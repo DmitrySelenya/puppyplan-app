@@ -1,0 +1,47 @@
+%% PuppyPlan — Sharing & Permissions Lifecycle (PRD §4.7 + §6.9)
+%% Family invite (household membership) и Trainer share (scoped link).
+
+flowchart TB
+  subgraph family[Family Sharing · household_membership]
+    fInvite[Owner создаёт invite<br/>email/magic-link/share-link]
+    fAccept[Invitee принимает<br/>Edge Function: accept_invite]
+    fActive[Active caregiver / viewer<br/>RLS: household member]
+    fSitter[Trusted Sitter Mode<br/>view over caregiver]
+    fRevoke[Owner: resend / revoke / expire]
+  end
+
+  subgraph trainer[Trainer Sharing · share_link]
+    tPrev[Owner: scope selector<br/>+ permission preview]
+    tCreate[Edge Function: create_share_link<br/>token_hash, scopes, expires_at]
+    tAccept[Trainer открывает по deep-link<br/>Edge Function: accept_share]
+    tView[Read-only view с scope-фильтром<br/>share_link_view projection]
+    tCard[Shareable puppy card<br/>generated artifact или signed link]
+    tRevoke[Owner: revoke / expire]
+  end
+
+  subgraph rls[RLS / Security]
+    pol1[event_log read: household member]
+    pol2[event_log write: owner / caregiver]
+    pol3[trainer_viewer read: только scopes share_link → share_scope]
+    pol4[anonymous user не создаёт share_link/invite]
+  end
+
+  fInvite --> fAccept --> fActive
+  fActive --> fSitter
+  fActive --> fRevoke
+
+  tPrev --> tCreate --> tAccept --> tView
+  tPrev --> tCard
+  tView --> tRevoke
+
+  fActive --> pol1
+  fActive --> pol2
+  tView --> pol3
+  fInvite -.-> pol4
+
+  classDef fam fill:#E6F4F8,stroke:#0891B2,color:#1C1F1B
+  classDef tr fill:#F1ECE3,stroke:#76796F,color:#1C1F1B
+  classDef sec fill:#FFFFFF,stroke:#9A3B2E,color:#1C1F1B,stroke-dasharray:3 3
+  class fInvite,fAccept,fActive,fSitter,fRevoke fam
+  class tPrev,tCreate,tAccept,tView,tCard,tRevoke tr
+  class pol1,pol2,pol3,pol4 sec

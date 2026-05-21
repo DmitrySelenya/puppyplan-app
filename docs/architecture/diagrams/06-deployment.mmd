@@ -1,0 +1,70 @@
+%% PuppyPlan — Environment & Deployment Topology
+%% EAS profiles + Supabase environments + supabase branches для PR-preview.
+
+flowchart TB
+  subgraph dev[Dev environment]
+    devApp[Expo dev client<br/>EAS profile: development]
+    devSb[(Supabase project: puppyplan-dev<br/>branch databases enabled)]
+  end
+
+  subgraph preview[Preview / staging]
+    prevApp[Internal TestFlight<br/>Play Internal Testing<br/>EAS profiles: preview / preview-apk / internal-aab]
+    prevSb[(Supabase project: puppyplan-staging<br/>data parity not guaranteed)]
+  end
+
+  subgraph prod[Production]
+    prodApp[App Store + Play Store<br/>EAS profile: production]
+    prodSb[(Supabase project: puppyplan-prod<br/>PITR + DRP + pgaudit)]
+  end
+
+  subgraph ci[CI · GitHub Actions]
+    lint[lint + typecheck]
+    unit[unit + integration · Jest]
+    rls[RLS tests · pgTAP]
+    sbDiff[supabase db diff<br/>schema drift check]
+    contract[contract/codegen diff]
+    eas[EAS build smoke]
+    e2e[E2E · Maestro · after build artifact]
+    preflight[platform preflight<br/>iOS + Android]
+  end
+
+  subgraph obs[Observability]
+    sen[Sentry · 3 projects]
+    ph[PostHog · 3 envs]
+  end
+
+  ci --> lint
+  ci --> unit
+  ci --> rls
+  ci --> sbDiff
+
+  rls --> sbDiff
+  sbDiff --> contract
+  contract --> eas
+  eas --> e2e
+  e2e --> preflight
+  sbDiff --> devSb
+  sbDiff --> prevSb
+  sbDiff --> prodSb
+
+  eas --> devApp
+  eas --> prevApp
+  eas --> prodApp
+
+  devApp --> devSb
+  prevApp --> prevSb
+  prodApp --> prodSb
+
+  devApp -.-> sen
+  prevApp -.-> sen
+  prodApp -.-> sen
+  devApp -.-> ph
+  prevApp -.-> ph
+  prodApp -.-> ph
+
+  classDef env fill:#E6F4F8,stroke:#0891B2,color:#1C1F1B
+  classDef cic fill:#F1ECE3,stroke:#76796F,color:#1C1F1B
+  classDef ob stroke-dasharray:4 4,fill:#FBFAF7,color:#1C1F1B
+  class devApp,devSb,prevApp,prevSb,prodApp,prodSb env
+  class lint,unit,rls,e2e,sbDiff,contract,eas,preflight cic
+  class sen,ph ob

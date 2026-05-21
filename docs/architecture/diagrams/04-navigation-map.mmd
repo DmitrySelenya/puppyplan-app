@@ -1,0 +1,55 @@
+%% PuppyPlan — Navigation Map (PRD §5 + DESIGN §3)
+%% Expo Router file-based. 3 таба + persistent Quick Log FAB + модальные/sheet-роуты.
+
+flowchart TB
+  root["(app)<br/>Root layout · auth gate · providers"]
+
+  subgraph tabs[Primary tabs]
+    today["/today<br/>hero · 5 daily cards · activity strip<br/>Today guidance card"]
+    health["/health<br/>vaccine · deworming · vet visits<br/>template vs confirmed"]
+    more["/more<br/>timeline · sharing · reminders<br/>trackers · profile · settings"]
+  end
+
+  subgraph modals[Modals / Bottom sheets]
+    qlog["/quick-log<br/>tracker grid"]
+    qlogd["/quick-log/details"]
+    timeline["/timeline<br/>filterable list"]
+    remEdit["/reminders/edit"]
+    famInvite["/family/invite"]
+    trainerPrev["/sharing/trainer-preview"]
+    scopeSel["/sharing/scope-selector"]
+    healthEdit["/health/record-edit"]
+    trackEdit["/settings/quick-trackers"]
+  end
+
+  subgraph deep[Deep links / web view]
+    inviteAccept["/invite/[token]<br/>Universal Link · App Link"]
+    shareView["/share/[token]<br/>web fallback · expo-router/web"]
+  end
+
+  fab((Quick Log FAB<br/>persistent · thumb-zone))
+
+  root --> tabs
+  today -. open .-> timeline
+  more --> timeline
+  more --> famInvite
+  more --> scopeSel
+  more --> remEdit
+  more --> trackEdit
+  health --> healthEdit
+  today --> remEdit
+
+  fab --> qlog
+  qlog --> qlogd
+
+  scopeSel --> trainerPrev
+
+  inviteAccept --> root
+  shareView -. read-only .-> root
+
+  classDef tab fill:#E6F4F8,stroke:#0891B2,color:#1C1F1B
+  classDef sheet fill:#F1ECE3,stroke:#76796F,color:#1C1F1B
+  classDef deepC fill:#FFFFFF,stroke:#0E7490,color:#1C1F1B,stroke-dasharray: 4 4
+  class today,health,more tab
+  class qlog,qlogd,timeline,remEdit,famInvite,trainerPrev,scopeSel,healthEdit,trackEdit sheet
+  class inviteAccept,shareView deepC

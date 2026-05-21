@@ -1,0 +1,99 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Credentials / signing / service accounts
+*.p8
+*.p12
+*.cer
+*.mobileprovision
+*.keystore
+*.jks
+GoogleService-Info.plist
+google-services.json
+credentials.json
+service-account*.json
+play-service-account*.json
+app-store-connect*.json
+eas-credentials*.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Node / Expo
+node_modules/
+.expo/
+.expo-shared/
+web-build/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Expo managed native output
+# Generated native folders are recreated by Expo prebuild/EAS and are not edited directly in MVP.
+ios/
+android/
+
+# EAS local state
+.eas/
+
+# Supabase local state / dumps
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+supabase/**/*.dump
+supabase/**/*.sql.gz
+
+# Native build artifacts
+android/.gradle/
+android/app/build/
+ios/build/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Editor / temporary files
+*.tmp
+*.bak
+*.orig
+*~
+
+# Agent / MCP local state
+.mcp.json
+.codex/
+.claude/work/
+.claude/settings.local.json
+.worktrees/
+.agentplane/worktrees/
+.agentplane/cache/
+.agentplane/recipes-cache/
+.agentplane/.upgrade/
+.agentplane/.release/
+.agentplane/upgrade/
+.agentplane/tasks.json
+
+# Local E2E and review artifacts
+tools/mobile-e2e/artifacts/
+tools/mobile-e2e/config/*.local.json
+docs/reports/
+docs/reviews/**/*.png
+docs/reviews/**/*.jpg
+docs/reviews/**/*.jpeg
+docs/reviews/**/*.webp
+docs/reviews/**/*.gif
+docs/reviews/**/*.mp4
+docs/reviews/**/*.mov
+docs/reviews/**/*.webm

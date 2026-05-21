@@ -1,0 +1,46 @@
+%% PuppyPlan — Quick Log Lifecycle (PRD §4.4 + §6.4)
+%% Optimistic UI с Minimal Durable Quick Log Queue как narrow exception.
+
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant UI as Quick Log Sheet
+  participant Q as TanStack Query Cache
+  participant Z as PendingQueue (Expo SQLite + Zustand mirror)
+  participant SB as Supabase event_log
+
+  U->>UI: tap "Покакал"
+  UI->>UI: gather payload + generate client_event_id
+  UI->>Q: optimistic insert (status=pending_local)
+  UI-->>U: snackbar "Сохранено · Undo · Add details"
+
+  alt online & ok
+    UI->>SB: insert(event_log)
+    SB-->>UI: 201 Created
+    UI->>Q: replace optimistic with server row (status=server_confirmed)
+  else slow / failed / offline
+    UI->>Z: enqueue {client_event_id, payload, attempts=0, state=pending_local}
+    Note over Z: SQLite is durable source<br/>Zustand mirrors UI status only
+    UI->>Q: mark cached row as pending_local
+    UI-->>U: показывает pending state в Today + Timeline
+
+    loop on reconnect / foreground / manual retry
+      Z->>SB: insert(event_log) with client_event_id
+      alt success или duplicate (idempotent)
+        SB-->>Z: 201 Created or conflict returning existing row
+        Z->>Q: replace with server row (status=server_confirmed)
+        Z->>Z: remove from queue
+      else retryable error
+        Z->>Z: attempts++ (state=failed_retryable)
+      else permanent error (e.g. RLS deny)
+        Z->>Q: mark as failed_permanent
+        Z-->>U: показывает Retry / Delete
+      end
+    end
+  end
+
+  alt user undo до server_confirmed
+    U->>UI: tap Undo
+    UI->>Q: remove optimistic row
+    UI->>Z: remove from queue (state=deleted_before_sync)
+  end

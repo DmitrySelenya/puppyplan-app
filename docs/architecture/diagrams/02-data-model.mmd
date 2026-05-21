@@ -1,0 +1,191 @@
+%% PuppyPlan — Core Data Model (PRD §6.10)
+%% MVP-сущности. Phase 1+ сущности обозначены пунктиром.
+
+erDiagram
+  user ||--o{ household_membership : has
+  household ||--o{ household_membership : has
+  household ||--o{ puppy : owns
+  household ||--o{ invite : issues
+  household ||--o{ share_link : issues
+  household ||--o{ subscription_entitlement : has
+
+  puppy ||--o{ event_log : has
+  puppy ||--o{ health_record : has
+  puppy ||--o{ reminder : has
+
+  reminder ||--o{ reminder_occurrence : schedules
+
+  user ||--o{ device_push_token : owns
+  user ||--o{ notification_preference : has
+
+  household ||--o{ notification_delivery_log : audits
+  household ||--o{ trusted_sitter_completion_event : audits
+
+  share_link ||--o{ share_scope : grants
+
+  household ||--o{ media_asset : stores
+
+  user {
+    uuid id PK
+    text email
+    timestamptz created_at
+    bool is_anonymous
+  }
+  household {
+    uuid id PK
+    uuid created_by FK
+    text display_name
+    timestamptz created_at
+  }
+  household_membership {
+    uuid id PK
+    uuid household_id FK
+    uuid user_id FK
+    text role "owner | caregiver | viewer"
+    timestamptz accepted_at
+    timestamptz revoked_at
+  }
+  puppy {
+    uuid id PK
+    uuid household_id FK
+    text name
+    date birth_date
+    int age_weeks_estimate
+    jsonb selected_trackers
+    timestamptz created_at
+  }
+  event_log {
+    uuid id PK
+    uuid puppy_id FK
+    uuid household_id FK
+    uuid created_by FK
+    text client_event_id "UNIQUE per household"
+    text event_type
+    timestamptz occurred_at
+    int payload_version
+    jsonb payload
+    int version
+    timestamptz deleted_at
+  }
+  health_record {
+    uuid id PK
+    uuid puppy_id FK
+    text record_type
+    text title
+    text status
+    text source
+    date scheduled_for
+    timestamptz completed_at
+    text provider_name
+    text notes
+    int version
+    timestamptz deleted_at
+  }
+  reminder {
+    uuid id PK
+    uuid puppy_id FK
+    uuid created_by FK
+    uuid assigned_to
+    text reminder_type
+    jsonb schedule_rule
+    text timezone
+    jsonb quiet_hours
+    bool enabled
+    bool trusted_sitter_visible
+  }
+  reminder_occurrence {
+    uuid id PK
+    uuid reminder_id FK
+    timestamptz scheduled_for
+    text local_notification_id
+    text status
+    text action_taken
+    uuid acted_by
+    timestamptz acted_at
+  }
+  invite {
+    uuid id PK
+    uuid household_id FK
+    text email_hash
+    text token_hash
+    text token_last4
+    text role
+    timestamptz expires_at
+    timestamptz accepted_at
+    timestamptz revoked_at
+  }
+  share_link {
+    uuid id PK
+    uuid household_id FK
+    uuid puppy_id FK
+    text token_hash
+    text role "trainer_viewer"
+    timestamptz expires_at
+    timestamptz accepted_at
+    timestamptz revoked_at
+  }
+  share_scope {
+    uuid id PK
+    uuid share_link_id FK
+    text scope "routine_summary | training_notes | selected_timeline_range | health_summary | puppy_profile"
+    daterange timeline_range
+  }
+  device_push_token {
+    uuid id PK
+    uuid user_id FK
+    text device_id
+    text platform
+    text expo_push_token
+    text apns_token
+    text fcm_token
+    bool enabled
+    timestamptz revoked_at
+  }
+  notification_preference {
+    uuid id PK
+    uuid user_id FK
+    uuid household_id FK
+    bool reminder_push_enabled
+    bool trusted_sitter_completion_push_enabled
+    jsonb quiet_hours
+    text timezone
+  }
+  notification_delivery_log {
+    uuid id PK
+    uuid user_id FK
+    uuid household_id FK
+    text notification_type
+    text channel
+    text provider_message_id
+    text delivery_status
+    text error_category
+    timestamptz created_at
+  }
+  trusted_sitter_completion_event {
+    uuid id PK
+    uuid household_id FK
+    uuid puppy_id FK
+    uuid completed_by FK
+    uuid source_event_id
+    text completion_type
+    timestamptz created_at
+  }
+  subscription_entitlement {
+    uuid id PK
+    uuid household_id FK
+    text provider
+    text provider_customer_id_hash
+    text entitlement
+    text status
+    timestamptz renews_at
+  }
+  media_asset {
+    uuid id PK
+    uuid household_id FK
+    uuid uploaded_by FK
+    text bucket
+    text path
+    text mime_type
+    int byte_size
+    timestamptz uploaded_at
+  }

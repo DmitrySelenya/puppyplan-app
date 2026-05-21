@@ -1,0 +1,61 @@
+%% PuppyPlan — System Context (C4 Level 1)
+%% Источник правды: PRD §6 (Техническая архитектура).
+%% Изменения только через ADR.
+
+flowchart LR
+  subgraph users[Пользователи]
+    owner[Puppy owner<br/>iOS / Android]
+    caregiver[Caregiver / Trusted Sitter<br/>iOS / Android]
+    trainer[Trainer / Viewer<br/>web link, без аккаунта]
+  end
+
+  subgraph mobile[Мобильное приложение]
+    app[(PuppyPlan App<br/>Expo SDK 55 · RN 0.83 · React 19.2<br/>New Architecture, TS strict)]
+  end
+
+  subgraph platform[Supabase Platform]
+    auth[(Supabase Auth<br/>Anonymous · Magic Link · Apple · Google)]
+    db[(Postgres<br/>schemas: public, app_private<br/>RLS enforced)]
+    storage[(Supabase Storage<br/>private buckets · EXIF strip)]
+    realtime[(Supabase Realtime<br/>enhancement only)]
+    edge[(Edge Functions<br/>accept_invite · accept_share<br/>send_trusted_sitter_completion<br/>Phase 1: export_pdf)]
+  end
+
+  subgraph third[Third-party services]
+    apns[APNs<br/>iOS push]
+    fcm[FCM<br/>Android push]
+    sentry[Sentry<br/>error + perf · PII scrub]
+    posthog[PostHog<br/>analytics · session replay OFF]
+    revcat((RevenueCat<br/>Phase 1 only))
+    appstore((App Store / Play Store<br/>distribution))
+  end
+
+  owner -->|onboarding · quick log · sharing| app
+  caregiver -->|view + log| app
+  trainer -.->|web view of share link| app
+
+  app -->|auth / token| auth
+  app -->|REST + Realtime channels| db
+  app -->|signed URLs for media| storage
+  app -->|optional channels| realtime
+  app -->|privileged ops| edge
+
+  edge -->|push payload| apns
+  edge -->|push payload| fcm
+  apns -.->|notification| app
+  fcm -.->|notification| app
+
+  app -->|errors + perf| sentry
+  app -->|events| posthog
+
+  app -.->|entitlement state via flag| revcat
+  app -.->|distribution| appstore
+
+  classDef ext fill:#F1ECE3,stroke:#76796F,color:#1C1F1B
+  classDef plat fill:#E6F4F8,stroke:#0891B2,color:#1C1F1B
+  classDef cli fill:#FFFFFF,stroke:#1C1F1B,color:#1C1F1B
+  classDef futr stroke-dasharray: 4 4,color:#76796F,fill:#FBFAF7
+  class apns,fcm,sentry,posthog,appstore ext
+  class auth,db,storage,realtime,edge plat
+  class app cli
+  class revcat futr

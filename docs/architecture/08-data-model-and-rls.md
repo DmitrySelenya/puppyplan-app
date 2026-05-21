@@ -1,0 +1,82 @@
+# Data Model And RLS
+
+## Schema Baseline
+
+Use PRD §6.10 as the source of truth. Do not introduce schema splits or renames without ADR-0007.
+
+MVP entities:
+
+- `user`
+- `household`
+- `household_membership`
+- `puppy`
+- `event_log`
+- `health_record`
+- `reminder`
+- `reminder_occurrence`
+- `invite`
+- `share_link`
+- `share_scope`
+- `device_push_token`
+- `notification_preference`
+- `notification_delivery_log`
+- `trusted_sitter_completion_event`
+- `subscription_entitlement`
+- `media_asset`
+- `content_version`
+
+## Rejected Schema Changes
+
+Rejected:
+
+- `event_log` split into `event_notes`;
+- `health_record` split into `health_record_notes`;
+- `health_record_media` replacing generic `media_asset`;
+- renaming `share_link/share_scope` to `external_share_links/share_link_scopes`.
+
+Reasons:
+
+- larger RLS surface;
+- more joins on hot Today/Timeline paths;
+- harder Quick Log idempotency;
+- conflicts with PRD §6.10;
+- privacy can be enforced with projections and RLS.
+
+## Event Idempotency
+
+`event_log` must have:
+
+```sql
+UNIQUE (household_id, client_event_id)
+```
+
+Retry insert uses `ON CONFLICT ... RETURNING *` semantics. `client_event_id` is generated before the optimistic write and queue insert.
+
+## RLS Negative Tests
+
+P0 pgTAP cases:
+
+- non-member cannot read household data;
+- viewer cannot write;
+- caregiver cannot manage billing, owner settings, or share scopes;
+- revoked member loses access immediately;
+- anonymous user cannot create invites or external shares;
+- expired/revoked share cannot read;
+- trainer/share can only access projections, not base tables;
+- `health_summary` excludes notes/provider/photos;
+- user cannot read another user's push tokens;
+- delivery logs store metadata only.
+
+Policy shape requirements:
+
+- `invite`, `share_link`, and `share_scope` direct client inserts/updates/deletes are denied by default.
+- invite/share create, accept, revoke, and scope changes happen through Edge Functions or SECURITY DEFINER helpers that check `auth.uid()`.
+- anonymous auth may read only the narrow projection needed to resolve a valid invite/share token; it may not create invites or external shares.
+- share projection tests must assert both allowed fields and forbidden fields. A test that only checks "some rows are returned" is insufficient.
+- base-table tests must prove trainer/share access cannot directly read unrestricted `event_log` or `health_record` rows.
+
+## Payload Versioning
+
+`payload_version` starts at `1`. Breaking changes add a new Zod union branch; old versions remain readable.
+
+No ad hoc version branching in UI components. Parse at the contract/data boundary.

@@ -1,0 +1,10 @@
+# Default owner until team-specific ownership is added.
+* @DmitrySelenya
+
+# Architecture and planning docs are high-leverage for AI-coded work.
+/AGENTS.md @DmitrySelenya
+/CLAUDE.md @DmitrySelenya
+/docs/architecture/ @DmitrySelenya
+/docs/plans/ @DmitrySelenya
+/puppyplan-prd-v2.md @DmitrySelenya
+/DESIGN.md @DmitrySelenya

@@ -1,0 +1,55 @@
+%% PuppyPlan — Notification Architecture (PRD §6.7)
+%% Local reminders + узкий remote push canal (trusted-sitter completion).
+
+flowchart LR
+  subgraph mobile[Mobile App]
+    rem[Reminder · client]
+    occ[reminder_occurrence cache]
+    expoN[Expo Notifications<br/>local schedule]
+    localIds[local_notification_id<br/>per install/device]
+    sitterEv[trusted-sitter completion<br/>client emits]
+    permGate[Notifications permission<br/>OS prompt · provisional → full]
+    channels[Android channels<br/>iOS categories]
+    pushReg[push token registration<br/>device_push_token]
+  end
+
+  subgraph backend[Supabase]
+    sbRem[(reminder<br/>reminder_occurrence)]
+    sbTok[(device_push_token)]
+    sbPref[(notification_preference)]
+    sbLog[(notification_delivery_log)]
+    edgeFn[(Edge Function<br/>send_trusted_sitter_completion)]
+  end
+
+  subgraph providers[Push providers]
+    apns[APNs]
+    fcm[FCM]
+  end
+
+  rem -->|create / edit| sbRem
+  sbRem -->|sync| rem
+  channels --> expoN
+  rem -->|schedule local| expoN
+  expoN -->|returns id| localIds
+  localIds --> occ
+  occ -->|persist| sbRem
+
+  permGate -->|on grant| pushReg
+  pushReg -->|upsert| sbTok
+
+  sitterEv -->|record completion| edgeFn
+  edgeFn -->|read prefs + token| sbTok
+  edgeFn --> sbPref
+  edgeFn -->|push payload| apns
+  edgeFn -->|push payload| fcm
+  edgeFn -->|metadata only| sbLog
+
+  apns -.-> mobile
+  fcm -.-> mobile
+
+  classDef local fill:#E6F4F8,stroke:#0891B2,color:#1C1F1B
+  classDef sb fill:#F1ECE3,stroke:#76796F,color:#1C1F1B
+  classDef ext stroke-dasharray: 4 4,fill:#FBFAF7,color:#1C1F1B
+  class rem,occ,expoN,localIds,sitterEv,permGate,channels,pushReg local
+  class sbRem,sbTok,sbPref,sbLog,edgeFn sb
+  class apns,fcm ext
