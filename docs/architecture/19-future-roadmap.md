@@ -4,12 +4,12 @@
 
 Allowed after beta core loop is stable:
 
-- live RevenueCat adapter;
+- live entitlement provider adapter;
 - PDF vet report/export;
 - weekly digest email;
 - multi-pet/foster;
 - better shareable puppy cards;
-- weight tracking and symptom journal;
+- weight tracking and symptom notes;
 - referrals;
 - dark mode/tablet if product evidence supports it;
 - Storybook if component inventory outgrows `_dev/components`.
@@ -34,4 +34,3 @@ Reopen architecture if:
 - RLS performance degrades on timeline queries;
 - notification delivery/reliability blocks retention;
 - beta users strongly require multi-pet/foster workflows.
-

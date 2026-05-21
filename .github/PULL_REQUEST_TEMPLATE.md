@@ -2,6 +2,13 @@
 
 -
 
+## Work Tracking
+
+- Linear: PUP-___ / none - reason: ...
+- Branch: Linear `gitBranchName` / N/A
+- Linked plan: `docs/plans/...` / N/A
+- Context package included: yes / no / N/A
+
 ## Architecture / ADR
 
 - Architecture docs followed:
@@ -35,6 +42,8 @@
 
 ## Verification
 
+- Acceptance criteria mapped from Linear/plan to tests or manual checks: yes / no / N/A
+- Verification evidence summary:
 - [ ] `npm run lint`
 - [ ] `npm run typecheck`
 - [ ] `npm run test`

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: PuppyPlan internal task intake
+    url: https://linear.app/dmitryselenya/project/puppyplan-mvp-8ba865db0841
+    about: Use Linear team PUP and project PuppyPlan MVP for internal product, engineering, design, QA, and release work.
+  - name: PuppyPlan repository rules
+    url: https://github.com/DmitrySelenya/puppyplan-app/blob/main/AGENTS.md
+    about: Read the agent and repository operating rules before opening implementation work.

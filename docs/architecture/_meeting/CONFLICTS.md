@@ -21,7 +21,6 @@
 - root `ARCHITECTURE.md`;
 - physical `event_notes` / `health_record_notes` split;
 - treating design audit as architecture/schema source;
-- live RevenueCat SDK in MVP;
+- live IAP/subscription SDK in MVP;
 - custom API service in beta;
 - full offline-first/outbox in beta.
-

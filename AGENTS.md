@@ -17,6 +17,23 @@ Read these before non-trivial work:
 
 Primary architecture entry point: `docs/architecture/00-overview.md`.
 Agent-specific rules: `docs/architecture/18-ai-agent-guide.md`.
+Agent operating model: `docs/agents/00-operating-model.md`.
+Linear workflow rules: `docs/agents/linear-workflow.md`.
+Context engineering rules: `docs/agents/context-engineering.md`.
+
+## Project Skills
+
+Canonical PuppyPlan project skills live under `.agents/skills/`:
+
+- `.agents/skills/plan/SKILL.md`
+- `.agents/skills/implement/SKILL.md`
+- `.agents/skills/review/SKILL.md`
+- `.agents/skills/review-deep/SKILL.md`
+- `.agents/skills/tdd/SKILL.md`
+
+Use these project skills before generic or personal skills with the same names. Claude Code discovers `.claude/skills/*` adapters that point back to `.agents/skills/*`. Codex may not auto-discover repo-local skills, so Codex agents must read the matching `.agents/skills/<name>/SKILL.md` manually when the task matches one of these workflows.
+
+Do not put PuppyPlan-specific process rules in global user skills such as `~/.codex/skills` or `~/.claude/skills`; keep project behavior in this repo.
 
 ## Target Tech Stack
 
@@ -97,9 +114,36 @@ docs/plans/
 - Prefer extension through existing contracts over broad rewrites. Modify existing code for bug fixes and focused refactors.
 - Add dependencies only after explicit approval.
 
+## Linear Operating System
+
+Linear is the operational tracker. GitHub is the code review, PR, branch, and CI surface. Repository docs are the canonical knowledge base for product, architecture, decisions, plans, and verification evidence.
+
+Use Linear team `PUP` and project `PuppyPlan MVP` for PuppyPlan work. Do not create PuppyPlan work in any legacy or non-PuppyPlan stream. Non-trivial work starts from a `PUP-___` issue unless the user explicitly says this is a no-Linear exception.
+
+Linear issue lifecycle:
+
+```text
+Backlog -> Todo -> In Progress -> In Review -> Done
+```
+
+- **Backlog:** captured but not ready to implement.
+- **Todo:** scoped enough to start planning or implementation.
+- **In Progress:** one active agent or human is working it.
+- **In Review:** implementation is ready for review or verification.
+- **Done:** merged or otherwise completed with verification evidence recorded.
+
+Before working from Linear, an agent must read the issue, linked docs/plans, relevant PRD/DESIGN/architecture/ADR sections, and any attached Linear document. If the issue lacks acceptance criteria, source docs, or privacy/security constraints, add or request that context before implementation.
+
+Linear issues must use the task contract from this file: Goal, Non-goals, Constraints, Acceptance, Likely files, Verification. Use labels from `docs/agents/linear-workflow.md`; apply `agent-ready` only when a task has enough context for an implementation agent to start without guessing.
+
+Linear documents/pages are allowed as hubs, status summaries, meeting notes, and indexes. They must not become the source of truth for product scope, architecture decisions, schema contracts, security policy, or implementation plans. Move durable decisions into repo docs, ADRs, or `docs/plans/`.
+
+Never put secrets, tokens, production credentials, raw puppy names, raw notes, raw emails, provider names, photos, invite/share tokens, push tokens, screenshots with private data, or other private user content in Linear issues, Linear documents, PRs, branch names, commit messages, docs, fixtures, logs, or analytics.
+
 ## Workflow
 
 - Restate the goal and success criteria before coding.
+- For Linear-backed work, use the issue's Linear-generated `gitBranchName` without modification (for example `dimaselenya/pup-123-quick-log-queue`). If Linear does not expose a generated branch, use `pup-<issue-number>-<short-slug>`. Include the matching `PUP-___` in the PR title and Work Tracking section, and keep one primary issue per branch.
 - Read relevant PRD/design/architecture/ADR docs before editing.
 - For UX, flow, API, storage, schema, permissions, release, or architecture changes, create or update a `docs/plans/YYYY-MM-DD-<topic>.md` plan/contract.
 - If a plan exists, read the full plan before implementation, identify the current phase, and update checkboxes/changelog as work completes.

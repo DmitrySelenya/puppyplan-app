@@ -11,6 +11,10 @@ This repository is documentation-first. The Expo app scaffold, Supabase migratio
 Start here:
 
 - `AGENTS.md` - project rules and non-negotiables for AI coding agents.
+- `.agents/README.md` - canonical project skills shared by Claude, Codex, and future agents.
+- `docs/agents/00-operating-model.md` - agent workflow and company operating model.
+- `docs/agents/linear-workflow.md` - Linear task, label, project, and GitHub linking rules.
+- `docs/agents/context-engineering.md` - context package, trust tiers, and handoff rules.
 - `puppyplan-prd-v2.md` - product requirements and acceptance criteria.
 - `DESIGN.md` - product and UI design direction.
 - `docs/architecture/00-overview.md` - architecture entry point.
@@ -41,6 +45,8 @@ Expected future shape:
 
 ## Repository Rules
 
+- Linear team `PUP` and project `PuppyPlan MVP` are the operational tracker for internal work.
+- Repository docs remain the source of truth for product, architecture, ADRs, and plans.
 - Keep `app/` thin: routes, layouts, providers, auth redirects, modal presentation.
 - Put business logic, data hooks, contracts, and screen components under `src/`.
 - Do not edit generated `ios/` or `android/` files directly.

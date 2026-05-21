@@ -4,6 +4,8 @@
 
 Agents write most of the code, so architecture must be enforced by files, types, lint, tests, and CI rather than memory.
 
+Operational workflow lives in `docs/agents/00-operating-model.md`, Linear rules live in `docs/agents/linear-workflow.md`, context packet rules live in `docs/agents/context-engineering.md`, and reusable project skills live in `.agents/skills/`.
+
 ## Before Coding
 
 An agent must read:
@@ -12,7 +14,9 @@ An agent must read:
 2. relevant DESIGN section;
 3. relevant `docs/architecture/*.md`;
 4. related ADRs;
-5. feature `AGENTS.md` once it exists.
+5. relevant Linear `PUP-___` issue or explicit no-Linear exception;
+6. relevant `.agents/skills/<name>/SKILL.md` workflow when planning, implementing, reviewing, deep-reviewing, or using TDD;
+7. feature `AGENTS.md` once it exists.
 
 ## Contracts First
 
@@ -61,4 +65,3 @@ Review for:
 - accessibility labels and touch targets;
 - string budget and Dynamic Type;
 - platform submission risk.
-

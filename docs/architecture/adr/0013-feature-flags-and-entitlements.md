@@ -10,7 +10,7 @@ Feature rollout, backend kill switches, and paid entitlements have different cor
 
 Use PostHog for product/UI flags and kill switches. Use Supabase `app_config` for backend-critical operational config. Use `subscription_entitlement` as the source of truth for paid access.
 
-RevenueCat is abstracted behind `EntitlementProvider`; MVP uses a NoOp/manual provider unless a future ADR adds the live SDK.
+The live subscription provider is abstracted behind `EntitlementProvider`; MVP uses a NoOp/manual provider unless a future ADR adds the live SDK.
 
 ## Consequences
 

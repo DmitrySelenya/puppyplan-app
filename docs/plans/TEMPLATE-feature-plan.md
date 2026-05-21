@@ -8,6 +8,10 @@
 
 **Architecture:** [How the feature fits PuppyPlan: Supabase source of truth, Edge Function/RLS boundary, client query/cache flow, Quick Log queue if relevant.]
 
+**Linear:** PUP-___ / no-Linear exception: [reason]
+
+**Branch:** Linear `gitBranchName` / N/A
+
 **Primary source docs:**
 - PRD: `puppyplan-prd-v2.md` - [section]
 - Design: `DESIGN.md` - [section]
@@ -20,6 +24,8 @@
 
 [Describe the current state.]
 
+- **Context package:** [Exact Linear issue, source docs, ADRs, plans, screenshots, logs, graph/context output, and tool observations an implementation agent must load.]
+- **Context placement:** Linear issue stays short, this plan holds long-form implementation context, and the PR holds final verification evidence.
 - What already exists?
 - Which architecture decisions constrain this work?
 - Which ownership area owns the change?
@@ -64,6 +70,7 @@ These decisions are fixed for this implementation pass:
 
 Each invariant must map to at least one automated test. Use property-based tests only when the state space justifies it and the dependency is approved.
 
+- **Acceptance mapping:** Linear issue -> this plan -> automated test/manual check -> PR verification evidence.
 - **Invariant 1:** [Always/never rule.]
   - **Test:** `src/test/[feature].test.ts` or `supabase/tests/[feature].sql`
 - **Invariant 2:** [Always/never rule.]

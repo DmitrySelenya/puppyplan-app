@@ -2,7 +2,7 @@
 
 ## Product Frame
 
-PuppyPlan is not a generic dog app, a training library, a veterinary app, a mental-health app, or a social product. It is a calm operational companion for the first 90 days with a puppy.
+PuppyPlan is not a generic dog app, a training library, a veterinary app, a wellness product, a mental-health app, or a social product. It is a practical routine tracker and household coordination tool for the first 90 days with a puppy.
 
 The beta optimizes for:
 
@@ -32,7 +32,7 @@ Deferred:
 - full offline-first sync;
 - custom backend server;
 - PDF export/background workers;
-- live RevenueCat/IAP;
+- live IAP/subscription provider;
 - AI coach;
 - multi-pet/foster;
 - public social/community;
@@ -58,4 +58,3 @@ Two separate product rules are final:
 - household duplicate-care warning: 10 minutes.
 
 Both constants live in `contracts/business-rules.ts` and must be tested.
-

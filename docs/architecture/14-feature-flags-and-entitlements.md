@@ -37,15 +37,14 @@ MVP implementation:
 
 - `NoOpEntitlementProvider`;
 - `useEntitlement('premium')` returns inactive;
-- no RevenueCat SDK in MVP binary.
+- no live IAP/subscription SDK in MVP binary.
 
 Phase 1:
 
-- RevenueCat adapter behind feature flag;
+- live entitlement provider adapter behind feature flag;
 - webhooks into Supabase Edge Function;
 - household-scoped `subscription_entitlement`.
 
 ## App Store / Play Billing
 
 No external payment links for digital content. Future paid unlocks use platform-compliant IAP through the entitlement provider.
-
