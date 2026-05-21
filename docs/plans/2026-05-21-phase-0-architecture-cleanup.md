@@ -136,9 +136,9 @@ The external review surfaced several useful risks. Some were already documented,
 ### Phase 1 - Repo And Scaffold Setup
 
 **Checklist:**
-- [ ] With explicit approval, initialize local git if still absent.
-- [ ] With explicit approval, create a private GitHub repository.
-- [ ] With explicit approval, make initial commit and push.
+- [x] With explicit approval, initialize local git if still absent.
+- [x] With explicit approval, create a private GitHub repository.
+- [x] With explicit approval, make initial commit and push.
 - [ ] Add branch protection and required checks after CI scripts exist.
 - [ ] Scaffold Expo app without editing generated native folders directly.
 
@@ -202,3 +202,4 @@ Once scripts exist, prefer:
 ## Changelog
 
 - 2026-05-21: Created Phase 0 cleanup plan from architecture review findings.
+- 2026-05-21: Created private GitHub repository `DmitrySelenya/puppyplan-app`, pushed initial architecture baseline, and added repository labels/milestones/settings. Branch protection is deferred until CI checks exist.
