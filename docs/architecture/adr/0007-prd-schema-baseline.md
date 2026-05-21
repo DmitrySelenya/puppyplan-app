@@ -14,4 +14,4 @@ Keep PRD section 6.10 names and shape for MVP. Do not split `event_log` into `ev
 
 - Privacy is enforced through RLS, sanitized views/RPCs, and explicit projections.
 - Future schema deltas require ADR, migration tests, and contract updates.
-- `AUDIT_FIXES.md` is design QA input, not schema authority.
+- Historical design audit findings are design QA input, not schema authority.

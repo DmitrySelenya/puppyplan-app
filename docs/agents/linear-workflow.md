@@ -41,7 +41,7 @@ Create these labels for team `PUP`:
 | Label | Meaning |
 |---|---|
 | `agent-ready` | Task has enough context, acceptance, and verification for an agent to start. |
-| `needs-plan` | Requires a `docs/plans/` plan before implementation. |
+| `needs-plan` | Requires a `docs/plans/active/` plan before implementation. |
 | `needs-adr` | Requires an ADR before or alongside implementation. |
 | `contracts` | Touches Zod contracts, payloads, business rules, or generated types. |
 | `rls` | Touches Supabase policies, permissions, or pgTAP coverage. |

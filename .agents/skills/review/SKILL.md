@@ -51,7 +51,7 @@ Check every relevant item:
 - No raw puppy names, notes, emails, provider names, photos, push tokens, invite/share tokens, screenshots with private data, or production rows appear in logs, analytics, fixtures, docs, issues, or PR text.
 - Contract/schema changes update migrations, generated DB types, RLS tests, docs, and ADRs as needed.
 - Query mutations use correct query keys, invalidation, optimistic update, and rollback behavior.
-- Quick Log invariants remain 3 seconds for accidental double tap and 10 minutes for household duplicate-care warning.
+- Quick Log invariants remain 3 seconds for accidental double tap and 60 seconds for household duplicate-care warning.
 - Touched UI has accessibility labels/states, touch targets, Dynamic Type behavior, and string-budget coverage when scripts exist.
 - Generated `ios/` and `android/` files are not edited directly.
 - Release Guardrail is respected: no release, deploy, production config, migration, EAS, store, git remote mutation, or irreversible action without exact user approval.

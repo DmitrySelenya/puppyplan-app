@@ -388,9 +388,9 @@
     },
     "duplicate-warning": {
       "title": "Looks like this is already logged",
-      "body-template": "{actorName} logged a {eventType} {n} minutes ago.",
-      "body-example": "Olya logged a feeding 4 minutes ago.",
-      "more-matches": "{n} more event in the last 12 minutes",
+      "body-template": "{actorName} logged a {eventType} {timeAgo}.",
+      "body-example": "Olya logged a feeding 42 seconds ago.",
+      "more-matches": "{n} more event in the last 60 seconds",
       "primary": "This is a different event — add it",
       "primary-alt": "Add anyway",
       "secondary": "Cancel",

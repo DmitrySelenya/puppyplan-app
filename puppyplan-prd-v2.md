@@ -351,7 +351,7 @@ MVP:
 - roles: `owner`, `caregiver`, `viewer`;
 - shared Today and Timeline;
 - last-action strip;
-- duplicate detection for potty/feeding within 10 minutes;
+- duplicate detection for potty/feeding within 60 seconds;
 - activity attribution на всех events;
 - app показывает, кто что сделал, например "Оля покормила Бублика 12 мин назад";
 - owner может resend, revoke или expire invite;

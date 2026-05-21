@@ -13,8 +13,8 @@
 | OTA updates | Off in MVP | CTO + iOS + Android + Client |
 | Product flags vs backend config | PostHog for product/UI; Supabase `app_config` for backend operations | CTO |
 | Exact alarms | ADR/spike required; not default blindly | CTO + Android |
-| Duplicate warning windows | 3 seconds double tap; 10 minutes duplicate care | CTO + Client |
-| AUDIT_FIXES classification | Design Audit Track required before beta, not schema input | CTO + UX |
+| Duplicate warning windows | 3 seconds double tap; 60 seconds duplicate care | CTO + Client |
+| Design audit classification | Historical design audit findings are beta QA input, not schema input | CTO + UX |
 
 ## Rejected Proposals
 

@@ -16,4 +16,4 @@ MVP component inspection uses `/_dev/components`; Storybook is Phase 1 unless ju
 
 - UI changes must go through primitives or extended components.
 - Accessibility labels, roles, target sizes, and Reduced Motion behavior are component contracts.
-- `AUDIT_FIXES.md` remains a required beta design QA track.
+- Historical design audit findings remain a required beta design QA track.

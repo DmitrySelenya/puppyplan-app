@@ -21,7 +21,7 @@
 6. Disable OTA in MVP.
 7. Use PostHog flags for product/UI and Supabase `app_config` for backend-critical toggles.
 8. Require Android exact-alarm ADR/spike.
-9. Use duplicate windows: 3 seconds and 10 minutes.
+9. Use duplicate windows: 3 seconds and 60 seconds.
 10. Treat design audit as beta QA workstream, not backend input.
 
 ## Required ADRs

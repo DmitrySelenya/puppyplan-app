@@ -4,6 +4,8 @@
 
 **Goal:** Establish PuppyPlan as an agent-first project where Linear tracks operational work, GitHub tracks code review and CI, and repo docs remain the canonical knowledge base.
 
+**Status:** Completed. All plan-owned checklist items are done; `PUP-6` owns the separate first-PR GitHub integration verification follow-up.
+
 **Architecture:** This is a documentation and workflow setup. It does not change product scope, app runtime, Supabase schema, CI, or release behavior.
 
 **Linear:** `PUP-1` tracks this repo-side agent operating model cleanup and has no remaining plan-owned checklist items after this pass. `PUP-6` separately tracks first-PR GitHub integration verification. Project `PuppyPlan MVP` is the operational Linear project.
@@ -73,7 +75,7 @@ Tracked outside `PUP-1`:
   - Result: no stale branch convention or old project-specific matches.
 - `git diff --check`
   - Result: passed.
-- `rg -n "[ \t]+$" AGENTS.md CLAUDE.md README.md .github docs/agents docs/plans/TEMPLATE-feature-plan.md docs/plans/2026-05-21-agent-company-setup.md docs/architecture/01-principles-and-scope.md docs/architecture/14-feature-flags-and-entitlements.md docs/architecture/18-ai-agent-guide.md docs/architecture/19-future-roadmap.md docs/architecture/_meeting/CONFLICTS.md docs/architecture/adr/0013-feature-flags-and-entitlements.md docs/architecture/diagrams/01-system-context.mmd`
+- `rg -n "[ \t]+$" AGENTS.md CLAUDE.md README.md .github docs/agents docs/plans/TEMPLATE-feature-plan.md docs/plans/completed/2026-05-21-agent-company-setup.md docs/architecture/01-principles-and-scope.md docs/architecture/14-feature-flags-and-entitlements.md docs/architecture/18-ai-agent-guide.md docs/architecture/19-future-roadmap.md docs/architecture/_meeting/CONFLICTS.md docs/architecture/adr/0013-feature-flags-and-entitlements.md docs/architecture/diagrams/01-system-context.mmd`
   - Result: no matches.
 - `test -f package.json && echo package.json-present || echo package.json-missing`
   - Result: `package.json-missing`; no npm checks are available yet.

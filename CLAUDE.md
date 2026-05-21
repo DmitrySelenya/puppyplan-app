@@ -21,7 +21,7 @@ Primary project rules live in `AGENTS.md`. This file is intentionally short and 
 - Non-trivial PuppyPlan work starts from a `PUP-___` Linear issue or an explicit no-Linear exception from the user.
 - Before coding from Linear, read the issue, linked plan, relevant PRD/DESIGN/architecture/ADR docs, and `docs/agents/context-engineering.md`.
 - Claude project skills in `.claude/skills/*` are adapters. Follow the canonical workflows in `.agents/skills/*`.
-- For UX, flow, API, storage, schema, permission, release, or architecture changes, create or update a `docs/plans/YYYY-MM-DD-<topic>.md` plan.
+- For UX, flow, API, storage, schema, permission, release, or architecture changes, create or update a `docs/plans/active/YYYY-MM-DD-<topic>.md` plan.
 - Implement from plans phase-by-phase and update checkboxes/changelog as work completes.
 - Write or update tests before, or alongside, behavior changes.
 - Run relevant checks before claiming completion; once scripts exist, prefer `npm run check`.

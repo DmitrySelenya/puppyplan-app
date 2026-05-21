@@ -60,7 +60,7 @@ Read `AGENTS.md`, the relevant `PUP-___` issue, linked plan, PRD/DESIGN/architec
 - Offline/retry/replay behavior.
 - Realtime is freshness only, not correctness.
 - Query keys, invalidation, optimistic update, rollback, and stale state.
-- Quick Log 3-second and 10-minute invariants.
+- Quick Log 3-second and 60-second invariants.
 
 ### Tests
 

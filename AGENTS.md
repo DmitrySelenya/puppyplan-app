@@ -89,6 +89,8 @@ supabase/
   seed/
 docs/architecture/
 docs/plans/
+  active/
+  completed/
 ```
 
 `app/` must stay thin. It wires layouts, providers, routes, auth redirects, and modal presentation only. Business logic, Supabase calls, hooks, and screen components live outside `app/`.
@@ -103,7 +105,7 @@ docs/plans/
 - **Design boundary:** feature code must not import raw colors, spacing, typography, icons, `Pressable`, haptics, or direct business-error alerts. Use `src/design` primitives/wrappers.
 - **Observability boundary:** feature code must not call `Sentry.captureException` directly. Use shared observability wrappers that scrub PII.
 - **i18n boundary:** no raw user-facing strings in UI code; use typed i18n keys and ICU plurals.
-- **Quick Log invariants:** accidental double tap is 3 seconds; household duplicate-care warning is 10 minutes. These constants live in `src/contracts/business-rules.ts` and must be tested.
+- **Quick Log invariants:** accidental double tap is 3 seconds; duplicate-care warning is 60 seconds. These constants live in `src/contracts/business-rules.ts` and must be tested.
 
 ## Agent-Friendly Development
 
@@ -145,8 +147,9 @@ Never put secrets, tokens, production credentials, raw puppy names, raw notes, r
 - Restate the goal and success criteria before coding.
 - For Linear-backed work, use the issue's Linear-generated `gitBranchName` without modification (for example `dimaselenya/pup-123-quick-log-queue`). If Linear does not expose a generated branch, use `pup-<issue-number>-<short-slug>`. Include the matching `PUP-___` in the PR title and Work Tracking section, and keep one primary issue per branch.
 - Read relevant PRD/design/architecture/ADR docs before editing.
-- For UX, flow, API, storage, schema, permissions, release, or architecture changes, create or update a `docs/plans/YYYY-MM-DD-<topic>.md` plan/contract.
+- For UX, flow, API, storage, schema, permissions, release, or architecture changes, create or update a `docs/plans/active/YYYY-MM-DD-<topic>.md` plan/contract.
 - If a plan exists, read the full plan before implementation, identify the current phase, and update checkboxes/changelog as work completes.
+- When a plan has no remaining plan-owned work, move it to `docs/plans/completed/`, update its `Status`, and update `docs/plans/README.md`.
 - For behavior changes, write or update tests before, or at minimum alongside, implementation.
 - If anything is unclear, ask one blocking question rather than guessing.
 

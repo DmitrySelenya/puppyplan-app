@@ -7,7 +7,7 @@ description: Use when implementing PuppyPlan work from a docs/plans plan or scop
 
 ## Use When
 
-- Implementing from an existing `docs/plans/YYYY-MM-DD-<topic>.md`.
+- Implementing from an existing `docs/plans/active/YYYY-MM-DD-<topic>.md`.
 - Executing a scoped `PUP-___` issue.
 - Continuing a partially completed plan.
 

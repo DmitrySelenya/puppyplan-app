@@ -382,9 +382,9 @@
     },
     "duplicate-warning": {
       "title": "Кажется, это уже отмечено",
-      "body-template": "{actorName} отметила {eventType} {n} минут назад.",
-      "body-example": "Оля отметила кормление 4 минуты назад.",
-      "more-matches": "Ещё {n} событие за последние 12 минут",
+      "body-template": "{actorName} отметила {eventType} {timeAgo}.",
+      "body-example": "Оля отметила кормление 42 секунды назад.",
+      "more-matches": "Ещё {n} событие за последние 60 секунд",
       "primary": "Это другое событие — добавить",
       "primary-alt": "Добавить всё равно",
       "secondary": "Отменить",

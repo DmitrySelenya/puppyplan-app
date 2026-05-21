@@ -1,0 +1,500 @@
+# Design Handoff And Agent Gallery - Implementation Plan
+
+> For implementation agents: use repo `AGENTS.md`, relevant Codex/superpowers skills, and this plan task-by-task.
+> Living document: update this file as design artifacts, screenshots, tokens, native primitives, or verification evidence change.
+
+**Goal:** Make the pre-final Cloud Design package usable as a repo-native, agent-friendly design source without a full Figma migration.
+
+**Status:** Active.
+
+**Plan type:** Linear task plan for `PUP-7`.
+
+**Current phase:** Phase 1 - Design Artifact Intake.
+
+**Current Linear scope:** `PUP-7` should execute Phases 1-3 now. Phases 4-7 are blocked until the Expo scaffold and package scripts exist through `PUP-2` from the architecture foundation roadmap.
+
+**Architecture:** This is a design handoff and implementation-enablement plan. It does not change product scope, app runtime, Supabase schema, RLS, CI, or release behavior. Future code work must still implement Expo native UI through `src/design` primitives, typed i18n, contracts, and tests.
+
+**Linear:** `PUP-7` - https://linear.app/dmitryselenya/issue/PUP-7/finalize-repo-native-design-handoff-and-agent-design-gallery
+
+**Branch:** N/A until a Linear implementation issue creates a branch.
+
+**Foundation dependency:** `docs/plans/active/2026-05-21-phase-0-architecture-cleanup.md` is a roadmap, not part of `PUP-7`. Use it only for prerequisites called out inside individual phases below.
+
+**Primary source docs:**
+- PRD: `puppyplan-prd-v2.md` - onboarding, Quick Log, Today, Health, sharing, reminders, privacy, release readiness.
+- Design: `DESIGN.md` - foundations, tokens, navigation, screen/state specifications, accessibility.
+- Architecture: `docs/architecture/00-overview.md`, `docs/architecture/01-principles-and-scope.md`, `docs/architecture/06-design-system-and-ui-contracts.md`, `docs/architecture/10-quick-log-queue.md`, `docs/architecture/12-i18n-and-content.md`, `docs/architecture/17-testing-ci-release.md`, `docs/architecture/18-ai-agent-guide.md`.
+- ADR: `docs/architecture/adr/0007-prd-schema-baseline.md`, `docs/architecture/adr/0011-design-system-runtime.md`.
+
+---
+
+## Context
+
+The current design package lives outside the repo at `/Users/dmitryselenya/Downloads/puppy_app`. It is a Cloud Design export, not a stable project source of truth. The useful current visual canvas is `PuppyPlan.html`, which was inspected as 17 sections, 65 artboards, and 62 phone screens. `PuppyPlan-print.html` and `PuppyPlan.standalone.src.html` appear older and must be treated as stale unless a later manifest proves otherwise.
+
+Repo docs and tokens were cleaned before this plan:
+
+- `AUDIT_FIXES.md` is no longer a repo source.
+- Quick Log accidental double tap window is 3 seconds.
+- Duplicate-care warning window is 60 seconds.
+- `DESIGN.md`, `design-tokens.json`, and `STRINGS.en.json` from the downloaded `uploads/` folder matched repo copies before the local cleanup; the new handoff value is the HTML/JSX screen package, not duplicate docs.
+
+This plan keeps durable decisions in git, uses Linear for tracking, and avoids Figma as a required intermediate because the MCP limit makes full migration unreliable and lossy.
+
+- **Context package:** this plan, the Linear issue, `AGENTS.md`, `DESIGN.md`, `puppyplan-prd-v2.md`, the architecture files listed above, and the eventual `docs/design/v1/` package.
+- **Context placement:** Linear holds the concise checklist and status, this plan holds implementation context, and PRs hold final verification evidence.
+- **Ownership area:** design handoff, app design system, i18n setup, and visual regression enablement.
+
+---
+
+## Goals
+
+1. **Preserve the design package in git in a reviewable shape.**
+   - Move the Cloud Design export into a versioned `docs/design/v1/` structure.
+   - Keep raw files separate from curated metadata and generated screenshots.
+   - Label stale or reference-only files explicitly.
+   - Exclude downloaded audit markdown files from the active raw package; reconcile their actionable findings into a curated checklist instead.
+
+2. **Give agents pixel-visible design context without Figma.**
+   - Generate a deterministic artboard manifest from `PuppyPlan.html`.
+   - Generate PNG screenshots for each current artboard.
+   - Store screenshot metadata so agents can compare native screens against known dimensions and states.
+   - Commit the first generated PNG atlas if the PII review passes and the total size stays small enough for normal git review.
+
+3. **Convert design source into implementation contracts.**
+   - Generate TypeScript tokens from `design-tokens.json`.
+   - Keep tokens, `tokens.css`, and future `src/design/tokens.ts` synchronized by a drift check.
+   - Keep every visible string behind typed i18n keys.
+
+4. **Build native implementation scaffolding around the design.**
+   - Port visual primitives into React Native equivalents under `src/design`, not by copying web JSX into feature screens.
+   - Add an in-app design gallery route for native components and screen states.
+   - Later compare simulator screenshots against the generated design atlas.
+
+---
+
+## Non-Goals
+
+- Do not migrate the full design into Figma as a required source of truth.
+- Do not treat `AUDIT_FIXES.md` as active input.
+- Do not copy downloaded `uploads/AUDIT_FIXES*.md` into the active raw design package.
+- Do not copy web JSX directly into production React Native feature screens.
+- Do not create a Storybook requirement before the Expo scaffold and design primitives exist.
+- Do not add new dependencies without explicit approval.
+- Do not commit, push, create PRs, publish builds, or touch production services without explicit approval for that exact action.
+
+---
+
+## Product Decisions Locked In
+
+1. **Design source strategy**
+   - **Chosen:** repo-native handoff package plus generated screenshots and native gallery.
+   - **Reason:** agents can read git files, diff changes, and inspect pixels without exhausting Figma MCP calls.
+
+2. **Figma role**
+   - **Chosen:** optional reference tool only, not the canonical handoff path.
+   - **Reason:** a full import would be slow, approximate, and likely to lose fidelity or context.
+
+3. **Current visual canvas**
+   - **Chosen:** `PuppyPlan.html` is the current visual source until a manifest regeneration says otherwise.
+   - **Reason:** it contains the broadest and newest screen set found in the export.
+
+4. **Stale artifacts**
+   - **Chosen:** `PuppyPlan-print.html`, `PuppyPlan.standalone.src.html`, and old upload duplicates are stored only as raw/reference files if needed.
+   - **Reason:** agents need a clear current-vs-stale signal to avoid implementing old screens.
+
+5. **Downloaded audit markdown**
+   - **Chosen:** do not copy `uploads/AUDIT_FIXES*.md` into the active handoff package.
+   - **Reason:** the repo has already removed that file as a source; any useful findings must be reconciled into a curated status list instead of reviving a stale input.
+
+6. **Quick Log timing**
+   - **Chosen:** 3 seconds for accidental double tap, 60 seconds for duplicate-care warning.
+   - **Reason:** this is now the repo-wide contract and must be implemented as tested constants.
+
+7. **Native implementation path**
+   - **Chosen:** web JSX is design reference; React Native production code lives behind `src/design` primitives and feature-owned screens.
+   - **Reason:** PuppyPlan is an Expo native app, and the architecture requires design, i18n, accessibility, and state boundaries.
+
+8. **Screenshot atlas storage**
+   - **Chosen:** commit the first light-mode PNG atlas if it is roughly a few MB and contains only synthetic data.
+   - **Reason:** a committed atlas gives agents pixel references without external services; if the atlas is unexpectedly large, commit the manifest and generator first.
+
+---
+
+## Invariants And Executable Spec
+
+Each invariant must map to an automated check once the app scaffold exists.
+
+- **Acceptance mapping:** Linear issue -> this plan -> generated artifacts/tests/manual checks -> PR verification evidence.
+
+- **Invariant 1:** the active design package exposes exactly one current visual canvas for implementation.
+  - **Check:** `docs/design/v1/manifest.json` names `PuppyPlan.html` as current and marks stale/reference artifacts.
+
+- **Invariant 2:** each current artboard has manifest metadata and a generated screenshot.
+  - **Check:** screenshot export command verifies manifest count, output count, image dimensions, and nonblank pixels.
+
+- **Invariant 3:** Quick Log double tap and duplicate-care windows stay 3 seconds and 60 seconds.
+  - **Test:** future `src/contracts/business-rules.ts` tests.
+
+- **Invariant 4:** design tokens have one generated TypeScript runtime entry point.
+  - **Check:** token generation/drift check compares `design-tokens.json`, `tokens.css`, and future `src/design/tokens.ts`.
+
+- **Invariant 5:** user-facing native UI strings never bypass i18n.
+  - **Test:** future i18n lint/string-budget checks plus EN/RU parity checks.
+
+- **Invariant 6:** design screenshots and fixtures contain only synthetic, non-private data.
+  - **Check:** manual review plus future PII scan over committed artifacts.
+
+- **Invariant 7:** native screen states are inspectable without Cloud Design.
+  - **Check:** future in-app design gallery route renders every critical component and screen state.
+
+Important PuppyPlan invariants that still apply:
+
+- `Today | Health | More` are the only primary tabs.
+- Quick Log is a persistent FAB/action, not a tab.
+- Quick Log accidental double tap window is 3 seconds.
+- Duplicate-care warning window is 60 seconds.
+- Every user-facing string comes through i18n.
+- Private puppy/user data must not appear in analytics, logs, screenshots, docs, or PR text.
+
+---
+
+## File Map
+
+### Design Handoff
+- `docs/design/v1/README.md` - source status, how agents should use the package, current/stale artifact notes.
+- `docs/design/v1/raw/` - raw Cloud Design export copied from `/Users/dmitryselenya/Downloads/puppy_app`.
+- `docs/design/v1/manifest.json` - current artboards, sections, routes, states, dimensions, source files, implementation priority.
+- `docs/design/v1/design-audit-reconciliation.md` - curated applied/superseded/open status for useful findings from the downloaded historical audit note.
+- `docs/design/v1/screenshots/<section>/<artboard-id>.png` - generated screenshot atlas.
+- `docs/design/v1/screenshots/index.md` - human-readable screenshot index.
+
+### Scripts
+- `scripts/design/extract-artboards.*` - future manifest extraction from `PuppyPlan.html`.
+- `scripts/design/export-artboard-screenshots.*` - future Playwright screenshot export.
+- `scripts/design/check-design-package.*` - future manifest/screenshot/token drift verification.
+
+### Design Runtime
+- `src/design/tokens.ts` - generated token module from `design-tokens.json`.
+- `src/design/primitives/` - React Native design primitives and wrappers.
+- `src/design/motion/`, `src/design/haptics/`, `src/design/a11y/` - shared design behavior boundaries.
+
+### Contracts And i18n
+- `src/contracts/business-rules.ts` - Quick Log timing constants and tested business rules.
+- `src/lib/i18n/` - typed keys, EN/RU parity, string budget checks.
+- `STRINGS.en.json`, `STRINGS.ru.json` - current root source strings until they are ingested into the future `src/lib/i18n/` pipeline.
+
+### Native Design Gallery
+- `app/_dev/design.tsx` or `app/_dev/components.tsx` - development-only gallery route.
+- `src/features/_dev/design-gallery/` - native gallery screens once feature folders exist.
+
+### Docs
+- `DESIGN.md` - design contract updates only when decisions change.
+- `docs/architecture/06-design-system-and-ui-contracts.md` - native design system boundaries.
+- `docs/architecture/12-i18n-and-content.md` - i18n pipeline.
+- `docs/architecture/17-testing-ci-release.md` - visual and token drift gates.
+- `docs/architecture/adr/0011-design-system-runtime.md` - design runtime decision updates if needed.
+
+---
+
+## Contracts, Schema, And Permissions
+
+### Zod Contracts
+
+- [ ] No Zod contract changes are required for the handoff package itself.
+- [ ] Future Quick Log work must expose timing constants from `src/contracts/business-rules.ts`.
+- [ ] Future analytics/observability changes must use contracts and PII scrub tests.
+
+### Database / RLS
+
+- [ ] Migration required: no.
+- [ ] Destructive migration risk reviewed: N/A.
+- [ ] RLS policy impact reviewed: no runtime permission changes in this plan.
+- [ ] pgTAP tests required: no for this plan.
+
+### Edge Functions
+
+- [ ] Edge Function required: no.
+- [ ] No privileged operation changes in this plan.
+
+---
+
+## UX Spec
+
+### Navigation And Entry Points
+
+- Production tabs remain `Today | Health | More`.
+- Quick Log remains a persistent FAB/action.
+- The design gallery, when added, must be development-only and must not ship as a production user entry point.
+
+### States To Cover In Manifest And Gallery
+
+- Welcome/onboarding and profile setup.
+- Today operational states.
+- Quick Log sheet, save, duplicate warning, pending/offline, undo, and error states.
+- Health and timeline states.
+- Sharing/trainer/sitter preview and permission states.
+- More/settings/reminder/guidance/library states.
+- Empty, loading, error, offline, revoked/permission-denied, and Dynamic Type stress states.
+
+### Accessibility
+
+- [ ] Touch targets meet iOS 44pt / Android 48dp minimums.
+- [ ] Quick Log / FAB target is 56pt+.
+- [ ] Interactive elements have labels, roles, and state/hint when needed.
+- [ ] Status does not rely on color alone.
+- [ ] Swipe actions have non-swipe alternatives.
+- [ ] Dynamic Type XXL/XXXL reviewed for affected core screens.
+- [ ] Manifest marks which artboards represent accessibility or large-text states.
+
+### i18n And String Budgets
+
+- [ ] No raw user-facing strings in UI.
+- [ ] EN/RU key parity updated.
+- [ ] ICU plurals used where needed, including Russian forms.
+- [ ] String-budget-sensitive labels checked: tabs, CTAs, pills, tracker tiles, notification actions.
+- [ ] Design screenshots that include text are treated as visual references, not i18n source.
+
+---
+
+## Privacy, Analytics, And Observability
+
+- [ ] Raw design screenshots and generated PNGs use synthetic data only.
+- [ ] No puppy names, notes, emails, provider names, photos, invite/share tokens, push tokens, or production identifiers are committed.
+- [ ] Generated screenshots are reviewed before commit if the raw export changes.
+- [ ] No analytics or observability runtime changes are part of this plan.
+- [ ] Future visual regression artifacts must scrub or use synthetic data only.
+
+---
+
+## Implementation Plan
+
+### Phase 0 - Source Cleanup Baseline
+
+**Status:** complete for current docs cleanup; keep this phase as the baseline agents must verify.
+
+**Files:**
+- Modified: `AGENTS.md`
+- Modified: `DESIGN.md` if future design wording changes
+- Modified: `design-tokens.json`
+- Modified: `STRINGS.en.json`, `STRINGS.ru.json`
+- Modified: `puppyplan-prd-v2.md`
+- Modified: `docs/architecture/*`
+- Modified: `docs/plans/TEMPLATE-feature-plan.md`
+
+**Checklist:**
+- [x] Remove active repo references to `AUDIT_FIXES.md`.
+- [x] Replace stale duplicate-care 12-minute wording with 60 seconds.
+- [x] Keep accidental double tap at 3 seconds.
+- [x] Validate JSON files touched by the cleanup.
+
+**Acceptance criteria:**
+- `rg` finds no active repo reference to `AUDIT_FIXES`, `12 minutes`, `12-min`, or `duplicate-warning-window-min` outside this historical planning note.
+- JSON validation passes for design tokens and string files.
+
+### Phase 1 - Design Artifact Intake
+
+**Foundation dependency:** none. This phase can run under `PUP-7` before the Expo scaffold exists.
+
+**Files:**
+- Create: `docs/design/v1/README.md`
+- Create: `docs/design/v1/raw/`
+- Copy from: `/Users/dmitryselenya/Downloads/puppy_app`
+
+**Checklist:**
+- [ ] Copy the Cloud Design export into `docs/design/v1/raw/`, excluding `uploads/AUDIT_FIXES*.md`.
+- [ ] Keep raw folder structure intact enough to preserve relative imports.
+- [ ] Mark `PuppyPlan.html` as current.
+- [ ] Mark `PuppyPlan-print.html`, `PuppyPlan.standalone.src.html`, and duplicate uploads as stale/reference unless proven current.
+- [ ] Confirm no private data appears in raw screenshots/uploads before commit.
+- [ ] Add a README table of contents that lists included raw files, excluded historical audit files, and current/stale status.
+- [ ] Document how agents should open and inspect the raw package.
+
+**Acceptance criteria:**
+- `docs/design/v1/README.md` contains a current/stale table of contents.
+- `find docs/design/v1/raw -maxdepth 2 -type f | sort` matches the expected included file list documented in the README.
+- `find docs/design/v1/raw -name 'AUDIT_FIXES*.md'` returns no files.
+- A new agent can locate the current design canvas, identify stale files, and open the design locally without asking for the Downloads folder.
+
+### Phase 2 - Manifest And Screen Inventory
+
+**Foundation dependency:** none. This phase can run under `PUP-7` before the Expo scaffold exists.
+
+**Files:**
+- Create: `docs/design/v1/manifest.json`
+- Create: `docs/design/v1/design-audit-reconciliation.md`
+- Create: `docs/design/v1/screenshots/index.md`
+- Future script: `scripts/design/extract-artboards.*`
+
+**Checklist:**
+- [ ] Extract artboards from `PuppyPlan.html`.
+- [ ] Record section, artboard id, title, dimensions, route/screen intent, state type, priority, and source file.
+- [ ] Reconcile the observed count: 17 sections, 65 artboards, 62 phone screens.
+- [ ] Reconcile useful findings from the downloaded historical audit note as `applied`, `superseded`, or `open`; create follow-up issues for any real open items.
+- [ ] Flag missing or intentionally deferred states.
+- [ ] Add implementation priority tags: `mvp`, `post-mvp`, `reference`, `stale`.
+
+**Acceptance criteria:**
+- The manifest is the canonical inventory for agent implementation and screenshot export.
+- Any mismatch from 65 artboards is explained in the manifest changelog.
+
+### Phase 3 - Screenshot Atlas Automation
+
+**Foundation dependency:** no Expo scaffold is required for local screenshot export. If this becomes a required CI gate, wait for the foundation roadmap's `PUP-4` CI/local verification work.
+
+**Files:**
+- Create: `docs/design/v1/screenshots/<section>/<artboard-id>.png`
+- Future script: `scripts/design/export-artboard-screenshots.*`
+- Future script: `scripts/design/check-design-package.*`
+
+**Checklist:**
+- [ ] Use Playwright or an equivalent local browser runner to render `PuppyPlan.html`.
+- [ ] Account for `PuppyPlan.html` loading React, ReactDOM, and Babel from `unpkg.com`: either require network for the local export command or vendor those assets into `docs/design/v1/raw/_vendor/` before making this a CI gate.
+- [ ] Export one PNG per current artboard.
+- [ ] Verify each PNG is nonblank and has the expected dimensions.
+- [ ] Generate `screenshots/index.md` with thumbnails/paths, dimensions, and section grouping.
+- [ ] Commit the first generated light-mode atlas if size and PII review are acceptable; otherwise commit the manifest and generator first, with the reason recorded here.
+
+**Acceptance criteria:**
+- Agents can inspect pixel references by reading PNGs directly, without Figma or Cloud Design.
+
+### Phase 4 - Token Pipeline
+
+**Foundation dependency:** requires the Expo scaffold and package scripts from the foundation roadmap's Phase 1 / `PUP-2`. The token drift check can become a required gate only after `PUP-4` defines local/CI checks.
+
+**Files:**
+- Read: `design-tokens.json`
+- Read: `tokens.css`
+- Future create: `src/design/tokens.ts`
+- Future script: `scripts/design/generate-tokens.*`
+- Future test/check: token drift check
+
+**Checklist:**
+- [ ] Define the generated `src/design/tokens.ts` shape after the Expo scaffold exists.
+- [ ] Generate colors, spacing, radius, typography, motion, haptics, and business timing references where applicable.
+- [ ] Keep letter spacing at `0` unless a product decision explicitly changes it.
+- [ ] Ensure `text/tertiary` contrast uses the corrected value.
+- [ ] Add a drift check so JSON/CSS/TS cannot diverge silently.
+
+**Acceptance criteria:**
+- Feature UI imports tokens only through `src/design`, not raw JSON/CSS.
+
+### Phase 5 - Native Design Primitives
+
+**Foundation dependency:** requires the Expo scaffold and TypeScript/test setup from the foundation roadmap's Phase 1 / `PUP-2`. Render tests depend on the verification setup owned by `PUP-4`.
+
+**Files:**
+- Future create: `src/design/primitives/`
+- Future create: `src/design/a11y/`
+- Future create: `src/design/haptics/`
+- Future create: `src/design/motion/`
+
+**Checklist:**
+- [ ] Define React Native equivalents for core surfaces, text, list rows, segmented controls, tracker tiles, tabs, FAB, sheets, and buttons.
+- [ ] Add accessibility labels, roles, focus/pressed/disabled states, and touch-target guarantees.
+- [ ] Keep feature screens from importing raw `Pressable`, raw colors, raw spacing, direct haptics, or business-error alerts.
+- [ ] Add focused render tests once test infrastructure exists.
+
+**Acceptance criteria:**
+- Feature implementation can compose native screens from shared primitives without duplicating design rules.
+
+### Phase 6 - i18n And String Budget Pipeline
+
+**Foundation dependency:** requires the Expo scaffold/package scripts from `PUP-2`. Required i18n/string-budget checks should be wired into the local/CI gate through `PUP-4`.
+
+**Files:**
+- Read/update: `STRINGS.en.json`, `STRINGS.ru.json`
+- Future create: `src/lib/i18n/`
+- Future script/check: i18n key parity and string budgets
+
+**Checklist:**
+- [ ] Preserve existing typed string keys when scaffolding i18n.
+- [ ] Add EN/RU parity check.
+- [ ] Add string-budget checks for tabs, CTAs, pills, tracker tiles, notification actions, and compact rows.
+- [ ] Confirm duplicate-warning copy refers to the last 60 seconds.
+
+**Acceptance criteria:**
+- Native UI has no raw user-facing strings and does not overflow expected compact surfaces.
+
+### Phase 7 - In-App Design Gallery
+
+**Foundation dependency:** requires the Expo scaffold, Expo Router route structure, and runnable dev workflow from `PUP-2`.
+
+**Files:**
+- Future create: `app/_dev/design.tsx` or `app/_dev/components.tsx`
+- Future create: `src/features/_dev/design-gallery/`
+
+**Checklist:**
+- [ ] Add a development-only route that renders design primitives and critical screen states.
+- [ ] Include Quick Log duplicate, offline/pending, undo, error, Today, Health, sharing, and settings states.
+- [ ] Use synthetic data only.
+- [ ] Capture simulator screenshots after Expo scaffold and dev build exist.
+- [ ] Compare native screenshots against `docs/design/v1/screenshots/` as a manual gate first, then automate when stable.
+
+**Acceptance criteria:**
+- Agents can inspect native implementation fidelity in the app without relying on external design tools.
+
+### Phase 8 - Agent Tracking And Execution Split
+
+**Foundation dependency:** use this phase to split Phases 4-7 into separate Linear issues if `PUP-2` or `PUP-4` is not ready when Phases 1-3 finish.
+
+**Files:**
+- Update: this plan
+- Update: Linear issue
+- Future update: PR descriptions and verification evidence
+
+**Checklist:**
+- [ ] Keep one coordination issue for this plan.
+- [ ] Split implementation issues only when a phase becomes large enough for parallel work.
+- [ ] Mark `agent-ready` only for phases with enough context and acceptance criteria.
+- [ ] Add changelog entries when phases complete or design package counts change.
+
+**Acceptance criteria:**
+- A new agent can read the Linear issue plus this plan and know exactly what was done, what remains, and which files prove it.
+
+---
+
+## Verification
+
+Current verification:
+
+- `python3 -m json.tool design-tokens.json`
+- `python3 -m json.tool STRINGS.en.json`
+- `python3 -m json.tool STRINGS.ru.json`
+- `rg -n "AUDIT_FIXES|12 minutes|12-min|duplicate-warning-window-min" . -g '!docs/plans/active/2026-05-21-design-handoff-agent-gallery.md'`
+
+Future verification after artifact intake:
+
+- `find docs/design/v1 -maxdepth 3 -type f | sort`
+- `python3 -m json.tool docs/design/v1/manifest.json`
+- `scripts/design/check-design-package.*`
+- screenshot export count equals current manifest artboard count.
+- generated screenshots are nonblank and dimensionally match manifest metadata.
+
+Future verification after Expo scaffold:
+
+- Requires the Expo scaffold and package scripts from the foundation roadmap's `PUP-2` work first.
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run check`
+- token drift check
+- i18n parity/string-budget check
+- simulator screenshot pass for the in-app design gallery
+
+---
+
+## Open Questions
+
+- Should Storybook be added later? Recommendation: defer until Expo scaffold, primitives, and test runner exist; the development-only native gallery is the first useful step.
+
+---
+
+## Changelog
+
+- 2026-05-21: Created plan for repo-native Cloud Design handoff, screenshot atlas, token pipeline, native primitives, i18n checks, and in-app design gallery.
+- 2026-05-21: Recorded cleanup baseline: removed active `AUDIT_FIXES.md` dependency and locked Quick Log timing to 3 seconds / 60 seconds.
+- 2026-05-21: Created Linear coordination issue `PUP-7` for plan tracking.
+- 2026-05-21: Fixed architecture doc links, excluded downloaded audit markdown from raw intake, added audit reconciliation, documented `unpkg.com` screenshot dependency, and made the first PNG atlas a chosen path when size/PII review pass.
+- 2026-05-21: Clarified `PUP-7` execution scope: Phases 1-3 can run now; Phases 4-7 depend on foundation roadmap work, especially `PUP-2` Expo scaffold and `PUP-4` verification gates.

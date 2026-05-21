@@ -55,6 +55,6 @@ Deferred:
 Two separate product rules are final:
 
 - accidental double tap: 3 seconds;
-- household duplicate-care warning: 10 minutes.
+- duplicate-care warning: 60 seconds.
 
 Both constants live in `contracts/business-rules.ts` and must be tested.

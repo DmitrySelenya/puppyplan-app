@@ -39,7 +39,7 @@ Claude Code may use parallel exploration subagents if available. Codex must not 
 
 ## Plan Shape
 
-Copy `docs/plans/TEMPLATE-feature-plan.md` to `docs/plans/YYYY-MM-DD-<topic>.md`.
+Copy `docs/plans/TEMPLATE-feature-plan.md` to `docs/plans/active/YYYY-MM-DD-<topic>.md`.
 
 Fill in:
 

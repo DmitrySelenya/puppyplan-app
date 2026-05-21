@@ -6,6 +6,10 @@
 
 **Goal:** [What user/system outcome this feature must deliver.]
 
+**Status:** Active.
+
+**Current phase:** Phase 0 - Read And Lock Scope.
+
 **Architecture:** [How the feature fits PuppyPlan: Supabase source of truth, Edge Function/RLS boundary, client query/cache flow, Quick Log queue if relevant.]
 
 **Linear:** PUP-___ / no-Linear exception: [reason]
@@ -81,7 +85,7 @@ Each invariant must map to at least one automated test. Use property-based tests
 Important PuppyPlan invariants to reuse when relevant:
 
 - Quick Log accidental double tap window is 3 seconds.
-- Household duplicate-care warning window is 10 minutes.
+- Duplicate-care warning window is 60 seconds.
 - Realtime can improve freshness but cannot be required for correctness.
 - UI guards are not permission enforcement; RLS and Edge Functions are.
 - Private puppy/user data must not appear in analytics, logs, screenshots, docs, or PR text.

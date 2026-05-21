@@ -32,7 +32,7 @@ The file will be the main architecture source for future coding agents and engin
 - Security/privacy: anonymous auth limits, token hashing, private detail tables, analytics whitelist.
 - Testing/release gates: unit, integration, RLS negative tests, E2E, accessibility, beta readiness.
 - Mermaid diagrams: app module map, data flow, Quick Log sequence, sharing permission flow, notification flow.
-- Appendix: unresolved source conflicts from `AUDIT_FIXES.md` that must be fixed before implementation.
+- Appendix: unresolved source conflicts from historical design audit notes that must be fixed before implementation.
 
 ### Important Interface/Schema Changes
 - Split free-text/private fields from shareable core rows:
@@ -51,5 +51,5 @@ The file will be the main architecture source for future coding agents and engin
 
 ### Assumptions
 - Final artifact is a single Markdown file with Mermaid diagrams, not a separate Figma/diagram file.
-- Existing `PRD`, `DESIGN`, `STRINGS`, `design-tokens`, and `AUDIT_FIXES` remain source inputs, not edited in this pass.
+- Existing `PRD`, `DESIGN`, `STRINGS`, and `design-tokens` remain source inputs, not edited in this pass.
 - Official stack assumptions were checked against primary docs: Expo SDK 55, Expo SDK 55 changelog, React Native 0.83, Supabase RLS, Supabase React Native Auth, Expo Notifications.

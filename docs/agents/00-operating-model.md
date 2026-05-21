@@ -14,7 +14,7 @@ If the same fact appears in multiple places, repo docs win for product and archi
 
 ## Agent Roles
 
-- **Planner:** turns product intent into a scoped Linear issue and `docs/plans/` plan when UX, flow, API, storage, schema, permissions, release, or architecture changes are involved.
+- **Planner:** turns product intent into a scoped Linear issue and `docs/plans/active/` plan when UX, flow, API, storage, schema, permissions, release, or architecture changes are involved.
 - **Implementer:** works one primary issue at a time, reads the context package, changes the smallest viable ownership area, updates tests and docs alongside code, and records verification.
 - **Reviewer:** checks correctness, privacy, RLS, contracts, query invalidation, accessibility, i18n, platform risk, and whether required docs/ADRs changed.
 - **Release/checks agent:** runs gates and prepares release evidence, but never performs release, deploy, production, store, Supabase production, git push, merge, tag, or other irreversible action without exact user approval.
@@ -28,9 +28,9 @@ For solo development, the final reviewer is the user. Agent self-review is usefu
 1. Start from a `PUP-___` Linear issue unless the user explicitly declares a no-Linear exception.
 2. Read `AGENTS.md`, the Linear issue, linked plan, relevant PRD/DESIGN/architecture/ADR docs, and feature-local `AGENTS.md` if one exists.
 3. Build a context package: source docs, current files, constraints, acceptance criteria, risks, expected verification, and open questions.
-4. Create or update a `docs/plans/YYYY-MM-DD-<topic>.md` plan for non-trivial UX, flow, API, storage, schema, permissions, release, or architecture changes.
+4. Create or update a `docs/plans/active/YYYY-MM-DD-<topic>.md` plan for non-trivial UX, flow, API, storage, schema, permissions, release, or architecture changes.
 5. Implement in a small diff. Keep one primary issue per branch and avoid cross-workstream edits unless a plan or ADR explains the boundary crossing.
-6. Update the plan checklist/changelog, docs, ADRs, diagrams, i18n keys, contracts, migrations, generated types, and tests as needed.
+6. Update the plan checklist/changelog, docs, ADRs, diagrams, i18n keys, contracts, migrations, generated types, and tests as needed. Move completed plans to `docs/plans/completed/` and update `docs/plans/README.md`.
 7. Run targeted verification. Once scripts exist, prefer `npm run check` as the full local gate.
 8. Put verification evidence in the PR and Linear issue. Move the issue to `In Review` only when the work is ready for review.
 
@@ -66,7 +66,8 @@ Approval must name the exact action. A broad instruction such as "continue" or "
 
 Create or update a repo document when a decision should survive chat history:
 
-- `docs/plans/`: implementation contracts, task plans, and verification logs.
+- `docs/plans/active/`: implementation contracts, task plans, and verification logs with remaining plan-owned work.
+- `docs/plans/completed/`: closed plans retained for history and handoff evidence.
 - `docs/architecture/`: durable technical architecture and cross-feature rules.
 - `docs/architecture/adr/`: decisions that change architecture, schema baseline, external services, release policy, or security posture.
 - `docs/agents/`: agent operating model, Linear workflow, context engineering, and handoff rules.

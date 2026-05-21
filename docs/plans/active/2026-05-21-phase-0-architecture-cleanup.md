@@ -1,11 +1,21 @@
-# Phase 0 Architecture Cleanup - Implementation Plan
+# Architecture Foundation Roadmap - Execution Plan
 
-> For implementation agents: use repo `AGENTS.md`, relevant Codex/superpowers skills, and this plan task-by-task.
+> For implementation agents: do not execute this document as one task. Use repo `AGENTS.md`, relevant Codex/superpowers skills, and the scoped Linear issue that owns the phase you are implementing.
 > Living document: update this file as implementation changes contracts, schema, RLS, CI, release checks, or verification evidence.
 
 **Goal:** Turn the architecture review findings into enforceable contracts before the Expo/Supabase scaffold grows enough to drift.
 
+**Status:** Active.
+
+**Plan type:** Foundation roadmap. This is a dependency map, not a single agent-ready Linear task.
+
+**Current execution:** Split into scoped Linear issues. `PUP-2` owns the Expo scaffold prerequisite. `PUP-3` owns Supabase contracts/RLS. `PUP-4` owns CI/local verification gates. Quick Log and release/privacy work should be split into follow-up issues when ready.
+
+**Relationship to `PUP-7`:** `PUP-7` can run design handoff Phases 1-3 before this roadmap is complete. `PUP-7` Phases 4-7 require the Expo scaffold and package scripts from `PUP-2` before implementation.
+
 **Architecture:** This plan does not change product scope. It sharpens the existing Expo + Supabase + RLS + Edge Function architecture around privacy, sharing projections, Quick Log queue correctness, and release gates.
+
+**Linear:** N/A as a direct task. Execute through the scoped issues listed in Current execution.
 
 **Primary source docs:**
 - PRD: `puppyplan-prd-v2.md` - sharing, Quick Log, privacy, testing, release readiness.
@@ -20,6 +30,8 @@
 The repo is currently documentation-first. There is no Expo app scaffold, no Supabase migrations, no generated native projects, and no CI scripts yet. That makes this the right time to convert high-risk architecture notes into executable future requirements.
 
 The external review surfaced several useful risks. Some were already documented, but not specific enough to guide migration SQL, tests, or CI. This plan captures the cleanup needed before implementation agents start writing schema, Edge Functions, queue code, and release automation.
+
+This document is not the current `PUP-7` task. Treat it as the roadmap that explains which foundation work must exist before later design runtime phases can proceed.
 
 ---
 
@@ -135,6 +147,8 @@ The external review surfaced several useful risks. Some were already documented,
 
 ### Phase 1 - Repo And Scaffold Setup
 
+**Execution owner:** `PUP-2` for Expo scaffold. `PUP-4` for branch protection after CI checks exist.
+
 **Checklist:**
 - [x] With explicit approval, initialize local git if still absent.
 - [x] With explicit approval, create a private GitHub repository.
@@ -147,6 +161,8 @@ The external review surfaced several useful risks. Some were already documented,
 
 ### Phase 2 - Supabase Contracts And RLS
 
+**Execution owner:** `PUP-3` or a scoped Supabase/RLS follow-up issue.
+
 **Checklist:**
 - [ ] Add schema migration for baseline tables.
 - [ ] Add share projection views/RPCs.
@@ -157,6 +173,8 @@ The external review surfaced several useful risks. Some were already documented,
 - Tests prove private fields and base rows cannot be read through trainer/share access.
 
 ### Phase 3 - Client Queue And Query Enforcement
+
+**Execution owner:** `PUP-5` or a scoped Quick Log implementation issue after the app scaffold exists.
 
 **Checklist:**
 - [ ] Add query key factory.
@@ -169,6 +187,8 @@ The external review surfaced several useful risks. Some were already documented,
 - Quick Log remains visible, deduped, retryable, and cancellable without stale Today/Timeline state.
 
 ### Phase 4 - Release And Privacy Gates
+
+**Execution owner:** `PUP-4` for local/CI gates, plus later release-readiness issues when platform workflows exist.
 
 **Checklist:**
 - [ ] Add PII scrubber tests.
@@ -203,3 +223,4 @@ Once scripts exist, prefer:
 
 - 2026-05-21: Created Phase 0 cleanup plan from architecture review findings.
 - 2026-05-21: Created private GitHub repository `DmitrySelenya/puppyplan-app`, pushed initial architecture baseline, and added repository labels/milestones/settings. Branch protection is deferred until CI checks exist.
+- 2026-05-21: Clarified this document as a foundation roadmap executed through scoped Linear issues, not a direct task; recorded the dependency relationship to `PUP-7`.

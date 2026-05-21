@@ -18,7 +18,7 @@ Before non-trivial implementation, assemble and use:
 
 - `AGENTS.md` and feature-local `AGENTS.md` if present;
 - `PUP-___` Linear issue or explicit no-Linear exception;
-- linked `docs/plans/` plan, or a note that no plan is required;
+- linked `docs/plans/active/` plan, or a note that no plan is required;
 - relevant PRD section;
 - relevant `DESIGN.md` section;
 - relevant `docs/architecture/*.md` files and ADRs;
@@ -27,7 +27,7 @@ Before non-trivial implementation, assemble and use:
 - constraints, acceptance criteria, and verification commands;
 - open questions or a statement that none remain.
 
-If a task touches UX, flow, API, storage, schema, permissions, release, or architecture, the context package must include or create a plan under `docs/plans/`.
+If a task touches UX, flow, API, storage, schema, permissions, release, or architecture, the context package must include or create a plan under `docs/plans/active/`.
 
 ## Context Ordering
 

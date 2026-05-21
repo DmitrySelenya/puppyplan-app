@@ -188,7 +188,7 @@
     "light":   { "ios": "impactLight",          "android": "KEYBOARD_TAP", "trigger": "Tap on Tracker Tile, open sheet" },
     "medium":  { "ios": "impactMedium",         "android": "LONG_PRESS",   "trigger": "Drag handle, segment switch" },
     "success": { "ios": "notificationSuccess",  "android": "CONFIRM",      "trigger": "Quick Log saved, vaccine confirmed" },
-    "warning": { "ios": "notificationWarning",  "android": "REJECT",       "trigger": "Duplicate detected (12-min window)" },
+    "warning": { "ios": "notificationWarning",  "android": "REJECT",       "trigger": "Duplicate detected (60-second window)" },
     "error":   { "ios": "notificationError",    "android": "REJECT",       "trigger": "Failed save, permission denied" }
   },
 
@@ -273,7 +273,7 @@
     "one-cta-per-hero":         "Exactly one primary CTA + at most one tertiary text-link in hero. Never two equal-weight filled buttons.",
     "quick-log-trackers-max":   5,
     "today-daily-cards-max":    5,
-    "duplicate-warning-window-min": 12,
+    "duplicate-warning-window-seconds": 60,
     "celebration-color-only":   "accent/* — celebration ONLY (first log, milestone, vaccination confirmed). Never default CTA.",
     "danger-color-only":        "status/danger — user-marked urgent ONLY. Never system-flagged.",
     "no-streaks-days":          14,

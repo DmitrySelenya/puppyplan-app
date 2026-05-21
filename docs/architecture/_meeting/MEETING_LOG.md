@@ -7,7 +7,7 @@
 - `design-tokens.json`
 - `STRINGS.en.json`
 - `STRINGS.ru.json`
-- `AUDIT_FIXES.md`
+- historical design audit notes (superseded; file removed)
 - `_meeting/positions/*.md`
 - `_meeting/critiques/*.md`
 - `_meeting/REVIEW_REPORT.md`
@@ -46,4 +46,3 @@ The council accepted the core architecture from the prior discussion but rejecte
 - Add design-system primitives.
 - Add CI gates from `17-testing-ci-release.md`.
 - Run `greenlight preflight .` until no critical iOS findings remain.
-
