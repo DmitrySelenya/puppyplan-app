@@ -9,9 +9,9 @@
 
 **Plan type:** Linear task plan for `PUP-7`.
 
-**Current phase:** Phases 1-3 complete with deep-review and second-agent follow-up fixes applied locally; Spanish root strings added as pre-scaffold locale data; Phases 4-7 blocked pending `PUP-2` Expo scaffold and package scripts.
+**Current phase:** Phases 1-3 complete with deep-review and second-agent follow-up fixes applied locally; Spanish root strings added as pre-scaffold locale data; `PUP-2` scaffold is complete; Phases 4-7 should wait for `PUP-4` verification gates or be split into scoped follow-up issues.
 
-**Current Linear scope:** `PUP-7` should execute Phases 1-3 now. Phases 4-7 are blocked until the Expo scaffold and package scripts exist through `PUP-2` from the architecture foundation roadmap.
+**Current Linear scope:** `PUP-7` executed Phases 1-3. Phases 4-7 should resume only after `PUP-4` defines local/CI verification gates, or be split into scoped follow-up issues.
 
 **Architecture:** This is a design handoff and implementation-enablement plan. It does not change product scope, app runtime, Supabase schema, RLS, CI, or release behavior. Future code work must still implement Expo native UI through `src/design` primitives, typed i18n, contracts, and tests.
 
@@ -530,6 +530,7 @@ Future verification after Expo scaffold:
 - 2026-05-22: Fixed deep-review findings by syncing root PRD/DESIGN duplicate-warning copy to 60 seconds, sanitizing design-package identity placeholders to synthetic examples, and adding text-policy checks to `scripts/design/check-design-package.mjs`.
 - 2026-05-22: Addressed follow-up review by extending text policy to root product/string docs, sanitizing active personas to synthetic placeholders, relabeling uploaded product docs as sanitized historical snapshots, marking screenshot export as local/manual until vendored dependencies and runner paths are ready, and adding PNG smoke tests.
 - 2026-05-22: Closed `PUP-7` tracking tail by syncing Linear to `In Review`, removing stale local Linear-status notes, and recording Phases 4-7 as blocked on `PUP-2`/`PUP-4`.
+- 2026-05-22: Updated dependency note after `PUP-2` scaffold completion; remaining design-runtime work should wait for `PUP-4` gates or be split into scoped follow-ups.
 - 2026-05-22: Addressed additional follow-up review by replacing the remaining foster persona name with `Волонтёр A`, extending text-policy tests for Sarah/Sara/Сара and email placeholders, adding an explicit unsupported-PNG encoding error, adding `STRINGS.es.json`, and documenting startup locale scope as EN/RU/ES.
 - 2026-05-22: Addressed Spanish localization follow-up review by fixing high-risk ES copy regressions, standardizing cited strings on informal `tú`, adding Spanish value-level string tests, and syncing EN/RU-only plan language to EN/RU/ES.
 - 2026-05-22: Addressed deep-review fixes by changing the Quick Log duplicate-warning artboard and PNG atlas from a 4-minute example to a 42-second example, adding text-policy coverage for stale duplicate-window examples, tightening Spanish core-copy tests and informal-register checks, and aligning `STRINGS.en.json` metadata with English-as-master i18n docs.

@@ -6,7 +6,7 @@ The beta focuses on one operational habit: create a puppy profile, log routine e
 
 ## Current State
 
-This repository is documentation-first. The Expo app scaffold, Supabase migrations, CI, and release automation are not created yet.
+This repository has the initial Expo app scaffold for the mobile shell. Supabase migrations, CI, and release automation are not created yet.
 
 Start here:
 
@@ -23,14 +23,32 @@ Start here:
 
 ## Local Setup
 
-There is no runnable app yet. Do not add setup commands here until the Expo scaffold and package scripts exist.
+Install dependencies:
 
-Expected future shape:
+```bash
+npm install
+```
 
-- `npm run lint`
-- `npm run typecheck`
-- `npm run test`
-- `npm run check`
+Start the local Expo dev server:
+
+```bash
+npm start
+```
+
+If the default Metro port is already in use, choose another port:
+
+```bash
+npx expo start --localhost --port 8082
+```
+
+Run the local scaffold gate:
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run check
+```
 
 ## Architecture Baseline
 

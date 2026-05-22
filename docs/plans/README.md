@@ -13,13 +13,14 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
 | Active roadmap | [Architecture Foundation Roadmap](active/2026-05-21-phase-0-architecture-cleanup.md) | Split through `PUP-2`, `PUP-3`, `PUP-4`, and follow-up issues | Do not assign directly; use it as the dependency map for scaffold, Supabase/RLS, Quick Log, and release gates |
-| Active task plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7` | Phases 1-3 complete and synced to Linear `In Review`; Spanish root strings added; continue Phases 4-7 only after `PUP-2`/`PUP-4` |
+| Active task plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7` | Phases 1-3 complete and synced to Linear `In Review`; `PUP-2` scaffold is complete; continue or split Phases 4-7 after `PUP-4` defines verification gates |
+| Completed | [Scaffold Expo App Baseline](completed/2026-05-22-scaffold-expo-app-baseline.md) | `PUP-2` | Local scaffold implemented and verified; Linear moved to `In Review` |
 | Completed | [Agent Company Setup](completed/2026-05-21-agent-company-setup.md) | `PUP-1` | Closed; `PUP-6` separately tracks first-PR GitHub integration verification |
 
 ## Execution Order
 
 1. Run the foundation roadmap only through scoped Linear issues. `PUP-2` owns the Expo scaffold prerequisite needed by later design runtime work.
-2. After the Expo scaffold and package scripts exist, continue or split `PUP-7` Phases 4-7: token generation, native design primitives, EN/RU/ES i18n/string-budget checks, and the in-app design gallery.
+2. After `PUP-4` defines the local/CI verification gates, continue or split `PUP-7` Phases 4-7: token generation, native design primitives, EN/RU/ES i18n/string-budget checks, and the in-app design gallery.
 3. Re-run `PUP-7` screenshot/package checks whenever the raw design export changes.
 4. Supabase/RLS, Quick Log queue, and release/privacy gates should be assigned from the foundation roadmap as separate Linear issues, not mixed into `PUP-7`.
 

@@ -80,7 +80,7 @@ Dynamic Type:
 
 ## Motion
 
-Use Reanimated 3 as the only animation layer.
+Use the Expo SDK 55-compatible Reanimated runtime as the only animation layer. The current scaffold installs Reanimated 4.
 
 Motion presets:
 
