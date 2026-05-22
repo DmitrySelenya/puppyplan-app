@@ -23,7 +23,7 @@ test("textPolicyRoots includes root product and string documents", () => {
 
 test("forbiddenTextPatterns reject legacy persona and timing examples", () => {
   const text =
-    "Olya fed Luna, Sarah fostered a puppy, Сара волонтёр, Оля покормила Бублика, a 12-min duplicate warning stayed behind, Caregiver A logged a feeding 4 minutes ago, and Опекун A отметила кормление 4 минуты назад.";
+    "Olya fed Luna, Sarah fostered a puppy, Сара волонтёр, Оля покормила Бублика, Ирине нужен dashboard, a 12-min duplicate warning stayed behind, Caregiver A logged a feeding 4 minutes ago, and Опекун A отметила кормление 4 минуты назад.";
   const matches = forbiddenTextPatterns.flatMap(({ pattern }) => {
     pattern.lastIndex = 0;
     return [...text.matchAll(pattern)].map((match) => match[0]);
@@ -36,6 +36,7 @@ test("forbiddenTextPatterns reject legacy persona and timing examples", () => {
     "Сара",
     "Оля",
     "Бублика",
+    "Ирине",
     "12-min",
     "Caregiver A logged a feeding 4 minutes ago",
     "Опекун A отметила кормление 4 минуты назад",

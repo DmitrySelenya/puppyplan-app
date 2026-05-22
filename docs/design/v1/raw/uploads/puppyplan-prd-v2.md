@@ -1,7 +1,7 @@
 # PuppyPlan - PRD v2.3 (Supabase-first, beta-scope)
 
-> Обновлено: 2026-05-17  
-> Статус: продуктовый и инженерный PRD для закрытой беты  
+> Обновлено: 2026-05-17
+> Статус: продуктовый и инженерный PRD для закрытой беты
 > Заменяет: `deep-research-report (1).md`, предыдущий `puppyplan-prd-v2.md`, PRD v2.1 и PRD v2.2
 
 ## Краткое Резюме
@@ -113,21 +113,21 @@
 
 ### Основные Персоны
 
-**1. Владелец A, 29, solo first-time owner.**  
+**1. Владелец A, 29, solo first-time owner.**
 Работает удаленно, у нее 11-недельный щенок, она перегружена сном, biting и toilet accidents. Ей нужно, чтобы приложение сразу снижало cognitive load. Она не потерпит долгую настройку.
 
-**2. Владелец B и Опекун A, 32 и 31, shared care.**  
+**2. Владелец B и Опекун A, 32 и 31, shared care.**
 Их боль - координация: duplicate feeding, пропущенные walks и "я думал, ты это сделал". Им нужна shared timeline, last-action visibility и duplicate warnings.
 
-**3. Владелец C, 35, владелец, работающий с trainer/kinologist.**  
+**3. Владелец C, 35, владелец, работающий с trainer/kinologist.**
 Она хочет показать выбранный progress, potty patterns и training notes, не давая trainer доступ ко всем health notes, private household details или billing settings.
 
 ### Вторичные Персоны
 
-**4. Владелец D, 38, parent managing family care.**  
-Дети помогают со щенком, но не являются пользователями приложения. Ирине нужен спокойный dashboard, task visibility и простая account model.
+**4. Владелец D, 38, parent managing family care.**
+Дети помогают со щенком, но не являются пользователями приложения. Владельцу D нужен спокойный dashboard, task visibility и простая account model.
 
-**5. Владелец E, 64, retired companion-dog owner.**  
+**5. Владелец E, 64, retired companion-dog owner.**
 Он ценит reminders, readable typography и health records больше, чем shareable moments. Accessibility для этого сегмента обязательна.
 
 **6. Волонтёр A, 34, foster/rescue volunteer.**
@@ -150,10 +150,10 @@
 
 ### Конкурентный Контекст
 
-**Training and lifestyle apps:** Woofz, Dogo, Zigzag, Puppr, GoodPup, Pupford.  
+**Training and lifestyle apps:** Woofz, Dogo, Zigzag, Puppr, GoodPup, Pupford.
 Риск: у них есть content breadth и brand presence.
 
-**Logging and household apps:** DogLog, Doggy Time, PupFi, 11pets.  
+**Logging and household apps:** DogLog, Doggy Time, PupFi, 11pets.
 Риск: они уже закрывают части workflow.
 
 **Дифференциация PuppyPlan:**
