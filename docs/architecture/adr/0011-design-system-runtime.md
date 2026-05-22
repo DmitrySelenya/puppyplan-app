@@ -8,7 +8,7 @@ The app needs consistent mobile UI, accessibility, haptics, motion, and design Q
 
 ## Decision
 
-Create `src/design` as the only UI infrastructure zone. Tokens are TypeScript `as const` in MVP. Use Reanimated 3 for motion and a typed haptics wrapper. Feature code cannot import raw colors, spacing, typography, icons, `Pressable`, or direct haptics.
+Create `src/design` as the only UI infrastructure zone. Tokens are TypeScript `as const` in MVP. Use the Expo SDK-compatible Reanimated runtime for motion and a typed haptics wrapper; the SDK 55 scaffold currently installs Reanimated 4. Feature code cannot import raw colors, spacing, typography, icons, `Pressable`, or direct haptics.
 
 MVP component inspection uses `/_dev/components`; Storybook is Phase 1 unless justified by component count or design QA.
 
