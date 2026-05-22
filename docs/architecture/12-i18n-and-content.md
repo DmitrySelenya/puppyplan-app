@@ -17,6 +17,7 @@ Existing source inputs:
 
 - `STRINGS.en.json`
 - `STRINGS.ru.json`
+- `STRINGS.es.json`
 
 CI must check:
 
@@ -27,11 +28,18 @@ CI must check:
 
 ## Plurals
 
-Use ICU plural support through i18next. Russian requires:
+Use ICU plural support through i18next. The plural test matrix must cover every startup locale.
+
+Russian requires:
 
 - `one`;
 - `few`;
 - `many`;
+- `other`.
+
+Spanish pluralized strings require:
+
+- `one`;
 - `other`.
 
 ## Dates And Numbers
@@ -48,7 +56,7 @@ Enforce budgets for:
 - tracker tile labels;
 - notification action labels.
 
-Dynamic Type XXL/XXXL screenshots must include RU and EN for core flows.
+Dynamic Type XXL/XXXL screenshots must include EN, RU, and ES for core flows.
 
 ## RTL
 
@@ -63,4 +71,3 @@ Guidance and health template content use:
 - `UNIQUE (content_version_id, locale)`.
 
 Fallback locale: English.
-

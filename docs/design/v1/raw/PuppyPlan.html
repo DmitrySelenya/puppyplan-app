@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PuppyPlan v1 — Screen Set</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #f0eee9; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+    /* Hide DC inner phone strokes — phone shells own their borders */
+    .dc-card { background: transparent !important; box-shadow: none !important; }
+    .phone-shadow {
+      box-shadow: 0 24px 60px rgba(28,31,27,0.14), 0 4px 12px rgba(28,31,27,0.06), 0 0 0 1px rgba(28,31,27,0.08);
+      border-radius: 44px;
+      overflow: hidden;
+    }
+    .phone-shadow .pp-phone { border-radius: 44px; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="components.jsx"></script>
+
+  <script type="text/babel" src="screens/onboarding.jsx"></script>
+  <script type="text/babel" src="screens/today.jsx"></script>
+  <script type="text/babel" src="screens/quicklog.jsx"></script>
+  <script type="text/babel" src="screens/timeline.jsx"></script>
+  <script type="text/babel" src="screens/sharing.jsx"></script>
+  <script type="text/babel" src="screens/health.jsx"></script>
+  <script type="text/babel" src="screens/more.jsx"></script>
+  <script type="text/babel" src="screens/library.jsx"></script>
+  <script type="text/babel" src="screens/states.jsx"></script>
+
+  <script type="text/babel" src="screens/profile.jsx"></script>
+  <script type="text/babel" src="screens/sitter.jsx"></script>
+  <script type="text/babel" src="screens/cards.jsx"></script>
+  <script type="text/babel" src="screens/guidance.jsx"></script>
+  <script type="text/babel" src="screens/settings.jsx"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const PW = 393, PH = 852;
+
+    // Wrap a phone screen with a drop shadow so it reads as a device.
+    function Frame({ children }) {
+      return <div className="phone-shadow" style={{ width: PW, height: PH }}>{children}</div>;
+    }
+
+    function App() {
+      return (
+        <DesignCanvas>
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 0 — Read me                                                 */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="readme" title="0 — Read me" subtitle="What's included and what isn't">
+            <DCArtboard id="intro" label="Intro" width={920} height={780}>
+              <div style={{
+                width: 920, padding: 40, background: 'var(--pp-surface-base)',
+                fontFamily: 'var(--pp-font)', color: 'var(--pp-text-primary)',
+                border: '1px solid var(--pp-stroke)', borderRadius: 12,
+              }}>
+                <div className="pp-display" style={{ fontSize: 40, lineHeight: '46px', marginBottom: 8 }}>PuppyPlan v1 · Screen Set</div>
+                <div className="pp-body" style={{ color: 'var(--pp-text-secondary)', marginBottom: 16, maxWidth: 640 }}>
+                  Hi-fi screens for the Daily Core, Collaboration, Records & Settings surfaces.
+                  Drawn against <span className="pp-mono" style={{ fontSize: 15 }}>design-tokens.json</span> and
+                  <span className="pp-mono" style={{ fontSize: 15 }}> STRINGS.en.json</span> (your English translation of STRINGS.ru.json).
+                  Phone canvas is iPhone 393×852, light mode only.
+                </div>
+                <div style={{
+                  background: 'var(--pp-info-tint)', color: 'var(--pp-info)',
+                  borderRadius: 8, padding: '10px 14px', marginBottom: 24, maxWidth: 720,
+                  fontSize: 13, lineHeight: '18px',
+                }}>
+                  <b>v1 · second review pass applied.</b> CTA hierarchy: Today day-7 second filled button → secondary;
+                  duplicate-warning Cancel → text link; Delete account uses new <span className="pp-mono">destructive-filled</span> variant (no inline override);
+                  Today day-2 missed-reminder collapsed from 5 equal pills to <b>Done</b> + overflow ⋯;
+                  empty-state primary CTA unified to <span className="pp-mono">variant="primary"</span> across Timeline, Sharing, States.
+                  Tokens: snackbar accent <span className="pp-mono">#67E8F9 → var(--pp-primary-300)</span>, sheet shadow → <span className="pp-mono">var(--pp-elev-2)</span>,
+                  added <span className="pp-mono">.pp-tabular-num</span> utility, added <span className="pp-mono">more.h</span> icon.
+                  Canvas: merged sections 8/10 and 12/14/15 split into 5 focused DCSections.
+                  Still pending (scope expansion, not bugs): Dynamic Type XXL/XXXL, multi-size iPhone canvases, §7 Sitter, §9 Cards, §13 Guidance detail.
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+                  <div>
+                    <div className="pp-headline" style={{ marginBottom: 10 }}>Included</div>
+                    <ul className="pp-callout" style={{ color: 'var(--pp-text-secondary)', margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>
+                      <li><b>1 ·</b> Foundation library — colors, type, spacing, components</li>
+                      <li><b>2 ·</b> Onboarding — Welcome, Profile, Trackers, Plan, First log</li>
+                      <li><b>3 ·</b> Today — day 1, day 2 morning, day 7 weekly, with activity, loading, offline, pending</li>
+                      <li><b>4 ·</b> Quick Log — default, after-tap, duplicate warning, failed, details form</li>
+                      <li><b>5 ·</b> Timeline — synced, filtered, empty</li>
+                      <li><b>6 ·</b> Family sharing — list, invite, sent</li>
+                      <li><b>8 ·</b> Trainer — scope selector, preview, accepted view</li>
+                      <li><b>10 ·</b> Revoked/expired — single neutral state</li>
+                      <li><b>11 ·</b> Health — list, edit empty/filled, confirmed detail, empty first-run</li>
+                      <li><b>12 ·</b> Reminders — list + lock-screen push</li>
+                      <li><b>14 ·</b> More tab + delete-confirm sheet</li>
+                      <li><b>15 ·</b> Paywall shell</li>
+                      <li><b>16 ·</b> Screen states reference (8 templates)</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="pp-headline" style={{ marginBottom: 10 }}>Added in this pass</div>
+                    <ul className="pp-callout" style={{ color: 'var(--pp-text-secondary)', margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>
+                      <li><b>7 ·</b> Trusted Sitter — enable (ready / pending / no-caregiver), sitter checklist, owner status, exit-confirm</li>
+                      <li><b>9 ·</b> Shareable Cards — builder (default / empty / health-on), 3:4 rendered preview, share-sheet, list</li>
+                      <li><b>13 ·</b> Starter Guidance — topic detail (First Night) with read/tried-it/skip + escalation</li>
+                      <li><b>14.2 ·</b> Puppy Profile — saved view, editing form, breed picker sheet (default + search)</li>
+                      <li><b>14.3 ·</b> Quick trackers reorder · <b>14.4 ·</b> Notifications · <b>14.5 ·</b> Privacy &amp; account</li>
+                    </ul>
+                    <div style={{ height: 14 }} />
+                    <div className="pp-headline" style={{ marginBottom: 10 }}>Still deferred</div>
+                    <ul className="pp-callout" style={{ color: 'var(--pp-text-secondary)', margin: 0, paddingLeft: 18, lineHeight: 1.6 }}>
+                      <li>§17 Dynamic Type XXL / XXXL variants</li>
+                      <li>Detailed annotation layers (tap-target outlines, VoiceOver labels) — better in Figma</li>
+                    </ul>
+                    <div style={{ height: 16 }} />
+                    <div className="pp-headline" style={{ marginBottom: 8 }}>Quality bar applied</div>
+                    <ul className="pp-footnote" style={{ color: 'var(--pp-text-secondary)', margin: 0, paddingLeft: 18, lineHeight: 1.5 }}>
+                      <li>Hero card: 1 primary CTA + ≤1 tertiary link</li>
+                      <li>Quick Log: ≤5 trackers · Today: ≤5 daily cards</li>
+                      <li>Accent (coral) only on celebration moments</li>
+                      <li>Danger (clay red) only user-marked urgent · no bright red</li>
+                      <li>All tap targets ≥44pt · FAB 56pt</li>
+                      <li>Pills always icon + text + color</li>
+                      <li>No streaks · no shame copy · no "you missed" · single exclamation only in 2.6 first-log celebration ("First event saved." has no "!")</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 1 — Foundation                                            */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="foundation" title="1 — Foundation" subtitle="Component library · all tokens · all variants">
+            <DCArtboard id="library" label="Library sheet" width={920} height={4200}>
+              <LibraryFrame />
+            </DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 2 — Onboarding                                            */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="onboarding" title="2 — Onboarding" subtitle="2.1 Welcome → 2.6 First log">
+            <DCArtboard id="2.1" label="2.1 Welcome · default" width={PW} height={PH}><Frame><ScreenOnbWelcome /></Frame></DCArtboard>
+            <DCArtboard id="2.2-default" label="2.2 Profile · default" width={PW} height={PH}><Frame><ScreenOnbProfile state="default" /></Frame></DCArtboard>
+            <DCArtboard id="2.2-filled" label="2.2 Profile · filled" width={PW} height={PH}><Frame><ScreenOnbProfile state="filled" /></Frame></DCArtboard>
+            <DCArtboard id="2.2-error" label="2.2 Profile · error" width={PW} height={PH}><Frame><ScreenOnbProfile state="error" /></Frame></DCArtboard>
+            <DCArtboard id="2.4" label="2.4 Tracker picker · 5 of 5" width={PW} height={PH}><Frame><ScreenOnbTrackers /></Frame></DCArtboard>
+            <DCArtboard id="2.5" label="2.5 Plan reveal" width={PW} height={PH}><Frame><ScreenOnbPlanReveal /></Frame></DCArtboard>
+            <DCArtboard id="2.6" label="2.6 First log · pending (celebration)" width={PW} height={PH}><Frame><ScreenOnbFirstLogPending /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 3 — Today                                                 */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="today" title="3 — Today" subtitle="Hero · activity strip · pattern cards · screen-states">
+            <DCArtboard id="3.1" label="3.1 Day 1 · first day" width={PW} height={PH}><Frame><ScreenTodayDay1 /></Frame></DCArtboard>
+            <DCArtboard id="3.2" label="3.2 Day 2 · morning" width={PW} height={PH}><Frame><ScreenTodayDay2 /></Frame></DCArtboard>
+            <DCArtboard id="3.3" label="3.3 Day 7 · weekly rhythm" width={PW} height={PH}><Frame><ScreenTodayDay7 /></Frame></DCArtboard>
+            <DCArtboard id="3.4" label="3.4 With activity strip" width={PW} height={PH}><Frame><ScreenTodayWithActivity /></Frame></DCArtboard>
+            <DCArtboard id="3.5" label="3.5 Loading skeleton" width={PW} height={PH}><Frame><ScreenTodayLoading /></Frame></DCArtboard>
+            <DCArtboard id="3.6" label="3.6 Offline-read" width={PW} height={PH}><Frame><ScreenTodayOffline /></Frame></DCArtboard>
+            <DCArtboard id="3.7" label="3.7 Pending-write" width={PW} height={PH}><Frame><ScreenTodayPending /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 4 — Quick Log                                             */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="quicklog" title="4 — Quick Log" subtitle="Sheet · pending · duplicate · failed · details">
+            <DCArtboard id="4.1" label="4.1 Sheet · default (3-col, ≤5)" width={PW} height={PH}><Frame><ScreenQLDefault /></Frame></DCArtboard>
+            <DCArtboard id="4.2" label="4.2 After tap · snackbar + undo" width={PW} height={PH}><Frame><ScreenQLPending /></Frame></DCArtboard>
+            <DCArtboard id="4.4" label="4.4 Duplicate warning · 60-sec window" width={PW} height={PH}><Frame><ScreenQLDuplicate /></Frame></DCArtboard>
+            <DCArtboard id="4.5" label="4.5 Failed save · retry/discard inline" width={PW} height={PH}><Frame><ScreenQLFailed /></Frame></DCArtboard>
+            <DCArtboard id="4.6" label="4.6 Details form · optional fields" width={PW} height={PH}><Frame><ScreenQLDetails /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 5 — Timeline                                              */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="timeline" title="5 — Timeline" subtitle="Events log with filters + states">
+            <DCArtboard id="5.1" label="5.1 Synced (default)" width={PW} height={PH}><Frame><ScreenTimeline /></Frame></DCArtboard>
+            <DCArtboard id="5.2" label="5.2 Pending item visible" width={PW} height={PH}><Frame><ScreenTimeline state="pending" /></Frame></DCArtboard>
+            <DCArtboard id="5.3" label="5.3 Failed item visible" width={PW} height={PH}><Frame><ScreenTimeline state="failed" /></Frame></DCArtboard>
+            <DCArtboard id="5.4" label="5.4 Filtered · only feeding" width={PW} height={PH}><Frame><ScreenTimelineFiltered /></Frame></DCArtboard>
+            <DCArtboard id="5.5" label="5.5 Empty · filtered" width={PW} height={PH}><Frame><ScreenTimelineEmpty /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 6 — Family                                                */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="family" title="6 — Family sharing" subtitle="Owner view · invite · sent">
+            <DCArtboard id="6.1" label="6.1 Family list · owner" width={PW} height={PH}><Frame><ScreenFamilyList /></Frame></DCArtboard>
+            <DCArtboard id="6.2" label="6.2 Invite · role + scope" width={PW} height={PH}><Frame><ScreenFamilyInvite /></Frame></DCArtboard>
+            <DCArtboard id="6.3" label="6.3 Invite · sent / pending" width={PW} height={PH}><Frame><ScreenFamilyInviteSent /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 7 — Trusted Sitter                                          */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="sitter" title="7 — Trusted Sitter" subtitle="Owner setup · sitter-side checklist · owner status · exit">
+            <DCArtboard id="7.1-ready"        label="7.1 Enable · ready"          width={PW} height={PH}><Frame><ScreenSitterEnable /></Frame></DCArtboard>
+            <DCArtboard id="7.1-pending"      label="7.1 Enable · invite pending" width={PW} height={PH}><Frame><ScreenSitterEnable state="pending-invite" /></Frame></DCArtboard>
+            <DCArtboard id="7.1-no-caregiver" label="7.1 Enable · no caregiver"   width={PW} height={PH}><Frame><ScreenSitterEnable state="no-caregiver" /></Frame></DCArtboard>
+            <DCArtboard id="7.2"              label="7.2 Sitter checklist · sitter view" width={PW} height={PH}><Frame><ScreenSitterChecklist /></Frame></DCArtboard>
+            <DCArtboard id="7.3"              label="7.3 Owner status · sitter active"   width={PW} height={PH}><Frame><ScreenSitterOwnerStatus /></Frame></DCArtboard>
+            <DCArtboard id="7.4"              label="7.4 Exit · confirm sheet"     width={PW} height={PH}><Frame><ScreenSitterExit /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 8 — Trainer sharing                                          */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="trainer" title="8 — Trainer sharing" subtitle="Scoped sharing flow">
+            <DCArtboard id="8.1" label="8.1 Scope selector · toggle rows" width={PW} height={PH}><Frame><ScreenTrainerScope /></Frame></DCArtboard>
+            <DCArtboard id="8.2" label="8.2 Preview · includes / excludes" width={PW} height={PH}><Frame><ScreenTrainerPreview /></Frame></DCArtboard>
+            <DCArtboard id="8.3" label="8.3 Accepted · trainer's view" width={PW} height={PH}><Frame><ScreenTrainerAccepted /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 9 — Shareable Puppy Cards                                   */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="cards" title="9 — Shareable Cards" subtitle="Builder · preview · share-sheet · list">
+            <DCArtboard id="9.1"         label="9.1 Builder · default"      width={PW} height={PH}><Frame><ScreenCardBuilder /></Frame></DCArtboard>
+            <DCArtboard id="9.1-empty"   label="9.1 Builder · empty (disabled)" width={PW} height={PH}><Frame><ScreenCardBuilder state="empty" /></Frame></DCArtboard>
+            <DCArtboard id="9.1-health"  label="9.1 Builder · health on (disclosure)" width={PW} height={PH}><Frame><ScreenCardBuilder state="health-on" /></Frame></DCArtboard>
+            <DCArtboard id="9.2"         label="9.2 Preview · rendered card 3:4" width={PW} height={PH}><Frame><ScreenCardPreview /></Frame></DCArtboard>
+            <DCArtboard id="9.3"         label="9.3 Share-sheet · link vs snapshot" width={PW} height={PH}><Frame><ScreenCardShareSheet /></Frame></DCArtboard>
+            <DCArtboard id="9.4"         label="9.4 Shared cards · list"     width={PW} height={PH}><Frame><ScreenCardsList /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 10 — Revoked/expired                                        */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="revoked" title="10 — Revoked / expired" subtitle="Neutral end-of-access state">
+            <DCArtboard id="10.1" label="10.1 Revoked or expired · neutral" width={PW} height={PH}><Frame><ScreenRevokedExpired /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 11 — Health                                               */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="health" title="11 — Health" subtitle="Records, template/confirmed/done lifecycle">
+            <DCArtboard id="11.1" label="11.1 List · mixed templates + records" width={PW} height={PH}><Frame><ScreenHealthList /></Frame></DCArtboard>
+            <DCArtboard id="11.2" label="11.2 Edit · empty form" width={PW} height={PH}><Frame><ScreenHealthEdit /></Frame></DCArtboard>
+            <DCArtboard id="11.3" label="11.3 Edit · filled, ready to save" width={PW} height={PH}><Frame><ScreenHealthEdit filled /></Frame></DCArtboard>
+            <DCArtboard id="11.4" label="11.4 Detail · confirmed" width={PW} height={PH}><Frame><ScreenHealthDetail pill="confirmed" /></Frame></DCArtboard>
+            <DCArtboard id="11.5" label="11.5 Detail · needs vet review" width={PW} height={PH}><Frame><ScreenHealthDetail pill="review" /></Frame></DCArtboard>
+            <DCArtboard id="11.6" label="11.6 Empty · first-run" width={PW} height={PH}><Frame><ScreenHealthEmpty /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 12 — Reminders                                              */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="reminders" title="12 — Reminders" subtitle="List + lock-screen push">
+            <DCArtboard id="12.1" label="12.1 Reminders list" width={PW} height={PH}><Frame><ScreenReminders /></Frame></DCArtboard>
+            <DCArtboard id="12.4" label="12.4 Push · lock-screen" width={PW} height={PH}><Frame><ScreenReminderPush /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 13 — Starter Guidance                                       */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="guidance" title="13 — Starter Guidance" subtitle="Topic detail page · read / tried it / skip">
+            <DCArtboard id="13.1" label="13.1 Topic detail · first night" width={PW} height={PH}><Frame><ScreenGuidanceDetail topic="first-night" /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 14 — More & settings                                        */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="more" title="14 — More" subtitle="Settings surface · profile · trackers · notifications · privacy · destructive confirm">
+            <DCArtboard id="14.1"           label="14.1 More · full list" width={PW} height={PH}><Frame><ScreenMore /></Frame></DCArtboard>
+            <DCArtboard id="14.2-default"   label="14.2 Puppy profile · saved view"   width={PW} height={PH}><Frame><ScreenProfile /></Frame></DCArtboard>
+            <DCArtboard id="14.2-editing"   label="14.2 Puppy profile · editing form" width={PW} height={PH}><Frame><ScreenProfileEditing /></Frame></DCArtboard>
+            <DCArtboard id="14.2-breed"     label="14.2 Puppy profile · breed picker" width={PW} height={PH}><Frame><ScreenProfileBreedPicker /></Frame></DCArtboard>
+            <DCArtboard id="14.2-breed-q"   label="14.2 Puppy profile · breed search · 'bord'" width={PW} height={PH}><Frame><ScreenProfileBreedPicker query="bord" /></Frame></DCArtboard>
+            <DCArtboard id="14.3"           label="14.3 Quick trackers · 5 of 5" width={PW} height={PH}><Frame><ScreenQuickTrackers /></Frame></DCArtboard>
+            <DCArtboard id="14.4"           label="14.4 Notifications"           width={PW} height={PH}><Frame><ScreenNotifications /></Frame></DCArtboard>
+            <DCArtboard id="14.5"           label="14.5 Privacy & account"       width={PW} height={PH}><Frame><ScreenPrivacy /></Frame></DCArtboard>
+            <DCArtboard id="14.6"           label="14.6 Delete confirm · type DELETE" width={PW} height={PH}><Frame><ScreenDeleteConfirm /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 15 — Paywall                                                */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="paywall" title="15 — Paywall" subtitle="PuppyPlan Plus shell">
+            <DCArtboard id="15.1" label="15.1 Paywall shell" width={PW} height={PH}><Frame><ScreenPaywall /></Frame></DCArtboard>
+          </DCSection>
+
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* 16 — Screen states reference                              */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <DCSection id="states" title="16 — Screen states" subtitle="Canonical templates · copy from STRINGS.en.json `states.*`">
+            <DCArtboard id="states" label="Screen-states reference" width={1200} height={1280}>
+              <StatesFrame />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

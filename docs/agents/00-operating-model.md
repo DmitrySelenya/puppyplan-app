@@ -27,12 +27,13 @@ For solo development, the final reviewer is the user. Agent self-review is usefu
 
 1. Start from a `PUP-___` Linear issue unless the user explicitly declares a no-Linear exception.
 2. Read `AGENTS.md`, the Linear issue, linked plan, relevant PRD/DESIGN/architecture/ADR docs, and feature-local `AGENTS.md` if one exists.
-3. Build a context package: source docs, current files, constraints, acceptance criteria, risks, expected verification, and open questions.
-4. Create or update a `docs/plans/active/YYYY-MM-DD-<topic>.md` plan for non-trivial UX, flow, API, storage, schema, permissions, release, or architecture changes.
-5. Implement in a small diff. Keep one primary issue per branch and avoid cross-workstream edits unless a plan or ADR explains the boundary crossing.
-6. Update the plan checklist/changelog, docs, ADRs, diagrams, i18n keys, contracts, migrations, generated types, and tests as needed. Move completed plans to `docs/plans/completed/` and update `docs/plans/README.md`.
-7. Run targeted verification. Once scripts exist, prefer `npm run check` as the full local gate.
-8. Put verification evidence in the PR and Linear issue. Move the issue to `In Review` only when the work is ready for review.
+3. Move the Linear issue to `In Progress`, or add a comment explaining why the state is intentionally unchanged.
+4. Build a context package: source docs, current files, constraints, acceptance criteria, risks, expected verification, and open questions.
+5. Create or update a `docs/plans/active/YYYY-MM-DD-<topic>.md` plan for non-trivial UX, flow, API, storage, schema, permissions, release, or architecture changes.
+6. Implement in a small diff. Keep one primary issue per branch and avoid cross-workstream edits unless a plan or ADR explains the boundary crossing.
+7. Update the plan checklist/changelog, docs, ADRs, diagrams, i18n keys, contracts, migrations, generated types, and tests as needed. Mirror phase/checklist progress, blockers, and scope changes back to the Linear issue before ending the turn. Move completed plans to `docs/plans/completed/` and update `docs/plans/README.md`.
+8. Run targeted verification. Once scripts exist, prefer `npm run check` as the full local gate.
+9. Put verification evidence in the PR and Linear issue. Move the issue to `In Review` only when the work is ready for review.
 
 ## Task Contract
 
@@ -47,7 +48,7 @@ Every non-trivial Linear issue and plan must include:
 
 An issue is `agent-ready` only when this contract is complete enough for an implementation agent to start without guessing.
 
-Keep the Linear issue short: task contract, owner/status, blockers, and links. Keep the long-form implementation reasoning in `docs/plans/`. Keep final verification evidence in the PR and mirror only the concise result back to Linear.
+Keep the Linear issue short but current: task contract, owner/status, active phase, blockers, concise progress, verification evidence, and links. Keep the long-form implementation reasoning in `docs/plans/`.
 
 ## Approval Gates
 

@@ -1,0 +1,1256 @@
+{
+  "$meta": {
+    "version": "1.0.0-v1",
+    "language": "es",
+    "source": "DESIGN.md",
+    "lastUpdated": "2026-05-22",
+    "role": "locale",
+    "translatedFrom": "STRINGS.en.json",
+    "note": "Traducción española inicial para el MVP. STRINGS.en.json sigue siendo el archivo maestro para claves tipadas; DESIGN.md gana ante conflictos de producto o tono.",
+    "placeholderSyntax": "Sintaxis simple {name}. Consulta los campos _comment para la lista de variables por clave."
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "cancel-action": "Cancelar",
+    "done": "Listo",
+    "back": "Atrás",
+    "close": "Cerrar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "retry": "Intentar de nuevo",
+    "continue": "Continuar",
+    "start": "Empezar",
+    "skip": "Omitir",
+    "snooze": "Posponer",
+    "stop": "Detener",
+    "got-it": "Entendido",
+    "not-now": "Ahora no",
+    "open-settings": "Abrir ajustes",
+    "show-more": "Mostrar más",
+    "share": "Compartir",
+    "send": "Enviar",
+    "copy-link": "Copiar enlace",
+    "resend": "Enviar de nuevo",
+    "revoke": "Revocar",
+    "leave-as-is": "Mantener",
+    "i-have-account": "Ya tengo una cuenta",
+    "add-record": "Agregar registro",
+    "open-timeline": "Abrir cronología",
+    "loading": "Cargando"
+  },
+  "states": {
+    "loading": {
+      "label": "Cargando"
+    },
+    "empty-first-run": {
+      "title": "Tus eventos aparecerán aquí",
+      "body": "Agrega tu primer evento: los patrones se vuelven más claros una vez que hay datos.",
+      "action": "Añadir una entrada"
+    },
+    "empty-filtered": {
+      "title": "Nada aquí",
+      "body": "Prueba con otro rango o borra los filtros.",
+      "action": "Limpiar filtros"
+    },
+    "error-server": {
+      "title": "No se pudo cargar",
+      "body": "Comprueba tu conexión y vuelve a intentarlo.",
+      "action": "Intentar otra vez"
+    },
+    "offline-read": {
+      "title": "Estás desconectado",
+      "body": "Mostrando datos de {time}. Tus cambios se guardarán localmente.",
+      "_comment": "{time}: la última hora de sincronización exitosa",
+      "banner": "Mostrando tus últimos datos guardados.",
+      "chip": "Desconectado. Mostrando datos locales.",
+      "synced-toast": "Sincronizado"
+    },
+    "pending-write": {
+      "title": "Guardando…",
+      "pill": "Guardando",
+      "tooltip": "Tu cambio se está sincronizando"
+    },
+    "permission-denied": {
+      "title": "Permiso necesario",
+      "body": "Para que esto funcione, permite el acceso a {resource} en ajustes.",
+      "_comment": "{resource} — p.ej. \"notificaciones\" / \"la cámara\" / \"fotos\"",
+      "action": "Abrir configuración",
+      "how-to-enable": "Cómo habilitar"
+    },
+    "revoked-or-expired": {
+      "title": "Este acceso ya no está disponible",
+      "body": "Contacta al propietario si necesitas un nuevo acceso.",
+      "body-long": "Contacta al propietario si necesitas información actualizada.",
+      "action": "Entiendo",
+      "_comment": "Redacción canónica de §3.3.6: una frase tanto para revocados como para vencidos. No utilice \"revocado\", \"caducado\", \"eliminado\", \"cerrado por el propietario\"."
+    }
+  },
+  "voice": {
+    "forbidden": [
+      "te perdiste",
+      "te olvidaste",
+      "alarma",
+      "¡urgente!",
+      "¡Detener!",
+      "¡Advertencia!",
+      "¡Error!",
+      "¡Ups!",
+      "¡no lo olvides!",
+      "EMERGENCIA",
+      "ADVERTENCIA",
+      "ALERTA",
+      "¡Hurra!",
+      "¡Buen trabajo, el pequeño lo logró!",
+      "¡Gran crecimiento! ¡Avanza!",
+      "¡Comparte tus datos con tu médico favorito!",
+      "algo salió mal",
+      "¿está seguro?",
+      "duplicado",
+      "error",
+      "problema",
+      "de nuevo",
+      "tarea",
+      "necesito",
+      "debe",
+      "eres increíble",
+      "gran trabajo",
+      "Mamá",
+      "Papá",
+      "fallido",
+      "HTTP 500",
+      "Datos perdidos",
+      "¡advertencia!",
+      "alerta",
+      "racha rota",
+      "fallaste",
+      "no has iniciado sesión"
+    ],
+    "approved-tone-phrases": [
+      "Las rutinas se construyen con el tiempo.",
+      "sucede",
+      "próxima oportunidad",
+      "puede",
+      "probar",
+      "generalmente",
+      "las cosas están más claras ahora",
+      "Los patrones están apareciendo.",
+      "Eso sucede a veces.",
+      "Parece un duplicado de los últimos 60 segundos."
+    ],
+    "approved-examples": [
+      "Evento guardado",
+      "Parece un duplicado de los últimos 60 segundos. ¿Guardar de todos modos?",
+      "La vacunación está en el calendario modelo. Tu veterinario lo confirmará.",
+      "No se pudo guardar. Tu evento se guarda localmente; lo intentaremos de nuevo más tarde.",
+      "Peso: 4,2 kg, 0,3 kg más que la semana pasada",
+      "El veterinario tiene acceso a tus datos hasta el 17 de junio",
+      "Ir al baño afuera — registrado a las 9:42",
+      "Este enlace ya no está activo"
+    ]
+  },
+  "tabs": {
+    "today": "Hoy",
+    "today-hint": "Abre la pantalla Hoy",
+    "health": "Salud",
+    "more": "Más",
+    "quick-log-fab-label": "Registro rápido",
+    "quick-log-fab-hint": "Abre una lista de cosas que puedes registrar"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Los primeros días con un cachorro pueden ser complicados.",
+      "subtitle": "Empieza con un plan claro.",
+      "cta": "Empezar",
+      "secondary": "ya tengo una cuenta",
+      "a11y-title": "Los primeros días con un cachorro pueden ser complicados. Título."
+    },
+    "puppy-profile": {
+      "title": "¿Cómo se llama tu cachorro?",
+      "helper": "Puedes cambiar esto más tarde.",
+      "name-field-label": "Nombre",
+      "name-field-hint": "Nombre del cachorro, requerido para continuar",
+      "age-toggle-age": "Edad",
+      "age-toggle-date": "O fecha de nacimiento",
+      "cta": "Continuar",
+      "error-future-date": "Esa fecha es en el futuro; verifíquela dos veces",
+      "a11y-toggle": "Método de entrada de edad. Seleccionado: edad en semanas.",
+      "a11y-stepper": "Edad 8 semanas. Desliza hacia arriba para aumentar."
+    },
+    "age-hint": {
+      "6-8-weeks": "A las 8 semanas, los cachorros suelen dormir entre 18 y 20 horas al día.",
+      "9-12-weeks": "Alrededor de las 10 semanas la vejiga es pequeña; los intervalos cortos son normales.",
+      "13-16-weeks": "A las 14 semanas, muchos cachorros están listos para paseos más largos.",
+      "fallback": "Cada cachorro es diferente. Mantendremos un ritmo tranquilo."
+    },
+    "tracker-picker": {
+      "title": "Qué rastrear",
+      "helper": "Hasta 5 acciones. Puedes cambiarlos más tarde.",
+      "counter": "{n} de 5 seleccionados",
+      "_comment": "{n}: entero 0..5",
+      "limit-snackbar": "Hasta 5. Elimina uno para agregar un nuevo rastreador.",
+      "zero-state-cta": "Saltar por ahora",
+      "cta": "Continuar",
+      "tile-feeding-a11y": "Alimentación. Seleccionado. Toca dos veces para eliminar."
+    },
+    "plan-reveal": {
+      "title": "Tu plan para hoy",
+      "subtitle": "Puedes comenzar con el primer elemento.",
+      "hero": "Registra tu primer evento; tardará unos cinco segundos.",
+      "starter-card-1": "Observa el patrón de alimentación",
+      "starter-card-2": "Descansos breves para ir al baño cada 1 o 2 horas",
+      "starter-card-3": "Un lugar tranquilo para dormir.",
+      "cta": "Empieza tu primer registro"
+    },
+    "first-log": {
+      "hero-after-first": "Primer evento guardado. A partir de aquí, un ritmo tranquilo.",
+      "celebration-snackbar": "Hecho. Puedes seguir adelante."
+    },
+    "account-wall": {
+      "title": "Guarda tu progreso",
+      "body": "Esto te permite compartir con tu familia y ver tus datos en otros dispositivos.",
+      "apple": "Continuar con Apple",
+      "google": "Continuar con Google",
+      "email": "Correo electrónico",
+      "secondary": "Ahora no"
+    },
+    "notifications-prompt": {
+      "title": "¿Quieres recordatorios silenciosos?",
+      "body": "Sólo enviaremos lo que elijas. Sin ruido.",
+      "primary": "Encender",
+      "secondary": "Ahora no"
+    }
+  },
+  "today": {
+    "section-now": "Ahora",
+    "section-next": "Próximo",
+    "section-yesterday-recap": "Lo que aprendimos ayer",
+    "section-now-do": "Que hacer ahora",
+    "section-weekly": "Ritmo semanal",
+    "weekly-lead": "Más de 7 días:",
+    "weekly-insight-prefix": "Más claro ahora:",
+    "weekly-cta": "Ver detalles",
+    "hero": {
+      "day1": "Registra tu primer evento; tardará unos cinco segundos.",
+      "day1-cta": "Comenzar",
+      "day2-morning-title": "Pausa para ir al baño por la mañana",
+      "day2-morning-body": "El cachorro A durmió 6 horas; la vejiga está llena.",
+      "day2-morning-cta": "Registrar descanso para ir al baño",
+      "potty-time": "Parece que es hora de un descanso.",
+      "potty-time-meta": "La última pausa fue hace {duration}.",
+      "_comment-potty-time-meta": "{duration} — p.ej. \"1 hora 40 minutos\"",
+      "potty-time-primary": "Regístrelo",
+      "potty-time-tertiary": "Más tarde"
+    },
+    "starter-guidance": {
+      "first-day": "El primer día se trata de observar, no de resultados.",
+      "potty-frequency": "Descansos breves para ir al baño cada 1 o 2 horas",
+      "sleep-spot": "Un lugar tranquilo para dormir.",
+      "feeding-pattern": "Observa el patrón de alimentación"
+    },
+    "recap-day2": {
+      "_comment": "{walks}, {feedings} — números",
+      "template": "{walks} salidas afuera, {feedings} comidas. Un ritmo tranquilo para el segundo día.",
+      "example": "3 paseos al aire libre, 2 tomas. Un ritmo suave para el segundo día."
+    },
+    "accident-recovery": {
+      "title": "Sucede.",
+      "body": "La próxima oportunidad es después de dormir o comer.",
+      "body-repeat": "Han surgido algunos episodios. Un breve descanso cada hora hoy podría ayudar.",
+      "cta": "Planifica un descanso"
+    },
+    "after-feeding": {
+      "title": "Alimentándose al ritmo habitual.",
+      "body": "Acerca de {grams} g · {time}",
+      "body-no-grams": "Aproximadamente la porción habitual",
+      "_comment-body": "{grams} — gramos enteros; {time} — HH:MM",
+      "primary": "Porción habitual",
+      "tertiary": "Cambiar"
+    },
+    "activity-strip": {
+      "single": "{actorName} {verbForm} {puppyName} · {timeAgo}",
+      "_comment-single": "Spanish {verbForm} values carry required prepositions and personal-a handling, e.g. \"alimentó a\", \"registró una pausa\" or \"volvió de un paseo\". Keep {timeAgo} lowercase when the template places it after \"·\".",
+      "example-feeding": "Cuidador A alimentó a Cachorro A · hace 42 min",
+      "example-potty": "Cuidador A registró una pausa al baño · hace 4 min",
+      "example-walk": "Cuidador B volvió de un paseo · hace 1 hora",
+      "example-reminder": "El cuidador A agregó un recordatorio, justo ahora",
+      "example-note": "El cuidador B dejó una nota: hace 30 minutos",
+      "example-health": "El cuidador B registró una visita al veterinario: hace 2 horas",
+      "example-sitter": "Cuidador A (cuidador): {puppyName} recibió comida · hace 6 min",
+      "multiple": "{actorName} y tú · {n} eventos en la última hora",
+      "example-multiple": "Cuidador A y tú · 3 eventos en la última hora",
+      "topbar-members": "Contigo: {names}.",
+      "topbar-example": "Contigo: Cuidador A y tú."
+    },
+    "missed-reminder-card": {
+      "title": "Recordatorio: alimentación en {time}",
+      "body": "Si esto ya sucedió, márcalo como hecho.",
+      "actions": [
+        "Hecho",
+        "Posponer",
+        "Saltar",
+        "Editar",
+        "Deja de recordar"
+      ],
+      "snooze-options": [
+        "15 minutos",
+        "30 minutos",
+        "1 hora"
+      ],
+      "done-snackbar": "registrado"
+    },
+    "sleep-banner": {
+      "active": "{puppyName} está durmiendo · {mmss}",
+      "stop": "Detener",
+      "stop-snackbar": "Sueño registrado: minutos {minutes}."
+    },
+    "empty": {
+      "title": "Tranquilo hoy.",
+      "body": "Empieza con lo que hayas notado hace un momento.",
+      "cta": "Abrir registro rápido"
+    },
+    "error-banner": "No se pudo actualizar. Mostrando la última vista guardada.",
+    "weekly-example": {
+      "walks-line": "{n} paseos afuera",
+      "feedings-line": "Alimentación {n}",
+      "sleep-line": "Sueño: promedio de horas {hours} / día",
+      "insight-example": "Ahora está más claro: el cachorro A suele pedir salir entre 40 y 60 minutos después de una comida."
+    }
+  },
+  "quick-log": {
+    "sheet": {
+      "title": "¿Qué pasó?",
+      "edit-trackers": "Editar rastreadores",
+      "edit-screen-title": "Tus rastreadores rápidos",
+      "edit-helper": "Hasta 5. Arrastre para reordenar."
+    },
+    "trackers": {
+      "potty-outside": "Orinar afuera",
+      "potty-inside": "Orinar dentro",
+      "potty-poop": "Caca",
+      "feeding": "Alimentación",
+      "sleep": "Sueño",
+      "zoomies": "Zoomies",
+      "training": "Entrenamiento",
+      "weight": "Peso",
+      "walk": "Paseo",
+      "play": "Juego",
+      "biting": "Mordidas"
+    },
+    "potty": {
+      "screen-title": "Baño",
+      "details-header": "Agregar detalles (opcional)",
+      "context-label": "Contexto",
+      "note-label": "Nota",
+      "photo-label": "Foto",
+      "context-options": [
+        "Después de dormir",
+        "Después de comer",
+        "Paseo",
+        "Jugar",
+        "No estoy seguro"
+      ]
+    },
+    "feeding": {
+      "title": "Alimentado",
+      "suggestion": "Porción habitual: aproximadamente {grams} g",
+      "primary": "Porción habitual",
+      "secondary": "Ingresar manualmente",
+      "tertiary": "Justo ahora, sin gramos",
+      "manual-unit": "porción"
+    },
+    "sleep": {
+      "title": "Dormir",
+      "start-now": "Empezar ahora",
+      "already-slept": "Ya dormí",
+      "how-long": "¿Aproximadamente cuánto tiempo?",
+      "duration-chips": [
+        "15 minutos",
+        "30",
+        "1 hora",
+        "2 horas"
+      ]
+    },
+    "zoomies": {
+      "title": "Zoomies",
+      "log-now": "Registrarlo ahora",
+      "details-header": "Detalles (opcional):",
+      "context-label": "Contexto",
+      "context-default": "Después de dormir",
+      "duration-label": "Duración",
+      "duration-options": [
+        "<5",
+        "5–15",
+        "15+"
+      ],
+      "note-label": "Nota"
+    },
+    "snackbar": {
+      "saved-template": "Registrado · {trackerName}",
+      "saved-example": "Registrado · Orinar afuera",
+      "undo": "Deshacer",
+      "undo-confirmed": "Deshecho",
+      "add-details": "Agregar detalles",
+      "a11y": "Registrado: Orinar afuera. Acciones disponibles: deshacer, agregar detalles."
+    },
+    "pending": {
+      "label": "Guardando"
+    },
+    "failed": {
+      "snackbar": "No se pudo guardar. ¿Intentar otra vez?",
+      "primary": "Intentar otra vez",
+      "tertiary": "Desechar",
+      "pill": "No guardado",
+      "persistent-banner": "Algunos eventos no se salvaron. Comprueba tu conexión.",
+      "too-many-attempts": "Muchos intentos seguidos. Lo intentaremos de nuevo más tarde automáticamente.",
+      "generic": "No se pudo guardar. Comprueba tu conexión."
+    },
+    "duplicate-warning": {
+      "title": "Parece que esto ya está registrado",
+      "body-template": "{actorName} registró un {eventType} {timeAgo}.",
+      "body-example": "El cuidador A registró una alimentación hace 42 segundos.",
+      "more-matches": "{n} eventos más en los últimos 60 segundos",
+      "primary": "Este es un evento diferente: agrégalo",
+      "primary-alt": "Agregar de todos modos",
+      "secondary": "Cancelar",
+      "question": "¿Agregar de todos modos?"
+    }
+  },
+  "timeline": {
+    "title": "Eventos",
+    "section-today": "Hoy · {weekday}",
+    "section-yesterday": "Ayer · {weekday}",
+    "filter-chips": [
+      "Todo",
+      "Baño",
+      "Alimento",
+      "Dormir",
+      "Zoomies",
+      "Entrenamiento",
+      "Salud"
+    ],
+    "range-default": "Hoy",
+    "range-options": [
+      "Hoy",
+      "3 días",
+      "Semana",
+      "Personalizado"
+    ],
+    "range-custom-title": "Elige un rango",
+    "empty-filter": "No hay eventos en este rango.",
+    "actor-you": "Registrado por: tú",
+    "actor-template": "Registrado por: {name}",
+    "pills": {
+      "pending": "Guardando",
+      "failed": "No guardado",
+      "local-only": "Sólo en este dispositivo"
+    },
+    "time": {
+      "just-now": "En este momento",
+      "minutes-ago": "hace {n} min",
+      "yesterday-time": "ayer {time}"
+    },
+    "edit-snackbar": "Actualizado",
+    "delete-confirm": {
+      "title": "¿Eliminar esta entrada?",
+      "body": "Puede deshacerlo en 5 segundos.",
+      "primary": "Borrar",
+      "secondary": "Cancelar"
+    },
+    "delete-snackbar": "Entrada eliminada.",
+    "swipe-actions": [
+      "Editar",
+      "Borrar"
+    ],
+    "overflow-actions": [
+      "Editar",
+      "Borrar"
+    ],
+    "pending-overflow-actions": [
+      "Cancelar envío",
+      "Borrar"
+    ]
+  },
+  "sharing": {
+    "common": {
+      "contract-header-shows": "Este acceso incluye:",
+      "contract-header-excludes": "No incluido:",
+      "disclosure-can-close": "Puedes cerrar el acceso en cualquier momento.",
+      "expiry-label": "Caducidad del enlace",
+      "expiry-options": [
+        "24 horas",
+        "7 días",
+        "14 días"
+      ],
+      "trainer-expiry-options": [
+        "7 días",
+        "30 días",
+        "90 días",
+        "Sin caducidad (no recomendado)"
+      ],
+      "no-expiry-warning": "Es mejor establecer una fecha de caducidad. Un enlace sin uno permanece abierto hasta que lo cierres tú mismo.",
+      "until-date": "Vence {date}",
+      "active-until": "Activo a través de {date}",
+      "expires-in-days": "Vence en {n} días",
+      "access-closed-at": "Acceso cerrado {date}",
+      "expires-soon": "Vence en {n} días."
+    },
+    "family": {
+      "today-prompt": {
+        "title": "Comparte el cuidado con la familia.",
+        "body": "Invita a una persona: podrá registrar las comidas y los paseos.",
+        "primary": "Invitar",
+        "secondary": "Ahora no"
+      },
+      "invite": {
+        "screen-title": "Invitar",
+        "section-who": "¿A quién estás invitando?",
+        "email-placeholder": "Correo electrónico o nombre de contacto",
+        "section-role": "Rol",
+        "role-caregiver": "cuidador",
+        "role-caregiver-desc": "Cuidador: puede registrar eventos y agregar notas",
+        "role-viewer": "Espectador",
+        "role-viewer-desc": "Visor: solo ver",
+        "section-what-caregiver-sees": "Lo que verá el cuidador",
+        "caregiver-preview-bullets": [
+          "Hoy y la cronología de {puppyName}",
+          "Puede registrar comidas, paseos y pausas para ir al baño.",
+          "Puede crear recordatorios"
+        ],
+        "caregiver-excluded": "No veo: facturación de suscripción, notas privadas",
+        "viewer-preview-bullets": [
+          "Hoy y la cronología de {puppyName}",
+          "Solo ver, sin modificaciones"
+        ],
+        "viewer-excluded": "No veo: facturación de suscripción, notas privadas",
+        "cta": "enviar invitación",
+        "secondary": "Compartir un enlace",
+        "error-invalid-email": "No parece un correo electrónico. Por favor verifique la dirección.",
+        "sending": "Envío…"
+      },
+      "invite-sent": {
+        "title": "Invitación enviada",
+        "copy-link": "Copiar enlace",
+        "resend": "Enviar de nuevo",
+        "revoke": "Revocar invitación",
+        "resent-toast": "Enlace enviado de nuevo",
+        "expired-strip": "El enlace ha caducado",
+        "send-new": "enviar uno nuevo",
+        "revoked-neutral": "Invitación revocada. Puedes enviar uno nuevo.",
+        "revoke-confirm": {
+          "title": "¿Revocar esta invitación?",
+          "body": "El enlace dejará de funcionar. Puedes hacer esto en cualquier momento.",
+          "destructive": "Revocar",
+          "cancel": "Mantener"
+        }
+      },
+      "accepted": {
+        "header": "{ownerName} te invita a ayudar a cuidar de {puppyName}",
+        "role-caregiver": "Tu rol: Cuidador",
+        "role-viewer": "Tu rol: espectador",
+        "what-included": "A qué tendrás acceso",
+        "what-excluded": "Lo que no verás",
+        "caregiver-included-bullets": [
+          "Hoy y la cronología de {puppyName}",
+          "Registrar comidas, paseos y pausas para ir al baño.",
+          "Crear recordatorios"
+        ],
+        "caregiver-excluded-bullets": [
+          "Facturación de suscripción",
+          "Notas privadas del propietario"
+        ],
+        "disclosure": "{ownerName} puede cerrar tu acceso en cualquier momento.",
+        "accept": "Aceptar",
+        "decline": "Rechazar",
+        "decline-confirm-title": "¿Rechazar esta invitación?",
+        "already-member": "Ya estás en la casa de {puppyName}.",
+        "already-member-cta": "Abierto",
+        "load-error": "No se pudo cargar la invitación. Comprueba tu conexión.",
+        "neutral-unavailable": "Esta invitación ya no está disponible. Pídele a {ownerName} que envíe una nueva."
+      },
+      "shared-today-viewer": {
+        "read-only-hint": "Ver sólo",
+        "read-only-inline-toast": "Ver sólo. Pide al propietario acceso para cuidadores.",
+        "blocked": "El acceso a {puppyName} está cerrado. Si esto te parece incorrecto, contacta al propietario.",
+        "empty": "Los eventos de hoy aparecerán aquí.",
+        "offline-banner": "Sin conexión. Tus cambios se guardarán localmente."
+      },
+      "manage": {
+        "screen-title": "Familia y acceso",
+        "section-members": "Miembros",
+        "section-invites": "invita",
+        "active-ago": "Activo {timeAgo}",
+        "pending-until": "Activo a través de {date}",
+        "invite-cta": "Invitar",
+        "badge-owner": "Dueño",
+        "badge-caregiver": "cuidador",
+        "badge-viewer": "Espectador",
+        "badge-pending": "Pendiente",
+        "badge-expired": "Venció",
+        "badge-revoked": "Revocado",
+        "member-overflow": [
+          "Cambiar rol",
+          "Cerrar acceso"
+        ],
+        "pending-overflow": [
+          "Copiar enlace",
+          "Enviar de nuevo",
+          "Revocar"
+        ],
+        "revoke-confirm": {
+          "title": "¿Cerrar acceso para {name}?",
+          "body": "{name} ya no verá los datos de {puppyName}. Puedes revertir esto enviando una nueva invitación.",
+          "destructive": "Cerrar acceso",
+          "cancel": "Cancelar"
+        },
+        "revoked-toast": "El acceso para {name} está cerrado."
+      }
+    },
+    "sitter": {
+      "screen-title": "Modo cuidador",
+      "subtitle": "Entregar el cuidado a un cuidador por un período de tiempo",
+      "subtitle-body": "{name} verá una lista de verificación y recibirá recordatorios.",
+      "section-who": "Quién",
+      "section-period": "Ventana",
+      "period-start": "Comenzar",
+      "period-end": "Fin",
+      "section-checklist": "Lista de verificación",
+      "checklist-feeding": "Tomas (3/día)",
+      "checklist-walks": "Paseos (3/día)",
+      "checklist-potty": "Pausas al baño",
+      "checklist-meds": "Medicamento",
+      "checklist-training": "Entrenamiento",
+      "section-what-sitter-sees": "Lo que verá el cuidador",
+      "sitter-preview-bullets": [
+        "Hoy y la línea de tiempo",
+        "Lista de verificación y recordatorios en su dispositivo"
+      ],
+      "sitter-excluded": "No verá: suscripción, configuración personal, otros ámbitos compartidos (entrenador, tarjetas)",
+      "disclosure": "Puedes finalizar el modo cuidador en cualquier momento.",
+      "enable-cta": "Activar modo cuidador",
+      "exit-cta": "Finalizar modo cuidador",
+      "no-caregiver": "Primero invite a un cuidador. El modo cuidador amplía a un cuidador existente.",
+      "no-caregiver-cta": "Invitar a un cuidador",
+      "pending-hint": "Esperando a que {name} acepte la invitación.",
+      "checklist-view": {
+        "role-chip": "cuidador",
+        "deadline-strip": "Modo cuidador hasta {date}, {time}",
+        "section-now": "Ahora",
+        "section-remaining": "Todavía hoy",
+        "section-done": "Hecho",
+        "empty": "Nada en la lista de hoy. Aún puedes registrar eventos a través de la línea de tiempo.",
+        "completion-inline": "Hecho. {ownerName} ha sido notificado.",
+        "exit-neutral": "Modo cuidador finalizado. ¡Gracias!",
+        "offline": "Sin conexión. Tus elementos completados se guardan y se enviarán más tarde."
+      },
+      "owner-status-card": {
+        "title": "El modo cuidador está activado",
+        "subtitle": "{name} • hasta {date}, {time}",
+        "last-action": "Lo último: {actorName} {verbForm} {puppyName} — {timeAgo}",
+        "progress": "Hoy: {done} de {total} terminado",
+        "open-details": "Abrir detalles",
+        "empty-yet": "Aún no se ha registrado nada. {name} comenzará pronto.",
+        "all-done": "Todo por hoy está hecho.",
+        "expired-summary": "Modo cuidador finalizado. {done} de {total} elementos completados."
+      },
+      "exit-confirm": {
+        "title": "¿Finalizar el modo cuidador?",
+        "body": "{name} permanecerá como cuidador y aún podrá registrar eventos, pero sin la lista de verificación y sin enviarle actualizaciones de finalización.",
+        "destructive": "Finalizar modo cuidador",
+        "cancel": "Cancelar"
+      },
+      "auto-expired-toast": "El modo cuidador ha finalizado.",
+      "exit-error-toast": "No se pudo finalizar el modo cuidador. Inténtalo de nuevo."
+    },
+    "trainer": {
+      "today-prompt": {
+        "title": "Comparte el progreso con tu entrenador.",
+        "body": "El entrenador verá solo lo que tú elijas, sin acceso total al hogar.",
+        "primary": "Configurar el acceso",
+        "secondary": "Ahora no"
+      },
+      "more-row": "Compartir con un entrenador",
+      "more-active-row": "Entrenador: el acceso está activo",
+      "scope-selector": {
+        "screen-title": "Acceso al entrenador",
+        "intro": "Elige lo que verá el entrenador. Cada elemento se puede activar y desactivar por separado.",
+        "scopes": {
+          "puppy-profile": {
+            "title": "Perfil de cachorro",
+            "included": "Incluye: nombre, edad, foto seleccionada.",
+            "excluded": "No incluye: peso, microchip, contacto con el propietario."
+          },
+          "routine-summary": {
+            "title": "Resumen de rutina diaria",
+            "included": "Incluye: recuento de alimentación/paseo/ir al baño para la semana, rangos de tiempo generales",
+            "excluded": "No incluye: horas exactas, notas."
+          },
+          "timeline-range": {
+            "title": "Línea de tiempo para un rango",
+            "included": "Incluye: eventos de los tipos seleccionados en los días seleccionados",
+            "excluded": "No incluido: notas de texto libre que no marcaste como compartibles",
+            "cta": "Elige gama y tipos"
+          },
+          "training-notes": {
+            "title": "Notas de entrenamiento",
+            "included": "Incluye: tema y duración de la sesión de entrenamiento, notas que marcaste como compartibles",
+            "excluded": "No incluye: notas privadas"
+          },
+          "health-summary": {
+            "title": "Salud: breve resumen",
+            "included": "Incluye: nombre de entrada, estado, fecha",
+            "excluded": "No incluye: notas, contacto veterinario, fotografías.",
+            "default-off-disclosure": "Este elemento está desactivado de forma predeterminada.",
+            "one-time-disclosure": "El formador solo verá fechas y estados, sin notas ni contactos. Puedes cambiar esto más tarde."
+          }
+        },
+        "all-off-helper": "Active al menos un elemento para continuar.",
+        "timeline-error": "Elige un rango y al menos un tipo de evento",
+        "cta": "Continuar"
+      },
+      "preview": {
+        "screen-title": "Comprueba lo que verá el entrenador.",
+        "header-includes": "Este acceso incluye:",
+        "header-excludes": "No incluido:",
+        "common-excluded-bullets": [
+          "Horarios exactos del evento",
+          "Salud",
+          "Contactos de propietarios y veterinarios.",
+          "notas privadas"
+        ],
+        "expiry-label": "Expiración",
+        "disclosure": "Puedes cerrar el acceso en cualquier momento.",
+        "email-label": "Enviar a",
+        "primary": "enviar invitación",
+        "secondary": "Copiar enlace"
+      },
+      "manage": {
+        "screen-title": "Acceso al entrenador",
+        "status-active": "Activo",
+        "section-what-sees": "Lo que ve el entrenador",
+        "actions": [
+          "Editar lo que ve el entrenador",
+          "Extender el vencimiento",
+          "Cerrar acceso"
+        ],
+        "revoke-confirm": {
+          "title": "¿Cerrar el acceso del entrenador?",
+          "body": "El enlace dejará de funcionar inmediatamente. Puede enviar una nueva invitación si es necesario.",
+          "destructive": "Cerrar acceso",
+          "cancel": "Cancelar"
+        },
+        "expired-neutral": "El acceso expiró {date}. Puedes enviar una nueva invitación.",
+        "revoked-neutral": "Acceso cerrado {date}."
+      },
+      "accepted-view": {
+        "header-puppy-meta": "{puppyName}",
+        "header-from": "{age} • acceso desde {ownerName}",
+        "scope-summary": "Este acceso incluye: perfil, resumen de rutina, notas de entrenamiento. Activo a través de {date}.",
+        "summary-section-title": "Resumen de rutina (últimos 7 días)",
+        "summary-feedings": "Alimentación: {n} ({perDay}/día)",
+        "summary-walks": "Paseos: {n} (≈{perDay}/día)",
+        "summary-potty": "Pausas al baño: {n}",
+        "notes-section-title": "Notas de entrenamiento",
+        "note-row-template": "{date} • \"{topic}\" • {duration} mín.",
+        "footer": "Ver sólo. Sólo el propietario puede cerrar el acceso.",
+        "empty-per-scope": "Aún no hay datos para este rango"
+      }
+    },
+    "card-builder": {
+      "screen-title": "Tarjeta de {puppyName}",
+      "section-title": "Qué incluir en la tarjeta",
+      "fields": [
+        "Nombre y edad",
+        "Foto",
+        "Criar",
+        "Peso",
+        "Fecha de nacimiento",
+        "Microchip (número de chip)",
+        "Vacunas: entradas más recientes",
+        "contacto propietario"
+      ],
+      "footer-note": "Las notas privadas no están incluidas.",
+      "preview-cta": "Avance",
+      "empty-helper": "Elige al menos un campo.",
+      "photo-prompt": "Elige una foto para la tarjeta.",
+      "health-disclosure": "Sólo se incluirán estados y fechas. Sin notas, sin contactos clínicos."
+    },
+    "card-preview": {
+      "screen-title": "Avance",
+      "footer": "Esto es todo lo que verá el destinatario.",
+      "edit": "Editar",
+      "share": "Compartir"
+    },
+    "card-share-options": {
+      "title": "como compartir",
+      "option-link-title": "Enlace que puedes cerrar",
+      "option-link-body": "El destinatario lo abre en línea. Puedes cerrar el acceso en cualquier momento. Se requiere una caducidad.",
+      "option-snapshot-title": "Imagen/archivo",
+      "option-snapshot-body": "Una instantánea de la tarjeta que no se puede revocar después del envío.",
+      "cancel": "Cancelar",
+      "link-copied-toast": "Enlace copiado"
+    },
+    "card-management": {
+      "screen-title": "Tarjetas compartidas",
+      "section-active": "Activo",
+      "section-history": "Historia",
+      "row-status-active": "Activo a través de {date}",
+      "row-status-expiring": "Vence en {n} días",
+      "row-status-revoked": "Acceso cerrado {date}",
+      "overflow": [
+        "Copiar enlace",
+        "Extender el vencimiento",
+        "Cerrar acceso"
+      ],
+      "revoke-confirm": {
+        "title": "¿Cerrar el acceso a esta tarjeta?",
+        "body": "El enlace dejará de funcionar inmediatamente. Las instantáneas y los archivos que ya hayas enviado permanecerán con el destinatario.",
+        "destructive": "Cerrar acceso",
+        "cancel": "Cancelar"
+      },
+      "public-link-disclosure": "Cualquiera que tenga el enlace verá los campos que seleccionaste. Se requiere una caducidad y la capacidad de cerrar el acceso."
+    },
+    "revoked-or-expired-screen": {
+      "title": "Este acceso ya no está disponible",
+      "body": "Contacta al propietario si necesitas un nuevo acceso.",
+      "body-long": "Contacta al propietario si necesitas información actualizada.",
+      "cta": "Entiendo",
+      "_comment": "§3.3.6 — una frase neutral. Nunca diferencie revocado versus vencido."
+    }
+  },
+  "health": {
+    "tab-title": "Salud",
+    "footer-hint": "Este es un registro de entradas, no un consejo médico.",
+    "segments": [
+      "Todo",
+      "Vacunas",
+      "Tratos",
+      "Visitas"
+    ],
+    "filter-chips": [
+      "Plantillas",
+      "Confirmado",
+      "Hecho"
+    ],
+    "error-card": "No se pudieron cargar las entradas. Intenta actualizar.",
+    "refresh": "Refrescar",
+    "pills": {
+      "template": "Plantilla",
+      "needs-vet-review": "Pregúntale a tu veterinario",
+      "confirmed": "Confirmado",
+      "completed": "Hecho"
+    },
+    "template-row-subline": "Plantilla, no una receta",
+    "confirmed-meta-template": "Hecho {date} · {provider}",
+    "confirmed-meta-no-provider": "Hecho {date} · No hay ninguna clínica en la lista",
+    "sync-error-row": "Cambios no sincronizados. Intentar otra vez",
+    "record-types": {
+      "vaccination": "Vacunación",
+      "deworming": "Tratamiento de parásitos",
+      "prophylaxis": "Cuidado preventivo",
+      "vet-visit": "Visita al veterinario"
+    },
+    "add-record": {
+      "sheet-title": "Nueva entrada",
+      "close": "Cerca",
+      "hint-after-list": "Puedes agregar esto más tarde desde una plantilla.",
+      "form-cancel": "Cancelar",
+      "form-save": "Guardar",
+      "section-main": "Principal",
+      "section-extra": "Más",
+      "field-name": "Nombre",
+      "field-date": "Fecha",
+      "field-status": "Estado",
+      "status-segments": [
+        "Plantilla",
+        "Confirmado",
+        "Hecho"
+      ],
+      "field-clinic": "Clínica o veterinario (opcional)",
+      "field-note": "Nota (opcional)",
+      "urgent-toggle": "Marcar como urgente",
+      "urgent-hint": "Usa esto si ya hablaste con tu veterinario.",
+      "note-hint": "Las notas no se utilizan en análisis",
+      "privacy-hint": "Las notas solo son visibles para ti y los familiares invitados.",
+      "save-toast": "Entrada guardada",
+      "offline-banner": "Guardaremos esto tan pronto como vuelvas a estar en línea.",
+      "error-date": "Por favor revisa la fecha"
+    },
+    "edit-record": {
+      "screen-title": "Entrada",
+      "edit-action": "Editar",
+      "section-details": "Detalles",
+      "clinic-empty": "Clínica: —",
+      "section-history": "Historia",
+      "history-line": "Editado por ti · {date}",
+      "delete-action": "Eliminar entrada",
+      "delete-confirm": {
+        "title": "¿Eliminar esta entrada?",
+        "body": "La entrada desaparecerá de tu registro. Puedes deshacerlo en 5 segundos.",
+        "cancel": "Cancelar",
+        "destructive": "Borrar"
+      },
+      "delete-undo-toast": "Entrada eliminada. Deshacer"
+    },
+    "template-suggestion": {
+      "section-title": "Entradas sugeridas",
+      "footnote": "Estas son plantillas estándar. Tu veterinario siempre tiene la última palabra",
+      "header-example": "Plantilla: DHPP, 12 semanas",
+      "subline-template": "Plantilla, no receta.",
+      "subline-vet": "Vale la pena discutirlo con tu veterinario.",
+      "hide": "Esconder",
+      "add": "Agregar"
+    },
+    "status-transitions": {
+      "stages": [
+        "Plantilla",
+        "Pregúntale a tu veterinario",
+        "Confirmado",
+        "Hecho"
+      ],
+      "hint": "Puedes cambiar esto manualmente en cualquier momento.",
+      "a11y-template": "Etapa {current} de 4: {currentLabel}. Disponible: plantilla, pregunta a tu veterinario, confirmado, listo."
+    },
+    "vet-prep": {
+      "title": "Preparándose para la visita",
+      "subtitle": "Visita en {date}, {time}",
+      "checklist": [
+        "Traer cartilla de vacunación previa",
+        "Lista de preguntas para el veterinario",
+        "El premio favorito de tu cachorro",
+        "Correa y transportador"
+      ],
+      "add-item": "Agregar artículo",
+      "hint": "Esta es una lista de verificación personal, no instrucciones de tu veterinario."
+    },
+    "empty": {
+      "title": "Aún no hay entradas",
+      "body": "Agrega una primera vacunación, tratamiento o visita para ver el historial en un solo lugar.",
+      "primary": "Agregar entrada",
+      "secondary": "Explorar plantillas"
+    },
+    "share-preview": {
+      "title": "Lo que verá el destinatario",
+      "scope-label": "Alcance: resumen_salud",
+      "visible-header": "Visible:",
+      "visible-bullets": [
+        "Tipo de entrada (vacunación/tratamiento/visita)",
+        "Estado (plantilla/confirmado/hecho)",
+        "Fecha"
+      ],
+      "hidden-header": "No compartido:",
+      "hidden-bullets": [
+        "Nombre de la clínica y del veterinario",
+        "Notas",
+        "Fotos"
+      ],
+      "toggle-include-clinic": "Incluye clínica y notas.",
+      "toggle-hint": "Compártelos solo cuando los necesites",
+      "primary": "Enviar"
+    },
+    "a11y": {
+      "record-row": "Vacuna DHPP, estado confirmado, realizado el 12 de mayo, confirmado por ti"
+    }
+  },
+  "reminders": {
+    "screen-title": "Recordatorios",
+    "segments": [
+      "Activo",
+      "Apagado"
+    ],
+    "sections": {
+      "feeding": "Alimentación",
+      "health": "Salud",
+      "sitter": "cuidador de confianza",
+      "missed-today": "No registrado hoy"
+    },
+    "footer-quiet-hours": "Horas de silencio: en la configuración de notificaciones.",
+    "empty": "Tus recordatorios aparecerán aquí",
+    "form": {
+      "cancel": "Cancelar",
+      "title-new": "Nuevo recordatorio",
+      "save": "Guardar",
+      "field-name": "Nombre",
+      "field-category": "Categoría",
+      "category-options": [
+        "Alimentación",
+        "Baño",
+        "Dormir",
+        "Salud",
+        "Modelo",
+        "Otro"
+      ],
+      "category-health-hint": "Se utiliza como recordatorio para discutir una entrada con tu veterinario.",
+      "field-time": "Tiempo",
+      "field-repeat": "Repetir",
+      "repeat-options": [
+        "Cada día",
+        "Días laborables",
+        "Horario personalizado"
+      ],
+      "field-tz": "Huso horario",
+      "tz-auto-example": "Europa/Berlín (automático)",
+      "toggle-quiet": "Respetar las horas de silencio",
+      "toggle-sound": "Sonido",
+      "hint": "Este recordatorio se ejecuta localmente en este dispositivo. Activa Push en Configuración para recibirlo incluso cuando la aplicación esté cerrada.",
+      "error-no-days": "Elige al menos un día",
+      "permission-banner": "Las notificaciones están desactivadas. El recordatorio se guardará, pero no emitirá ningún sonido."
+    },
+    "quiet-hours": {
+      "title": "Horas tranquilas",
+      "range-example": "22:00 a 07:00",
+      "toggle-per-puppy": "Aplicar sólo a este cachorro",
+      "hint": "Durante las horas de silencio, los recordatorios permanecen en silencio y aparecen en la pantalla por la mañana.",
+      "save": "Guardar",
+      "error-min-window": "La ventana de silencio debe ser de al menos 30 minutos."
+    },
+    "push-notification": {
+      "title-feeding": "Alimentación",
+      "title-walk": "caminar / ir al baño",
+      "title-sleep": "Dormir",
+      "title-health": "Salud: vale la pena hablar con tu veterinario",
+      "title-sitter": "Niñera: lista de verificación nocturna",
+      "example-title": "Alimentación: 7:30 am",
+      "example-body": "Un comienzo suave para el día de {puppyName}.",
+      "actions": [
+        "Hecho",
+        "Posponer 10 min",
+        "Saltar"
+      ]
+    },
+    "card": {
+      "example-title": "Alimentación · 7:30 am",
+      "example-body": "Un suave comienzo del día",
+      "actions": [
+        "Hecho",
+        "Posponer",
+        "Saltar",
+        "Editar",
+        "Detener"
+      ],
+      "done-summary": "Hecho en {time}",
+      "snoozed-summary": "Pospuesto hasta {time}",
+      "skipped-summary": "Saltado",
+      "stop-confirm": "¿Desactivar este recordatorio?"
+    },
+    "sitter-card": {
+      "title-example": "Lista de verificación nocturna · 7:00 pm",
+      "subtitle-template": "{n} elementos · cuidador: {name}",
+      "actions": [
+        "Lista de verificación abierta",
+        "Posponer"
+      ],
+      "completed-summary": "Hecho · {time} · {name}"
+    },
+    "permission-denied": {
+      "title": "Las notificaciones están desactivadas",
+      "body": "Los recordatorios funcionan dentro de la aplicación, pero no emitirán ningún sonido mientras la pantalla esté cerrada.",
+      "how-to-enable": "Cómo habilitar",
+      "tone-fallback": "Los recordatorios aún se crean y son visibles en la aplicación."
+    },
+    "missed": {
+      "section": "No registrado hoy",
+      "row-template": "Alimentación {time} · no registrado",
+      "actions": [
+        "Marcar hecho",
+        "Saltar"
+      ],
+      "repeating-hint": "Puedes mover la hora o desactivar el recordatorio."
+    }
+  },
+  "guidance": {
+    "eyebrow-template": "Consejo del día · {current} de {total}",
+    "actions": [
+      "Leer",
+      "Lo intenté",
+      "Saltar"
+    ],
+    "read-summary": "Leer: {title}",
+    "practiced-summary": "Probado: {title}",
+    "skip-timeline-event": "Consejo omitido",
+    "escalation-pattern": "Si {sign}, contacta a tu clínica veterinaria.",
+    "topics": {
+      "first-night": {
+        "eyebrow": "Consejo del día · 1 de 14",
+        "title": "Primera noche en casa",
+        "body": "Pon la cama cerca de la tuya. Los lloriqueos silenciosos son normales. Voz suave, luces tenues. Por la mañana, una breve pausa para ir al baño.",
+        "escalation": "Si tu cachorro respira rápidamente y no puede calmarse, contacta a tu clínica veterinaria."
+      },
+      "potty-rhythm": {
+        "title": "Ritmo para ir al baño",
+        "body": "Un cachorro pequeño pide ir aproximadamente cada 1 o 2 horas y después de comer, dormir o jugar. Elogia con calma el momento en que salen a la calle.",
+        "escalation": "Si no orina nada durante un día completo, llame a su clínica"
+      },
+      "biting": {
+        "title": "Morder durante el juego",
+        "body": "Los cachorros exploran el mundo con la boca. Si los dientes tocan tu mano, di un suave \"ow\" y haz una pausa de 10 segundos. Luego ofrece un juguete.",
+        "escalation": "Si tu cachorro rompe repetidamente la piel de un adulto hasta el punto de causarle dolor, habla con un especialista en comportamiento."
+      },
+      "crate": {
+        "title": "La jaula como lugar tranquilo",
+        "body": "La jaula no es un castigo, es una guarida. Deja premios adentro y mantén la puerta abierta durante el día. Dormir en la jaula empieza con tramos breves de 10 minutos.",
+        "escalation": "Si tu cachorro entra en pánico en la jaula durante más de 15 minutos, detén el entrenamiento y habla con un especialista."
+      }
+    }
+  },
+  "more": {
+    "screen-title": "Más",
+    "sections": {
+      "puppy": "Cachorro",
+      "sharing": "Intercambio",
+      "records": "Registros y notificaciones",
+      "privacy": "Privacidad",
+      "support": "Apoyo",
+      "subscription": "Suscripción"
+    },
+    "rows": {
+      "puppy-profile": "Perfil de cachorro",
+      "quick-trackers": "rastreadores rápidos",
+      "family": "Familia",
+      "trainer-sitter": "Entrenador / cuidador",
+      "timeline": "Línea de tiempo",
+      "reminders": "Recordatorios",
+      "notifications": "Notificaciones",
+      "data-account": "Datos y cuenta",
+      "help": "Ayuda",
+      "about": "Acerca de",
+      "puppyplan-plus": "PuppyPlan Plus"
+    },
+    "puppy-profile": {
+      "screen-title": "Perfil de cachorro",
+      "save": "Guardar",
+      "change-photo": "Cambiar foto",
+      "field-name": "Nombre",
+      "field-birth": "Fecha de nacimiento / aprox.",
+      "field-breed": "Raza / mezcla / desconocida",
+      "field-gender": "Sexo",
+      "field-weight": "Peso (opcional)",
+      "field-note": "Nota",
+      "hint": "Esta información se utiliza únicamente dentro de la aplicación y en los enlaces compartidos que creas.",
+      "photo-permission-denied": "El acceso a fotografías está desactivado. Puedes usar uno de los avatares integrados.",
+      "avatar-actions": [
+        "tomar una foto",
+        "Elige de tu biblioteca",
+        "Usa una ilustración"
+      ]
+    },
+    "quick-trackers": {
+      "screen-title-template": "Rastreadores rápidos ({n} de 5 seleccionados)",
+      "hint": "Elige hasta 5 rastreadores para la pantalla Hoy. Arrastra para reordenar.",
+      "max-reached-hint": "Desactiva uno de los primeros seleccionados",
+      "items": [
+        "Alimentación",
+        "Baño",
+        "Sueño",
+        "Paseo",
+        "Peso",
+        "Juego",
+        "Mordidas"
+      ]
+    },
+    "notifications": {
+      "screen-title": "Notificaciones",
+      "section-local": "recordatorios locales",
+      "row-all-reminders": "Todos los recordatorios",
+      "local-hint": "Estos se ejecutan en este dispositivo.",
+      "section-push": "Push al dispositivo",
+      "row-push-reminders": "Recordatorios",
+      "row-push-sitter": "Lista de verificación terminada por el cuidador",
+      "push-hint": "En versión beta, la notificación se envía solo para estos eventos. No se presiona la actividad familiar.",
+      "section-quiet-hours": "Horas tranquilas",
+      "quiet-hours-example": "10:00 pm – 7:00 am",
+      "section-tz": "Huso horario",
+      "tz-example": "Europa/Berlín (automático)"
+    },
+    "privacy": {
+      "screen-title": "Datos y cuenta",
+      "section-consents": "Consentimientos",
+      "row-analytics": "Análisis de uso",
+      "analytics-hint": "Nos ayuda a mejorar la aplicación. No está vinculado a tu permiso de notificaciones.",
+      "section-errors": "Colección de errores",
+      "row-error-reports": "Informes de errores",
+      "errors-hint": "Los datos personales se eliminan antes del envío.",
+      "section-your-data": "Tus datos",
+      "row-export": "Exporta tus datos",
+      "section-account": "Cuenta",
+      "row-delete": "Eliminar cuenta",
+      "export-sheet": "Recopilaremos tus registros y te enviaremos un enlace a tu correo electrónico dentro de las 24 horas.",
+      "delete-sheet": {
+        "title": "Eliminar cuenta",
+        "body": "Esto eliminará tu perfil, los registros de tu cachorro y los enlaces que has compartido. Esto no se puede deshacer",
+        "confirm-input-prompt": "escribe la palabra \"ELIMINAR\"",
+        "confirm-input-word": "ELIMINAR"
+      },
+      "delete-toast": "Solicitud de eliminación recibida. Te enviaremos una confirmación a tu correo electrónico."
+    },
+    "help": {
+      "screen-title": "Ayuda",
+      "section-contact": "Contacto",
+      "row-support": "Contactar con soporte",
+      "support-email": "support@puppyplan.app",
+      "section-docs": "Documentos",
+      "row-privacy-policy": "política de privacidad",
+      "row-terms": "Condiciones de uso",
+      "section-about": "Acerca de",
+      "row-version": "Versión 1.0.0 (beta)",
+      "row-health-disclaimer": "Aviso legal de salud",
+      "health-disclaimer-sheet": "PuppyPlan te ayuda a mantener registros y recordatorios. No es consejo médico. Para cualquier duda sobre la salud de tu cachorro, consulta con tu veterinario."
+    }
+  },
+  "paywall": {
+    "title": "PuppyPlan Plus",
+    "subtitle": "Funciones ampliadas durante los primeros 90 días.",
+    "features": [
+      "Enlaces compartidos ilimitados",
+      "Exportación sanitaria ampliada",
+      "Varios cachorros en una cuenta"
+    ],
+    "plan-monthly": "Mensual · 8,99 €",
+    "plan-yearly": "Anual · 49,99 € (ahorra 53%)",
+    "primary": "Suscribirse",
+    "secondary": "Restaurar compras",
+    "legal": "Renovación automática. Puedes cancelar en la App Store.",
+    "free-vs-plus": {
+      "free": [
+        "Hoy + Cronología",
+        "1 acceso compartido",
+        "Exportación básica",
+        "1 cachorro"
+      ],
+      "plus": [
+        "Todo lo de Free",
+        "Acceso compartido ilimitado",
+        "Exportación sanitaria ampliada",
+        "Varios cachorros"
+      ],
+      "header-free": "Gratis",
+      "header-plus": "Más"
+    },
+    "states": {
+      "offline": "Cargaremos los planes una vez que vuelvas a estar en línea.",
+      "error": "No se pudieron cargar los planes. Intenta actualizar.",
+      "active-until": "Suscripción activa hasta {date}. Gestionada en la App Store."
+    },
+    "a11y-price-example": "Anualmente, 49 euros 99 céntimos, ahorra un 53 por ciento"
+  },
+  "permission-denied-patterns": {
+    "notifications-body": "Puedes seguir adelante sin ellos. Los recordatorios son visibles dentro de la aplicación.",
+    "camera-body": "Puedes seguir adelante sin él. Usa fotos de tu biblioteca o ilustraciones.",
+    "photos-body": "Puedes seguir adelante sin ellos. Usa los avatares integrados",
+    "title-template": "El acceso a {resource} está desactivado",
+    "_comment": "{resource} — p.ej. \"notificaciones\" / \"la cámara\" / \"fotos\". El inglés no necesita cambios gramaticales de casos."
+  },
+  "errors": {
+    "save-failed": "No se pudo guardar",
+    "save-failed-local": "No se pudo guardar. Tu entrada se guarda localmente; lo intentaremos de nuevo más tarde.",
+    "save-failed-connection": "No se pudo guardar. Comprueba tu conexión.",
+    "load-failed": "No se pudo cargar",
+    "tariffs-load-failed": "No se pudieron cargar los planes. Intenta actualizar.",
+    "session-revoked": "El acceso a {puppyName} está cerrado. Si esto te parece incorrecto, contacta al propietario.",
+    "duplicate-soft": "Parece un duplicado de los últimos 60 segundos. ¿Guardar de todos modos?",
+    "too-many-attempts": "Muchos intentos seguidos. Lo intentaremos de nuevo más tarde automáticamente.",
+    "exit-sitter-failed": "No se pudo finalizar el modo cuidador. Inténtalo de nuevo.",
+    "invite-load": "No se pudo cargar la invitación. Comprueba tu conexión.",
+    "min-quiet-window": "La ventana de silencio debe ser de al menos 30 minutos."
+  }
+}

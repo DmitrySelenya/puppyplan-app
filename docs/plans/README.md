@@ -13,14 +13,14 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
 | Active roadmap | [Architecture Foundation Roadmap](active/2026-05-21-phase-0-architecture-cleanup.md) | Split through `PUP-2`, `PUP-3`, `PUP-4`, and follow-up issues | Do not assign directly; use it as the dependency map for scaffold, Supabase/RLS, Quick Log, and release gates |
-| Active task plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7` | Phases 1-3 can run now; Phases 4-7 wait for Expo scaffold/package scripts from the foundation roadmap |
+| Active task plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7` | Phases 1-3 complete and synced to Linear `In Review`; Spanish root strings added; continue Phases 4-7 only after `PUP-2`/`PUP-4` |
 | Completed | [Agent Company Setup](completed/2026-05-21-agent-company-setup.md) | `PUP-1` | Closed; `PUP-6` separately tracks first-PR GitHub integration verification |
 
 ## Execution Order
 
-1. Run `PUP-7` from the Design Handoff plan for Phases 1-3: raw design intake, manifest/screen inventory, and screenshot atlas.
-2. Run the foundation roadmap only through scoped Linear issues. `PUP-2` owns the Expo scaffold prerequisite needed by later design runtime work.
-3. After the Expo scaffold and package scripts exist, continue or split `PUP-7` Phases 4-7: token generation, native design primitives, i18n/string-budget checks, and the in-app design gallery.
+1. Run the foundation roadmap only through scoped Linear issues. `PUP-2` owns the Expo scaffold prerequisite needed by later design runtime work.
+2. After the Expo scaffold and package scripts exist, continue or split `PUP-7` Phases 4-7: token generation, native design primitives, EN/RU/ES i18n/string-budget checks, and the in-app design gallery.
+3. Re-run `PUP-7` screenshot/package checks whenever the raw design export changes.
 4. Supabase/RLS, Quick Log queue, and release/privacy gates should be assigned from the foundation roadmap as separate Linear issues, not mixed into `PUP-7`.
 
 ## Maintenance Rules

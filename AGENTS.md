@@ -58,6 +58,7 @@ Do not put PuppyPlan-specific process rules in global user skills such as `~/.co
 - Realtime is an enhancement, not a correctness dependency.
 - RLS and Edge Functions enforce access; UI guards are convenience only.
 - Every user-facing string comes through i18n.
+- MVP ships with English, Russian, and Spanish locale files from the start; typed-key parity and string-budget checks must cover all three.
 - No raw puppy names, notes, emails, provider names, photos, or tokens in analytics/logs.
 - Any schema change beyond PRD section 6.10 requires ADR-0007 process and CTO approval.
 - OTA/EAS Update stays off in MVP.
@@ -134,6 +135,8 @@ Backlog -> Todo -> In Progress -> In Review -> Done
 - **In Review:** implementation is ready for review or verification.
 - **Done:** merged or otherwise completed with verification evidence recorded.
 
+For Linear-backed work, keeping the Linear issue current is mandatory. Agents must update Linear when work starts, when a phase/checklist item completes, when scope or blockers change, and when verification is ready. Do not rely on repo plan updates alone: mirror concise progress, blocker, and verification status back to the Linear issue before ending the turn.
+
 Before working from Linear, an agent must read the issue, linked docs/plans, relevant PRD/DESIGN/architecture/ADR sections, and any attached Linear document. If the issue lacks acceptance criteria, source docs, or privacy/security constraints, add or request that context before implementation.
 
 Linear issues must use the task contract from this file: Goal, Non-goals, Constraints, Acceptance, Likely files, Verification. Use labels from `docs/agents/linear-workflow.md`; apply `agent-ready` only when a task has enough context for an implementation agent to start without guessing.
@@ -146,6 +149,7 @@ Never put secrets, tokens, production credentials, raw puppy names, raw notes, r
 
 - Restate the goal and success criteria before coding.
 - For Linear-backed work, use the issue's Linear-generated `gitBranchName` without modification (for example `dimaselenya/pup-123-quick-log-queue`). If Linear does not expose a generated branch, use `pup-<issue-number>-<short-slug>`. Include the matching `PUP-___` in the PR title and Work Tracking section, and keep one primary issue per branch.
+- For Linear-backed work, move or comment the issue into `In Progress` at start, keep phase/checklist progress mirrored in Linear, and move to `In Review` only after verification evidence is recorded there.
 - Read relevant PRD/design/architecture/ADR docs before editing.
 - For UX, flow, API, storage, schema, permissions, release, or architecture changes, create or update a `docs/plans/active/YYYY-MM-DD-<topic>.md` plan/contract.
 - If a plan exists, read the full plan before implementation, identify the current phase, and update checkboxes/changelog as work completes.
@@ -167,6 +171,7 @@ Use this shape for non-trivial tasks:
 ## Definition Of Done
 
 - Acceptance criteria are met.
+- The tracked Linear issue reflects the current status, completed checklist items, blockers/dependencies, and verification evidence.
 - Relevant architecture docs, ADRs, diagrams, contracts, migrations, generated types, i18n keys, and tests are updated.
 - No PII or secrets are exposed in logs, analytics, fixtures, docs, screenshots, or PR text.
 - Touched behavior has focused tests.
