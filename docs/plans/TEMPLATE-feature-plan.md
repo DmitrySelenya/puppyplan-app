@@ -178,8 +178,8 @@ Important PuppyPlan invariants to reuse when relevant:
 ### i18n And String Budgets
 
 - [ ] No raw user-facing strings in UI.
-- [ ] EN/RU key parity updated.
-- [ ] ICU plurals used where needed, including Russian forms.
+- [ ] EN/RU/ES key parity updated.
+- [ ] ICU plurals used where needed, including locale forms such as Russian `one`/`few`/`many`/`other` and Spanish `one`/`other`.
 - [ ] String-budget-sensitive labels checked: tabs, CTAs, pills, tracker tiles, notification actions.
 
 ---

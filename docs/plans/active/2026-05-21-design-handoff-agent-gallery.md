@@ -9,7 +9,7 @@
 
 **Plan type:** Linear task plan for `PUP-7`.
 
-**Current phase:** Phase 1 - Design Artifact Intake.
+**Current phase:** Phases 1-3 complete with deep-review and second-agent follow-up fixes applied locally; Spanish root strings added as pre-scaffold locale data; Phases 4-7 blocked pending `PUP-2` Expo scaffold and package scripts.
 
 **Current Linear scope:** `PUP-7` should execute Phases 1-3 now. Phases 4-7 are blocked until the Expo scaffold and package scripts exist through `PUP-2` from the architecture foundation roadmap.
 
@@ -141,7 +141,7 @@ Each invariant must map to an automated check once the app scaffold exists.
   - **Check:** token generation/drift check compares `design-tokens.json`, `tokens.css`, and future `src/design/tokens.ts`.
 
 - **Invariant 5:** user-facing native UI strings never bypass i18n.
-  - **Test:** future i18n lint/string-budget checks plus EN/RU parity checks.
+  - **Test:** future i18n lint/string-budget checks plus EN/RU/ES parity checks.
 
 - **Invariant 6:** design screenshots and fixtures contain only synthetic, non-private data.
   - **Check:** manual review plus future PII scan over committed artifacts.
@@ -182,8 +182,8 @@ Important PuppyPlan invariants that still apply:
 
 ### Contracts And i18n
 - `src/contracts/business-rules.ts` - Quick Log timing constants and tested business rules.
-- `src/lib/i18n/` - typed keys, EN/RU parity, string budget checks.
-- `STRINGS.en.json`, `STRINGS.ru.json` - current root source strings until they are ingested into the future `src/lib/i18n/` pipeline.
+- `src/lib/i18n/` - typed keys, EN/RU/ES parity, string budget checks.
+- `STRINGS.en.json`, `STRINGS.ru.json`, `STRINGS.es.json` - current root source strings until they are ingested into the future `src/lib/i18n/` pipeline.
 
 ### Native Design Gallery
 - `app/_dev/design.tsx` or `app/_dev/components.tsx` - development-only gallery route.
@@ -251,8 +251,8 @@ Important PuppyPlan invariants that still apply:
 ### i18n And String Budgets
 
 - [ ] No raw user-facing strings in UI.
-- [ ] EN/RU key parity updated.
-- [ ] ICU plurals used where needed, including Russian forms.
+- [ ] EN/RU/ES key parity updated.
+- [ ] ICU plurals used where needed, including locale forms such as Russian `one`/`few`/`many`/`other` and Spanish `one`/`other`.
 - [ ] String-budget-sensitive labels checked: tabs, CTAs, pills, tracker tiles, notification actions.
 - [ ] Design screenshots that include text are treated as visual references, not i18n source.
 
@@ -262,7 +262,9 @@ Important PuppyPlan invariants that still apply:
 
 - [ ] Raw design screenshots and generated PNGs use synthetic data only.
 - [ ] No puppy names, notes, emails, provider names, photos, invite/share tokens, push tokens, or production identifiers are committed.
+- [ ] Startup locale files remain complete for English, Russian, and Spanish.
 - [ ] Generated screenshots are reviewed before commit if the raw export changes.
+- [ ] PNGs are not OCR-scanned; privacy relies on source text policy plus manual visual review before commit.
 - [ ] No analytics or observability runtime changes are part of this plan.
 - [ ] Future visual regression artifacts must scrub or use synthetic data only.
 
@@ -278,7 +280,7 @@ Important PuppyPlan invariants that still apply:
 - Modified: `AGENTS.md`
 - Modified: `DESIGN.md` if future design wording changes
 - Modified: `design-tokens.json`
-- Modified: `STRINGS.en.json`, `STRINGS.ru.json`
+- Modified: `STRINGS.en.json`, `STRINGS.ru.json`, `STRINGS.es.json`
 - Modified: `puppyplan-prd-v2.md`
 - Modified: `docs/architecture/*`
 - Modified: `docs/plans/TEMPLATE-feature-plan.md`
@@ -290,7 +292,7 @@ Important PuppyPlan invariants that still apply:
 - [x] Validate JSON files touched by the cleanup.
 
 **Acceptance criteria:**
-- `rg` finds no active repo reference to `AUDIT_FIXES`, `12 minutes`, `12-min`, or `duplicate-warning-window-min` outside this historical planning note.
+- `rg` finds no stale duplicate-warning long-window markers in active product docs or the design package, apart from validator literals that intentionally reject those strings.
 - JSON validation passes for design tokens and string files.
 
 ### Phase 1 - Design Artifact Intake
@@ -303,13 +305,13 @@ Important PuppyPlan invariants that still apply:
 - Copy from: `/Users/dmitryselenya/Downloads/puppy_app`
 
 **Checklist:**
-- [ ] Copy the Cloud Design export into `docs/design/v1/raw/`, excluding `uploads/AUDIT_FIXES*.md`.
-- [ ] Keep raw folder structure intact enough to preserve relative imports.
-- [ ] Mark `PuppyPlan.html` as current.
-- [ ] Mark `PuppyPlan-print.html`, `PuppyPlan.standalone.src.html`, and duplicate uploads as stale/reference unless proven current.
-- [ ] Confirm no private data appears in raw screenshots/uploads before commit.
-- [ ] Add a README table of contents that lists included raw files, excluded historical audit files, and current/stale status.
-- [ ] Document how agents should open and inspect the raw package.
+- [x] Copy the Cloud Design export into `docs/design/v1/raw/`, excluding `uploads/AUDIT_FIXES*.md`.
+- [x] Keep raw folder structure intact enough to preserve relative imports.
+- [x] Mark `PuppyPlan.html` as current.
+- [x] Mark `PuppyPlan-print.html`, `PuppyPlan.standalone.src.html`, and duplicate uploads as stale/reference unless proven current.
+- [x] Confirm no private data appears in raw screenshots/uploads before commit.
+- [x] Add a README table of contents that lists included raw files, excluded historical audit files, and current/stale status.
+- [x] Document how agents should open and inspect the raw package.
 
 **Acceptance criteria:**
 - `docs/design/v1/README.md` contains a current/stale table of contents.
@@ -324,16 +326,15 @@ Important PuppyPlan invariants that still apply:
 **Files:**
 - Create: `docs/design/v1/manifest.json`
 - Create: `docs/design/v1/design-audit-reconciliation.md`
-- Create: `docs/design/v1/screenshots/index.md`
-- Future script: `scripts/design/extract-artboards.*`
+- Create: `scripts/design/extract-artboards.mjs`
 
 **Checklist:**
-- [ ] Extract artboards from `PuppyPlan.html`.
-- [ ] Record section, artboard id, title, dimensions, route/screen intent, state type, priority, and source file.
-- [ ] Reconcile the observed count: 17 sections, 65 artboards, 62 phone screens.
-- [ ] Reconcile useful findings from the downloaded historical audit note as `applied`, `superseded`, or `open`; create follow-up issues for any real open items.
-- [ ] Flag missing or intentionally deferred states.
-- [ ] Add implementation priority tags: `mvp`, `post-mvp`, `reference`, `stale`.
+- [x] Extract artboards from `PuppyPlan.html`.
+- [x] Record section, artboard id, title, dimensions, route/screen intent, state type, priority, and source file.
+- [x] Reconcile the observed count: 17 sections, 65 artboards, 62 phone screens.
+- [x] Reconcile useful findings from the downloaded historical audit note as `applied`, `superseded`, or `open`; create follow-up issues for any real open items.
+- [x] Flag missing or intentionally deferred states.
+- [x] Add implementation priority tags: `mvp`, `post-mvp`, `reference`, `stale`.
 
 **Acceptance criteria:**
 - The manifest is the canonical inventory for agent implementation and screenshot export.
@@ -345,16 +346,20 @@ Important PuppyPlan invariants that still apply:
 
 **Files:**
 - Create: `docs/design/v1/screenshots/<section>/<artboard-id>.png`
-- Future script: `scripts/design/export-artboard-screenshots.*`
-- Future script: `scripts/design/check-design-package.*`
+- Create: `docs/design/v1/screenshots/index.md`
+- Create: `scripts/design/export-artboard-screenshots.mjs`
+- Create: `scripts/design/check-design-package.mjs`
+- Create: `scripts/design/lib/png.mjs`
 
 **Checklist:**
-- [ ] Use Playwright or an equivalent local browser runner to render `PuppyPlan.html`.
-- [ ] Account for `PuppyPlan.html` loading React, ReactDOM, and Babel from `unpkg.com`: either require network for the local export command or vendor those assets into `docs/design/v1/raw/_vendor/` before making this a CI gate.
-- [ ] Export one PNG per current artboard.
-- [ ] Verify each PNG is nonblank and has the expected dimensions.
-- [ ] Generate `screenshots/index.md` with thumbnails/paths, dimensions, and section grouping.
-- [ ] Commit the first generated light-mode atlas if size and PII review are acceptable; otherwise commit the manifest and generator first, with the reason recorded here.
+- [x] Use Playwright or an equivalent local browser runner to render `PuppyPlan.html`.
+- [x] Account for `PuppyPlan.html` loading React, ReactDOM, and Babel from `unpkg.com`: either require network for the local export command or vendor those assets into `docs/design/v1/raw/_vendor/` before making this a CI gate.
+- [x] Keep screenshot export out of `npm run check`/CI until network dependencies are vendored and the target runner has a supported Chrome/Chromium path.
+- [x] Export one PNG per current artboard.
+- [x] Verify each PNG is nonblank and has the expected dimensions.
+- [x] Add smoke tests for the custom PNG reader's blank-image and dimension-failure behavior.
+- [x] Generate `screenshots/index.md` with thumbnails/paths, dimensions, and section grouping.
+- [x] Record commit decision: no git commit was made in this run because the user did not approve commit; generated atlas size is 3,630,207 bytes and remains in the worktree for review.
 
 **Acceptance criteria:**
 - Agents can inspect pixel references by reading PNGs directly, without Figma or Cloud Design.
@@ -403,15 +408,18 @@ Important PuppyPlan invariants that still apply:
 
 **Foundation dependency:** requires the Expo scaffold/package scripts from `PUP-2`. Required i18n/string-budget checks should be wired into the local/CI gate through `PUP-4`.
 
+**Pre-scaffold note:** `STRINGS.es.json` now exists with EN object-key parity so Spanish can ship from the first app build. Runtime wiring, typed key generation, and budget gates still remain Phase 6 work after the Expo scaffold exists.
+
 **Files:**
-- Read/update: `STRINGS.en.json`, `STRINGS.ru.json`
+- Read/update: `STRINGS.en.json`, `STRINGS.ru.json`, `STRINGS.es.json`
 - Future create: `src/lib/i18n/`
 - Future script/check: i18n key parity and string budgets
 
 **Checklist:**
 - [ ] Preserve existing typed string keys when scaffolding i18n.
-- [ ] Add EN/RU parity check.
+- [ ] Add EN/RU/ES parity check.
 - [ ] Add string-budget checks for tabs, CTAs, pills, tracker tiles, notification actions, and compact rows.
+- [ ] Include EN/RU/ES screenshots in Dynamic Type XXL/XXXL verification for core flows.
 - [ ] Confirm duplicate-warning copy refers to the last 60 seconds.
 
 **Acceptance criteria:**
@@ -445,10 +453,10 @@ Important PuppyPlan invariants that still apply:
 - Future update: PR descriptions and verification evidence
 
 **Checklist:**
-- [ ] Keep one coordination issue for this plan.
-- [ ] Split implementation issues only when a phase becomes large enough for parallel work.
-- [ ] Mark `agent-ready` only for phases with enough context and acceptance criteria.
-- [ ] Add changelog entries when phases complete or design package counts change.
+- [x] Keep one coordination issue for this plan.
+- [x] Split implementation issues only when a phase becomes large enough for parallel work.
+- [x] Mark `agent-ready` only for phases with enough context and acceptance criteria.
+- [x] Add changelog entries when phases complete or design package counts change.
 
 **Acceptance criteria:**
 - A new agent can read the Linear issue plus this plan and know exactly what was done, what remains, and which files prove it.
@@ -459,10 +467,28 @@ Important PuppyPlan invariants that still apply:
 
 Current verification:
 
+- `find docs/design/v1/raw -maxdepth 2 -type f | sort`
+- `find docs/design/v1/raw -name 'AUDIT_FIXES*.md'`
+- `python3 -m json.tool docs/design/v1/manifest.json`
+- `node --check scripts/design/lib/png.mjs`
+- `node --check scripts/design/lib/policy.mjs`
+- `node --check scripts/design/check-design-package.mjs`
+- `node --check scripts/design/export-artboard-screenshots.mjs`
+- `node --test scripts/design/lib/png.test.mjs`
+- `node --test scripts/design/lib/policy.test.mjs`
+- `node scripts/design/extract-artboards.mjs --check`
+- `node scripts/design/export-artboard-screenshots.mjs`
+- `node scripts/design/check-design-package.mjs`
+- `git diff --check`
+
+Earlier cleanup verification:
+
 - `python3 -m json.tool design-tokens.json`
 - `python3 -m json.tool STRINGS.en.json`
 - `python3 -m json.tool STRINGS.ru.json`
-- `rg -n "AUDIT_FIXES|12 minutes|12-min|duplicate-warning-window-min" . -g '!docs/plans/active/2026-05-21-design-handoff-agent-gallery.md'`
+- `python3 -m json.tool STRINGS.es.json`
+- `node --test scripts/design/lib/strings.test.mjs`
+- `rg -n "12 minutes|12-min|12 минут|12-минут|duplicate-warning-window-min" DESIGN.md puppyplan-prd-v2.md docs/design/v1`
 
 Future verification after artifact intake:
 
@@ -498,3 +524,13 @@ Future verification after Expo scaffold:
 - 2026-05-21: Created Linear coordination issue `PUP-7` for plan tracking.
 - 2026-05-21: Fixed architecture doc links, excluded downloaded audit markdown from raw intake, added audit reconciliation, documented `unpkg.com` screenshot dependency, and made the first PNG atlas a chosen path when size/PII review pass.
 - 2026-05-21: Clarified `PUP-7` execution scope: Phases 1-3 can run now; Phases 4-7 depend on foundation roadmap work, especially `PUP-2` Expo scaffold and `PUP-4` verification gates.
+- 2026-05-21: Completed Phase 1 raw design artifact intake into `docs/design/v1/raw/`, excluded `uploads/AUDIT_FIXES*.md`, added `docs/design/v1/README.md`, and verified raw contents contain only synthetic/reference design data.
+- 2026-05-22: Completed Phase 2 manifest and screen inventory with `docs/design/v1/manifest.json`, `scripts/design/extract-artboards.mjs`, and `docs/design/v1/design-audit-reconciliation.md`; current canvas reconciles to 17 sections, 65 artboards, and 62 phone screens.
+- 2026-05-22: Completed Phase 3 screenshot atlas automation with 65 generated PNGs, `docs/design/v1/screenshots/index.md`, Chrome/CDP export automation, and package validation for count, dimensions, nonblank pixels, and audit-file exclusion.
+- 2026-05-22: Fixed deep-review findings by syncing root PRD/DESIGN duplicate-warning copy to 60 seconds, sanitizing design-package identity placeholders to synthetic examples, and adding text-policy checks to `scripts/design/check-design-package.mjs`.
+- 2026-05-22: Addressed follow-up review by extending text policy to root product/string docs, sanitizing active personas to synthetic placeholders, relabeling uploaded product docs as sanitized historical snapshots, marking screenshot export as local/manual until vendored dependencies and runner paths are ready, and adding PNG smoke tests.
+- 2026-05-22: Closed `PUP-7` tracking tail by syncing Linear to `In Review`, removing stale local Linear-status notes, and recording Phases 4-7 as blocked on `PUP-2`/`PUP-4`.
+- 2026-05-22: Addressed additional follow-up review by replacing the remaining foster persona name with `Волонтёр A`, extending text-policy tests for Sarah/Sara/Сара and email placeholders, adding an explicit unsupported-PNG encoding error, adding `STRINGS.es.json`, and documenting startup locale scope as EN/RU/ES.
+- 2026-05-22: Addressed Spanish localization follow-up review by fixing high-risk ES copy regressions, standardizing cited strings on informal `tú`, adding Spanish value-level string tests, and syncing EN/RU-only plan language to EN/RU/ES.
+- 2026-05-22: Addressed deep-review fixes by changing the Quick Log duplicate-warning artboard and PNG atlas from a 4-minute example to a 42-second example, adding text-policy coverage for stale duplicate-window examples, tightening Spanish core-copy tests and informal-register checks, and aligning `STRINGS.en.json` metadata with English-as-master i18n docs.
+- 2026-05-22: Addressed second-agent review by aligning RU/ES locale metadata with English-as-master provenance, making RU activity/duplicate-warning copy grammatically consistent without gendered actor verbs, adding regression tests for those cases, and removing the dead `12-min` manifest-generator branch in favor of existing text-policy enforcement.

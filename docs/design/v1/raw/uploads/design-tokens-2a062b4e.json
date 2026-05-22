@@ -1,0 +1,284 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "PuppyPlan design tokens — v1 (first draft, light mode + phone only). Source of truth: DESIGN.md §1.2–1.8. Any drift between this file and DESIGN.md should be resolved in favor of DESIGN.md §1.",
+  "$metadata": {
+    "version": "1.0.0-v1",
+    "scope": "light-mode, phone-only",
+    "source": "DESIGN.md",
+    "lastUpdated": "2026-05-18"
+  },
+
+  "color": {
+    "$description": "Color tokens. Light mode only in v1. Dark fallback values exist in DESIGN.md §1.2.1 as v2 reference but are not rendered in v1.",
+
+    "surface": {
+      "base":    { "$value": "#FBFAF7", "$type": "color", "$description": "Warm Off-white. Основной фон экрана. DESIGN.md §1.2.1" },
+      "raised":  { "$value": "#FFFFFF", "$type": "color", "$description": "Cards, list rows. DESIGN.md §1.2.1" },
+      "sunken":  { "$value": "#F1ECE3", "$type": "color", "$description": "Группированные секции, search bar. DESIGN.md §1.2.1" },
+      "overlay": { "$value": "rgba(255,255,255,0.96)", "$type": "color", "$description": "Sheets, popovers. DESIGN.md §1.2.1" },
+      "scrim":   { "$value": "rgba(26,26,24,0.32)", "$type": "color", "$description": "Modal backdrop. DESIGN.md §1.2.1" }
+    },
+
+    "text": {
+      "primary":     { "$value": "#1C1F1B", "$type": "color", "$description": "Charcoal. Contrast 14.8:1 vs surface/base. DESIGN.md §1.2.2" },
+      "secondary":   { "$value": "#4A4E48", "$type": "color", "$description": "Contrast 8.6:1. DESIGN.md §1.2.2" },
+      "tertiary":    { "$value": "#76796F", "$type": "color", "$description": "Contrast 4.7:1. DESIGN.md §1.2.2" },
+      "disabled":    { "$value": "#A6A89F", "$type": "color", "$description": "Decorative only — 2.6:1 (fails WCAG AA for body text). DESIGN.md §1.2.2" },
+      "on-primary":  { "$value": "#FFFFFF", "$type": "color", "$description": "White на primary/600. 5.1:1. DESIGN.md §1.2.2" },
+      "on-accent":   { "$value": "#1C1F1B", "$type": "color", "$description": "Charcoal на accent/300. 9.2:1. DESIGN.md §1.2.2" },
+      "link":        { "$value": "#0E7490", "$type": "color", "$description": "Same as primary/600. 5.0:1. DESIGN.md §1.2.2" }
+    },
+
+    "primary": {
+      "$description": "Calm Teal scale. Brand, focus, primary actions. DESIGN.md §1.2.3",
+      "50":  { "$value": "#ECFEFF", "$type": "color", "$description": "Tinted backgrounds, selected rows" },
+      "100": { "$value": "#CFFAFE", "$type": "color", "$description": "Hover/pressed tint" },
+      "200": { "$value": "#A5F3FC", "$type": "color", "$description": "Disabled fill" },
+      "300": { "$value": "#67E8F9", "$type": "color", "$description": "Illustrative" },
+      "400": { "$value": "#22D3EE", "$type": "color", "$description": "Secondary brand" },
+      "500": { "$value": "#0891B2", "$type": "color", "$description": "Calm Teal — default brand, focus ring" },
+      "600": { "$value": "#0E7490", "$type": "color", "$description": "Primary button fill (contrast-safe with white text)" },
+      "700": { "$value": "#155E75", "$type": "color", "$description": "Pressed state" },
+      "800": { "$value": "#164E63", "$type": "color", "$description": "Headings on tinted bg" },
+      "900": { "$value": "#083344", "$type": "color", "$description": "Reserved for v2 dark mode" }
+    },
+
+    "accent": {
+      "$description": "Ember Coral — CELEBRATION ONLY. Never default CTA, never urgent. DESIGN.md §1.2.4",
+      "100": { "$value": "#FBEBE0", "$type": "color", "$description": "Celebration card tint" },
+      "300": { "$value": "#F4B89A", "$type": "color", "$description": "Confetti, badge fill" },
+      "500": { "$value": "#E07A4F", "$type": "color", "$description": "Ember Coral — celebration icon" },
+      "700": { "$value": "#A14B26", "$type": "color", "$description": "Text on accent/100. 6.9:1" }
+    },
+
+    "status": {
+      "$description": "Muted status colors. Danger is user-marked only. DESIGN.md §1.2.5",
+      "success":      { "$value": "#3F7A57", "$type": "color", "$description": "Sage. 5.0:1" },
+      "success-tint": { "$value": "#E6EFE8", "$type": "color", "$description": "Fill only" },
+      "warning":      { "$value": "#A06A1F", "$type": "color", "$description": "Amber Bark. 5.2:1" },
+      "warning-tint": { "$value": "#F6ECD8", "$type": "color", "$description": "Fill only" },
+      "danger":       { "$value": "#9A3B2E", "$type": "color", "$description": "Clay Red — USER-MARKED URGENT ONLY. 6.0:1. NEVER bright red." },
+      "danger-tint":  { "$value": "#F4DDD8", "$type": "color", "$description": "Fill only" },
+      "info":         { "$value": "#3C5C7A", "$type": "color", "$description": "Slate Blue. 6.1:1" },
+      "info-tint":    { "$value": "#E2E8EF", "$type": "color", "$description": "Fill only" }
+    },
+
+    "stroke": {
+      "default":           { "$value": "#E2DDD2", "$type": "color", "$description": "Card hairline, dividers. DESIGN.md §1.2.6" },
+      "strong":            { "$value": "#C9C3B5", "$type": "color", "$description": "DESIGN.md §1.2.6" },
+      "divider-hairline":  { "$value": "rgba(226,221,210,0.6)", "$type": "color", "$description": "stroke/default @ 60%. DESIGN.md §1.2.6" },
+      "focus-ring":        { "$value": "#0E7490", "$type": "color", "$description": "2pt outline + 2pt offset. DESIGN.md §1.2.6" }
+    },
+
+    "pill": {
+      "$description": "Health-status pill colors. Pill = fill + text + icon (shape duplicates meaning, never color alone). DESIGN.md §1.2.7",
+      "template":          { "fill": { "$value": "#F1ECE3", "$type": "color" }, "text": { "$value": "#4A4E48", "$type": "color" } },
+      "needs-vet-review":  { "fill": { "$value": "#F6ECD8", "$type": "color" }, "text": { "$value": "#7A4F12", "$type": "color", "$description": "5.3:1" } },
+      "confirmed":         { "fill": { "$value": "#E6EFE8", "$type": "color" }, "text": { "$value": "#2F5E41", "$type": "color", "$description": "6.2:1" } },
+      "completed":         { "fill": { "$value": "#EAF3F3", "$type": "color" }, "text": { "$value": "#175255", "$type": "color", "$description": "7.4:1" } },
+      "pending":           { "fill": { "$value": "#F1ECE3", "$type": "color" }, "text": { "$value": "#4A4E48", "$type": "color" } },
+      "failed":            { "fill": { "$value": "#F4DDD8", "$type": "color" }, "text": { "$value": "#7A2A20", "$type": "color", "$description": "6.5:1" } },
+      "urgent":            { "fill": { "$value": "#F4DDD8", "$type": "color" }, "text": { "$value": "#7A2A20", "$type": "color", "$description": "User-marked only" } }
+    }
+  },
+
+  "typography": {
+    "$description": "Native system fonts: SF Pro Text/Display (iOS), Roboto (Android). DESIGN.md §1.3",
+    "fontFamily": {
+      "ios":     { "$value": "SF Pro Text", "$type": "fontFamily" },
+      "android": { "$value": "Roboto", "$type": "fontFamily" },
+      "mono":    { "$value": ["SF Mono", "Roboto Mono", "monospace"], "$type": "fontFamily" }
+    },
+    "fontWeight": {
+      "regular":  { "$value": 400, "$type": "fontWeight" },
+      "semibold": { "$value": 600, "$type": "fontWeight" }
+    },
+    "scale": {
+      "display":     { "$value": { "fontSize": "34pt", "lineHeight": "41pt", "fontWeight": 600, "dynamicType": "largeTitle" }, "$type": "typography", "$description": "Onboarding hero, celebration" },
+      "title-1":     { "$value": { "fontSize": "28pt", "lineHeight": "34pt", "fontWeight": 600, "dynamicType": "title1" },     "$type": "typography", "$description": "Screen title (Today header)" },
+      "title-2":     { "$value": { "fontSize": "22pt", "lineHeight": "28pt", "fontWeight": 600, "dynamicType": "title2" },     "$type": "typography", "$description": "Section header в sheet" },
+      "title-3":     { "$value": { "fontSize": "20pt", "lineHeight": "25pt", "fontWeight": 600, "dynamicType": "title3" },     "$type": "typography", "$description": "Card title" },
+      "headline":    { "$value": { "fontSize": "17pt", "lineHeight": "22pt", "fontWeight": 600, "dynamicType": "headline" },   "$type": "typography", "$description": "Row primary text" },
+      "body":        { "$value": { "fontSize": "17pt", "lineHeight": "24pt", "fontWeight": 400, "dynamicType": "body" },       "$type": "typography", "$description": "Основной читаемый текст" },
+      "body-emph":   { "$value": { "fontSize": "17pt", "lineHeight": "24pt", "fontWeight": 600, "dynamicType": "body" },       "$type": "typography", "$description": "Inline ударение" },
+      "callout":     { "$value": { "fontSize": "16pt", "lineHeight": "22pt", "fontWeight": 400, "dynamicType": "callout" },    "$type": "typography", "$description": "Описательные подписи. Минимум читаемого текста." },
+      "subheadline": { "$value": { "fontSize": "15pt", "lineHeight": "20pt", "fontWeight": 400, "dynamicType": "subheadline" }, "$type": "typography", "$description": "Метаданные" },
+      "footnote":    { "$value": { "fontSize": "13pt", "lineHeight": "18pt", "fontWeight": 400, "dynamicType": "footnote" },   "$type": "typography", "$description": "Timestamps, source labels" },
+      "caption":     { "$value": { "fontSize": "12pt", "lineHeight": "16pt", "fontWeight": 400, "dynamicType": "caption1" },   "$type": "typography", "$description": "Pill labels, tab labels" },
+      "code":        { "$value": { "fontSize": "15pt", "lineHeight": "20pt", "fontWeight": 400, "family": "mono" },            "$type": "typography", "$description": "Dosage, ID strings" }
+    },
+    "rules": [
+      "Минимум читаемого текста — 16pt (Callout). Body = 17pt по умолчанию.",
+      "Line-length 65–75 символов.",
+      "Tabular numerals для всех числовых данных (weight, dose, time).",
+      "Letter-spacing 0 для всех размеров.",
+      "Weight Light/Thin запрещён."
+    ]
+  },
+
+  "space": {
+    "$description": "4pt grid. Canonical scale. DESIGN.md §1.4. Aliases s/N and s-N → see DESIGN.md Part 2 intro for mapping.",
+    "0":  { "$value": "0pt",  "$type": "dimension" },
+    "1":  { "$value": "4pt",  "$type": "dimension" },
+    "2":  { "$value": "8pt",  "$type": "dimension" },
+    "3":  { "$value": "12pt", "$type": "dimension" },
+    "4":  { "$value": "16pt", "$type": "dimension" },
+    "5":  { "$value": "20pt", "$type": "dimension" },
+    "6":  { "$value": "24pt", "$type": "dimension" },
+    "8":  { "$value": "32pt", "$type": "dimension" },
+    "10": { "$value": "40pt", "$type": "dimension" },
+    "14": { "$value": "56pt", "$type": "dimension" }
+  },
+
+  "layout": {
+    "$description": "Layout rules. DESIGN.md §1.4",
+    "screen-padding-phone":   { "$value": "16pt", "$type": "dimension" },
+    "screen-padding-tablet":  { "$value": "24pt", "$type": "dimension", "$description": "v2 reference — tablet out-of-scope in v1" },
+    "section-gap":            { "$value": "24pt", "$type": "dimension" },
+    "card-padding":           { "$value": "16pt", "$type": "dimension" },
+    "tap-target-min":         { "$value": "44pt", "$type": "dimension", "$description": "WCAG 2.5.5 / Apple HIG minimum" },
+    "tap-target-thumb-zone":  { "$value": "56pt", "$type": "dimension", "$description": "Quick Log FAB and primary CTAs" },
+    "tap-gap-min":            { "$value": "8pt",  "$type": "dimension" },
+    "max-content-width":      { "$value": "560pt", "$type": "dimension", "$description": "Long-read text (vaccination details, vet notes)" },
+    "tab-bar-height":         { "$value": "49pt", "$type": "dimension", "$description": "+ safe-area bottom inset" },
+    "app-bar-collapsed":      { "$value": "44pt", "$type": "dimension", "$description": "+ safe-area top inset" },
+    "app-bar-expanded":       { "$value": "96pt", "$type": "dimension", "$description": "Large-title mode" }
+  },
+
+  "radius": {
+    "$description": "DESIGN.md §1.5",
+    "sm":   { "$value": "8pt",   "$type": "dimension", "$description": "Buttons, inputs, pills, tracker tile inner" },
+    "md":   { "$value": "12pt",  "$type": "dimension", "$description": "Cards, list groups, snackbars" },
+    "lg":   { "$value": "16pt",  "$type": "dimension", "$description": "Bottom sheets, modal sheets" },
+    "full": { "$value": "999pt", "$type": "dimension", "$description": "Avatars, FAB" }
+  },
+
+  "elevation": {
+    "$description": "4 levels, neutral grey only. No colored shadows, no inner-shadow, no glow. DESIGN.md §1.5",
+    "0": { "$value": { "shadow": "none", "border": "1px solid #E2DDD2" }, "$type": "shadow", "$description": "Resting cards/rows — hairline only" },
+    "1": { "$value": { "x": 0, "y": 2, "blur": 8,  "color": "rgba(28,31,27,0.06)" }, "$type": "shadow", "$description": "Interactive card hover/press" },
+    "2": { "$value": { "x": 0, "y": -4, "blur": 16, "color": "rgba(28,31,27,0.10)" }, "$type": "shadow", "$description": "Bottom sheet (от низа)" },
+    "3": { "$value": { "x": 0, "y": 8, "blur": 24, "color": "rgba(28,31,27,0.14)" }, "$type": "shadow", "$description": "Full-screen modal over scrim" }
+  },
+
+  "motion": {
+    "$description": "DESIGN.md §1.7. Respect prefers-reduced-motion (see rules).",
+    "duration": {
+      "instant": { "$value": "80ms",  "$type": "duration" },
+      "fast":    { "$value": "160ms", "$type": "duration" },
+      "base":    { "$value": "240ms", "$type": "duration" },
+      "slow":    { "$value": "360ms", "$type": "duration" }
+    },
+    "easing": {
+      "standard":   { "$value": "cubic-bezier(0.4, 0, 0.2, 1)", "$type": "cubicBezier", "$description": "Bidirectional" },
+      "decel":      { "$value": "cubic-bezier(0.0, 0, 0.2, 1)", "$type": "cubicBezier", "$description": "Entering" },
+      "accel":      { "$value": "cubic-bezier(0.4, 0, 1, 1)",   "$type": "cubicBezier", "$description": "Exiting" },
+      "emphasized": { "$value": "cubic-bezier(0.3, 0, 0, 1)",   "$type": "cubicBezier", "$description": "Celebration" }
+    },
+    "reduced-motion": {
+      "transform-fallback":   "opacity 0→1, motion/fast",
+      "celebration-fallback": "static badge, no particle",
+      "sheet-fallback":       "cross-fade instead of slide-up",
+      "disabled":             ["parallax", "large-title bounce"]
+    }
+  },
+
+  "haptic": {
+    "$description": "Native API: Haptics.impactAsync/notificationAsync (iOS), HapticFeedbackConstants (Android). DESIGN.md §1.8. Respects system 'Reduce haptics'.",
+    "light":   { "ios": "impactLight",          "android": "KEYBOARD_TAP", "trigger": "Tap on Tracker Tile, open sheet" },
+    "medium":  { "ios": "impactMedium",         "android": "LONG_PRESS",   "trigger": "Drag handle, segment switch" },
+    "success": { "ios": "notificationSuccess",  "android": "CONFIRM",      "trigger": "Quick Log saved, vaccine confirmed" },
+    "warning": { "ios": "notificationWarning",  "android": "REJECT",       "trigger": "Duplicate detected (60-sec window)" },
+    "error":   { "ios": "notificationError",    "android": "REJECT",       "trigger": "Failed save, permission denied" }
+  },
+
+  "icon": {
+    "$description": "Linear icons 24×24pt, stroke 1.75pt rounded. SF Symbols (iOS) / Material Symbols Outlined (Android). DESIGN.md §1.6",
+    "specs": {
+      "size":         "24pt",
+      "stroke":       "1.75pt",
+      "caps":         "rounded",
+      "ios-source":   "SF Symbols (regular weight, regular variant)",
+      "android-source": "Material Symbols Outlined (size 24, weight 400, fill 0)",
+      "active-state": "fill 1 (only in Tab Bar active)"
+    },
+    "core-mvp": [
+      "nav.today", "nav.health", "nav.more",
+      "action.quick_log", "action.add", "action.share", "action.edit", "action.delete", "action.search",
+      "potty.outside", "potty.inside", "potty.poop",
+      "feeding.bowl", "feeding.water", "sleep.moon",
+      "zoomies.spark", "training.paw", "household.home",
+      "person.solo", "person.cluster", "person.vet", "person.trainer",
+      "med.vaccine", "med.deworming", "med.pill", "med.weight", "med.vet_visit",
+      "status.template", "status.review", "status.confirmed", "status.completed", "status.urgent_flag"
+    ],
+    "utility": ["chevron.right", "chevron.down", "close.x", "check", "info.circle", "lock.shield"],
+    "extended": [
+      "ui.bell", "ui.bell.slash", "ui.wifi.slash",
+      "ui.book", "ui.doc.text", "ui.stethoscope",
+      "ui.phone", "ui.lock", "ui.gear",
+      "ui.checkmark.seal", "ui.checkmark.circle", "ui.exclamation.circle",
+      "ui.info.card", "ui.paw.filled",
+      "person.crop.circle.badge.checkmark"
+    ]
+  },
+
+  "component": {
+    "$description": "Canonical component dimensions and contracts. Full anatomy in DESIGN.md §1.9.",
+    "tracker-tile": {
+      "$description": "DESIGN.md §1.9.6 — locked v1",
+      "two-col":  { "width": "168pt", "height": "96pt", "$description": "Onboarding selector grid" },
+      "three-col":{ "width": "110pt", "height": "96pt", "$description": "Quick Log sheet grid" },
+      "min":      { "width": "88pt",  "height": "88pt" },
+      "icon":     "28pt"
+    },
+    "fab": {
+      "size":     "56pt",
+      "radius":   "999pt",
+      "fill":     "primary/600",
+      "icon":     "28pt white",
+      "elevation":"elev/2"
+    },
+    "tab-bar": {
+      "height":   "49pt",
+      "icon":     "24pt",
+      "active":   "primary/700 + filled icon"
+    },
+    "bottom-sheet": {
+      "radius-top":   "16pt",
+      "drag-handle":  { "width": "36pt", "height": "4pt" },
+      "elevation":    "elev/2"
+    },
+    "list-item": {
+      "min-height":   "56pt",
+      "padding":      "12pt vertical, 16pt horizontal"
+    },
+    "snackbar": {
+      "radius":         "12pt",
+      "padding":        "12pt vertical, 16pt horizontal",
+      "elevation":      "elev/1",
+      "duration-default": "4s",
+      "duration-with-action": "6s"
+    },
+    "pill": {
+      "height":   "24pt",
+      "padding":  "4pt vertical, 8pt horizontal",
+      "radius":   "8pt",
+      "icon":     "14pt"
+    }
+  },
+
+  "contract": {
+    "$description": "Hard contracts that override individual screen specs. v1 first draft.",
+    "one-cta-per-hero":         "Exactly one primary CTA + at most one tertiary text-link in hero. Never two equal-weight filled buttons.",
+    "quick-log-trackers-max":   5,
+    "today-daily-cards-max":    5,
+    "duplicate-warning-window-seconds": 60,
+    "celebration-color-only":   "accent/* — celebration ONLY (first log, milestone, vaccination confirmed). Never default CTA.",
+    "danger-color-only":        "status/danger — user-marked urgent ONLY. Never system-flagged.",
+    "no-streaks-days":          14,
+    "tabs":                     ["today", "health", "more"],
+    "quick-log-position":       "persistent bottom action / FAB, NOT a tab",
+    "out-of-scope-v1":          ["dark-mode", "tablet", "landscape", "ipad"]
+  }
+}

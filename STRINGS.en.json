@@ -4,8 +4,8 @@
     "language": "en",
     "source": "DESIGN.md",
     "lastUpdated": "2026-05-18",
-    "translatedFrom": "STRINGS.ru.json",
-    "note": "All strings are translated from STRINGS.ru.json, which is the source of truth alongside DESIGN.md. If there's a conflict, DESIGN.md wins.",
+    "role": "fallback-master",
+    "note": "English is the fallback/master locale for typed keys. DESIGN.md wins for product, tone, and screen-contract conflicts.",
     "placeholderSyntax": "Simple {name} syntax. See _comment fields for the list of variables per key."
   },
 
@@ -239,7 +239,7 @@
       "day1": "Log your first event — it takes about five seconds.",
       "day1-cta": "Start",
       "day2-morning-title": "Morning potty break",
-      "day2-morning-body": "Luna slept 6 hours — bladder is full.",
+      "day2-morning-body": "Puppy A slept 6 hours — bladder is full.",
       "day2-morning-cta": "Log potty break",
       "potty-time": "Looks like it's time for a break.",
       "potty-time-meta": "Last break was {duration} ago.",
@@ -275,17 +275,17 @@
     "activity-strip": {
       "single": "{actorName} {verbForm} {puppyName} · {timeAgo}",
       "_comment-single": "verbForm examples: \"fed\", \"logged a potty break\", \"got back from a walk\". English verbs don't change by actor gender, so {verbForm} stays simple. {timeAgo} — e.g. \"42 min ago\"",
-      "example-feeding": "Olya fed Luna · 42 min ago",
-      "example-potty": "Olya logged a potty break — 4 min ago",
-      "example-walk": "Dmitry got back from a walk — 1 hr ago",
-      "example-reminder": "Olya added a reminder — just now",
-      "example-note": "Dmitry left a note — 30 min ago",
-      "example-health": "Dmitry logged a vet visit — 2 hr ago",
-      "example-sitter": "Olya (sitter): {puppyName} has been fed — 6 min ago",
+      "example-feeding": "Caregiver A fed Puppy A · 42 min ago",
+      "example-potty": "Caregiver A logged a potty break — 4 min ago",
+      "example-walk": "Caregiver B got back from a walk — 1 hr ago",
+      "example-reminder": "Caregiver A added a reminder — just now",
+      "example-note": "Caregiver B left a note — 30 min ago",
+      "example-health": "Caregiver B logged a vet visit — 2 hr ago",
+      "example-sitter": "Caregiver A (sitter): {puppyName} has been fed — 6 min ago",
       "multiple": "{actorName} and you · {n} events in the last hour",
-      "example-multiple": "Olya and you · 3 events in the last hour",
+      "example-multiple": "Caregiver A and you · 3 events in the last hour",
       "topbar-members": "With you: {names}.",
-      "topbar-example": "With you: Olya, you."
+      "topbar-example": "With you: Caregiver A, you."
     },
     "missed-reminder-card": {
       "title": "Reminder: feeding at {time}",
@@ -309,7 +309,7 @@
       "walks-line": "{n} walks outside",
       "feedings-line": "{n} feedings",
       "sleep-line": "Sleep — average {hours} hr / day",
-      "insight-example": "Clearer now: Luna usually asks to go out 40–60 minutes after a meal."
+      "insight-example": "Clearer now: Puppy A usually asks to go out 40–60 minutes after a meal."
     }
   },
 
@@ -389,7 +389,7 @@
     "duplicate-warning": {
       "title": "Looks like this is already logged",
       "body-template": "{actorName} logged a {eventType} {timeAgo}.",
-      "body-example": "Olya logged a feeding 42 seconds ago.",
+      "body-example": "Caregiver A logged a feeding 42 seconds ago.",
       "more-matches": "{n} more event in the last 60 seconds",
       "primary": "This is a different event — add it",
       "primary-alt": "Add anyway",

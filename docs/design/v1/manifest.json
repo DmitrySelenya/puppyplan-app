@@ -1,0 +1,2383 @@
+{
+  "schema": "puppyplan.design-manifest.v1",
+  "linearIssue": "PUP-7",
+  "status": "current",
+  "source": {
+    "currentVisualSource": "raw/PuppyPlan.html",
+    "currentVisualSourceReason": "It contains the broadest and newest screen set in the Cloud Design export.",
+    "renderRequiresNetwork": true,
+    "ciGateEligible": false,
+    "ciGateBlockers": [
+      "Vendor React, ReactDOM, and Babel into docs/design/v1/raw/_vendor/ before CI use.",
+      "Keep Linux Chrome/Chromium discovery supported on the target runner before CI use."
+    ],
+    "networkDependencies": [
+      "https://unpkg.com/react@18.3.1/umd/react.development.js",
+      "https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js",
+      "https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+    ],
+    "rawFiles": [
+      "raw/.design-canvas.state.json",
+      "raw/PuppyPlan - Standalone.html",
+      "raw/PuppyPlan-print.html",
+      "raw/PuppyPlan.html",
+      "raw/PuppyPlan.standalone.src.html",
+      "raw/components.jsx",
+      "raw/design-canvas-print.jsx",
+      "raw/design-canvas.jsx",
+      "raw/icons.jsx",
+      "raw/ios-frame.jsx",
+      "raw/scraps/sketch-2026-05-18T11-54-22-nzk0tl.napkin",
+      "raw/screens/cards.jsx",
+      "raw/screens/guidance.jsx",
+      "raw/screens/health.jsx",
+      "raw/screens/library.jsx",
+      "raw/screens/more.jsx",
+      "raw/screens/onboarding.jsx",
+      "raw/screens/profile.jsx",
+      "raw/screens/quicklog.jsx",
+      "raw/screens/settings.jsx",
+      "raw/screens/sharing.jsx",
+      "raw/screens/sitter.jsx",
+      "raw/screens/states.jsx",
+      "raw/screens/timeline.jsx",
+      "raw/screens/today.jsx",
+      "raw/tokens.css",
+      "raw/uploads/DESIGN-43511de2.md",
+      "raw/uploads/DESIGN.md",
+      "raw/uploads/STRINGS.en.json",
+      "raw/uploads/design-tokens-2a062b4e.json",
+      "raw/uploads/design-tokens.json",
+      "raw/uploads/pasted-1779109067002-0.png",
+      "raw/uploads/puppyplan-prd-v2.md"
+    ],
+    "artifacts": [
+      {
+        "path": "raw/PuppyPlan.html",
+        "status": "current",
+        "priorityTags": [
+          "mvp"
+        ],
+        "notes": "Current visual source for implementation, manifest extraction, and screenshot export."
+      },
+      {
+        "path": "raw/PuppyPlan - Standalone.html",
+        "status": "reference",
+        "priorityTags": [
+          "reference"
+        ],
+        "notes": "Self-contained exported snapshot. Keep for reference; prefer PuppyPlan.html plus source modules."
+      },
+      {
+        "path": "raw/PuppyPlan-print.html",
+        "status": "stale-reference",
+        "priorityTags": [
+          "stale",
+          "reference"
+        ],
+        "notes": "Print-oriented export. Do not use for current implementation unless a future manifest promotes it."
+      },
+      {
+        "path": "raw/PuppyPlan.standalone.src.html",
+        "status": "stale-reference",
+        "priorityTags": [
+          "stale",
+          "reference"
+        ],
+        "notes": "Older standalone source-style export. Do not use for current implementation unless a future manifest promotes it."
+      },
+      {
+        "path": "raw/uploads/DESIGN*.md",
+        "status": "sanitized-historical-snapshot",
+        "priorityTags": [
+          "reference"
+        ],
+        "notes": "Sanitized historical uploaded copies. Repo root DESIGN.md remains canonical and may intentionally differ."
+      },
+      {
+        "path": "raw/uploads/puppyplan-prd-v2.md",
+        "status": "sanitized-historical-snapshot",
+        "priorityTags": [
+          "reference"
+        ],
+        "notes": "Sanitized historical uploaded copy. Repo root puppyplan-prd-v2.md remains canonical and may intentionally differ."
+      },
+      {
+        "path": "raw/uploads/design-tokens*.json",
+        "status": "reference-duplicate",
+        "priorityTags": [
+          "reference"
+        ],
+        "notes": "Historical uploaded token copies. Repo root design-tokens.json remains canonical until Phase 4."
+      },
+      {
+        "path": "raw/uploads/STRINGS.en.json",
+        "status": "reference-duplicate",
+        "priorityTags": [
+          "reference"
+        ],
+        "notes": "Historical uploaded strings copy. Repo root string files remain canonical."
+      },
+      {
+        "path": "raw/uploads/AUDIT_FIXES*.md",
+        "status": "excluded",
+        "priorityTags": [
+          "stale",
+          "reference"
+        ],
+        "notes": "Historical audit markdown is intentionally excluded from raw intake. Curated statuses live in design-audit-reconciliation.md."
+      }
+    ]
+  },
+  "counts": {
+    "expectedSections": 17,
+    "expectedArtboards": 65,
+    "expectedPhoneScreens": 62,
+    "sections": 17,
+    "artboards": 65,
+    "phoneScreens": 62,
+    "referenceArtboards": 3,
+    "reconciliation": "Matches observed PUP-7 baseline: 17 sections, 65 artboards, 62 phone screens."
+  },
+  "defaults": {
+    "phoneArtboard": {
+      "width": 393,
+      "height": 852,
+      "unit": "px"
+    },
+    "implementationTarget": "Expo native mobile app using future src/design primitives, not copied web JSX."
+  },
+  "sections": [
+    {
+      "id": "readme",
+      "title": "0 — Read me",
+      "subtitle": "What's included and what isn't",
+      "sourceFile": "raw/PuppyPlan.html",
+      "priorityTags": [
+        "reference"
+      ],
+      "artboards": [
+        {
+          "id": "intro",
+          "slug": "readme__intro",
+          "label": "Intro",
+          "title": "Intro",
+          "sectionId": "readme",
+          "sectionTitle": "0 — Read me",
+          "route": null,
+          "screenIntent": "0 — Read me: Intro",
+          "stateType": "reference",
+          "priorityTags": [
+            "reference"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 920,
+            "height": 780,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/readme/intro.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "foundation",
+      "title": "1 — Foundation",
+      "subtitle": "Component library · all tokens · all variants",
+      "sourceFile": "raw/screens/library.jsx",
+      "priorityTags": [
+        "reference"
+      ],
+      "artboards": [
+        {
+          "id": "library",
+          "slug": "foundation__library",
+          "label": "Library sheet",
+          "title": "Library sheet",
+          "sectionId": "foundation",
+          "sectionTitle": "1 — Foundation",
+          "route": "/_dev/components",
+          "screenIntent": "1 — Foundation: Library sheet",
+          "stateType": "reference",
+          "priorityTags": [
+            "reference"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 920,
+            "height": 4200,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/library.jsx"
+          ],
+          "component": {
+            "name": "LibraryFrame",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/foundation/library.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "onboarding",
+      "title": "2 — Onboarding",
+      "subtitle": "2.1 Welcome → 2.6 First log",
+      "sourceFile": "raw/screens/onboarding.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "2.1",
+          "slug": "onboarding__2-1",
+          "label": "2.1 Welcome · default",
+          "title": "Welcome · default",
+          "sectionId": "onboarding",
+          "sectionTitle": "2 — Onboarding",
+          "route": "/onboarding",
+          "screenIntent": "2 — Onboarding: 2.1 Welcome · default",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/onboarding.jsx"
+          ],
+          "component": {
+            "name": "ScreenOnbWelcome",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/onboarding/2-1.png",
+          "knownIssues": []
+        },
+        {
+          "id": "2.2-default",
+          "slug": "onboarding__2-2-default",
+          "label": "2.2 Profile · default",
+          "title": "Profile · default",
+          "sectionId": "onboarding",
+          "sectionTitle": "2 — Onboarding",
+          "route": "/onboarding",
+          "screenIntent": "2 — Onboarding: 2.2 Profile · default",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/onboarding.jsx"
+          ],
+          "component": {
+            "name": "ScreenOnbProfile",
+            "props": {
+              "state": "default"
+            }
+          },
+          "screenshotPath": "screenshots/onboarding/2-2-default.png",
+          "knownIssues": []
+        },
+        {
+          "id": "2.2-filled",
+          "slug": "onboarding__2-2-filled",
+          "label": "2.2 Profile · filled",
+          "title": "Profile · filled",
+          "sectionId": "onboarding",
+          "sectionTitle": "2 — Onboarding",
+          "route": "/onboarding",
+          "screenIntent": "2 — Onboarding: 2.2 Profile · filled",
+          "stateType": "filled-form",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/onboarding.jsx"
+          ],
+          "component": {
+            "name": "ScreenOnbProfile",
+            "props": {
+              "state": "filled"
+            }
+          },
+          "screenshotPath": "screenshots/onboarding/2-2-filled.png",
+          "knownIssues": []
+        },
+        {
+          "id": "2.2-error",
+          "slug": "onboarding__2-2-error",
+          "label": "2.2 Profile · error",
+          "title": "Profile · error",
+          "sectionId": "onboarding",
+          "sectionTitle": "2 — Onboarding",
+          "route": "/onboarding",
+          "screenIntent": "2 — Onboarding: 2.2 Profile · error",
+          "stateType": "error",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/onboarding.jsx"
+          ],
+          "component": {
+            "name": "ScreenOnbProfile",
+            "props": {
+              "state": "error"
+            }
+          },
+          "screenshotPath": "screenshots/onboarding/2-2-error.png",
+          "knownIssues": []
+        },
+        {
+          "id": "2.4",
+          "slug": "onboarding__2-4",
+          "label": "2.4 Tracker picker · 5 of 5",
+          "title": "Tracker picker · 5 of 5",
+          "sectionId": "onboarding",
+          "sectionTitle": "2 — Onboarding",
+          "route": "/onboarding",
+          "screenIntent": "2 — Onboarding: 2.4 Tracker picker · 5 of 5",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/onboarding.jsx"
+          ],
+          "component": {
+            "name": "ScreenOnbTrackers",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/onboarding/2-4.png",
+          "knownIssues": []
+        },
+        {
+          "id": "2.5",
+          "slug": "onboarding__2-5",
+          "label": "2.5 Plan reveal",
+          "title": "Plan reveal",
+          "sectionId": "onboarding",
+          "sectionTitle": "2 — Onboarding",
+          "route": "/onboarding",
+          "screenIntent": "2 — Onboarding: 2.5 Plan reveal",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/onboarding.jsx"
+          ],
+          "component": {
+            "name": "ScreenOnbPlanReveal",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/onboarding/2-5.png",
+          "knownIssues": []
+        },
+        {
+          "id": "2.6",
+          "slug": "onboarding__2-6",
+          "label": "2.6 First log · pending (celebration)",
+          "title": "First log · pending (celebration)",
+          "sectionId": "onboarding",
+          "sectionTitle": "2 — Onboarding",
+          "route": "/onboarding",
+          "screenIntent": "2 — Onboarding: 2.6 First log · pending (celebration)",
+          "stateType": "pending-write",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/onboarding.jsx"
+          ],
+          "component": {
+            "name": "ScreenOnbFirstLogPending",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/onboarding/2-6.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "today",
+      "title": "3 — Today",
+      "subtitle": "Hero · activity strip · pattern cards · screen-states",
+      "sourceFile": "raw/screens/today.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "3.1",
+          "slug": "today__3-1",
+          "label": "3.1 Day 1 · first day",
+          "title": "Day 1 · first day",
+          "sectionId": "today",
+          "sectionTitle": "3 — Today",
+          "route": "/today",
+          "screenIntent": "3 — Today: 3.1 Day 1 · first day",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/today.jsx"
+          ],
+          "component": {
+            "name": "ScreenTodayDay1",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/today/3-1.png",
+          "knownIssues": []
+        },
+        {
+          "id": "3.2",
+          "slug": "today__3-2",
+          "label": "3.2 Day 2 · morning",
+          "title": "Day 2 · morning",
+          "sectionId": "today",
+          "sectionTitle": "3 — Today",
+          "route": "/today",
+          "screenIntent": "3 — Today: 3.2 Day 2 · morning",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/today.jsx"
+          ],
+          "component": {
+            "name": "ScreenTodayDay2",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/today/3-2.png",
+          "knownIssues": []
+        },
+        {
+          "id": "3.3",
+          "slug": "today__3-3",
+          "label": "3.3 Day 7 · weekly rhythm",
+          "title": "Day 7 · weekly rhythm",
+          "sectionId": "today",
+          "sectionTitle": "3 — Today",
+          "route": "/today",
+          "screenIntent": "3 — Today: 3.3 Day 7 · weekly rhythm",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/today.jsx"
+          ],
+          "component": {
+            "name": "ScreenTodayDay7",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/today/3-3.png",
+          "knownIssues": []
+        },
+        {
+          "id": "3.4",
+          "slug": "today__3-4",
+          "label": "3.4 With activity strip",
+          "title": "With activity strip",
+          "sectionId": "today",
+          "sectionTitle": "3 — Today",
+          "route": "/today",
+          "screenIntent": "3 — Today: 3.4 With activity strip",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/today.jsx"
+          ],
+          "component": {
+            "name": "ScreenTodayWithActivity",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/today/3-4.png",
+          "knownIssues": []
+        },
+        {
+          "id": "3.5",
+          "slug": "today__3-5",
+          "label": "3.5 Loading skeleton",
+          "title": "Loading skeleton",
+          "sectionId": "today",
+          "sectionTitle": "3 — Today",
+          "route": "/today",
+          "screenIntent": "3 — Today: 3.5 Loading skeleton",
+          "stateType": "loading",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/today.jsx"
+          ],
+          "component": {
+            "name": "ScreenTodayLoading",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/today/3-5.png",
+          "knownIssues": []
+        },
+        {
+          "id": "3.6",
+          "slug": "today__3-6",
+          "label": "3.6 Offline-read",
+          "title": "Offline-read",
+          "sectionId": "today",
+          "sectionTitle": "3 — Today",
+          "route": "/today",
+          "screenIntent": "3 — Today: 3.6 Offline-read",
+          "stateType": "offline-read",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/today.jsx"
+          ],
+          "component": {
+            "name": "ScreenTodayOffline",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/today/3-6.png",
+          "knownIssues": []
+        },
+        {
+          "id": "3.7",
+          "slug": "today__3-7",
+          "label": "3.7 Pending-write",
+          "title": "Pending-write",
+          "sectionId": "today",
+          "sectionTitle": "3 — Today",
+          "route": "/today",
+          "screenIntent": "3 — Today: 3.7 Pending-write",
+          "stateType": "pending-write",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/today.jsx"
+          ],
+          "component": {
+            "name": "ScreenTodayPending",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/today/3-7.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "quicklog",
+      "title": "4 — Quick Log",
+      "subtitle": "Sheet · pending · duplicate · failed · details",
+      "sourceFile": "raw/screens/quicklog.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "4.1",
+          "slug": "quicklog__4-1",
+          "label": "4.1 Sheet · default (3-col, ≤5)",
+          "title": "Sheet · default (3-col, ≤5)",
+          "sectionId": "quicklog",
+          "sectionTitle": "4 — Quick Log",
+          "route": "/quick-log",
+          "screenIntent": "4 — Quick Log: 4.1 Sheet · default (3-col, ≤5)",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/quicklog.jsx"
+          ],
+          "component": {
+            "name": "ScreenQLDefault",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/quicklog/4-1.png",
+          "knownIssues": []
+        },
+        {
+          "id": "4.2",
+          "slug": "quicklog__4-2",
+          "label": "4.2 After tap · snackbar + undo",
+          "title": "After tap · snackbar + undo",
+          "sectionId": "quicklog",
+          "sectionTitle": "4 — Quick Log",
+          "route": "/quick-log",
+          "screenIntent": "4 — Quick Log: 4.2 After tap · snackbar + undo",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/quicklog.jsx"
+          ],
+          "component": {
+            "name": "ScreenQLPending",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/quicklog/4-2.png",
+          "knownIssues": []
+        },
+        {
+          "id": "4.4",
+          "slug": "quicklog__4-4",
+          "label": "4.4 Duplicate warning · 60-sec window",
+          "title": "Duplicate warning · 60-sec window",
+          "sectionId": "quicklog",
+          "sectionTitle": "4 — Quick Log",
+          "route": "/quick-log",
+          "screenIntent": "4 — Quick Log: 4.4 Duplicate warning · 60-sec window",
+          "stateType": "duplicate-warning",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/quicklog.jsx"
+          ],
+          "component": {
+            "name": "ScreenQLDuplicate",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/quicklog/4-4.png",
+          "knownIssues": []
+        },
+        {
+          "id": "4.5",
+          "slug": "quicklog__4-5",
+          "label": "4.5 Failed save · retry/discard inline",
+          "title": "Failed save · retry/discard inline",
+          "sectionId": "quicklog",
+          "sectionTitle": "4 — Quick Log",
+          "route": "/quick-log",
+          "screenIntent": "4 — Quick Log: 4.5 Failed save · retry/discard inline",
+          "stateType": "failed",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/quicklog.jsx"
+          ],
+          "component": {
+            "name": "ScreenQLFailed",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/quicklog/4-5.png",
+          "knownIssues": []
+        },
+        {
+          "id": "4.6",
+          "slug": "quicklog__4-6",
+          "label": "4.6 Details form · optional fields",
+          "title": "Details form · optional fields",
+          "sectionId": "quicklog",
+          "sectionTitle": "4 — Quick Log",
+          "route": "/quick-log/details",
+          "screenIntent": "4 — Quick Log: 4.6 Details form · optional fields",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/quicklog.jsx"
+          ],
+          "component": {
+            "name": "ScreenQLDetails",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/quicklog/4-6.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "timeline",
+      "title": "5 — Timeline",
+      "subtitle": "Events log with filters + states",
+      "sourceFile": "raw/screens/timeline.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "5.1",
+          "slug": "timeline__5-1",
+          "label": "5.1 Synced (default)",
+          "title": "Synced (default)",
+          "sectionId": "timeline",
+          "sectionTitle": "5 — Timeline",
+          "route": "/timeline",
+          "screenIntent": "5 — Timeline: 5.1 Synced (default)",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/timeline.jsx"
+          ],
+          "component": {
+            "name": "ScreenTimeline",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/timeline/5-1.png",
+          "knownIssues": []
+        },
+        {
+          "id": "5.2",
+          "slug": "timeline__5-2",
+          "label": "5.2 Pending item visible",
+          "title": "Pending item visible",
+          "sectionId": "timeline",
+          "sectionTitle": "5 — Timeline",
+          "route": "/timeline",
+          "screenIntent": "5 — Timeline: 5.2 Pending item visible",
+          "stateType": "pending-write",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/timeline.jsx"
+          ],
+          "component": {
+            "name": "ScreenTimeline",
+            "props": {
+              "state": "pending"
+            }
+          },
+          "screenshotPath": "screenshots/timeline/5-2.png",
+          "knownIssues": []
+        },
+        {
+          "id": "5.3",
+          "slug": "timeline__5-3",
+          "label": "5.3 Failed item visible",
+          "title": "Failed item visible",
+          "sectionId": "timeline",
+          "sectionTitle": "5 — Timeline",
+          "route": "/timeline",
+          "screenIntent": "5 — Timeline: 5.3 Failed item visible",
+          "stateType": "failed",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/timeline.jsx"
+          ],
+          "component": {
+            "name": "ScreenTimeline",
+            "props": {
+              "state": "failed"
+            }
+          },
+          "screenshotPath": "screenshots/timeline/5-3.png",
+          "knownIssues": []
+        },
+        {
+          "id": "5.4",
+          "slug": "timeline__5-4",
+          "label": "5.4 Filtered · only feeding",
+          "title": "Filtered · only feeding",
+          "sectionId": "timeline",
+          "sectionTitle": "5 — Timeline",
+          "route": "/timeline",
+          "screenIntent": "5 — Timeline: 5.4 Filtered · only feeding",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/timeline.jsx"
+          ],
+          "component": {
+            "name": "ScreenTimelineFiltered",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/timeline/5-4.png",
+          "knownIssues": []
+        },
+        {
+          "id": "5.5",
+          "slug": "timeline__5-5",
+          "label": "5.5 Empty · filtered",
+          "title": "Empty · filtered",
+          "sectionId": "timeline",
+          "sectionTitle": "5 — Timeline",
+          "route": "/timeline",
+          "screenIntent": "5 — Timeline: 5.5 Empty · filtered",
+          "stateType": "empty",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/timeline.jsx"
+          ],
+          "component": {
+            "name": "ScreenTimelineEmpty",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/timeline/5-5.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "family",
+      "title": "6 — Family sharing",
+      "subtitle": "Owner view · invite · sent",
+      "sourceFile": "raw/screens/sharing.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "6.1",
+          "slug": "family__6-1",
+          "label": "6.1 Family list · owner",
+          "title": "Family list · owner",
+          "sectionId": "family",
+          "sectionTitle": "6 — Family sharing",
+          "route": "/family/invite",
+          "screenIntent": "6 — Family sharing: 6.1 Family list · owner",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sharing.jsx"
+          ],
+          "component": {
+            "name": "ScreenFamilyList",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/family/6-1.png",
+          "knownIssues": []
+        },
+        {
+          "id": "6.2",
+          "slug": "family__6-2",
+          "label": "6.2 Invite · role + scope",
+          "title": "Invite · role + scope",
+          "sectionId": "family",
+          "sectionTitle": "6 — Family sharing",
+          "route": "/family/invite",
+          "screenIntent": "6 — Family sharing: 6.2 Invite · role + scope",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sharing.jsx"
+          ],
+          "component": {
+            "name": "ScreenFamilyInvite",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/family/6-2.png",
+          "knownIssues": []
+        },
+        {
+          "id": "6.3",
+          "slug": "family__6-3",
+          "label": "6.3 Invite · sent / pending",
+          "title": "Invite · sent / pending",
+          "sectionId": "family",
+          "sectionTitle": "6 — Family sharing",
+          "route": "/family/invite",
+          "screenIntent": "6 — Family sharing: 6.3 Invite · sent / pending",
+          "stateType": "pending-write",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sharing.jsx"
+          ],
+          "component": {
+            "name": "ScreenFamilyInviteSent",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/family/6-3.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "sitter",
+      "title": "7 — Trusted Sitter",
+      "subtitle": "Owner setup · sitter-side checklist · owner status · exit",
+      "sourceFile": "raw/screens/sitter.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "7.1-ready",
+          "slug": "sitter__7-1-ready",
+          "label": "7.1 Enable · ready",
+          "title": "Enable · ready",
+          "sectionId": "sitter",
+          "sectionTitle": "7 — Trusted Sitter",
+          "route": "/more/trusted-sitter",
+          "screenIntent": "7 — Trusted Sitter: 7.1 Enable · ready",
+          "stateType": "ready",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sitter.jsx"
+          ],
+          "component": {
+            "name": "ScreenSitterEnable",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/sitter/7-1-ready.png",
+          "knownIssues": []
+        },
+        {
+          "id": "7.1-pending",
+          "slug": "sitter__7-1-pending",
+          "label": "7.1 Enable · invite pending",
+          "title": "Enable · invite pending",
+          "sectionId": "sitter",
+          "sectionTitle": "7 — Trusted Sitter",
+          "route": "/more/trusted-sitter",
+          "screenIntent": "7 — Trusted Sitter: 7.1 Enable · invite pending",
+          "stateType": "pending-write",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sitter.jsx"
+          ],
+          "component": {
+            "name": "ScreenSitterEnable",
+            "props": {
+              "state": "pending-invite"
+            }
+          },
+          "screenshotPath": "screenshots/sitter/7-1-pending.png",
+          "knownIssues": []
+        },
+        {
+          "id": "7.1-no-caregiver",
+          "slug": "sitter__7-1-no-caregiver",
+          "label": "7.1 Enable · no caregiver",
+          "title": "Enable · no caregiver",
+          "sectionId": "sitter",
+          "sectionTitle": "7 — Trusted Sitter",
+          "route": "/more/trusted-sitter",
+          "screenIntent": "7 — Trusted Sitter: 7.1 Enable · no caregiver",
+          "stateType": "no-caregiver",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sitter.jsx"
+          ],
+          "component": {
+            "name": "ScreenSitterEnable",
+            "props": {
+              "state": "no-caregiver"
+            }
+          },
+          "screenshotPath": "screenshots/sitter/7-1-no-caregiver.png",
+          "knownIssues": []
+        },
+        {
+          "id": "7.2",
+          "slug": "sitter__7-2",
+          "label": "7.2 Sitter checklist · sitter view",
+          "title": "Sitter checklist · sitter view",
+          "sectionId": "sitter",
+          "sectionTitle": "7 — Trusted Sitter",
+          "route": "/more/trusted-sitter",
+          "screenIntent": "7 — Trusted Sitter: 7.2 Sitter checklist · sitter view",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sitter.jsx"
+          ],
+          "component": {
+            "name": "ScreenSitterChecklist",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/sitter/7-2.png",
+          "knownIssues": []
+        },
+        {
+          "id": "7.3",
+          "slug": "sitter__7-3",
+          "label": "7.3 Owner status · sitter active",
+          "title": "Owner status · sitter active",
+          "sectionId": "sitter",
+          "sectionTitle": "7 — Trusted Sitter",
+          "route": "/more/trusted-sitter",
+          "screenIntent": "7 — Trusted Sitter: 7.3 Owner status · sitter active",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sitter.jsx"
+          ],
+          "component": {
+            "name": "ScreenSitterOwnerStatus",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/sitter/7-3.png",
+          "knownIssues": []
+        },
+        {
+          "id": "7.4",
+          "slug": "sitter__7-4",
+          "label": "7.4 Exit · confirm sheet",
+          "title": "Exit · confirm sheet",
+          "sectionId": "sitter",
+          "sectionTitle": "7 — Trusted Sitter",
+          "route": "/more/trusted-sitter",
+          "screenIntent": "7 — Trusted Sitter: 7.4 Exit · confirm sheet",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sitter.jsx"
+          ],
+          "component": {
+            "name": "ScreenSitterExit",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/sitter/7-4.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "trainer",
+      "title": "8 — Trainer sharing",
+      "subtitle": "Scoped sharing flow",
+      "sourceFile": "raw/screens/sharing.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "8.1",
+          "slug": "trainer__8-1",
+          "label": "8.1 Scope selector · toggle rows",
+          "title": "Scope selector · toggle rows",
+          "sectionId": "trainer",
+          "sectionTitle": "8 — Trainer sharing",
+          "route": "/sharing/trainer-preview",
+          "screenIntent": "8 — Trainer sharing: 8.1 Scope selector · toggle rows",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sharing.jsx"
+          ],
+          "component": {
+            "name": "ScreenTrainerScope",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/trainer/8-1.png",
+          "knownIssues": []
+        },
+        {
+          "id": "8.2",
+          "slug": "trainer__8-2",
+          "label": "8.2 Preview · includes / excludes",
+          "title": "Preview · includes / excludes",
+          "sectionId": "trainer",
+          "sectionTitle": "8 — Trainer sharing",
+          "route": "/sharing/trainer-preview",
+          "screenIntent": "8 — Trainer sharing: 8.2 Preview · includes / excludes",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sharing.jsx"
+          ],
+          "component": {
+            "name": "ScreenTrainerPreview",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/trainer/8-2.png",
+          "knownIssues": []
+        },
+        {
+          "id": "8.3",
+          "slug": "trainer__8-3",
+          "label": "8.3 Accepted · trainer's view",
+          "title": "Accepted · trainer's view",
+          "sectionId": "trainer",
+          "sectionTitle": "8 — Trainer sharing",
+          "route": "/sharing/trainer-preview",
+          "screenIntent": "8 — Trainer sharing: 8.3 Accepted · trainer's view",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sharing.jsx"
+          ],
+          "component": {
+            "name": "ScreenTrainerAccepted",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/trainer/8-3.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "cards",
+      "title": "9 — Shareable Cards",
+      "subtitle": "Builder · preview · share-sheet · list",
+      "sourceFile": "raw/screens/cards.jsx",
+      "priorityTags": [
+        "post-mvp"
+      ],
+      "artboards": [
+        {
+          "id": "9.1",
+          "slug": "cards__9-1",
+          "label": "9.1 Builder · default",
+          "title": "Builder · default",
+          "sectionId": "cards",
+          "sectionTitle": "9 — Shareable Cards",
+          "route": "/more/shareable-cards",
+          "screenIntent": "9 — Shareable Cards: 9.1 Builder · default",
+          "stateType": "default",
+          "priorityTags": [
+            "post-mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/cards.jsx"
+          ],
+          "component": {
+            "name": "ScreenCardBuilder",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/cards/9-1.png",
+          "knownIssues": []
+        },
+        {
+          "id": "9.1-empty",
+          "slug": "cards__9-1-empty",
+          "label": "9.1 Builder · empty (disabled)",
+          "title": "Builder · empty (disabled)",
+          "sectionId": "cards",
+          "sectionTitle": "9 — Shareable Cards",
+          "route": "/more/shareable-cards",
+          "screenIntent": "9 — Shareable Cards: 9.1 Builder · empty (disabled)",
+          "stateType": "empty",
+          "priorityTags": [
+            "post-mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/cards.jsx"
+          ],
+          "component": {
+            "name": "ScreenCardBuilder",
+            "props": {
+              "state": "empty"
+            }
+          },
+          "screenshotPath": "screenshots/cards/9-1-empty.png",
+          "knownIssues": []
+        },
+        {
+          "id": "9.1-health",
+          "slug": "cards__9-1-health",
+          "label": "9.1 Builder · health on (disclosure)",
+          "title": "Builder · health on (disclosure)",
+          "sectionId": "cards",
+          "sectionTitle": "9 — Shareable Cards",
+          "route": "/more/shareable-cards",
+          "screenIntent": "9 — Shareable Cards: 9.1 Builder · health on (disclosure)",
+          "stateType": "health-on",
+          "priorityTags": [
+            "post-mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/cards.jsx"
+          ],
+          "component": {
+            "name": "ScreenCardBuilder",
+            "props": {
+              "state": "health-on"
+            }
+          },
+          "screenshotPath": "screenshots/cards/9-1-health.png",
+          "knownIssues": []
+        },
+        {
+          "id": "9.2",
+          "slug": "cards__9-2",
+          "label": "9.2 Preview · rendered card 3:4",
+          "title": "Preview · rendered card 3:4",
+          "sectionId": "cards",
+          "sectionTitle": "9 — Shareable Cards",
+          "route": "/more/shareable-cards",
+          "screenIntent": "9 — Shareable Cards: 9.2 Preview · rendered card 3:4",
+          "stateType": "default",
+          "priorityTags": [
+            "post-mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/cards.jsx"
+          ],
+          "component": {
+            "name": "ScreenCardPreview",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/cards/9-2.png",
+          "knownIssues": []
+        },
+        {
+          "id": "9.3",
+          "slug": "cards__9-3",
+          "label": "9.3 Share-sheet · link vs snapshot",
+          "title": "Share-sheet · link vs snapshot",
+          "sectionId": "cards",
+          "sectionTitle": "9 — Shareable Cards",
+          "route": "/more/shareable-cards",
+          "screenIntent": "9 — Shareable Cards: 9.3 Share-sheet · link vs snapshot",
+          "stateType": "default",
+          "priorityTags": [
+            "post-mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/cards.jsx"
+          ],
+          "component": {
+            "name": "ScreenCardShareSheet",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/cards/9-3.png",
+          "knownIssues": []
+        },
+        {
+          "id": "9.4",
+          "slug": "cards__9-4",
+          "label": "9.4 Shared cards · list",
+          "title": "Shared cards · list",
+          "sectionId": "cards",
+          "sectionTitle": "9 — Shareable Cards",
+          "route": "/more/shareable-cards",
+          "screenIntent": "9 — Shareable Cards: 9.4 Shared cards · list",
+          "stateType": "default",
+          "priorityTags": [
+            "post-mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/cards.jsx"
+          ],
+          "component": {
+            "name": "ScreenCardsList",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/cards/9-4.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "revoked",
+      "title": "10 — Revoked / expired",
+      "subtitle": "Neutral end-of-access state",
+      "sourceFile": "raw/screens/sharing.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "10.1",
+          "slug": "revoked__10-1",
+          "label": "10.1 Revoked or expired · neutral",
+          "title": "Revoked or expired · neutral",
+          "sectionId": "revoked",
+          "sectionTitle": "10 — Revoked / expired",
+          "route": "/share/unavailable",
+          "screenIntent": "10 — Revoked / expired: 10.1 Revoked or expired · neutral",
+          "stateType": "revoked-or-expired",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sharing.jsx"
+          ],
+          "component": {
+            "name": "ScreenRevokedExpired",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/revoked/10-1.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "health",
+      "title": "11 — Health",
+      "subtitle": "Records, template/confirmed/done lifecycle",
+      "sourceFile": "raw/screens/health.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "11.1",
+          "slug": "health__11-1",
+          "label": "11.1 List · mixed templates + records",
+          "title": "List · mixed templates + records",
+          "sectionId": "health",
+          "sectionTitle": "11 — Health",
+          "route": "/health",
+          "screenIntent": "11 — Health: 11.1 List · mixed templates + records",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/health.jsx"
+          ],
+          "component": {
+            "name": "ScreenHealthList",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/health/11-1.png",
+          "knownIssues": []
+        },
+        {
+          "id": "11.2",
+          "slug": "health__11-2",
+          "label": "11.2 Edit · empty form",
+          "title": "Edit · empty form",
+          "sectionId": "health",
+          "sectionTitle": "11 — Health",
+          "route": "/health/record-edit",
+          "screenIntent": "11 — Health: 11.2 Edit · empty form",
+          "stateType": "empty",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/health.jsx"
+          ],
+          "component": {
+            "name": "ScreenHealthEdit",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/health/11-2.png",
+          "knownIssues": []
+        },
+        {
+          "id": "11.3",
+          "slug": "health__11-3",
+          "label": "11.3 Edit · filled, ready to save",
+          "title": "Edit · filled, ready to save",
+          "sectionId": "health",
+          "sectionTitle": "11 — Health",
+          "route": "/health",
+          "screenIntent": "11 — Health: 11.3 Edit · filled, ready to save",
+          "stateType": "filled-form",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/health.jsx"
+          ],
+          "component": {
+            "name": "ScreenHealthEdit",
+            "props": {
+              "filled": true
+            }
+          },
+          "screenshotPath": "screenshots/health/11-3.png",
+          "knownIssues": []
+        },
+        {
+          "id": "11.4",
+          "slug": "health__11-4",
+          "label": "11.4 Detail · confirmed",
+          "title": "Detail · confirmed",
+          "sectionId": "health",
+          "sectionTitle": "11 — Health",
+          "route": "/health",
+          "screenIntent": "11 — Health: 11.4 Detail · confirmed",
+          "stateType": "confirmed",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/health.jsx"
+          ],
+          "component": {
+            "name": "ScreenHealthDetail",
+            "props": {
+              "pill": "confirmed"
+            }
+          },
+          "screenshotPath": "screenshots/health/11-4.png",
+          "knownIssues": []
+        },
+        {
+          "id": "11.5",
+          "slug": "health__11-5",
+          "label": "11.5 Detail · needs vet review",
+          "title": "Detail · needs vet review",
+          "sectionId": "health",
+          "sectionTitle": "11 — Health",
+          "route": "/health",
+          "screenIntent": "11 — Health: 11.5 Detail · needs vet review",
+          "stateType": "needs-vet-review",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/health.jsx"
+          ],
+          "component": {
+            "name": "ScreenHealthDetail",
+            "props": {
+              "pill": "review"
+            }
+          },
+          "screenshotPath": "screenshots/health/11-5.png",
+          "knownIssues": []
+        },
+        {
+          "id": "11.6",
+          "slug": "health__11-6",
+          "label": "11.6 Empty · first-run",
+          "title": "Empty · first-run",
+          "sectionId": "health",
+          "sectionTitle": "11 — Health",
+          "route": "/health",
+          "screenIntent": "11 — Health: 11.6 Empty · first-run",
+          "stateType": "empty",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/health.jsx"
+          ],
+          "component": {
+            "name": "ScreenHealthEmpty",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/health/11-6.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "reminders",
+      "title": "12 — Reminders",
+      "subtitle": "List + lock-screen push",
+      "sourceFile": "raw/screens/more.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "12.1",
+          "slug": "reminders__12-1",
+          "label": "12.1 Reminders list",
+          "title": "Reminders list",
+          "sectionId": "reminders",
+          "sectionTitle": "12 — Reminders",
+          "route": "/reminders",
+          "screenIntent": "12 — Reminders: 12.1 Reminders list",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx"
+          ],
+          "component": {
+            "name": "ScreenReminders",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/reminders/12-1.png",
+          "knownIssues": []
+        },
+        {
+          "id": "12.4",
+          "slug": "reminders__12-4",
+          "label": "12.4 Push · lock-screen",
+          "title": "Push · lock-screen",
+          "sectionId": "reminders",
+          "sectionTitle": "12 — Reminders",
+          "route": "system-notification",
+          "screenIntent": "12 — Reminders: 12.4 Push · lock-screen",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx"
+          ],
+          "component": {
+            "name": "ScreenReminderPush",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/reminders/12-4.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "guidance",
+      "title": "13 — Starter Guidance",
+      "subtitle": "Topic detail page · read / tried it / skip",
+      "sourceFile": "raw/screens/guidance.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "13.1",
+          "slug": "guidance__13-1",
+          "label": "13.1 Topic detail · first night",
+          "title": "Topic detail · first night",
+          "sectionId": "guidance",
+          "sectionTitle": "13 — Starter Guidance",
+          "route": "/today/guidance",
+          "screenIntent": "13 — Starter Guidance: 13.1 Topic detail · first night",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/guidance.jsx"
+          ],
+          "component": {
+            "name": "ScreenGuidanceDetail",
+            "props": {
+              "topic": "first-night"
+            }
+          },
+          "screenshotPath": "screenshots/guidance/13-1.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "more",
+      "title": "14 — More",
+      "subtitle": "Settings surface · profile · trackers · notifications · privacy · destructive confirm",
+      "sourceFile": "raw/screens/more.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "14.1",
+          "slug": "more__14-1",
+          "label": "14.1 More · full list",
+          "title": "More · full list",
+          "sectionId": "more",
+          "sectionTitle": "14 — More",
+          "route": "/more",
+          "screenIntent": "14 — More: 14.1 More · full list",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx"
+          ],
+          "component": {
+            "name": "ScreenMore",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/more/14-1.png",
+          "knownIssues": []
+        },
+        {
+          "id": "14.2-default",
+          "slug": "more__14-2-default",
+          "label": "14.2 Puppy profile · saved view",
+          "title": "Puppy profile · saved view",
+          "sectionId": "more",
+          "sectionTitle": "14 — More",
+          "route": "/more/puppy-profile",
+          "screenIntent": "14 — More: 14.2 Puppy profile · saved view",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx",
+            "raw/screens/profile.jsx"
+          ],
+          "component": {
+            "name": "ScreenProfile",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/more/14-2-default.png",
+          "knownIssues": []
+        },
+        {
+          "id": "14.2-editing",
+          "slug": "more__14-2-editing",
+          "label": "14.2 Puppy profile · editing form",
+          "title": "Puppy profile · editing form",
+          "sectionId": "more",
+          "sectionTitle": "14 — More",
+          "route": "/more/puppy-profile",
+          "screenIntent": "14 — More: 14.2 Puppy profile · editing form",
+          "stateType": "editing-form",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx",
+            "raw/screens/profile.jsx"
+          ],
+          "component": {
+            "name": "ScreenProfileEditing",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/more/14-2-editing.png",
+          "knownIssues": []
+        },
+        {
+          "id": "14.2-breed",
+          "slug": "more__14-2-breed",
+          "label": "14.2 Puppy profile · breed picker",
+          "title": "Puppy profile · breed picker",
+          "sectionId": "more",
+          "sectionTitle": "14 — More",
+          "route": "/more/puppy-profile",
+          "screenIntent": "14 — More: 14.2 Puppy profile · breed picker",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx",
+            "raw/screens/profile.jsx"
+          ],
+          "component": {
+            "name": "ScreenProfileBreedPicker",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/more/14-2-breed.png",
+          "knownIssues": []
+        },
+        {
+          "id": "14.2-breed-q",
+          "slug": "more__14-2-breed-q",
+          "label": "14.2 Puppy profile · breed search · 'bord'",
+          "title": "Puppy profile · breed search · 'bord'",
+          "sectionId": "more",
+          "sectionTitle": "14 — More",
+          "route": "/more/puppy-profile",
+          "screenIntent": "14 — More: 14.2 Puppy profile · breed search · 'bord'",
+          "stateType": "search",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx",
+            "raw/screens/profile.jsx"
+          ],
+          "component": {
+            "name": "ScreenProfileBreedPicker",
+            "props": {
+              "query": "bord"
+            }
+          },
+          "screenshotPath": "screenshots/more/14-2-breed-q.png",
+          "knownIssues": []
+        },
+        {
+          "id": "14.3",
+          "slug": "more__14-3",
+          "label": "14.3 Quick trackers · 5 of 5",
+          "title": "Quick trackers · 5 of 5",
+          "sectionId": "more",
+          "sectionTitle": "14 — More",
+          "route": "/settings/quick-trackers",
+          "screenIntent": "14 — More: 14.3 Quick trackers · 5 of 5",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx",
+            "raw/screens/settings.jsx"
+          ],
+          "component": {
+            "name": "ScreenQuickTrackers",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/more/14-3.png",
+          "knownIssues": []
+        },
+        {
+          "id": "14.4",
+          "slug": "more__14-4",
+          "label": "14.4 Notifications",
+          "title": "Notifications",
+          "sectionId": "more",
+          "sectionTitle": "14 — More",
+          "route": "/more/notifications",
+          "screenIntent": "14 — More: 14.4 Notifications",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx",
+            "raw/screens/settings.jsx"
+          ],
+          "component": {
+            "name": "ScreenNotifications",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/more/14-4.png",
+          "knownIssues": []
+        },
+        {
+          "id": "14.5",
+          "slug": "more__14-5",
+          "label": "14.5 Privacy & account",
+          "title": "Privacy & account",
+          "sectionId": "more",
+          "sectionTitle": "14 — More",
+          "route": "/more/privacy",
+          "screenIntent": "14 — More: 14.5 Privacy & account",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx",
+            "raw/screens/settings.jsx"
+          ],
+          "component": {
+            "name": "ScreenPrivacy",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/more/14-5.png",
+          "knownIssues": []
+        },
+        {
+          "id": "14.6",
+          "slug": "more__14-6",
+          "label": "14.6 Delete confirm · type DELETE",
+          "title": "Delete confirm · type DELETE",
+          "sectionId": "more",
+          "sectionTitle": "14 — More",
+          "route": "/more",
+          "screenIntent": "14 — More: 14.6 Delete confirm · type DELETE",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx"
+          ],
+          "component": {
+            "name": "ScreenDeleteConfirm",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/more/14-6.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "paywall",
+      "title": "15 — Paywall",
+      "subtitle": "PuppyPlan Plus shell",
+      "sourceFile": "raw/screens/more.jsx",
+      "priorityTags": [
+        "post-mvp"
+      ],
+      "artboards": [
+        {
+          "id": "15.1",
+          "slug": "paywall__15-1",
+          "label": "15.1 Paywall shell",
+          "title": "Paywall shell",
+          "sectionId": "paywall",
+          "sectionTitle": "15 — Paywall",
+          "route": "/more/paywall",
+          "screenIntent": "15 — Paywall: 15.1 Paywall shell",
+          "stateType": "default",
+          "priorityTags": [
+            "post-mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 393,
+            "height": 852,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/more.jsx"
+          ],
+          "component": {
+            "name": "ScreenPaywall",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/paywall/15-1.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "states",
+      "title": "16 — Screen states",
+      "subtitle": "Canonical templates · copy from STRINGS.en.json `states.*`",
+      "sourceFile": "raw/screens/states.jsx",
+      "priorityTags": [
+        "reference"
+      ],
+      "artboards": [
+        {
+          "id": "states",
+          "slug": "states__states",
+          "label": "Screen-states reference",
+          "title": "Screen-states reference",
+          "sectionId": "states",
+          "sectionTitle": "16 — Screen states",
+          "route": "/_dev/components/states",
+          "screenIntent": "16 — Screen states: Screen-states reference",
+          "stateType": "reference",
+          "priorityTags": [
+            "reference"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 1200,
+            "height": 1280,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/states.jsx"
+          ],
+          "component": {
+            "name": "StatesFrame",
+            "props": {}
+          },
+          "screenshotPath": "screenshots/states/states.png",
+          "knownIssues": []
+        }
+      ]
+    }
+  ],
+  "missingOrDeferredStates": [
+    {
+      "status": "open",
+      "item": "Onboarding age hint artboard",
+      "notes": "Expected between profile setup and tracker picker. Not present as a dedicated current artboard."
+    },
+    {
+      "status": "open",
+      "item": "Today after-accident recovery state",
+      "notes": "Required by PRD retention journey; not present as a dedicated current artboard."
+    },
+    {
+      "status": "open",
+      "item": "Today empty and refresh-error states",
+      "notes": "Current canvas has loading/offline/pending but not a dedicated empty or error Today artboard."
+    },
+    {
+      "status": "open",
+      "item": "Quick Log slow-network/saving state",
+      "notes": "Current canvas has after-tap pending and failed states but not the slow saving intermediate."
+    },
+    {
+      "status": "open",
+      "item": "Reminder edit route",
+      "notes": "Current canvas has reminder list and lock-screen push, not /reminders/edit."
+    },
+    {
+      "status": "open",
+      "item": "Notification permission-denied state",
+      "notes": "Current canvas has notification settings, not a dedicated denied-permission state."
+    },
+    {
+      "status": "open",
+      "item": "Viewer-role read-only Today/Timeline",
+      "notes": "Family sharing viewer read-only surfaces are not dedicated artboards."
+    },
+    {
+      "status": "open",
+      "item": "Quick Log detail forms for sleep, feeding, and zoomies",
+      "notes": "Current details form is generic and does not show the three specific variants."
+    },
+    {
+      "status": "deferred",
+      "item": "Dynamic Type XXL/XXXL variants",
+      "notes": "Explicitly deferred from this Cloud Design pass; future native gallery/screenshots must cover it."
+    },
+    {
+      "status": "deferred",
+      "item": "Multi-size phone canvases",
+      "notes": "Current phone artboards are 393x852 only. DESIGN calls for small iPhone, large iPhone, and common Android acceptance screenshots."
+    },
+    {
+      "status": "deferred",
+      "item": "Detailed tap-target and VoiceOver annotation layers",
+      "notes": "Readme marks these as better suited to Figma; native primitives must enforce them later."
+    }
+  ],
+  "changelog": [
+    {
+      "date": "2026-05-22",
+      "change": "Generated manifest from current raw/PuppyPlan.html with 17 sections, 65 artboards, and 62 phone screens."
+    }
+  ]
+}

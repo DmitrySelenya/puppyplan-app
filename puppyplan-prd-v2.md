@@ -12,6 +12,8 @@
 
 **Позиционирование.** PuppyPlan - не универсальное приложение про собак, не библиотека тренировок и не медицинское приложение. Это спокойный компаньон на первые 90 дней жизни со щенком: быстрый трекинг рутины, общая видимость для семьи, напоминания, базовые медицинские записи, стартовые подсказки и контролируемый sharing с caregiver или кинологом.
 
+**Языки старта.** Закрытая бета должна иметь полный набор UI-строк на английском, русском и испанском (`en`, `ru`, `es`) с английским как fallback/master locale для typed keys.
+
 **Главное обещание.**
 
 > Первые 90 дней со щенком - с меньшим перегрузом: одна общая рутина, один понятный следующий шаг, одна надежная запись.
@@ -113,25 +115,25 @@
 
 ### Основные Персоны
 
-**1. Аня, 29, solo first-time owner.**  
+**1. Владелец A, 29, solo first-time owner.**
 Работает удаленно, у нее 11-недельный щенок, она перегружена сном, biting и toilet accidents. Ей нужно, чтобы приложение сразу снижало cognitive load. Она не потерпит долгую настройку.
 
-**2. Марк и Оля, 32 и 31, shared care.**  
+**2. Владелец B и Опекун A, 32 и 31, shared care.**
 Их боль - координация: duplicate feeding, пропущенные walks и "я думал, ты это сделал". Им нужна shared timeline, last-action visibility и duplicate warnings.
 
-**3. Лена, 35, владелец, работающий с trainer/kinologist.**  
+**3. Владелец C, 35, владелец, работающий с trainer/kinologist.**
 Она хочет показать выбранный progress, potty patterns и training notes, не давая trainer доступ ко всем health notes, private household details или billing settings.
 
 ### Вторичные Персоны
 
-**4. Ирина, 38, parent managing family care.**  
-Дети помогают со щенком, но не являются пользователями приложения. Ирине нужен спокойный dashboard, task visibility и простая account model.
+**4. Владелец D, 38, parent managing family care.**
+Дети помогают со щенком, но не являются пользователями приложения. Владельцу D нужен спокойный dashboard, task visibility и простая account model.
 
-**5. Томаш, 64, retired companion-dog owner.**  
+**5. Владелец E, 64, retired companion-dog owner.**
 Он ценит reminders, readable typography и health records больше, чем shareable moments. Accessibility для этого сегмента обязательна.
 
-**6. Сара, 34, foster/rescue volunteer.**  
-Потенциально сильный advocate, но multi-pet и foster workflows - Phase 1+. Не оптимизировать closed beta под нее ценой простоты для first-time owner.
+**6. Волонтёр A, 34, foster/rescue volunteer.**
+Потенциально сильный advocate, но multi-pet и foster workflows - Phase 1+. Не оптимизировать closed beta под эту персону ценой простоты для first-time owner.
 
 ### Эмоциональное Позиционирование
 
@@ -250,7 +252,7 @@ Flow:
 Required layout:
 - top bar: имя щенка, возраст в неделях, household avatars при наличии;
 - optional age microcopy рядом с Today hero или setup reveal, максимум одна строка и без alarmist language;
-- household activity strip: "Оля покормила Луну 42 мин назад";
+- household activity strip: "Опекун A покормил Щенка A 42 мин назад";
 - только one hero card;
 - Quick Log action в thumb zone;
 - daily cards с максимум 5 visible items;
@@ -284,7 +286,7 @@ Required layout:
 - details остаются optional.
 
 **After invite.**
-- owner видит last-action strip с attribution: "Оля покормила Бублика 12 мин назад";
+- owner видит last-action strip с attribution: "Опекун A покормил Щенка A 15 мин назад";
 - caregiver видит тот же Today, но без owner/billing/share settings;
 - если caregiver сделал log, owner видит update in-app без broad household push.
 
@@ -353,7 +355,7 @@ MVP:
 - last-action strip;
 - duplicate detection for potty/feeding within 60 seconds;
 - activity attribution на всех events;
-- app показывает, кто что сделал, например "Оля покормила Бублика 12 мин назад";
+- app показывает, кто что сделал, например "Опекун A покормил Щенка A 15 мин назад";
 - owner может resend, revoke или expire invite;
 - owner может remove caregiver, и access прекращается сразу.
 
@@ -361,7 +363,7 @@ Trusted Sitter Mode:
 - owner может пометить единственного invited caregiver как trusted sitter на выбранный период, когда owner уезжает или передает уход;
 - sitter видит общий Today, Timeline и checklist из выбранных trackers/reminders, без доступа к billing, owner settings или private share scopes;
 - sitter получает reminders/checklist prompts на своем устройстве после accept;
-- owner видит completion updates in-app, например "Бублик накормлен"; push completion notifications разрешены только как узкий trusted-sitter сценарий, а не как broad household activity push;
+- owner видит completion updates in-app, например "Щенок A накормлен"; push completion notifications разрешены только как узкий trusted-sitter сценарий, а не как broad household activity push;
 - режим должен работать как view over existing caregiver membership/reminders, без отдельного сложного schedule ownership в closed beta.
 
 Role behavior:
@@ -619,7 +621,7 @@ After tap:
 
 Duplicate warning:
 - non-blocking bottom sheet or inline warning;
-- copy: "Оля уже логировала feeding 12 минут назад. Все равно добавить?";
+- copy: "Другой опекун уже логировал feeding за последние 60 секунд. Все равно добавить?";
 - actions: Add anyway / Cancel.
 
 #### Timeline Item Contract
@@ -1427,7 +1429,7 @@ Activated household:
 - activity attribution виден;
 - trusted-sitter mode можно включить только для accepted caregiver;
 - sitter видит checklist/reminders без billing/settings/share-scope доступа;
-- owner видит completion update вроде "Бублик накормлен" in-app; push notification отправляется только если trusted-sitter completion push включен и permission получен.
+- owner видит completion update вроде "Щенок A накормлен" in-app; push notification отправляется только если trusted-sitter completion push включен и permission получен.
 
 **Trainer Sharing**
 - owner видит permission preview перед отправкой;
@@ -1600,10 +1602,10 @@ Design QA:
 > Первый день дома может быть хаотичным. Добавьте potty, feeding, nap или другой выбранный tracker, и мы начнем выстраивать ритм дня.
 
 **Age hint**
-> Ого, Бублику уже 5 месяцев. В этом возрасте у многих щенков активно меняются зубы - держите chew toys под рукой и сверяйте вопросы здоровья с ветеринаром.
+> Ого, щенку A уже 5 месяцев. В этом возрасте у многих щенков активно меняются зубы - держите chew toys под рукой и сверяйте вопросы здоровья с ветеринаром.
 
 **Duplicate feeding warning**
-> Оля залогировала feeding 12 минут назад. Все равно добавить еще одно feeding?
+> Другой опекун залогировал feeding за последние 60 секунд. Все равно добавить еще одно feeding?
 
 **Health template**
 > Template, not a prescription. Подтвердите эту дату с вашей ветеринарной клиникой.
@@ -1615,7 +1617,7 @@ Design QA:
 > Если это уже произошло, отметьте как done. Если нет - перенесите на более удобное время.
 
 **Trusted sitter completion**
-> Бублик накормлен. Марина отметила feeding 4 минуты назад.
+> Щенок A накормлен. Ситтер A отметил feeding 4 минуты назад.
 
 **Supportive education card**
 > Многие новые владельцы щенков сначала чувствуют усталость и неуверенность. Короткая рутина помогает. Начните со следующего маленького шага.

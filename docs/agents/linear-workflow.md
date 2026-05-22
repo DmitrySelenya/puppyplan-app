@@ -34,6 +34,19 @@ Backlog -> Todo -> In Progress -> In Review -> Done
 
 Use `Canceled` for work intentionally dropped and `Duplicate` only when another issue is the canonical tracker.
 
+## Mandatory Issue Sync
+
+For Linear-backed work, Linear is not an optional end-of-task note. It is the live workflow state. Agents must keep the issue current at these points:
+
+- **Start:** move the issue to `In Progress`, or add a comment explaining why the state is intentionally unchanged.
+- **Phase or checklist progress:** update checked items, blockers, dependencies, and current phase before switching context or ending the turn.
+- **Scope changes:** record new non-goals, deferred work, blocked dependencies, or split follow-up issue needs.
+- **Verification:** paste concise command/results evidence into the issue once checks run.
+- **Review handoff:** move the issue to `In Review` only after implementation artifacts and verification evidence are ready for human or agent review.
+- **Closure:** move to `Done` only after acceptance/review expectations are satisfied and final evidence is recorded.
+
+Repo plans remain canonical for detailed implementation contracts, but the Linear issue must always show the operational truth: who owns the work, what phase it is in, what is blocked, and what evidence exists.
+
 ## Labels
 
 Create these labels for team `PUP`:
