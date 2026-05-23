@@ -22,7 +22,7 @@
     "text": {
       "primary":     { "$value": "#1C1F1B", "$type": "color", "$description": "Charcoal. Contrast 14.8:1 vs surface/base. DESIGN.md §1.2.2" },
       "secondary":   { "$value": "#4A4E48", "$type": "color", "$description": "Contrast 8.6:1. DESIGN.md §1.2.2" },
-      "tertiary":    { "$value": "#76796F", "$type": "color", "$description": "Contrast 4.7:1. DESIGN.md §1.2.2" },
+      "tertiary":    { "$value": "#72756A", "$type": "color", "$description": "Contrast 4.50:1 vs surface/base and 4.70:1 vs surface/raised. DESIGN.md §1.2.2" },
       "disabled":    { "$value": "#A6A89F", "$type": "color", "$description": "Decorative only — 2.6:1 (fails WCAG AA for body text). DESIGN.md §1.2.2" },
       "on-primary":  { "$value": "#FFFFFF", "$type": "color", "$description": "White на primary/600. 5.1:1. DESIGN.md §1.2.2" },
       "on-accent":   { "$value": "#1C1F1B", "$type": "color", "$description": "Charcoal на accent/300. 9.2:1. DESIGN.md §1.2.2" },
@@ -132,7 +132,8 @@
 
   "layout": {
     "$description": "Layout rules. DESIGN.md §1.4",
-    "screen-padding-phone":   { "$value": "16pt", "$type": "dimension" },
+    "screen-padding-phone":   { "$value": "16pt", "$type": "dimension", "$description": "Horizontal phone screen edge padding. DESIGN.md §1.4" },
+    "screen-padding-y":       { "$value": "24pt", "$type": "dimension", "$description": "Vertical screen edge padding after safe-area handling; separate from section-gap. DESIGN.md §1.4" },
     "screen-padding-tablet":  { "$value": "24pt", "$type": "dimension", "$description": "v2 reference — tablet out-of-scope in v1" },
     "section-gap":            { "$value": "24pt", "$type": "dimension" },
     "card-padding":           { "$value": "16pt", "$type": "dimension" },
@@ -273,6 +274,7 @@
     "one-cta-per-hero":         "Exactly one primary CTA + at most one tertiary text-link in hero. Never two equal-weight filled buttons.",
     "quick-log-trackers-max":   5,
     "today-daily-cards-max":    5,
+    "accidental-double-tap-window-seconds": 3,
     "duplicate-warning-window-seconds": 60,
     "celebration-color-only":   "accent/* — celebration ONLY (first log, milestone, vaccination confirmed). Never default CTA.",
     "danger-color-only":        "status/danger — user-marked urgent ONLY. Never system-flagged.",

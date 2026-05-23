@@ -1,5 +1,5 @@
 # Tokens
 
-The full design token pipeline is deferred to PUP-7.
+`src/design/tokens.ts` is generated from `design-tokens.json` by `npm run tokens:generate`.
 
-`scaffold.ts` is a temporary shell-only bridge so route and feature shell code do not import raw token values directly. Do not extend it for product UI. PUP-7 must either delete it after generated native tokens exist or migrate its few values into the real token output with a drift check.
+Use `npm run tokens:check` to verify `design-tokens.json`, generated TypeScript, root `tokens.css` when present, and the raw design CSS mirror stay synchronized. Do not edit generated token output directly.

@@ -58,7 +58,7 @@ function LibraryFrame() {
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', alignItems: 'baseline' }}>
           <div><div className="pp-body" style={{ color: 'var(--pp-text-primary)' }}>Primary 14.8:1</div><div className="pp-anno">#1C1F1B</div></div>
           <div><div className="pp-body" style={{ color: 'var(--pp-text-secondary)' }}>Secondary 8.6:1</div><div className="pp-anno">#4A4E48</div></div>
-          <div><div className="pp-body" style={{ color: 'var(--pp-text-tertiary)' }}>Tertiary 4.71:1</div><div className="pp-anno">#72756B</div></div>
+          <div><div className="pp-body" style={{ color: 'var(--pp-text-tertiary)' }}>Tertiary 4.50:1</div><div className="pp-anno">#72756A</div></div>
           <div><div className="pp-body" style={{ color: 'var(--pp-text-link)' }}>Link 5.0:1</div><div className="pp-anno">#0E7490</div></div>
         </div>
       </LibraryRow>

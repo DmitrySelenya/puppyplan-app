@@ -49,7 +49,7 @@
 **Visual contract.** (значения совпадают с §1.2; при любом расхождении побеждает §1.2)
 - Style: `soft native utility`, `warm clinical trust`, `paper-like calm`.
 - Background `surface/base`: `#FBFAF7` (Warm Off-white); surface/raised: `#FFFFFF`; surface/sunken: `#F1ECE3`.
-- Text: primary `#1C1F1B` (Charcoal), secondary `#4A4E48`, tertiary `#76796F`; border `stroke/default` `#E2DDD2`.
+- Text: primary `#1C1F1B` (Charcoal), secondary `#4A4E48`, tertiary `#72756A`; border `stroke/default` `#E2DDD2`.
 - Primary brand: Calm Teal `primary/500` `#0891B2`; filled-button teal затемнён до contrast-safe `primary/600` `#0E7490`.
 - Accent: Ember Coral `accent/500` `#E07A4F` — ТОЛЬКО для celebration (первая запись, milestone, vaccination confirmed). Никаких amber-accent для CTA.
 - `status/danger` Clay Red `#9A3B2E` (muted) — только для user-marked urgent. Bright red (`#DC2626` и т.п.) запрещён.
@@ -219,7 +219,7 @@ loading → empty → error → offline-read → pending-write → permission-de
 |---|---|---|
 | `text/primary` (Charcoal) | `#1C1F1B` | 14.8:1 |
 | `text/secondary` | `#4A4E48` | 8.6:1 |
-| `text/tertiary` | `#76796F` | 4.7:1 |
+| `text/tertiary` | `#72756A` | 4.50:1 |
 | `text/disabled` | `#A6A89F` | 2.6:1 (decorative only) |
 | `text/on-primary` | `#FFFFFF` | 5.1:1 на `primary/600` |
 | `text/on-accent` | `#1C1F1B` | 9.2:1 на `accent/300` |
@@ -3285,7 +3285,7 @@ anxious first-time owner, one-handed phone use, often in low light.
 DO:
 - Use SF Pro system font, semibold for headings, regular for body
 - Background surface/base: warm off-white #FBFAF7; surface/raised #FFFFFF; surface/sunken #F1ECE3
-- Text primary: charcoal #1C1F1B; secondary #4A4E48; tertiary #76796F
+- Text primary: charcoal #1C1F1B; secondary #4A4E48; tertiary #72756A
 - Stroke/default: #E2DDD2 (1px hairline на cards)
 - Primary brand: Calm Teal #0891B2 (focus ring, brand)
 - Primary filled action: contrast-safe teal #0E7490

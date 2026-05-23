@@ -12,7 +12,7 @@
   /* Text */
   --pp-text-primary:    #1C1F1B;
   --pp-text-secondary:  #4A4E48;
-  --pp-text-tertiary:   #72756B; /* 4.71:1 on surface/base · 4.91:1 on raised · was #76796F (4.42:1) — fixed in review pass */
+  --pp-text-tertiary:   #72756A; /* 4.50:1 on surface/base, 4.70:1 on raised. */
   --pp-text-disabled:   #A6A89F;
   --pp-text-on-primary: #FFFFFF;
   --pp-text-on-accent:  #1C1F1B;
@@ -28,6 +28,7 @@
   --pp-primary-600: #0E7490;
   --pp-primary-700: #155E75;
   --pp-primary-800: #164E63;
+  --pp-primary-900: #083344;
 
   /* Accent — Ember Coral, celebration ONLY */
   --pp-accent-100: #FBEBE0;

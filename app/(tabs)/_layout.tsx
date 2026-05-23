@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { primaryTabs, quickLogAction } from '@/contracts/navigation';
 import { FAB } from '@/design/primitives/FAB';
-import { scaffoldTokens } from '@/design/tokens/scaffold';
+import { tokens } from '@/design/tokens';
 
 const [todayTab, healthTab, moreTab] = primaryTabs;
 
@@ -16,8 +16,8 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: scaffoldTokens.color.primaryStrong,
-          tabBarInactiveTintColor: scaffoldTokens.color.textSecondary,
+          tabBarActiveTintColor: tokens.color.primary[600],
+          tabBarInactiveTintColor: tokens.color.text.secondary,
           tabBarStyle: styles.tabBar,
         }}>
         <Tabs.Screen
@@ -57,8 +57,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tabBar: {
-    backgroundColor: scaffoldTokens.color.surfaceRaised,
-    borderTopColor: scaffoldTokens.color.stroke,
+    backgroundColor: tokens.color.surface.raised,
+    borderTopColor: tokens.color.stroke.default,
   },
   quickLog: {
     bottom: 88,
