@@ -1,7 +1,7 @@
 # PuppyPlan - PRD v2.3 (Supabase-first, beta-scope)
 
-> Обновлено: 2026-05-17  
-> Статус: продуктовый и инженерный PRD для закрытой беты  
+> Обновлено: 2026-05-17<br>
+> Статус: продуктовый и инженерный PRD для закрытой беты<br>
 > Заменяет: `deep-research-report (1).md`, предыдущий `puppyplan-prd-v2.md`, PRD v2.1 и PRD v2.2
 
 ## Краткое Резюме
@@ -152,10 +152,10 @@
 
 ### Конкурентный Контекст
 
-**Training and lifestyle apps:** Woofz, Dogo, Zigzag, Puppr, GoodPup, Pupford.  
+**Training and lifestyle apps:** Woofz, Dogo, Zigzag, Puppr, GoodPup, Pupford.<br>
 Риск: у них есть content breadth и brand presence.
 
-**Logging and household apps:** DogLog, Doggy Time, PupFi, 11pets.  
+**Logging and household apps:** DogLog, Doggy Time, PupFi, 11pets.<br>
 Риск: они уже закрывают части workflow.
 
 **Дифференциация PuppyPlan:**

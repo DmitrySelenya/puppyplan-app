@@ -18,7 +18,7 @@
 - CTO: Алекс
 - UX/UI Lead: Мира
 - iOS Architect: Тарас
-- Android Architect: Аня
+- Android Architect: Android Lead
 - Lead Client Developer: Костя
 - Lead Backend Developer: Денис
 
