@@ -22,6 +22,8 @@ if (!i18n.isInitialized) {
     initImmediate: false,
     interpolation: {
       escapeValue: false,
+      prefix: '{',
+      suffix: '}',
     },
     lng: 'en',
     resources: i18nResources,

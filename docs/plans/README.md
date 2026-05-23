@@ -13,6 +13,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
 | Active roadmap | [Architecture Foundation Roadmap](active/2026-05-21-phase-0-architecture-cleanup.md) | Split through `PUP-2`, `PUP-3`, `PUP-4`, and follow-up issues | Do not assign directly; use it as the dependency map for scaffold, Supabase/RLS, Quick Log, and release gates |
+| Active task plan | [PUP-4 Test Harness And Local Gates](active/2026-05-23-pup-4-test-harness-local-gates.md) | `PUP-4` | Local harness, PR metadata CI, `npm run check`, privacy scan, text hygiene, i18n placeholders, tab-layout coverage, and deep-review fixes are implemented; local review is complete and waiting for explicit commit/push/PR approval |
 | Active task plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7` | Phases 1-3 complete and synced to Linear `In Review`; `PUP-2` scaffold is complete; continue or split Phases 4-7 after `PUP-4` defines verification gates |
 | Completed | [Scaffold Expo App Baseline](completed/2026-05-22-scaffold-expo-app-baseline.md) | `PUP-2` | Local scaffold implemented and verified; Linear moved to `In Review` |
 | Completed | [Agent Company Setup](completed/2026-05-21-agent-company-setup.md) | `PUP-1` | Closed; `PUP-6` separately tracks first-PR GitHub integration verification |
