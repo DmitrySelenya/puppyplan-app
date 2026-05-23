@@ -9,9 +9,9 @@
 
 **Plan type:** Linear task plan for `PUP-7`.
 
-**Current phase:** Phases 1-3 complete with deep-review and second-agent follow-up fixes applied locally; Spanish root strings added as pre-scaffold locale data; `PUP-2` scaffold is complete; Phases 4-7 should wait for `PUP-4` verification gates or be split into scoped follow-up issues.
+**Current phase:** Phases 1-3 complete with deep-review and second-agent follow-up fixes applied locally; Spanish root strings added as pre-scaffold locale data; `PUP-2` scaffold and `PUP-4` verification gates are complete; continue or split Phases 4-7 into scoped follow-up issues.
 
-**Current Linear scope:** `PUP-7` executed Phases 1-3. Phases 4-7 should resume only after `PUP-4` defines local/CI verification gates, or be split into scoped follow-up issues.
+**Current Linear scope:** `PUP-7` executed Phases 1-3. Phases 4-7 can now resume under the `PUP-4` local/CI gates, or be split into scoped follow-up issues.
 
 **Architecture:** This is a design handoff and implementation-enablement plan. It does not change product scope, app runtime, Supabase schema, RLS, CI, or release behavior. Future code work must still implement Expo native UI through `src/design` primitives, typed i18n, contracts, and tests.
 
@@ -535,3 +535,4 @@ Future verification after Expo scaffold:
 - 2026-05-22: Addressed Spanish localization follow-up review by fixing high-risk ES copy regressions, standardizing cited strings on informal `tú`, adding Spanish value-level string tests, and syncing EN/RU-only plan language to EN/RU/ES.
 - 2026-05-22: Addressed deep-review fixes by changing the Quick Log duplicate-warning artboard and PNG atlas from a 4-minute example to a 42-second example, adding text-policy coverage for stale duplicate-window examples, tightening Spanish core-copy tests and informal-register checks, and aligning `STRINGS.en.json` metadata with English-as-master i18n docs.
 - 2026-05-22: Addressed second-agent review by aligning RU/ES locale metadata with English-as-master provenance, making RU activity/duplicate-warning copy grammatically consistent without gendered actor verbs, adding regression tests for those cases, and removing the dead `12-min` manifest-generator branch in favor of existing text-policy enforcement.
+- 2026-05-23: Updated post-`PUP-4` status after PR #3 merged verification gates into `main`; Phases 4-7 can now resume or be split under the new local/CI gate.

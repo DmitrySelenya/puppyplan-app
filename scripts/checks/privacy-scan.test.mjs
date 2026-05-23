@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 import {
   formatPrivacyViolation,
   listWorkspaceFiles,
+  repoRoot,
   scanPrivacyText,
   shouldScanPrivacyPath,
 } from './privacy-scan.mjs';
@@ -86,6 +89,14 @@ describe('scanPrivacyText', () => {
 
     assert.equal(files.includes('package.json'), true);
     assert.equal(files.includes('src/test/README.md'), true);
+  });
+
+  it('does not list tracked paths that were removed from the working tree', () => {
+    const files = listWorkspaceFiles();
+
+    for (const file of files) {
+      assert.equal(existsSync(join(repoRoot, file)), true, file);
+    }
   });
 
   it('allows common lowercase words like blind spot', () => {

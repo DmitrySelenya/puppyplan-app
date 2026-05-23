@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-import { listWorkspaceFiles, scanTextHygiene } from './text-hygiene.mjs';
+import { listWorkspaceFiles, repoRoot, scanTextHygiene } from './text-hygiene.mjs';
 
 describe('scanTextHygiene', () => {
   it('accepts clean text with a final newline', () => {
@@ -39,5 +41,13 @@ describe('scanTextHygiene', () => {
 
     assert.equal(files.includes('package.json'), true);
     assert.equal(files.includes('src/test/README.md'), true);
+  });
+
+  it('does not list tracked paths that were removed from the working tree', () => {
+    const files = listWorkspaceFiles();
+
+    for (const file of files) {
+      assert.equal(existsSync(join(repoRoot, file)), true, file);
+    }
   });
 });

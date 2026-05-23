@@ -5,9 +5,9 @@
 
 **Goal:** Add a real Expo/React Native test harness, lightweight CI metadata checks, and keep `npm run check` as the standard local verification gate before product logic lands.
 
-**Status:** Active.
+**Status:** Completed.
 
-**Current phase:** Local review complete; awaiting explicit commit/push/PR approval.
+**Completed:** Merged to `main` via PR #3 on 2026-05-23.
 
 **Plan type:** Linear task plan for `PUP-4`.
 
@@ -34,7 +34,7 @@
 - **Context package:** `PUP-4`, this plan, `AGENTS.md`, the source docs above, current `package.json`, `tsconfig.json`, `eslint.config.mjs`, `app/`, `src/`, `scripts/checks/`, and advisory project graph output.
 - **Context placement:** Linear holds concise status and verification evidence; this plan holds implementation context and the verification log.
 - **Ownership area:** local verification gates, CI metadata checks, test harness config, focused shell/design/i18n/navigation tests, and docs updates.
-- **Current constraint:** user approved local dev dependencies needed for `PUP-4` test harness only. Product/runtime dependencies, release/EAS/production actions, commits, pushes, and PRs remain unapproved.
+- **Completion note:** user approved the dev-only test harness dependencies for `PUP-4`, then separately approved local commit, branch push, and PR creation for PR #3. Product/runtime dependencies, release/EAS/production actions, and Supabase production actions remained out of scope and were not run.
 
 ## Goals
 
@@ -147,7 +147,7 @@ Important PuppyPlan invariants still apply:
 
 ### Docs
 - `docs/plans/README.md` - add active plan entry.
-- `docs/plans/active/2026-05-23-pup-4-test-harness-local-gates.md` - this plan and verification log.
+- `docs/plans/completed/2026-05-23-pup-4-test-harness-local-gates.md` - this plan and verification log.
 
 ### CI
 - `.github/workflows/pr-metadata.yml` - PR title/body work tracking guard.
@@ -340,7 +340,7 @@ Run and record exact results before claiming completion:
 | Test mocks hide real behavior. | Prefer real providers/components; mock only unavoidable native/router boundaries and do not assert on mock internals. |
 | Dev dependencies introduce runtime surface. | Install with `--dev`, verify `npm audit --omit=dev`, and review `package.json` dependency sections. |
 | Scanner false positives block known safe project support copy. | Allowlist the single project support email while continuing to block private-looking personal emails and token patterns. |
-| GitHub Actions exist but have not run remotely yet. | Use local equivalent verification now; first PR will provide remote CI evidence before merge. |
+| GitHub Actions could drift from local gate over time. | PR #3 provided remote CI evidence; keep `verification.yml` running `npm run check` so local and remote gates stay aligned. |
 | Workflow action major tags are not pinned to commit SHAs. | Accept standard `@v4` tags for the initial lightweight gate; revisit SHA pinning if the project adopts stricter supply-chain hardening. |
 
 ## Changelog
@@ -353,3 +353,4 @@ Run and record exact results before claiming completion:
 - [2026-05-23]: Addressed follow-up review notes by removing the locale-fragile digit assertion from the count-key i18n test, narrowing privacy scanner self-exclusion so future `scripts/**/*.test.mjs` files are scanned, removing common noun `Spot` from forbidden private fixture names, documenting simple-brace interpolation and `<br>` hard-break conventions in `src/test/README.md`, and recording workflow SHA pinning as future supply-chain hardening. Verification passed: `npm run check` passed 5 Jest suites / 19 tests, 27 Node tests, scaffold guardrails, privacy scan, and text hygiene scan; `git diff --check` exited clean.
 - [2026-05-23]: Addressed deep-review fix requests by redacting privacy-scan failure output, making privacy/text scanners repo-rooted, tightening PR metadata validation to require matching title and Work Tracking issue IDs, disabling persisted checkout credentials in CI workflows, bounding direct Jest unit runs with `--runInBand`, and extending privacy fixture coverage to canonical legacy placeholders. RED evidence: `npm run test:node` failed on the new regression tests before implementation. GREEN evidence: `npm run check` passed lint, typecheck, 5 Jest suites / 19 tests, 33 Node tests, scaffold guardrails, privacy scan, and text hygiene scan; `git diff --check` exited clean.
 - [2026-05-23]: Continued the final local review pass without commit/push/PR actions. Fresh verification passed: `npm run check` passed lint, typecheck, 5 Jest suites / 19 tests, 33 Node tests, scaffold guardrails, privacy scan, and text hygiene scan; `npm audit --omit=dev --audit-level=moderate` found 0 vulnerabilities; `npx expo install --check` reported dependencies are up to date; `git diff --check` exited clean; workflow YAML parsed locally with Ruby/Psych; privacy/text scanners also passed when invoked from `src/`.
+- [2026-05-23]: Published and merged PR #3 after explicit approval for local commit, branch push, and PR creation. Post-merge verification on `main` passed: GitHub Actions `Verification` push run succeeded; local `npm run check` passed lint, typecheck, 5 Jest suites / 19 tests, 33 Node tests, scaffold guardrails, privacy scan, and text hygiene scan; `npm audit --omit=dev --audit-level=moderate` found 0 vulnerabilities; `npx expo install --check` reported dependencies are up to date; `git diff --check` exited clean. Moved this plan to `docs/plans/completed/`.
