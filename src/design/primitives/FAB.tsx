@@ -2,7 +2,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { AppText } from '@/design/primitives/AppText';
-import { scaffoldTokens } from '@/design/tokens/scaffold';
+import { tokens } from '@/design/tokens';
 
 type FABProps = {
   accessibilityHint: string;
@@ -34,18 +34,18 @@ const styles = StyleSheet.create({
   },
   root: {
     alignItems: 'center',
-    backgroundColor: scaffoldTokens.color.primaryStrong,
-    borderRadius: scaffoldTokens.spacing.fabSize / 2,
-    height: scaffoldTokens.spacing.fabSize,
+    backgroundColor: tokens.color.primary[600],
+    borderRadius: tokens.component.fab.size / 2,
+    height: tokens.component.fab.size,
     justifyContent: 'center',
-    shadowColor: scaffoldTokens.color.textPrimary,
+    shadowColor: tokens.color.text.primary,
     shadowOffset: { height: 3, width: 0 },
     shadowOpacity: 0.18,
     shadowRadius: 10,
-    width: scaffoldTokens.spacing.fabSize,
+    width: tokens.component.fab.size,
   },
   symbol: {
-    color: scaffoldTokens.color.surfaceRaised,
+    color: tokens.color.surface.raised,
     fontSize: 32,
     fontWeight: '600',
     lineHeight: 36,

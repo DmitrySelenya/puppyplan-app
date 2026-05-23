@@ -8,12 +8,14 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "tokens:generate": "node scripts/design/generate-tokens.mjs",
+    "tokens:check": "node scripts/design/generate-tokens.mjs --check",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:node && npm run test:scaffold",
     "test:unit": "jest --runInBand",
-    "test:node": "node --test scripts/checks/*.test.mjs scripts/design/lib/*.test.mjs",
-    "test:scaffold": "node scripts/checks/check-navigation-contract.mjs && node scripts/checks/check-shell-i18n.mjs && node scripts/checks/check-scaffold-guardrails.mjs && node scripts/checks/privacy-scan.mjs && node scripts/checks/text-hygiene.mjs",
+    "test:node": "node --test scripts/checks/*.test.mjs scripts/design/*.test.mjs scripts/design/lib/*.test.mjs",
+    "test:scaffold": "node scripts/checks/check-navigation-contract.mjs && node scripts/checks/check-shell-i18n.mjs && node scripts/checks/check-scaffold-guardrails.mjs && npm run tokens:check && node scripts/checks/privacy-scan.mjs && node scripts/checks/text-hygiene.mjs",
     "check": "npm run lint && npm run typecheck && npm run test"
   },
   "dependencies": {

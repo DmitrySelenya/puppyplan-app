@@ -9,9 +9,9 @@
 
 **Plan type:** Linear task plan for `PUP-7`.
 
-**Current phase:** Phases 1-3 complete with deep-review and second-agent follow-up fixes applied locally; Spanish root strings added as pre-scaffold locale data; `PUP-2` scaffold and `PUP-4` verification gates are complete; continue or split Phases 4-7 into scoped follow-up issues.
+**Current phase:** Phases 1-4 complete. Phase 4 token pipeline completed under `PUP-8`; continue or split Phases 5-7 into scoped follow-up issues.
 
-**Current Linear scope:** `PUP-7` executed Phases 1-3. Phases 4-7 can now resume under the `PUP-4` local/CI gates, or be split into scoped follow-up issues.
+**Current Linear scope:** `PUP-7` executed Phases 1-3. `PUP-8` executed Phase 4. Phases 5-7 remain available for scoped follow-up issues.
 
 **Architecture:** This is a design handoff and implementation-enablement plan. It does not change product scope, app runtime, Supabase schema, RLS, CI, or release behavior. Future code work must still implement Expo native UI through `src/design` primitives, typed i18n, contracts, and tests.
 
@@ -64,7 +64,7 @@ This plan keeps durable decisions in git, uses Linear for tracking, and avoids F
 
 3. **Convert design source into implementation contracts.**
    - Generate TypeScript tokens from `design-tokens.json`.
-   - Keep tokens, `tokens.css`, and future `src/design/tokens.ts` synchronized by a drift check.
+   - Keep tokens, generated CSS when present, the raw design CSS mirror, and `src/design/tokens.ts` synchronized by a drift check.
    - Keep every visible string behind typed i18n keys.
 
 4. **Build native implementation scaffolding around the design.**
@@ -138,7 +138,7 @@ Each invariant must map to an automated check once the app scaffold exists.
   - **Test:** future `src/contracts/business-rules.ts` tests.
 
 - **Invariant 4:** design tokens have one generated TypeScript runtime entry point.
-  - **Check:** token generation/drift check compares `design-tokens.json`, `tokens.css`, and future `src/design/tokens.ts`.
+  - **Check:** token generation/drift check compares `design-tokens.json`, generated `tokens.css` when present, `docs/design/v1/raw/tokens.css` when present, and `src/design/tokens.ts`.
 
 - **Invariant 5:** user-facing native UI strings never bypass i18n.
   - **Test:** future i18n lint/string-budget checks plus EN/RU/ES parity checks.
@@ -368,22 +368,26 @@ Important PuppyPlan invariants that still apply:
 
 **Foundation dependency:** requires the Expo scaffold and package scripts from the foundation roadmap's Phase 1 / `PUP-2`. The token drift check can become a required gate only after `PUP-4` defines local/CI checks.
 
+**Status:** complete under `PUP-8`.
+
 **Files:**
 - Read: `design-tokens.json`
-- Read: `tokens.css`
-- Future create: `src/design/tokens.ts`
-- Future script: `scripts/design/generate-tokens.*`
-- Future test/check: token drift check
+- Read: `docs/design/v1/raw/tokens.css`
+- Create: `src/design/tokens.ts`
+- Create: `scripts/design/generate-tokens.mjs`
+- Create: token generator/drift tests and gate wiring
 
 **Checklist:**
-- [ ] Define the generated `src/design/tokens.ts` shape after the Expo scaffold exists.
-- [ ] Generate colors, spacing, radius, typography, motion, haptics, and business timing references where applicable.
-- [ ] Keep letter spacing at `0` unless a product decision explicitly changes it.
-- [ ] Ensure `text/tertiary` contrast uses the corrected value.
-- [ ] Add a drift check so JSON/CSS/TS cannot diverge silently.
+- [x] Define the generated `src/design/tokens.ts` shape after the Expo scaffold exists.
+- [x] Generate colors, spacing, radius, typography, motion, haptics, and business timing references where applicable.
+- [x] Keep letter spacing at `0` unless a product decision explicitly changes it.
+- [x] Ensure `text/tertiary` contrast uses the corrected value.
+- [x] Add a drift check so JSON/CSS/TS cannot diverge silently.
 
 **Acceptance criteria:**
 - Feature UI imports tokens only through `src/design`, not raw JSON/CSS.
+- `npm run check` runs `npm run tokens:check`, which verifies `design-tokens.json`, root `tokens.css` when present, `docs/design/v1/raw/tokens.css` when present, and generated `src/design/tokens.ts`.
+- Focused tests cover generator normalization, TypeScript drift, CSS drift, raw CSS mirror coverage, generated token values, `text/tertiary` contrast, semantic screen padding, and exported 3s / 60s business timing references.
 
 ### Phase 5 - Native Design Primitives
 
@@ -467,6 +471,12 @@ Important PuppyPlan invariants that still apply:
 
 Current verification:
 
+- `node --test scripts/design/generate-tokens.test.mjs`
+- `npm run test:unit -- --runTestsByPath src/test/design-tokens.test.ts src/test/business-rules.test.ts src/test/design-primitives.render.test.tsx src/test/tab-layout.render.test.tsx`
+- `npm run tokens:check`
+- `npm run typecheck`
+- `npm run check`
+- `git diff --check`
 - `find docs/design/v1/raw -maxdepth 2 -type f | sort`
 - `find docs/design/v1/raw -name 'AUDIT_FIXES*.md'`
 - `python3 -m json.tool docs/design/v1/manifest.json`
@@ -498,14 +508,12 @@ Future verification after artifact intake:
 - screenshot export count equals current manifest artboard count.
 - generated screenshots are nonblank and dimensionally match manifest metadata.
 
-Future verification after Expo scaffold:
+Future verification after later design runtime phases:
 
-- Requires the Expo scaffold and package scripts from the foundation roadmap's `PUP-2` work first.
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test`
 - `npm run check`
-- token drift check
 - i18n parity/string-budget check
 - simulator screenshot pass for the in-app design gallery
 
@@ -536,3 +544,6 @@ Future verification after Expo scaffold:
 - 2026-05-22: Addressed deep-review fixes by changing the Quick Log duplicate-warning artboard and PNG atlas from a 4-minute example to a 42-second example, adding text-policy coverage for stale duplicate-window examples, tightening Spanish core-copy tests and informal-register checks, and aligning `STRINGS.en.json` metadata with English-as-master i18n docs.
 - 2026-05-22: Addressed second-agent review by aligning RU/ES locale metadata with English-as-master provenance, making RU activity/duplicate-warning copy grammatically consistent without gendered actor verbs, adding regression tests for those cases, and removing the dead `12-min` manifest-generator branch in favor of existing text-policy enforcement.
 - 2026-05-23: Updated post-`PUP-4` status after PR #3 merged verification gates into `main`; Phases 4-7 can now resume or be split under the new local/CI gate.
+- 2026-05-23: Completed Phase 4 under `PUP-8` with generated `src/design/tokens.ts`, `scripts/design/generate-tokens.mjs`, token drift gating in `npm run check`, generated-token shell wiring, and tested 3-second / 60-second business timing references. Verification: `node --test scripts/design/generate-tokens.test.mjs`, targeted Jest token/business/design shell tests, `npm run tokens:check`, `npm run typecheck`, `npm run check`, and `git diff --check`.
+- 2026-05-23: Addressed local review finding by extending `npm run tokens:check` to validate the checked-in raw design CSS mirror at `docs/design/v1/raw/tokens.css` and covering raw CSS drift with a focused node test.
+- 2026-05-23: Addressed follow-up agent review by correcting canonical `text/tertiary` to AA-safe `#72756A`, adding contrast assertions, adding semantic `layout.screenPaddingY`, preserving explicit typography tracking, normalizing generated TS/CSS line endings in drift checks, and expanding raw CSS drift coverage for `primary-900`, elevation, and font variables. Verification: `node --test scripts/design/generate-tokens.test.mjs` passed 10/10, targeted Jest token/primitive tests passed 7/7, `npm run tokens:check` reported `css=docs/design/v1/raw/tokens.css`, `npm run check` passed with 25 Jest tests and 45 Node tests, and `git diff --check` passed.

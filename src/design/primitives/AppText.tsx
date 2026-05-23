@@ -2,7 +2,7 @@ import type { PropsWithChildren } from 'react';
 import type { StyleProp, TextProps, TextStyle } from 'react-native';
 import { StyleSheet, Text } from 'react-native';
 
-import { scaffoldTokens } from '@/design/tokens/scaffold';
+import { tokens } from '@/design/tokens';
 
 type AppTextVariant = 'title' | 'body' | 'caption';
 
@@ -26,20 +26,20 @@ export function AppText({ children, style, variant = 'body', ...props }: AppText
 
 const styles = StyleSheet.create({
   base: {
-    color: scaffoldTokens.color.textPrimary,
+    color: tokens.color.text.primary,
   },
   body: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: tokens.typography.scale.body.fontSize,
+    lineHeight: tokens.typography.scale.body.lineHeight,
   },
   caption: {
-    color: scaffoldTokens.color.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    color: tokens.color.text.secondary,
+    fontSize: tokens.typography.scale.footnote.fontSize,
+    lineHeight: tokens.typography.scale.footnote.lineHeight,
   },
   title: {
-    fontSize: 28,
+    fontSize: tokens.typography.scale.title1.fontSize,
     fontWeight: '600',
-    lineHeight: 34,
+    lineHeight: tokens.typography.scale.title1.lineHeight,
   },
 });
