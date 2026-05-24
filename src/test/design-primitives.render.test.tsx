@@ -1,5 +1,4 @@
 import type {
-  PressableStateCallbackType,
   StyleProp,
   ViewStyle,
 } from 'react-native';
@@ -58,11 +57,11 @@ void primitiveTypeContractChecks;
 
 type MaybePressableStyle =
   | StyleProp<ViewStyle>
-  | ((state: PressableStateCallbackType) => StyleProp<ViewStyle>);
+  | ((state: { pressed: boolean }) => StyleProp<ViewStyle>);
 
 function flattenViewStyle(style: MaybePressableStyle, pressed = false) {
   return StyleSheet.flatten(
-    typeof style === 'function' ? style({ hovered: false, pressed }) : style,
+    typeof style === 'function' ? style({ pressed }) : style,
   );
 }
 
