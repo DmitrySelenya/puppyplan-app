@@ -1,3 +1,5 @@
+import type { I18nKey } from '@/lib/i18n';
+
 export const primaryTabs = [
   {
     id: 'today',
@@ -20,14 +22,25 @@ export const primaryTabs = [
     labelKey: 'tabs.more',
     accessibilityLabelKey: 'tabs.more',
   },
-] as const;
+] as const satisfies readonly {
+  id: string;
+  routeName: string;
+  href: string;
+  labelKey: I18nKey;
+  accessibilityLabelKey: I18nKey;
+}[];
 
 export const quickLogAction = {
   id: 'quick-log',
   href: '/quick-log',
   labelKey: 'tabs.quick-log-fab-label',
   accessibilityHintKey: 'tabs.quick-log-fab-hint',
-} as const;
+} as const satisfies {
+  id: string;
+  href: string;
+  labelKey: I18nKey;
+  accessibilityHintKey: I18nKey;
+};
 
 export const modalRoutes = [
   quickLogAction.href,
@@ -58,7 +71,7 @@ export const shellI18nKeys = [
   'quick-log.sheet.edit-helper',
   'states.revoked-or-expired.title',
   'states.revoked-or-expired.body-long',
-] as const;
+] as const satisfies readonly I18nKey[];
 
 export type PrimaryTabId = (typeof primaryTabs)[number]['id'];
 export type PrimaryTabHref = (typeof primaryTabs)[number]['href'];

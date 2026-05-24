@@ -9,9 +9,9 @@
 
 **Plan type:** Linear task plan for `PUP-7`.
 
-**Current phase:** Phases 1-5 complete. Phase 5 native primitives completed under `PUP-9`; continue Phase 6 i18n/string-budget and Phase 7 design gallery only as separate scoped follow-up issues.
+**Current phase:** Phases 1-5 complete. Phase 6A typed i18n/string-budget gates are complete under `PUP-10`; the EN/RU/ES Dynamic Type screenshot item and Phase 7 design gallery remain scoped follow-up work.
 
-**Current Linear scope:** `PUP-7` executed Phases 1-3. `PUP-8` executed Phase 4. `PUP-9` executed Phase 5. Phases 6-7 remain available for scoped follow-up issues.
+**Current Linear scope:** `PUP-7` executed Phases 1-3. `PUP-8` executed Phase 4. `PUP-9` executed Phase 5. `PUP-10` executes Phase 6A typed i18n/string-budget gates. The remaining Phase 6 screenshot item and Phase 7 remain available for scoped follow-up issues.
 
 **Architecture:** This is a design handoff and implementation-enablement plan. It does not change product scope, app runtime, Supabase schema, RLS, CI, or release behavior. Future code work must still implement Expo native UI through `src/design` primitives, typed i18n, contracts, and tests.
 
@@ -420,17 +420,19 @@ Important PuppyPlan invariants that still apply:
 
 **Pre-scaffold note:** `STRINGS.es.json` now exists with EN object-key parity so Spanish can ship from the first app build. Runtime wiring, typed key generation, and budget gates still remain Phase 6 work after the Expo scaffold exists.
 
+**Status:** Phase 6A is implemented under `PUP-10` for typed keys, EN/RU/ES parity, placeholder/count checks, compact string budgets, shell typed-helper usage, and duplicate-warning 60-second copy checks. Dynamic Type XXL/XXXL screenshots remain open until real EN/RU/ES screenshots exist.
+
 **Files:**
 - Read/update: `STRINGS.en.json`, `STRINGS.ru.json`, `STRINGS.es.json`
 - Future create: `src/lib/i18n/`
 - Future script/check: i18n key parity and string budgets
 
 **Checklist:**
-- [ ] Preserve existing typed string keys when scaffolding i18n.
-- [ ] Add EN/RU/ES parity check.
-- [ ] Add string-budget checks for tabs, CTAs, pills, tracker tiles, notification actions, and compact rows.
+- [x] Preserve existing typed string keys when scaffolding i18n.
+- [x] Add EN/RU/ES parity check.
+- [x] Add string-budget checks for tabs, CTAs, pills, tracker tiles, notification actions, and compact rows.
 - [ ] Include EN/RU/ES screenshots in Dynamic Type XXL/XXXL verification for core flows.
-- [ ] Confirm duplicate-warning copy refers to the last 60 seconds.
+- [x] Confirm duplicate-warning copy refers to the last 60 seconds.
 
 **Acceptance criteria:**
 - Native UI has no raw user-facing strings and does not overflow expected compact surfaces.
@@ -579,3 +581,7 @@ Future verification after later design runtime phases:
 - 2026-05-24: Addressed deep-review findings by adding reduced-motion-aware pressed transform handling with listener cleanup, containing haptic adapter failures in the design boundary, rendering a visible loading indicator for loading buttons, preventing decorative FAB glyph Dynamic Type overflow, and tightening active `Button`, `IconButton`, and `TrackerTile` props so `onPress` is required. RED verification failed on haptic rejection, missing loading indicator, unguarded active control props, and FAB glyph scaling; GREEN verification passed the focused primitive suite with 14 tests, `npm run typecheck`, the 5-suite targeted regression with 27 tests, `npm run check` with 36 Jest tests and 45 Node tests, and `git diff --check`.
 - 2026-05-24: Addressed Phase 5 native primitive review findings by splitting elevation tokens into solid color/opacity plus Android elevation, routing FAB/Card/SheetSurface through a shared elevation helper, replacing per-instance Reduced Motion subscriptions with a shared `useSyncExternalStore` store, defaulting `Screen` safe-area edges to top-only, documenting `SheetSurface` as static-only without Android focus trapping, forcing `Touchable.blockPresses` to expose `busy`, preventing nullable/color-only `StatusPill` icons through types, blocking static `Card variant="interactive"`, documenting the `AppText label` alias, tokenizing the FAB glyph weight, and closing the focused coverage gaps for segmented reselect, sheet handle hiding, muted interactive cards, icon-button hit slop, static list rows, and all status tones. Verification: RED targeted primitive/token tests failed on the confirmed cases; GREEN passed targeted primitive/token tests, token generator tests, tab-layout regression, `npm run check`, and `git diff --check`.
 - 2026-05-24: Addressed local Dynamic Type review findings by removing default one-line truncation from `Button` labels and changing `TrackerTile` size variants from fixed heights to minimum heights so Quick Log tiles can grow vertically under accessibility text sizes. Verification: RED focused primitive test failed on the old button label truncation; GREEN focused primitive suite passed 28/28; `npm run check` passed with 50 Jest tests and 45 Node tests; `git diff --check` passed.
+- 2026-05-24: Completed Phase 6A under `PUP-10` with typed i18n keys derived from `STRINGS.en.json`, `useAppTranslation()`/typed `t()` helpers, shell/native UI migration away from raw `useTranslation`, full EN/RU/ES user-facing leaf parity including arrays, placeholder/count parity, compact string-budget checks, duplicate-warning 60-second copy checks, and `npm run check` wiring. The EN/RU/ES Dynamic Type screenshot checklist item remains open until real screenshots exist.
+- 2026-05-24: Addressed Phase 6A follow-up review by widening compact action budget coverage, aligning typed/runtime root-only `$meta` and `voice.*` exclusions, narrowing interpolation options and hook return shape, sharing static i18n source extraction, scanning production app/src files for raw `react-i18next` `useTranslation`, and expanding parity/budget/duplicate-warning/type coverage.
+- 2026-05-24: Addressed Phase 6A deep-review gate gap by adding RED coverage for production raw `i18n` runtime imports and extending `check-i18n.mjs` to reject that typed-key bypass outside approved i18n/provider boundaries.
+- 2026-05-24: Addressed local review guardrail gaps by adding RED coverage for raw `@/lib/i18n` namespace imports and static translation keys missing from the English master, then extending `check-i18n.mjs` so namespace raw-runtime bypasses and stale array indices such as `actions.999` fail the scaffold gate.

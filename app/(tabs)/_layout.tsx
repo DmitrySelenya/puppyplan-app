@@ -1,15 +1,15 @@
 import { router, Tabs } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { primaryTabs, quickLogAction } from '@/contracts/navigation';
 import { FAB } from '@/design/primitives/FAB';
 import { tokens } from '@/design/tokens';
+import { useAppTranslation } from '@/lib/i18n';
 
 const [todayTab, healthTab, moreTab] = primaryTabs;
 
 export default function TabLayout() {
-  const { t } = useTranslation();
+  const { t } = useAppTranslation();
 
   return (
     <View style={styles.container}>

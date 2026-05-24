@@ -1,10 +1,9 @@
-import { useTranslation } from 'react-i18next';
-
 import { AppText } from '@/design/primitives/AppText';
 import { Screen } from '@/design/primitives/Screen';
+import { useAppTranslation } from '@/lib/i18n';
 
 export function QuickLogShell() {
-  const { t } = useTranslation();
+  const { t } = useAppTranslation();
 
   return (
     <Screen>

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import { extractStaticTranslationKeys } from './i18n-source-utils.mjs';
 import { loadNavigationContract, repoPath } from './load-navigation-contract.mjs';
 
 const { shellI18nKeys } = await loadNavigationContract();
@@ -29,31 +30,25 @@ function getValue(source, key) {
   return key.split('.').reduce((value, part) => value?.[part], source);
 }
 
-function extractStaticTranslationKeys(source) {
-  return [...source.matchAll(/\bt\s*\(\s*(["'`])((?:\\.|(?!\1)[\s\S])*?)\1/g)].map((match) => {
-    assert.equal(
-      match[2].includes('${'),
-      false,
-      `shell i18n keys must be static literals: ${match[0]}`,
-    );
-    return match[2];
-  });
-}
-
 assert.deepEqual(
   extractStaticTranslationKeys("t('tabs.today'); t(\"tabs.health\"); t(`tabs.more`);"),
   ['tabs.today', 'tabs.health', 'tabs.more'],
   'shell i18n extractor must cover single quotes, double quotes, and static template literals',
 );
 assert.throws(
-  () => extractStaticTranslationKeys('t(`tabs.${id}`);'),
+  () =>
+    extractStaticTranslationKeys('t(`tabs.${id}`);', {
+      dynamicKeyMessage: 'shell i18n keys must be static literals',
+    }),
   /shell i18n keys must be static literals/,
   'shell i18n extractor must reject dynamic template literals',
 );
 
 for (const sourceFile of shellSourceFiles) {
   const source = readFileSync(repoPath(sourceFile), 'utf8');
-  for (const key of extractStaticTranslationKeys(source)) {
+  for (const key of extractStaticTranslationKeys(source, {
+    dynamicKeyMessage: 'shell i18n keys must be static literals',
+  })) {
     assert.equal(
       shellI18nKeySet.has(key),
       true,
