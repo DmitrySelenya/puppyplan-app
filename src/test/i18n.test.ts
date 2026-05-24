@@ -1,5 +1,41 @@
+import { createElement } from 'react';
+import { render } from '@testing-library/react-native';
+
 import { shellI18nKeys } from '@/contracts/navigation';
-import { i18n, i18nResources, supportedLocales, type SupportedLocale } from '@/lib/i18n';
+import {
+  i18n,
+  i18nResources,
+  supportedLocales,
+  t as typedT,
+  useAppTranslation,
+  type I18nKey,
+  type I18nTOptions,
+  type SupportedLocale,
+} from '@/lib/i18n';
+
+type AssertTrue<T extends true> = T;
+type AssertFalse<T extends false> = T;
+type IsAssignable<T, U> = [T] extends [U] ? true : false;
+
+type I18nKeyTypeAssertions = [
+  AssertTrue<IsAssignable<'tabs.today', I18nKey>>,
+  AssertTrue<IsAssignable<'reminders.push-notification.actions.0', I18nKey>>,
+  AssertFalse<IsAssignable<'tabs.typo', I18nKey>>,
+  AssertFalse<IsAssignable<'states.offline-read._comment', I18nKey>>,
+  AssertFalse<IsAssignable<'voice.forbidden.0', I18nKey>>,
+  AssertFalse<IsAssignable<'$meta.language', I18nKey>>,
+];
+
+const i18nKeyTypeAssertions: I18nKeyTypeAssertions | null = null;
+
+type I18nOptionsTypeAssertions = [
+  AssertTrue<IsAssignable<{ actorName: string; n: number; enabled: boolean }, I18nTOptions>>,
+  AssertFalse<IsAssignable<{ renderedAt: Date }, I18nTOptions>>,
+  AssertFalse<IsAssignable<{ actorName: null }, I18nTOptions>>,
+  AssertFalse<IsAssignable<{ actorName: undefined }, I18nTOptions>>,
+];
+
+const i18nOptionsTypeAssertions: I18nOptionsTypeAssertions | null = null;
 
 type FlattenedStrings = Record<string, string>;
 
@@ -49,6 +85,11 @@ function userFacingStringEntries(locale: SupportedLocale): [string, string][] {
 }
 
 describe('i18n scaffold resources', () => {
+  it('keeps compile-time i18n key assertions active', () => {
+    expect(i18nKeyTypeAssertions).toBeNull();
+    expect(i18nOptionsTypeAssertions).toBeNull();
+  });
+
   it('keeps the MVP startup locales in the expected order', () => {
     expect(supportedLocales).toEqual(['en', 'ru', 'es']);
     expect(Object.keys(i18nResources).sort()).toEqual(['en', 'es', 'ru']);
@@ -64,6 +105,27 @@ describe('i18n scaffold resources', () => {
       expect(i18n.t(key)).toBe(rawValue);
       expect(i18n.t(key)).not.toBe(key);
     }
+  });
+
+  it('exposes a typed translation helper backed by the react-i18next runtime', async () => {
+    await i18n.changeLanguage('en');
+
+    const key: I18nKey = 'tabs.today';
+
+    expect(typedT(key)).toBe(i18n.t(key));
+  });
+
+  it('keeps the app translation hook surface narrow', () => {
+    let observedKeys: string[] = [];
+
+    function TranslationProbe() {
+      observedKeys = Object.keys(useAppTranslation()).sort();
+      return null;
+    }
+
+    render(createElement(TranslationProbe));
+
+    expect(observedKeys).toEqual(['ready', 't']);
   });
 
   it('keeps placeholder parity for every EN/RU/ES string', () => {
@@ -87,6 +149,8 @@ describe('i18n scaffold resources', () => {
       .map(([key]) => key)
       .sort();
 
+    // Keep this pinned list aligned with the dynamic script-side count parity scan
+    // when English adds or removes legitimate {n} interpolation keys.
     expect(englishCountKeys).toEqual([
       'more.quick-trackers.screen-title-template',
       'onboarding.tracker-picker.counter',

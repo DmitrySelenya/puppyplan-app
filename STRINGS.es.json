@@ -63,7 +63,7 @@
       "body": "Mostrando datos de {time}. Tus cambios se guardarán localmente.",
       "_comment": "{time}: la última hora de sincronización exitosa",
       "banner": "Mostrando tus últimos datos guardados.",
-      "chip": "Desconectado. Mostrando datos locales.",
+      "chip": "Sin conexión. Datos locales.",
       "synced-toast": "Sincronizado"
     },
     "pending-write": {
@@ -410,7 +410,7 @@
       "body-template": "{actorName} registró un {eventType} {timeAgo}.",
       "body-example": "El cuidador A registró una alimentación hace 42 segundos.",
       "more-matches": "{n} eventos más en los últimos 60 segundos",
-      "primary": "Este es un evento diferente: agrégalo",
+      "primary": "Agregar como evento distinto",
       "primary-alt": "Agregar de todos modos",
       "secondary": "Cancelar",
       "question": "¿Agregar de todos modos?"
@@ -843,7 +843,7 @@
     "template-row-subline": "Plantilla, no una receta",
     "confirmed-meta-template": "Hecho {date} · {provider}",
     "confirmed-meta-no-provider": "Hecho {date} · No hay ninguna clínica en la lista",
-    "sync-error-row": "Cambios no sincronizados. Intentar otra vez",
+    "sync-error-row": "Cambios sin sincronizar. Reintenta",
     "record-types": {
       "vaccination": "Vacunación",
       "deworming": "Tratamiento de parásitos",
@@ -1037,7 +1037,7 @@
       "title-example": "Lista de verificación nocturna · 7:00 pm",
       "subtitle-template": "{n} elementos · cuidador: {name}",
       "actions": [
-        "Lista de verificación abierta",
+        "Abrir lista",
         "Posponer"
       ],
       "completed-summary": "Hecho · {time} · {name}"
