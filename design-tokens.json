@@ -156,10 +156,10 @@
 
   "elevation": {
     "$description": "4 levels, neutral grey only. No colored shadows, no inner-shadow, no glow. DESIGN.md §1.5",
-    "0": { "$value": { "shadow": "none", "border": "1px solid #E2DDD2" }, "$type": "shadow", "$description": "Resting cards/rows — hairline only" },
-    "1": { "$value": { "x": 0, "y": 2, "blur": 8,  "color": "rgba(28,31,27,0.06)" }, "$type": "shadow", "$description": "Interactive card hover/press" },
-    "2": { "$value": { "x": 0, "y": -4, "blur": 16, "color": "rgba(28,31,27,0.10)" }, "$type": "shadow", "$description": "Bottom sheet (от низа)" },
-    "3": { "$value": { "x": 0, "y": 8, "blur": 24, "color": "rgba(28,31,27,0.14)" }, "$type": "shadow", "$description": "Full-screen modal over scrim" }
+    "0": { "$value": { "shadow": "none", "border": "1px solid #E2DDD2", "androidElevation": 0 }, "$type": "shadow", "$description": "Resting cards/rows — hairline only" },
+    "1": { "$value": { "x": 0, "y": 2, "blur": 8,  "color": "#1C1F1B", "opacity": 0.06, "androidElevation": 2 }, "$type": "shadow", "$description": "Interactive card hover/press" },
+    "2": { "$value": { "x": 0, "y": -4, "blur": 16, "color": "#1C1F1B", "opacity": 0.10, "androidElevation": 6 }, "$type": "shadow", "$description": "Bottom sheet (от низа)" },
+    "3": { "$value": { "x": 0, "y": 8, "blur": 24, "color": "#1C1F1B", "opacity": 0.14, "androidElevation": 12 }, "$type": "shadow", "$description": "Full-screen modal over scrim" }
   },
 
   "motion": {

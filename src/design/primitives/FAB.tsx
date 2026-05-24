@@ -1,7 +1,12 @@
-import type { StyleProp, ViewStyle } from 'react-native';
-import { Pressable, StyleSheet } from 'react-native';
+import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 
+import { THUMB_TOUCH_TARGET, decorativeViewProps } from '@/design/a11y';
+import { haptic } from '@/design/haptics';
+import { pressedScaleStyle, useReducedMotion } from '@/design/motion';
 import { AppText } from '@/design/primitives/AppText';
+import { Touchable } from '@/design/primitives/Touchable';
+import { elevationStyle } from '@/design/primitives/elevationStyle';
 import { tokens } from '@/design/tokens';
 
 type FABProps = {
@@ -12,25 +17,45 @@ type FABProps = {
 };
 
 export function FAB({ accessibilityHint, accessibilityLabel, onPress, style }: FABProps) {
+  const reducedMotion = useReducedMotion();
+  const handlePress = () => {
+    void haptic('tapConfirm');
+    onPress();
+  };
+
   return (
-    <Pressable
+    <Touchable
       accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       hitSlop={8}
-      onPress={onPress}
-      style={({ pressed }) => [styles.root, pressed ? styles.pressed : null, style]}>
-      <AppText accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.symbol}>
+      minTarget="thumb"
+      onPress={handlePress}
+      style={({ pressed }) => [
+        styles.root,
+        pressed ? styles.pressed : null,
+        pressedScaleStyle(pressed, reducedMotion),
+        style,
+      ]}>
+      <AppText
+        {...decorativeViewProps}
+        allowFontScaling={false}
+        maxFontSizeMultiplier={1}
+        style={styles.symbol}
+        testID="fab-symbol">
         +
       </AppText>
-    </Pressable>
+    </Touchable>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<{
+  pressed: ViewStyle;
+  root: ViewStyle;
+  symbol: TextStyle;
+}>({
   pressed: {
     opacity: 0.82,
-    transform: [{ scale: 0.96 }],
   },
   root: {
     alignItems: 'center',
@@ -38,16 +63,15 @@ const styles = StyleSheet.create({
     borderRadius: tokens.component.fab.size / 2,
     height: tokens.component.fab.size,
     justifyContent: 'center',
-    shadowColor: tokens.color.text.primary,
-    shadowOffset: { height: 3, width: 0 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
+    minHeight: THUMB_TOUCH_TARGET,
+    minWidth: THUMB_TOUCH_TARGET,
+    ...elevationStyle(2),
     width: tokens.component.fab.size,
   },
   symbol: {
     color: tokens.color.surface.raised,
     fontSize: 32,
-    fontWeight: '600',
+    fontWeight: tokens.typography.fontWeight.semibold,
     lineHeight: 36,
   },
 });

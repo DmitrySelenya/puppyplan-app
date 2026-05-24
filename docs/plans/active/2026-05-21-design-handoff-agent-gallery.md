@@ -9,9 +9,9 @@
 
 **Plan type:** Linear task plan for `PUP-7`.
 
-**Current phase:** Phases 1-4 complete. Phase 4 token pipeline completed under `PUP-8`; continue or split Phases 5-7 into scoped follow-up issues.
+**Current phase:** Phases 1-5 complete. Phase 5 native primitives completed under `PUP-9`; continue Phase 6 i18n/string-budget and Phase 7 design gallery only as separate scoped follow-up issues.
 
-**Current Linear scope:** `PUP-7` executed Phases 1-3. `PUP-8` executed Phase 4. Phases 5-7 remain available for scoped follow-up issues.
+**Current Linear scope:** `PUP-7` executed Phases 1-3. `PUP-8` executed Phase 4. `PUP-9` executed Phase 5. Phases 6-7 remain available for scoped follow-up issues.
 
 **Architecture:** This is a design handoff and implementation-enablement plan. It does not change product scope, app runtime, Supabase schema, RLS, CI, or release behavior. Future code work must still implement Expo native UI through `src/design` primitives, typed i18n, contracts, and tests.
 
@@ -393,20 +393,26 @@ Important PuppyPlan invariants that still apply:
 
 **Foundation dependency:** requires the Expo scaffold and TypeScript/test setup from the foundation roadmap's Phase 1 / `PUP-2`. Render tests depend on the verification setup owned by `PUP-4`.
 
+**Status:** complete under `PUP-9`.
+
 **Files:**
-- Future create: `src/design/primitives/`
-- Future create: `src/design/a11y/`
-- Future create: `src/design/haptics/`
-- Future create: `src/design/motion/`
+- Created/updated: `src/design/primitives/`
+- Created: `src/design/a11y/`
+- Created: `src/design/haptics/`
+- Created: `src/design/motion/`
+- Updated: `src/design/README.md`
+- Updated: `src/test/design-primitives.render.test.tsx`
 
 **Checklist:**
-- [ ] Define React Native equivalents for core surfaces, text, list rows, segmented controls, tracker tiles, tabs, FAB, sheets, and buttons.
-- [ ] Add accessibility labels, roles, focus/pressed/disabled states, and touch-target guarantees.
-- [ ] Keep feature screens from importing raw `Pressable`, raw colors, raw spacing, direct haptics, or business-error alerts.
-- [ ] Add focused render tests once test infrastructure exists.
+- [x] Define React Native equivalents for core surfaces, text, list rows, segmented controls, tracker tiles, status pills, FAB, sheet surfaces, and buttons.
+- [x] Add accessibility labels, roles, pressed/disabled/selected/busy states where applicable, and touch-target guarantees.
+- [x] Keep feature screens from importing raw `Pressable`, raw colors, raw spacing, direct haptics, or business-error alerts.
+- [x] Add focused render tests once test infrastructure exists.
 
 **Acceptance criteria:**
 - Feature implementation can compose native screens from shared primitives without duplicating design rules.
+- `AppText`, `Screen`, and `FAB` remain compatible with the current app shell and tab layout.
+- Shared helpers are limited to accessibility/touch-target, motion, and haptic boundaries backed by generated `src/design/tokens.ts`.
 
 ### Phase 6 - i18n And String Budget Pipeline
 
@@ -471,6 +477,27 @@ Important PuppyPlan invariants that still apply:
 
 Current verification:
 
+- `npm run test:unit -- --runTestsByPath src/test/design-primitives.render.test.tsx` - PUP-9 RED failed before implementation because new primitive modules were missing; GREEN passed 7 tests after implementation.
+- `npm run test:unit -- --runTestsByPath src/test/design-primitives.render.test.tsx` - PUP-9 follow-up review RED failed on confirmed primitive issues: AppText Dynamic Type ceiling/caption mapping, platform touch target split, busy touchable a11y state, Button loading press blocking, SegmentedControl tablist role, SheetSurface root a11y flattening, and FAB elevation tokens. GREEN passed 12 focused primitive tests after fixes.
+- `npm run test:unit -- --runTestsByPath src/test/design-primitives.render.test.tsx src/test/tab-layout.render.test.tsx src/test/app-shell.render.test.tsx src/test/design-tokens.test.ts src/test/business-rules.test.ts` - passed 5 suites / 20 tests for Phase 5 targeted coverage.
+- `npm run lint` - passed with no warnings after cleanup.
+- `npm run typecheck` - passed after nullable Pressable prop fixes.
+- `npm run check` - passed after Phase 5 docs update with 29 Jest tests, 45 Node tests, scaffold checks, token drift, privacy scan, and text hygiene.
+- `npm run check` - passed after Phase 5 follow-up review fixes with 34 Jest tests, 45 Node tests, scaffold checks, token drift, privacy scan, and text hygiene.
+- `git diff --check` - passed after Phase 5 docs update.
+- `npm run test:unit -- --runTestsByPath src/test/design-primitives.render.test.tsx` - PUP-9 deep-review fixes passed 14 focused primitive tests covering Reduced Motion, haptic adapter containment, loading indicators, decorative FAB glyph scaling, touch targets, and primitive states.
+- `npm run typecheck` - passed with compile-time guards preventing active `Button`, `IconButton`, and `TrackerTile` controls without `onPress`.
+- `npm run test:unit -- --runTestsByPath src/test/design-primitives.render.test.tsx src/test/tab-layout.render.test.tsx src/test/app-shell.render.test.tsx src/test/design-tokens.test.ts src/test/business-rules.test.ts` - passed 5 suites / 27 tests after PUP-9 deep-review fixes.
+- `npm run check` - passed after PUP-9 deep-review fixes with 36 Jest tests, 45 Node tests, scaffold checks, token drift, privacy scan, and text hygiene.
+- `git diff --check` - passed after PUP-9 deep-review fixes.
+- `npm run test:unit -- --runTestsByPath src/test/design-primitives.render.test.tsx src/test/design-tokens.test.ts` - PUP-9 Phase 5 native primitive review RED failed on Android elevation tokens/styles, `Screen.edges`, per-instance Reduced Motion listeners, `Touchable.blockPresses` busy state, static `Card variant="interactive"`, nullable `StatusPill.icon`, and the remaining focused coverage gaps; GREEN passed 2 suites / 31 tests after fixes.
+- `node --test scripts/design/generate-tokens.test.mjs` - passed 10 token-generation tests after splitting elevation color/opacity and Android elevation.
+- `npm run test:unit -- --runTestsByPath src/test/tab-layout.render.test.tsx` - passed after waiting for the shared Reduced Motion store update in the FAB-bearing tab layout test.
+- `npm run check` - passed after PUP-9 Phase 5 native primitive review fixes with 49 Jest tests, 45 Node tests, scaffold checks, token drift, privacy scan, and text hygiene.
+- `git diff --check` - passed after PUP-9 Phase 5 native primitive review fixes.
+- `npm run test:unit -- --runTestsByPath src/test/design-primitives.render.test.tsx` - PUP-9 local review RED failed on default `Button` label one-line truncation; GREEN passed 28 focused primitive tests after allowing button labels to wrap and making `TrackerTile` size variants use minimum heights.
+- `npm run check` - passed after local Dynamic Type review fixes with 50 Jest tests, 45 Node tests, scaffold checks, token drift, privacy scan, and text hygiene.
+- `git diff --check` - passed after local Dynamic Type review fixes.
 - `node --test scripts/design/generate-tokens.test.mjs`
 - `npm run test:unit -- --runTestsByPath src/test/design-tokens.test.ts src/test/business-rules.test.ts src/test/design-primitives.render.test.tsx src/test/tab-layout.render.test.tsx`
 - `npm run tokens:check`
@@ -547,3 +574,8 @@ Future verification after later design runtime phases:
 - 2026-05-23: Completed Phase 4 under `PUP-8` with generated `src/design/tokens.ts`, `scripts/design/generate-tokens.mjs`, token drift gating in `npm run check`, generated-token shell wiring, and tested 3-second / 60-second business timing references. Verification: `node --test scripts/design/generate-tokens.test.mjs`, targeted Jest token/business/design shell tests, `npm run tokens:check`, `npm run typecheck`, `npm run check`, and `git diff --check`.
 - 2026-05-23: Addressed local review finding by extending `npm run tokens:check` to validate the checked-in raw design CSS mirror at `docs/design/v1/raw/tokens.css` and covering raw CSS drift with a focused node test.
 - 2026-05-23: Addressed follow-up agent review by correcting canonical `text/tertiary` to AA-safe `#72756A`, adding contrast assertions, adding semantic `layout.screenPaddingY`, preserving explicit typography tracking, normalizing generated TS/CSS line endings in drift checks, and expanding raw CSS drift coverage for `primary-900`, elevation, and font variables. Verification: `node --test scripts/design/generate-tokens.test.mjs` passed 10/10, targeted Jest token/primitive tests passed 7/7, `npm run tokens:check` reported `css=docs/design/v1/raw/tokens.css`, `npm run check` passed with 25 Jest tests and 45 Node tests, and `git diff --check` passed.
+- 2026-05-23: Completed Phase 5 under `PUP-9` with token-backed native primitives for text, screens, touchables, buttons, icon buttons, cards, list rows, segmented controls, tracker tiles, status pills, sheet surfaces, FAB compatibility, and design-owned a11y/motion/haptics boundaries. RED verification failed on missing primitive modules; GREEN verification passed focused primitive tests, app shell/tab regression tests, design token tests, and Quick Log timing tests. Initial full gate exposed a privacy-scan false positive from a local haptic metadata variable named `token`; the boundary was renamed and `node scripts/checks/privacy-scan.mjs` passed. Final verification: `npm run check` passed with 29 Jest tests, 45 Node tests, scaffold checks, token drift, privacy scan, and text hygiene; `git diff --check` passed.
+- 2026-05-23: Addressed external Phase 5 primitive review by removing `SheetSurface` root accessibility flattening, splitting loading press blocking from disabled a11y state through `Touchable.blockPresses`, raising `AppText` Dynamic Type ceiling to 3.0, routing `caption` to the generated caption token, encoding Android 48dp touch targets, adding `SegmentedControl` tablist semantics, isolating Card pressed variants, routing FAB elevation/motion through generated/shared tokens, exporting primitive variant types consistently, allowing `Touchable.pressedStyle` callbacks, extracting decorative a11y props, documenting deferred primitives, and expanding focused primitive coverage to 12 tests. Verification: RED focused primitive suite failed on the confirmed review cases; GREEN focused primitive suite passed 12/12; targeted Jest regression passed 5 suites / 25 tests; `npm run lint`, `npm run typecheck`, `npm run check` with 34 Jest tests and 45 Node tests, and `git diff --check` passed.
+- 2026-05-24: Addressed deep-review findings by adding reduced-motion-aware pressed transform handling with listener cleanup, containing haptic adapter failures in the design boundary, rendering a visible loading indicator for loading buttons, preventing decorative FAB glyph Dynamic Type overflow, and tightening active `Button`, `IconButton`, and `TrackerTile` props so `onPress` is required. RED verification failed on haptic rejection, missing loading indicator, unguarded active control props, and FAB glyph scaling; GREEN verification passed the focused primitive suite with 14 tests, `npm run typecheck`, the 5-suite targeted regression with 27 tests, `npm run check` with 36 Jest tests and 45 Node tests, and `git diff --check`.
+- 2026-05-24: Addressed Phase 5 native primitive review findings by splitting elevation tokens into solid color/opacity plus Android elevation, routing FAB/Card/SheetSurface through a shared elevation helper, replacing per-instance Reduced Motion subscriptions with a shared `useSyncExternalStore` store, defaulting `Screen` safe-area edges to top-only, documenting `SheetSurface` as static-only without Android focus trapping, forcing `Touchable.blockPresses` to expose `busy`, preventing nullable/color-only `StatusPill` icons through types, blocking static `Card variant="interactive"`, documenting the `AppText label` alias, tokenizing the FAB glyph weight, and closing the focused coverage gaps for segmented reselect, sheet handle hiding, muted interactive cards, icon-button hit slop, static list rows, and all status tones. Verification: RED targeted primitive/token tests failed on the confirmed cases; GREEN passed targeted primitive/token tests, token generator tests, tab-layout regression, `npm run check`, and `git diff --check`.
+- 2026-05-24: Addressed local Dynamic Type review findings by removing default one-line truncation from `Button` labels and changing `TrackerTile` size variants from fixed heights to minimum heights so Quick Log tiles can grow vertically under accessibility text sizes. Verification: RED focused primitive test failed on the old button label truncation; GREEN focused primitive suite passed 28/28; `npm run check` passed with 50 Jest tests and 45 Node tests; `git diff --check` passed.

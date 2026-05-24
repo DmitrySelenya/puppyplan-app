@@ -156,25 +156,32 @@ export const tokens = {
   "elevation": {
     "0": {
       "shadow": "none",
-      "border": "1px solid #E2DDD2"
+      "border": "1px solid #E2DDD2",
+      "androidElevation": 0
     },
     "1": {
       "x": 0,
       "y": 2,
       "blur": 8,
-      "color": "rgba(28,31,27,0.06)"
+      "color": "#1C1F1B",
+      "opacity": 0.06,
+      "androidElevation": 2
     },
     "2": {
       "x": 0,
       "y": -4,
       "blur": 16,
-      "color": "rgba(28,31,27,0.10)"
+      "color": "#1C1F1B",
+      "opacity": 0.1,
+      "androidElevation": 6
     },
     "3": {
       "x": 0,
       "y": 8,
       "blur": 24,
-      "color": "rgba(28,31,27,0.14)"
+      "color": "#1C1F1B",
+      "opacity": 0.14,
+      "androidElevation": 12
     }
   },
   "haptic": {

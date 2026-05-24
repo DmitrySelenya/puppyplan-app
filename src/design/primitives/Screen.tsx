@@ -1,13 +1,34 @@
 import type { PropsWithChildren } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import type { Edges } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { tokens } from '@/design/tokens';
 
-export function Screen({ children }: PropsWithChildren) {
+export type ScreenProps = PropsWithChildren<{
+  contentStyle?: StyleProp<ViewStyle>;
+  edges?: Edges;
+  scroll?: boolean;
+  style?: StyleProp<ViewStyle>;
+}>;
+
+export function Screen({
+  children,
+  contentStyle,
+  edges = ['top'],
+  scroll = true,
+  style,
+}: ScreenProps) {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>{children}</ScrollView>
+    <SafeAreaView edges={edges} style={[styles.safeArea, style]}>
+      {scroll ? (
+        <ScrollView contentContainerStyle={[styles.content, contentStyle]}>
+          {children}
+        </ScrollView>
+      ) : (
+        <View style={[styles.content, styles.fixedContent, contentStyle]}>{children}</View>
+      )}
     </SafeAreaView>
   );
 }
@@ -17,6 +38,9 @@ const styles = StyleSheet.create({
     gap: tokens.space[3],
     paddingHorizontal: tokens.layout.screenPaddingPhone,
     paddingVertical: tokens.layout.screenPaddingY,
+  },
+  fixedContent: {
+    flex: 1,
   },
   safeArea: {
     backgroundColor: tokens.color.surface.base,
