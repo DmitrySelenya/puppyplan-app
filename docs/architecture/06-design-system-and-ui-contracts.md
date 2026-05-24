@@ -44,6 +44,8 @@ Required primitives:
 - `TrackerTile`
 - `Touchable`
 
+PUP-9 Phase 5 shipped the first native runtime layer: `AppText`, `Screen`, `Touchable`, `Button`, `IconButton`, `Card`, `FAB`, `SheetSurface`, `StatusPill`, `ListRow`, `TrackerTile`, and `SegmentedControl`, plus design-owned a11y, motion, haptics, and native elevation helpers. `SheetSurface` is only a static sheet/panel surface; it does not provide Android focus trapping or background focus isolation. Full `BottomSheet`/`Modal` behavior remains deferred until current dependencies support it or a scoped follow-up approves an implementation path. `Snackbar`, `InlineAlert`, `FormField`, `Avatar`, `TabBar` configuration wrapper, `EmptyState`, and `SkeletonLoader` are still required future primitives and must land through scoped follow-up work, not opportunistic feature-local copies.
+
 Required extended components:
 
 - `TimelineItem`
@@ -66,16 +68,17 @@ Required extended components:
 ## Accessibility
 
 - `Touchable` requires `accessibilityLabel`, `accessibilityRole`, optional hint/state at TypeScript level.
-- Touch target minimum: iOS 44pt, Android 48dp.
+- Touch target minimum: iOS/default 44pt, Android 48dp.
 - Quick Log/FAB target: 56pt+.
 - Status never relies on color alone; use icon + text + tone.
+- Elevation must come from generated elevation tokens, including Android `elevation`.
 - Swipe actions must have overflow/menu alternatives.
 - Snackbar/live updates use polite announcements.
 
 Dynamic Type:
 
-- display/heading `maxFontSizeMultiplier=1.6`;
-- body `maxFontSizeMultiplier=2.0`;
+- `AppText` default `maxFontSizeMultiplier=3.0` so XXL/XXXL accessibility review remains possible.
+- Callers may lower a specific text ceiling only with screen-specific evidence and without hiding required content.
 - no fixed heights on touchable controls.
 
 ## Motion
@@ -91,6 +94,7 @@ Motion presets:
 - celebration.
 
 All presets must respect Reduced Motion. Reduced Motion removes translate/scale and uses opacity/cross-fade. Celebration becomes static.
+Primitive pressed transforms must use the design-owned Reduced Motion helper rather than hard-coding scale transforms.
 
 ## Haptics
 
@@ -101,6 +105,7 @@ haptic('tapConfirm' | 'saveSuccess' | 'celebration' | 'warning' | 'selection' | 
 ```
 
 Direct `Haptics.impactAsync` from feature code is forbidden.
+Haptics are a best-effort enhancement; adapter failures must be contained inside `src/design/haptics` and must not block UI actions.
 
 ## Component Inventory
 

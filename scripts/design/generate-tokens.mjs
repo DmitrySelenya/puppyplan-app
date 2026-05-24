@@ -207,6 +207,16 @@ function readCssCustomProperties(css) {
 function rawDesignCssVariables(payload) {
   const px = (value) => (value === undefined ? undefined : `${value}px`);
   const cssLength = (value) => (value === 0 ? '0' : `${value}px`);
+  const rgbaFromHex = (hex, opacity) => {
+    if (typeof hex !== 'string' || opacity === undefined || !/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+      return hex;
+    }
+
+    const channels = [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16));
+    const alpha = Number(opacity).toFixed(2);
+
+    return `rgba(${channels.join(', ')}, ${alpha})`;
+  };
   const quoteFont = (font) => {
     const keywordFonts = new Set([
       '-apple-system',
@@ -227,7 +237,7 @@ function rawDesignCssVariables(payload) {
   );
   const elevationShadow = (elevation) =>
     elevation
-      ? `${cssLength(elevation.x)} ${cssLength(elevation.y)} ${cssLength(elevation.blur)} ${elevation.color}`
+      ? `${cssLength(elevation.x)} ${cssLength(elevation.y)} ${cssLength(elevation.blur)} ${rgbaFromHex(elevation.color, elevation.opacity)}`
       : undefined;
 
   return Object.fromEntries(

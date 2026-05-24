@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import * as React from 'react';
 import { View } from 'react-native';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { primaryTabs, quickLogAction } from '@/contracts/navigation';
 import { i18n } from '@/lib/i18n';
@@ -49,30 +49,34 @@ describe('TabLayout', () => {
     await i18n.changeLanguage('en');
   });
 
-  it('renders only the primary tab screens from the navigation contract', () => {
+  it('renders only the primary tab screens from the navigation contract', async () => {
     render(
       <AppProviders>
         <TabLayout />
       </AppProviders>,
     );
 
-    expect(mockTabScreens.map((screen) => screen.name)).toEqual(
-      primaryTabs.map((tab) => tab.routeName),
-    );
+    await waitFor(() => {
+      expect(mockTabScreens.map((screen) => screen.name)).toEqual(
+        primaryTabs.map((tab) => tab.routeName),
+      );
+    });
     expect(mockTabScreens.map((screen) => screen.options?.title)).toEqual(
       primaryTabs.map((tab) => i18n.t(tab.labelKey)),
     );
   });
 
-  it('keeps Quick Log as a persistent FAB that opens the modal route', () => {
+  it('keeps Quick Log as a persistent FAB that opens the modal route', async () => {
     render(
       <AppProviders>
         <TabLayout />
       </AppProviders>,
     );
 
-    const quickLogButton = screen.getByRole('button', {
-      name: i18n.t(quickLogAction.labelKey),
+    const quickLogButton = await waitFor(() => {
+      return screen.getByRole('button', {
+        name: i18n.t(quickLogAction.labelKey),
+      });
     });
 
     expect(quickLogButton.props.accessibilityHint).toBe(

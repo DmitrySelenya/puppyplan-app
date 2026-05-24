@@ -33,9 +33,36 @@ const sourceTokens = {
   },
   elevation: {
     0: { $value: { shadow: 'none', border: '1px solid #E2DDD2' } },
-    1: { $value: { x: 0, y: 2, blur: 8, color: 'rgba(28,31,27,0.06)' } },
-    2: { $value: { x: 0, y: -4, blur: 16, color: 'rgba(28,31,27,0.10)' } },
-    3: { $value: { x: 0, y: 8, blur: 24, color: 'rgba(28,31,27,0.14)' } },
+    1: {
+      $value: {
+        androidElevation: 2,
+        blur: 8,
+        color: '#1C1F1B',
+        opacity: 0.06,
+        x: 0,
+        y: 2,
+      },
+    },
+    2: {
+      $value: {
+        androidElevation: 6,
+        blur: 16,
+        color: '#1C1F1B',
+        opacity: 0.1,
+        x: 0,
+        y: -4,
+      },
+    },
+    3: {
+      $value: {
+        androidElevation: 12,
+        blur: 24,
+        color: '#1C1F1B',
+        opacity: 0.14,
+        x: 0,
+        y: 8,
+      },
+    },
   },
   typography: {
     fontFamily: {
@@ -110,6 +137,9 @@ test('buildTokenPayload normalizes design-token values for native runtime use', 
   assert.equal(payload.space[10], 40);
   assert.equal(payload.radius.full, 999);
   assert.equal(payload.typography.scale.body.letterSpacing, 0);
+  assert.equal(payload.elevation[2].androidElevation, 6);
+  assert.equal(payload.elevation[2].color, '#1C1F1B');
+  assert.equal(payload.elevation[2].opacity, 0.1);
   assert.equal(payload.motion.duration.fast, 160);
   assert.equal(payload.haptic.warning.android, 'REJECT');
   assert.deepEqual(payload.business.timing, {

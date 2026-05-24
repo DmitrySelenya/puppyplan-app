@@ -13,7 +13,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
 | Active roadmap | [Architecture Foundation Roadmap](active/2026-05-21-phase-0-architecture-cleanup.md) | Split through `PUP-2`, `PUP-3`, `PUP-4`, and follow-up issues | Do not assign directly; use it as the dependency map for scaffold, Supabase/RLS, Quick Log, and release gates |
-| Active task plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7`, `PUP-8` | Phases 1-4 complete; token pipeline completed under `PUP-8`; continue or split Phases 5-7 as scoped follow-up issues |
+| Active task plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7`, `PUP-8`, `PUP-9` | Phases 1-5 complete; native primitives completed under `PUP-9` with Phase 5 review fixes; continue Phase 6 i18n/string-budget and Phase 7 design gallery only as scoped follow-up issues |
 | Completed | [PUP-4 Test Harness And Local Gates](completed/2026-05-23-pup-4-test-harness-local-gates.md) | `PUP-4` | Merged via PR #3; local harness, PR metadata CI, `npm run check`, privacy scan, text hygiene, i18n placeholders, tab-layout coverage, and deep-review fixes are in `main` |
 | Completed | [Scaffold Expo App Baseline](completed/2026-05-22-scaffold-expo-app-baseline.md) | `PUP-2` | Local scaffold implemented and verified; Linear moved to `In Review` |
 | Completed | [Agent Company Setup](completed/2026-05-21-agent-company-setup.md) | `PUP-1` | Closed; `PUP-6` separately tracks first-PR GitHub integration verification |
@@ -21,7 +21,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 ## Execution Order
 
 1. Run the foundation roadmap only through scoped Linear issues. `PUP-2` owns the Expo scaffold prerequisite needed by later design runtime work.
-2. Now that `PUP-8` completed token generation and drift checks, continue or split `PUP-7` Phases 5-7: native design primitives, EN/RU/ES i18n/string-budget checks, and the in-app design gallery.
+2. Now that `PUP-8` completed token generation and `PUP-9` completed native design primitives, continue or split only the remaining `PUP-7` Phases 6-7: EN/RU/ES i18n/string-budget checks and the in-app design gallery.
 3. Re-run `PUP-7` screenshot/package checks whenever the raw design export changes.
 4. Supabase/RLS, Quick Log queue, and release/privacy gates should be assigned from the foundation roadmap as separate Linear issues, not mixed into `PUP-7`.
 
