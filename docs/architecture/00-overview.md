@@ -24,7 +24,7 @@ This architecture is optimized for AI-coding-first delivery: narrow ownership, t
 - Use PostHog for product/UI flags; use Supabase `app_config` only for backend-critical operational config.
 - Treat historical design audit findings as a beta QA track, not as backend/schema input.
 
-Current compliance note: local preflight found that `PrivacyInfo.xcprivacy` is missing. This is a P0 release blocker and is tracked in `15-ios-runtime-and-compliance.md`.
+Current compliance note: a tracked `PrivacyInfo.xcprivacy` source manifest is wired through the Expo config plugin path. iOS release still requires built-artifact verification and a fresh dependency/API audit, tracked in `15-ios-runtime-and-compliance.md`.
 
 ## Architecture Map
 

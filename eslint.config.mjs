@@ -27,4 +27,10 @@ export default [
       ],
     },
   },
+  {
+    files: ['src/lib/supabase/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
 ];
