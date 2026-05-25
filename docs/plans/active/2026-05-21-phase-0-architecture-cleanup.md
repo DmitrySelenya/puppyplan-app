@@ -9,7 +9,7 @@
 
 **Plan type:** Foundation roadmap. This is a dependency map, not a single agent-ready Linear task.
 
-**Current execution:** Split into scoped Linear issues. `PUP-2` owns the Expo scaffold prerequisite. `PUP-3` owns Supabase contracts/RLS. `PUP-4` owns CI/local verification gates. Quick Log and release/privacy work should be split into follow-up issues when ready.
+**Current execution:** Split into scoped Linear issues. `PUP-2` completed the Expo scaffold prerequisite. `PUP-3` completed Supabase contracts/RLS and the hosted-dev remote gate. `PUP-4` completed CI/local verification gates. `PUP-5` completed the Quick Log MVP implementation plan. Quick Log implementation now starts with `PUP-11` and continues through the scoped `PUP-12` to `PUP-16` follow-ups; remaining release/privacy work should be split into follow-up issues when ready.
 
 **Relationship to `PUP-7`:** `PUP-7` can run design handoff Phases 1-3 before this roadmap is complete. `PUP-7` Phases 4-7 require the Expo scaffold and package scripts from `PUP-2` before implementation.
 
@@ -27,7 +27,7 @@
 
 ## Context
 
-The repo is currently documentation-first. There is no Expo app scaffold, no Supabase migrations, no generated native projects, and no CI scripts yet. That makes this the right time to convert high-risk architecture notes into executable future requirements.
+The repo now has the Expo scaffold, Supabase migrations/contracts/RLS baseline, generated DB types, local verification gates, GitHub remote Supabase gate, design token runtime, typed i18n gates, and native design primitives. This roadmap remains active only as a dependency map for unresolved Quick Log and release/privacy follow-up work.
 
 The external review surfaced several useful risks. Some were already documented, but not specific enough to guide migration SQL, tests, or CI. This plan captures the cleanup needed before implementation agents start writing schema, Edge Functions, queue code, and release automation.
 
@@ -153,8 +153,9 @@ This document is not the current `PUP-7` task. Treat it as the roadmap that expl
 - [x] With explicit approval, initialize local git if still absent.
 - [x] With explicit approval, create a private GitHub repository.
 - [x] With explicit approval, make initial commit and push.
-- [ ] Add branch protection and required checks after CI scripts exist.
-- [ ] Scaffold Expo app without editing generated native folders directly.
+- [x] Add initial GitHub verification workflows and required local checks.
+- [x] Scaffold Expo app without editing generated native folders directly.
+- [ ] Add branch protection and required checks if/when the user explicitly approves repository settings changes.
 
 **Acceptance criteria:**
 - Private remote exists, baseline docs are versioned, and no secrets are committed.
@@ -164,24 +165,26 @@ This document is not the current `PUP-7` task. Treat it as the roadmap that expl
 **Execution owner:** `PUP-3` or a scoped Supabase/RLS follow-up issue.
 
 **Checklist:**
-- [ ] Add schema migration for baseline tables.
-- [ ] Add share projection views/RPCs.
-- [ ] Add Edge Functions or SECURITY DEFINER helpers for invite/share mutations.
-- [ ] Add pgTAP negative tests for membership, shares, projections, revoked access, anonymous writes, and token secrecy.
+- [x] Add schema migration for baseline tables.
+- [x] Add share projection views/RPCs.
+- [x] Add SECURITY DEFINER helpers for invite/share mutations and safe share metadata.
+- [x] Add remote pgTAP/static negative tests for membership, shares, projections, revoked access, anonymous writes, and token secrecy.
+- [x] Add GitHub remote Supabase gate for migration dry-run, lint, pgTAP, and generated DB type drift.
 
 **Acceptance criteria:**
 - Tests prove private fields and base rows cannot be read through trainer/share access.
 
 ### Phase 3 - Client Queue And Query Enforcement
 
-**Execution owner:** `PUP-5` or a scoped Quick Log implementation issue after the app scaffold exists.
+**Execution owner:** `PUP-5` completed the implementation plan. `PUP-11` starts the Quick Log implementation with contracts/query keys, followed by `PUP-12` queue core, `PUP-13` mutation/cache lifecycle, `PUP-14` sheet UI, `PUP-15` Today/Timeline integration, and `PUP-16` privacy-safe analytics/observability.
 
 **Checklist:**
-- [ ] Add query key factory.
-- [ ] Add invalidation helpers for Quick Log, reminders, health, sharing, and membership mutations.
-- [ ] Add Quick Log queue state machine tests.
-- [ ] Add retry/permanent error classification.
-- [ ] Add Undo vs in-flight response regression test.
+- [x] Create the Quick Log MVP implementation plan under `PUP-5`.
+- [ ] Add query key factory under `PUP-11`.
+- [ ] Add invalidation helpers for Quick Log, reminders, health, sharing, and membership mutations under `PUP-11` and later scoped issues.
+- [ ] Add Quick Log queue state machine tests under `PUP-12`.
+- [ ] Add retry/permanent error classification under `PUP-12`.
+- [ ] Add Undo vs in-flight response regression test under `PUP-12`/`PUP-13`.
 
 **Acceptance criteria:**
 - Quick Log remains visible, deduped, retryable, and cancellable without stale Today/Timeline state.
@@ -191,7 +194,8 @@ This document is not the current `PUP-7` task. Treat it as the roadmap that expl
 **Execution owner:** `PUP-4` for local/CI gates, plus later release-readiness issues when platform workflows exist.
 
 **Checklist:**
-- [ ] Add PII scrubber tests.
+- [x] Add baseline privacy scan/text hygiene checks and Supabase remote gate.
+- [ ] Add app-wide observability PII scrubber tests once observability wrappers exist. Quick Log-specific analytics/observability tests are owned by the `PUP-5` follow-up split only if Quick Log introduces telemetry or error wrappers; this roadmap keeps the global release/privacy gate open.
 - [ ] Add AASA and assetlinks validation script.
 - [ ] Add privacy manifest generation/check into Expo build path.
 - [ ] Add platform preflight gate before TestFlight/Internal Testing.
@@ -224,3 +228,5 @@ Once scripts exist, prefer:
 - 2026-05-21: Created Phase 0 cleanup plan from architecture review findings.
 - 2026-05-21: Created private GitHub repository `DmitrySelenya/puppyplan-app`, pushed initial architecture baseline, and added repository labels/milestones/settings. Branch protection is deferred until CI checks exist.
 - 2026-05-21: Clarified this document as a foundation roadmap executed through scoped Linear issues, not a direct task; recorded the dependency relationship to `PUP-7`.
+- 2026-05-25: Synced roadmap with completed `PUP-2`, `PUP-3`, `PUP-4`, `PUP-8`, `PUP-9`, and `PUP-10` work on `main`; `PUP-6` was verified separately through PR #5 GitHub/Linear linkage evidence; `PUP-5` completed Quick Log MVP planning, while release/privacy hardening remains future scoped issue work.
+- 2026-05-25: Created and completed `docs/plans/completed/2026-05-25-quick-log-mvp.md` for `PUP-5`; Phase 3 implementation tasks remain open as scoped Linear coding issues `PUP-11` through `PUP-16`.

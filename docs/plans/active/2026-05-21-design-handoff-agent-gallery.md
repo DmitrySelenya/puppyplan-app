@@ -9,9 +9,9 @@
 
 **Plan type:** Linear task plan for `PUP-7`.
 
-**Current phase:** Phases 1-5 complete. Phase 6A typed i18n/string-budget gates are complete under `PUP-10`; the EN/RU/ES Dynamic Type screenshot item and Phase 7 design gallery remain scoped follow-up work.
+**Current phase:** Phases 1-5 complete. Phase 6A typed i18n/string-budget gates were merged via PR #6 under `PUP-10`. The EN/RU/ES Dynamic Type screenshot item and Phase 7 design gallery remain scoped follow-up work.
 
-**Current Linear scope:** `PUP-7` executed Phases 1-3. `PUP-8` executed Phase 4. `PUP-9` executed Phase 5. `PUP-10` executes Phase 6A typed i18n/string-budget gates. The remaining Phase 6 screenshot item and Phase 7 remain available for scoped follow-up issues.
+**Current Linear scope:** `PUP-7` executed Phases 1-3. `PUP-8` executed Phase 4. `PUP-9` executed Phase 5. `PUP-10` executed Phase 6A typed i18n/string-budget gates via PR #6. The remaining Phase 6 screenshot item and Phase 7 remain available for scoped follow-up issues.
 
 **Architecture:** This is a design handoff and implementation-enablement plan. It does not change product scope, app runtime, Supabase schema, RLS, CI, or release behavior. Future code work must still implement Expo native UI through `src/design` primitives, typed i18n, contracts, and tests.
 
@@ -585,3 +585,4 @@ Future verification after later design runtime phases:
 - 2026-05-24: Addressed Phase 6A follow-up review by widening compact action budget coverage, aligning typed/runtime root-only `$meta` and `voice.*` exclusions, narrowing interpolation options and hook return shape, sharing static i18n source extraction, scanning production app/src files for raw `react-i18next` `useTranslation`, and expanding parity/budget/duplicate-warning/type coverage.
 - 2026-05-24: Addressed Phase 6A deep-review gate gap by adding RED coverage for production raw `i18n` runtime imports and extending `check-i18n.mjs` to reject that typed-key bypass outside approved i18n/provider boundaries.
 - 2026-05-24: Addressed local review guardrail gaps by adding RED coverage for raw `@/lib/i18n` namespace imports and static translation keys missing from the English master, then extending `check-i18n.mjs` so namespace raw-runtime bypasses and stale array indices such as `actions.999` fail the scaffold gate.
+- 2026-05-25: Synced Phase 6A wording to the repo-verifiable PR #6 merge. This plan remains active only for the EN/RU/ES Dynamic Type screenshot follow-up and the development-only in-app design gallery.

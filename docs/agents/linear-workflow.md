@@ -218,4 +218,4 @@ After team `PUP` exists:
   - `PUP-4` `Set up CI and local verification gates`
   - `PUP-5` `Create Quick Log MVP implementation plan`
   - `PUP-6` `Enable Linear GitHub integration and branch linking`
-- [ ] Verify GitHub integration for `DmitrySelenya/puppyplan-app` with the first approved branch/PR so branches link back to Linear issues. Track this in `PUP-6`.
+- [x] Verify GitHub integration for `DmitrySelenya/puppyplan-app` with the first approved branch/PR so branches link back to Linear issues. Tracked in `PUP-6`; verified through PR #5 using the Linear-generated `PUP-9` branch and PR linkage.

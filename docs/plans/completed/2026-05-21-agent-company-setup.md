@@ -4,11 +4,11 @@
 
 **Goal:** Establish PuppyPlan as an agent-first project where Linear tracks operational work, GitHub tracks code review and CI, and repo docs remain the canonical knowledge base.
 
-**Status:** Completed. All plan-owned checklist items are done; `PUP-6` owns the separate first-PR GitHub integration verification follow-up.
+**Status:** Completed. All plan-owned checklist items are done; the separate first-PR GitHub integration verification follow-up was later completed in `PUP-6`.
 
 **Architecture:** This is a documentation and workflow setup. It does not change product scope, app runtime, Supabase schema, CI, or release behavior.
 
-**Linear:** `PUP-1` tracks this repo-side agent operating model cleanup and has no remaining plan-owned checklist items after this pass. `PUP-6` separately tracks first-PR GitHub integration verification. Project `PuppyPlan MVP` is the operational Linear project.
+**Linear:** `PUP-1` tracks this repo-side agent operating model cleanup and has no remaining plan-owned checklist items after this pass. `PUP-6` later verified first-PR GitHub integration through PR #5. Project `PuppyPlan MVP` is the operational Linear project.
 
 **Primary source docs:**
 - Project rules: `AGENTS.md`
@@ -63,7 +63,7 @@ Linear team `PUP` / PuppyPlan exists and owns the `PuppyPlan MVP` project. Puppy
 
 Tracked outside `PUP-1`:
 
-- [ ] `PUP-6`: Verify Linear GitHub integration for `DmitrySelenya/puppyplan-app` with the first approved branch/PR.
+- [x] `PUP-6`: Verify Linear GitHub integration for `DmitrySelenya/puppyplan-app` with the first approved branch/PR. Verified through PR #5 using the Linear-generated `PUP-9` branch and PR linkage.
 
 ## Verification
 
@@ -90,9 +90,9 @@ Created:
 - Milestones: `Agent OS and Repo Hygiene`, `Expo App Scaffold`, `Supabase Contracts and RLS`, `Quick Log MVP`, `CI and Release Gates`
 - Starter issues: `PUP-1` through `PUP-6`
 
-Remaining blocker:
+Follow-up verification:
 
-- GitHub integration verification for `DmitrySelenya/puppyplan-app` is tracked in `PUP-6`.
+- GitHub integration verification for `DmitrySelenya/puppyplan-app` was completed in `PUP-6` after PR #5 linked back to Linear and auto-completed the linked implementation issue.
 
 ## Changelog
 
@@ -102,3 +102,4 @@ Remaining blocker:
 - 2026-05-21: Aligned branch convention with Linear `gitBranchName` and changed GitHub integration work from setup to first-PR verification.
 - 2026-05-21: Added canonical `.agents/skills` workflows and converted `.claude/skills` into adapters so Claude and Codex use one project process source.
 - 2026-05-21: Clarified that `PUP-1` has no remaining plan-owned checklist items and `PUP-6` owns first-PR GitHub integration verification.
+- 2026-05-25: Synced the historical follow-up state after `PUP-6` completed first-PR GitHub/Linear linkage verification through PR #5.
