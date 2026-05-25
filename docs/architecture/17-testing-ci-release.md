@@ -49,6 +49,14 @@ Use pgTAP in `supabase/tests/`. Required P0 cases are in `08-data-model-and-rls.
 
 Sharing RLS tests must assert forbidden fields and forbidden base-table access, not just successful projection reads.
 
+On the 8 GB M1 MacBook Air, do not run a local Supabase stack. Local Expo development points at the hosted non-production Supabase dev project via `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Remote migration dry-runs and lint use `SUPABASE_DB_URL`.
+
+The full Supabase gate runs in GitHub Actions:
+
+- `npm run supabase:test` for remote pgTAP;
+- `npm run db:types` for generated DB types; use `SUPABASE_PROJECT_REF` plus Supabase CLI auth locally, or download the GitHub `database-types` artifact;
+- `npm run supabase:ci:remote` as the full remote Supabase schema gate.
+
 ## E2E
 
 Use Maestro in MVP.
@@ -91,4 +99,4 @@ MVP release channels:
 
 OTA/EAS Update is off in MVP.
 
-Run `greenlight preflight .` before iOS submission. Current project preflight found missing `PrivacyInfo.xcprivacy`; this must be fixed before release.
+Run `greenlight preflight .` before iOS submission. The repo now tracks a source `PrivacyInfo.xcprivacy` and Expo config plugin, but release remains blocked until a built `.app` confirms the manifest is present at bundle root and the dependency/API audit is current.

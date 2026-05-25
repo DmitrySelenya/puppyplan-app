@@ -1,0 +1,63 @@
+name: Supabase Remote Dev
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/supabase-remote-dev.yml
+      - package-lock.json
+      - package.json
+      - scripts/checks/check-database-types-generated.mjs
+      - scripts/checks/supabase-baseline.test.mjs
+      - scripts/supabase/**
+      - src/contracts/**
+      - src/lib/supabase/**
+      - supabase/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-remote-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  remote-dev-schema:
+    name: Remote Dev Schema Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_CLI_DOCKER_ALLOWED: '1'
+      SUPABASE_DB_URL: ${{ secrets.PUPPYPLAN_DEV_SUPABASE_DB_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate remote dev secrets
+        run: |
+          if [ -z "${SUPABASE_DB_URL}" ]; then
+            echo "::error::Set the PUPPYPLAN_DEV_SUPABASE_DB_URL repository secret for the non-production dev database."
+            exit 1
+          fi
+
+      - name: Run remote Supabase schema gate
+        run: npm run supabase:ci:remote
+
+      - name: Upload generated database types
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: ignore
+          name: database-types
+          path: src/contracts/database.types.ts

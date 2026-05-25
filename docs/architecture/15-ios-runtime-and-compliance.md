@@ -25,7 +25,7 @@ Do not add `NSPrivacyTrackingDomains` automatically unless the app/SDK usage mee
 Expo implementation rule:
 
 - do not hand-edit generated `ios/` files;
-- keep the source manifest or config-plugin input in the tracked Expo project;
+- keep the source manifest or config-plugin input in the tracked Expo project; current source path is `assets/apple/PrivacyInfo.xcprivacy`, copied into the app target by `plugins/with-ios-privacy-manifest.js`;
 - verify the built `.app` contains `PrivacyInfo.xcprivacy` at bundle root;
 - rerun dependency audit whenever a native dependency is added or upgraded.
 
