@@ -22,7 +22,7 @@ Current MCP-created dev project:
 - region: `eu-central-1`
 - API URL: `https://olymqppxsadsxfrcyskh.supabase.co`
 
-Supabase MCP can apply migrations and run SQL against this project. Migrations through `20260525123000_fix_share_projection_puppy_soft_delete.sql` have been applied to this non-production dev project. Local Expo development points at this hosted project through public Expo env vars; a local Supabase database is not part of the workflow.
+Supabase MCP can apply migrations and run SQL against this project. Migrations through `20260525135121_route_share_link_view_through_metadata_rpc.sql` have been applied to this non-production dev project. Local Expo development points at this hosted project through public Expo env vars; a local Supabase database is not part of the workflow.
 
 1. Create or select a non-production Supabase project or persistent branch.
 2. Use a local-only database URL for remote migration and lint checks:

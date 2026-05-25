@@ -10,6 +10,8 @@ const hardeningMigrationPath = 'supabase/migrations/20260524203009_security_hard
 const reviewFixesMigrationPath = 'supabase/migrations/20260525090000_review_fix_privacy_and_share_rpc.sql';
 const remoteCiHardeningMigrationPath = 'supabase/migrations/20260525111954_remote_ci_rls_baseline_hardening.sql';
 const shareSoftDeleteFixMigrationPath = 'supabase/migrations/20260525123000_fix_share_projection_puppy_soft_delete.sql';
+const shareLinkViewRpcMigrationPath =
+  'supabase/migrations/20260525135121_route_share_link_view_through_metadata_rpc.sql';
 const rlsTestPath = 'supabase/tests/rls_baseline.sql';
 const remoteCliPath = 'scripts/supabase/run-remote-cli.mjs';
 const noLocalDockerPath = 'scripts/supabase/no-local-docker.mjs';
@@ -29,6 +31,7 @@ function allMigrationSource() {
     reviewFixesMigrationPath,
     remoteCiHardeningMigrationPath,
     shareSoftDeleteFixMigrationPath,
+    shareLinkViewRpcMigrationPath,
   ].map((path) => readFileSync(path, 'utf8')).join('\n');
 }
 
@@ -36,6 +39,16 @@ function viewBlock(source, viewName) {
   const match = source.match(new RegExp(`CREATE VIEW public\\.${viewName}\\n[\\s\\S]*?;`, 'u'));
   assert.ok(match, `missing ${viewName} view`);
   return match[0];
+}
+
+function latestViewBlock(source, viewName) {
+  const matches = [
+    ...source.matchAll(
+      new RegExp(`CREATE (?:OR REPLACE )?VIEW public\\.${viewName}\\n[\\s\\S]*?;`, 'gu'),
+    ),
+  ];
+  assert.ok(matches.length > 0, `missing ${viewName} view`);
+  return matches.at(-1)?.[0] ?? '';
 }
 
 function policyBlock(source, policyName) {
@@ -148,6 +161,7 @@ describe('Supabase baseline migration guardrails', () => {
       /SELECT \* FROM public\.current_share_routine_summary\(\)/u,
       /SELECT \* FROM public\.current_share_health_summary\(\)/u,
       /20260525123000: tighten accepted-share projections against soft-deleted puppies/u,
+      /20260525135121: route share link metadata view through the hardened RPC boundary/u,
     ]) {
       assert.match(source, expected);
     }
@@ -157,6 +171,14 @@ describe('Supabase baseline migration guardrails', () => {
       /CREATE OR REPLACE FUNCTION public\.current_share_link_metadata\(\)/u,
       'review-fix migration must repair remote dev baseline drift before projection RPCs',
     );
+  });
+
+  it('keeps the share metadata view on the hardened metadata RPC path', () => {
+    const block = latestViewBlock(allMigrationSource(), 'share_link_view');
+
+    assert.match(block, /WITH \(security_barrier = true, security_invoker = true\)/u);
+    assert.match(block, /SELECT \* FROM public\.current_share_link_metadata\(\)/u);
+    assert.doesNotMatch(block, /active_share_link_ids/u);
   });
 
   it('keeps accepted-share projection RPCs from leaking soft-deleted puppies', () => {

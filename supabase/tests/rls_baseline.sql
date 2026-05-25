@@ -1027,14 +1027,14 @@ SELECT results_eq(
 
 SELECT results_eq(
   'SELECT count(*)::int FROM public.share_routine_summary',
-  ARRAY[2],
-  'accepted trainer share can read sanitized routine summary projection rows'
+  ARRAY[3],
+  'accepted trainer share can read sanitized routine summary projection rows including same-puppy caregiver events'
 );
 
 SELECT results_eq(
   'SELECT count(*)::int FROM public.share_selected_timeline',
-  ARRAY[2],
-  'accepted trainer share can read sanitized selected timeline projection rows'
+  ARRAY[3],
+  'accepted trainer share can read sanitized selected timeline projection rows including same-puppy caregiver events'
 );
 
 SELECT results_eq(
