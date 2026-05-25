@@ -8,6 +8,8 @@ import { spawnSync } from 'node:child_process';
 const baselineMigrationPath = 'supabase/migrations/20260524202620_mvp_schema_baseline.sql';
 const hardeningMigrationPath = 'supabase/migrations/20260524203009_security_harden_share_projections.sql';
 const reviewFixesMigrationPath = 'supabase/migrations/20260525090000_review_fix_privacy_and_share_rpc.sql';
+const remoteCiHardeningMigrationPath = 'supabase/migrations/20260525111954_remote_ci_rls_baseline_hardening.sql';
+const shareSoftDeleteFixMigrationPath = 'supabase/migrations/20260525123000_fix_share_projection_puppy_soft_delete.sql';
 const rlsTestPath = 'supabase/tests/rls_baseline.sql';
 const remoteCliPath = 'scripts/supabase/run-remote-cli.mjs';
 const noLocalDockerPath = 'scripts/supabase/no-local-docker.mjs';
@@ -25,6 +27,8 @@ function allMigrationSource() {
     baselineMigrationPath,
     hardeningMigrationPath,
     reviewFixesMigrationPath,
+    remoteCiHardeningMigrationPath,
+    shareSoftDeleteFixMigrationPath,
   ].map((path) => readFileSync(path, 'utf8')).join('\n');
 }
 
@@ -38,6 +42,16 @@ function policyBlock(source, policyName) {
   const match = source.match(new RegExp(`CREATE POLICY ${policyName} ON [\\s\\S]*?;`, 'u'));
   assert.ok(match, `missing ${policyName} policy`);
   return match[0];
+}
+
+function functionBlock(source, functionName) {
+  const matches = [
+    ...source.matchAll(
+      new RegExp(`CREATE OR REPLACE FUNCTION public\\.${functionName}\\(\\)[\\s\\S]*?\\$\\$;`, 'gu'),
+    ),
+  ];
+  assert.ok(matches.length > 0, `missing ${functionName} function`);
+  return matches.at(-1)?.[0] ?? '';
 }
 
 function exportedArrayValues(source, name) {
@@ -133,6 +147,7 @@ describe('Supabase baseline migration guardrails', () => {
       /share_link\.accepted_by = auth\.uid\(\)/u,
       /SELECT \* FROM public\.current_share_routine_summary\(\)/u,
       /SELECT \* FROM public\.current_share_health_summary\(\)/u,
+      /20260525123000: tighten accepted-share projections against soft-deleted puppies/u,
     ]) {
       assert.match(source, expected);
     }
@@ -142,6 +157,59 @@ describe('Supabase baseline migration guardrails', () => {
       /CREATE OR REPLACE FUNCTION public\.current_share_link_metadata\(\)/u,
       'review-fix migration must repair remote dev baseline drift before projection RPCs',
     );
+  });
+
+  it('keeps accepted-share projection RPCs from leaking soft-deleted puppies', () => {
+    const source = allMigrationSource();
+    const metadataBlock = functionBlock(source, 'current_share_link_metadata');
+
+    assert.match(metadataBlock, /JOIN public\.puppy/u);
+    assert.match(metadataBlock, /puppy\.deleted_at IS NULL/u);
+
+    for (const functionName of [
+      'current_share_routine_summary',
+      'current_share_selected_timeline',
+      'current_share_training_notes',
+      'current_share_health_summary',
+      'current_share_puppy_profile',
+    ]) {
+      const block = functionBlock(source, functionName);
+
+      assert.match(block, /JOIN public\.puppy/u, `${functionName} must join puppy`);
+      assert.match(block, /puppy\.deleted_at IS NULL/u, `${functionName} must filter soft-deleted puppies`);
+    }
+  });
+
+  it('keeps the remote CI hardening migration aligned with the amended baseline', () => {
+    const source = readFileSync(remoteCiHardeningMigrationPath, 'utf8');
+
+    for (const expected of [
+      /DROP POLICY IF EXISTS household_insert ON public\.household/u,
+      /DROP POLICY IF EXISTS trusted_sitter_completion_event_insert/u,
+      /DROP POLICY IF EXISTS share_link_owner_or_acceptor_read/u,
+      /DROP POLICY IF EXISTS share_scope_owner_or_acceptor_read/u,
+      /CREATE OR REPLACE FUNCTION public\.prevent_event_log_identity_update\(\)/u,
+      /CREATE OR REPLACE FUNCTION public\.prevent_notification_preference_identity_update\(\)/u,
+      /ADD CONSTRAINT media_asset_puppy_household_fk/u,
+      /REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated/u,
+      /GRANT INSERT ON\s+public\.puppy,\s+public\.event_log,\s+public\.health_record,\s+public\.reminder,\s+public\.notification_preference,\s+public\.media_asset/su,
+    ]) {
+      assert.match(source, expected);
+    }
+
+    assert.match(source, /Normalizes drift observed on the non-production PuppyPlan Dev database/u);
+    assert.match(source, /household_insert, trusted_sitter_completion_event_insert/u);
+    assert.match(source, /share_link_owner_or_acceptor_read, share_scope_owner_or_acceptor_read/u);
+
+    const insertGrants = [...source.matchAll(/GRANT INSERT ON([\s\S]*?)TO authenticated;/gu)]
+      .map((match) => match[1]);
+
+    assert.ok(insertGrants.length > 0, 'expected at least one authenticated INSERT grant block');
+
+    for (const insertGrant of insertGrants) {
+      assert.doesNotMatch(insertGrant, /public\.household/u);
+      assert.doesNotMatch(insertGrant, /public\.trusted_sitter_completion_event/u);
+    }
   });
 });
 
@@ -171,6 +239,26 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
       'accepted trainer share can read sanitized training notes projection rows',
       'accepted trainer share can read sanitized health summary projection rows',
       'accepted trainer share can read sanitized puppy profile projection rows',
+      'accepted trainer routine summary has no sibling feeding rows',
+      'accepted trainer selected timeline has no sibling feeding rows',
+      'accepted trainer metadata excludes soft-deleted puppy shares',
+      'accepted trainer routine summary excludes soft-deleted puppy events',
+      'accepted trainer selected timeline excludes soft-deleted puppy events',
+      'accepted trainer training notes exclude soft-deleted puppy events',
+      'accepted trainer health summary excludes soft-deleted puppy health records',
+      'accepted trainer puppy profile excludes soft-deleted puppies',
+      'non-member cannot read accepted-share metadata RPC rows',
+      'non-member cannot read routine summary projection RPC rows',
+      'non-member cannot read selected timeline projection RPC rows',
+      'non-member cannot read training notes projection RPC rows',
+      'non-member cannot read health summary projection RPC rows',
+      'non-member cannot read puppy profile projection RPC rows',
+      'expired share reads no metadata projection rows',
+      'expired share reads no routine summary projection RPC rows',
+      'expired share reads no selected timeline projection RPC rows',
+      'expired share reads no training notes projection RPC rows',
+      'expired share reads no health summary projection RPC rows',
+      'expired share reads no puppy profile projection RPC rows',
     ]) {
       assert.match(source, new RegExp(expected, 'u'));
     }

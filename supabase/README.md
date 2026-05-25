@@ -8,7 +8,7 @@ This directory contains the Supabase contract for PuppyPlan MVP.
 - `app_private` contains server-only token hashes and future SECURITY DEFINER helpers.
 - `minimal_quick_log_queue_item` is intentionally not a Supabase table; it remains a local Expo SQLite queue contract.
 - Production linking, production migrations, and Edge Function deploys are out of scope for PUP-3.
-- The daily development path on the 8 GB M1 MacBook Air is a non-production Supabase dev project or branch. Do not start Docker or the local Supabase stack on this machine.
+- The daily development path on the 8 GB M1 MacBook Air is a non-production Supabase dev project or branch. Do not start a local Supabase stack on this machine.
 - Anonymous sign-ins are disabled in the baseline config until the auth/onboarding issue adds an anonymous-to-permanent upgrade path and RLS checks for anonymous JWT claims.
 
 ## Remote Dev Workflow
@@ -22,7 +22,7 @@ Current MCP-created dev project:
 - region: `eu-central-1`
 - API URL: `https://olymqppxsadsxfrcyskh.supabase.co`
 
-Supabase MCP can apply migrations and run SQL against this project. The review-fix migration `20260525090000_review_fix_privacy_and_share_rpc.sql` has been applied to this non-production dev project. Local Expo development points at this hosted project through public Expo env vars; local Docker is not part of the daily workflow.
+Supabase MCP can apply migrations and run SQL against this project. Migrations through `20260525123000_fix_share_projection_puppy_soft_delete.sql` have been applied to this non-production dev project. Local Expo development points at this hosted project through public Expo env vars; a local Supabase database is not part of the workflow.
 
 1. Create or select a non-production Supabase project or persistent branch.
 2. Use a local-only database URL for remote migration and lint checks:
@@ -48,9 +48,9 @@ npm run db:push:remote:dry-run
 npm run supabase:lint
 ```
 
-`npm run db:types` prefers `SUPABASE_PROJECT_REF` and Supabase CLI auth, so it can generate `src/contracts/database.types.ts` from the hosted project without Docker. Authenticate with `npx supabase login` locally or set `SUPABASE_ACCESS_TOKEN` in the shell. If `SUPABASE_PROJECT_REF` is absent, the wrapper can fall back to `SUPABASE_DB_URL`, but that fallback remains Docker-only and is disabled on this Mac.
+`npm run db:types` prefers `SUPABASE_PROJECT_REF` and Supabase CLI auth, so it can generate `src/contracts/database.types.ts` from the hosted project. Authenticate with `npx supabase login` locally or set `SUPABASE_ACCESS_TOKEN` in the shell. Without CLI auth, use the GitHub Actions remote gate artifact rather than hand-writing generated types.
 
-`npm run supabase:test` runs pgTAP through Supabase CLI against the remote DB URL. Supabase CLI still uses Docker for this mode, so run it only on a Docker-capable CI/cloud runner with `SUPABASE_CLI_DOCKER_ALLOWED=1`.
+`npm run supabase:test` is reserved for the GitHub Actions remote gate. Do not run pgTAP locally on the M1 Air.
 
 The GitHub Actions workflow `.github/workflows/supabase-remote-dev.yml` is the expected runner for the full remote gate:
 
@@ -62,7 +62,7 @@ Required GitHub configuration:
 
 - repository secret `PUPPYPLAN_DEV_SUPABASE_DB_URL`
 
-The CI workflow intentionally uses the Docker-capable runner plus `SUPABASE_DB_URL` for pgTAP and type generation. `SUPABASE_ACCESS_TOKEN` is optional for local no-Docker type generation only.
+The CI workflow uses `SUPABASE_DB_URL` for pgTAP and type generation. `SUPABASE_ACCESS_TOKEN` is optional for local hosted-project type generation only.
 
 When `src/contracts/database.types.ts` is missing or stale, the remote workflow fails after generating the file and uploads it as the `database-types` artifact. Download that artifact, review the diff, commit the generated file, and rerun the workflow.
 
@@ -72,12 +72,12 @@ When `src/contracts/database.types.ts` is missing or stale, the remote workflow 
 EXPO_PUBLIC_SUPABASE_URL=<dev-project-url>
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<dev-publishable-key>
 SUPABASE_PROJECT_REF=olymqppxsadsxfrcyskh
-SUPABASE_DB_URL=<percent-encoded-postgres-url-for-cli-only>
+SUPABASE_DB_URL=<postgres-url-for-cli-only>
 ```
 
 Only publishable client keys belong in Expo public env vars. Service role or secret keys must never be committed, exposed to Expo, pasted into Linear, or used in client code.
 
-## Disabled Local Docker Workflow
+## Local Supabase Guardrail
 
 The short local commands are intentionally guarded on this workspace:
 
@@ -87,7 +87,7 @@ npm run supabase:lint
 npm run db:types
 ```
 
-The npm scripts route through `scripts/supabase/run-remote-cli.mjs`, which fails before Docker-only modes unless `SUPABASE_CLI_DOCKER_ALLOWED=1` is present. Keep that flag unset on the 8 GB M1 MacBook Air. Local Docker-based Supabase commands are reserved for CI/cloud runners or a different workstation where the user explicitly approves that path. Do not run production migration commands unless the user explicitly approves that exact action.
+The npm scripts route through `scripts/supabase/run-remote-cli.mjs`, which fails before modes that are not approved for this machine. Keep `SUPABASE_CLI_DOCKER_ALLOWED` unset on the 8 GB M1 MacBook Air; the flag is reserved for the GitHub remote gate. Do not run production migration commands unless the user explicitly approves that exact action.
 
 ## Privileged Boundary
 

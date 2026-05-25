@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(64);
+SELECT plan(82);
 
 CREATE SCHEMA IF NOT EXISTS tests;
 
@@ -769,6 +769,42 @@ SELECT results_eq(
   'non-member cannot read household events'
 );
 
+SELECT results_eq(
+  'SELECT count(*)::int FROM public.current_share_link_metadata()',
+  ARRAY[0],
+  'non-member cannot read accepted-share metadata RPC rows'
+);
+
+SELECT results_eq(
+  'SELECT count(*)::int FROM public.current_share_routine_summary()',
+  ARRAY[0],
+  'non-member cannot read routine summary projection RPC rows'
+);
+
+SELECT results_eq(
+  'SELECT count(*)::int FROM public.current_share_selected_timeline()',
+  ARRAY[0],
+  'non-member cannot read selected timeline projection RPC rows'
+);
+
+SELECT results_eq(
+  'SELECT count(*)::int FROM public.current_share_training_notes()',
+  ARRAY[0],
+  'non-member cannot read training notes projection RPC rows'
+);
+
+SELECT results_eq(
+  'SELECT count(*)::int FROM public.current_share_health_summary()',
+  ARRAY[0],
+  'non-member cannot read health summary projection RPC rows'
+);
+
+SELECT results_eq(
+  'SELECT count(*)::int FROM public.current_share_puppy_profile()',
+  ARRAY[0],
+  'non-member cannot read puppy profile projection RPC rows'
+);
+
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000103');
 SELECT is(
   tests.try_insert_event(
@@ -974,14 +1010,30 @@ SELECT results_eq(
 
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000106');
 SELECT results_eq(
+  $$SELECT coalesce(sum(event_count), 0)::int
+    FROM public.share_routine_summary
+    WHERE event_type = 'feeding'$$,
+  ARRAY[0],
+  'accepted trainer routine summary has no sibling feeding rows'
+);
+
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.share_selected_timeline
+    WHERE event_type = 'feeding'$$,
+  ARRAY[0],
+  'accepted trainer selected timeline has no sibling feeding rows'
+);
+
+SELECT results_eq(
   'SELECT count(*)::int FROM public.share_routine_summary',
-  ARRAY[3],
+  ARRAY[2],
   'accepted trainer share can read sanitized routine summary projection rows'
 );
 
 SELECT results_eq(
   'SELECT count(*)::int FROM public.share_selected_timeline',
-  ARRAY[3],
+  ARRAY[2],
   'accepted trainer share can read sanitized selected timeline projection rows'
 );
 
@@ -1044,6 +1096,172 @@ SELECT results_eq(
 );
 
 SELECT tests.as_postgres();
+INSERT INTO public.puppy (
+  id,
+  household_id,
+  name,
+  age_weeks_estimate,
+  deleted_at
+)
+VALUES (
+  '00000000-0000-4000-8000-000000000404',
+  '00000000-0000-4000-8000-000000000201',
+  'Soft-deleted test puppy',
+  11,
+  now()
+);
+
+INSERT INTO public.event_log (
+  id,
+  household_id,
+  puppy_id,
+  created_by,
+  client_event_id,
+  event_type,
+  occurred_at,
+  payload_version,
+  payload
+)
+VALUES
+  (
+    '00000000-0000-4000-8000-000000000504',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000404',
+    '00000000-0000-4000-8000-000000000101',
+    'evt_seed_deleted_001',
+    'potty',
+    now() - interval '10 minutes',
+    1,
+    '{"quick_action":"pee_outside"}'::jsonb
+  ),
+  (
+    '00000000-0000-4000-8000-000000000505',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000404',
+    '00000000-0000-4000-8000-000000000101',
+    'evt_seed_deleted_002',
+    'training',
+    now() - interval '5 minutes',
+    1,
+    '{"topic":"settle","duration_bucket":"short"}'::jsonb
+  );
+
+INSERT INTO public.health_record (
+  id,
+  puppy_id,
+  record_type,
+  title,
+  status,
+  source,
+  scheduled_for,
+  completed_at,
+  updated_by
+)
+VALUES (
+  '00000000-0000-4000-8000-000000000602',
+  '00000000-0000-4000-8000-000000000404',
+  'vaccine',
+  'Soft-deleted puppy health record',
+  'needs_vet_review',
+  'template',
+  current_date + 7,
+  null,
+  '00000000-0000-4000-8000-000000000101'
+);
+
+INSERT INTO public.share_link (
+  id,
+  household_id,
+  puppy_id,
+  role,
+  expires_at,
+  accepted_at,
+  accepted_by,
+  created_by
+)
+VALUES (
+  '00000000-0000-4000-8000-000000000703',
+  '00000000-0000-4000-8000-000000000201',
+  '00000000-0000-4000-8000-000000000404',
+  'trainer_viewer',
+  now() + interval '7 days',
+  now(),
+  '00000000-0000-4000-8000-000000000106',
+  '00000000-0000-4000-8000-000000000101'
+);
+
+INSERT INTO public.share_scope (
+  id,
+  share_link_id,
+  scope,
+  timeline_from,
+  timeline_to,
+  selected_event_types
+)
+VALUES
+  ('00000000-0000-4000-8000-000000000806', '00000000-0000-4000-8000-000000000703', 'routine_summary', null, null, null),
+  (
+    '00000000-0000-4000-8000-000000000807',
+    '00000000-0000-4000-8000-000000000703',
+    'selected_timeline_range',
+    current_date - 1,
+    current_date + 1,
+    ARRAY['potty'::public.event_type, 'training'::public.event_type]
+  ),
+  ('00000000-0000-4000-8000-000000000808', '00000000-0000-4000-8000-000000000703', 'training_notes', null, null, null),
+  ('00000000-0000-4000-8000-000000000809', '00000000-0000-4000-8000-000000000703', 'health_summary', null, null, null),
+  ('00000000-0000-4000-8000-000000000810', '00000000-0000-4000-8000-000000000703', 'puppy_profile', null, null, null);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000106');
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.current_share_link_metadata()
+    WHERE puppy_id = '00000000-0000-4000-8000-000000000404'$$,
+  ARRAY[0],
+  'accepted trainer metadata excludes soft-deleted puppy shares'
+);
+
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.share_routine_summary
+    WHERE share_link_id = '00000000-0000-4000-8000-000000000703'$$,
+  ARRAY[0],
+  'accepted trainer routine summary excludes soft-deleted puppy events'
+);
+
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.share_selected_timeline
+    WHERE share_link_id = '00000000-0000-4000-8000-000000000703'$$,
+  ARRAY[0],
+  'accepted trainer selected timeline excludes soft-deleted puppy events'
+);
+
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.share_training_notes
+    WHERE share_link_id = '00000000-0000-4000-8000-000000000703'$$,
+  ARRAY[0],
+  'accepted trainer training notes exclude soft-deleted puppy events'
+);
+
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.share_health_summary
+    WHERE share_link_id = '00000000-0000-4000-8000-000000000703'$$,
+  ARRAY[0],
+  'accepted trainer health summary excludes soft-deleted puppy health records'
+);
+
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.share_puppy_profile
+    WHERE share_link_id = '00000000-0000-4000-8000-000000000703'$$,
+  ARRAY[0],
+  'accepted trainer puppy profile excludes soft-deleted puppies'
+);
+
+SELECT tests.as_postgres();
 SELECT results_eq(
   $$SELECT count(*)::int
     FROM pg_class
@@ -1093,9 +1311,33 @@ SELECT results_eq(
 );
 
 SELECT results_eq(
-  'SELECT count(*)::int FROM public.share_health_summary',
+  'SELECT count(*)::int FROM public.current_share_routine_summary()',
   ARRAY[0],
-  'expired share reads no projection rows'
+  'expired share reads no routine summary projection RPC rows'
+);
+
+SELECT results_eq(
+  'SELECT count(*)::int FROM public.current_share_selected_timeline()',
+  ARRAY[0],
+  'expired share reads no selected timeline projection RPC rows'
+);
+
+SELECT results_eq(
+  'SELECT count(*)::int FROM public.current_share_training_notes()',
+  ARRAY[0],
+  'expired share reads no training notes projection RPC rows'
+);
+
+SELECT results_eq(
+  'SELECT count(*)::int FROM public.current_share_health_summary()',
+  ARRAY[0],
+  'expired share reads no health summary projection RPC rows'
+);
+
+SELECT results_eq(
+  'SELECT count(*)::int FROM public.current_share_puppy_profile()',
+  ARRAY[0],
+  'expired share reads no puppy profile projection RPC rows'
 );
 
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');

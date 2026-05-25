@@ -49,12 +49,12 @@ Use pgTAP in `supabase/tests/`. Required P0 cases are in `08-data-model-and-rls.
 
 Sharing RLS tests must assert forbidden fields and forbidden base-table access, not just successful projection reads.
 
-On the 8 GB M1 MacBook Air, do not run local Supabase or Docker. Local Expo development points at the hosted non-production Supabase dev project via `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Remote migration dry-runs and lint use `SUPABASE_DB_URL` without local Docker.
+On the 8 GB M1 MacBook Air, do not run a local Supabase stack. Local Expo development points at the hosted non-production Supabase dev project via `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Remote migration dry-runs and lint use `SUPABASE_DB_URL`.
 
-Docker-required Supabase checks run on CI/cloud runners:
+The full Supabase gate runs in GitHub Actions:
 
-- `npm run supabase:test` for remote pgTAP with `SUPABASE_CLI_DOCKER_ALLOWED=1`;
-- `npm run db:types` for generated DB types; use `SUPABASE_PROJECT_REF` plus Supabase CLI auth locally, or `SUPABASE_DB_URL` on Docker-capable CI/cloud runners;
+- `npm run supabase:test` for remote pgTAP;
+- `npm run db:types` for generated DB types; use `SUPABASE_PROJECT_REF` plus Supabase CLI auth locally, or download the GitHub `database-types` artifact;
 - `npm run supabase:ci:remote` as the full remote Supabase schema gate.
 
 ## E2E
