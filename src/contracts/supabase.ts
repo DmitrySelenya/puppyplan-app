@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export type { Database } from './database.types';
+
 export const householdMembershipRoles = ['owner', 'caregiver', 'viewer'] as const;
 export const inviteRoles = ['caregiver', 'viewer'] as const;
 export const shareRoles = ['trainer_viewer'] as const;

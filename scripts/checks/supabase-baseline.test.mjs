@@ -99,6 +99,12 @@ describe('Supabase baseline migration guardrails', () => {
     assert.ok(!publicTables.includes('minimal_quick_log_queue_item'));
   });
 
+  it('re-exports generated database types from the Supabase contract boundary', () => {
+    const contract = readFileSync(supabaseContractPath, 'utf8');
+
+    assert.match(contract, /export type \{ Database \} from '\.\/database\.types';/u);
+  });
+
   it('scopes event-backed share projections to the shared puppy', () => {
     const source = migrationSource();
 

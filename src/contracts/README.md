@@ -24,4 +24,4 @@ Local Supabase Docker type generation is intentionally disabled on the M1/8 GB d
 npm run supabase:ci:remote
 ```
 
-Current dev project note: `PuppyPlan Dev` is reachable through Supabase MCP and CLI project-ref type generation once Supabase CLI auth is available. Do not hand-edit `src/contracts/database.types.ts`; generate it from the approved dev database, review the diff, and let `npm run supabase:ci:remote` fail if it is missing or stale.
+Current dev project note: `PuppyPlan Dev` is reachable through Supabase MCP and the GitHub remote gate. `src/contracts/database.types.ts` was generated from the approved dev database through the `database-types` artifact. Do not hand-edit it; regenerate it from the same approved database, review the diff, and let `npm run supabase:ci:remote` fail if it is missing or stale.

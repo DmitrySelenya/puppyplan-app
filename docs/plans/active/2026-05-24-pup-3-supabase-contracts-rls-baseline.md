@@ -10,7 +10,7 @@
 
 **Plan type:** Active task plan.
 
-**Current phase:** Phase 7 - Remote Dev Supabase Environment. TypeScript contracts, Supabase baseline, Expo client wiring, MCP remote RLS verification, static/local app verification, review hardening, non-production dev migration apply, and a GitHub Actions remote Supabase gate are implemented locally. The 8 GB M1 MacBook Air uses hosted `PuppyPlan Dev`; do not start a local Supabase stack. `PuppyPlan Dev` has migrations through `20260525135121_route_share_link_view_through_metadata_rpc.sql` applied. Remaining work is to rerun the GitHub remote gate, download the generated DB type artifact if the gate produces it, and commit generated DB types from the approved dev database.
+**Current phase:** Phase 7 - Remote Dev Supabase Environment. TypeScript contracts, Supabase baseline, Expo client wiring, MCP remote RLS verification, static/local app verification, review hardening, non-production dev migration apply, generated DB types, and a GitHub Actions remote Supabase gate are implemented locally. The 8 GB M1 MacBook Air uses hosted `PuppyPlan Dev`; do not start a local Supabase stack. `PuppyPlan Dev` has migrations through `20260525135121_route_share_link_view_through_metadata_rpc.sql` applied. Remaining work is to rerun the GitHub remote gate after committing generated DB types from the approved dev database.
 
 **Architecture:** Contracts are the first semantic boundary under `src/contracts/`, Supabase Postgres is the durable source of truth, RLS protects base tables, and invite/share privileged mutations are reserved for Edge Functions or server-side helpers. External trainer/share reads use sanitized projections rather than unrestricted base table reads.
 
@@ -157,7 +157,7 @@ PUP-3 is the first backend/security foundation issue after the Expo scaffold and
 - `supabase/seed/README.md` - seed policy; no private data.
 
 ### Generated Types
-- `src/contracts/database.types.ts` - generated Supabase DB types from the non-production remote dev database through Supabase CLI auth or the GitHub remote gate artifact.
+- `src/contracts/database.types.ts` - generated Supabase DB types from the non-production remote dev database through the GitHub remote gate artifact.
 - `scripts/supabase/run-remote-cli.mjs` - remote CLI wrapper that requires local-only `SUPABASE_DB_URL` for database checks, prefers `SUPABASE_PROJECT_REF` for hosted-project typegen, pins the Supabase CLI package, and redacts secrets from CLI output.
 - `scripts/supabase/no-local-docker.mjs` - guard for short Supabase scripts so agents do not accidentally start unsupported local Supabase services on the M1/8 GB development machine.
 - `package.json` - Supabase scripts only if no new dependency install is required.
@@ -341,10 +341,10 @@ Relevant UX constraints carried forward:
 
 **Checklist:**
 - [x] Define exact remote dev command for DB type generation.
-- [ ] Generate `src/contracts/database.types.ts` from the approved dev database after Supabase CLI auth or CI secrets are available.
+- [x] Generate `src/contracts/database.types.ts` from the approved dev database after Supabase CLI auth or CI secrets are available.
 - [x] If generation cannot run because Supabase CLI auth or CI secrets are missing, document the workflow and record the blocker.
 - [x] Guard short local scripts so `npm run db:types` stays on the hosted-project/artifact path and cannot start unsupported local services.
-- [ ] Add a typecheck-visible re-export only when the generated file exists.
+- [x] Add a typecheck-visible re-export only when the generated file exists.
 
 **Acceptance criteria:**
 - Generated DB types workflow is defined or implemented, satisfying Linear acceptance without production linking.
@@ -430,8 +430,8 @@ Notes:
 - [x] Apply remote CI hardening migration `20260525111954_remote_ci_rls_baseline_hardening.sql` to non-production `PuppyPlan Dev` after explicit user approval.
 - [x] Apply `20260525123000_fix_share_projection_puppy_soft_delete.sql` to non-production `PuppyPlan Dev` only after explicit user approval, then rerun the remote dry-run/lint/catalog checks.
 - [x] Apply `20260525135121_route_share_link_view_through_metadata_rpc.sql` to non-production `PuppyPlan Dev` only after explicit user approval, then rerun the remote dry-run/lint/catalog checks.
-- [ ] Run the remote Supabase gate on GitHub Actions, download the generated type artifact, and commit generated DB types from that gate.
-- [ ] Generate and commit `src/contracts/database.types.ts` from the approved dev database after the remote gate has the required credentials.
+- [x] Run the remote Supabase gate on GitHub Actions and download the generated type artifact.
+- [x] Generate and commit `src/contracts/database.types.ts` from the approved dev database after the remote gate has the required credentials.
 - [x] Populate local `.env` with dev branch URL and publishable key only; do not commit `.env`.
 
 **Acceptance criteria:**
@@ -536,3 +536,4 @@ Notes:
 - 2026-05-25: GitHub remote Supabase gate run `26403264301` failed in pgTAP after the previous push: `share_link_view` still used the legacy `active_share_link_ids()` path, and accepted-share routine/timeline row count expectations did not account for the same-puppy caregiver `zoomies` event created earlier in the test fixture. Added RED static coverage for the final `share_link_view` definition; RED `node --test scripts/checks/supabase-baseline.test.mjs` failed on the legacy path as expected. Added `20260525135121_route_share_link_view_through_metadata_rpc.sql`, rerouted `share_link_view` to `current_share_link_metadata()`, and updated pgTAP expectations to 3 rows while retaining the explicit sibling `feeding` exclusion checks. GREEN `node --test scripts/checks/supabase-baseline.test.mjs` passed with 20 tests.
 - 2026-05-25: Applied `20260525135121_route_share_link_view_through_metadata_rpc.sql` to non-production `PuppyPlan Dev` after explicit user approval. Verification: pre-apply `npm run db:push:remote:dry-run` showed exactly that one pending migration; `node scripts/supabase/run-remote-cli.mjs push` applied it; post-apply `npm run db:push:remote:dry-run` reports the remote database is up to date; `npm run supabase:lint:remote` reports no schema errors; a remote catalog query confirms `migration_applied=true`, `view_uses_metadata_rpc=true`, and `view_uses_legacy_helper=false`. Full pgTAP/typegen remains assigned to the GitHub remote gate because local pgTAP/typegen Docker modes are disabled on this M1/8 GB workspace.
 - 2026-05-25: Final local verification before committing the follow-up fix: `git diff --check` passed; `node scripts/checks/text-hygiene.mjs` passed; `npm run check` passed with lint, typecheck, 10 Jest suites / 74 Jest tests, 85 Node tests, scaffold checks, design token check, privacy scan, and text hygiene.
+- 2026-05-25: GitHub remote Supabase gate run `26404178494` passed migration dry-run, remote lint, and pgTAP (`82/82`) after the share metadata fix, then failed as designed because `src/contracts/database.types.ts` was generated but not committed. Downloaded the `database-types` artifact, moved it to `src/contracts/database.types.ts`, and added a type-only `Database` re-export from `src/contracts/supabase.ts`. RED static guard failed before the re-export; GREEN `node --test scripts/checks/supabase-baseline.test.mjs` passed with 21 tests.
