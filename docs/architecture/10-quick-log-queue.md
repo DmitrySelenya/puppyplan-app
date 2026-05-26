@@ -25,10 +25,16 @@ Local-only table:
 ```sql
 CREATE TABLE queue_item (
   client_event_id TEXT PRIMARY KEY,
-  state TEXT NOT NULL,
+  household_id TEXT NOT NULL,
+  puppy_id TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  payload_version INTEGER NOT NULL,
   payload_json TEXT NOT NULL,
-  attempts INTEGER NOT NULL DEFAULT 0,
-  last_error TEXT,
+  occurred_at TEXT NOT NULL,
+  state TEXT NOT NULL,
+  retry_count INTEGER NOT NULL DEFAULT 0,
+  last_error_category TEXT,
+  retry_after_at TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -74,7 +80,7 @@ Permanent until user action:
 
 Unknown errors start as retryable for a bounded number of attempts, then move to `failed_permanent` with Retry/Delete. Do not loop forever.
 
-Store only scrubbed error category in `last_error`; never store raw server messages that may contain PII.
+Store only scrubbed error category in `last_error_category`; never store raw server messages that may contain PII.
 
 ## Undo And In-Flight Sync
 
