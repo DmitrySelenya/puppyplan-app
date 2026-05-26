@@ -108,6 +108,6 @@ Successful retry, duplicate/idempotent success, Undo cleanup, and permanent fail
 Use two explicit windows from the CTO verdict:
 
 - 3 seconds: accidental double-tap warning for identical tracker action;
-- 60 seconds: duplicate-care warning for the same routine event type.
+- 60 seconds: duplicate-care warning for product-approved care buckets, currently feeding meals, outside pee, and poop. Indoor pee accidents are deliberately excluded by PRD; sleep, zoomies, and training remain visibility trackers without duplicate-care prompts.
 
 Constants live in `src/contracts/business-rules.ts`. Duplicate warnings must never block a caregiver from intentionally logging a real second event.

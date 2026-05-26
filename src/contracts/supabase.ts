@@ -213,6 +213,7 @@ export const eventLogInsertSchema = z.object({
   puppy_id: uuidSchema,
   household_id: uuidSchema,
   created_by: uuidSchema,
+  // Quick Log insert paths must use quickLogCommandSchema/createQuickLogEventInsert for generated v4 IDs.
   client_event_id: nonEmptyStringSchema,
   event_type: eventTypeSchema,
   occurred_at: timestampSchema,
