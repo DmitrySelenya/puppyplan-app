@@ -5,11 +5,11 @@
 
 **Goal:** Implement the Quick Log sheet UI and interaction states with a design-owned Snackbar primitive, non-blocking logging feedback, duplicate warnings, unavailable state, and CI hardening follow-ups.
 
-**Status:** Active - local implementation verified, awaiting handoff/PR approval.
+**Status:** Completed - merged via PR #12 on 2026-05-27.
 
 **Plan type:** Linear task plan for `PUP-14`.
 
-**Current phase:** Phase 5 - Verification, Review, And Handoff.
+**Current phase:** Complete.
 
 **Architecture:** Quick Log UI behavior flows through a controller port shaped around the PUP-13 mutation/cache boundary. `app/` stays route-thin. Snackbar is shared design infrastructure under `src/design`, hosted globally above modal routes, so post-dismiss success/failure/undo feedback survives the Quick Log sheet lifecycle. The production route remains in the unavailable state until a real active household/puppy/session source exists; PUP-14 does not use fake IDs.
 
@@ -264,3 +264,4 @@ PUP-13 implemented the typed Quick Log mutation/cache lifecycle and failed local
 - 2026-05-27: Final post-report `npm run check` passed: 20 Jest suites / 165 unit tests, 89 node tests, scaffold/i18n/privacy/text/token checks all green.
 - 2026-05-27: Post-review fixes added RED/GREEN coverage for Quick Log sheet outer horizontal padding and active-context-without-mutation safety. `QuickLogShell` now treats a missing mutation adapter as unavailable instead of silently accepting logs, and sheet content removes the outer `Screen` horizontal padding so three 110pt tracker tiles fit with `SheetSurface` padding. Verification passed: `npx jest --runInBand src/test/quick-log-sheet.render.test.tsx`; `npm run check`; `git diff --check`; `node scripts/checks/text-hygiene.mjs`.
 - 2026-05-27: Security-pattern follow-up split `@ts-ignore`/`@ts-nocheck` from `@ts-expect-error`, kept type-contract tests excluded, excluded the `.claude` security config/guidance files from directive self-matches, and aligned model-backed guidance wording with AGENTS.md. Added `scripts/checks/security-patterns.test.mjs`. Verification passed: `node --test scripts/checks/security-patterns.test.mjs`; `npm run check`; `git diff --check`.
+- 2026-05-27: PR metadata follow-up added a base-branch `pull_request_target` auto-fill workflow and `scripts/checks/pr-metadata-autofill.mjs` so branch names like `pup-14-*` populate the PR title and Work Tracking section before the strict metadata validator reruns. RED failed for missing helper/workflow. Verification passed: `node --test scripts/checks/pr-metadata.test.mjs scripts/checks/workflow-hardening.test.mjs`; `npm run test:node`; `git diff --check`.

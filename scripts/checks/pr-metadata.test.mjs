@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
+import { autofillPullRequestMetadata } from './pr-metadata-autofill.mjs';
 import { validatePullRequestMetadata } from './pr-metadata.mjs';
 
 describe('validatePullRequestMetadata', () => {
@@ -69,5 +70,46 @@ describe('validatePullRequestMetadata', () => {
     const template = readFileSync('.github/PULL_REQUEST_TEMPLATE.md', 'utf8');
 
     assert.match(template, /Linear:\s*PUP-___\s*\/\s*no-Linear exception - reason: \.\.\./);
+  });
+
+  it('autofills template metadata from a Linear branch before validation', () => {
+    const body = readFileSync('.github/PULL_REQUEST_TEMPLATE.md', 'utf8')
+      .replace('no-Linear exception - reason: ...', 'none - reason: ...');
+    const result = autofillPullRequestMetadata({
+      body,
+      headRefName: 'dimaselenya/pup-14-quick-log-sheet-ui-and-interaction-states',
+      title: 'Dimaselenya/pup 14 quick log sheet UI and interaction states',
+    });
+
+    assert.equal(result.changed, true);
+    assert.equal(result.title, 'PUP-14 Quick Log sheet UI and interaction states');
+    assert.match(result.body, /- Linear: PUP-14/u);
+    assert.match(result.body, /- Branch: `dimaselenya\/pup-14-quick-log-sheet-ui-and-interaction-states`/u);
+    assert.deepEqual(validatePullRequestMetadata(result), []);
+  });
+
+  it('keeps common workflow acronyms uppercase when deriving the title from a branch', () => {
+    const result = autofillPullRequestMetadata({
+      body: '## Work Tracking\n\n- Linear: PUP-___ / no-Linear exception - reason: ...',
+      headRefName: 'codex/pup-14-pr-metadata-ci-followup',
+      title: 'Codex/pup 14 pr metadata ci followup',
+    });
+
+    assert.equal(result.title, 'PUP-14 PR metadata CI followup');
+  });
+
+  it('does not fabricate tracking for branches without a Linear issue id', () => {
+    const result = autofillPullRequestMetadata({
+      body: '## Summary\n\nLocal cleanup only.',
+      headRefName: 'codex/local-cleanup',
+      title: 'Local cleanup',
+    });
+
+    assert.deepEqual(result, {
+      body: '## Summary\n\nLocal cleanup only.',
+      changed: false,
+      issueId: null,
+      title: 'Local cleanup',
+    });
   });
 });
