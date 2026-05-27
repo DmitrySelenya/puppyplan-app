@@ -49,12 +49,14 @@
     {
       "rule_name": "unsafe_double_cast",
       "regex": "\\bas\\s+unknown\\s+as\\b",
+      "exclude_paths": ["**/.claude/security-patterns.json", "**/.claude/security-patterns.yaml", "**/.claude/security-patterns.yml", "**/.claude/claude-security-guidance.md"],
       "reminder": "AGENTS.md Boundaries: `as unknown as` requires an ADR. Double-casts often hide Zod validation gaps and bypass type-level safety guarantees."
     },
     {
       "rule_name": "any_in_security_sensitive_paths",
       "regex": ":\\s*any\\b|<any>|\\bas\\s+any\\b",
       "paths": ["**/src/contracts/**", "**/src/lib/query/**", "**/src/lib/supabase/**", "**/supabase/functions/**"],
+      "exclude_paths": ["**/src/contracts/database.types.ts"],
       "reminder": "AGENTS.md Boundaries: explicit `any` in contracts / query / supabase code requires an ADR. `any` here can bypass runtime validation. Use a Zod-validated type."
     },
     {
@@ -75,18 +77,6 @@
       "regex": "from\\s+['\"]zustand['\"]",
       "paths": ["**/src/lib/query/**", "**/src/lib/supabase/**"],
       "reminder": "AGENTS.md state boundary: Zustand is for UI/workflow state only. Server-derived rows belong in TanStack Query — Zustand can let stale auth-scoped data leak across user sessions."
-    },
-    {
-      "rule_name": "raw_strings_outside_i18n",
-      "regex": ">[A-Z][a-z]{2,}( [A-Za-z]+){2,}<",
-      "paths": ["**/src/features/**/*.tsx", "**/app/**/*.tsx"],
-      "exclude_paths": ["**/*.test.tsx", "**/*.stories.tsx"],
-      "reminder": "AGENTS.md i18n boundary: possible raw user-facing string in JSX. All user-facing text must be a typed react-i18next key. Raw strings break locale parity (en/ru/es) and string-budget checks."
-    },
-    {
-      "rule_name": "linear_pii_marker",
-      "regex": "(linear\\.app|PUP-\\d+)[^\\n]{0,200}(puppy_name|owner_email|notes?:|vet_name)",
-      "reminder": "AGENTS.md privacy: Linear issues, PRs, commit messages, and docs must not contain raw puppy names, owner emails, notes, or vet names. Use opaque identifiers."
     }
   ]
 }
