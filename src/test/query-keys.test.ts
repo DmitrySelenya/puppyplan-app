@@ -149,4 +149,21 @@ describe('Quick Log invalidation map', () => {
       ]);
     }
   });
+
+  it('keeps the Timeline invalidation key as a prefix for filtered Timeline queries', () => {
+    const [todayKey, timelineRootKey] = getQuickLogInvalidationKeys({
+      householdId,
+      puppyId,
+      eventType: 'feeding',
+      todayDate: '2026-05-26',
+    });
+    const filteredTimelineKey = queryKeys.events.timeline(householdId, puppyId, {
+      eventTypes: ['feeding'],
+      from: '2026-05-01',
+      to: '2026-05-26',
+    });
+
+    expect(todayKey).toEqual(queryKeys.today.dashboard(householdId, puppyId, '2026-05-26'));
+    expect(filteredTimelineKey.slice(0, timelineRootKey.length)).toEqual(timelineRootKey);
+  });
 });

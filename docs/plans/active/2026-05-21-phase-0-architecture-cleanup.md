@@ -184,7 +184,7 @@ This document is not the current `PUP-7` task. Treat it as the roadmap that expl
 - [ ] Add invalidation helpers for Quick Log, reminders, health, sharing, and membership mutations under `PUP-11` and later scoped issues.
 - [ ] Add Quick Log queue state machine tests under `PUP-12`.
 - [ ] Add retry/permanent error classification under `PUP-12`.
-- [ ] Add Undo vs in-flight response regression test under `PUP-12`/`PUP-13`.
+- [x] Add Undo vs in-flight response regression test under `PUP-12`/`PUP-13`.
 
 **Acceptance criteria:**
 - Quick Log remains visible, deduped, retryable, and cancellable without stale Today/Timeline state.
@@ -230,3 +230,4 @@ Once scripts exist, prefer:
 - 2026-05-21: Clarified this document as a foundation roadmap executed through scoped Linear issues, not a direct task; recorded the dependency relationship to `PUP-7`.
 - 2026-05-25: Synced roadmap with completed `PUP-2`, `PUP-3`, `PUP-4`, `PUP-8`, `PUP-9`, and `PUP-10` work on `main`; `PUP-6` was verified separately through PR #5 GitHub/Linear linkage evidence; `PUP-5` completed Quick Log MVP planning, while release/privacy hardening remains future scoped issue work.
 - 2026-05-25: Created and completed `docs/plans/completed/2026-05-25-quick-log-mvp.md` for `PUP-5`; Phase 3 implementation tasks remain open as scoped Linear coding issues `PUP-11` through `PUP-16`.
+- 2026-05-26: Closed the Phase 3 undo-vs-in-flight regression item under `PUP-13`; the mutation tests now cover late-success cleanup and failed tombstone handling.

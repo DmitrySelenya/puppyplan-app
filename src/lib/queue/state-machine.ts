@@ -16,7 +16,7 @@ const allowedTransitions = {
     'deleted_before_sync',
   ],
   server_confirmed: [],
-  failed_retryable: ['sending', 'deleted_before_sync'],
+  failed_retryable: ['sending', 'failed_permanent', 'deleted_before_sync'],
   failed_permanent: ['deleted_before_sync'],
   deleted_before_sync: [],
 } as const satisfies Record<QuickLogQueueState, readonly QuickLogQueueState[]>;

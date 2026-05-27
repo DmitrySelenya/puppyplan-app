@@ -12,6 +12,7 @@ import {
 const householdId = '00000000-0000-4000-8000-000000000001';
 const puppyId = '00000000-0000-4000-8000-000000000002';
 const clientEventId = 'evt_00000000-0000-4000-8000-000000000003';
+const createdBy = '00000000-0000-4000-8000-000000000004';
 const occurredAt = '2026-05-26T07:15:00.000Z';
 const createdAt = '2026-05-26T07:15:01.000Z';
 
@@ -22,6 +23,7 @@ function queueItem(
     client_event_id: clientEventId,
     household_id: householdId,
     puppy_id: puppyId,
+    created_by: createdBy,
     event_type: 'feeding',
     payload_version: 1,
     payload: {
@@ -45,6 +47,7 @@ describe('Quick Log queue state machine', () => {
     expect(canTransitionQuickLogQueueState('sending', 'failed_retryable')).toBe(true);
     expect(canTransitionQuickLogQueueState('failed_retryable', 'sending')).toBe(true);
     expect(canTransitionQuickLogQueueState('sending', 'failed_permanent')).toBe(true);
+    expect(canTransitionQuickLogQueueState('failed_retryable', 'failed_permanent')).toBe(true);
 
     expect(canTransitionQuickLogQueueState('pending_local', 'deleted_before_sync')).toBe(true);
     expect(canTransitionQuickLogQueueState('sending', 'deleted_before_sync')).toBe(true);

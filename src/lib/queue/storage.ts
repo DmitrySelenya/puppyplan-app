@@ -210,6 +210,7 @@ async function enqueueQueueItem(
         client_event_id,
         household_id,
         puppy_id,
+        created_by,
         event_type,
         payload_version,
         payload_json,
@@ -220,7 +221,7 @@ async function enqueueQueueItem(
         retry_after_at,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       rowParamsFromItem(item),
     );
 
@@ -264,6 +265,20 @@ async function claimNextReadyQueueItem(
     }
 
     const readyItem = rowToQueueItem(readyRow);
+
+    if (readyItem.created_by === null) {
+      await writeQueueItemState(transaction, createStoredQuickLogQueueItem({
+        ...readyItem,
+        state: 'failed_permanent',
+        retry_count: readyItem.retry_count + 1,
+        last_error_category: 'missing_context',
+        retry_after_at: null,
+        updated_at: options.now,
+      }));
+
+      return null;
+    }
+
     const sendingItem = applyQuickLogQueueTransition(readyItem, {
       type: 'mark_sending',
       now: options.now,
@@ -351,6 +366,7 @@ function rowParamsFromItem(item: QuickLogStoredQueueItem): QuickLogQueueSqlParam
     item.client_event_id,
     item.household_id,
     item.puppy_id,
+    item.created_by,
     item.event_type,
     item.payload_version,
     serializeQuickLogQueuePayload(item.payload),
@@ -369,6 +385,7 @@ function rowToQueueItem(row: QuickLogQueueStoredRow): QuickLogStoredQueueItem {
     client_event_id: row.client_event_id,
     household_id: row.household_id,
     puppy_id: row.puppy_id,
+    created_by: row.created_by,
     event_type: row.event_type,
     payload_version: row.payload_version,
     payload: parseQuickLogQueuePayload(row.payload_json),

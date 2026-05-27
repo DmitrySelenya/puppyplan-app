@@ -13,11 +13,13 @@ const puppyId = '00000000-0000-4000-8000-000000000012';
 const clientEventId = 'evt_00000000-0000-4000-8000-000000000013';
 const occurredAt = '2026-05-26T08:00:00.000Z';
 const createdAt = '2026-05-26T08:00:01.000Z';
+const createdBy = '00000000-0000-4000-8000-000000000017';
 
 type QueueRow = {
   client_event_id: string;
   household_id: string;
   puppy_id: string;
+  created_by: string | null;
   event_type: string;
   payload_version: number;
   payload_json: string;
@@ -32,12 +34,31 @@ type QueueRow = {
 
 class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
   public userVersion = 0;
+  public readonly columns = new Set([
+    'client_event_id',
+    'household_id',
+    'puppy_id',
+    'event_type',
+    'payload_version',
+    'payload_json',
+    'occurred_at',
+    'state',
+    'retry_count',
+    'last_error_category',
+    'retry_after_at',
+    'created_at',
+    'updated_at',
+  ]);
   public readonly rows = new Map<string, QueueRow>();
   public readonly statements: string[] = [];
   public failNextTransactionalRun = false;
 
   public async execAsync(sql: string): Promise<void> {
     this.statements.push(sql);
+
+    if (/ADD COLUMN created_by TEXT/i.test(sql)) {
+      this.columns.add('created_by');
+    }
 
     const userVersion = sql.match(/PRAGMA user_version = (\d+)/i)?.[1];
 
@@ -150,6 +171,10 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
       return rows as T[];
     }
 
+    if (/PRAGMA table_info\(queue_item\)/i.test(sql)) {
+      return Array.from(this.columns).map((name) => ({ name })) as T[];
+    }
+
     return [];
   }
 
@@ -177,6 +202,7 @@ function enqueueInput(overrides: Record<string, unknown> = {}): Record<string, u
     client_event_id: clientEventId,
     household_id: householdId,
     puppy_id: puppyId,
+    created_by: createdBy,
     event_type: 'feeding',
     payload_version: 1,
     payload: {
@@ -193,16 +219,17 @@ function rowFromParams(params: QuickLogQueueSqlParams): QueueRow {
     client_event_id: String(params[0]),
     household_id: String(params[1]),
     puppy_id: String(params[2]),
-    event_type: String(params[3]),
-    payload_version: Number(params[4]),
-    payload_json: String(params[5]),
-    occurred_at: String(params[6]),
-    state: String(params[7]),
-    retry_count: Number(params[8]),
-    last_error_category: typeof params[9] === 'string' ? params[9] : null,
-    retry_after_at: typeof params[10] === 'string' ? params[10] : null,
-    created_at: String(params[11]),
-    updated_at: String(params[12]),
+    created_by: typeof params[3] === 'string' ? params[3] : null,
+    event_type: String(params[4]),
+    payload_version: Number(params[5]),
+    payload_json: String(params[6]),
+    occurred_at: String(params[7]),
+    state: String(params[8]),
+    retry_count: Number(params[9]),
+    last_error_category: typeof params[10] === 'string' ? params[10] : null,
+    retry_after_at: typeof params[11] === 'string' ? params[11] : null,
+    created_at: String(params[12]),
+    updated_at: String(params[13]),
   };
 }
 
@@ -216,12 +243,26 @@ describe('Quick Log queue SQLite storage boundary', () => {
     expect(QUICK_LOG_QUEUE_TABLE_NAME).toBe('queue_item');
     expect(executor.statements.join('\n')).toContain('CREATE TABLE IF NOT EXISTS queue_item');
     expect(executor.statements.join('\n')).toContain('client_event_id TEXT PRIMARY KEY');
+    expect(executor.statements.join('\n')).toContain('created_by TEXT');
     expect(executor.statements.join('\n')).toContain('payload_json TEXT NOT NULL');
     expect(executor.statements.join('\n')).toContain('last_error_category TEXT');
-    expect(executor.statements.join('\n')).toContain('PRAGMA user_version = 1');
+    expect(executor.statements.join('\n')).toContain('PRAGMA user_version = 2');
   });
 
-  it('serializes only the minimal Quick Log queue payload', async () => {
+  it('migrates local schema v1 queues by adding created_by in place', async () => {
+    const executor = new TestQueueSqlExecutor();
+
+    executor.userVersion = 1;
+
+    await applyQuickLogQueueMigrations(executor);
+
+    expect(executor.userVersion).toBe(QUICK_LOG_QUEUE_SCHEMA_VERSION);
+    expect(executor.columns.has('created_by')).toBe(true);
+    expect(executor.statements.join('\n')).toContain('ALTER TABLE queue_item ADD COLUMN created_by TEXT');
+    expect(executor.statements.join('\n')).not.toContain('CREATE TABLE IF NOT EXISTS queue_item');
+  });
+
+  it('serializes the minimal Quick Log queue payload with the original actor', async () => {
     const executor = new TestQueueSqlExecutor();
     const storage = createQuickLogQueueStorage(executor);
 
@@ -232,17 +273,63 @@ describe('Quick Log queue SQLite storage boundary', () => {
 
     expect(stored).toMatchObject({
       client_event_id: clientEventId,
+      created_by: createdBy,
       state: 'pending_local',
       retry_count: 0,
       last_error_category: null,
       retry_after_at: null,
     });
     expect(row).toBeDefined();
+    expect(row?.created_by).toBe(createdBy);
     expect(row?.payload_json).toBe('{"amount":"meal"}');
-    expect(JSON.stringify(row)).not.toContain('created_by');
     expect(JSON.stringify(row)).not.toContain('notes');
     expect(JSON.stringify(row)).not.toContain('puppy_name');
     expect(JSON.stringify(row)).not.toContain('private-contact-marker');
+  });
+
+  it('rejects new enqueue attempts without an original actor before writing a row', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+
+    await expect(storage.enqueue(enqueueInput({
+      created_by: undefined,
+    }), {
+      now: createdAt,
+    })).rejects.toThrow();
+
+    expect(executor.rows.size).toBe(0);
+  });
+
+  it('keeps legacy rows with missing actors local and marks them missing_context', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+
+    executor.rows.set(clientEventId, {
+      client_event_id: clientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: null,
+      event_type: 'feeding',
+      payload_version: 1,
+      payload_json: '{"amount":"meal"}',
+      occurred_at: occurredAt,
+      state: 'pending_local',
+      retry_count: 0,
+      last_error_category: null,
+      retry_after_at: null,
+      created_at: createdAt,
+      updated_at: createdAt,
+    });
+
+    await expect(storage.claimNextReadyToSend({
+      now: '2026-05-26T08:02:00.000Z',
+    })).resolves.toBeNull();
+    await expect(storage.getByClientEventId(clientEventId)).resolves.toMatchObject({
+      client_event_id: clientEventId,
+      created_by: null,
+      state: 'failed_permanent',
+      last_error_category: 'missing_context',
+    });
   });
 
   it('rejects disallowed private and free-text persistence before writing a row', async () => {
@@ -439,6 +526,7 @@ describe('Quick Log queue SQLite storage boundary', () => {
       client_event_id: 'evt_00000000-0000-4000-8000-000000000015',
       household_id: householdId,
       puppy_id: puppyId,
+      created_by: createdBy,
       event_type: 'feeding',
       payload_version: 1,
       payload_json: '{"notes":"corrupt non-queue free text"}',
@@ -472,6 +560,7 @@ describe('Quick Log queue SQLite storage boundary', () => {
       client_event_id: 'evt_00000000-0000-4000-8000-000000000016',
       household_id: householdId,
       puppy_id: puppyId,
+      created_by: createdBy,
       event_type: 'feeding',
       payload_version: 1,
       payload_json: '{"notes":"corrupt non-queue free text"}',

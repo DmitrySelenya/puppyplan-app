@@ -20,12 +20,13 @@ export async function applyQuickLogQueueMigrations(
     return;
   }
 
-  // Version 1 is idempotent; wrap future multi-step migrations in an exclusive transaction.
-  await executor.execAsync(`
+  if (currentVersion === 0) {
+    await executor.execAsync(`
 CREATE TABLE IF NOT EXISTS ${QUICK_LOG_QUEUE_TABLE_NAME} (
   client_event_id TEXT PRIMARY KEY,
   household_id TEXT NOT NULL,
   puppy_id TEXT NOT NULL,
+  created_by TEXT,
   event_type TEXT NOT NULL,
   payload_version INTEGER NOT NULL,
   payload_json TEXT NOT NULL,
@@ -41,4 +42,18 @@ CREATE INDEX IF NOT EXISTS queue_item_state_retry_after_idx
   ON ${QUICK_LOG_QUEUE_TABLE_NAME} (state, retry_after_at, created_at);
 PRAGMA user_version = ${QUICK_LOG_QUEUE_SCHEMA_VERSION};
 `);
+    return;
+  }
+
+  if (currentVersion < 2) {
+    const columns = await executor.getAllAsync<{ name: string }>(
+      `PRAGMA table_info(${QUICK_LOG_QUEUE_TABLE_NAME})`,
+    );
+    const hasCreatedBy = columns.some((column) => column.name === 'created_by');
+
+    await executor.execAsync(`
+${hasCreatedBy ? '' : `ALTER TABLE ${QUICK_LOG_QUEUE_TABLE_NAME} ADD COLUMN created_by TEXT;`}
+PRAGMA user_version = ${QUICK_LOG_QUEUE_SCHEMA_VERSION};
+`);
+  }
 }

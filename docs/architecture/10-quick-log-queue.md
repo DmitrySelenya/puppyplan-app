@@ -27,6 +27,7 @@ CREATE TABLE queue_item (
   client_event_id TEXT PRIMARY KEY,
   household_id TEXT NOT NULL,
   puppy_id TEXT NOT NULL,
+  created_by TEXT,
   event_type TEXT NOT NULL,
   payload_version INTEGER NOT NULL,
   payload_json TEXT NOT NULL,
@@ -40,6 +41,8 @@ CREATE TABLE queue_item (
 );
 ```
 
+`created_by` is nullable only for legacy local rows created before queue schema v2. New enqueue calls must provide the original authenticated actor. Legacy rows with `created_by IS NULL` become `failed_permanent/missing_context` and must not be replayed as the current session user.
+
 No notes/photos/free text unless a future ADR explicitly expands the queue.
 
 ## State Machine
@@ -47,6 +50,7 @@ No notes/photos/free text unless a future ADR explicitly expands the queue.
 ```text
 pending_local -> sending -> server_confirmed
 sending -> failed_retryable -> sending
+failed_retryable -> failed_permanent
 any before server_confirmed -> deleted_before_sync
 sending -> failed_permanent
 ```
@@ -91,9 +95,10 @@ Required behavior:
 1. Mark the queue item `deleted_before_sync` transactionally.
 2. Remove the optimistic row from Today/Timeline.
 3. If an in-flight insert later returns success for the same `client_event_id`, issue a best-effort server delete/tombstone through the typed data layer, then invalidate affected query keys.
-4. If best-effort server cleanup fails, show a recoverable conflict state rather than silently resurrecting the event.
+4. If best-effort server cleanup fails, do not resurrect the event in cache and do not invalidate event-derived queries that could refetch the surviving server row. Keep the local `deleted_before_sync` row so a future cleanup-recovery pass can look up `(household_id, client_event_id)` and tombstone any surviving server row.
+5. If the in-flight insert returns a retryable or permanent failure after Undo, keep `deleted_before_sync` terminal. Do not transition it into failed state or re-show the row.
 
-This is not a general conflict UI. It is a narrow guard for the Quick Log Undo race.
+This is not a general conflict UI. It is a narrow guard for the Quick Log Undo race. User-facing cleanup conflict surfacing, telemetry, and retry-on-next-start recovery are follow-up work, not part of the PUP-13 mutation/cache boundary.
 
 ## UI Contract
 
@@ -108,6 +113,8 @@ This is not a general conflict UI. It is a narrow guard for the Quick Log Undo r
 Supabase enforces `UNIQUE (household_id, client_event_id)`. Retry with the same `client_event_id` must not create duplicates.
 
 Successful retry, duplicate/idempotent success, Undo cleanup, and permanent failure all invalidate the affected query keys listed in `03-client-data-layer.md`.
+
+Duplicate/idempotent success compares routing identity only: `household_id`, `client_event_id`, `created_by`, `puppy_id`, `event_type`, `payload_version`, and `occurred_at`. JSON payload comparison is intentionally avoided; the server row replaces local cache once identity matches.
 
 ## Duplicate Detection
 

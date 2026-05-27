@@ -4,6 +4,7 @@ import {
   dateSchema,
   devicePushTokenSchema,
   eventLogInsertSchema,
+  eventLogRecordSchema,
   eventTypes,
   householdMembershipRoles,
   minimalQuickLogQueueItemSchema,
@@ -11,6 +12,8 @@ import {
   shareScopeRecordSchema,
   shareScopes,
   supabaseMvpTableNames,
+  type EventLogInsert,
+  type EventLogRecord,
 } from '@/contracts/supabase';
 
 const uuidA = '00000000-0000-4000-8000-000000000001';
@@ -52,13 +55,26 @@ describe('event log contracts', () => {
     event_type: 'potty',
     occurred_at: '2026-05-17T08:32:00.000Z',
     payload_version: 1,
-      payload: {
-        quick_action: 'pee_outside',
-      },
-  };
+    payload: {
+      quick_action: 'pee_outside',
+    },
+  } satisfies EventLogInsert;
 
   it('accepts event inserts with idempotency and payload version fields', () => {
     expect(eventLogInsertSchema.safeParse(validEvent).success).toBe(true);
+  });
+
+  it('exports and parses confirmed event log records separately from inserts', () => {
+    const record: EventLogRecord = {
+      id: '00000000-0000-4000-8000-000000000007',
+      ...validEvent,
+      version: 1,
+      deleted_at: null,
+      created_at: '2026-05-17T08:32:01.000Z',
+      updated_at: '2026-05-17T08:32:01.000Z',
+    };
+
+    expect(eventLogRecordSchema.safeParse(record).success).toBe(true);
   });
 
   it('rejects missing idempotency key and unsupported payload versions', () => {
