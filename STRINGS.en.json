@@ -318,7 +318,12 @@
       "title": "What happened?",
       "edit-trackers": "Edit trackers",
       "edit-screen-title": "Your quick trackers",
-      "edit-helper": "Up to 5. Drag to reorder."
+      "edit-helper": "Up to 5. Drag to reorder.",
+      "unavailable": {
+        "title": "Quick Log is not ready yet",
+        "body": "Finish puppy setup before logging care events.",
+        "close": "Close"
+      }
     },
     "trackers": {
       "potty-outside": "Pee outside",
@@ -372,7 +377,7 @@
       "undo": "Undo",
       "undo-confirmed": "Undone",
       "add-details": "Add details",
-      "a11y": "Logged: pee outside. Available actions: undo, add details."
+      "a11y": "Logged: {trackerName}. Available action: undo."
     },
     "pending": {
       "label": "Saving"

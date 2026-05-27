@@ -69,6 +69,13 @@ export const shellI18nKeys = [
   'more.sections.support',
   'quick-log.sheet.title',
   'quick-log.sheet.edit-helper',
+  'quick-log.sheet.unavailable.title',
+  'quick-log.sheet.unavailable.body',
+  'quick-log.sheet.unavailable.close',
+  'quick-log.duplicate-warning.title',
+  'quick-log.duplicate-warning.question',
+  'quick-log.duplicate-warning.primary-alt',
+  'quick-log.duplicate-warning.secondary',
   'states.revoked-or-expired.title',
   'states.revoked-or-expired.body-long',
 ] as const satisfies readonly I18nKey[];

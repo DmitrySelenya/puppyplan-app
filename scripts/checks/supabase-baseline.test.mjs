@@ -356,7 +356,10 @@ describe('remote Supabase CLI wrapper guardrails', () => {
     assert.match(workflow, /SUPABASE_CLI_DOCKER_ALLOWED: '1'/u);
     assert.match(workflow, /PUPPYPLAN_DEV_SUPABASE_DB_URL/u);
     assert.match(workflow, /npm run supabase:ci:remote/u);
-    assert.match(workflow, /actions\/upload-artifact@v4/u);
+    assert.match(
+      workflow,
+      /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02\s+#\s+v4\.6\.2/u,
+    );
     assert.match(workflow, /path: src\/contracts\/database\.types\.ts/u);
     assert.match(packageJson.scripts['supabase:ci:remote'], /supabase:test:remote/u);
     assert.match(packageJson.scripts['supabase:ci:remote'], /db:types:remote/u);

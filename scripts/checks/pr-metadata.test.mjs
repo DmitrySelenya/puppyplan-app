@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 import { validatePullRequestMetadata } from './pr-metadata.mjs';
@@ -62,5 +63,11 @@ describe('validatePullRequestMetadata', () => {
       }).join('\n'),
       /same Linear issue/i,
     );
+  });
+
+  it('keeps the PR template aligned with the accepted no-Linear exception wording', () => {
+    const template = readFileSync('.github/PULL_REQUEST_TEMPLATE.md', 'utf8');
+
+    assert.match(template, /Linear:\s*PUP-___\s*\/\s*no-Linear exception - reason: \.\.\./);
   });
 });
