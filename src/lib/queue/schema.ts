@@ -13,7 +13,7 @@ import {
 } from '@/contracts/supabase';
 
 export const QUICK_LOG_QUEUE_DATABASE_NAME = 'quick-log-queue.db';
-export const QUICK_LOG_QUEUE_SCHEMA_VERSION = 1;
+export const QUICK_LOG_QUEUE_SCHEMA_VERSION = 2;
 export const QUICK_LOG_QUEUE_TABLE_NAME = 'queue_item';
 
 export const quickLogQueueRetryableErrorCategories = [
@@ -53,6 +53,7 @@ export const quickLogStoredQueueItemSchema = z.object({
   client_event_id: z.string(),
   household_id: uuidSchema,
   puppy_id: uuidSchema,
+  created_by: uuidSchema.nullable(),
   event_type: eventTypeSchema,
   payload_version: payloadVersionSchema,
   payload: jsonObjectSchema,
@@ -68,6 +69,7 @@ export const quickLogStoredQueueItemSchema = z.object({
     client_event_id: item.client_event_id,
     household_id: item.household_id,
     puppy_id: item.puppy_id,
+    created_by: item.created_by,
     event_type: item.event_type,
     payload_version: item.payload_version,
     payload: item.payload,
@@ -91,6 +93,7 @@ export const quickLogQueueEnqueueInputSchema = z.object({
   client_event_id: z.string(),
   household_id: uuidSchema,
   puppy_id: uuidSchema,
+  created_by: uuidSchema,
   event_type: eventTypeSchema,
   payload_version: payloadVersionSchema,
   payload: jsonObjectSchema,
@@ -129,6 +132,7 @@ export type QuickLogQueueStoredRow = Readonly<{
   client_event_id: string;
   household_id: string;
   puppy_id: string;
+  created_by: string | null;
   event_type: EventType;
   payload_version: number;
   payload_json: string;

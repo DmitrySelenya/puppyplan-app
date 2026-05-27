@@ -465,6 +465,7 @@ export const minimalQuickLogQueueItemSchema = z.object({
   client_event_id: nonEmptyStringSchema,
   household_id: uuidSchema,
   puppy_id: uuidSchema,
+  created_by: uuidSchema.nullable().optional(),
   event_type: eventTypeSchema,
   payload_version: payloadVersionSchema,
   payload: jsonObjectSchema,
@@ -481,6 +482,7 @@ export type ShareRole = z.infer<typeof shareRoleSchema>;
 export type ShareScope = z.infer<typeof shareScopeSchema>;
 export type EventType = z.infer<typeof eventTypeSchema>;
 export type EventPayloadSchemas = typeof eventPayloadSchemas;
+export type EventLogRecord = z.infer<typeof eventLogRecordSchema>;
 export type EventLogInsert = z.infer<typeof eventLogInsertSchema>;
 export type MinimalQuickLogQueueItem = z.infer<typeof minimalQuickLogQueueItemSchema>;
 export type CreateInviteRequest = z.infer<typeof createInviteRequestSchema>;

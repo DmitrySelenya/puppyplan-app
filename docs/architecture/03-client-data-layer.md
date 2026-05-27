@@ -62,17 +62,24 @@ Quick Log mutations must use `onMutate`, `onSuccess`, `onError`, and `onSettled`
 Required lifecycle:
 
 1. Generate `client_event_id`.
-2. Cancel relevant Today/Timeline queries.
-3. Snapshot previous cache.
-4. Optimistically insert pending event.
-5. Enqueue durable queue item in Expo SQLite.
-6. Send Supabase insert.
-7. On success, replace pending row with server row and remove queue item.
-8. On retryable failure, keep pending/failed state.
-9. On permanent invalid state, mark failed with Retry/Delete.
-10. Invalidate relevant query keys on settle.
+2. Read `supabase.auth.getSession()` once and persist that actor as `created_by`.
+3. Build one insert payload and derive the affected query keys.
+4. Cancel all relevant Today/Timeline/summary/duplicate-warning queries before cache writes.
+5. Snapshot previous cache by `client_event_id`.
+6. Enqueue the same identity in Expo SQLite.
+7. Optimistically insert pending event.
+8. Send Supabase insert through `src/lib/supabase/events.ts`.
+9. On success, replace only the matching optimistic row with the typed server row and remove the queue item.
+10. On retryable or permanent failure, keep the row visible with `QuickLogCachedEventRow.localSync`.
+11. Invalidate relevant query keys on settle and return invalidation promises.
 
-Rollback must not hide a valid pending event for retryable network failures.
+Rollback must not hide a valid pending event for retryable network failures. Until Timeline query `select` merges local queue rows into server results, mutation failures must not invalidate the Timeline root/prefix because an active refetch would replace the local failed row with Supabase-only data. Failure settlement still invalidates the non-Timeline dependent keys.
+
+Undo/delete before sync removes the optimistic row. If a late success returns after `deleted_before_sync`, the typed Supabase wrapper selects by `(household_id, client_event_id)` to obtain `id`, then tombstones by `id`; cache must not resurrect the row. If cleanup fails, keep the local `deleted_before_sync` record for a future cleanup-recovery pass and skip event-derived invalidations that could refetch the surviving server row. If the in-flight insert fails after Undo, `deleted_before_sync` remains terminal and no failed-state transition is attempted.
+
+Filtered Timeline cache compatibility must use the local calendar date supplied by the mutation/replay path, not a UTC date sliced from `occurred_at`, so near-midnight logs stay visible on the user's intended Today/Timeline date.
+
+`auth_refresh_in_progress` classification requires a shared auth-refresh signal to be passed into `createSupabaseEventLogRepository`. Until the auth/session implementation wires that signal, 401/403 responses are treated as `permission_denied`.
 
 ## Hydration Cache
 
