@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 const workflowPaths = [
+  '.github/workflows/pr-metadata-autofill.yml',
   '.github/workflows/pr-metadata.yml',
   '.github/workflows/supabase-remote-dev.yml',
   '.github/workflows/verification.yml',
@@ -72,5 +73,14 @@ describe('workflow hardening', () => {
     assert.match(source, /package-ecosystem:\s*["']?github-actions["']?/);
     assert.match(source, /directory:\s*["']?\/["']?/);
     assert.match(source, /interval:\s*["']?weekly["']?/);
+  });
+
+  it('auto-fills PR metadata from the base workflow without executing PR code', () => {
+    const source = readFileSync('.github/workflows/pr-metadata-autofill.yml', 'utf8');
+
+    assert.match(source, /pull_request_target:/);
+    assert.match(source, /pull-requests:\s*write/);
+    assert.match(source, /ref:\s*\$\{\{\s*github\.event\.repository\.default_branch\s*\}\}/);
+    assert.match(source, /node scripts\/checks\/pr-metadata-autofill\.mjs --apply/);
   });
 });
