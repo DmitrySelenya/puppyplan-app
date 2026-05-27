@@ -322,7 +322,12 @@
       "title": "¿Qué pasó?",
       "edit-trackers": "Editar rastreadores",
       "edit-screen-title": "Tus rastreadores rápidos",
-      "edit-helper": "Hasta 5. Arrastre para reordenar."
+      "edit-helper": "Hasta 5. Arrastre para reordenar.",
+      "unavailable": {
+        "title": "El registro rápido aún no está listo",
+        "body": "Termina la configuración del cachorro antes de registrar cuidados.",
+        "close": "Cerrar"
+      }
     },
     "trackers": {
       "potty-outside": "Orinar afuera",
@@ -391,7 +396,7 @@
       "undo": "Deshacer",
       "undo-confirmed": "Deshecho",
       "add-details": "Agregar detalles",
-      "a11y": "Registrado: Orinar afuera. Acciones disponibles: deshacer, agregar detalles."
+      "a11y": "Registrado: {trackerName}. Acción disponible: deshacer."
     },
     "pending": {
       "label": "Guardando"

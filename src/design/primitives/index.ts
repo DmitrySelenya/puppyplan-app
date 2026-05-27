@@ -22,6 +22,19 @@ export {
 } from '@/design/primitives/SegmentedControl';
 export { SheetSurface, type SheetSurfaceProps } from '@/design/primitives/SheetSurface';
 export {
+  Stack,
+  type StackGap,
+  type StackProps,
+} from '@/design/primitives/Stack';
+export {
+  SnackbarProvider,
+  useSnackbar,
+  type SnackbarAction,
+  type SnackbarController,
+  type SnackbarMessage,
+  type SnackbarTone,
+} from '@/design/primitives/Snackbar';
+export {
   StatusPill,
   type StatusPillProps,
   type StatusPillTone,

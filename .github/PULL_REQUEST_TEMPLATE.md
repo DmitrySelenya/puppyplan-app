@@ -4,7 +4,7 @@
 
 ## Work Tracking
 
-- Linear: PUP-___ / none - reason: ...
+- Linear: PUP-___ / no-Linear exception - reason: ...
 - Branch: Linear `gitBranchName` / N/A
 - Linked plan: `docs/plans/...` / N/A
 - Context package included: yes / no / N/A

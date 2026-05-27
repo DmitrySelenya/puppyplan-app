@@ -5,7 +5,7 @@ import type {
 import { AccessibilityInfo, ScrollView, StyleSheet, View } from 'react-native';
 import EventEmitter from 'react-native/Libraries/vendor/emitter/EventEmitter';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
@@ -16,6 +16,14 @@ import { ListRow } from '@/design/primitives/ListRow';
 import { Screen } from '@/design/primitives/Screen';
 import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { SheetSurface } from '@/design/primitives/SheetSurface';
+import {
+  SNACKBAR_BOTTOM_OFFSET_WITH_FAB,
+  SNACKBAR_DEFAULT_DURATION_MS,
+  SnackbarProvider,
+  useSnackbar,
+  type SnackbarController,
+} from '@/design/primitives/Snackbar';
+import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
 import { Touchable } from '@/design/primitives/Touchable';
 import { TrackerTile } from '@/design/primitives/TrackerTile';
@@ -90,6 +98,18 @@ function createAccessibilitySubscription() {
   const emitter = new EventEmitter();
 
   return emitter.addListener('reduceMotionChanged', jest.fn());
+}
+
+function SnackbarControllerProbe({
+  onReady,
+}: {
+  onReady: (controller: SnackbarController) => void;
+}) {
+  const snackbar = useSnackbar();
+
+  onReady(snackbar);
+
+  return null;
 }
 
 describe('design primitives', () => {
@@ -567,6 +587,21 @@ describe('design primitives', () => {
     expect(onSegmentChange).toHaveBeenCalledWith('vaccines');
   });
 
+  it('renders Stack layout spacing through the design boundary', () => {
+    render(
+      <Stack direction="horizontal" gap="sm" testID="stack-probe" wrap>
+        <AppText>First</AppText>
+        <AppText>Second</AppText>
+      </Stack>,
+    );
+
+    const stackStyle = StyleSheet.flatten(screen.getByTestId('stack-probe').props.style);
+
+    expect(stackStyle.flexDirection).toBe('row');
+    expect(stackStyle.flexWrap).toBe('wrap');
+    expect(stackStyle.gap).toBe(tokens.space[2]);
+  });
+
   it('does not emit segmented value changes when re-selecting the current segment', () => {
     const onSegmentChange = jest.fn();
 
@@ -821,5 +856,140 @@ describe('design primitives', () => {
 
     fireEvent.press(button);
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders snackbar status with icon, text, tone, actions, and polite accessibility', async () => {
+    const user = userEvent.setup();
+    const onUndo = jest.fn();
+    let snackbar: SnackbarController | null = null;
+
+    render(
+      <SnackbarProvider>
+        <SnackbarControllerProbe onReady={(controller) => {
+          snackbar = controller;
+        }} />
+      </SnackbarProvider>,
+    );
+
+    act(() => {
+      snackbar?.showSnackbar({
+        accessibilityLabel: 'Logged: feeding. Available actions: undo.',
+        id: 'quick-log:evt_00000000-0000-4000-8000-000000000301',
+        message: 'Logged · Feeding',
+        primaryAction: {
+          label: 'Undo',
+          onPress: onUndo,
+        },
+        tone: 'success',
+      });
+    });
+
+    const snackbarStatus = screen.getByLabelText('Logged: feeding. Available actions: undo.');
+    const icon = screen.getByTestId('snackbar-tone-icon', {
+      includeHiddenElements: true,
+    });
+
+    expect(snackbarStatus.props.testID).toBe('snackbar-status');
+    expect(snackbarStatus.props.accessibilityLiveRegion).toBe('polite');
+    expect(screen.getByTestId('snackbar-surface').props.accessible).not.toBe(true);
+    expect(screen.getByText('Logged · Feeding')).toBeTruthy();
+    expect(icon.props.accessibilityElementsHidden).toBe(true);
+    expect(StyleSheet.flatten(screen.getByTestId('snackbar-host').props.style).bottom).toBe(
+      SNACKBAR_BOTTOM_OFFSET_WITH_FAB,
+    );
+    expect(StyleSheet.flatten(screen.getByTestId('snackbar-surface').props.style).backgroundColor).toBe(
+      tokens.color.status.successTint,
+    );
+
+    await user.press(screen.getByRole('button', { name: 'Undo' }));
+
+    expect(onUndo).toHaveBeenCalledTimes(1);
+  });
+
+  it('replaces snackbar messages by id instead of stacking stale status', () => {
+    let snackbar: SnackbarController | null = null;
+
+    render(
+      <SnackbarProvider>
+        <SnackbarControllerProbe onReady={(controller) => {
+          snackbar = controller;
+        }} />
+      </SnackbarProvider>,
+    );
+
+    act(() => {
+      snackbar?.showSnackbar({
+        accessibilityLabel: 'Logged: feeding.',
+        clientEventId: 'evt_00000000-0000-4000-8000-000000000301',
+        id: 'quick-log:evt_00000000-0000-4000-8000-000000000301',
+        message: 'Logged · Feeding',
+        tone: 'success',
+      });
+      snackbar?.replaceSnackbar({
+        accessibilityLabel: 'Could not save feeding. Available actions: retry or discard.',
+        clientEventId: 'evt_00000000-0000-4000-8000-000000000301',
+        id: 'quick-log:evt_00000000-0000-4000-8000-000000000301',
+        message: "Couldn't save. Try again?",
+        primaryAction: {
+          label: 'Try again',
+          onPress: jest.fn(),
+        },
+        secondaryAction: {
+          label: 'Discard',
+          onPress: jest.fn(),
+        },
+        tone: 'error',
+      });
+    });
+
+    expect(screen.queryByText('Logged · Feeding')).toBeNull();
+    expect(screen.getByText("Couldn't save. Try again?")).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Discard' })).toBeTruthy();
+  });
+
+  it('does not replace a newer snackbar with a stale id and auto-dismisses after 4 seconds', () => {
+    jest.useFakeTimers();
+    let snackbar: SnackbarController | null = null;
+
+    render(
+      <SnackbarProvider>
+        <SnackbarControllerProbe onReady={(controller) => {
+          snackbar = controller;
+        }} />
+      </SnackbarProvider>,
+    );
+
+    act(() => {
+      snackbar?.showSnackbar({
+        accessibilityLabel: 'Logged first.',
+        id: 'quick-log:first',
+        message: 'Logged · Feeding',
+        tone: 'success',
+      });
+      snackbar?.showSnackbar({
+        accessibilityLabel: 'Logged second.',
+        id: 'quick-log:second',
+        message: 'Logged · Sleep',
+        tone: 'success',
+      });
+      snackbar?.replaceSnackbar({
+        accessibilityLabel: 'First failed.',
+        id: 'quick-log:first',
+        message: "Couldn't save first.",
+        tone: 'error',
+      });
+    });
+
+    expect(screen.queryByText("Couldn't save first.")).toBeNull();
+    expect(screen.getByText('Logged · Sleep')).toBeTruthy();
+
+    act(() => {
+      jest.advanceTimersByTime(SNACKBAR_DEFAULT_DURATION_MS);
+    });
+
+    expect(screen.queryByText('Logged · Sleep')).toBeNull();
+
+    jest.useRealTimers();
   });
 });

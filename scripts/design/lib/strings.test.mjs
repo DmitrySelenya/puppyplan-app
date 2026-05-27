@@ -145,7 +145,7 @@ test("Spanish strings avoid known high-risk machine-translation regressions", ()
     ["quick-log.potty.context-options.1", "Después de comer"],
     ["quick-log.sleep.already-slept", "Ya dormí"],
     ["quick-log.zoomies.context-default", "Después de dormir"],
-    ["quick-log.snackbar.a11y", "Registrado: Orinar afuera. Acciones disponibles: deshacer, agregar detalles."],
+    ["quick-log.snackbar.a11y", "Registrado: {trackerName}. Acción disponible: deshacer."],
     ["timeline.filter-chips.5", "Entrenamiento"],
     ["quick-log.duplicate-warning.more-matches", "{n} eventos más en los últimos 60 segundos"],
     ["sharing.family.invite.section-role", "Rol"],
