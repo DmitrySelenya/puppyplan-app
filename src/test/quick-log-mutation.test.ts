@@ -45,7 +45,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events,
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -89,7 +89,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events: new FakeQuickLogEventsRepository(),
-      getSessionUserId: async () => null,
+      getSessionUserId: () => null,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -126,7 +126,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue: new FakeQuickLogQueueStorage(),
       events,
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -160,7 +160,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events: new FakeQuickLogEventsRepository(),
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -187,6 +187,7 @@ describe('Quick Log mutation lifecycle', () => {
         localSync: {
           state: 'failed_retryable',
           category: 'network_unavailable',
+          retryCount: 1,
         },
       }),
     ]);
@@ -202,9 +203,88 @@ describe('Quick Log mutation lifecycle', () => {
         localSync: {
           state: 'failed_permanent',
           category: 'permission_denied',
+          retryCount: 2,
         },
       }),
     ]);
+  });
+
+  it('makes the optimistic row visible before durable enqueue finishes', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const variables = createMutationVariables();
+    let releaseEnqueue: () => void = () => undefined;
+
+    queue.enqueueGate = new Promise<void>((resolve) => {
+      releaseEnqueue = resolve;
+    });
+
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+
+    const mutatePromise = options.onMutate?.(variables);
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(readTimelineRows(queryClient)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+        created_by: createdBy,
+        localSync: {
+          state: 'pending_local',
+          category: null,
+          retryCount: 0,
+        },
+      }),
+    ]);
+    await expect(Promise.race([
+      mutatePromise?.then(() => 'resolved'),
+      Promise.resolve('pending'),
+    ])).resolves.toBe('pending');
+
+    releaseEnqueue();
+    await expect(mutatePromise).resolves.toMatchObject({
+      clientEventId,
+      queuedItem: {
+        client_event_id: clientEventId,
+      },
+    });
+  });
+
+  it('removes the optimistic row if durable enqueue fails', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+    const variables = createMutationVariables();
+
+    queue.enqueueError = {
+      kind: 'unknown',
+      retryAfterMs: null,
+    };
+
+    await expect(options.onMutate?.(variables)).rejects.toMatchObject({
+      kind: 'unknown',
+    });
+
+    expect(readTimelineRows(queryClient)).toEqual([]);
+    expect(events.inserts).toEqual([]);
+    expect(queue.items.has(clientEventId)).toBe(false);
   });
 
   it('keeps a failed row visible after TanStack settles with an active Timeline observer', async () => {
@@ -223,7 +303,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events,
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     }));
@@ -239,6 +319,7 @@ describe('Quick Log mutation lifecycle', () => {
         localSync: {
           state: 'failed_retryable',
           category: 'network_unavailable',
+          retryCount: 1,
         },
       }),
     ]);
@@ -252,7 +333,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events,
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -297,7 +378,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events,
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -340,7 +421,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events,
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -393,7 +474,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events,
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -440,7 +521,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events,
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -494,7 +575,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events,
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -564,7 +645,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue,
       events,
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     }));
@@ -617,7 +698,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue: new FakeQuickLogQueueStorage(),
       events: new FakeQuickLogEventsRepository(),
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -639,6 +720,45 @@ describe('Quick Log mutation lifecycle', () => {
     expect(queryClient.getQueryData<QuickLogCachedEventRow[]>(dateMismatchKey)).toEqual([]);
   });
 
+  it('updates the root Timeline cache even when only filtered Timeline caches exist', async () => {
+    const queryClient = createTestQueryClient();
+    const compatibleKey = queryKeys.events.timeline(householdId, puppyId, {
+      eventTypes: ['feeding'],
+      from: '2026-05-01',
+      to: todayDate,
+    });
+
+    queryClient.setQueryData(compatibleKey, []);
+
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue: new FakeQuickLogQueueStorage(),
+      events: new FakeQuickLogEventsRepository(),
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+
+    await options.onMutate?.({
+      householdId,
+      puppyId,
+      trackerId: 'feeding_meal',
+      occurredAt,
+      todayDate,
+    });
+
+    expect(readTimelineRows(queryClient)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+      }),
+    ]);
+    expect(queryClient.getQueryData<QuickLogCachedEventRow[]>(compatibleKey)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+      }),
+    ]);
+  });
+
   it('uses the mutation calendar date for filtered Timeline cache compatibility', async () => {
     const queryClient = createTestQueryClient();
     const localDayKey = queryKeys.events.timeline(householdId, puppyId, {
@@ -653,7 +773,7 @@ describe('Quick Log mutation lifecycle', () => {
       queryClient,
       queue: new FakeQuickLogQueueStorage(),
       events: new FakeQuickLogEventsRepository(),
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -692,6 +812,7 @@ describe('Quick Log mutation lifecycle', () => {
         localSync: {
           state: 'failed_retryable',
           category: 'request_timeout',
+          retryCount: 0,
         },
       }),
     ]);
@@ -735,7 +856,7 @@ describe('Quick Log mutation lifecycle', () => {
       // @ts-expect-error Quick Log mutation success requires pending_local -> sending first.
       queue: queueWithoutMarkSending,
       events: new FakeQuickLogEventsRepository(),
-      getSessionUserId: async () => createdBy,
+      getSessionUserId: () => createdBy,
       createClientEventId: () => clientEventId,
       now: () => now,
     });
@@ -913,11 +1034,21 @@ class FakeQuickLogQueueStorage implements Pick<
   | 'markDeletedBeforeSync' | 'resolveInFlightSuccess' | 'remove'
 > {
   public readonly items = new Map<string, QuickLogStoredQueueItem>();
+  public enqueueGate: Promise<void> | null = null;
+  public enqueueError: unknown = null;
 
   public async enqueue(input: unknown): Promise<QuickLogStoredQueueItem> {
+    if (this.enqueueError !== null) {
+      throw this.enqueueError;
+    }
+
     const item = createQueueItem(input as Partial<QuickLogStoredQueueItem>);
 
     this.items.set(item.client_event_id, item);
+
+    if (this.enqueueGate !== null) {
+      await this.enqueueGate;
+    }
 
     return item;
   }

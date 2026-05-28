@@ -2,6 +2,8 @@ import type { QuickLogTrackerId } from './quick-log';
 
 export const QUICK_LOG_ACCIDENTAL_DOUBLE_TAP_WINDOW_SECONDS = 3;
 export const QUICK_LOG_DUPLICATE_CARE_WARNING_WINDOW_SECONDS = 60;
+export const QUICK_LOG_OPTIMISTIC_VISIBLE_TARGET_MS = 100;
+export const QUICK_LOG_FAILED_BANNER_RETRY_COUNT_THRESHOLD = 3;
 
 export const QUICK_LOG_ACCIDENTAL_DOUBLE_TAP_WINDOW_MS =
   QUICK_LOG_ACCIDENTAL_DOUBLE_TAP_WINDOW_SECONDS * 1000;
@@ -12,6 +14,13 @@ export const quickLogTiming = {
   accidentalDoubleTapWindowSeconds: QUICK_LOG_ACCIDENTAL_DOUBLE_TAP_WINDOW_SECONDS,
   duplicateCareWarningWindowSeconds: QUICK_LOG_DUPLICATE_CARE_WARNING_WINDOW_SECONDS,
 } as const;
+
+export type QuickLogFailedBannerRow = Readonly<{
+  localSync?: Readonly<{
+    retryCount?: number;
+    state: string;
+  }>;
+}>;
 
 export type QuickLogAccidentalDoubleTapInput = Readonly<{
   previousTrackerId: QuickLogTrackerId;
@@ -54,6 +63,14 @@ export function shouldShowQuickLogDuplicateCareWarning(
       input.nextOccurredAtMs,
       QUICK_LOG_DUPLICATE_CARE_WARNING_WINDOW_MS,
     );
+}
+
+export function shouldShowQuickLogFailedBanner(
+  rows: readonly QuickLogFailedBannerRow[],
+): boolean {
+  return rows.some((row) =>
+    (row.localSync?.state === 'failed_retryable' || row.localSync?.state === 'failed_permanent')
+    && (row.localSync.retryCount ?? 0) >= QUICK_LOG_FAILED_BANNER_RETRY_COUNT_THRESHOLD);
 }
 
 export function getQuickLogDuplicateCareWarningKey(

@@ -12,6 +12,8 @@ import { TodayScreen } from '@/features/today/screens/TodayScreen';
 import { useSnackbar } from '@/design/primitives/Snackbar';
 import { QuickLogFeedbackProvider } from '@/features/quick-log/QuickLogFeedbackProvider';
 
+const noop = () => {};
+
 function renderWithProviders(element: ReactElement) {
   return render(
     <AppProviders>
@@ -52,11 +54,11 @@ describe('app shell screens', () => {
   });
 
   it('renders the Today shell with localized empty-state copy', () => {
-    renderWithProviders(<TodayScreen />);
+    renderWithProviders(<TodayScreen openTimeline={noop} />);
 
     expect(screen.getByText(i18n.t('tabs.today'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('states.empty-first-run.title'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('states.empty-first-run.body'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.quick-log.unavailable.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.quick-log.unavailable.body'))).toBeTruthy();
   });
 
   it('renders the Health shell with localized support copy', () => {
@@ -67,9 +69,10 @@ describe('app shell screens', () => {
   });
 
   it('renders the More shell with localized support copy', () => {
-    renderWithProviders(<MoreScreen />);
+    renderWithProviders(<MoreScreen openTimeline={noop} />);
 
     expect(screen.getByText(i18n.t('more.screen-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.rows.timeline'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.sections.support'))).toBeTruthy();
   });
 

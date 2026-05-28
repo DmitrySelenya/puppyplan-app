@@ -125,7 +125,7 @@ describe('i18n scaffold resources', () => {
 
     render(createElement(TranslationProbe));
 
-    expect(observedKeys).toEqual(['ready', 't']);
+    expect(observedKeys).toEqual(['locale', 'ready', 't']);
   });
 
   it('keeps placeholder parity for every EN/RU/ES string', () => {

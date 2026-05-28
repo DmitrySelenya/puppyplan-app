@@ -14,14 +14,14 @@ import {
 } from '@/contracts/quick-log';
 import type { EventLogInsert } from '@/contracts/supabase';
 import type { I18nKey, I18nTOptions } from '@/lib/i18n';
+import {
+  getQuickLogTrackerLabelKey,
+  type QuickLogEventUndoRequest,
+  type QuickLogSurfaceCareContext,
+} from '@/lib/query/quick-log-event-view';
 import type { QuickLogMutationVariables } from '@/lib/query/quick-log';
 
-export type QuickLogCareContext = Readonly<{
-  authState: 'authenticated';
-  householdId: string;
-  puppyId: string;
-  todayDate: string;
-}>;
+export type QuickLogCareContext = QuickLogSurfaceCareContext;
 
 export type QuickLogRecentEvent = Readonly<{
   occurredAtMs: number;
@@ -33,13 +33,7 @@ export type QuickLogMutationRequest = Readonly<{
   variables: QuickLogMutationVariables;
 }>;
 
-export type QuickLogUndoRequest = Readonly<{
-  clientEventId: string;
-  eventType: EventLogInsert['event_type'];
-  householdId: string;
-  puppyId: string;
-  todayDate: string;
-}>;
+export type QuickLogUndoRequest = QuickLogEventUndoRequest;
 
 export type QuickLogMutationPort = Readonly<{
   deleteLocal: (clientEventId: string) => unknown;
@@ -291,22 +285,10 @@ export function useQuickLogSheetController({
   ]);
 }
 
-export function getQuickLogTrackerLabelKey(trackerId: QuickLogTrackerId): I18nKey {
-  return trackerLabelKeys[trackerId];
-}
+export { getQuickLogTrackerLabelKey };
 
 function createDefaultRequestId() {
   quickLogRequestCounter += 1;
 
   return `quick-log:${Date.now()}:${quickLogRequestCounter}`;
 }
-
-const trackerLabelKeys = {
-  feeding_meal: 'quick-log.trackers.feeding',
-  potty_pee_inside: 'quick-log.trackers.potty-inside',
-  potty_pee_outside: 'quick-log.trackers.potty-outside',
-  potty_poop: 'quick-log.trackers.potty-poop',
-  sleep_nap: 'quick-log.trackers.sleep',
-  training: 'quick-log.trackers.training',
-  zoomies: 'quick-log.trackers.zoomies',
-} as const satisfies Record<QuickLogTrackerId, I18nKey>;

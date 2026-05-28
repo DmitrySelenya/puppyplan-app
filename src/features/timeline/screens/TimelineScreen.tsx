@@ -1,4 +1,3 @@
-import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
@@ -15,37 +14,42 @@ import {
 } from '@/lib/query/quick-log-event-view';
 import { useQuickLogCachedRows } from '@/lib/query/useQuickLogCachedRows';
 
-export type TodayScreenProps = Readonly<{
+export type TimelineScreenProps = Readonly<{
   actions?: QuickLogEventActionHandlers;
   careContext?: QuickLogSurfaceCareContext | null;
-  openTimeline: () => void;
+  onClose: () => void;
 }>;
 
 const emptyActions: QuickLogEventActionHandlers = {};
 
-export function TodayScreen({
+export function TimelineScreen({
   actions = emptyActions,
   careContext = null,
-  openTimeline,
-}: TodayScreenProps) {
+  onClose,
+}: TimelineScreenProps) {
   const { locale, t } = useAppTranslation();
   const rows = useQuickLogCachedRows(careContext);
 
   if (careContext === null) {
     return (
       <Screen>
-        <AppText variant="title">{t('tabs.today')}</AppText>
+        <Stack
+          align="center"
+          direction="horizontal"
+          justify="space-between">
+          <AppText variant="title">{t('timeline.title')}</AppText>
+          <Button
+            label={t('timeline.close')}
+            onPress={onClose}
+            variant="tertiary"
+          />
+        </Stack>
         <Card>
           <Stack gap="sm">
-            <AppText variant="headline">{t('today.quick-log.unavailable.title')}</AppText>
-            <AppText tone="secondary">{t('today.quick-log.unavailable.body')}</AppText>
+            <AppText variant="headline">{t('timeline.unavailable.title')}</AppText>
+            <AppText tone="secondary">{t('timeline.unavailable.body')}</AppText>
           </Stack>
         </Card>
-        <Button
-          label={t('today.quick-log.timeline-entry')}
-          onPress={openTimeline}
-          variant="secondary"
-        />
       </Screen>
     );
   }
@@ -62,41 +66,37 @@ export function TodayScreen({
 
   return (
     <Screen>
-      <AppText variant="title">{t('tabs.today')}</AppText>
-      {shouldShowQuickLogFailedBanner(rows) ? (
-        <Card>
-          <AppText variant="headline">{t('quick-log.failed.persistent-banner')}</AppText>
-        </Card>
-      ) : null}
-      <Stack gap="sm">
-        <AppText variant="headline">{t('today.quick-log.section-title')}</AppText>
-        {eventViews.length > 0 ? (
-          eventViews.map((event) => (
-            <TodayQuickLogEventRow
+      <Stack
+        align="center"
+        direction="horizontal"
+        justify="space-between">
+        <AppText variant="title">{t('timeline.title')}</AppText>
+        <Button
+          label={t('timeline.close')}
+          onPress={onClose}
+          variant="tertiary"
+        />
+      </Stack>
+      {eventViews.length > 0 ? (
+        <Stack gap="sm">
+          {eventViews.map((event) => (
+            <TimelineQuickLogEventRow
               actions={actions}
               event={event}
               key={event.clientEventId}
             />
-          ))
-        ) : (
-          <Card>
-            <Stack gap="sm">
-              <AppText variant="bodyEmph">{t('today.quick-log.empty.title')}</AppText>
-              <AppText tone="secondary">{t('today.quick-log.empty.body')}</AppText>
-            </Stack>
-          </Card>
-        )}
-      </Stack>
-      <Button
-        label={t('today.quick-log.timeline-entry')}
-        onPress={openTimeline}
-        variant="secondary"
-      />
+          ))}
+        </Stack>
+      ) : (
+        <Card>
+          <AppText tone="secondary">{t('timeline.empty')}</AppText>
+        </Card>
+      )}
     </Screen>
   );
 }
 
-function TodayQuickLogEventRow({
+function TimelineQuickLogEventRow({
   actions,
   event,
 }: Readonly<{

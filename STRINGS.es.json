@@ -309,6 +309,18 @@
       "body": "Empieza con lo que hayas notado hace un momento.",
       "cta": "Abrir registro rápido"
     },
+    "quick-log": {
+      "section-title": "Quick Log reciente",
+      "timeline-entry": "Abrir Timeline",
+      "unavailable": {
+        "title": "Configura un perfil de cachorro",
+        "body": "Los eventos de Quick Log aparecerán aquí cuando haya un perfil de cachorro activo."
+      },
+      "empty": {
+        "title": "Aún no hay eventos de Quick Log",
+        "body": "Usa Quick Log cuando ocurra algo y los eventos recientes quedarán visibles aquí."
+      }
+    },
     "error-banner": "No se pudo actualizar. Mostrando la última vista guardada.",
     "weekly-example": {
       "walks-line": "{n} paseos afuera",
@@ -423,6 +435,7 @@
   },
   "timeline": {
     "title": "Eventos",
+    "close": "Cerrar",
     "section-today": "Hoy · {weekday}",
     "section-yesterday": "Ayer · {weekday}",
     "filter-chips": [
@@ -442,12 +455,18 @@
       "Personalizado"
     ],
     "range-custom-title": "Elige un rango",
+    "empty": "Aún no hay eventos.",
     "empty-filter": "No hay eventos en este rango.",
+    "unavailable": {
+      "title": "Timeline necesita un cachorro activo",
+      "body": "Los eventos aparecerán aquí cuando haya un hogar y un perfil de cachorro activos."
+    },
     "actor-you": "Registrado por: tú",
     "actor-template": "Registrado por: {name}",
     "pills": {
       "pending": "Guardando",
       "failed": "No guardado",
+      "synced": "Guardado",
       "local-only": "Sólo en este dispositivo"
     },
     "time": {

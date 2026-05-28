@@ -62,9 +62,13 @@ describe('QuickLogLocalEvents', () => {
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.failed.primary'),
     }));
-    fireEvent.press(screen.getByRole('button', {
+    const deleteButtons = screen.getAllByRole('button', {
       name: i18n.t('quick-log.failed.tertiary'),
-    }));
+    });
+
+    expect(deleteButtons).toHaveLength(2);
+    fireEvent.press(deleteButtons[0]);
+    fireEvent.press(deleteButtons[1]);
 
     expect(onUndo).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000000602',
@@ -74,6 +78,7 @@ describe('QuickLogLocalEvents', () => {
       todayDate: '2026-05-27',
     });
     expect(onRetry).toHaveBeenCalledWith(clientEventId);
+    expect(onDelete).toHaveBeenCalledWith('evt_00000000-0000-4000-8000-000000000602');
     expect(onDelete).toHaveBeenCalledWith(clientEventId);
   });
 });
