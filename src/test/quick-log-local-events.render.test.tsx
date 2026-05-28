@@ -78,7 +78,13 @@ describe('QuickLogLocalEvents', () => {
       todayDate: '2026-05-27',
     });
     expect(onRetry).toHaveBeenCalledWith(clientEventId);
-    expect(onDelete).toHaveBeenCalledWith('evt_00000000-0000-4000-8000-000000000602');
-    expect(onDelete).toHaveBeenCalledWith(clientEventId);
+    expect(onDelete).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000000602',
+      eventType: 'sleep',
+    });
+    expect(onDelete).toHaveBeenCalledWith({
+      clientEventId,
+      eventType: 'feeding',
+    });
   });
 });

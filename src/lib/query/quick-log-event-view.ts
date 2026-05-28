@@ -1,5 +1,10 @@
-import type { QuickLogTrackerId } from '@/contracts/quick-log';
-import { eventPayloadSchemas, type EventLogInsert } from '@/contracts/supabase';
+import {
+  isQuickLogEventType,
+  type QuickLogEventType,
+  type QuickLogTrackerId,
+} from '@/contracts/quick-log';
+import type { QuickLogRecoverySurface } from '@/contracts/analytics';
+import { eventPayloadSchemas } from '@/contracts/supabase';
 import type { AppTranslate, I18nKey } from '@/lib/i18n';
 
 import type { QuickLogCachedEventRow } from './quick-log';
@@ -13,22 +18,27 @@ export type QuickLogSurfaceCareContext = Readonly<{
 
 export type QuickLogEventUndoRequest = Readonly<{
   clientEventId: string;
-  eventType: EventLogInsert['event_type'];
+  eventType: QuickLogEventType;
   householdId: string;
   puppyId: string;
   todayDate: string;
 }>;
 
+export type QuickLogEventDeleteRequest = Readonly<{
+  clientEventId: string;
+  eventType: QuickLogEventType;
+}>;
+
 export type QuickLogEventActionHandlers = Readonly<{
-  onDelete?: (clientEventId: string) => void;
-  onRetry?: (clientEventId: string) => void;
+  onDelete?: (request: QuickLogEventDeleteRequest) => void;
+  onRetry?: (clientEventId: string, recoverySurface: QuickLogRecoverySurface) => void;
   onUndo?: (request: QuickLogEventUndoRequest) => void;
 }>;
 
 export type QuickLogEventView = Readonly<{
   actorLabel: string;
   clientEventId: string;
-  eventType: EventLogInsert['event_type'];
+  eventType: QuickLogEventType;
   householdId: string;
   occurredAtLabel: string;
   puppyId: string;
@@ -51,6 +61,10 @@ export function createQuickLogEventView(
     todayDate: string;
   }>,
 ): QuickLogEventView | null {
+  if (!isQuickLogEventType(row.event_type)) {
+    return null;
+  }
+
   const status = getQuickLogEventStatus(row);
   const titleKey = getQuickLogEventLabelKey(row);
 
@@ -82,6 +96,13 @@ export function createQuickLogUndoRequest(view: QuickLogEventView): QuickLogEven
     householdId: view.householdId,
     puppyId: view.puppyId,
     todayDate: view.todayDate,
+  };
+}
+
+export function createQuickLogDeleteRequest(view: QuickLogEventView): QuickLogEventDeleteRequest {
+  return {
+    clientEventId: view.clientEventId,
+    eventType: view.eventType,
   };
 }
 

@@ -5,6 +5,7 @@ import {
   classifyQuickLogQueueError,
   createManualQuickLogRetry,
   getQuickLogRetryDelayMs,
+  normalizeQuickLogQueueFailureForPersistence,
   resolveQuickLogInFlightSuccess,
   type QuickLogStoredQueueItem,
 } from '@/lib/queue';
@@ -169,6 +170,21 @@ describe('Quick Log queue state machine', () => {
 });
 
 describe('Quick Log queue retry behavior', () => {
+  it('normalizes raw backend errors before persistence decisions', () => {
+    const decision = normalizeQuickLogQueueFailureForPersistence({
+      error: new Error('backend detail contained PuppyDisplayPrivate private routine text'),
+      retryCount: 0,
+    });
+
+    expect(decision).toEqual({
+      category: 'unknown',
+      decision: 'retryable',
+      retryAfterMs: null,
+    });
+    expect(JSON.stringify(decision)).not.toContain('PuppyDisplayPrivate');
+    expect(JSON.stringify(decision)).not.toContain('private routine text');
+  });
+
   it('classifies retryable, permanent, and bounded unknown failures', () => {
     expect(classifyQuickLogQueueError({ kind: 'network_unavailable', retryCount: 0 })).toEqual({
       decision: 'retryable',

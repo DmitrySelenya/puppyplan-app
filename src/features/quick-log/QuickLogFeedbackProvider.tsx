@@ -8,6 +8,7 @@ import {
 } from 'react';
 
 import { useSnackbar, type SnackbarController } from '@/design/primitives/Snackbar';
+import { noopAnalyticsClient, type QuickLogAnalyticsClient } from '@/lib/analytics';
 import { useAppTranslation, type I18nKey, type I18nTOptions } from '@/lib/i18n';
 
 import type {
@@ -33,10 +34,16 @@ type QuickLogFeedbackState = {
 };
 
 export type QuickLogFeedbackController = QuickLogFeedbackPort;
+export type QuickLogFeedbackProviderProps = PropsWithChildren<{
+  analytics?: QuickLogAnalyticsClient;
+}>;
 
 const QuickLogFeedbackContext = createContext<QuickLogFeedbackController | null>(null);
 
-export function QuickLogFeedbackProvider({ children }: PropsWithChildren) {
+export function QuickLogFeedbackProvider({
+  analytics = noopAnalyticsClient,
+  children,
+}: QuickLogFeedbackProviderProps) {
   const { t } = useAppTranslation();
   const designSnackbar = useSnackbar();
   const snackbar = useMemo(
@@ -50,10 +57,11 @@ export function QuickLogFeedbackProvider({ children }: PropsWithChildren) {
 
   const controller = useMemo<QuickLogFeedbackController>(
     () => createQuickLogFeedbackController({
+      analytics,
       snackbar,
       state: requireQuickLogFeedbackState(feedbackStateRef.current),
     }),
-    [snackbar],
+    [analytics, snackbar],
   );
 
   return (
@@ -96,9 +104,11 @@ export function QuickLogMutationFeedbackObserver({
 }
 
 export function createQuickLogFeedbackController({
+  analytics = noopAnalyticsClient,
   snackbar,
   state = createQuickLogFeedbackState(),
 }: {
+  analytics?: QuickLogAnalyticsClient;
   snackbar: QuickLogSnackbarPort;
   state?: QuickLogFeedbackState;
 }): QuickLogFeedbackController {
@@ -116,6 +126,7 @@ export function createQuickLogFeedbackController({
     }
 
     state.pendingUndoRequestIds.delete(requestId);
+    trackUndoUsed(analytics, context.eventType);
     mutation.undo({
       clientEventId: context.clientEventId,
       eventType: context.eventType,
@@ -149,6 +160,7 @@ export function createQuickLogFeedbackController({
 
         if (state.pendingUndoRequestIds.has(event.requestId) && careContext !== null) {
           state.pendingUndoRequestIds.delete(event.requestId);
+          trackUndoUsed(analytics, event.eventType);
           mutation.undo({
             clientEventId: event.clientEventId,
             eventType: event.eventType,
@@ -172,9 +184,16 @@ export function createQuickLogFeedbackController({
         id: event.requestId,
         messageKey: 'quick-log.failed.snackbar',
         onPrimaryAction: () => {
-          mutation.retry(event.clientEventId);
+          mutation.retry(event.clientEventId, 'manual_retry');
         },
         onSecondaryAction: () => {
+          analytics.trackQuickLogEvent({
+            name: 'pending_quick_log_deleted',
+            properties: {
+              event_type: event.eventType,
+              pending_age_bucket: 'unknown',
+            },
+          });
           mutation.deleteLocal(event.clientEventId);
         },
         primaryActionKey: 'quick-log.failed.primary',
@@ -186,6 +205,7 @@ export function createQuickLogFeedbackController({
 
   return {
     applyMutationEvents,
+    analytics,
     snackbar,
     undoRequest,
   };
@@ -198,6 +218,19 @@ function createQuickLogFeedbackState(): QuickLogFeedbackState {
     requestContexts: new Map<string, QuickLogStartedContext>(),
     undoneRequestIds: new Set<string>(),
   };
+}
+
+function trackUndoUsed(
+  analytics: QuickLogAnalyticsClient,
+  eventType: QuickLogMutationEvent['eventType'],
+): void {
+  analytics.trackQuickLogEvent({
+    name: 'undo_used',
+    properties: {
+      event_type: eventType,
+      seconds_after_log_bucket: 'unknown',
+    },
+  });
 }
 
 function requireQuickLogFeedbackState(state: QuickLogFeedbackState | null): QuickLogFeedbackState {

@@ -9,13 +9,17 @@ import {
 import {
   shouldShowQuickLogDuplicateCareWarning,
 } from '@/contracts/business-rules';
+import type { QuickLogRecoverySurface } from '@/contracts/analytics';
 import {
+  quickLogTrackerDefinitions,
+  type QuickLogEventType,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
-import type { EventLogInsert } from '@/contracts/supabase';
+import { noopAnalyticsClient, type QuickLogAnalyticsClient } from '@/lib/analytics';
 import type { I18nKey, I18nTOptions } from '@/lib/i18n';
 import {
   getQuickLogTrackerLabelKey,
+  type QuickLogEventDeleteRequest,
   type QuickLogEventUndoRequest,
   type QuickLogSurfaceCareContext,
 } from '@/lib/query/quick-log-event-view';
@@ -34,11 +38,12 @@ export type QuickLogMutationRequest = Readonly<{
 }>;
 
 export type QuickLogUndoRequest = QuickLogEventUndoRequest;
+export type QuickLogDeleteRequest = QuickLogEventDeleteRequest;
 
 export type QuickLogMutationPort = Readonly<{
   deleteLocal: (clientEventId: string) => unknown;
   mutate: (request: QuickLogMutationRequest) => unknown;
-  retry: (clientEventId: string) => unknown;
+  retry: (clientEventId: string, recoverySurface: QuickLogRecoverySurface) => unknown;
   undo: (request: QuickLogUndoRequest) => unknown;
 }>;
 
@@ -78,20 +83,21 @@ export type QuickLogMutationFeedbackPort = Readonly<{
 }>;
 
 export type QuickLogFeedbackPort = QuickLogMutationFeedbackPort & Readonly<{
+  analytics: QuickLogAnalyticsClient;
   snackbar: QuickLogSnackbarPort;
 }>;
 
 export type QuickLogMutationEvent =
   | Readonly<{
     clientEventId: string;
-    eventType: EventLogInsert['event_type'];
+    eventType: QuickLogEventType;
     requestId: string;
     trackerId: QuickLogTrackerId;
     type: 'started';
   }>
   | Readonly<{
     clientEventId: string;
-    eventType: EventLogInsert['event_type'];
+    eventType: QuickLogEventType;
     requestId: string;
     state: 'failed_retryable' | 'failed_permanent';
     trackerId: QuickLogTrackerId;
@@ -105,7 +111,7 @@ export type QuickLogDuplicateWarning = Readonly<{
 export type QuickLogSheetController = Readonly<{
   cancelDuplicate: () => void;
   confirmDuplicate: () => void;
-  deleteLocal: (clientEventId: string) => void;
+  deleteLocal: (request: QuickLogDeleteRequest) => void;
   readonly duplicateWarning: QuickLogDuplicateWarning | null;
   logTracker: (trackerId: QuickLogTrackerId) => void;
   retry: (clientEventId: string) => void;
@@ -117,6 +123,7 @@ export type QuickLogSheetController = Readonly<{
 }>;
 
 export type UseQuickLogSheetControllerInput = Readonly<{
+  analytics?: QuickLogAnalyticsClient;
   careContext: QuickLogCareContext | null;
   closeSheet: () => void;
   createRequestId?: () => string;
@@ -130,6 +137,7 @@ export type UseQuickLogSheetControllerInput = Readonly<{
 let quickLogRequestCounter = 0;
 
 export function useQuickLogSheetController({
+  analytics = noopAnalyticsClient,
   careContext,
   closeSheet,
   createRequestId = createDefaultRequestId,
@@ -220,12 +228,21 @@ export function useQuickLogSheetController({
         trackerId,
       };
       pendingDuplicateRef.current = trackerId;
+      analytics.trackQuickLogEvent({
+        name: 'duplicate_warning_seen',
+        properties: {
+          event_type: quickLogTrackerDefinitions[trackerId].event_type,
+          time_since_previous_bucket: bucketDuplicateWarningMs(
+            currentNowMs - recentEvent.occurredAtMs,
+          ),
+        },
+      });
       rerender();
       return;
     }
 
     commitTracker(trackerId);
-  }, [careContext, commitTracker, now, recentEvent, rerender]);
+  }, [analytics, careContext, commitTracker, now, recentEvent, rerender]);
 
   const confirmDuplicate = useCallback(() => {
     const trackerId = pendingDuplicateRef.current;
@@ -233,9 +250,15 @@ export function useQuickLogSheetController({
     clearDuplicateWarning();
 
     if (trackerId) {
+      analytics.trackQuickLogEvent({
+        name: 'duplicate_warning_confirmed',
+        properties: {
+          event_type: quickLogTrackerDefinitions[trackerId].event_type,
+        },
+      });
       commitTracker(trackerId);
     }
-  }, [clearDuplicateWarning, commitTracker]);
+  }, [analytics, clearDuplicateWarning, commitTracker]);
 
   const undo = useCallback((requestId: string) => {
     undoRequest(requestId);
@@ -252,8 +275,15 @@ export function useQuickLogSheetController({
   return useMemo<QuickLogSheetController>(() => ({
     cancelDuplicate: clearDuplicateWarning,
     confirmDuplicate,
-    deleteLocal: (clientEventId) => {
-      mutation.deleteLocal(clientEventId);
+    deleteLocal: (request) => {
+      analytics.trackQuickLogEvent({
+        name: 'pending_quick_log_deleted',
+        properties: {
+          event_type: request.eventType,
+          pending_age_bucket: 'unknown',
+        },
+      });
+      mutation.deleteLocal(request.clientEventId);
     },
     get duplicateWarning() {
       return duplicateWarningRef.current;
@@ -263,13 +293,20 @@ export function useQuickLogSheetController({
     },
     logTracker,
     retry: (clientEventId) => {
-      mutation.retry(clientEventId);
+      mutation.retry(clientEventId, 'manual_retry');
     },
     status: careContext === null
       ? 'unavailable'
       : 'ready',
     undo,
     undoLocal: (request) => {
+      analytics.trackQuickLogEvent({
+        name: 'undo_used',
+        properties: {
+          event_type: request.eventType,
+          seconds_after_log_bucket: 'unknown',
+        },
+      });
       mutation.undo(request);
     },
     unavailableReason: careContext === null
@@ -277,12 +314,18 @@ export function useQuickLogSheetController({
       : null,
   }), [
     careContext,
+    analytics,
     clearDuplicateWarning,
     confirmDuplicate,
     logTracker,
     mutation,
     undo,
   ]);
+}
+
+function bucketDuplicateWarningMs(elapsedMs: number): 'under_3s' | 'under_60s' {
+  // under_3s is intentional: it preserves the accidental double-tap window in telemetry.
+  return elapsedMs <= 3_000 ? 'under_3s' : 'under_60s';
 }
 
 export { getQuickLogTrackerLabelKey };

@@ -5,9 +5,9 @@
 
 **Goal:** Integrate Quick Log pending, failed, retry/delete/undo, and server-confirmed replacement states into Today and a minimal Timeline modal without fake production IDs.
 
-**Status:** Active; review findings fixed locally.
+**Status:** Completed.
 
-**Current phase:** Phase 4 - Verification And Handoff complete locally; review fixes verified; awaiting commit/push approval.
+**Current phase:** Completed - merged via PR #15; plan-owned work complete.
 
 **Architecture:** Supabase remains the durable source of truth, TanStack Query owns server-state cache, and the existing Minimal Durable Quick Log Queue remains the only durable local-write exception. Today and Timeline consume query/cache rows through shared lib helpers and feature screens; `app/` stays route-thin. Production Quick Log remains unavailable until a real active household/puppy/session context exists.
 
@@ -233,6 +233,7 @@ PUP-13 implemented the mutation/cache lifecycle and PUP-14 implemented the Quick
 - 2026-05-28: Fixed final review findings by moving `expo-router` usage out of Today/More/Timeline feature screens, adding minimal Timeline empty-state copy, and aligning Quick Log lifecycle architecture docs with the optimistic hot path.
 - 2026-05-28: Fixed latest review warnings with code comments for the deferred actor-label assumption and intentional optimistic-cancel ordering, aliased the duplicated care-context type, and added failed-banner coverage for `failed_permanent`.
 - 2026-05-28: Fixed fifth deep-review blockers by keeping the root Timeline cache updated alongside compatible filtered caches and removing raw `"OK"` synced status text from Today/Timeline rows.
+- 2026-05-28: Moved the plan to completed after `PUP-15` reached Linear `Done` and PR #15 was merged.
 
 ## Follow-Ups Logged Outside PUP-15
 

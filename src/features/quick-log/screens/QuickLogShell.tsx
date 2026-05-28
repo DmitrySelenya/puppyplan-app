@@ -45,9 +45,10 @@ export function QuickLogShell(props: QuickLogShellProps) {
   const snackbar = props.snackbar ?? feedback.snackbar;
   const controllerFeedback = useMemo<QuickLogFeedbackPort>(() => ({
     applyMutationEvents: feedback.applyMutationEvents,
+    analytics: feedback.analytics,
     snackbar,
     undoRequest: feedback.undoRequest,
-  }), [feedback.applyMutationEvents, feedback.undoRequest, snackbar]);
+  }), [feedback.analytics, feedback.applyMutationEvents, feedback.undoRequest, snackbar]);
 
   return (
     <QuickLogShellContent
@@ -74,6 +75,7 @@ function QuickLogShellContent({
     ? null
     : careContext;
   const controller = useQuickLogSheetController({
+    analytics: feedback.analytics,
     careContext: readyCareContext,
     closeSheet,
     feedback,

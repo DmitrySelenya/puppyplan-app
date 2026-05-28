@@ -12,9 +12,10 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
-| Active task plan | [PUP-15 Today/Timeline Quick Log State Integration](active/2026-05-27-pup-15-today-timeline-quick-log-state-integration.md) | `PUP-15` | Phase 4 complete locally; awaiting review/commit/push approval |
+| Active task plan | [PUP-16 Quick Log Privacy-Safe Analytics And Observability](active/2026-05-28-pup-16-quick-log-privacy-safe-analytics-observability.md) | `PUP-16` | Deep-review follow-ups implemented and verified locally; awaiting commit/push/PR approval |
 | Active roadmap | [Architecture Foundation Roadmap](active/2026-05-21-phase-0-architecture-cleanup.md) | Split through `PUP-2`, `PUP-3`, `PUP-4`, `PUP-5`, and follow-up issues | Do not assign directly; scaffold, Supabase/RLS, local/CI gates, Quick Log planning, and PUP-11 contracts are complete; continue with scoped Quick Log implementation issues |
 | Active follow-up plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7`, `PUP-8`, `PUP-9`, `PUP-10` | Phases 1-5 and 6A are complete; only EN/RU/ES Dynamic Type screenshots and the dev-only design gallery remain as scoped follow-up work |
+| Completed | [PUP-15 Today/Timeline Quick Log State Integration](completed/2026-05-27-pup-15-today-timeline-quick-log-state-integration.md) | `PUP-15` | Merged via PR #15; Today and Timeline Quick Log pending/failed state integration is complete |
 | Completed | [PUP-14 Quick Log Sheet UI And Interaction States](completed/2026-05-27-pup-14-quick-log-sheet-ui.md) | `PUP-14` | Merged via PR #12; Quick Log sheet UI, interaction states, global Snackbar, and CI guardrails are complete |
 | Completed | [PUP-13 Quick Log Mutation Cache Lifecycle](completed/2026-05-26-pup-13-quick-log-mutation-cache.md) | `PUP-13` | Merged via PR #11; mutation/cache lifecycle and deep-review follow-ups implemented and verified |
 | Completed | [PUP-12 Quick Log Queue Core](completed/2026-05-26-pup-12-quick-log-queue-core.md) | `PUP-12` | Merged via PR #10; local queue core implemented and verified |
@@ -27,7 +28,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 ## Execution Order
 
 1. Execute foundation roadmap items only through scoped Linear issues. `PUP-2`, `PUP-3`, `PUP-4`, and `PUP-5` are complete.
-2. Continue Quick Log implementation through `PUP-12` to `PUP-16` as dependencies are satisfied.
+2. Finish the Quick Log MVP chain with `PUP-16` privacy-safe analytics and observability.
 3. Keep the remaining `PUP-7` design follow-ups separate: EN/RU/ES Dynamic Type screenshots and the in-app design gallery.
 4. Re-run `PUP-7` screenshot/package checks whenever the raw design export changes.
 5. Release/privacy gates that are not already covered by `PUP-4`/`PUP-3` should become separate Linear issues, not part of Quick Log feature implementation.

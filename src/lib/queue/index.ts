@@ -28,6 +28,7 @@ export {
   classifyQuickLogQueueError,
   createManualQuickLogRetry,
   getQuickLogRetryDelayMs,
+  normalizeQuickLogQueueFailureForPersistence,
   type QuickLogManualRetry,
   type QuickLogQueueFailureKind,
   type QuickLogQueueRetryDecision,
