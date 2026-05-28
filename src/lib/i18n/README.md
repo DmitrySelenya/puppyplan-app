@@ -10,8 +10,9 @@ raw `useTranslation().t(...)` or importing the raw `i18n` runtime. `I18nKey` is
 derived from the English JSON shape and includes object string leaves plus array
 string leaves such as notification actions. Root `$meta`, root `voice.*` policy
 lists, and `_comment*` fields at any depth are excluded from typed UI keys and
-executable parity. The app hook returns only typed `t` plus `ready`; feature code
-should not receive the raw `react-i18next` tuple/object surface.
+executable parity. The app hook returns typed `t`, a normalized supported `locale`,
+and `ready`; feature code should not receive the raw `react-i18next` tuple/object
+surface.
 
 The executable i18n gate is `node scripts/checks/check-i18n.mjs`, wired through
 `npm run check` via `test:scaffold`. It checks:

@@ -12,6 +12,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
+| Active task plan | [PUP-15 Today/Timeline Quick Log State Integration](active/2026-05-27-pup-15-today-timeline-quick-log-state-integration.md) | `PUP-15` | Phase 4 complete locally; awaiting review/commit/push approval |
 | Active roadmap | [Architecture Foundation Roadmap](active/2026-05-21-phase-0-architecture-cleanup.md) | Split through `PUP-2`, `PUP-3`, `PUP-4`, `PUP-5`, and follow-up issues | Do not assign directly; scaffold, Supabase/RLS, local/CI gates, Quick Log planning, and PUP-11 contracts are complete; continue with scoped Quick Log implementation issues |
 | Active follow-up plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7`, `PUP-8`, `PUP-9`, `PUP-10` | Phases 1-5 and 6A are complete; only EN/RU/ES Dynamic Type screenshots and the dev-only design gallery remain as scoped follow-up work |
 | Completed | [PUP-14 Quick Log Sheet UI And Interaction States](completed/2026-05-27-pup-14-quick-log-sheet-ui.md) | `PUP-14` | Merged via PR #12; Quick Log sheet UI, interaction states, global Snackbar, and CI guardrails are complete |

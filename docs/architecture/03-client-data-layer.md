@@ -62,16 +62,18 @@ Quick Log mutations must use `onMutate`, `onSuccess`, `onError`, and `onSettled`
 Required lifecycle:
 
 1. Generate `client_event_id`.
-2. Read `supabase.auth.getSession()` once and persist that actor as `created_by`.
+2. Read the authenticated actor from the active session/care context synchronously and persist that actor as `created_by`.
 3. Build one insert payload and derive the affected query keys.
-4. Cancel all relevant Today/Timeline/summary/duplicate-warning queries before cache writes.
+4. Start cancellation for all relevant Today/Timeline/summary/duplicate-warning queries.
 5. Snapshot previous cache by `client_event_id`.
-6. Enqueue the same identity in Expo SQLite.
-7. Optimistically insert pending event.
+6. Optimistically insert the pending event before awaiting cancellation, queue, or network work.
+7. Await query cancellation and enqueue the same identity in Expo SQLite before any network send; if enqueue fails, remove the optimistic row.
 8. Send Supabase insert through `src/lib/supabase/events.ts`.
 9. On success, replace only the matching optimistic row with the typed server row and remove the queue item.
 10. On retryable or permanent failure, keep the row visible with `QuickLogCachedEventRow.localSync`.
 11. Invalidate relevant query keys on settle and return invalidation promises.
+
+The Quick Log tap hot path must not await `supabase.auth.getSession()`, SQLite enqueue, or network work before the pending row becomes visible. Durable queue enqueue remains mandatory before the Supabase insert starts.
 
 Rollback must not hide a valid pending event for retryable network failures. Until Timeline query `select` merges local queue rows into server results, mutation failures must not invalidate the Timeline root/prefix because an active refetch would replace the local failed row with Supabase-only data. Failure settlement still invalidates the non-Timeline dependent keys.
 

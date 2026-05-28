@@ -99,6 +99,13 @@ export function QuickLogLocalEvents({
                   }}
                   variant="tertiary"
                 />
+                <Button
+                  label={t('quick-log.failed.tertiary')}
+                  onPress={() => {
+                    onDelete(event.clientEventId);
+                  }}
+                  variant="tertiary"
+                />
               </Stack>
             )}
             </Stack>

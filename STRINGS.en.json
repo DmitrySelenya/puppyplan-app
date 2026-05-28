@@ -304,6 +304,18 @@
       "body": "Start with whatever you've noticed just now.",
       "cta": "Open Quick Log"
     },
+    "quick-log": {
+      "section-title": "Recent Quick Log",
+      "timeline-entry": "Open Timeline",
+      "unavailable": {
+        "title": "Puppy setup is needed",
+        "body": "Quick Log events will appear here after an active puppy profile is available."
+      },
+      "empty": {
+        "title": "No Quick Log events yet",
+        "body": "Use Quick Log when something happens, and the latest events will stay visible here."
+      }
+    },
     "error-banner": "Couldn't refresh. Showing the last saved view.",
     "weekly-example": {
       "walks-line": "{n} walks outside",
@@ -405,18 +417,25 @@
 
   "timeline": {
     "title": "Events",
+    "close": "Close",
     "section-today": "Today · {weekday}",
     "section-yesterday": "Yesterday · {weekday}",
     "filter-chips": ["All", "Potty", "Food", "Sleep", "Zoomies", "Training", "Health"],
     "range-default": "Today",
     "range-options": ["Today", "3 days", "Week", "Custom"],
     "range-custom-title": "Pick a range",
+    "empty": "No events yet.",
     "empty-filter": "No events in this range.",
+    "unavailable": {
+      "title": "Timeline needs an active puppy",
+      "body": "Events will appear here after an active household and puppy profile are available."
+    },
     "actor-you": "Logged by: You",
     "actor-template": "Logged by: {name}",
     "pills": {
       "pending": "Saving",
       "failed": "Not saved",
+      "synced": "Saved",
       "local-only": "Only on this device"
     },
     "time": {

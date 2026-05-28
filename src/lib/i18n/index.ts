@@ -56,11 +56,20 @@ if (!i18n.isInitialized) {
 
 export const t: AppTranslate = (key, options) => i18n.t(key, options ?? {});
 
+export function toSupportedLocale(locale: string | undefined): SupportedLocale {
+  const baseLocale = locale?.split('-')[0];
+
+  return supportedLocales.includes(baseLocale as SupportedLocale)
+    ? baseLocale as SupportedLocale
+    : 'en';
+}
+
 export function useAppTranslation() {
   const translation = useTranslation();
   const translate = translation.t as AppTranslate;
 
   return {
+    locale: toSupportedLocale(translation.i18n.resolvedLanguage ?? translation.i18n.language),
     t: translate,
     ready: translation.ready,
   };

@@ -102,8 +102,9 @@ This is not a general conflict UI. It is a narrow guard for the Quick Log Undo r
 
 ## UI Contract
 
-- Pending event appears immediately in Today/Timeline.
+- Pending event appears immediately in Today/Timeline after local identity and payload validation, before durable enqueue or network work is awaited.
 - Quick Log tap to visible optimistic UI must be <=100ms.
+- Durable enqueue must still complete before the Supabase insert starts.
 - Pending event uses dot/pill `pending`, not skeleton replacement.
 - User can Undo/Delete before server confirmation.
 - Failed permanent state shows Retry/Delete with calm copy.

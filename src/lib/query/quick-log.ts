@@ -21,7 +21,6 @@ import {
   createSupabaseEventLogRepository,
   type SupabaseEventLogRepository,
 } from '@/lib/supabase/events';
-import { getSupabaseClient } from '@/lib/supabase/client';
 
 import { getQuickLogInvalidationKeys, queryKeys, type TimelineFilters } from './keys';
 
@@ -29,6 +28,7 @@ export type QuickLogCachedEventRow = EventLogRecord & {
   localSync?: Readonly<{
     state: QuickLogQueueState;
     category: QuickLogQueueErrorCategory | null;
+    retryCount: number;
   }>;
 };
 
@@ -91,7 +91,9 @@ export type QuickLogMutationDependencies = Readonly<{
   queryClient: QueryClient;
   queue: QuickLogMutationQueue;
   events?: Pick<SupabaseEventLogRepository, 'insertEvent' | 'tombstoneByClientEventId'>;
-  getSessionUserId?: () => Promise<string | null>;
+  // Optional only while production Quick Log is gated by the deferred active care context.
+  // Production wiring must inject the synchronous session actor instead of using the null default.
+  getSessionUserId?: () => string | null;
   createClientEventId?: () => string;
   now?: () => string;
 }>;
@@ -124,13 +126,13 @@ export function createQuickLogMutationOptions(
   dependencies: QuickLogMutationDependencies,
 ): QuickLogMutationOptions {
   const events = dependencies.events ?? createSupabaseEventLogRepository();
-  const getSessionUserId = dependencies.getSessionUserId ?? getDefaultSessionUserId;
+  const getSessionUserId = dependencies.getSessionUserId ?? (() => null);
   const createClientEventId = dependencies.createClientEventId ?? createDefaultClientEventId;
   const now = dependencies.now ?? (() => new Date().toISOString());
 
   return {
     onMutate: async (variables) => {
-      const actorId = await getSessionUserId();
+      const actorId = getSessionUserId();
 
       if (actorId === null) {
         throw new Error('Quick Log requires an authenticated session');
@@ -157,18 +159,45 @@ export function createQuickLogMutationOptions(
         insert.puppy_id,
       );
 
-      await cancelAffectedQueries(dependencies.queryClient, {
+      // Dispatch cancellation before the optimistic insert, then await it before durable enqueue/network.
+      // This keeps tap-to-visible cache writes immediate while preventing late refetch overwrites.
+      const cancelQueries = cancelAffectedQueries(dependencies.queryClient, {
         invalidationKeys,
         timelineRootKey,
       });
 
       const snapshots = snapshotCachedRows(dependencies.queryClient, timelineRootKey);
-      const queuedItem = await dependencies.queue.enqueue({
-        ...insert,
-        created_at: timestamp,
-      }, {
+      const optimisticRow = createOptimisticEventRow(insert, {
         now: timestamp,
+        localSyncState: 'pending_local',
+        localSyncCategory: null,
+        retryCount: 0,
       });
+
+      upsertCachedEventRow(dependencies.queryClient, {
+        timelineRootKey,
+        calendarDate: variables.todayDate,
+        row: optimisticRow,
+      });
+
+      let queuedItem: QuickLogStoredQueueItem;
+
+      try {
+        await cancelQueries;
+        queuedItem = await dependencies.queue.enqueue({
+          ...insert,
+          created_at: timestamp,
+        }, {
+          now: timestamp,
+        });
+      } catch (error) {
+        removeCachedEventRow(dependencies.queryClient, {
+          timelineRootKey,
+          clientEventId,
+        });
+
+        throw error;
+      }
       const context: QuickLogMutationContext = {
         clientEventId,
         insert,
@@ -178,14 +207,12 @@ export function createQuickLogMutationOptions(
         queuedItem,
       };
 
-      upsertCachedEventRow(dependencies.queryClient, {
+      updateCachedLocalSync(dependencies.queryClient, {
         timelineRootKey,
-        calendarDate: variables.todayDate,
-        row: createOptimisticEventRow(insert, {
-          now: timestamp,
-          localSyncState: queuedItem.state,
-          localSyncCategory: queuedItem.last_error_category,
-        }),
+        clientEventId,
+        state: queuedItem.state,
+        category: queuedItem.last_error_category,
+        retryCount: queuedItem.retry_count,
       });
       mutationContextByVariables.set(variables, context);
 
@@ -236,6 +263,7 @@ export function createQuickLogMutationOptions(
         clientEventId: context.clientEventId,
         state: failedItem.state,
         category: failedItem.last_error_category,
+        retryCount: failedItem.retry_count,
       });
     },
     onSuccess: async (data, _variables, context) => {
@@ -422,9 +450,11 @@ function upsertCachedEventRow(
       calendarDate: input.calendarDate,
       row: input.row,
     }));
-  const queryKeysToUpdate = compatibleQueryKeys.length > 0
-    ? compatibleQueryKeys
-    : [input.timelineRootKey];
+  const queryKeysToUpdate = [
+    input.timelineRootKey,
+    ...compatibleQueryKeys.filter((queryKey) =>
+      !isSameQueryKey(queryKey, input.timelineRootKey)),
+  ];
 
   for (const queryKey of queryKeysToUpdate) {
     queryClient.setQueryData<QuickLogCachedEventRow[]>(queryKey, (previousRows = []) => {
@@ -468,6 +498,7 @@ function updateCachedLocalSync(
     clientEventId: string;
     state: QuickLogQueueState;
     category: QuickLogQueueErrorCategory | null;
+    retryCount: number;
   }>,
 ): void {
   updateMatchingCachedRows(queryClient, input.timelineRootKey, (rows) =>
@@ -477,6 +508,7 @@ function updateCachedLocalSync(
         localSync: {
           state: input.state,
           category: input.category,
+          retryCount: input.retryCount,
         },
       }
       : row));
@@ -589,6 +621,7 @@ function createOptimisticEventRow(
     now: string;
     localSyncState: QuickLogQueueState;
     localSyncCategory: QuickLogQueueErrorCategory | null;
+    retryCount: number;
   }>,
 ): QuickLogCachedEventRow {
   const row = eventLogRecordSchema.parse({
@@ -605,6 +638,7 @@ function createOptimisticEventRow(
     localSync: {
       state: input.localSyncState,
       category: input.localSyncCategory,
+      retryCount: input.retryCount,
     },
   };
 }
@@ -629,6 +663,7 @@ function createCachedEventRowFromQueueItem(
     localSync: {
       state: item.state,
       category: item.last_error_category,
+      retryCount: item.retry_count,
     },
   };
 }
@@ -681,12 +716,6 @@ function retryAfterAt(now: string, retryAfterMs: number | null): string | null {
 
 function isSameQueryKey(left: QueryKey, right: QueryKey): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
-}
-
-async function getDefaultSessionUserId(): Promise<string | null> {
-  const sessionResult = await getSupabaseClient().auth.getSession();
-
-  return sessionResult.data.session?.user.id ?? null;
 }
 
 function createDefaultClientEventId(): string {
