@@ -1,7 +1,9 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 
+import type { QuickLogRecoverySurface } from '@/contracts/analytics';
 import {
   createQuickLogEventInsert,
+  type QuickLogEventInsert,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
 import {
@@ -10,13 +12,20 @@ import {
   type EventLogRecord,
 } from '@/contracts/supabase';
 import {
-  classifyQuickLogQueueError,
+  normalizeQuickLogQueueFailureForPersistence,
   type QuickLogQueueErrorCategory,
-  type QuickLogQueueFailureKind,
   type QuickLogQueueState,
   type QuickLogQueueStorage,
   type QuickLogStoredQueueItem,
 } from '@/lib/queue';
+import {
+  createAnalyticsClient,
+  type QuickLogAnalyticsClient,
+} from '@/lib/analytics';
+import {
+  createObservabilityReporter,
+  type ObservabilityReporter,
+} from '@/lib/observability';
 import {
   createSupabaseEventLogRepository,
   type SupabaseEventLogRepository,
@@ -37,14 +46,16 @@ export type QuickLogMutationVariables = Readonly<{
   puppyId: string;
   trackerId: QuickLogTrackerId;
   occurredAt: string;
+  recoverySurface?: QuickLogRecoverySurface;
   todayDate: string;
 }>;
 
 export type QuickLogMutationContext = Readonly<{
   clientEventId: string;
-  insert: EventLogInsert;
+  insert: QuickLogEventInsert;
   invalidationKeys: readonly QueryKey[];
   timelineRootKey: QueryKey;
+  recoverySurface?: QuickLogRecoverySurface;
   snapshots: readonly QuickLogCacheSnapshot[];
   queuedItem: QuickLogStoredQueueItem;
 }>;
@@ -90,6 +101,8 @@ type QuickLogMutationQueue = Pick<
 export type QuickLogMutationDependencies = Readonly<{
   queryClient: QueryClient;
   queue: QuickLogMutationQueue;
+  analytics?: QuickLogAnalyticsClient;
+  observability?: ObservabilityReporter;
   events?: Pick<SupabaseEventLogRepository, 'insertEvent' | 'tombstoneByClientEventId'>;
   // Optional only while production Quick Log is gated by the deferred active care context.
   // Production wiring must inject the synchronous session actor instead of using the null default.
@@ -106,26 +119,12 @@ const mutationContextByVariables = new WeakMap<
 >();
 const contextsSkippingAllInvalidation = new WeakSet<QuickLogMutationContext>();
 
-const queueFailureKinds = new Set<QuickLogQueueFailureKind>([
-  'network_unavailable',
-  'request_timeout',
-  'server_5xx',
-  'rate_limited',
-  'auth_refresh_in_progress',
-  'permission_denied',
-  'invalid_payload',
-  'missing_context',
-  'expired_context',
-  'server_validation_failed',
-  'unsupported_schema_version',
-  'corrupt_payload',
-  'unknown',
-]);
-
 export function createQuickLogMutationOptions(
   dependencies: QuickLogMutationDependencies,
 ): QuickLogMutationOptions {
   const events = dependencies.events ?? createSupabaseEventLogRepository();
+  const analytics = dependencies.analytics ?? createAnalyticsClient();
+  const observability = dependencies.observability ?? createObservabilityReporter();
   const getSessionUserId = dependencies.getSessionUserId ?? (() => null);
   const createClientEventId = dependencies.createClientEventId ?? createDefaultClientEventId;
   const now = dependencies.now ?? (() => new Date().toISOString());
@@ -203,6 +202,7 @@ export function createQuickLogMutationOptions(
         insert,
         invalidationKeys,
         timelineRootKey,
+        recoverySurface: variables.recoverySurface,
         snapshots,
         queuedItem,
       };
@@ -213,6 +213,13 @@ export function createQuickLogMutationOptions(
         state: queuedItem.state,
         category: queuedItem.last_error_category,
         retryCount: queuedItem.retry_count,
+      });
+      analytics.trackQuickLogEvent({
+        name: 'pending_quick_log_created',
+        properties: {
+          connection_state: 'unknown',
+          event_type: insert.event_type,
+        },
       });
       mutationContextByVariables.set(variables, context);
 
@@ -241,10 +248,9 @@ export function createQuickLogMutationOptions(
         return;
       }
 
-      const decision = classifyQuickLogQueueError({
-        kind: getQuickLogFailureKind(error),
+      const decision = normalizeQuickLogQueueFailureForPersistence({
+        error,
         retryCount: queueItem.retry_count,
-        retryAfterMs: getRetryAfterMs(error),
       });
       const timestamp = now();
       const failedItem = decision.decision === 'retryable'
@@ -264,6 +270,22 @@ export function createQuickLogMutationOptions(
         state: failedItem.state,
         category: failedItem.last_error_category,
         retryCount: failedItem.retry_count,
+      });
+      analytics.trackQuickLogEvent({
+        name: 'event_save_failed',
+        properties: {
+          connection_state: 'unknown',
+          error_category: decision.category,
+          event_type: context.insert.event_type,
+        },
+      });
+      observability.captureException(new Error('Quick Log operation failed'), {
+        area: 'quick_log',
+        errorCategory: decision.category,
+        operation: 'save_event',
+        tags: {
+          event_type: context.insert.event_type,
+        },
       });
     },
     onSuccess: async (data, _variables, context) => {
@@ -300,6 +322,27 @@ export function createQuickLogMutationOptions(
         row: {
           ...data,
           localSync: undefined,
+        },
+      });
+      const retryCountBucket = bucketRetryCount(resolution.item.retry_count);
+
+      if (retryCountBucket !== null && context.recoverySurface !== undefined) {
+        analytics.trackQuickLogEvent({
+          name: 'offline_or_failed_log_recovered',
+          properties: {
+            event_type: context.insert.event_type,
+            recovery_surface: context.recoverySurface,
+            retry_count_bucket: retryCountBucket,
+          },
+        });
+      }
+      analytics.trackQuickLogEvent({
+        name: 'event_logged',
+        properties: {
+          connection_state: 'unknown',
+          event_type: context.insert.event_type,
+          save_result: 'server_confirmed',
+          source_surface: 'quick_log_sheet',
         },
       });
       await dependencies.queue.remove(context.clientEventId);
@@ -686,32 +729,28 @@ function getRequiredMutationContext(
   return context;
 }
 
-function getQuickLogFailureKind(error: unknown): QuickLogQueueFailureKind {
-  if (
-    isRecord(error)
-    && typeof error.kind === 'string'
-    && queueFailureKinds.has(error.kind as QuickLogQueueFailureKind)
-  ) {
-    return error.kind as QuickLogQueueFailureKind;
-  }
-
-  return 'unknown';
-}
-
-function getRetryAfterMs(error: unknown): number | null {
-  if (!isRecord(error) || typeof error.retryAfterMs !== 'number') {
-    return null;
-  }
-
-  return error.retryAfterMs;
-}
-
 function retryAfterAt(now: string, retryAfterMs: number | null): string | null {
   if (retryAfterMs === null) {
     return null;
   }
 
   return new Date(Date.parse(now) + retryAfterMs).toISOString();
+}
+
+function bucketRetryCount(retryCount: number): 'one' | 'two' | 'three_or_more' | null {
+  if (retryCount <= 0) {
+    return null;
+  }
+
+  if (retryCount === 1) {
+    return 'one';
+  }
+
+  if (retryCount === 2) {
+    return 'two';
+  }
+
+  return 'three_or_more';
 }
 
 function isSameQueryKey(left: QueryKey, right: QueryKey): boolean {

@@ -85,6 +85,12 @@ export const quickLogTrackerDefinitions = {
   },
 } as const satisfies Record<QuickLogTrackerId, QuickLogTrackerDefinition>;
 
+export type QuickLogEventType =
+  (typeof quickLogTrackerDefinitions)[QuickLogTrackerId]['event_type'];
+export type QuickLogEventInsert = EventLogInsert & Readonly<{
+  event_type: QuickLogEventType;
+}>;
+
 export const selectedQuickLogTrackerIdsSchema = z.array(quickLogTrackerIdSchema)
   .min(0)
   .max(MAX_VISIBLE_QUICK_LOG_TRACKERS)
@@ -135,7 +141,7 @@ export const quickLogQueueItemSchema = minimalQuickLogQueueItemSchema
 
 export type QuickLogQueueItem = z.infer<typeof quickLogQueueItemSchema>;
 
-export function createQuickLogEventInsert(command: unknown): EventLogInsert {
+export function createQuickLogEventInsert(command: unknown): QuickLogEventInsert {
   const parsedCommand = quickLogCommandSchema.parse(command);
   const definition = quickLogTrackerDefinitions[parsedCommand.tracker_id];
 
@@ -150,9 +156,13 @@ export function createQuickLogEventInsert(command: unknown): EventLogInsert {
     payload: {
       ...definition.payload,
     },
-  });
+  }) as QuickLogEventInsert;
 }
 
 const quickLogEventTypeSet = new Set<EventType>(
   Object.values(quickLogTrackerDefinitions).map((definition) => definition.event_type),
 );
+
+export function isQuickLogEventType(eventType: EventType): eventType is QuickLogEventType {
+  return quickLogEventTypeSet.has(eventType);
+}

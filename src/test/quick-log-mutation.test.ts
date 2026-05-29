@@ -209,6 +209,178 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
+  it('emits privacy-safe telemetry for pending creation and failed saves', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const analytics = {
+      trackQuickLogEvent: jest.fn(),
+    };
+    const observability = {
+      captureException: jest.fn(),
+    };
+    const options = createQuickLogMutationOptions({
+      analytics,
+      observability,
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+    const variables = createMutationVariables();
+    const rawFailure = new Error('backend detail contained PuppyDisplayPrivate private routine text');
+    const context = await options.onMutate?.(variables);
+
+    await queue.markSending(clientEventId, {
+      now,
+    });
+    await options.onError?.(rawFailure, variables, context);
+
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'pending_quick_log_created',
+      properties: {
+        connection_state: 'unknown',
+        event_type: 'feeding',
+      },
+    });
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'event_save_failed',
+      properties: {
+        connection_state: 'unknown',
+        error_category: 'unknown',
+        event_type: 'feeding',
+      },
+    });
+    expect(observability.captureException).toHaveBeenCalledWith(expect.objectContaining({
+      message: 'Quick Log operation failed',
+    }), expect.objectContaining({
+      area: 'quick_log',
+      errorCategory: 'unknown',
+      operation: 'save_event',
+      tags: {
+        event_type: 'feeding',
+      },
+    }));
+    expect(queue.items.get(clientEventId)).toMatchObject({
+      last_error_category: 'unknown',
+      state: 'failed_retryable',
+    });
+    expect(JSON.stringify(analytics.trackQuickLogEvent.mock.calls)).not.toContain('PuppyDisplayPrivate');
+    expect(JSON.stringify(observability.captureException.mock.calls)).not.toContain('private routine text');
+  });
+
+  it('emits privacy-safe telemetry when the server confirms a log', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const analytics = {
+      trackQuickLogEvent: jest.fn(),
+    };
+    const options = createQuickLogMutationOptions({
+      analytics,
+      queryClient,
+      queue,
+      events: new FakeQuickLogEventsRepository(),
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+    const variables = createMutationVariables();
+    const context = await options.onMutate?.(variables);
+
+    await options.mutationFn?.(variables);
+    await options.onSuccess?.(serverRow(), variables, context);
+
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'event_logged',
+      properties: {
+        connection_state: 'unknown',
+        event_type: 'feeding',
+        save_result: 'server_confirmed',
+        source_surface: 'quick_log_sheet',
+      },
+    });
+  });
+
+  it('emits privacy-safe recovery telemetry with the caller-provided recovery surface', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const analytics = {
+      trackQuickLogEvent: jest.fn(),
+    };
+    const options = createQuickLogMutationOptions({
+      analytics,
+      queryClient,
+      queue,
+      events: new FakeQuickLogEventsRepository(),
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+    const variables = {
+      ...createMutationVariables(),
+      recoverySurface: 'app_foreground' as const,
+    };
+    const context = await options.onMutate?.(variables);
+    const queuedItem = await queue.getByClientEventId(clientEventId);
+
+    if (!queuedItem) {
+      throw new Error('Expected queued item before recovery telemetry test');
+    }
+
+    queue.items.set(clientEventId, {
+      ...queuedItem,
+      retry_count: 2,
+      state: 'sending',
+    });
+    await options.onSuccess?.(serverRow(), variables, context);
+
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'offline_or_failed_log_recovered',
+      properties: {
+        event_type: 'feeding',
+        recovery_surface: 'app_foreground',
+        retry_count_bucket: 'two',
+      },
+    });
+  });
+
+  it('skips recovery telemetry when retry confirmation has no trusted recovery surface', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const analytics = {
+      trackQuickLogEvent: jest.fn(),
+    };
+    const options = createQuickLogMutationOptions({
+      analytics,
+      queryClient,
+      queue,
+      events: new FakeQuickLogEventsRepository(),
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+    const variables = createMutationVariables();
+    const context = await options.onMutate?.(variables);
+    const queuedItem = await queue.getByClientEventId(clientEventId);
+
+    if (!queuedItem) {
+      throw new Error('Expected queued item before recovery telemetry test');
+    }
+
+    queue.items.set(clientEventId, {
+      ...queuedItem,
+      retry_count: 1,
+      state: 'sending',
+    });
+    await options.onSuccess?.(serverRow(), variables, context);
+
+    expect(analytics.trackQuickLogEvent).not.toHaveBeenCalledWith(expect.objectContaining({
+      name: 'offline_or_failed_log_recovered',
+    }));
+  });
+
   it('makes the optimistic row visible before durable enqueue finishes', async () => {
     const queryClient = createTestQueryClient();
     const queue = new FakeQuickLogQueueStorage();

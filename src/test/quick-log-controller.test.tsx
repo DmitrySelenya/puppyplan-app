@@ -38,7 +38,14 @@ function createSnackbarPort(): jest.Mocked<QuickLogSnackbarPort> {
   };
 }
 
+function createAnalyticsPort() {
+  return {
+    trackQuickLogEvent: jest.fn(),
+  };
+}
+
 function renderController(input: {
+  analytics?: ReturnType<typeof createAnalyticsPort>;
   care?: QuickLogCareContext | null;
   events?: readonly QuickLogMutationEvent[];
   lastLoggedAtMs?: number;
@@ -47,10 +54,14 @@ function renderController(input: {
 } = {}) {
   const mutation = input.mutation ?? createMutationPort();
   const snackbar = input.snackbar ?? createSnackbarPort();
-  const feedback = createQuickLogFeedbackController({ snackbar });
+  const feedback = createQuickLogFeedbackController({
+    analytics: input.analytics,
+    snackbar,
+  });
   const closeSheet = jest.fn();
   const hook = renderHook((props: { events: readonly QuickLogMutationEvent[] }) =>
     useQuickLogSheetController({
+      analytics: input.analytics,
       careContext: input.care === undefined ? careContext : input.care,
       closeSheet,
       feedback,
@@ -126,7 +137,13 @@ describe('useQuickLogSheetController', () => {
   });
 
   it('replaces the post-dismiss success snackbar when mutation failure arrives', () => {
-    const { result, result: hook, snackbar } = renderController();
+    const analytics = createAnalyticsPort();
+    const {
+      mutation,
+      result,
+      result: hook,
+      snackbar,
+    } = renderController({ analytics });
 
     result.current.logTracker('feeding_meal');
 
@@ -151,6 +168,22 @@ describe('useQuickLogSheetController', () => {
       secondaryActionKey: 'quick-log.failed.tertiary',
       tone: 'error',
     }));
+
+    const message = snackbar.replaceSnackbar.mock.calls[0]?.[0];
+
+    message?.onSecondaryAction?.();
+
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'pending_quick_log_deleted',
+      properties: {
+        event_type: 'feeding',
+        pending_age_bucket: 'unknown',
+      },
+    });
+
+    message?.onPrimaryAction?.();
+
+    expect(mutation.retry).toHaveBeenCalledWith(clientEventId, 'manual_retry');
   });
 
   it('records pending undo intent and applies it when mutation context arrives', () => {
@@ -183,8 +216,45 @@ describe('useQuickLogSheetController', () => {
     }));
   });
 
+  it('tracks Undo from the success snackbar when mutation context arrives', () => {
+    const analytics = createAnalyticsPort();
+    const { mutation, result, snackbar } = renderController({ analytics });
+
+    result.current.logTracker('feeding_meal');
+
+    const requestId = requireRequestId(result.current.lastRequestId);
+    const message = snackbar.showSnackbar.mock.calls[0]?.[0];
+
+    message?.onPrimaryAction?.();
+    expect(mutation.undo).not.toHaveBeenCalled();
+
+    result.rerender({
+      events: [{
+        clientEventId,
+        eventType: 'feeding',
+        requestId,
+        trackerId: 'feeding_meal',
+        type: 'started',
+      }],
+    });
+
+    expect(mutation.undo).toHaveBeenCalledWith(expect.objectContaining({
+      clientEventId,
+      eventType: 'feeding',
+    }));
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'undo_used',
+      properties: {
+        event_type: 'feeding',
+        seconds_after_log_bucket: 'unknown',
+      },
+    });
+  });
+
   it('keeps duplicate warning non-blocking when user chooses Add anyway', () => {
+    const analytics = createAnalyticsPort();
     const { mutation, result } = renderController({
+      analytics,
       lastLoggedAtMs: now.getTime() - 30_000,
     });
 
@@ -196,6 +266,13 @@ describe('useQuickLogSheetController', () => {
       trackerId: 'feeding_meal',
     }));
     expect(mutation.mutate).not.toHaveBeenCalled();
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'duplicate_warning_seen',
+      properties: {
+        event_type: 'feeding',
+        time_since_previous_bucket: 'under_60s',
+      },
+    });
 
     act(() => {
       result.current.confirmDuplicate();
@@ -203,6 +280,60 @@ describe('useQuickLogSheetController', () => {
 
     expect(mutation.mutate).toHaveBeenCalledTimes(1);
     expect(result.current.duplicateWarning).toBeNull();
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'duplicate_warning_confirmed',
+      properties: {
+        event_type: 'feeding',
+      },
+    });
+  });
+
+  it('tracks undo through stable analytics categories', () => {
+    const analytics = createAnalyticsPort();
+    const { result } = renderController({ analytics });
+
+    result.current.undoLocal({
+      clientEventId,
+      eventType: 'feeding',
+      householdId,
+      puppyId,
+      todayDate: '2026-05-27',
+    });
+
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'undo_used',
+      properties: {
+        event_type: 'feeding',
+        seconds_after_log_bucket: 'unknown',
+      },
+    });
+  });
+
+  it('tracks local-row delete through stable analytics categories', () => {
+    const analytics = createAnalyticsPort();
+    const { mutation, result } = renderController({ analytics });
+
+    result.current.deleteLocal({
+      clientEventId,
+      eventType: 'feeding',
+    });
+
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'pending_quick_log_deleted',
+      properties: {
+        event_type: 'feeding',
+        pending_age_bucket: 'unknown',
+      },
+    });
+    expect(mutation.deleteLocal).toHaveBeenCalledWith(clientEventId);
+  });
+
+  it('marks Quick Log sheet retry actions as manual retries', () => {
+    const { mutation, result } = renderController();
+
+    result.current.retry(clientEventId);
+
+    expect(mutation.retry).toHaveBeenCalledWith(clientEventId, 'manual_retry');
   });
 });
 

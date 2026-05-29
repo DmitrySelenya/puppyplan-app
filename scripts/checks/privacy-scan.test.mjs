@@ -108,4 +108,84 @@ describe('scanPrivacyText', () => {
       [],
     );
   });
+
+  it('rejects direct Sentry SDK calls in app code', () => {
+    const sentryCalls = [
+      `Sentry.${'captureException'}(error)`,
+      `Sentry.${'captureMessage'}('failed')`,
+      `Sentry.${'captureEvent'}({ message: 'failed' })`,
+      `Sentry.${'addBreadcrumb'}({ category: 'quick_log' })`,
+      `Sentry.${'setUser'}({ id: 'raw-user' })`,
+      `Sentry.${'setContext'}('quick_log', {})`,
+      `Sentry.${'withScope'}(() => undefined)`,
+    ].join('\n');
+    const violations = scanPrivacyText({
+      path: 'src/features/example.ts',
+      text: sentryCalls,
+    });
+
+    assert.equal(violations.length, 7);
+    assert.deepEqual(
+      violations.map((violation) => violation.kind),
+      Array.from({ length: 7 }, () => 'telemetry-sdk'),
+    );
+  });
+
+  it('rejects direct PostHog SDK calls in app code', () => {
+    const posthogCalls = [
+      `posthog.${'capture'}('quick_log_saved')`,
+      `posthog.${'identify'}('raw-user-id')`,
+      `posthog.${'alias'}('raw-user-id')`,
+      `posthog.${'register'}({ household_id: 'raw-household' })`,
+    ].join('\n');
+    const violations = scanPrivacyText({
+      path: 'src/features/example.ts',
+      text: posthogCalls,
+    });
+
+    assert.equal(violations.length, 4);
+    assert.deepEqual(
+      violations.map((violation) => violation.kind),
+      Array.from({ length: 4 }, () => 'telemetry-sdk'),
+    );
+  });
+
+  it('allows telemetry SDK calls only in wrapper and privacy-scan test files', () => {
+    assert.deepEqual(
+      scanPrivacyText({
+        path: 'src/lib/observability/sentry-adapter.ts',
+        text: `Sentry.${'captureException'}(error)`,
+      }),
+      [],
+    );
+    assert.deepEqual(
+      scanPrivacyText({
+        path: 'src/lib/analytics/posthog-adapter.ts',
+        text: `posthog.${'capture'}('quick_log_saved')`,
+      }),
+      [],
+    );
+    assert.deepEqual(
+      scanPrivacyText({
+        path: 'scripts/checks/privacy-scan.test.mjs',
+        text: `Sentry.${'captureMessage'}('fixture')\nposthog.${'identify'}('fixture')`,
+      }),
+      [],
+    );
+  });
+
+  it('rejects PostHog autocapture and session replay enablement in app code', () => {
+    const autocapture = `posthog.init('key', { auto${'capture'}: true })`;
+    const sessionReplay = `posthog.init('key', { session${'Replay'}: true })`;
+    const violations = scanPrivacyText({
+      path: 'src/lib/analytics/example.ts',
+      text: `${autocapture}\n${sessionReplay}`,
+    });
+
+    assert.equal(violations.length, 2);
+    assert.deepEqual(violations.map((violation) => violation.kind), [
+      'telemetry-sdk',
+      'telemetry-sdk',
+    ]);
+  });
 });

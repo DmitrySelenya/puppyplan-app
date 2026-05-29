@@ -52,6 +52,36 @@ const TOKEN_PATTERNS = [
 ];
 const SECRET_ASSIGNMENT_PATTERN =
   /\b(?:api[_-]?key|secret|password|service[_-]?role[_-]?key|token)\b\s*[:=]\s*["']?([A-Za-z0-9_./+=-]{16,})["']?/gi;
+const TELEMETRY_GUARDRAIL_PATH_PATTERN = /^(?:app|src|supabase\/functions)\//;
+const TELEMETRY_DIRECT_SDK_ALLOWED_PATHS = [
+  /^src\/lib\/observability\//,
+  /^src\/lib\/analytics\//,
+  /^scripts\/checks\/privacy-scan\.test\.mjs$/,
+];
+const FORBIDDEN_DIRECT_TELEMETRY_SDK_PATTERNS = [
+  {
+    pattern: /\bSentry\.[A-Za-z]\w*\s*\(/g,
+    reason: 'direct Sentry SDK call outside observability wrapper',
+  },
+  {
+    pattern: /\bposthog\.[A-Za-z]\w*\s*\(/gi,
+    reason: 'direct PostHog SDK call outside analytics wrapper',
+  },
+];
+const FORBIDDEN_TELEMETRY_CONFIG_PATTERNS = [
+  {
+    pattern: /\bposthog\.init\s*\([\s\S]*\bautocapture\s*:\s*true/gi,
+    reason: 'PostHog autocapture must stay disabled',
+  },
+  {
+    pattern: /\bsession_?replay\b\s*:\s*true/gi,
+    reason: 'session replay must stay disabled',
+  },
+  {
+    pattern: /\bsessionRecording\b\s*:\s*true/gi,
+    reason: 'session recording must stay disabled',
+  },
+];
 const FORBIDDEN_PRIVATE_FIXTURE_PATTERNS = [
   {
     pattern: /\b(?:Fido|Rex|Buddy|Fluffy|Olya|Luna|Bublik|Sarah|Sara)\b/g,
@@ -78,6 +108,11 @@ export function shouldScanPrivacyPath(path) {
   }
 
   return TEXT_EXTENSIONS.has(extname(path)) || path.startsWith('.github/');
+}
+
+function shouldScanDirectTelemetrySdkPath(path) {
+  return TELEMETRY_GUARDRAIL_PATH_PATTERN.test(path)
+    && !TELEMETRY_DIRECT_SDK_ALLOWED_PATHS.some((pattern) => pattern.test(path));
 }
 
 export function scanPrivacyText({ path, text }) {
@@ -124,6 +159,36 @@ export function scanPrivacyText({ path, text }) {
         path,
         value: match[0],
       });
+    }
+  }
+
+  if (shouldScanDirectTelemetrySdkPath(path)) {
+    for (const { pattern, reason } of FORBIDDEN_DIRECT_TELEMETRY_SDK_PATTERNS) {
+      pattern.lastIndex = 0;
+      for (const match of text.matchAll(pattern)) {
+        violations.push({
+          kind: 'telemetry-sdk',
+          line: lineForIndex(text, match.index),
+          message: reason,
+          path,
+          value: match[0],
+        });
+      }
+    }
+  }
+
+  if (TELEMETRY_GUARDRAIL_PATH_PATTERN.test(path)) {
+    for (const { pattern, reason } of FORBIDDEN_TELEMETRY_CONFIG_PATTERNS) {
+      pattern.lastIndex = 0;
+      for (const match of text.matchAll(pattern)) {
+        violations.push({
+          kind: 'telemetry-sdk',
+          line: lineForIndex(text, match.index),
+          message: reason,
+          path,
+          value: match[0],
+        });
+      }
     }
   }
 

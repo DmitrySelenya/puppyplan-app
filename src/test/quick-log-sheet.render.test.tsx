@@ -41,18 +41,30 @@ function createSnackbarPort(): jest.Mocked<QuickLogSnackbarPort> {
   };
 }
 
-function withQuickLogFeedback(element: ReactElement) {
+function createAnalyticsPort() {
+  return {
+    trackQuickLogEvent: jest.fn(),
+  };
+}
+
+function withQuickLogFeedback(
+  element: ReactElement,
+  input: Readonly<{ analytics?: ReturnType<typeof createAnalyticsPort> }> = {},
+) {
   return (
     <SnackbarProvider>
-      <QuickLogFeedbackProvider>
+      <QuickLogFeedbackProvider analytics={input.analytics}>
         {element}
       </QuickLogFeedbackProvider>
     </SnackbarProvider>
   );
 }
 
-function renderWithQuickLogFeedback(element: ReactElement) {
-  return render(withQuickLogFeedback(element));
+function renderWithQuickLogFeedback(
+  element: ReactElement,
+  input: Readonly<{ analytics?: ReturnType<typeof createAnalyticsPort> }> = {},
+) {
+  return render(withQuickLogFeedback(element, input));
 }
 
 describe('QuickLogShell', () => {
@@ -154,6 +166,48 @@ describe('QuickLogShell', () => {
     expect(mutation.mutate).toHaveBeenCalledTimes(1);
   });
 
+  it('uses provider analytics for controller-owned duplicate warning events', () => {
+    const analytics = createAnalyticsPort();
+    const mutation = createMutationPort();
+
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={mutation}
+        now={() => new Date('2026-05-27T08:30:00.000Z')}
+        recentEvent={{
+          occurredAtMs: Date.parse('2026-05-27T08:29:30.000Z'),
+          trackerId: 'feeding_meal',
+        }}
+        snackbar={createSnackbarPort()}
+      />,
+      { analytics },
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.feeding'),
+    }));
+
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'duplicate_warning_seen',
+      properties: {
+        event_type: 'feeding',
+        time_since_previous_bucket: 'under_60s',
+      },
+    });
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.duplicate-warning.primary-alt'),
+    }));
+
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'duplicate_warning_confirmed',
+      properties: {
+        event_type: 'feeding',
+      },
+    });
+  });
+
   it('wires failed local rows to controller retry and delete callbacks', () => {
     const mutation = createMutationPort();
     const clientEventId = 'evt_00000000-0000-4000-8000-000000000503';
@@ -182,7 +236,7 @@ describe('QuickLogShell', () => {
       name: i18n.t('quick-log.failed.tertiary'),
     }));
 
-    expect(mutation.retry).toHaveBeenCalledWith(clientEventId);
+    expect(mutation.retry).toHaveBeenCalledWith(clientEventId, 'manual_retry');
     expect(mutation.deleteLocal).toHaveBeenCalledWith(clientEventId);
   });
 

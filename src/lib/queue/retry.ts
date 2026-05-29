@@ -24,6 +24,22 @@ export type QuickLogQueueFailureKind =
   | 'corrupt_payload'
   | 'unknown';
 
+const quickLogQueueFailureKinds = new Set<QuickLogQueueFailureKind>([
+  'network_unavailable',
+  'request_timeout',
+  'server_5xx',
+  'rate_limited',
+  'auth_refresh_in_progress',
+  'permission_denied',
+  'invalid_payload',
+  'missing_context',
+  'expired_context',
+  'server_validation_failed',
+  'unsupported_schema_version',
+  'corrupt_payload',
+  'unknown',
+]);
+
 export type QuickLogQueueRetryDecision =
   | Readonly<{
     decision: 'retryable';
@@ -41,6 +57,16 @@ export type QuickLogManualRetry = Readonly<{
   bypasses_delay: true;
   item: QuickLogStoredQueueItem;
 }>;
+
+export function normalizeQuickLogQueueFailureForPersistence(
+  input: Readonly<{ error: unknown; retryCount: number }>,
+): QuickLogQueueRetryDecision {
+  return classifyQuickLogQueueError({
+    kind: getQuickLogQueueFailureKind(input.error),
+    retryCount: input.retryCount,
+    retryAfterMs: getQuickLogRetryAfterMs(input.error),
+  });
+}
 
 export function classifyQuickLogQueueError(
   input: Readonly<{
@@ -95,6 +121,30 @@ export function classifyQuickLogQueueError(
         retryAfterMs: null,
       };
   }
+}
+
+function getQuickLogQueueFailureKind(error: unknown): QuickLogQueueFailureKind {
+  if (
+    isRecord(error)
+    && typeof error.kind === 'string'
+    && quickLogQueueFailureKinds.has(error.kind as QuickLogQueueFailureKind)
+  ) {
+    return error.kind as QuickLogQueueFailureKind;
+  }
+
+  return 'unknown';
+}
+
+function getQuickLogRetryAfterMs(error: unknown): number | null {
+  if (!isRecord(error) || typeof error.retryAfterMs !== 'number') {
+    return null;
+  }
+
+  return error.retryAfterMs;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 export function getQuickLogRetryDelayMs(

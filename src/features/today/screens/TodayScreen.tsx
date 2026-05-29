@@ -7,6 +7,7 @@ import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
 import { useAppTranslation } from '@/lib/i18n';
 import {
+  createQuickLogDeleteRequest,
   createQuickLogEventView,
   createQuickLogUndoRequest,
   type QuickLogEventActionHandlers,
@@ -135,7 +136,7 @@ function TodayQuickLogEventRow({
               <Button
                 label={t('quick-log.failed.primary')}
                 onPress={() => {
-                  onRetry(event.clientEventId);
+                  onRetry(event.clientEventId, 'manual_retry');
                 }}
                 variant="secondary"
               />
@@ -144,7 +145,7 @@ function TodayQuickLogEventRow({
               <Button
                 label={t('quick-log.failed.tertiary')}
                 onPress={() => {
-                  onDelete(event.clientEventId);
+                  onDelete(createQuickLogDeleteRequest(event));
                 }}
                 variant="tertiary"
               />
@@ -166,7 +167,7 @@ function TodayQuickLogEventRow({
               <Button
                 label={t('quick-log.failed.tertiary')}
                 onPress={() => {
-                  onDelete(event.clientEventId);
+                  onDelete(createQuickLogDeleteRequest(event));
                 }}
                 variant="tertiary"
               />

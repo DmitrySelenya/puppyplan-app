@@ -6,7 +6,7 @@ import { StatusPill } from '@/design/primitives/StatusPill';
 import { useAppTranslation } from '@/lib/i18n';
 import type { QuickLogQueueState } from '@/lib/queue';
 
-import type { QuickLogUndoRequest } from '../useQuickLogSheetController';
+import type { QuickLogDeleteRequest, QuickLogUndoRequest } from '../useQuickLogSheetController';
 
 export type QuickLogLocalEventView = Readonly<{
   clientEventId: string;
@@ -20,7 +20,7 @@ export type QuickLogLocalEventView = Readonly<{
 
 export type QuickLogLocalEventsProps = Readonly<{
   events: readonly QuickLogLocalEventView[];
-  onDelete: (clientEventId: string) => void;
+  onDelete: (request: QuickLogDeleteRequest) => void;
   onRetry: (clientEventId: string) => void;
   onUndo: (request: QuickLogUndoRequest) => void;
 }>;
@@ -79,7 +79,10 @@ export function QuickLogLocalEvents({
                 <Button
                   label={t('quick-log.failed.tertiary')}
                   onPress={() => {
-                    onDelete(event.clientEventId);
+                    onDelete({
+                      clientEventId: event.clientEventId,
+                      eventType: event.eventType,
+                    });
                   }}
                   variant="tertiary"
                 />
@@ -102,7 +105,10 @@ export function QuickLogLocalEvents({
                 <Button
                   label={t('quick-log.failed.tertiary')}
                   onPress={() => {
-                    onDelete(event.clientEventId);
+                    onDelete({
+                      clientEventId: event.clientEventId,
+                      eventType: event.eventType,
+                    });
                   }}
                   variant="tertiary"
                 />

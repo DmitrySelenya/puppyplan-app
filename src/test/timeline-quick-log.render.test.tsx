@@ -156,7 +156,10 @@ describe('Timeline Quick Log state integration', () => {
       puppyId,
       todayDate,
     }));
-    expect(actions.onDelete).toHaveBeenCalledWith('evt_00000000-0000-4000-8000-000000001605');
+    expect(actions.onDelete).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000001605',
+      eventType: 'feeding',
+    });
   });
 
   it('renders failed rows with Retry/Delete and does not show raw technical errors', () => {
@@ -195,8 +198,14 @@ describe('Timeline Quick Log state integration', () => {
       name: i18n.t('quick-log.failed.tertiary'),
     }));
 
-    expect(actions.onRetry).toHaveBeenCalledWith('evt_00000000-0000-4000-8000-000000001605');
-    expect(actions.onDelete).toHaveBeenCalledWith('evt_00000000-0000-4000-8000-000000001605');
+    expect(actions.onRetry).toHaveBeenCalledWith(
+      'evt_00000000-0000-4000-8000-000000001605',
+      'manual_retry',
+    );
+    expect(actions.onDelete).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000001605',
+      eventType: 'feeding',
+    });
   });
 
   it('renders synced rows with a non-color-only status and no local-only actions', () => {
