@@ -112,4 +112,14 @@ describe('validatePullRequestMetadata', () => {
       title: 'Local cleanup',
     });
   });
+
+  it('keeps PR metadata validation wired to branch-derived autofill output', () => {
+    const workflow = readFileSync('.github/workflows/pr-metadata.yml', 'utf8');
+
+    assert.match(workflow, /id:\s*derive-metadata/u);
+    assert.match(workflow, /PR_HEAD_REF:\s*\$\{\{\s*github\.event\.pull_request\.head\.ref\s*\}\}/u);
+    assert.match(workflow, /pr-metadata-autofill\.mjs --github-output "\$GITHUB_OUTPUT"/u);
+    assert.match(workflow, /PR_BODY:\s*\$\{\{\s*steps\.derive-metadata\.outputs\.body\s*\}\}/u);
+    assert.match(workflow, /PR_TITLE:\s*\$\{\{\s*steps\.derive-metadata\.outputs\.title\s*\}\}/u);
+  });
 });

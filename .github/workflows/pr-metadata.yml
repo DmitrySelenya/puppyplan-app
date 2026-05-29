@@ -28,8 +28,16 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate PR title and body
+      - name: Derive PR metadata from branch
+        id: derive-metadata
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/checks/pr-metadata-autofill.mjs --github-output "$GITHUB_OUTPUT"
+
+      - name: Validate PR title and body
+        env:
+          PR_BODY: ${{ steps.derive-metadata.outputs.body }}
+          PR_TITLE: ${{ steps.derive-metadata.outputs.title }}
         run: node scripts/checks/pr-metadata.mjs
