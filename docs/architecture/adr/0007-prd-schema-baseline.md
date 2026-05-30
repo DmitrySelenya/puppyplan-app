@@ -8,7 +8,7 @@ One critique proposed splitting notes/private fields into extra tables and renam
 
 ## Decision
 
-Keep PRD section 6.10 names and shape for MVP. Do not split `event_log` into `event_notes`, do not split `health_record` into `health_record_notes`, and do not rename `share_link/share_scope`.
+Keep the PRD §6 "Модель Данных" names and shape for MVP. Do not split `event_log` into `event_notes`, do not split `health_record` into `health_record_notes`, and do not rename `share_link/share_scope`.
 
 ## Consequences
 

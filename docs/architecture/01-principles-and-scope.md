@@ -48,7 +48,7 @@ Deferred:
 - RLS and Edge Functions enforce access; UI guards are convenience only.
 - Every user-facing string comes through i18n.
 - No raw puppy names, notes, emails, provider names, photos, or tokens in analytics/logs.
-- Any schema change beyond PRD §6.10 requires ADR-0007 process and CTO approval.
+- Any schema change beyond the ADR-0007 schema baseline / PRD §6 "Модель Данных" requires ADR-0007 process and CTO approval.
 
 ## Duplicate Warning Rules
 

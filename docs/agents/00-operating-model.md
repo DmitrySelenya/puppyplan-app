@@ -55,7 +55,7 @@ Keep the Linear issue short but current: task contract, owner/status, active pha
 Agents may read, search, plan, draft, and make scoped local file edits for approved work. Ask before:
 
 - adding dependencies;
-- changing schema beyond PRD section 6.10;
+- changing schema beyond the ADR-0007 schema baseline / PRD §6 "Модель Данных";
 - changing architecture or external services;
 - touching production configuration;
 - running release, deploy, migration, store, git remote, or irreversible actions;
