@@ -2,6 +2,7 @@ import 'react-native-url-polyfill/auto';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+import { createSecureStoreAuthStorage } from './authStorage';
 import { readSupabasePublicConfig, type SupabasePublicConfig } from './env';
 
 let cachedClient: SupabaseClient | undefined;
@@ -13,7 +14,8 @@ export function createPuppyPlanSupabaseClient(
     auth: {
       autoRefreshToken: true,
       detectSessionInUrl: false,
-      persistSession: false,
+      persistSession: true,
+      storage: createSecureStoreAuthStorage(),
     },
   });
 }

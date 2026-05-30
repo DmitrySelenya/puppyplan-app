@@ -16,19 +16,28 @@ describe('Supabase client boundary', () => {
     createClient.mockReset();
   });
 
-  it('creates the client without persisting auth tokens outside SecureStore', () => {
+  it('creates the client with a persisted, auto-refreshed, SecureStore-backed session', () => {
     createClient.mockReturnValue({ kind: 'supabase-client' });
 
     const client = createPuppyPlanSupabaseClient(config);
 
     expect(client).toEqual({ kind: 'supabase-client' });
-    expect(createClient).toHaveBeenCalledWith(config.url, config.publishableKey, {
-      auth: {
-        autoRefreshToken: true,
-        detectSessionInUrl: false,
-        persistSession: false,
-      },
-      });
+    expect(createClient).toHaveBeenCalledWith(
+      config.url,
+      config.publishableKey,
+      expect.objectContaining({
+        auth: expect.objectContaining({
+          autoRefreshToken: true,
+          detectSessionInUrl: false,
+          persistSession: true,
+          storage: expect.objectContaining({
+            getItem: expect.any(Function),
+            setItem: expect.any(Function),
+            removeItem: expect.any(Function),
+          }),
+        }),
+      }),
+    );
   });
 
   it('caches the singleton client', () => {
