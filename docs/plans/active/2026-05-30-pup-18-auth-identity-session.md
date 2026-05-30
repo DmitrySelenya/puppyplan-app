@@ -381,7 +381,7 @@ SELECT results_eq(
   $$SELECT count(*)::int FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'public' AND p.proname = 'bootstrap_current_user'
       AND p.prosecdef
-      AND 'search_path=' = ANY(coalesce(p.proconfig, ARRAY[]::text[]))$$,
+      AND 'search_path=""' = ANY(coalesce(p.proconfig, ARRAY[]::text[]))$$,
   ARRAY[1],
   'bootstrap_current_user is SECURITY DEFINER with a pinned empty search_path'
 );
