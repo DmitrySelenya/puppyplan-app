@@ -2427,16 +2427,20 @@ Expected: `lint`, `typecheck`, and all `test` sub-suites (unit + node + scaffold
 
 2026-05-31 cleanup verification: PASS (`lint`, `typecheck`, Jest 31 suites / 230 tests, Node guardrail tests 102 pass, scaffold guardrails including privacy scan and text hygiene).
 
-- [ ] **Step 2: Run the remote Supabase gate (gated — needs approval + credentials)**
+- [x] **Step 2: Run the remote Supabase gate (gated — needs approval + credentials)**
 
 Request explicit approval to "run `npm run supabase:ci:remote` for PUP-18 (push dev migration + pgTAP + typegen)". After approval:
 
 Run: `npm run supabase:ci:remote`
 Expected: migration dry-run clean, lint clean, pgTAP (including `auth_bootstrap.sql`) passing, and `database.types.ts` regenerated.
 
-- [ ] **Step 3: Remove the bootstrap RPC typing cast once types are regenerated**
+2026-05-31 evidence: PASS on GitHub Actions `Remote Dev Schema Gate` for commit `ef152d2` after applying the PUP-18 remote dev migrations. Remote dry-run reported the database up to date, remote lint found no schema errors, `auth_bootstrap.sql` and `rls_baseline.sql` passed 91 pgTAP tests, and `database.types.ts` was regenerated/committed. Local `npm run supabase:ci:remote` remains blocked at pgTAP/typegen by the missing Docker daemon on this machine, so Docker-backed proof is the GitHub runner.
+
+- [x] **Step 3: Remove the bootstrap RPC typing cast once types are regenerated**
 
 After `database.types.ts` includes `bootstrap_current_user`, update `src/lib/auth/bootstrap.ts` to call `getSupabaseClient().rpc('bootstrap_current_user', {})` through the generated RPC type, dropping the not-yet-generated RPC name cast. Re-run `npm run typecheck` and `npm run test:unit -- src/test/auth-bootstrap.test.ts`. If the remote gate is blocked, leave the documented cast and record the follow-up in Linear.
+
+2026-05-31 evidence: `database.types.ts` includes `bootstrap_current_user`; `src/lib/auth/bootstrap.ts` no longer uses the temporary RPC name cast; `npm run typecheck` passed; `npm run test:unit -- src/test/auth-bootstrap.test.ts src/test/supabase-client.test.ts` passed.
 
 - [ ] **Step 4: Manual smoke (when a dev build exists)**
 
