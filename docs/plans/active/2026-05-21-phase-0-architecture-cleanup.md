@@ -9,13 +9,13 @@
 
 **Plan type:** Foundation roadmap. This is a dependency map, not a single agent-ready Linear task.
 
-**Current execution:** Split into scoped Linear issues. `PUP-2` completed the Expo scaffold prerequisite. `PUP-3` completed Supabase contracts/RLS and the hosted-dev remote gate. `PUP-4` completed CI/local verification gates. `PUP-5` completed the Quick Log MVP implementation plan. Quick Log implementation now starts with `PUP-11` and continues through the scoped `PUP-12` to `PUP-16` follow-ups; remaining release/privacy work should be split into follow-up issues when ready.
+**Current execution:** Split into scoped Linear issues. `PUP-2` completed the Expo scaffold prerequisite. `PUP-3` completed Supabase contracts/RLS and the hosted-dev remote gate. `PUP-4` completed CI/local verification gates. `PUP-5` completed the Quick Log MVP implementation plan. `PUP-11` through `PUP-16` completed the Quick Log implementation chain. Remaining release/privacy work and non-Quick Log invalidation work should be split into follow-up issues when ready.
 
 **Relationship to `PUP-7`:** `PUP-7` can run design handoff Phases 1-3 before this roadmap is complete. `PUP-7` Phases 4-7 require the Expo scaffold and package scripts from `PUP-2` before implementation.
 
 **Architecture:** This plan does not change product scope. It sharpens the existing Expo + Supabase + RLS + Edge Function architecture around privacy, sharing projections, Quick Log queue correctness, and release gates.
 
-**Linear:** N/A as a direct task. Execute through the scoped issues listed in Current execution.
+**Linear:** N/A as a direct task. Execute remaining foundation work through scoped issues listed from the current master roadmap.
 
 **Primary source docs:**
 - PRD: `puppyplan-prd-v2.md` - sharing, Quick Log, privacy, testing, release readiness.
@@ -176,14 +176,15 @@ This document is not the current `PUP-7` task. Treat it as the roadmap that expl
 
 ### Phase 3 - Client Queue And Query Enforcement
 
-**Execution owner:** `PUP-5` completed the implementation plan. `PUP-11` starts the Quick Log implementation with contracts/query keys, followed by `PUP-12` queue core, `PUP-13` mutation/cache lifecycle, `PUP-14` sheet UI, `PUP-15` Today/Timeline integration, and `PUP-16` privacy-safe analytics/observability.
+**Execution owner:** `PUP-5` completed the implementation plan. `PUP-11` through `PUP-16` completed the Quick Log implementation chain: contracts/query keys, queue core, mutation/cache lifecycle, sheet UI, Today/Timeline integration, and privacy-safe analytics/observability.
 
 **Checklist:**
 - [x] Create the Quick Log MVP implementation plan under `PUP-5`.
-- [ ] Add query key factory under `PUP-11`.
-- [ ] Add invalidation helpers for Quick Log, reminders, health, sharing, and membership mutations under `PUP-11` and later scoped issues.
-- [ ] Add Quick Log queue state machine tests under `PUP-12`.
-- [ ] Add retry/permanent error classification under `PUP-12`.
+- [x] Add query key factory under `PUP-11`.
+- [x] Add Quick Log invalidation helpers under `PUP-11`/`PUP-13`.
+- [ ] Add invalidation helpers for reminders, health, sharing, and membership mutations under later scoped issues.
+- [x] Add Quick Log queue state machine tests under `PUP-12`.
+- [x] Add retry/permanent error classification under `PUP-12`.
 - [x] Add Undo vs in-flight response regression test under `PUP-12`/`PUP-13`.
 
 **Acceptance criteria:**
@@ -231,3 +232,4 @@ Once scripts exist, prefer:
 - 2026-05-25: Synced roadmap with completed `PUP-2`, `PUP-3`, `PUP-4`, `PUP-8`, `PUP-9`, and `PUP-10` work on `main`; `PUP-6` was verified separately through PR #5 GitHub/Linear linkage evidence; `PUP-5` completed Quick Log MVP planning, while release/privacy hardening remains future scoped issue work.
 - 2026-05-25: Created and completed `docs/plans/completed/2026-05-25-quick-log-mvp.md` for `PUP-5`; Phase 3 implementation tasks remain open as scoped Linear coding issues `PUP-11` through `PUP-16`.
 - 2026-05-26: Closed the Phase 3 undo-vs-in-flight regression item under `PUP-13`; the mutation tests now cover late-success cleanup and failed tombstone handling.
+- 2026-05-29: Synced roadmap status after `PUP-16` merged; the Quick Log implementation chain is complete, while release/privacy and non-Quick Log invalidation follow-ups remain future scoped work.

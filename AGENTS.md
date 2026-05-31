@@ -60,7 +60,7 @@ Do not put PuppyPlan-specific process rules in global user skills such as `~/.co
 - Every user-facing string comes through i18n.
 - MVP ships with English, Russian, and Spanish locale files from the start; typed-key parity and string-budget checks must cover all three.
 - No raw puppy names, notes, emails, provider names, photos, or tokens in analytics/logs.
-- Any schema change beyond PRD section 6.10 requires ADR-0007 process and CTO approval.
+- Any schema change beyond the ADR-0007 schema baseline / PRD §6 "Модель Данных" requires ADR-0007 process and CTO approval.
 - OTA/EAS Update stays off in MVP.
 - Generated `ios/` and `android/` files are not edited directly.
 
@@ -233,7 +233,7 @@ Do not add a tracked `tools/mobile-e2e/` toolkit until the Expo app id, simulato
 
 **Always:** read relevant docs before modifying; keep changes scoped; run and report relevant verification.
 
-**Ask first:** new dependencies, schema changes beyond PRD section 6.10, architecture changes, new external services, production configuration, release actions, or destructive operations.
+**Ask first:** new dependencies, schema changes beyond the ADR-0007 schema baseline / PRD §6 "Модель Данных", architecture changes, new external services, production configuration, release actions, or destructive operations.
 
 **Never:** commit secrets, bypass TypeScript errors, use `any` / `as unknown as` / `ts-ignore` without ADR, put server state in Zustand, use raw Supabase in UI, use raw UI strings, edit generated native project files directly, or store private user content in analytics/logs.
 

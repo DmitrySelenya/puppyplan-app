@@ -43,7 +43,7 @@ Every migration PR must include:
 - pgTAP/RLS tests;
 - regenerated `database.types.ts`;
 - updated Zod contracts;
-- ADR if the change departs from PRD §6.10.
+- ADR if the change departs from the ADR-0007 schema baseline / PRD §6 "Модель Данных".
 
 ## RLS Helpers
 

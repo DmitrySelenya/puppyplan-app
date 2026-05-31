@@ -14,7 +14,7 @@
 ## Final Arbitration
 
 1. Use `docs/architecture/` multi-file documentation.
-2. Keep PRD §6.10 schema.
+2. Keep the ADR-0007 schema baseline / PRD §6 "Модель Данных" schema.
 3. Use Expo SQLite for Quick Log queue.
 4. Use `react-i18next`.
 5. Use `_dev/components` in MVP; Storybook later if justified.

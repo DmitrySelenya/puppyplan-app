@@ -5,9 +5,9 @@
 
 **Goal:** Add Quick Log-specific typed analytics and scrubbed observability coverage so product reliability signals are measurable without leaking private user, puppy, invite/share, media, note, provider, token, or raw backend-error data.
 
-**Status:** Active; implementation, deep-review follow-ups, and review-remediation follow-ups complete locally; verification passed.
+**Status:** Completed; merged via PR #16 and Linear `PUP-16` is Done.
 
-**Current phase:** Phase 4 - Verification And Handoff complete locally after review-remediation follow-ups; awaiting commit/push/PR approval.
+**Current phase:** Completed.
 
 **Architecture:** Analytics events are contracts in `src/contracts` and are emitted only through `src/lib/analytics`. Observability is reported only through `src/lib/observability` with scrubbed categories and no direct SDK calls from features. Quick Log queue persistence remains local-only and stores only stable error categories in `last_error_category`.
 

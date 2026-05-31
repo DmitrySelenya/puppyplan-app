@@ -2,7 +2,7 @@
 
 ## Schema Baseline
 
-Use PRD §6.10 as the source of truth. Do not introduce schema splits or renames without ADR-0007.
+Use the ADR-0007 schema baseline / PRD §6 "Модель Данных" as the source of truth. Do not introduce schema splits or renames without ADR-0007.
 
 MVP entities:
 
@@ -39,7 +39,7 @@ Reasons:
 - larger RLS surface;
 - more joins on hot Today/Timeline paths;
 - harder Quick Log idempotency;
-- conflicts with PRD §6.10;
+- conflicts with the ADR-0007 schema baseline / PRD §6 "Модель Данных";
 - privacy can be enforced with projections and RLS.
 
 ## Event Idempotency
