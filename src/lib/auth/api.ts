@@ -51,7 +51,11 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 }
 
 export async function signOut(): Promise<void> {
-  await getSupabaseClient().auth.signOut();
+  const { error } = await getSupabaseClient().auth.signOut();
+
+  if (error) {
+    throw new Error('auth_sign_out_failed');
+  }
 }
 
 export function subscribeToAuthChanges(handler: AuthChangeHandler): () => void {

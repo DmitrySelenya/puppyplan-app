@@ -58,24 +58,63 @@ export function AuthProvider({
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<SessionUser | null>(null);
   const bootstrappedUserIds = useRef(new Set<string>());
+  const applyUserSequence = useRef(0);
 
   useEffect(() => {
     let active = true;
 
     const applyUser = (nextUser: SessionUser | null) => {
-      if (!active) {
+      const sequence = applyUserSequence.current + 1;
+      applyUserSequence.current = sequence;
+      const isCurrent = () => active && applyUserSequence.current === sequence;
+
+      if (!isCurrent()) {
         return;
       }
 
-      setUser(nextUser);
-      setStatus(nextUser ? 'signedIn' : 'signedOut');
-
-      if (nextUser && !bootstrappedUserIds.current.has(nextUser.id)) {
-        bootstrappedUserIds.current.add(nextUser.id);
-        void deps.bootstrap().catch(() => {
-          bootstrappedUserIds.current.delete(nextUser.id);
-        });
+      if (!nextUser) {
+        setUser(null);
+        setStatus('signedOut');
+        return;
       }
+
+      if (bootstrappedUserIds.current.has(nextUser.id)) {
+        setUser(nextUser);
+        setStatus('signedIn');
+        return;
+      }
+
+      setUser(null);
+      setStatus('loading');
+
+      void deps
+        .bootstrap()
+        .then(() => {
+          if (!isCurrent()) {
+            return;
+          }
+
+          bootstrappedUserIds.current.add(nextUser.id);
+          setUser(nextUser);
+          setStatus('signedIn');
+        })
+        .catch(async () => {
+          if (!isCurrent()) {
+            return;
+          }
+
+          bootstrappedUserIds.current.delete(nextUser.id);
+          try {
+            await deps.signOut();
+          } catch {
+            // Bootstrap already failed; keep cleanup errors generic and local.
+          } finally {
+            if (isCurrent()) {
+              setUser(null);
+              setStatus('signedOut');
+            }
+          }
+        });
     };
 
     void deps

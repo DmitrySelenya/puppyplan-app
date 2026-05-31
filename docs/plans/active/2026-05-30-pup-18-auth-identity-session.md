@@ -8,9 +8,9 @@
 
 **Plan type:** Active task plan.
 
-**Current phase:** Phase 0 — Approvals and dependency gate.
+**Current phase:** Phase 7 — i18n copy and `TextField` primitive. Local phases 0-6 are implemented; the gated remote Supabase test/typegen step from Task 2.2 remains pending until explicitly approved with credentials.
 
-**Linear:** `PUP-18` — Auth/identity ADR, session persistence, account boundary (to be created after roadmap approval; see roadmap "Suggested Linear Split").
+**Linear:** `PUP-18` — Auth, identity, session persistence, and new-user bootstrap.
 
 **Goal:** A real Supabase Auth identity exists for every durable app session: a signed-out user signs in with an email one-time code, the session persists across app restarts and auto-refreshes, the router gates signed-out vs signed-in surfaces, a first-time user is bootstrapped into a household + owner membership, and the user can sign out.
 
@@ -95,23 +95,23 @@
 
 **Files:** none (process gate).
 
-- [ ] **Step 1: Ask the user for explicit approval**
+- [x] **Step 1: Ask the user for explicit approval**
 
 Per `AGENTS.md` ("Add dependencies only after explicit approval") request approval for exactly: add `expo-secure-store` (Expo SDK 55 compatible) to `dependencies`. State why: the roadmap auth/session invariant requires SecureStore-backed session persistence, and the current `src/lib/supabase/client.ts` uses `persistSession: false` as a deliberate placeholder until this adapter exists.
 
 Do not proceed to Task 0.2 until the user names the action as approved.
 
-- [ ] **Step 2: Install the approved dependency**
+- [x] **Step 2: Install the approved dependency**
 
 Run: `npx expo install expo-secure-store`
 Expected: `expo-secure-store` is added to `package.json` `dependencies` with an SDK-55-compatible version, and `package-lock.json` updates.
 
-- [ ] **Step 3: Verify install does not break the typecheck baseline**
+- [x] **Step 3: Verify install does not break the typecheck baseline**
 
 Run: `npm run typecheck`
 Expected: PASS (no new errors; no source references it yet).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add package.json package-lock.json
@@ -128,7 +128,7 @@ git commit -m "PUP-18 add expo-secure-store dependency for session persistence"
 - Create: `src/contracts/auth.ts`
 - Test: `src/test/auth-contracts.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/test/auth-contracts.test.ts
@@ -177,12 +177,12 @@ describe('auth contracts', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/auth-contracts.test.ts`
 Expected: FAIL — cannot find module `@/contracts/auth`.
 
-- [ ] **Step 3: Write the contract**
+- [x] **Step 3: Write the contract**
 
 ```ts
 // src/contracts/auth.ts
@@ -225,12 +225,12 @@ export const bootstrapResultSchema = z
 export type BootstrapResult = z.infer<typeof bootstrapResultSchema>;
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/auth-contracts.test.ts`
 Expected: PASS (5 tests).
 
-- [ ] **Step 5: Typecheck and commit**
+- [x] **Step 5: Typecheck and commit**
 
 Run: `npm run typecheck`
 Expected: PASS.
@@ -251,7 +251,7 @@ git commit -m "PUP-18 add auth contracts"
 **Files:**
 - Create: `supabase/migrations/20260530120000_auth_bootstrap_rpc.sql`
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 ```sql
 -- supabase/migrations/20260530120000_auth_bootstrap_rpc.sql
@@ -310,12 +310,12 @@ REVOKE ALL ON FUNCTION public.bootstrap_current_user(text) FROM anon, authentica
 GRANT EXECUTE ON FUNCTION public.bootstrap_current_user(text) TO authenticated;
 ```
 
-- [ ] **Step 2: Sanity-check SQL shape locally**
+- [x] **Step 2: Sanity-check SQL shape locally**
 
 Run: `node -e "const s=require('fs').readFileSync('supabase/migrations/20260530120000_auth_bootstrap_rpc.sql','utf8'); if(!/SECURITY DEFINER/.test(s)||!/SET search_path = ''/.test(s)||!/GRANT EXECUTE ON FUNCTION public.bootstrap_current_user\(text\) TO authenticated/.test(s)) {throw new Error('bootstrap migration missing required clauses')}; console.log('bootstrap migration shape ok')"`
 Expected: `bootstrap migration shape ok`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/20260530120000_auth_bootstrap_rpc.sql
@@ -327,7 +327,7 @@ git commit -m "PUP-18 add bootstrap_current_user RPC migration"
 **Files:**
 - Create: `supabase/tests/auth_bootstrap.sql`
 
-- [ ] **Step 1: Write the pgTAP test (self-contained file with its own plan)**
+- [x] **Step 1: Write the pgTAP test (self-contained file with its own plan)**
 
 ```sql
 -- supabase/tests/auth_bootstrap.sql
@@ -463,7 +463,7 @@ Expected: pgTAP reports the bootstrap file passing (9 of N tests added), lint cl
 
 If approval/credentials are unavailable, mark this step blocked in Linear and proceed with the rest of the plan; the migration + test files are still committed and reviewable.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/tests/auth_bootstrap.sql
@@ -480,7 +480,7 @@ git commit -m "PUP-18 add pgTAP coverage for bootstrap_current_user"
 - Create: `src/lib/supabase/authStorage.ts`
 - Test: `src/test/auth-storage.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/test/auth-storage.test.ts
@@ -521,12 +521,12 @@ describe('SecureStore auth storage adapter', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/auth-storage.test.ts`
 Expected: FAIL — cannot find module `@/lib/supabase/authStorage`.
 
-- [ ] **Step 3: Write the adapter**
+- [x] **Step 3: Write the adapter**
 
 ```ts
 // src/lib/supabase/authStorage.ts
@@ -574,12 +574,12 @@ export function createSecureStoreAuthStorage(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/auth-storage.test.ts`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/supabase/authStorage.ts src/test/auth-storage.test.ts
@@ -591,7 +591,7 @@ git commit -m "PUP-18 add SecureStore auth storage adapter"
 **Files:**
 - Modify: `src/test/setup.ts`
 
-- [ ] **Step 1: Add the mock at the top of the setup file**
+- [x] **Step 1: Add the mock at the top of the setup file**
 
 Add to `src/test/setup.ts` (after the existing `react-native-safe-area-context` mock):
 
@@ -603,12 +603,12 @@ jest.mock('expo-secure-store', () => ({
 }));
 ```
 
-- [ ] **Step 2: Run the full unit suite to confirm no regressions**
+- [x] **Step 2: Run the full unit suite to confirm no regressions**
 
 Run: `npm run test:unit`
 Expected: PASS (existing suites still green; new auth suites green).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/test/setup.ts
@@ -621,7 +621,7 @@ git commit -m "PUP-18 mock expo-secure-store in jest setup"
 - Modify: `src/lib/supabase/client.ts`
 - Modify: `src/test/supabase-client.test.ts`
 
-- [ ] **Step 1: Update the failing test to assert persistence + storage**
+- [x] **Step 1: Update the failing test to assert persistence + storage**
 
 Replace the first assertion test in `src/test/supabase-client.test.ts` with:
 
@@ -651,12 +651,12 @@ Replace the first assertion test in `src/test/supabase-client.test.ts` with:
   });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/supabase-client.test.ts`
 Expected: FAIL — current client uses `persistSession: false` and no `storage`.
 
-- [ ] **Step 3: Update the client**
+- [x] **Step 3: Update the client**
 
 ```ts
 // src/lib/supabase/client.ts
@@ -688,12 +688,12 @@ export function getSupabaseClient(): SupabaseClient {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/supabase-client.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/supabase/client.ts src/test/supabase-client.test.ts
@@ -712,7 +712,7 @@ git commit -m "PUP-18 persist and auto-refresh Supabase session via SecureStore"
 - Create: `src/lib/auth/api.ts`
 - Test: `src/test/auth-api.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/test/auth-api.test.ts
@@ -830,12 +830,12 @@ describe('auth api', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/auth-api.test.ts`
 Expected: FAIL — cannot find module `@/lib/auth/api`.
 
-- [ ] **Step 3: Implement the API**
+- [x] **Step 3: Implement the API**
 
 ```ts
 // src/lib/auth/api.ts
@@ -911,12 +911,12 @@ export function stopAutoRefresh(): void {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/auth-api.test.ts`
 Expected: PASS (9 tests).
 
-- [ ] **Step 5: Typecheck and commit**
+- [x] **Step 5: Typecheck and commit**
 
 Run: `npm run typecheck`
 Expected: PASS.
@@ -936,7 +936,7 @@ git commit -m "PUP-18 add provider-agnostic auth api wrappers"
 - Create: `src/lib/auth/bootstrap.ts`
 - Test: `src/test/auth-bootstrap.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/test/auth-bootstrap.test.ts
@@ -978,12 +978,12 @@ describe('ensureUserBootstrapped', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/auth-bootstrap.test.ts`
 Expected: FAIL — cannot find module `@/lib/auth/bootstrap`.
 
-- [ ] **Step 3: Implement bootstrap**
+- [x] **Step 3: Implement bootstrap**
 
 ```ts
 // src/lib/auth/bootstrap.ts
@@ -1020,12 +1020,12 @@ export async function ensureUserBootstrapped(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/auth-bootstrap.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Typecheck and commit**
+- [x] **Step 5: Typecheck and commit**
 
 Run: `npm run typecheck`
 Expected: PASS.
@@ -1039,13 +1039,15 @@ git commit -m "PUP-18 add new-user bootstrap client"
 
 ## Phase 6 — Auth Context (session state, bootstrap-on-sign-in, auto-refresh)
 
+> Cleanup amendment (2026-05-31): `AuthProvider` must not expose `signedIn` until `bootstrap_current_user` succeeds for that user. If bootstrap fails, the provider signs out through the generic auth API and returns to `signedOut` without surfacing backend details.
+
 ### Task 6.1: Implement `AuthProvider` + `useAuth`
 
 **Files:**
 - Create: `src/lib/auth/context.tsx`
 - Test: `src/test/auth-context.test.tsx`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // src/test/auth-context.test.tsx
@@ -1144,12 +1146,12 @@ describe('AuthProvider', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/auth-context.test.tsx`
 Expected: FAIL — cannot find module `@/lib/auth/context`.
 
-- [ ] **Step 3: Implement the context**
+- [x] **Step 3: Implement the context**
 
 ```tsx
 // src/lib/auth/context.tsx
@@ -1291,12 +1293,12 @@ export function useAuth(): AuthContextValue {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/auth-context.test.tsx`
-Expected: PASS (4 tests).
+Expected: PASS (6 tests after the 2026-05-31 bootstrap-failure regression coverage).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/auth/context.tsx src/test/auth-context.test.tsx
@@ -1308,7 +1310,7 @@ git commit -m "PUP-18 add AuthProvider session context with bootstrap and auto-r
 **Files:**
 - Create: `src/lib/auth/index.ts`
 
-- [ ] **Step 1: Write the barrel**
+- [x] **Step 1: Write the barrel**
 
 ```ts
 // src/lib/auth/index.ts
@@ -1332,7 +1334,7 @@ export {
 } from './context';
 ```
 
-- [ ] **Step 2: Typecheck and commit**
+- [x] **Step 2: Typecheck and commit**
 
 Run: `npm run typecheck`
 Expected: PASS.
@@ -1423,7 +1425,7 @@ Insert a top-level `"auth"` key (object). Use exactly these keys/values:
     "subtitle": "Los datos de tu cachorro son privados para tu hogar.",
     "email": {
       "label": "Correo",
-      "placeholder": "tu@ejemplo.com",
+      "placeholder": "you@example.com",
       "cta": "Enviar código"
     },
     "code": {
@@ -2321,7 +2323,7 @@ git commit -m "PUP-18 add sign-out control to More tab"
 **Files:**
 - Create: `docs/architecture/adr/0017-auth-identity-session.md`
 
-- [ ] **Step 1: Write the ADR**
+- [x] **Step 1: Write the ADR**
 
 ```markdown
 # ADR-0017: Auth, Identity, Session Persistence, And New-User Bootstrap
@@ -2362,7 +2364,7 @@ git commit -m "PUP-18 add ADR-0017 auth identity and session"
 - Modify: `docs/architecture/07-backend-topology.md`
 - Modify: `docs/architecture/08-data-model-and-rls.md`
 
-- [ ] **Step 1: Document the bootstrap RPC in `07-backend-topology.md`**
+- [x] **Step 1: Document the bootstrap RPC in `07-backend-topology.md`**
 
 Under the "Edge Functions" / privileged-mutation discussion, add a short subsection:
 
@@ -2372,7 +2374,7 @@ Under the "Edge Functions" / privileged-mutation discussion, add a short subsect
 Creating the first household and owner membership is denied to direct client writes by RLS. New-user bootstrap goes through `public.bootstrap_current_user(text)` (SECURITY DEFINER, pinned `search_path`, checks `auth.uid()`, idempotent). It is provider-agnostic — it works for any Supabase sign-in method. Session persistence uses an Expo SecureStore `SupportedStorage` adapter with `autoRefreshToken` driven by React Native `AppState`. See ADR-0017.
 ```
 
-- [ ] **Step 2: Add a bootstrap note to the RLS test list in `08-data-model-and-rls.md`**
+- [x] **Step 2: Add a bootstrap note to the RLS test list in `08-data-model-and-rls.md`**
 
 Add to the "RLS Negative Tests" P0 list:
 
@@ -2393,13 +2395,13 @@ git commit -m "PUP-18 document bootstrap RPC and session persistence in architec
 - Modify: `docs/plans/active/2026-05-29-full-prd-native-app-master-roadmap.md`
 - Modify: `docs/plans/README.md`
 
-- [ ] **Step 1: Mark Phase 1A in progress and record the auth decision in the roadmap**
+- [x] **Step 1: Mark Phase 1A in progress and record the auth decision in the roadmap**
 
 In `2026-05-29-full-prd-native-app-master-roadmap.md`:
 - In the **Phase 1A** section, note that `PUP-18` is the active slice implementing it, that the method is email OTP with a provider-agnostic seam for Apple/Google, and that persistence uses SecureStore.
 - Add a changelog entry dated `2026-05-30`: "Started Phase 1A as `PUP-18`: Supabase Auth email-OTP sign-in, SecureStore session persistence + AppState auto-refresh, route gating, and a SECURITY DEFINER `bootstrap_current_user` RPC; ADR-0017 accepted. Apple/Google reserved behind a provider-agnostic seam."
 
-- [ ] **Step 2: Add the plan to the index**
+- [x] **Step 2: Add the plan to the index**
 
 In `docs/plans/README.md`, add a row to the Current Plans table:
 
@@ -2422,10 +2424,12 @@ git commit -m "PUP-18 link auth slice into roadmap and plan index"
 
 **Files:** none.
 
-- [ ] **Step 1: Run the complete check suite**
+- [x] **Step 1: Run the complete check suite**
 
 Run: `npm run check`
 Expected: `lint`, `typecheck`, and all `test` sub-suites (unit + node + scaffold) PASS, including `check-i18n.mjs`, `check-navigation-contract.mjs`, `privacy-scan.mjs`, and `text-hygiene.mjs`.
+
+2026-05-31 cleanup verification: PASS (`lint`, `typecheck`, Jest 31 suites / 230 tests, Node guardrail tests 102 pass, scaffold guardrails including privacy scan and text hygiene).
 
 - [ ] **Step 2: Run the remote Supabase gate (gated — needs approval + credentials)**
 
@@ -2477,4 +2481,5 @@ REQUIRED SUB-SKILL: superpowers:finishing-a-development-branch to choose merge/P
 
 ## Changelog
 
+- 2026-05-31: Cleanup after failed subagent batch: local branch renamed to Linear `gitBranchName`, PUP-17 master roadmap restored into this branch to fix the plan source link, ADR-0017 added for the temporary bootstrap RPC cast, plan index updated with PUP-18, privacy-scanner email placeholder fixed, `signOut` now maps backend errors to `auth_sign_out_failed`, `AuthProvider` no longer exposes `signedIn` before bootstrap succeeds, and pgTAP user-isolation comparison no longer reads userA membership through userB RLS.
 - 2026-05-30: Created the PUP-18 plan from the master roadmap (Phase 1A). Decisions captured: email-OTP first with a provider-agnostic seam for Apple/Google, SecureStore session persistence with AppState auto-refresh, SECURITY DEFINER `bootstrap_current_user` RPC for new-user household/owner-membership creation, route gating, and sign-out (account deletion deferred). ADR target is ADR-0017.

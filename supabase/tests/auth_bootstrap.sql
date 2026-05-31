@@ -39,6 +39,13 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA tests TO anon, authenticated;
 
 SELECT tests.as_postgres();
 
+CREATE TABLE tests.bootstrap_seen_households (
+  user_label text PRIMARY KEY,
+  household_id uuid NOT NULL
+);
+
+GRANT SELECT, INSERT ON tests.bootstrap_seen_households TO authenticated;
+
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES
   ('00000000-0000-4000-8000-0000000a0001', 'authenticated', 'authenticated', 'bootstrap-a@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
@@ -78,6 +85,15 @@ SELECT results_eq(
   'bootstrap creates a household owned by the current user'
 );
 
+SELECT tests.as_postgres();
+INSERT INTO tests.bootstrap_seen_households (user_label, household_id)
+SELECT 'user_a', household_id
+FROM public.household_membership
+WHERE user_id = '00000000-0000-4000-8000-0000000a0001'
+LIMIT 1;
+
+SELECT tests.as_auth('00000000-0000-4000-8000-0000000a0001');
+
 -- Second call is idempotent: created = false, same household.
 SELECT is(
   (SELECT created FROM public.bootstrap_current_user(NULL)),
@@ -94,13 +110,21 @@ SELECT results_eq(
 
 -- A different user gets a distinct household.
 SELECT tests.as_auth('00000000-0000-4000-8000-0000000a0002');
+INSERT INTO tests.bootstrap_seen_households (user_label, household_id)
+SELECT 'user_b', household_id
+FROM public.bootstrap_current_user(NULL);
+
+SELECT tests.as_postgres();
 SELECT isnt(
-  (SELECT household_id FROM public.bootstrap_current_user(NULL)),
-  (SELECT household_id FROM public.household_membership
-     WHERE user_id = '00000000-0000-4000-8000-0000000a0001' LIMIT 1),
+  coalesce(
+    (SELECT household_id FROM tests.bootstrap_seen_households WHERE user_label = 'user_b'),
+    (SELECT household_id FROM tests.bootstrap_seen_households WHERE user_label = 'user_a')
+  ),
+  (SELECT household_id FROM tests.bootstrap_seen_households WHERE user_label = 'user_a'),
   'a second user is bootstrapped into a distinct household'
 );
 
+SELECT tests.as_auth('00000000-0000-4000-8000-0000000a0002');
 SELECT results_eq(
   $$SELECT count(*)::int FROM public.household_membership
     WHERE user_id = '00000000-0000-4000-8000-0000000a0002' AND role = 'owner'$$,

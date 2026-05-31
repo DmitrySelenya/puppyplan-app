@@ -91,6 +91,12 @@ describe('auth api', () => {
     expect(supaSignOut).toHaveBeenCalledTimes(1);
   });
 
+  it('throws a generic error when sign out fails', async () => {
+    mockAuth({ signOut: jest.fn(async () => ({ error: { message: 'backend details' } })) });
+
+    await expect(signOut()).rejects.toThrow('auth_sign_out_failed');
+  });
+
   it('subscribes to auth changes and forwards mapped users', () => {
     const unsubscribe = jest.fn();
     let captured: (event: string, session: unknown) => void = () => {};

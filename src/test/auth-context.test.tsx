@@ -31,15 +31,26 @@ function makeDeps(overrides: Partial<AuthProviderDependencies> = {}) {
   return { deps, emit: (next: SessionUser | null) => emit(next) };
 }
 
+function renderProvider(deps: AuthProviderDependencies) {
+  render(
+    <AuthProvider dependencies={deps}>
+      <Probe />
+    </AuthProvider>,
+  );
+}
+
+async function flushAuthEffects() {
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
 describe('AuthProvider', () => {
   it('resolves to signedOut when there is no restored session', async () => {
     const { deps } = makeDeps();
 
-    render(
-      <AuthProvider dependencies={deps}>
-        <Probe />
-      </AuthProvider>,
-    );
+    renderProvider(deps);
+    await flushAuthEffects();
 
     await waitFor(() => expect(screen.getByText('signedOut:none')).toBeTruthy());
   });
@@ -48,24 +59,50 @@ describe('AuthProvider', () => {
     const bootstrap = jest.fn(async () => ({ household_id: 'h', created: true }));
     const { deps } = makeDeps({ getCurrentUser: jest.fn(async () => user), bootstrap });
 
-    render(
-      <AuthProvider dependencies={deps}>
-        <Probe />
-      </AuthProvider>,
-    );
+    renderProvider(deps);
+    await flushAuthEffects();
 
     await waitFor(() => expect(screen.getByText(`signedIn:${userId}`)).toBeTruthy());
     expect(bootstrap).toHaveBeenCalledTimes(1);
   });
 
+  it('signs out instead of exposing signedIn when bootstrap fails', async () => {
+    const bootstrap = jest.fn(async () => {
+      throw new Error('auth_bootstrap_failed');
+    });
+    const signOut = jest.fn(async () => {});
+    const { deps } = makeDeps({ getCurrentUser: jest.fn(async () => user), bootstrap, signOut });
+
+    renderProvider(deps);
+    await flushAuthEffects();
+
+    await waitFor(() => expect(bootstrap).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByText('signedOut:none')).toBeTruthy());
+    expect(screen.queryByText(`signedIn:${userId}`)).toBeNull();
+  });
+
+  it('still clears local auth state when bootstrap cleanup sign-out fails', async () => {
+    const bootstrap = jest.fn(async () => {
+      throw new Error('auth_bootstrap_failed');
+    });
+    const signOut = jest.fn(async () => {
+      throw new Error('auth_sign_out_failed');
+    });
+    const { deps } = makeDeps({ getCurrentUser: jest.fn(async () => user), bootstrap, signOut });
+
+    renderProvider(deps);
+    await flushAuthEffects();
+
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByText('signedOut:none')).toBeTruthy());
+  });
+
   it('updates status when auth changes are emitted', async () => {
     const { deps, emit } = makeDeps();
 
-    render(
-      <AuthProvider dependencies={deps}>
-        <Probe />
-      </AuthProvider>,
-    );
+    renderProvider(deps);
+    await flushAuthEffects();
 
     await waitFor(() => expect(screen.getByText('signedOut:none')).toBeTruthy());
     await act(async () => {
@@ -74,7 +111,7 @@ describe('AuthProvider', () => {
     await waitFor(() => expect(screen.getByText(`signedIn:${userId}`)).toBeTruthy());
   });
 
-  it('starts auto-refresh on mount and wires AppState', () => {
+  it('starts auto-refresh on mount and wires AppState', async () => {
     const addEventListener = jest.fn(() => ({ remove: jest.fn() }));
     const startAutoRefresh = jest.fn();
     const { deps } = makeDeps({
@@ -82,11 +119,8 @@ describe('AuthProvider', () => {
       appState: { currentState: 'active', addEventListener },
     });
 
-    render(
-      <AuthProvider dependencies={deps}>
-        <Probe />
-      </AuthProvider>,
-    );
+    renderProvider(deps);
+    await flushAuthEffects();
 
     expect(startAutoRefresh).toHaveBeenCalled();
     expect(addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
