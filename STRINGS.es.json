@@ -56,7 +56,12 @@
       "back": "Usar otro correo"
     },
     "sign-out": {
-      "cta": "Cerrar sesión"
+      "cta": "Cerrar sesión",
+      "error": "No pudimos cerrar sesión. Revisa tu conexión e inténtalo otra vez."
+    },
+    "social": {
+      "apple": "Iniciar sesión con Apple",
+      "google": "Iniciar sesión con Google"
     },
     "errors": {
       "invalid-email": "Escribe un correo válido.",

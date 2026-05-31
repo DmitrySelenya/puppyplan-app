@@ -8,7 +8,7 @@
 
 **Plan type:** Active task plan.
 
-**Current phase:** Phase 8 — Sign-In Feature UI. Local phases 0-7 are implemented and committed; the gated remote Supabase test/typegen step from Task 2.2 remains pending until explicitly approved with credentials.
+**Current phase:** Phase 8/9 commit gate — sign-in UI, auth route gating, and More sign-out are implemented locally with tests; review follow-up fixed sign-out failure feedback, social-provider i18n labels, and More-owned sign-out component placement; commit/push remains pending exact user approval. The gated remote Supabase test/typegen step completed on 2026-05-31; manual smoke remains pending a runnable dev build/session.
 
 **Linear:** `PUP-18` — Auth, identity, session persistence, and new-user bootstrap.
 
@@ -67,8 +67,8 @@
 - Create `src/features/auth/hooks/useEmailOtpSignIn.ts` — TanStack mutations for request + verify.
 - Create `src/features/auth/components/SocialSignInButtons.tsx` — provider seam; renders enabled non-email methods (currently none).
 - Create `src/features/auth/screens/SignInScreen.tsx` — email entry → code entry, design primitives + i18n.
-- Create `src/features/auth/components/SignOutButton.tsx` — self-contained sign-out affordance.
 - Create `src/features/auth/index.ts` — barrel.
+- Create `src/features/more/components/SignOutButton.tsx` — More-owned sign-out affordance.
 
 **Routing**
 - Modify `app/_layout.tsx` — wrap routes in `AuthProvider`, register `sign-in` screen.
@@ -1592,7 +1592,7 @@ git commit -m "PUP-18 add TextField design primitive"
 - Create: `src/features/auth/hooks/useSignInFlow.ts`
 - Test: `src/test/sign-in-flow.test.ts`
 
-- [ ] **Step 1: Write the failing test (pure reducer)**
+- [x] **Step 1: Write the failing test (pure reducer)**
 
 ```ts
 // src/test/sign-in-flow.test.ts
@@ -1620,12 +1620,12 @@ describe('signInFlowReducer', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/sign-in-flow.test.ts`
 Expected: FAIL — cannot find module.
 
-- [ ] **Step 3: Implement the hook + reducer**
+- [x] **Step 3: Implement the hook + reducer**
 
 ```ts
 // src/features/auth/hooks/useSignInFlow.ts
@@ -1667,12 +1667,14 @@ export function useSignInFlow() {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/sign-in-flow.test.ts`
 Expected: PASS (3 tests).
 
 - [ ] **Step 5: Commit**
+
+2026-05-31 local evidence: RED failed on missing `@/features/auth/hooks/useSignInFlow`; GREEN passed in `npm run test:unit -- src/test/sign-in-flow.test.ts src/test/sign-in-screen.render.test.tsx src/test/auth-navigation.test.ts src/test/app-shell.render.test.tsx`. Commit pending exact approval.
 
 ```bash
 git add src/features/auth/hooks/useSignInFlow.ts src/test/sign-in-flow.test.ts
@@ -1684,7 +1686,7 @@ git commit -m "PUP-18 add sign-in flow step machine"
 **Files:**
 - Create: `src/features/auth/hooks/useEmailOtpSignIn.ts`
 
-- [ ] **Step 1: Implement the hook (covered by the screen integration test in Task 8.4)**
+- [x] **Step 1: Implement the hook (covered by the screen integration test in Task 8.4)**
 
 ```ts
 // src/features/auth/hooks/useEmailOtpSignIn.ts
@@ -1714,6 +1716,8 @@ export function useEmailOtpSignIn(): SignInActions {
 
 - [ ] **Step 2: Typecheck and commit**
 
+2026-05-31 local evidence: hook implemented and covered through the SignInScreenView integration test; `npm run typecheck` passed. Commit pending exact approval.
+
 Run: `npm run typecheck`
 Expected: PASS.
 
@@ -1727,7 +1731,7 @@ git commit -m "PUP-18 add email OTP mutations hook"
 **Files:**
 - Create: `src/features/auth/components/SocialSignInButtons.tsx`
 
-- [ ] **Step 1: Implement the seam (renders enabled non-email methods; currently none)**
+- [x] **Step 1: Implement the seam (renders enabled non-email methods; currently none)**
 
 ```tsx
 // src/features/auth/components/SocialSignInButtons.tsx
@@ -1766,6 +1770,8 @@ export function SocialSignInButtons({ onSelectMethod }: SocialSignInButtonsProps
 
 - [ ] **Step 2: Typecheck and commit**
 
+2026-05-31 local evidence: provider seam implemented; review follow-up added i18n label mapping for reserved Apple/Google providers and RED/GREEN coverage in `src/test/social-sign-in-buttons.render.test.tsx`; `npm run typecheck` passed. Commit pending exact approval.
+
 Run: `npm run typecheck`
 Expected: PASS.
 
@@ -1780,7 +1786,7 @@ git commit -m "PUP-18 add provider-seam social sign-in component"
 - Create: `src/features/auth/screens/SignInScreen.tsx`
 - Test: `src/test/sign-in-screen.render.test.tsx`
 
-- [ ] **Step 1: Write the failing integration test (against the injectable view)**
+- [x] **Step 1: Write the failing integration test (against the injectable view)**
 
 ```tsx
 // src/test/sign-in-screen.render.test.tsx
@@ -1852,12 +1858,12 @@ describe('SignInScreenView', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/sign-in-screen.render.test.tsx`
 Expected: FAIL — cannot find module.
 
-- [ ] **Step 3: Implement the screen (connected `SignInScreen` + injectable `SignInScreenView`)**
+- [x] **Step 3: Implement the screen (connected `SignInScreen` + injectable `SignInScreenView`)**
 
 ```tsx
 // src/features/auth/screens/SignInScreen.tsx
@@ -1978,64 +1984,43 @@ export function SignInScreenView({ actions }: SignInScreenViewProps) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/sign-in-screen.render.test.tsx`
 Expected: PASS (4 tests).
 
 - [ ] **Step 5: Commit**
 
+2026-05-31 local evidence: RED failed on missing `@/features/auth/screens/SignInScreen`; GREEN passed in targeted auth UI test package. Commit pending exact approval.
+
 ```bash
 git add src/features/auth/screens/SignInScreen.tsx src/test/sign-in-screen.render.test.tsx
 git commit -m "PUP-18 add email OTP sign-in screen"
 ```
 
-### Task 8.5: Add the sign-out button and feature barrel
+### Task 8.5: Add the auth feature barrel
 
 **Files:**
-- Create: `src/features/auth/components/SignOutButton.tsx`
 - Create: `src/features/auth/index.ts`
 
-- [ ] **Step 1: Implement the sign-out button**
-
-```tsx
-// src/features/auth/components/SignOutButton.tsx
-import { Button } from '@/design/primitives/Button';
-import { useAuth } from '@/lib/auth';
-import { useAppTranslation } from '@/lib/i18n';
-
-export function SignOutButton() {
-  const { t } = useAppTranslation();
-  const { signOut } = useAuth();
-
-  return (
-    <Button
-      label={t('auth.sign-out.cta')}
-      onPress={() => {
-        void signOut();
-      }}
-      variant="secondary"
-    />
-  );
-}
-```
-
-- [ ] **Step 2: Implement the feature barrel**
+- [x] **Step 1: Implement the feature barrel**
 
 ```ts
 // src/features/auth/index.ts
 export { SignInScreen } from './screens/SignInScreen';
-export { SignOutButton } from './components/SignOutButton';
+export { resolveAuthLanding, resolveAuthRouteRedirect, type AuthLanding } from './navigation';
 ```
 
-- [ ] **Step 3: Typecheck and commit**
+- [ ] **Step 2: Typecheck and commit**
+
+2026-05-31 local evidence: auth feature barrel implemented without exporting More-owned sign-out UI, preserving the no-cross-feature-import boundary; `npm run typecheck` passed. Commit pending exact approval.
 
 Run: `npm run typecheck`
 Expected: PASS.
 
 ```bash
-git add src/features/auth/components/SignOutButton.tsx src/features/auth/index.ts
-git commit -m "PUP-18 add sign-out button and auth feature barrel"
+git add src/features/auth/index.ts
+git commit -m "PUP-18 add auth feature barrel"
 ```
 
 ---
@@ -2048,7 +2033,7 @@ git commit -m "PUP-18 add sign-out button and auth feature barrel"
 - Create: `src/features/auth/navigation.ts`
 - Test: `src/test/auth-navigation.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // src/test/auth-navigation.test.ts
@@ -2069,12 +2054,12 @@ describe('resolveAuthLanding', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/auth-navigation.test.ts`
 Expected: FAIL — cannot find module.
 
-- [ ] **Step 3: Implement the resolver**
+- [x] **Step 3: Implement the resolver**
 
 ```ts
 // src/features/auth/navigation.ts
@@ -2095,12 +2080,14 @@ export function resolveAuthLanding(status: AuthStatus): AuthLanding | null {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/auth-navigation.test.ts`
 Expected: PASS (3 tests).
 
 - [ ] **Step 5: Export from the feature barrel and commit**
+
+2026-05-31 local evidence: added both launch resolver and route-level redirect resolver so already-open protected tabs/modals redirect after sign-out; RED failed on missing `@/features/auth/navigation`; GREEN passed in `src/test/auth-navigation.test.ts`. Barrel export done; commit pending exact approval.
 
 Add to `src/features/auth/index.ts`:
 
@@ -2120,7 +2107,7 @@ git commit -m "PUP-18 add pure auth landing resolver"
 - Create: `app/sign-in.tsx`
 - Modify: `app/index.tsx`
 
-- [ ] **Step 1: Wrap routes in `AuthProvider` and register the sign-in screen**
+- [x] **Step 1: Wrap routes in `AuthProvider` and register the sign-in screen**
 
 ```tsx
 // app/_layout.tsx
@@ -2157,7 +2144,7 @@ export default function RootLayout() {
 }
 ```
 
-- [ ] **Step 2: Add the sign-in route**
+- [x] **Step 2: Add the sign-in route**
 
 ```tsx
 // app/sign-in.tsx
@@ -2177,7 +2164,7 @@ export default function SignInRoute() {
 }
 ```
 
-- [ ] **Step 3: Gate the index route by auth status**
+- [x] **Step 3: Gate the index route by auth status**
 
 ```tsx
 // app/index.tsx
@@ -2198,12 +2185,14 @@ export default function IndexRoute() {
 }
 ```
 
-- [ ] **Step 4: Verify the navigation + scaffold guardrails still pass**
+- [x] **Step 4: Verify the navigation + scaffold guardrails still pass**
 
 Run: `node scripts/checks/check-navigation-contract.mjs && node scripts/checks/check-scaffold-guardrails.mjs`
 Expected: both pass (no `@/lib/supabase`, `@supabase/supabase-js`, `createClient(`, or `console.*` in `app/`; required route files still present).
 
 - [ ] **Step 5: Typecheck and commit**
+
+2026-05-31 local evidence: `AuthProvider` is wired in `app/_layout.tsx`, `/sign-in` route added, `app/index.tsx` gates launch, and an app-level auth route gate redirects signed-out users away from protected tabs/modals. `node scripts/checks/check-navigation-contract.mjs && node scripts/checks/check-scaffold-guardrails.mjs` passed; `npm run typecheck` passed after Expo regenerated `.expo/types/router.d.ts` with `/sign-in`. Commit pending exact approval.
 
 Run: `npm run typecheck`
 Expected: PASS (Expo Router typed routes recognize `/sign-in`).
@@ -2216,10 +2205,12 @@ git commit -m "PUP-18 gate routes by auth status and add sign-in route"
 ### Task 9.3: Add sign-out to the More tab
 
 **Files:**
+- Create: `src/features/more/components/SignOutButton.tsx`
 - Modify: `src/features/more/screens/MoreScreen.tsx`
 - Modify: `src/test/app-shell.render.test.tsx`
+- Test: `src/test/sign-out-button.render.test.tsx`
 
-- [ ] **Step 1: Update the More-screen render test to provide an AuthProvider and assert the sign-out control**
+- [x] **Step 1: Update the More-screen render test to provide an AuthProvider and assert the sign-out control**
 
 In `src/test/app-shell.render.test.tsx`, add the import:
 
@@ -2262,20 +2253,21 @@ Replace the existing "renders the More shell with localized support copy" test b
   });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/app-shell.render.test.tsx`
 Expected: FAIL — `auth.sign-out.cta` not yet rendered by `MoreScreen`.
 
-- [ ] **Step 3: Render the sign-out button in the More screen**
+- [x] **Step 3: Render the sign-out button in the More screen**
 
 ```tsx
 // src/features/more/screens/MoreScreen.tsx
 import { AppText } from '@/design/primitives/AppText';
 import { ListRow } from '@/design/primitives/ListRow';
 import { Screen } from '@/design/primitives/Screen';
-import { SignOutButton } from '@/features/auth';
 import { useAppTranslation } from '@/lib/i18n';
+
+import { SignOutButton } from '../components/SignOutButton';
 
 export type MoreScreenProps = Readonly<{
   openTimeline: () => void;
@@ -2298,15 +2290,17 @@ export function MoreScreen({ openTimeline }: MoreScreenProps) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/app-shell.render.test.tsx`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
+2026-05-31 local evidence: RED failed because `auth.sign-out.cta` was absent from More; GREEN passed after rendering `SignOutButton`. Review follow-up moved `SignOutButton` under `src/features/more/components` so More does not import from the auth feature. Commit pending exact approval.
+
 ```bash
-git add src/features/more/screens/MoreScreen.tsx src/test/app-shell.render.test.tsx
+git add src/features/more/components/SignOutButton.tsx src/features/more/screens/MoreScreen.tsx src/test/app-shell.render.test.tsx src/test/sign-out-button.render.test.tsx
 git commit -m "PUP-18 add sign-out control to More tab"
 ```
 
@@ -2427,6 +2421,8 @@ Expected: `lint`, `typecheck`, and all `test` sub-suites (unit + node + scaffold
 
 2026-05-31 cleanup verification: PASS (`lint`, `typecheck`, Jest 31 suites / 230 tests, Node guardrail tests 102 pass, scaffold guardrails including privacy scan and text hygiene).
 
+2026-05-31 Phase 8/9 local verification: PASS (`npm run check`: lint, typecheck, Jest 37 suites / 249 tests, Node guardrail tests 102 pass, navigation contract, shell i18n, i18n parity/budgets, scaffold guardrails, design tokens, privacy scan, and text hygiene).
+
 - [x] **Step 2: Run the remote Supabase gate (gated — needs approval + credentials)**
 
 Request explicit approval to "run `npm run supabase:ci:remote` for PUP-18 (push dev migration + pgTAP + typegen)". After approval:
@@ -2482,6 +2478,8 @@ REQUIRED SUB-SKILL: superpowers:finishing-a-development-branch to choose merge/P
 ## Changelog
 
 - 2026-05-31: Applied the PUP-18 bootstrap RPC migration to remote dev, then added a follow-up RPC grant-hardening migration because EXECUTE remained available through `PUBLIC`; future fresh databases get the same hardening in the original migration.
+- 2026-05-31: Addressed review follow-up on uncommitted Phase 8/9 changes: `SignOutButton` now catches sign-out failures and shows localized snackbar feedback; `SocialSignInButtons` maps reserved Apple/Google methods through i18n keys; More owns its sign-out component to avoid a cross-feature import from auth; RED/GREEN coverage added for both; `npm run check` passed. Routing double-redirect and index loading blank-frame notes remain accepted manual-smoke risks until a runnable dev build/session is available.
+- 2026-05-31: Implemented Phase 8/9 locally without committing: email OTP sign-in UI, feature auth barrel, route launch resolver, app-level auth route gate, `/sign-in` route, and More sign-out control. Targeted RED/GREEN auth UI/navigation tests, typecheck, navigation contract, and scaffold guardrails pass; commit/push remains pending exact approval.
 - 2026-05-31: Cleanup after failed subagent batch: local branch renamed to Linear `gitBranchName`, PUP-17 master roadmap restored into this branch to fix the plan source link, ADR-0017 added for the temporary bootstrap RPC cast, plan index updated with PUP-18, privacy-scanner email placeholder fixed, `signOut` now maps backend errors to `auth_sign_out_failed`, `AuthProvider` no longer exposes `signedIn` before bootstrap succeeds, and pgTAP user-isolation comparison no longer reads userA membership through userB RLS.
 - 2026-05-31: Completed Phase 7 after preflight cleanup commit: added `auth` EN/RU/ES locale copy and the `TextField` primitive with RED/GREEN render coverage; committed as `PUP-18 add auth i18n copy and TextField primitive`.
 - 2026-05-30: Created the PUP-18 plan from the master roadmap (Phase 1A). Decisions captured: email-OTP first with a provider-agnostic seam for Apple/Google, SecureStore session persistence with AppState auto-refresh, SECURITY DEFINER `bootstrap_current_user` RPC for new-user household/owner-membership creation, route gating, and sign-out (account deletion deferred). ADR target is ADR-0017.

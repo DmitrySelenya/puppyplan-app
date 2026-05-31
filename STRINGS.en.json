@@ -57,7 +57,12 @@
       "back": "Use a different email"
     },
     "sign-out": {
-      "cta": "Sign out"
+      "cta": "Sign out",
+      "error": "We couldn't sign you out. Check your connection and try again."
+    },
+    "social": {
+      "apple": "Sign in with Apple",
+      "google": "Sign in with Google"
     },
     "errors": {
       "invalid-email": "Enter a valid email address.",
