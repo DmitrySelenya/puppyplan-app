@@ -2481,6 +2481,7 @@ REQUIRED SUB-SKILL: superpowers:finishing-a-development-branch to choose merge/P
 
 ## Changelog
 
+- 2026-05-31: Applied the PUP-18 bootstrap RPC migration to remote dev, then added a follow-up RPC grant-hardening migration because EXECUTE remained available through `PUBLIC`; future fresh databases get the same hardening in the original migration.
 - 2026-05-31: Cleanup after failed subagent batch: local branch renamed to Linear `gitBranchName`, PUP-17 master roadmap restored into this branch to fix the plan source link, ADR-0017 added for the temporary bootstrap RPC cast, plan index updated with PUP-18, privacy-scanner email placeholder fixed, `signOut` now maps backend errors to `auth_sign_out_failed`, `AuthProvider` no longer exposes `signedIn` before bootstrap succeeds, and pgTAP user-isolation comparison no longer reads userA membership through userB RLS.
 - 2026-05-31: Completed Phase 7 after preflight cleanup commit: added `auth` EN/RU/ES locale copy and the `TextField` primitive with RED/GREEN render coverage; committed as `PUP-18 add auth i18n copy and TextField primitive`.
 - 2026-05-30: Created the PUP-18 plan from the master roadmap (Phase 1A). Decisions captured: email-OTP first with a provider-agnostic seam for Apple/Google, SecureStore session persistence with AppState auto-refresh, SECURITY DEFINER `bootstrap_current_user` RPC for new-user household/owner-membership creation, route gating, and sign-out (account deletion deferred). ADR target is ADR-0017.
