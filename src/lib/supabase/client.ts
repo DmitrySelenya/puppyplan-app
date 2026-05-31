@@ -2,15 +2,17 @@ import 'react-native-url-polyfill/auto';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+import type { Database } from '@/contracts/supabase';
+
 import { createSecureStoreAuthStorage } from './authStorage';
 import { readSupabasePublicConfig, type SupabasePublicConfig } from './env';
 
-let cachedClient: SupabaseClient | undefined;
+let cachedClient: SupabaseClient<Database> | undefined;
 
 export function createPuppyPlanSupabaseClient(
   config: SupabasePublicConfig = readSupabasePublicConfig(),
-): SupabaseClient {
-  return createClient(config.url, config.publishableKey, {
+): SupabaseClient<Database> {
+  return createClient<Database>(config.url, config.publishableKey, {
     auth: {
       autoRefreshToken: true,
       detectSessionInUrl: false,
@@ -20,7 +22,7 @@ export function createPuppyPlanSupabaseClient(
   });
 }
 
-export function getSupabaseClient(): SupabaseClient {
+export function getSupabaseClient(): SupabaseClient<Database> {
   cachedClient ??= createPuppyPlanSupabaseClient();
   return cachedClient;
 }

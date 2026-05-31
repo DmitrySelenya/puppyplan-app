@@ -306,6 +306,7 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.bootstrap_current_user(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.bootstrap_current_user(text) FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.bootstrap_current_user(text) TO authenticated;
 ```
@@ -945,7 +946,7 @@ import { ensureUserBootstrapped } from '@/lib/auth/bootstrap';
 const householdId = '00000000-0000-4000-8000-000000000201';
 
 describe('ensureUserBootstrapped', () => {
-  it('calls the bootstrap RPC with a null display name and parses the row', async () => {
+  it('calls the bootstrap RPC with the default display name and parses the row', async () => {
     const rpc = jest.fn(async () => ({
       data: [{ household_id: householdId, created: true }],
       error: null,
@@ -955,7 +956,7 @@ describe('ensureUserBootstrapped', () => {
       household_id: householdId,
       created: true,
     });
-    expect(rpc).toHaveBeenCalledWith({ p_display_name: null });
+    expect(rpc).toHaveBeenCalledWith({});
   });
 
   it('accepts a single-object RPC result as well as a row array', async () => {
@@ -991,16 +992,11 @@ import { bootstrapResultSchema, type BootstrapResult } from '@/contracts/auth';
 import { getSupabaseClient } from '@/lib/supabase';
 
 export type BootstrapRpc = (
-  args: Readonly<{ p_display_name: string | null }>,
+  args: Readonly<{ p_display_name?: string }>,
 ) => PromiseLike<{ data: unknown; error: unknown }>;
 
 function defaultBootstrapRpc(): BootstrapRpc {
-  // ADR-0017: database.types.ts will type this RPC once the bootstrap migration
-  // is approved and pushed. Until then the rpc name is reached through this one
-  // documented narrow boundary cast. Remove the cast after `npm run db:types`.
-  const client = getSupabaseClient() as unknown as {
-    rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }>;
-  };
+  const client = getSupabaseClient();
 
   return (args) => client.rpc('bootstrap_current_user', { ...args });
 }
@@ -1008,7 +1004,7 @@ function defaultBootstrapRpc(): BootstrapRpc {
 export async function ensureUserBootstrapped(
   rpc: BootstrapRpc = defaultBootstrapRpc(),
 ): Promise<BootstrapResult> {
-  const { data, error } = await rpc({ p_display_name: null });
+  const { data, error } = await rpc({});
 
   if (error) {
     throw new Error('auth_bootstrap_failed');
@@ -2440,7 +2436,7 @@ Expected: migration dry-run clean, lint clean, pgTAP (including `auth_bootstrap.
 
 - [ ] **Step 3: Remove the bootstrap RPC typing cast once types are regenerated**
 
-After `database.types.ts` includes `bootstrap_current_user`, update `src/lib/auth/bootstrap.ts` to call `getSupabaseClient().rpc('bootstrap_current_user', { p_display_name: null })` directly (typed), dropping the `as unknown as` cast. Re-run `npm run typecheck` and `npm run test:unit -- src/test/auth-bootstrap.test.ts`. If the remote gate is blocked, leave the documented cast and record the follow-up in Linear.
+After `database.types.ts` includes `bootstrap_current_user`, update `src/lib/auth/bootstrap.ts` to call `getSupabaseClient().rpc('bootstrap_current_user', {})` through the generated RPC type, dropping the not-yet-generated RPC name cast. Re-run `npm run typecheck` and `npm run test:unit -- src/test/auth-bootstrap.test.ts`. If the remote gate is blocked, leave the documented cast and record the follow-up in Linear.
 
 - [ ] **Step 4: Manual smoke (when a dev build exists)**
 

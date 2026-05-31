@@ -4,7 +4,7 @@ import { ensureUserBootstrapped } from '@/lib/auth/bootstrap';
 const householdId = '00000000-0000-4000-8000-000000000201';
 
 describe('ensureUserBootstrapped', () => {
-  it('calls the bootstrap RPC with a null display name and parses the row', async () => {
+  it('calls the bootstrap RPC with the default display name and parses the row', async () => {
     const rpc = jest.fn(async () => ({
       data: [{ household_id: householdId, created: true }],
       error: null,
@@ -14,7 +14,7 @@ describe('ensureUserBootstrapped', () => {
       household_id: householdId,
       created: true,
     });
-    expect(rpc).toHaveBeenCalledWith({ p_display_name: null });
+    expect(rpc).toHaveBeenCalledWith({});
   });
 
   it('accepts a single-object RPC result as well as a row array', async () => {
