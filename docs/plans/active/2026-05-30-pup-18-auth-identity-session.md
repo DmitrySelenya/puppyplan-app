@@ -8,7 +8,7 @@
 
 **Plan type:** Active task plan.
 
-**Current phase:** Phase 7 — i18n copy and `TextField` primitive. Local phases 0-6 are implemented; the gated remote Supabase test/typegen step from Task 2.2 remains pending until explicitly approved with credentials.
+**Current phase:** Phase 8 — Sign-In Feature UI. Local phases 0-7 are implemented and committed; the gated remote Supabase test/typegen step from Task 2.2 remains pending until explicitly approved with credentials.
 
 **Linear:** `PUP-18` — Auth, identity, session persistence, and new-user bootstrap.
 
@@ -1353,7 +1353,7 @@ git commit -m "PUP-18 add auth lib barrel"
 **Files:**
 - Modify: `STRINGS.en.json`, `STRINGS.ru.json`, `STRINGS.es.json`
 
-- [ ] **Step 1: Add the `auth` block to `STRINGS.en.json`**
+- [x] **Step 1: Add the `auth` block to `STRINGS.en.json`**
 
 Insert a top-level `"auth"` key (object). Use exactly these keys/values:
 
@@ -1386,7 +1386,7 @@ Insert a top-level `"auth"` key (object). Use exactly these keys/values:
   }
 ```
 
-- [ ] **Step 2: Add the parity `auth` block to `STRINGS.ru.json`**
+- [x] **Step 2: Add the parity `auth` block to `STRINGS.ru.json`**
 
 ```json
   "auth": {
@@ -1417,7 +1417,7 @@ Insert a top-level `"auth"` key (object). Use exactly these keys/values:
   }
 ```
 
-- [ ] **Step 3: Add the parity `auth` block to `STRINGS.es.json`**
+- [x] **Step 3: Add the parity `auth` block to `STRINGS.es.json`**
 
 ```json
   "auth": {
@@ -1448,12 +1448,12 @@ Insert a top-level `"auth"` key (object). Use exactly these keys/values:
   }
 ```
 
-- [ ] **Step 4: Verify i18n parity, placeholder parity, and budgets**
+- [x] **Step 4: Verify i18n parity, placeholder parity, and budgets**
 
 Run: `node scripts/checks/check-i18n.mjs`
 Expected: `i18n parity, typed helper usage, and string budgets ok` (the `{email}` placeholder is present in all three `code.sent-helper` values; `email.cta`, `code.cta`, and `sign-out.cta` are within the 34-grapheme `fab-cta-labels` budget).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add STRINGS.en.json STRINGS.ru.json STRINGS.es.json
@@ -1467,7 +1467,7 @@ git commit -m "PUP-18 add auth i18n copy in EN/RU/ES"
 - Modify: `src/design/primitives/index.ts`
 - Test: `src/test/text-field.render.test.tsx`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // src/test/text-field.render.test.tsx
@@ -1492,12 +1492,12 @@ describe('TextField', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:unit -- src/test/text-field.render.test.tsx`
 Expected: FAIL — cannot find module `@/design/primitives/TextField`.
 
-- [ ] **Step 3: Implement the primitive**
+- [x] **Step 3: Implement the primitive**
 
 ```tsx
 // src/design/primitives/TextField.tsx
@@ -1564,7 +1564,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-- [ ] **Step 4: Export from the primitives barrel**
+- [x] **Step 4: Export from the primitives barrel**
 
 Add to `src/design/primitives/index.ts` (keep alphabetical grouping near `SwitchRow`/`TrackerTile`):
 
@@ -1572,14 +1572,14 @@ Add to `src/design/primitives/index.ts` (keep alphabetical grouping near `Switch
 export { TextField, type TextFieldProps } from '@/design/primitives/TextField';
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm run test:unit -- src/test/text-field.render.test.tsx`
 Expected: PASS (2 tests).
 
 > Token names confirmed against `design-tokens.json` at authoring time: `color.surface.base`, `color.stroke.default`, `color.status.danger`, `color.text.tertiary`, `color.text.primary`, `radius.sm`, `space[2]`, `space[3]`, `typography.scale.body.fontSize`. If any drift, open `src/design/tokens.ts` and substitute the nearest existing token.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/design/primitives/TextField.tsx src/design/primitives/index.ts src/test/text-field.render.test.tsx
@@ -2482,4 +2482,5 @@ REQUIRED SUB-SKILL: superpowers:finishing-a-development-branch to choose merge/P
 ## Changelog
 
 - 2026-05-31: Cleanup after failed subagent batch: local branch renamed to Linear `gitBranchName`, PUP-17 master roadmap restored into this branch to fix the plan source link, ADR-0017 added for the temporary bootstrap RPC cast, plan index updated with PUP-18, privacy-scanner email placeholder fixed, `signOut` now maps backend errors to `auth_sign_out_failed`, `AuthProvider` no longer exposes `signedIn` before bootstrap succeeds, and pgTAP user-isolation comparison no longer reads userA membership through userB RLS.
+- 2026-05-31: Completed Phase 7 after preflight cleanup commit: added `auth` EN/RU/ES locale copy and the `TextField` primitive with RED/GREEN render coverage; committed as `PUP-18 add auth i18n copy and TextField primitive`.
 - 2026-05-30: Created the PUP-18 plan from the master roadmap (Phase 1A). Decisions captured: email-OTP first with a provider-agnostic seam for Apple/Google, SecureStore session persistence with AppState auto-refresh, SECURITY DEFINER `bootstrap_current_user` RPC for new-user household/owner-membership creation, route gating, and sign-out (account deletion deferred). ADR target is ADR-0017.

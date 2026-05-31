@@ -39,6 +39,7 @@ export {
   type StatusPillProps,
   type StatusPillTone,
 } from '@/design/primitives/StatusPill';
+export { TextField, type TextFieldProps } from '@/design/primitives/TextField';
 export {
   Touchable,
   type TouchablePressedStyle,
