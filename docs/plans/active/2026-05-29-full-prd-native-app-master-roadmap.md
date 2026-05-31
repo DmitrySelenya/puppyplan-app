@@ -216,7 +216,7 @@ Each future task plan must map these invariants to automated tests or named manu
 - [x] Update stale design handoff checklist items that were closed by `PUP-8` through `PUP-16`.
 - [x] Apply confirmed external roadmap review fixes for auth/identity, existing backend baseline, source docs, share projections, route namespace, and release/schema references.
 - [x] Review this roadmap with the user and apply requested corrections from the first external-agent review pass.
-- [ ] Get final user approval for the amended roadmap.
+- [x] Get final user approval for the amended roadmap.
 - [ ] Split remaining foundation follow-ups into new issues after roadmap review.
 - [x] Decide the first implementation issue for the first approved slice: `PUP-18` auth/identity/session.
 
@@ -535,3 +535,4 @@ The full app is complete when:
 - 2026-05-29: Applied confirmed external review findings: elevated auth/identity/session persistence to an early Phase 1A foundation slice, added source docs and ADR-0003/ADR-0001, documented the existing backend/schema/RPC baseline, unified share projection ownership under ADR-0009, corrected schema approval wording, called out `/more` vs `/settings` namespace reconciliation, linked Quick Log missing artboard 4.3 to a synthetic state, aligned accessibility/notification invariants, and split suggested Linear buckets accordingly.
 - 2026-05-30: Applied follow-up review nits: made auth/identity the first suggested issue, clarified that shell/gallery work can parallelize only as synthetic/non-production wiring until Phase 1A exits, verified listed share projection RPC/view names against migrations/tests, and removed self-referential wording from ADR-0007.
 - 2026-05-31: Merged `PUP-17` roadmap/docs hygiene via PR #17 and recorded `PUP-18` as the active Phase 1A implementation slice.
+- 2026-05-31: Marked final roadmap approval complete after PR #17 merged to `main`; remaining issue-split follow-ups stay open until new Linear tasks are created.
