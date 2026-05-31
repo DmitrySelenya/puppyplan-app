@@ -80,13 +80,16 @@ Future:
 - `delete_account_request`
 - `export_data_request`
 
-SECURITY DEFINER functions live in `app_private`, set `search_path = app_private, public`, and check `auth.uid()` explicitly.
+SECURITY DEFINER helpers live in `app_private` by default, set `search_path = app_private, public`, and check `auth.uid()` explicitly.
+
+Client-callable privileged RPCs may live in `public` only when they must be exposed through Supabase/PostgREST. They must be SECURITY DEFINER, set a pinned empty `search_path`, fully qualify every referenced object, check `auth.uid()` explicitly, and grant EXECUTE only to the narrow intended roles. `public.bootstrap_current_user(text)` is the PUP-18 bootstrap exception; see ADR-0017.
 
 ## Privileged Mutation Boundary
 
 The following transitions must not be exposed as direct client table writes:
 
 - create, accept, revoke, or expire household invites;
+- create the first household and accepted owner membership for a newly authenticated user;
 - create, accept, revoke, or expire external share links;
 - change share scopes;
 - write token hashes, token metadata, or audit internals;

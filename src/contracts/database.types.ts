@@ -892,6 +892,13 @@ export type Database = {
     }
     Functions: {
       active_share_link_ids: { Args: never; Returns: string[] }
+      bootstrap_current_user: {
+        Args: { p_display_name?: string }
+        Returns: {
+          created: boolean
+          household_id: string
+        }[]
+      }
       current_household_ids: { Args: never; Returns: string[] }
       current_share_health_summary: {
         Args: never

@@ -9,7 +9,7 @@
 
 **Plan type:** Master roadmap. This is a reviewable execution map, not a single implementation contract.
 
-**Current execution:** `PUP-17` owns roadmap creation/review. The first critical-path implementation slice has been split out as `PUP-18` on its own branch; `PUP-17` remains roadmap/docs hygiene only and must not carry live `PUP-18` implementation progress state.
+**Current execution:** `PUP-17` roadmap/docs hygiene is merged via PR #17. `PUP-18` is the active Phase 1A implementation slice for auth, identity, session persistence, and new-user bootstrap.
 
 **Architecture:** Future work stays Supabase-first, identity-first, contracts-first, and trust-first: Supabase Auth session identity must exist before durable user flows, Zod contracts and business rules define payloads, Supabase/RLS/Edge Functions enforce access, TanStack Query owns server state, Expo SQLite remains the only durable local-write exception for Quick Log, feature UI uses `src/design` primitives, and all visible strings go through typed EN/RU/ES i18n.
 
@@ -216,7 +216,7 @@ Each future task plan must map these invariants to automated tests or named manu
 - [x] Update stale design handoff checklist items that were closed by `PUP-8` through `PUP-16`.
 - [x] Apply confirmed external roadmap review fixes for auth/identity, existing backend baseline, source docs, share projections, route namespace, and release/schema references.
 - [x] Review this roadmap with the user and apply requested corrections from the first external-agent review pass.
-- [ ] Get final user approval for the amended roadmap.
+- [x] Get final user approval for the amended roadmap.
 - [ ] Split remaining foundation follow-ups into new issues after roadmap review.
 - [x] Decide the first implementation issue for the first approved slice: `PUP-18` auth/identity/session.
 
@@ -241,6 +241,8 @@ Each future task plan must map these invariants to automated tests or named manu
 **Exit gate:** Milestone A is reachable in a local dev build/web preview with no raw private data and no production behavior claims.
 
 ### Phase 1A - Auth, Identity, Session Persistence, And Account Boundary
+
+**Status:** In progress via `PUP-18` (`docs/plans/active/2026-05-30-pup-18-auth-identity-session.md`). The local slice has implemented dependency setup, contracts, bootstrap RPC, SecureStore session persistence, auth API, bootstrap client, AuthProvider, i18n copy, and TextField. Sign-in UI, routing, docs completion, remote Supabase verification/typegen, and manual smoke remain pending.
 
 **Goal:** Establish the durable identity foundation required by every server-backed feature before product flows claim real app behavior.
 
@@ -532,3 +534,5 @@ The full app is complete when:
 - 2026-05-29: Completed repo-hygiene sync for active plans: moved `PUP-16` to completed, updated the plan index, closed stale Quick Log foundation checklist items, and narrowed the design handoff plan to its remaining Dynamic Type screenshot and dev-gallery follow-ups.
 - 2026-05-29: Applied confirmed external review findings: elevated auth/identity/session persistence to an early Phase 1A foundation slice, added source docs and ADR-0003/ADR-0001, documented the existing backend/schema/RPC baseline, unified share projection ownership under ADR-0009, corrected schema approval wording, called out `/more` vs `/settings` namespace reconciliation, linked Quick Log missing artboard 4.3 to a synthetic state, aligned accessibility/notification invariants, and split suggested Linear buckets accordingly.
 - 2026-05-30: Applied follow-up review nits: made auth/identity the first suggested issue, clarified that shell/gallery work can parallelize only as synthetic/non-production wiring until Phase 1A exits, verified listed share projection RPC/view names against migrations/tests, and removed self-referential wording from ADR-0007.
+- 2026-05-31: Merged `PUP-17` roadmap/docs hygiene via PR #17 and recorded `PUP-18` as the active Phase 1A implementation slice.
+- 2026-05-31: Marked final roadmap approval complete after PR #17 merged to `main`; remaining issue-split follow-ups stay open until new Linear tasks are created.

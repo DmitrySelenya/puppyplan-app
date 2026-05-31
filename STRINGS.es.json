@@ -39,6 +39,37 @@
     "open-timeline": "Abrir cronología",
     "loading": "Cargando"
   },
+  "auth": {
+    "title": "Inicia sesión en PuppyPlan",
+    "subtitle": "Los datos de tu cachorro son privados para tu hogar.",
+    "email": {
+      "label": "Correo",
+      "placeholder": "you@example.com",
+      "cta": "Enviar código"
+    },
+    "code": {
+      "label": "Código de 6 dígitos",
+      "placeholder": "123456",
+      "sent-helper": "Escribe el código que enviamos a {email}.",
+      "cta": "Verificar",
+      "resend": "Enviar un código nuevo",
+      "back": "Usar otro correo"
+    },
+    "sign-out": {
+      "cta": "Cerrar sesión",
+      "error": "No pudimos cerrar sesión. Revisa tu conexión e inténtalo otra vez."
+    },
+    "social": {
+      "apple": "Iniciar sesión con Apple",
+      "google": "Iniciar sesión con Google"
+    },
+    "errors": {
+      "invalid-email": "Escribe un correo válido.",
+      "invalid-code": "Escribe el código de 6 dígitos.",
+      "request-failed": "No pudimos enviar el código. Revisa tu conexión e inténtalo otra vez.",
+      "verify-failed": "Ese código no funcionó. Solicita uno nuevo e inténtalo otra vez."
+    }
+  },
   "states": {
     "loading": {
       "label": "Cargando"

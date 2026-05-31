@@ -40,6 +40,38 @@
     "loading": "Loading"
   },
 
+  "auth": {
+    "title": "Sign in to PuppyPlan",
+    "subtitle": "We keep your puppy's data private to your household.",
+    "email": {
+      "label": "Email",
+      "placeholder": "you@example.com",
+      "cta": "Send code"
+    },
+    "code": {
+      "label": "6-digit code",
+      "placeholder": "123456",
+      "sent-helper": "Enter the code we sent to {email}.",
+      "cta": "Verify code",
+      "resend": "Send a new code",
+      "back": "Use a different email"
+    },
+    "sign-out": {
+      "cta": "Sign out",
+      "error": "We couldn't sign you out. Check your connection and try again."
+    },
+    "social": {
+      "apple": "Sign in with Apple",
+      "google": "Sign in with Google"
+    },
+    "errors": {
+      "invalid-email": "Enter a valid email address.",
+      "invalid-code": "Enter the 6-digit code.",
+      "request-failed": "We couldn't send a code. Check your connection and try again.",
+      "verify-failed": "That code didn't work. Request a new one and try again."
+    }
+  },
+
   "states": {
     "loading": {
       "label": "Loading"

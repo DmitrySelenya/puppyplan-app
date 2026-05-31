@@ -66,10 +66,12 @@ P0 pgTAP cases:
 - `health_summary` excludes notes/provider/photos;
 - user cannot read another user's push tokens;
 - delivery logs store metadata only.
+- `bootstrap_current_user` creates exactly one accepted owner membership for the current authenticated user, is idempotent, isolates users into distinct households, denies anon execution, and is SECURITY DEFINER with a pinned search path.
 
 Policy shape requirements:
 
 - `invite`, `share_link`, and `share_scope` direct client inserts/updates/deletes are denied by default.
+- direct client inserts into `household` / `household_membership` remain denied for normal app bootstrap; new-user setup goes through `bootstrap_current_user`.
 - invite/share create, accept, revoke, and scope changes happen through Edge Functions or SECURITY DEFINER helpers that check `auth.uid()`.
 - anonymous auth may read only the narrow projection needed to resolve a valid invite/share token; it may not create invites or external shares.
 - share projection tests must assert both allowed fields and forbidden fields. A test that only checks "some rows are returned" is insufficient.
