@@ -4,7 +4,15 @@ import { join } from 'node:path';
 
 import { loadNavigationContract, repoPath } from './load-navigation-contract.mjs';
 
-const { modalRoutes, primaryTabs, quickLogAction } = await loadNavigationContract();
+const {
+  atlasRouteAliases,
+  developmentOnlyRoutes,
+  modalRoutes,
+  plannedRouteFiles,
+  primaryTabs,
+  quickLogAction,
+  settingsRoutes,
+} = await loadNavigationContract();
 
 assert.deepEqual(
   primaryTabs.map((tab) => tab.id),
@@ -20,6 +28,56 @@ assert.equal(
 
 assert.equal(modalRoutes.includes(quickLogAction.href), true, 'Quick Log must be a modal route');
 
+assert.deepEqual(
+  settingsRoutes,
+  ['/settings/puppy-profile', '/settings/quick-trackers'],
+  'Editable settings routes must be locked to the /settings namespace',
+);
+
+for (const settingsRoute of settingsRoutes) {
+  assert.equal(
+    settingsRoute.startsWith('/settings/'),
+    true,
+    `Editable settings route must stay under /settings: ${settingsRoute}`,
+  );
+  assert.equal(
+    modalRoutes.includes(settingsRoute),
+    true,
+    `Editable settings route must be registered as modal/sheet route: ${settingsRoute}`,
+  );
+}
+
+assert.equal(
+  modalRoutes.includes('/more/puppy-profile'),
+  false,
+  'Atlas /more/puppy-profile labels must map to /settings/puppy-profile, not a production /more route',
+);
+
+assert.equal(
+  atlasRouteAliases['/more/puppy-profile'],
+  '/settings/puppy-profile',
+  'Atlas puppy-profile artboards must map to the production /settings/puppy-profile route',
+);
+
+assert.deepEqual(
+  developmentOnlyRoutes,
+  ['/_dev/components'],
+  'The native design gallery route is development-only and must not become production navigation',
+);
+
+for (const devRoute of developmentOnlyRoutes) {
+  assert.equal(
+    primaryTabs.some((tab) => tab.href === devRoute),
+    false,
+    `Development-only route must not be a primary tab: ${devRoute}`,
+  );
+  assert.equal(
+    modalRoutes.includes(devRoute),
+    false,
+    `Development-only route must not be registered as a production modal: ${devRoute}`,
+  );
+}
+
 const routeFiles = [
   'app/_layout.tsx',
   'app/(tabs)/_layout.tsx',
@@ -34,6 +92,31 @@ const routeFiles = [
 for (const routeFile of routeFiles) {
   const filePath = repoPath(routeFile).pathname;
   assert.doesNotThrow(() => statSync(filePath), `Missing route file: ${routeFile}`);
+}
+
+for (const plannedRoute of plannedRouteFiles) {
+  assert.equal(
+    typeof plannedRoute.route,
+    'string',
+    `Planned route entry is missing route: ${JSON.stringify(plannedRoute)}`,
+  );
+  assert.equal(
+    typeof plannedRoute.file,
+    'string',
+    `Planned route entry is missing file: ${JSON.stringify(plannedRoute)}`,
+  );
+  assert.match(
+    plannedRoute.file,
+    /^app\/.+\.(ts|tsx)$/,
+    `Planned route must point at an app/ TypeScript route file: ${plannedRoute.file}`,
+  );
+
+  if (plannedRoute.implementationStage === 'existing') {
+    assert.doesNotThrow(
+      () => statSync(repoPath(plannedRoute.file).pathname),
+      `Existing planned route file is missing: ${plannedRoute.file}`,
+    );
+  }
 }
 
 const rootLayoutSource = readFileSync(repoPath('app/_layout.tsx'), 'utf8');

@@ -42,6 +42,8 @@ export const quickLogAction = {
   accessibilityHintKey: I18nKey;
 };
 
+export const settingsRoutes = ['/settings/puppy-profile', '/settings/quick-trackers'] as const;
+
 export const modalRoutes = [
   quickLogAction.href,
   '/quick-log/details',
@@ -51,10 +53,43 @@ export const modalRoutes = [
   '/sharing/trainer-preview',
   '/sharing/scope-selector',
   '/health/record-edit',
-  '/settings/quick-trackers',
+  ...settingsRoutes,
 ] as const;
 
+export const developmentOnlyRoutes = ['/_dev/components'] as const;
+
 export const deepLinkPlaceholders = ['/invite/[token]', '/share/[token]'] as const;
+
+export const atlasRouteAliases = {
+  '/more/puppy-profile': '/settings/puppy-profile',
+} as const satisfies Record<string, (typeof settingsRoutes)[number]>;
+
+export const plannedRouteFiles = [
+  {
+    route: '/onboarding',
+    file: 'app/(onboarding)/index.tsx',
+    implementationStage: 'planned',
+  },
+  {
+    route: '/settings/puppy-profile',
+    file: 'app/(modals)/settings/puppy-profile/index.tsx',
+    implementationStage: 'planned',
+  },
+  {
+    route: '/settings/quick-trackers',
+    file: 'app/(modals)/settings/quick-trackers/index.tsx',
+    implementationStage: 'planned',
+  },
+  {
+    route: '/_dev/components',
+    file: 'app/_dev/components.tsx',
+    implementationStage: 'planned',
+  },
+] as const satisfies readonly {
+  route: string;
+  file: string;
+  implementationStage: 'existing' | 'planned';
+}[];
 
 export const shellI18nKeys = [
   'tabs.today',
@@ -97,4 +132,5 @@ export const shellI18nKeys = [
 
 export type PrimaryTabId = (typeof primaryTabs)[number]['id'];
 export type PrimaryTabHref = (typeof primaryTabs)[number]['href'];
+export type SettingsRoute = (typeof settingsRoutes)[number];
 export type ShellI18nKey = (typeof shellI18nKeys)[number];

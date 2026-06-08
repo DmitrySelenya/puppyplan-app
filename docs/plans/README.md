@@ -12,7 +12,8 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
-| Active roadmap | [Full PRD Native App Master Roadmap](active/2026-05-29-full-prd-native-app-master-roadmap.md) | `PUP-17` | Merged via PR #17; auth/session foundation landed via PR #18, while route/design coverage can parallelize only as synthetic/non-production wiring |
+| Active task plan | [Post-PUP-18 Next Batch](active/2026-06-08-post-pup-18-next-batch.md) | `PUP-19`, `PUP-20`, `PUP-21` | `PUP-19` route/storage preflight complete; execute `PUP-20` synthetic dev-gallery lane. `PUP-21` remains blocked before durable selected tracker save behavior pending exact ADR-0007/CTO schema approval |
+| Active roadmap | [Full PRD Native App Master Roadmap](active/2026-05-29-full-prd-native-app-master-roadmap.md) | `PUP-17` | Merged via PR #17; use the Post-PUP-18 Next Batch plan for the current `PUP-19`/`PUP-20`/`PUP-21` split |
 | Active roadmap | [Architecture Foundation Roadmap](active/2026-05-21-phase-0-architecture-cleanup.md) | Split through `PUP-2`, `PUP-3`, `PUP-4`, `PUP-5`, and follow-up issues | Do not assign directly; scaffold, Supabase/RLS, local/CI gates, design runtime, typed i18n, and the Quick Log implementation chain are complete; keep only release/privacy follow-ups active |
 | Active follow-up plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7`, `PUP-8`, `PUP-9`, `PUP-10` | Phases 1-5 and 6A are complete; only EN/RU/ES Dynamic Type screenshots and the dev-only design gallery remain as scoped follow-up work |
 | Completed | [PUP-18 Auth, Identity, Session Persistence, And New-User Bootstrap](completed/2026-05-30-pup-18-auth-identity-session.md) | `PUP-18` | Merged via PR #18; manual email OTP smoke passed on `Grith iPhone SE 3 iOS 26.3` on 2026-06-08; final evidence mirrored to Linear comment `4f5f0f99-ba46-47cf-b86d-342d7e128b26` |
@@ -32,7 +33,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 1. Execute foundation roadmap items only through scoped Linear issues. `PUP-2`, `PUP-3`, `PUP-4`, and `PUP-5` are complete.
 2. Treat `PUP-11` through `PUP-16` as the completed Quick Log implementation chain.
 3. Treat `PUP-18` as the completed auth/session foundation; downstream production work may consume the real session actor.
-4. Review and amend the Full PRD Native App Master Roadmap before creating the next implementation issues.
+4. Use [Post-PUP-18 Next Batch](active/2026-06-08-post-pup-18-next-batch.md) to execute `PUP-20` and the allowed pre-approval portions of `PUP-21`. `PUP-19` has created the Linear split and route/state coverage map.
 5. Keep the remaining `PUP-7` design follow-ups separate: EN/RU/ES Dynamic Type screenshots and the in-app design gallery.
 6. Re-run `PUP-7` screenshot/package checks whenever the raw design export changes.
 7. Release/privacy gates that are not already covered by `PUP-4`/`PUP-3` should become separate Linear issues, not part of feature implementation.
