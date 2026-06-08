@@ -67,7 +67,7 @@ export const atlasRouteAliases = {
 export const plannedRouteFiles = [
   {
     route: '/onboarding',
-    file: 'app/(onboarding)/index.tsx',
+    file: 'app/onboarding/index.tsx',
     implementationStage: 'existing',
   },
   {
@@ -102,6 +102,7 @@ export const shellI18nKeys = [
   'today.quick-log.unavailable.title',
   'today.quick-log.unavailable.body',
   'today.quick-log.timeline-entry',
+  'today.quick-log.setup-entry',
   'today.quick-log.section-title',
   'today.quick-log.empty.title',
   'today.quick-log.empty.body',
@@ -115,7 +116,11 @@ export const shellI18nKeys = [
   'quick-log.snackbar.undo',
   'health.footer-hint',
   'more.screen-title',
+  'more.sections.puppy',
+  'more.sections.records',
   'more.sections.support',
+  'more.rows.puppy-profile',
+  'more.rows.quick-trackers',
   'more.rows.timeline',
   'quick-log.sheet.title',
   'quick-log.sheet.edit-helper',

@@ -21,6 +21,13 @@ const careContext: QuickLogCareContext = {
   authState: 'authenticated',
   householdId: '00000000-0000-4000-8000-000000000501',
   puppyId: '00000000-0000-4000-8000-000000000502',
+  selectedTrackerIds: [
+    'potty_pee_outside',
+    'potty_pee_inside',
+    'potty_poop',
+    'feeding_meal',
+    'sleep_nap',
+  ],
   todayDate: '2026-05-27',
 };
 
@@ -122,6 +129,28 @@ describe('QuickLogShell', () => {
     );
     expect(screen.queryByText(i18n.t('quick-log.snackbar.add-details'))).toBeNull();
     expect(screen.queryByText(i18n.t('quick-log.sheet.edit-trackers'))).toBeNull();
+  });
+
+  it('renders selected tracker ids from the active care context in order', () => {
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={{
+          ...careContext,
+          selectedTrackerIds: ['training', 'feeding_meal'],
+        }}
+        mutation={createMutationPort()}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    const trackerTiles = screen.getAllByTestId('quick-log-tracker-tile');
+
+    expect(trackerTiles).toHaveLength(2);
+    expect(trackerTiles[0].props.accessibilityLabel).toBe(i18n.t('quick-log.trackers.training'));
+    expect(trackerTiles[1].props.accessibilityLabel).toBe(i18n.t('quick-log.trackers.feeding'));
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.trackers.potty-outside'),
+    })).toBeNull();
   });
 
   it('treats an active context without a mutation adapter as unavailable', () => {

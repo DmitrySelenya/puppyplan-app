@@ -13,6 +13,7 @@ export type QuickLogSurfaceCareContext = Readonly<{
   authState: 'authenticated';
   householdId: string;
   puppyId: string;
+  selectedTrackerIds?: readonly QuickLogTrackerId[];
   todayDate: string;
 }>;
 

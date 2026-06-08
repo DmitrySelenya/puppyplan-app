@@ -25,6 +25,10 @@ MVP entities:
 - `media_asset`
 - `content_version`
 
+Approved additive profile fields:
+
+- `public.puppy.quick_tracker_ids` stores the ordered selected Quick Log tracker ids for `PUP-21`. It is constrained to allowed ids, uniqueness, and at most 5 entries, and remains under existing `puppy` owner insert/update RLS.
+
 ## Rejected Schema Changes
 
 Rejected:

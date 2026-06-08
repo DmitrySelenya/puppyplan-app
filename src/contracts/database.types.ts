@@ -484,6 +484,7 @@ export type Database = {
           household_id: string
           id: string
           name: string
+          quick_tracker_ids: string[]
           updated_at: string
         }
         Insert: {
@@ -494,6 +495,7 @@ export type Database = {
           household_id: string
           id?: string
           name: string
+          quick_tracker_ids?: string[]
           updated_at?: string
         }
         Update: {
@@ -504,6 +506,7 @@ export type Database = {
           household_id?: string
           id?: string
           name?: string
+          quick_tracker_ids?: string[]
           updated_at?: string
         }
         Relationships: [
@@ -1186,4 +1189,3 @@ export const Constants = {
     },
   },
 } as const
-

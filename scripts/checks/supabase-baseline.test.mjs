@@ -12,6 +12,8 @@ const remoteCiHardeningMigrationPath = 'supabase/migrations/20260525111954_remot
 const shareSoftDeleteFixMigrationPath = 'supabase/migrations/20260525123000_fix_share_projection_puppy_soft_delete.sql';
 const shareLinkViewRpcMigrationPath =
   'supabase/migrations/20260525135121_route_share_link_view_through_metadata_rpc.sql';
+const puppyQuickTrackerMigrationPath =
+  'supabase/migrations/20260608212607_puppy_quick_tracker_ids.sql';
 const rlsTestPath = 'supabase/tests/rls_baseline.sql';
 const remoteCliPath = 'scripts/supabase/run-remote-cli.mjs';
 const noLocalDockerPath = 'scripts/supabase/no-local-docker.mjs';
@@ -32,6 +34,7 @@ function allMigrationSource() {
     remoteCiHardeningMigrationPath,
     shareSoftDeleteFixMigrationPath,
     shareLinkViewRpcMigrationPath,
+    puppyQuickTrackerMigrationPath,
   ].map((path) => readFileSync(path, 'utf8')).join('\n');
 }
 
@@ -239,6 +242,24 @@ describe('Supabase baseline migration guardrails', () => {
       assert.doesNotMatch(insertGrant, /public\.trusted_sitter_completion_event/u);
     }
   });
+
+  it('persists selected quick trackers as constrained puppy profile state', () => {
+    const source = readFileSync(puppyQuickTrackerMigrationPath, 'utf8');
+
+    for (const expected of [
+      /ADD COLUMN quick_tracker_ids text\[\] NOT NULL DEFAULT ARRAY/u,
+      /puppy_quick_tracker_ids_allowed/u,
+      /puppy_quick_tracker_ids_visible_count/u,
+      /cardinality\(quick_tracker_ids\) <= 5/u,
+      /puppy_quick_tracker_ids_unique/u,
+      /public\.quick_tracker_ids_are_unique\(quick_tracker_ids\)/u,
+      /potty_pee_outside/u,
+      /feeding_meal/u,
+      /training/u,
+    ]) {
+      assert.match(source, expected);
+    }
+  });
 });
 
 describe('Supabase RLS pgTAP coverage guardrails', () => {
@@ -287,6 +308,20 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
       'expired share reads no training notes projection RPC rows',
       'expired share reads no health summary projection RPC rows',
       'expired share reads no puppy profile projection RPC rows',
+    ]) {
+      assert.match(source, new RegExp(expected, 'u'));
+    }
+  });
+
+  it('covers selected quick tracker puppy profile write permissions and constraints', () => {
+    const source = readFileSync(rlsTestPath, 'utf8');
+
+    for (const expected of [
+      'viewer cannot update puppy selected quick trackers',
+      'caregiver cannot update puppy selected quick trackers',
+      'owner can update puppy selected quick trackers',
+      'puppy selected quick trackers reject duplicate ids',
+      'puppy selected quick trackers reject more than five ids',
     ]) {
       assert.match(source, new RegExp(expected, 'u'));
     }

@@ -49,7 +49,7 @@ describe('navigation contract', () => {
       expect.arrayContaining([
         expect.objectContaining({
           route: '/onboarding',
-          file: 'app/(onboarding)/index.tsx',
+          file: 'app/onboarding/index.tsx',
           implementationStage: 'existing',
         }),
         expect.objectContaining({

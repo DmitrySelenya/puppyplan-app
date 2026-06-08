@@ -15,6 +15,7 @@ import {
   type EventLogInsert,
   type EventLogRecord,
 } from '@/contracts/supabase';
+import { defaultQuickLogTrackerIds } from '@/contracts/quick-log';
 
 const uuidA = '00000000-0000-4000-8000-000000000001';
 const uuidB = '00000000-0000-4000-8000-000000000002';
@@ -173,6 +174,7 @@ describe('profile, token, and share refinements', () => {
       name: 'Puppy',
       birth_date: null,
       age_weeks_estimate: 12,
+      quick_tracker_ids: defaultQuickLogTrackerIds,
       created_at: '2026-05-17T08:35:00.000Z',
       updated_at: '2026-05-17T08:35:00.000Z',
       deleted_at: null,
@@ -183,6 +185,33 @@ describe('profile, token, and share refinements', () => {
       ...profile,
       birth_date: null,
       age_weeks_estimate: null,
+    }).success).toBe(false);
+  });
+
+  it('keeps selected quick trackers on puppy profile rows capped and unique', () => {
+    const profile = {
+      id: uuidA,
+      household_id: uuidB,
+      name: 'Puppy',
+      birth_date: null,
+      age_weeks_estimate: 12,
+      quick_tracker_ids: ['training', 'feeding_meal'],
+      created_at: '2026-05-17T08:35:00.000Z',
+      updated_at: '2026-05-17T08:35:00.000Z',
+      deleted_at: null,
+    };
+
+    expect(puppyProfileSchema.safeParse(profile).success).toBe(true);
+    expect(puppyProfileSchema.safeParse({
+      ...profile,
+      quick_tracker_ids: ['feeding_meal', 'feeding_meal'],
+    }).success).toBe(false);
+    expect(puppyProfileSchema.safeParse({
+      ...profile,
+      quick_tracker_ids: [
+        ...defaultQuickLogTrackerIds,
+        'training',
+      ],
     }).success).toBe(false);
   });
 

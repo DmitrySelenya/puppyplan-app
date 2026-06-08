@@ -16,14 +16,14 @@ const repoRoot = process.cwd();
 
 const syntheticRouteFiles = [
   'app/_dev/components.tsx',
-  'app/(onboarding)/index.tsx',
+  'app/onboarding/index.tsx',
   'app/(modals)/settings/puppy-profile/index.tsx',
   'app/(modals)/settings/quick-trackers/index.tsx',
 ] as const;
 
 const guardedSourceRoots = [
   'app/_dev',
-  'app/(onboarding)',
+  'app/onboarding',
   'app/(modals)/settings',
   'src/features/_dev',
 ] as const;
@@ -87,7 +87,7 @@ describe('development-only design gallery', () => {
     );
 
     expect(screen.getAllByText(i18n.t('dev.gallery.shell-preview')).length).toBe(3);
-    expect(screen.getByText(i18n.t('onboarding.tracker-picker.counter', { count: 5, max: 5 }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('onboarding.tracker-picker.counter', { n: 5 }))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.puppy-profile.hint'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.quick-trackers.max-reached-hint'))).toBeTruthy();
     expect(screen.queryByText(/supabase|production write|token/i)).toBeNull();

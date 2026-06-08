@@ -86,7 +86,7 @@ export function SyntheticOnboardingShell() {
         <AppText tone="secondary">{t('onboarding.age-hint.6-8-weeks')}</AppText>
         <TrackerGrid />
         <AppText tone="secondary">
-          {t('onboarding.tracker-picker.counter', { count: 5, max: 5 })}
+          {t('onboarding.tracker-picker.counter', { n: 5 })}
         </AppText>
         <Button label={t('onboarding.tracker-picker.cta')} onPress={noop} />
       </Stack>
@@ -164,7 +164,7 @@ function GalleryShellHeader({
         label={t('dev.gallery.shell-preview')}
         tone="confirmed"
       />
-      <AppText variant="headline">{t(titleKey, { count: 5, max: 5 })}</AppText>
+      <AppText variant="headline">{t(titleKey, { n: 5 })}</AppText>
       <AppText tone="secondary">{t(bodyKey)}</AppText>
     </Stack>
   );

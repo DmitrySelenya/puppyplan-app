@@ -225,9 +225,11 @@
       "helper": "You can change this later.",
       "name-field-label": "Name",
       "name-field-hint": "Puppy's name, required to continue",
+      "birth-date-placeholder": "YYYY-MM-DD",
       "age-toggle-age": "Age",
       "age-toggle-date": "Or date of birth",
       "cta": "Continue",
+      "error-required": "Add a name and age or date of birth to continue.",
       "error-future-date": "That date is in the future — please double-check",
       "a11y-toggle": "Age entry method. Selected: age in weeks.",
       "a11y-stepper": "Age 8 weeks. Swipe up to increase."
@@ -358,6 +360,7 @@
     "quick-log": {
       "section-title": "Recent Quick Log",
       "timeline-entry": "Open Timeline",
+      "setup-entry": "Set up puppy",
       "unavailable": {
         "title": "Puppy setup is needed",
         "body": "Quick Log events will appear here after an active puppy profile is available."

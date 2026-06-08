@@ -15,6 +15,14 @@ jest.mock('expo-router', () => ({
   },
 }));
 
+jest.mock('@/lib/query/active-care-context', () => ({
+  useActiveCareContext: () => ({
+    careContext: null,
+    puppy: null,
+    status: 'empty',
+  }),
+}));
+
 describe('QuickLogRoute', () => {
   let reduceMotionProbe: jest.SpyInstance;
 

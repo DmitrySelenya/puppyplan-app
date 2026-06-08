@@ -119,6 +119,28 @@ export const entitlementStatusSchema = z.enum(entitlementStatuses);
 export const contentLocaleSchema = z.enum(contentLocales);
 export const quickLogQueueStateSchema = z.enum(quickLogQueueStates);
 export const healthRecordSourceSchema = z.enum(['template', 'manual', 'confirmed']);
+export const puppyQuickTrackerIds = [
+  'potty_pee_outside',
+  'potty_pee_inside',
+  'potty_poop',
+  'feeding_meal',
+  'sleep_nap',
+  'zoomies',
+  'training',
+] as const;
+export const puppyQuickTrackerIdSchema = z.enum(puppyQuickTrackerIds);
+export const puppyQuickTrackerIdsSchema = z.array(puppyQuickTrackerIdSchema)
+  .max(5)
+  .superRefine((trackerIds, context) => {
+    if (new Set(trackerIds).size === trackerIds.length) {
+      return;
+    }
+
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Puppy quick tracker ids must be unique.',
+    });
+  });
 
 export const pottyEventPayloadSchema = z.object({
   quick_action: z.enum(['pee_outside', 'pee_inside', 'poop']),
@@ -182,6 +204,7 @@ export const puppyProfileSchema = z.object({
   name: nonEmptyStringSchema,
   birth_date: dateSchema.nullable(),
   age_weeks_estimate: z.number().int().min(0).max(520).nullable(),
+  quick_tracker_ids: puppyQuickTrackerIdsSchema.nullable().default(null),
   created_at: timestampSchema,
   updated_at: timestampSchema,
   deleted_at: timestampSchema.nullable(),
@@ -481,6 +504,7 @@ export type InviteRole = z.infer<typeof inviteRoleSchema>;
 export type ShareRole = z.infer<typeof shareRoleSchema>;
 export type ShareScope = z.infer<typeof shareScopeSchema>;
 export type EventType = z.infer<typeof eventTypeSchema>;
+export type PuppyQuickTrackerId = z.infer<typeof puppyQuickTrackerIdSchema>;
 export type EventPayloadSchemas = typeof eventPayloadSchemas;
 export type EventLogRecord = z.infer<typeof eventLogRecordSchema>;
 export type EventLogInsert = z.infer<typeof eventLogInsertSchema>;

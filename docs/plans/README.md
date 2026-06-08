@@ -12,7 +12,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
-| Active task plan | [Post-PUP-18 Next Batch](active/2026-06-08-post-pup-18-next-batch.md) | `PUP-19`, `PUP-20`, `PUP-21` | `PUP-19` route/storage preflight complete; execute `PUP-20` synthetic dev-gallery lane. `PUP-21` remains blocked before durable selected tracker save behavior pending exact ADR-0007/CTO schema approval |
+| Active task plan | [Post-PUP-18 Next Batch](active/2026-06-08-post-pup-18-next-batch.md) | `PUP-19`, `PUP-20`, `PUP-21` | `PUP-19` and `PUP-20` are locally complete/in review. `PUP-21` local implementation and verification are complete after approved `quick_tracker_ids`; remaining gates are Docker-capable pgTAP and remote/non-production typegen after applying the migration outside production |
 | Active roadmap | [Full PRD Native App Master Roadmap](active/2026-05-29-full-prd-native-app-master-roadmap.md) | `PUP-17` | Merged via PR #17; use the Post-PUP-18 Next Batch plan for the current `PUP-19`/`PUP-20`/`PUP-21` split |
 | Active roadmap | [Architecture Foundation Roadmap](active/2026-05-21-phase-0-architecture-cleanup.md) | Split through `PUP-2`, `PUP-3`, `PUP-4`, `PUP-5`, and follow-up issues | Do not assign directly; scaffold, Supabase/RLS, local/CI gates, design runtime, typed i18n, and the Quick Log implementation chain are complete; keep only release/privacy follow-ups active |
 | Active follow-up plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7`, `PUP-8`, `PUP-9`, `PUP-10` | Phases 1-5 and 6A are complete; only EN/RU/ES Dynamic Type screenshots and the dev-only design gallery remain as scoped follow-up work |
@@ -33,7 +33,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 1. Execute foundation roadmap items only through scoped Linear issues. `PUP-2`, `PUP-3`, `PUP-4`, and `PUP-5` are complete.
 2. Treat `PUP-11` through `PUP-16` as the completed Quick Log implementation chain.
 3. Treat `PUP-18` as the completed auth/session foundation; downstream production work may consume the real session actor.
-4. Use [Post-PUP-18 Next Batch](active/2026-06-08-post-pup-18-next-batch.md) to execute `PUP-20` and the allowed pre-approval portions of `PUP-21`. `PUP-19` has created the Linear split and route/state coverage map.
+4. Use [Post-PUP-18 Next Batch](active/2026-06-08-post-pup-18-next-batch.md) only for the remaining `PUP-21` gated verification handoff. `PUP-19` created the Linear split and route/state coverage map, `PUP-20` added the synthetic dev-gallery lane, and `PUP-21` has local care-context implementation after approved `quick_tracker_ids`.
 5. Keep the remaining `PUP-7` design follow-ups separate: EN/RU/ES Dynamic Type screenshots and the in-app design gallery.
 6. Re-run `PUP-7` screenshot/package checks whenever the raw design export changes.
 7. Release/privacy gates that are not already covered by `PUP-4`/`PUP-3` should become separate Linear issues, not part of feature implementation.

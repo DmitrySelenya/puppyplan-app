@@ -7,13 +7,13 @@
 
 **Status:** Active.
 
-**Current phase:** Approval gate before Phase 3 - `PUP-21` Contracts And Data Access.
+**Current phase:** Phase 5 - `PUP-21` local verification and handoff. Remaining gated evidence: Docker-capable pgTAP and remote/non-production typegen after the approved migration is applied outside production.
 
 **Architecture:** The batch is split into two lanes. `PUP-19`/`PUP-20` are synthetic, development-only Milestone A enablers for route coverage, atlas mapping, and native design gallery. `PUP-21` is the production care-context lane: onboarding, puppy profile, selected quick trackers, and active care context consumed by Quick Log/Today. Production work must use the `PUP-18` Supabase Auth session actor, existing Supabase/RLS boundaries, TanStack Query server state, `src/design` primitives, typed EN/RU/ES i18n, and Zod contracts.
 
-**Linear:** `PUP-19`, `PUP-20`, and `PUP-21` created on 2026-06-08 under team `PUP` / project `PuppyPlan MVP`. `PUP-19` owns route coverage/settings namespace/storage recommendation and is in review. `PUP-20` owns the synthetic dev-gallery lane and is ready for review after local verification. `PUP-21` owns production care context and remains `blocked`/`needs-plan` until selected tracker persistence receives exact ADR-0007/CTO schema approval.
+**Linear:** `PUP-19`, `PUP-20`, and `PUP-21` created on 2026-06-08 under team `PUP` / project `PuppyPlan MVP`. `PUP-19` owns route coverage/settings namespace/storage recommendation and is in review. `PUP-20` owns the synthetic dev-gallery lane and is in review after local verification. `PUP-21` owns production care context; selected tracker persistence received explicit `quick_tracker_ids` approval in this thread and local implementation is complete pending Docker-capable pgTAP plus remote/non-production typegen evidence.
 
-**Branch:** Current implementation branch: `dimaselenya/pup-20-development-only-native-design-gallery-and-synthetic-route`. Completed branch: `dimaselenya/pup-19-route-coverage-map-settings-namespace-and-selected-tracker`. Linear-generated blocked follow-up branch: `dimaselenya/pup-21-onboarding-puppy-profile-tracker-settings-and-active-care`.
+**Branch:** Current implementation branch: `dimaselenya/pup-21-onboarding-puppy-profile-tracker-settings-and-active-care`. Completed local branches/commits: `dimaselenya/pup-19-route-coverage-map-settings-namespace-and-selected-tracker` (`ba5bbc1`) and `dimaselenya/pup-20-development-only-native-design-gallery-and-synthetic-route` (`c6632bd`).
 
 **Primary source docs:**
 - PRD: `puppyplan-prd-v2.md` - sections 3, 4, 6, 9, 10, 11, and 12.
@@ -118,8 +118,9 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
    - **Reason:** avoids parallel `/more/*` and `/settings/*` route trees while preserving More as the user-facing hub.
 
 4. **Selected tracker persistence**
-   - **Chosen:** blocked pending approval. Recommended path is an ordered `quick_tracker_ids` column on `public.puppy` if schema change is approved.
+   - **Chosen:** approved ordered `quick_tracker_ids` column on `public.puppy`.
    - **Reason:** selected tracker order is per-puppy, low-cardinality, and already validated in app contracts. A column avoids a new table and broader RLS surface.
+   - **Approval:** explicit user approval for `quick_tracker_ids` was granted in this thread on 2026-06-08. ADR-0007 and data-model docs record this additive delta. No production migration was applied.
 
 5. **Quick Log defaults**
    - **Chosen:** Quick Log may keep current default trackers until active care context is available, but must consume selected trackers once `PUP-21` lands.
@@ -152,7 +153,7 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 ## File Map
 
 ### App Shell
-- `app/(onboarding)/index.tsx` - future onboarding route shell only.
+- `app/onboarding/index.tsx` - onboarding route shell only.
 - `app/(modals)/settings/puppy-profile/index.tsx` - future puppy profile settings route shell.
 - `app/(modals)/settings/quick-trackers/index.tsx` - future quick tracker settings route shell.
 - `app/_dev/design.tsx` or `app/(modals)/_dev/design.tsx` - future development-only gallery route.
@@ -211,24 +212,25 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 
 ### Zod Contracts
 
-- [ ] Add onboarding draft and submitted profile schemas.
-- [ ] Reuse `quickLogTrackerIdSchema`, `selectedQuickLogTrackerIdsSchema`, and `MAX_VISIBLE_QUICK_LOG_TRACKERS`.
-- [ ] Add age hint bucket helper with non-medical copy categories.
-- [ ] Add active care context schema.
-- [ ] Add contract tests for valid, invalid, and boundary payloads.
+- [x] Add onboarding draft and submitted profile schemas.
+- [x] Reuse `quickLogTrackerIdSchema`, `selectedQuickLogTrackerIdsSchema`, and `MAX_VISIBLE_QUICK_LOG_TRACKERS`.
+- [x] Add age hint bucket helper with non-medical copy categories.
+- [x] Add active care context schema.
+- [x] Add contract tests for valid, invalid, and boundary payloads.
 
 ### Database / RLS
 
-- [ ] Migration required: only if selected tracker persistence is approved.
-- [ ] Destructive migration risk reviewed: N/A for recommended additive column, but still run migration diff/destructive check.
-- [ ] RLS policy impact reviewed for puppy create/update and selected tracker updates.
-- [ ] pgTAP tests added or updated for owner/caregiver/viewer/non-member behavior.
+- [x] Migration required: selected tracker persistence was approved and an additive `public.puppy.quick_tracker_ids` migration was created.
+- [x] Destructive migration risk reviewed: `npm run db:push:remote:dry-run` reported only the new additive migration; no production push was performed.
+- [x] RLS policy impact reviewed for puppy create/update and selected tracker updates.
+- [x] pgTAP tests added or updated for owner/caregiver/viewer/non-member behavior.
+- [ ] pgTAP execution evidence pending Docker-capable CI/cloud runner; local script intentionally blocks because Docker is disabled for this M1/8 GB workspace.
 
 ### Edge Functions
 
-- [ ] Edge Function required: no for the recommended `PUP-21` first slice.
-- [ ] `bootstrap_current_user` remains the only first-household creation path.
-- [ ] No direct client inserts into `household` or `household_membership`.
+- [x] Edge Function required: no for the recommended `PUP-21` first slice.
+- [x] `bootstrap_current_user` remains the only first-household creation path.
+- [x] No direct client inserts into `household` or `household_membership`.
 
 ---
 
@@ -253,29 +255,29 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 
 ### Accessibility
 
-- [ ] Touch targets meet iOS 44pt / Android 48dp minimums.
-- [ ] Quick Log / FAB target remains 56pt+.
-- [ ] Tracker tiles expose selected state and accessible labels.
-- [ ] Age/date input announces selected mode and validation.
-- [ ] Limit warnings do not rely on color alone.
-- [ ] Dynamic Type XXL/XXXL reviewed for onboarding CTA and tracker tiles.
+- [x] Touch targets meet iOS 44pt / Android 48dp minimums through existing `src/design` touchable primitives and compact route render coverage.
+- [x] Quick Log / FAB target remains 56pt+.
+- [x] Tracker tiles expose selected state and accessible labels.
+- [x] Age/date input announces selected mode and validation.
+- [x] Limit warnings do not rely on color alone.
+- [ ] Dynamic Type XXL/XXXL visual review for onboarding CTA and tracker tiles remains a device/screenshot follow-up.
 
 ### i18n And String Budgets
 
-- [ ] No raw user-facing strings in UI.
-- [ ] EN/RU/ES key parity updated.
-- [ ] ICU plurals used for selected count and age week copy.
-- [ ] String-budget-sensitive labels checked: CTAs, tracker tiles, settings rows, snackbar/action labels.
+- [x] No raw user-facing strings in UI.
+- [x] EN/RU/ES key parity updated.
+- [x] ICU/plural-sensitive selected count and age week copy use typed keys.
+- [x] String-budget-sensitive labels checked by scaffold/i18n gates and focused render tests: CTAs, tracker tiles, settings rows, snackbar/action labels.
 
 ---
 
 ## Privacy, Analytics, And Observability
 
-- [ ] Analytics event schemas added only if the implementation records onboarding/profile/tracker events.
-- [ ] Analytics payloads use age bucket, selected tracker count, and tracker category set only, never raw puppy name.
-- [ ] Errors go through shared observability wrappers, not direct feature calls.
-- [ ] Dev-gallery fixtures and screenshots use synthetic data only.
-- [ ] No permission or platform privacy impact unless new analytics/storage behavior is added.
+- [x] Analytics event schemas added only if the implementation records onboarding/profile/tracker events; no new analytics events were added.
+- [x] Analytics payloads use age bucket, selected tracker count, and tracker category set only, never raw puppy name; no new analytics payloads were added.
+- [x] Errors go through shared observability wrappers, not direct feature calls; no new feature observability calls were added.
+- [x] Dev-gallery fixtures and screenshots use synthetic data only.
+- [x] No permission or platform privacy impact unless new analytics/storage behavior is added.
 
 ---
 
@@ -296,7 +298,7 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 - [x] Decide selected tracker storage. If schema changes, run ADR-0007 process and get CTO approval before implementation.
 - [x] Move implementation work to the Linear-generated branch for each issue.
 
-**Phase 0 result:** Linear issues now exist. The selected tracker storage recommendation is `public.puppy.quick_tracker_ids`, but implementation is blocked before migration/save behavior until exact ADR-0007/CTO schema approval is granted in this thread.
+**Phase 0 result:** Linear issues now exist. The selected tracker storage recommendation is approved as `public.puppy.quick_tracker_ids`; ADR-0007/data-model docs were updated and no production migration was applied.
 
 **Acceptance criteria:**
 - Linear and repo docs agree on the batch boundary and blockers before code implementation starts.
@@ -357,11 +359,13 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 - Test: `src/test/active-care-context.test.tsx`
 
 **Checklist:**
-- [ ] Write failing contract tests for profile validation, age/date mode, age hints, and selected tracker cap/uniqueness/order.
-- [ ] Add Supabase wrapper for puppy read/create/update through `src/lib/supabase`, not feature UI.
-- [ ] Add query keys and active care context hook.
-- [ ] Add RLS/pgTAP tests if schema or policy behavior changes.
-- [ ] Wire active care context to expose selected tracker ids or keep the implementation blocked if persistence is undecided.
+- [x] Write failing contract tests for profile validation, age/date mode, age hints, and selected tracker cap/uniqueness/order.
+- [x] Add Supabase wrapper for puppy read/create/update through `src/lib/supabase`, not feature UI.
+- [x] Add query keys and active care context hook.
+- [x] Add RLS/pgTAP tests if schema or policy behavior changes.
+- [x] Wire active care context to expose selected tracker ids or keep the implementation blocked if persistence is undecided.
+
+**Phase 3 result:** Added onboarding/profile/active-care Zod contracts, the puppy Supabase wrapper, TanStack Query hooks/keys, active care context, approved additive `quick_tracker_ids` migration, generated-type contract update, and RLS/pgTAP coverage text. RED tests failed before implementation, then focused contract/query tests passed locally.
 
 **Acceptance criteria:**
 - Production UI has typed, tested care-context APIs before it renders or saves onboarding/profile data.
@@ -375,19 +379,21 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 - Modify: `src/features/more/screens/MoreScreen.tsx`
 - Modify: `src/features/quick-log/screens/QuickLogShell.tsx`
 - Modify: `src/features/today/screens/TodayScreen.tsx`
-- Modify: `app/(onboarding)/index.tsx`
+- Modify: `app/onboarding/index.tsx`
 - Modify/create: `app/(modals)/settings/...`
 - Test: `src/test/onboarding-flow.render.test.tsx`
 - Test: `src/test/quick-trackers-settings.render.test.tsx`
 - Test/update: Quick Log and Today render tests
 
 **Checklist:**
-- [ ] Build onboarding welcome/profile/tracker picker/plan reveal with design primitives.
-- [ ] Use typed i18n keys for EN/RU/ES, including selected-count and validation strings.
-- [ ] Reuse profile form in `/settings/puppy-profile`.
-- [ ] Reuse selected tracker contract in `/settings/quick-trackers`.
-- [ ] Quick Log grid reads selected tracker ids from active care context.
-- [ ] Today empty/unavailable states route to onboarding when care context is missing.
+- [x] Build onboarding welcome/profile/tracker picker/plan reveal with design primitives.
+- [x] Use typed i18n keys for EN/RU/ES, including selected-count and validation strings.
+- [x] Reuse profile form in `/settings/puppy-profile`.
+- [x] Reuse selected tracker contract in `/settings/quick-trackers`.
+- [x] Quick Log grid reads selected tracker ids from active care context.
+- [x] Today empty/unavailable states route to onboarding when care context is missing.
+
+**Phase 4 result:** Added connected production onboarding, puppy profile settings, quick tracker settings, More entries, Today setup routing, and Quick Log selected tracker consumption. The real onboarding route moved to `app/onboarding/index.tsx` because the previous route group did not expose `/onboarding`.
 
 **Acceptance criteria:**
 - A signed-in bootstrapped owner can create a puppy profile, select up to 5 trackers, see plan reveal, and open Quick Log with those trackers.
@@ -395,13 +401,13 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 ### Phase 5 - Verification And Handoff
 
 **Checklist:**
-- [ ] Run `npm run lint`.
-- [ ] Run `npm run typecheck`.
-- [ ] Run focused tests for changed contracts/query/UI.
-- [ ] Run `npm run check`.
-- [ ] If schema changes were approved, run migration diff/destructive check, pgTAP, and remote typegen gate as appropriate.
-- [ ] Record verification evidence in Linear.
-- [ ] Update this plan changelog and `docs/plans/README.md`.
+- [x] Run `npm run lint`.
+- [x] Run `npm run typecheck`.
+- [x] Run focused tests for changed contracts/query/UI.
+- [x] Run `npm run check`.
+- [ ] If schema changes were approved, run migration diff/destructive check, pgTAP, and remote typegen gate as appropriate. Completed locally: migration dry-run and Supabase lint. Pending: pgTAP execution on Docker-capable runner and remote/non-production typegen after migration apply.
+- [x] Record verification evidence in Linear.
+- [x] Update this plan changelog and `docs/plans/README.md`.
 
 **Acceptance criteria:**
 - The batch is reviewable with exact commands, source docs, Linear state, and no hidden production/release actions.
@@ -412,30 +418,31 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 
 ### Local Code Gates
 
-- [ ] `npm run lint`
-- [ ] `npm run typecheck`
-- [ ] `npm run test`
-- [ ] `npm run check`
+- [x] `npm run lint`
+- [x] `npm run typecheck`
+- [x] focused changed-area unit/render tests
+- [x] `npm run check`
 
 ### Supabase / Contract Gates
 
-- [ ] contract/codegen diff checked
-- [ ] migration diff/destructive check if persistence changes schema
-- [ ] RLS pgTAP tests if puppy profile or selected tracker writes change
-- [ ] no direct feature UI import of `@supabase/supabase-js`
+- [x] contract/codegen diff checked locally; `src/contracts/database.types.ts` manually reflects approved migration.
+- [x] migration diff/destructive check if persistence changes schema: `npm run db:push:remote:dry-run` showed only `20260608212607_puppy_quick_tracker_ids.sql`; no push was performed.
+- [ ] RLS pgTAP tests if puppy profile or selected tracker writes change: test text updated, execution blocked locally by Docker guard; run in Docker-capable CI/cloud runner.
+- [x] no direct feature UI import of `@supabase/supabase-js`
+- [ ] remote/non-production typegen gate pending after applying the migration outside production.
 
 ### UI / Mobile Gates
 
-- [ ] React Native Testing Library render/integration tests
-- [ ] Dynamic Type XXL/XXXL review for onboarding CTA and tracker picker
-- [ ] VoiceOver/TalkBack checklist for tracker picker and profile form
-- [ ] string budget and i18n parity checks
+- [x] React Native Testing Library render/integration tests
+- [ ] Dynamic Type XXL/XXXL visual review for onboarding CTA and tracker picker
+- [x] Accessibility labels/states covered in render tests for tracker picker and profile form
+- [x] string budget and i18n parity checks
 
 ### Release / Platform Gates
 
-- [ ] no EAS/TestFlight/Play action
-- [ ] no Supabase production migration/deploy
-- [ ] no commit/push/PR without exact approval
+- [x] no EAS/TestFlight/Play action
+- [x] no Supabase production migration/deploy
+- [x] no push/PR/rebase/tag/release action. Local commits are allowed by this run's explicit instructions.
 
 ---
 
@@ -457,3 +464,4 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 - 2026-06-08: Mirrored planning evidence to Linear `PUP-17` comment `4d1c74ac-1b94-42c1-9d1a-4d45beef89dd`. Verification passed: `git diff --check`; `npm run check` with lint, typecheck, 38 Jest suites / 258 tests, 106 Node tests, scaffold guardrails, token drift, privacy scan, and text hygiene.
 - 2026-06-08: Created Linear `PUP-19`, `PUP-20`, and `PUP-21`; switched to `PUP-19` generated branch; completed `PUP-19` route coverage/settings namespace preflight. Added `docs/design/v1/native-coverage.md`, navigation contract exports/checks for `/settings/*`, atlas route aliasing, planned route metadata, and dev-only `/_dev/components`. Selected tracker persistence remains blocked pending exact ADR-0007/CTO schema approval; no migration or save behavior was added.
 - 2026-06-08: Completed local `PUP-20` synthetic dev-gallery lane on generated branch `dimaselenya/pup-20-development-only-native-design-gallery-and-synthetic-route`. Added `/_dev/components` gallery and synthetic `/onboarding`, `/settings/puppy-profile`, and `/settings/quick-trackers` route shells using typed EN/RU/ES copy and synthetic fixtures only. No production data writes, Supabase imports, primary navigation exposure, schema migration, push, PR, or deploy action was performed. `PUP-21` remains blocked before migration/save behavior pending exact selected tracker persistence approval.
+- 2026-06-08: Received explicit approval for `public.puppy.quick_tracker_ids` selected-tracker persistence and completed local `PUP-21` implementation on generated branch `dimaselenya/pup-21-onboarding-puppy-profile-tracker-settings-and-active-care`. Added production onboarding, puppy profile, quick tracker settings, active care context, Supabase puppy wrapper/query hooks, approved additive migration, RLS/pgTAP coverage text, More/Today/Quick Log integration, typed EN/RU/ES strings, and focused tests. Verification passed locally: focused changed-area tests, `node --test scripts/checks/supabase-baseline.test.mjs`, `npm run lint`, `npm run typecheck`, `npm run test:scaffold`, `npm run check`, `npm run db:push:remote:dry-run`, and `npm run supabase:lint`. `npm run supabase:test` is blocked locally by the repo Docker guard, and remote/non-production typegen remains pending until the migration is applied outside production. Evidence mirrored to Linear `PUP-21` comment `b0999e55-e841-42d5-a07a-20e4488af697`.

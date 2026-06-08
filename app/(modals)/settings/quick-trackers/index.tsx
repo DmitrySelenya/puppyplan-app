@@ -1,5 +1,5 @@
-import { SyntheticQuickTrackersSettingsShell } from '@/features/_dev/design-gallery';
+import { ConnectedQuickTrackersSettingsScreen } from '@/features/settings/quick-trackers/screens/QuickTrackersSettingsScreen';
 
 export default function QuickTrackersSettingsRoute() {
-  return <SyntheticQuickTrackersSettingsShell />;
+  return <ConnectedQuickTrackersSettingsScreen />;
 }

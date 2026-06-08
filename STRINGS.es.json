@@ -219,9 +219,11 @@
       "helper": "Puedes cambiar esto más tarde.",
       "name-field-label": "Nombre",
       "name-field-hint": "Nombre del cachorro, requerido para continuar",
+      "birth-date-placeholder": "AAAA-MM-DD",
       "age-toggle-age": "Edad",
       "age-toggle-date": "O fecha de nacimiento",
       "cta": "Continuar",
+      "error-required": "Agrega un nombre y edad o fecha de nacimiento para continuar.",
       "error-future-date": "Esa fecha es en el futuro; verifíquela dos veces",
       "a11y-toggle": "Método de entrada de edad. Seleccionado: edad en semanas.",
       "a11y-stepper": "Edad 8 semanas. Desliza hacia arriba para aumentar."
@@ -361,6 +363,7 @@
     "quick-log": {
       "section-title": "Quick Log reciente",
       "timeline-entry": "Abrir Timeline",
+      "setup-entry": "Configurar cachorro",
       "unavailable": {
         "title": "Configura un perfil de cachorro",
         "body": "Los eventos de Quick Log aparecerán aquí cuando haya un perfil de cachorro activo."

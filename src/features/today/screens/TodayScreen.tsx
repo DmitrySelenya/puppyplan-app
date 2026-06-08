@@ -19,6 +19,7 @@ import { useQuickLogCachedRows } from '@/lib/query/useQuickLogCachedRows';
 export type TodayScreenProps = Readonly<{
   actions?: QuickLogEventActionHandlers;
   careContext?: QuickLogSurfaceCareContext | null;
+  openOnboarding?: () => void;
   openTimeline: () => void;
 }>;
 
@@ -27,6 +28,7 @@ const emptyActions: QuickLogEventActionHandlers = {};
 export function TodayScreen({
   actions = emptyActions,
   careContext = null,
+  openOnboarding,
   openTimeline,
 }: TodayScreenProps) {
   const { locale, t } = useAppTranslation();
@@ -43,9 +45,9 @@ export function TodayScreen({
           </Stack>
         </Card>
         <Button
-          label={t('today.quick-log.timeline-entry')}
-          onPress={openTimeline}
-          variant="secondary"
+          label={t('today.quick-log.setup-entry')}
+          onPress={openOnboarding ?? openTimeline}
+          variant="primary"
         />
       </Screen>
     );

@@ -22,6 +22,7 @@ const careContext = {
   todayDate,
 } as const;
 const openTimeline = jest.fn();
+const openOnboarding = jest.fn();
 const testQueryClients: ReturnType<typeof createPuppyPlanQueryClient>[] = [];
 
 function renderWithQuery(element: ReactElement) {
@@ -70,6 +71,7 @@ describe('Today Quick Log state integration', () => {
 
   beforeEach(async () => {
     openTimeline.mockClear();
+    openOnboarding.mockClear();
     reduceMotionProbe = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
       .mockReturnValue(new Promise<boolean>(() => {}));
@@ -90,12 +92,18 @@ describe('Today Quick Log state integration', () => {
     const { queryClient } = renderWithQuery(
       <TodayScreen
         careContext={null}
+        openOnboarding={openOnboarding}
         openTimeline={openTimeline}
       />,
     );
 
     expect(screen.getByText(i18n.t('today.quick-log.unavailable.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.quick-log.unavailable.body'))).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('today.quick-log.setup-entry'),
+    }));
+    expect(openOnboarding).toHaveBeenCalledTimes(1);
+    expect(openTimeline).not.toHaveBeenCalled();
     expect(screen.queryByText(i18n.t('states.empty-first-run.title'))).toBeNull();
     expect(queryClient.getQueryCache().findAll()).toHaveLength(0);
   });

@@ -84,6 +84,7 @@ function QuickLogShellContent({
     now,
     recentEvent,
   });
+  const selectedTrackerIds = readyCareContext?.selectedTrackerIds ?? defaultQuickLogTrackerIds;
 
   if (controller.status === 'unavailable') {
     return (
@@ -106,7 +107,7 @@ function QuickLogShellContent({
       <SheetSurface accessibilityLabel={t('quick-log.sheet.title')}>
         <AppText variant="title">{t('quick-log.sheet.title')}</AppText>
         <Stack direction="horizontal" gap="md" wrap>
-          {defaultQuickLogTrackerIds.map((trackerId) => (
+          {selectedTrackerIds.map((trackerId) => (
             <TrackerTile
               accessibilityLabel={t(getQuickLogTrackerLabelKey(trackerId))}
               key={trackerId}

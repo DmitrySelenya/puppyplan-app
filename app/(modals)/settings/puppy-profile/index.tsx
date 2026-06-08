@@ -1,5 +1,5 @@
-import { SyntheticPuppyProfileSettingsShell } from '@/features/_dev/design-gallery';
+import { ConnectedPuppyProfileSettingsScreen } from '@/features/profile/screens/PuppyProfileSettingsScreen';
 
 export default function PuppyProfileSettingsRoute() {
-  return <SyntheticPuppyProfileSettingsShell />;
+  return <ConnectedPuppyProfileSettingsScreen />;
 }
