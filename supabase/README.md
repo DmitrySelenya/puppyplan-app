@@ -71,11 +71,46 @@ When `src/contracts/database.types.ts` is missing or stale, the remote workflow 
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=<dev-project-url>
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<dev-publishable-key>
+EXPO_PUBLIC_PUPPYPLAN_DEBUG_AUTH_EMAIL=<synthetic-dev-account@example.test>
+EXPO_PUBLIC_PUPPYPLAN_DEBUG_AUTH_PASSWORD=<local-synthetic-password>
 SUPABASE_PROJECT_REF=olymqppxsadsxfrcyskh
 SUPABASE_DB_URL=<postgres-url-for-cli-only>
 ```
 
 Only publishable client keys belong in Expo public env vars. Service role or secret keys must never be committed, exposed to Expo, pasted into Linear, or used in client code.
+
+### Dev Auth Email OTP Template
+
+The native PUP-18 sign-in flow verifies a 6-digit email OTP with `verifyOtp({ email, token, type: 'email' })`. Hosted Supabase sends a magic link or an OTP based on the Auth email template content: templates with `{{ .ConfirmationURL }}` produce links, while templates with `{{ .Token }}` produce a code. The hosted Auth config must also keep `mailer_otp_length=6`; otherwise Supabase can generate a longer code that the native contract rejects.
+
+For the non-production `PuppyPlan Dev` project, update the OTP length and both the confirmation and magic-link/OTP templates before manual smoke:
+
+```bash
+SUPABASE_PROJECT_REF=olymqppxsadsxfrcyskh npm run supabase:auth:otp-template
+```
+
+The command also requires `SUPABASE_ACCESS_TOKEN` in the shell or local ignored `.env`. The token must have Management API permissions to read and update Auth config. The script does not print token values or full template contents.
+The helper refuses any `SUPABASE_PROJECT_REF` except the known non-production `PuppyPlan Dev` ref (`olymqppxsadsxfrcyskh`) before contacting the Supabase Management API.
+
+### Dev Debug Sign-In
+
+Manual pre-production smoke should still use the email OTP path. For repetitive local debug loops, the app can show a dev-only "debug account" button when both local Expo env vars are set:
+
+```bash
+EXPO_PUBLIC_PUPPYPLAN_DEBUG_AUTH_EMAIL=<synthetic-dev-account@example.test>
+EXPO_PUBLIC_PUPPYPLAN_DEBUG_AUTH_PASSWORD=<local-synthetic-password>
+```
+
+Because `EXPO_PUBLIC_*` values are bundled into development JavaScript, use only a synthetic user in the non-production dev project. Do not use real mailbox credentials, production accounts, or shared passwords. The debug account must be a normal confirmed Supabase email/password user so RLS, session persistence, and `bootstrap_current_user` still run through the real authenticated-user path.
+
+Create or update that confirmed synthetic user with:
+
+```bash
+npm run supabase:auth:debug-account
+```
+
+The command requires local `PUPPYPLAN_DEV_SUPABASE_AUTH_ADMIN_KEY` in addition to the Expo debug email/password values. It calls Supabase Auth Admin APIs through a Node script, does not print the account email/password/admin key, and must only target the non-production dev project.
+The helper refuses any `EXPO_PUBLIC_SUPABASE_URL` except `https://olymqppxsadsxfrcyskh.supabase.co` before creating the Auth Admin client.
 
 ## Local Supabase Guardrail
 

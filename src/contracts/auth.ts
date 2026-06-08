@@ -17,6 +17,14 @@ export type Email = z.infer<typeof emailSchema>;
 export const otpCodeSchema = z.string().trim().regex(/^\d{6}$/);
 export type OtpCode = z.infer<typeof otpCodeSchema>;
 
+export const devPasswordSignInCredentialsSchema = z
+  .object({
+    email: emailSchema,
+    password: z.string().min(12),
+  })
+  .strict();
+export type DevPasswordSignInCredentials = z.infer<typeof devPasswordSignInCredentialsSchema>;
+
 export const sessionUserSchema = z
   .object({
     id: uuidSchema,

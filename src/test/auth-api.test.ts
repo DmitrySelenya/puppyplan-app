@@ -2,6 +2,7 @@
 import {
   getCurrentUser,
   requestEmailOtp,
+  signInWithPassword,
   signOut,
   subscribeToAuthChanges,
   toSessionUser,
@@ -70,6 +71,41 @@ describe('auth api', () => {
     await expect(verifyEmailOtp({ email: 'owner@example.com', token: '000000' })).rejects.toThrow(
       'auth_verify_otp_failed',
     );
+  });
+
+  it('signs in with a synthetic dev password and returns the session user', async () => {
+    const signInWithPasswordMock = jest.fn(async () => ({
+      data: { session: { user: { id: userId, email: 'debug-owner@example.test' } } },
+      error: null,
+    }));
+    mockAuth({ signInWithPassword: signInWithPasswordMock });
+
+    await expect(signInWithPassword({
+      email: 'debug-owner@example.test',
+      password: '<synthetic-debug-password>',
+    })).resolves.toEqual({
+      id: userId,
+      email: 'debug-owner@example.test',
+    });
+
+    expect(signInWithPasswordMock).toHaveBeenCalledWith({
+      email: 'debug-owner@example.test',
+      password: '<synthetic-debug-password>',
+    });
+  });
+
+  it('throws a generic error when synthetic dev password sign-in fails', async () => {
+    mockAuth({
+      signInWithPassword: jest.fn(async () => ({
+        data: { session: null },
+        error: { message: 'invalid credentials' },
+      })),
+    });
+
+    await expect(signInWithPassword({
+      email: 'debug-owner@example.test',
+      password: '<synthetic-debug-password>',
+    })).rejects.toThrow('auth_password_sign_in_failed');
   });
 
   it('reads the current user from the active session', async () => {

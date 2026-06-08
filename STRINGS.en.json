@@ -56,6 +56,9 @@
       "resend": "Send a new code",
       "back": "Use a different email"
     },
+    "debug": {
+      "cta": "Use debug account"
+    },
     "sign-out": {
       "cta": "Sign out",
       "error": "We couldn't sign you out. Check your connection and try again."
@@ -67,6 +70,7 @@
     "errors": {
       "invalid-email": "Enter a valid email address.",
       "invalid-code": "Enter the 6-digit code.",
+      "debug-sign-in-failed": "The debug account sign-in didn't work. Check the local dev credentials.",
       "request-failed": "We couldn't send a code. Check your connection and try again.",
       "verify-failed": "That code didn't work. Request a new one and try again."
     }

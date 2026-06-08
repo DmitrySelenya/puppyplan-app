@@ -2,6 +2,7 @@
 import {
   authMethodSchema,
   bootstrapResultSchema,
+  devPasswordSignInCredentialsSchema,
   emailSchema,
   enabledAuthMethods,
   otpCodeSchema,
@@ -23,6 +24,20 @@ describe('auth contracts', () => {
     expect(otpCodeSchema.parse('123456')).toBe('123456');
     expect(otpCodeSchema.safeParse('12345').success).toBe(false);
     expect(otpCodeSchema.safeParse('abcdef').success).toBe(false);
+  });
+
+  it('parses synthetic dev password sign-in credentials', () => {
+    expect(devPasswordSignInCredentialsSchema.parse({
+      email: 'Debug-Owner@Example.test',
+      password: '<synthetic-debug-password>',
+    })).toEqual({
+      email: 'debug-owner@example.test',
+      password: '<synthetic-debug-password>',
+    });
+    expect(devPasswordSignInCredentialsSchema.safeParse({
+      email: 'debug-owner@example.test',
+      password: 'short',
+    }).success).toBe(false);
   });
 
   it('parses a session user with a nullable email', () => {

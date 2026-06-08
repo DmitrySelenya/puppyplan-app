@@ -15,6 +15,7 @@ import { useSignInFlow } from '../hooks/useSignInFlow';
 type AuthErrorKey =
   | 'auth.errors.invalid-code'
   | 'auth.errors.invalid-email'
+  | 'auth.errors.debug-sign-in-failed'
   | 'auth.errors.request-failed'
   | 'auth.errors.verify-failed';
 
@@ -71,7 +72,20 @@ export function SignInScreenView({ actions }: SignInScreenViewProps) {
     }
   };
 
-  const emailErrorText = errorKey === 'auth.errors.invalid-email' || errorKey === 'auth.errors.request-failed'
+  const submitDebugSignIn = async () => {
+    setErrorKey(null);
+
+    try {
+      await actions.signInWithDebugAccount();
+    } catch {
+      setErrorKey('auth.errors.debug-sign-in-failed');
+    }
+  };
+
+  const emailErrorText =
+    errorKey === 'auth.errors.invalid-email' ||
+    errorKey === 'auth.errors.request-failed' ||
+    errorKey === 'auth.errors.debug-sign-in-failed'
     ? t(errorKey)
     : undefined;
   const codeErrorText = errorKey === 'auth.errors.invalid-code' || errorKey === 'auth.errors.verify-failed'
@@ -106,6 +120,16 @@ export function SignInScreenView({ actions }: SignInScreenViewProps) {
                 void submitEmail();
               }}
             />
+            {actions.isDebugSignInEnabled ? (
+              <Button
+                label={t('auth.debug.cta')}
+                loading={actions.isBusy}
+                onPress={() => {
+                  void submitDebugSignIn();
+                }}
+                variant="tertiary"
+              />
+            ) : null}
             <SocialSignInButtons />
           </Stack>
         ) : (

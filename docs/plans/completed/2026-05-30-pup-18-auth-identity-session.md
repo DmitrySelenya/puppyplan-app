@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> This is the first implementation slice off the [Full PRD Native App Master Roadmap](2026-05-29-full-prd-native-app-master-roadmap.md) (Phase 1A). Read `AGENTS.md`, the roadmap, `docs/architecture/07-backend-topology.md`, `docs/architecture/08-data-model-and-rls.md`, and ADR-0007 before starting. Do not implement the whole roadmap from here — this plan is scoped to `PUP-18` only.
+> This is the first implementation slice off the [Full PRD Native App Master Roadmap](../active/2026-05-29-full-prd-native-app-master-roadmap.md) (Phase 1A). Read `AGENTS.md`, the roadmap, `docs/architecture/07-backend-topology.md`, `docs/architecture/08-data-model-and-rls.md`, and ADR-0007 before starting. Do not implement the whole roadmap from here — this plan is scoped to `PUP-18` only.
 
-**Status:** Active.
+**Status:** Completed.
 
-**Plan type:** Active task plan.
+**Plan type:** Completed task plan.
 
-**Current phase:** Phase 8/9 commit gate — sign-in UI, auth route gating, and More sign-out are implemented locally with tests; review follow-up fixed sign-out failure feedback, social-provider i18n labels, and More-owned sign-out component placement; commit/push remains pending exact user approval. The gated remote Supabase test/typegen step completed on 2026-05-31; manual smoke remains pending a runnable dev build/session.
+**Current phase:** Completed — PR #18 merged to `main` on 2026-05-31 with local and remote gates green. Manual email OTP smoke passed on `Grith iPhone SE 3 iOS 26.3` (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) on 2026-06-08 after applying dev Auth email-template/config alignment (`{{ .Token }}` and `mailer_otp_length=6`). Linear `PUP-18` is `Done`; final smoke and local verification evidence were mirrored in Linear comment `4f5f0f99-ba46-47cf-b86d-342d7e128b26` on 2026-06-08.
 
 **Linear:** `PUP-18` — Auth, identity, session persistence, and new-user bootstrap.
 
@@ -455,7 +455,7 @@ SELECT * FROM finish();
 ROLLBACK;
 ```
 
-- [ ] **Step 2: Run the remote Supabase test gate (requires credentials + user approval)**
+- [x] **Step 2: Run the remote Supabase test gate (requires credentials + user approval)**
 
 The bootstrap pgTAP runs against the hosted dev project via the existing CLI wrapper. Pushing the new migration to remote dev is a gated action — request explicit approval naming "run `npm run supabase:ci:remote` for PUP-18 (push dev migration + pgTAP)" before running it.
 
@@ -463,6 +463,8 @@ Run (after approval): `npm run supabase:ci:remote`
 Expected: pgTAP reports the bootstrap file passing (9 of N tests added), lint clean, dry-run clean.
 
 If approval/credentials are unavailable, mark this step blocked in Linear and proceed with the rest of the plan; the migration + test files are still committed and reviewable.
+
+2026-05-31 evidence: PASS via GitHub Actions `Remote Dev Schema Gate` for commit `ef152d2`; remote dry-run was up to date, remote lint found no schema errors, and `auth_bootstrap.sql` plus `rls_baseline.sql` passed 91 pgTAP tests. The generated `database.types.ts` update landed before PR #18 merged.
 
 - [x] **Step 3: Commit**
 
@@ -1672,9 +1674,9 @@ export function useSignInFlow() {
 Run: `npm run test:unit -- src/test/sign-in-flow.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
-2026-05-31 local evidence: RED failed on missing `@/features/auth/hooks/useSignInFlow`; GREEN passed in `npm run test:unit -- src/test/sign-in-flow.test.ts src/test/sign-in-screen.render.test.tsx src/test/auth-navigation.test.ts src/test/app-shell.render.test.tsx`. Commit pending exact approval.
+2026-05-31 evidence: RED failed on missing `@/features/auth/hooks/useSignInFlow`; GREEN passed in `npm run test:unit -- src/test/sign-in-flow.test.ts src/test/sign-in-screen.render.test.tsx src/test/auth-navigation.test.ts src/test/app-shell.render.test.tsx`. Changes merged through PR #18; no new git mutation is authorized by this cleanup.
 
 ```bash
 git add src/features/auth/hooks/useSignInFlow.ts src/test/sign-in-flow.test.ts
@@ -1714,9 +1716,9 @@ export function useEmailOtpSignIn(): SignInActions {
 }
 ```
 
-- [ ] **Step 2: Typecheck and commit**
+- [x] **Step 2: Typecheck and commit**
 
-2026-05-31 local evidence: hook implemented and covered through the SignInScreenView integration test; `npm run typecheck` passed. Commit pending exact approval.
+2026-05-31 evidence: hook implemented and covered through the SignInScreenView integration test; `npm run typecheck` passed. Changes merged through PR #18; no new git mutation is authorized by this cleanup.
 
 Run: `npm run typecheck`
 Expected: PASS.
@@ -1768,9 +1770,9 @@ export function SocialSignInButtons({ onSelectMethod }: SocialSignInButtonsProps
 }
 ```
 
-- [ ] **Step 2: Typecheck and commit**
+- [x] **Step 2: Typecheck and commit**
 
-2026-05-31 local evidence: provider seam implemented; review follow-up added i18n label mapping for reserved Apple/Google providers and RED/GREEN coverage in `src/test/social-sign-in-buttons.render.test.tsx`; `npm run typecheck` passed. Commit pending exact approval.
+2026-05-31 evidence: provider seam implemented; review follow-up added i18n label mapping for reserved Apple/Google providers and RED/GREEN coverage in `src/test/social-sign-in-buttons.render.test.tsx`; `npm run typecheck` passed. Changes merged through PR #18; no new git mutation is authorized by this cleanup.
 
 Run: `npm run typecheck`
 Expected: PASS.
@@ -1989,9 +1991,9 @@ export function SignInScreenView({ actions }: SignInScreenViewProps) {
 Run: `npm run test:unit -- src/test/sign-in-screen.render.test.tsx`
 Expected: PASS (4 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
-2026-05-31 local evidence: RED failed on missing `@/features/auth/screens/SignInScreen`; GREEN passed in targeted auth UI test package. Commit pending exact approval.
+2026-05-31 evidence: RED failed on missing `@/features/auth/screens/SignInScreen`; GREEN passed in targeted auth UI test package. Changes merged through PR #18; no new git mutation is authorized by this cleanup.
 
 ```bash
 git add src/features/auth/screens/SignInScreen.tsx src/test/sign-in-screen.render.test.tsx
@@ -2011,9 +2013,9 @@ export { SignInScreen } from './screens/SignInScreen';
 export { resolveAuthLanding, resolveAuthRouteRedirect, type AuthLanding } from './navigation';
 ```
 
-- [ ] **Step 2: Typecheck and commit**
+- [x] **Step 2: Typecheck and commit**
 
-2026-05-31 local evidence: auth feature barrel implemented without exporting More-owned sign-out UI, preserving the no-cross-feature-import boundary; `npm run typecheck` passed. Commit pending exact approval.
+2026-05-31 evidence: auth feature barrel implemented without exporting More-owned sign-out UI, preserving the no-cross-feature-import boundary; `npm run typecheck` passed. Changes merged through PR #18; no new git mutation is authorized by this cleanup.
 
 Run: `npm run typecheck`
 Expected: PASS.
@@ -2085,9 +2087,9 @@ export function resolveAuthLanding(status: AuthStatus): AuthLanding | null {
 Run: `npm run test:unit -- src/test/auth-navigation.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Export from the feature barrel and commit**
+- [x] **Step 5: Export from the feature barrel and commit**
 
-2026-05-31 local evidence: added both launch resolver and route-level redirect resolver so already-open protected tabs/modals redirect after sign-out; RED failed on missing `@/features/auth/navigation`; GREEN passed in `src/test/auth-navigation.test.ts`. Barrel export done; commit pending exact approval.
+2026-05-31 evidence: added both launch resolver and route-level redirect resolver so already-open protected tabs/modals redirect after sign-out; RED failed on missing `@/features/auth/navigation`; GREEN passed in `src/test/auth-navigation.test.ts`. Barrel export merged through PR #18; no new git mutation is authorized by this cleanup.
 
 Add to `src/features/auth/index.ts`:
 
@@ -2190,9 +2192,9 @@ export default function IndexRoute() {
 Run: `node scripts/checks/check-navigation-contract.mjs && node scripts/checks/check-scaffold-guardrails.mjs`
 Expected: both pass (no `@/lib/supabase`, `@supabase/supabase-js`, `createClient(`, or `console.*` in `app/`; required route files still present).
 
-- [ ] **Step 5: Typecheck and commit**
+- [x] **Step 5: Typecheck and commit**
 
-2026-05-31 local evidence: `AuthProvider` is wired in `app/_layout.tsx`, `/sign-in` route added, `app/index.tsx` gates launch, and an app-level auth route gate redirects signed-out users away from protected tabs/modals. `node scripts/checks/check-navigation-contract.mjs && node scripts/checks/check-scaffold-guardrails.mjs` passed; `npm run typecheck` passed after Expo regenerated `.expo/types/router.d.ts` with `/sign-in`. Commit pending exact approval.
+2026-05-31 evidence: `AuthProvider` is wired in `app/_layout.tsx`, `/sign-in` route added, `app/index.tsx` gates launch, and an app-level auth route gate redirects signed-out users away from protected tabs/modals. `node scripts/checks/check-navigation-contract.mjs && node scripts/checks/check-scaffold-guardrails.mjs` passed; `npm run typecheck` passed after Expo regenerated `.expo/types/router.d.ts` with `/sign-in`. Changes merged through PR #18; no new git mutation is authorized by this cleanup.
 
 Run: `npm run typecheck`
 Expected: PASS (Expo Router typed routes recognize `/sign-in`).
@@ -2295,9 +2297,9 @@ export function MoreScreen({ openTimeline }: MoreScreenProps) {
 Run: `npm run test:unit -- src/test/app-shell.render.test.tsx`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
-2026-05-31 local evidence: RED failed because `auth.sign-out.cta` was absent from More; GREEN passed after rendering `SignOutButton`. Review follow-up moved `SignOutButton` under `src/features/more/components` so More does not import from the auth feature. Commit pending exact approval.
+2026-05-31 evidence: RED failed because `auth.sign-out.cta` was absent from More; GREEN passed after rendering `SignOutButton`. Review follow-up moved `SignOutButton` under `src/features/more/components` so More does not import from the auth feature. Changes merged through PR #18; no new git mutation is authorized by this cleanup.
 
 ```bash
 git add src/features/more/components/SignOutButton.tsx src/features/more/screens/MoreScreen.tsx src/test/app-shell.render.test.tsx src/test/sign-out-button.render.test.tsx
@@ -2341,7 +2343,9 @@ The roadmap (Phase 1A) makes identity a foundation dependency: durable writes, R
 - `expo-secure-store` is a new runtime dependency.
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
+
+2026-05-31 evidence: ADR-0017 merged through PR #18; no new git mutation is authorized by this cleanup.
 
 ```bash
 git add docs/architecture/adr/0017-auth-identity-session.md
@@ -2372,7 +2376,9 @@ Add to the "RLS Negative Tests" P0 list:
 - new-user bootstrap creates exactly one accepted owner membership, is idempotent, isolates users, and is denied to the anonymous role (`supabase/tests/auth_bootstrap.sql`).
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
+
+2026-05-31 evidence: architecture doc updates merged through PR #18; no new git mutation is authorized by this cleanup.
 
 ```bash
 git add docs/architecture/07-backend-topology.md docs/architecture/08-data-model-and-rls.md
@@ -2388,7 +2394,7 @@ git commit -m "PUP-18 document bootstrap RPC and session persistence in architec
 - [x] **Step 1: Mark Phase 1A in progress and record the auth decision in the roadmap**
 
 In `2026-05-29-full-prd-native-app-master-roadmap.md`:
-- In the **Phase 1A** section, note that `PUP-18` is the active slice implementing it, that the method is email OTP with a provider-agnostic seam for Apple/Google, and that persistence uses SecureStore.
+- In the **Phase 1A** section, note that `PUP-18` implemented the slice, that the method is email OTP with a provider-agnostic seam for Apple/Google, and that persistence uses SecureStore.
 - Add a changelog entry dated `2026-05-30`: "Started Phase 1A as `PUP-18`: Supabase Auth email-OTP sign-in, SecureStore session persistence + AppState auto-refresh, route gating, and a SECURITY DEFINER `bootstrap_current_user` RPC; ADR-0017 accepted. Apple/Google reserved behind a provider-agnostic seam."
 
 - [x] **Step 2: Add the plan to the index**
@@ -2396,10 +2402,12 @@ In `2026-05-29-full-prd-native-app-master-roadmap.md`:
 In `docs/plans/README.md`, add a row to the Current Plans table:
 
 ```markdown
-| Active task plan | [PUP-18 Auth, Identity, Session, And Bootstrap](active/2026-05-30-pup-18-auth-identity-session.md) | `PUP-18` | Phase 0 dependency gate → implement phase-by-phase |
+| Completed | [PUP-18 Auth, Identity, Session, And Bootstrap](completed/2026-05-30-pup-18-auth-identity-session.md) | `PUP-18` | Merged via PR #18; manual smoke + Linear evidence complete |
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
+
+2026-05-31 evidence: roadmap/index linkage merged through PR #18; no new git mutation is authorized by this cleanup.
 
 ```bash
 git add docs/plans/active/2026-05-29-full-prd-native-app-master-roadmap.md docs/plans/README.md
@@ -2438,19 +2446,35 @@ After `database.types.ts` includes `bootstrap_current_user`, update `src/lib/aut
 
 2026-05-31 evidence: `database.types.ts` includes `bootstrap_current_user`; `src/lib/auth/bootstrap.ts` no longer uses the temporary RPC name cast; `npm run typecheck` passed; `npm run test:unit -- src/test/auth-bootstrap.test.ts src/test/supabase-client.test.ts` passed.
 
-- [ ] **Step 4: Manual smoke (when a dev build exists)**
+- [x] **Step 4: Manual smoke (when a dev build exists)**
 
 On a device/simulator: launch signed-out → land on Sign in → enter email → receive 6-digit code → enter code → land on Today → confirm a household + owner membership exists (bootstrap) → kill and relaunch app → session restored to Today (no re-sign-in) → More → Sign out → returns to Sign in.
 
-- [ ] **Step 5: Update Linear**
+2026-05-31 partial evidence: PASS for `npm run check` before smoke. Built and installed a dev simulator app only on `Grith iPhone SE 3 iOS 26.3` after temporarily adding the Expo-suggested bundle identifier for prebuild, then restoring source config; `ios/` remains ignored generated output. Signed-out launch landed on Sign in with no redirect loop and no blank loading frame observed. OTP completion is blocked: hosted Supabase Auth rejects `example.test` addresses as invalid for email OTP, and synthetic `example.com` retries returned the generic UI failure backed by `over_email_send_rate_limit`. Later backend-only rechecks with fresh synthetic `example.com` addresses still returned `429 over_email_send_rate_limit`, so the OTP request/verify smoke cannot be completed without a usable approved test mailbox/code path or the dev Auth rate limit clearing. No private email, OTP, token, or screenshot evidence was recorded. Remaining unchecked smoke items: receive/enter OTP, land on Today, verify bootstrap household + owner membership, kill/relaunch session restore, and More -> Sign out.
+
+2026-05-31 continuation evidence after user confirmed Linear reauth is unavailable: checked current Supabase docs and dev Auth metadata. `signInWithOtp`/`verifyOtp` remains the correct proof path; no unexpired synthetic token exists in dev Auth, and the available Supabase connector does not expose an Auth config/rate-limit update tool. A direct SQL-auth bypass would not prove the required OTP request/verify smoke, so it was not used as completion evidence. Manual smoke remains blocked until the dev OTP rate limit clears or an approved test mailbox/code path is available.
+
+2026-06-02 continuation evidence: Temp Mail delivery worked with a synthetic disposable mailbox, but the Supabase email contained a signup confirmation/magic-link URL instead of a 6-digit code. Clicking the link redirected the browser to `localhost:3000` with session tokens in the URL fragment, which did not authenticate the native app because PUP-18 has no magic-link/deep-link callback by design. Added a dev Auth template helper (`npm run supabase:auth:otp-template`) that updates the non-production confirmation and magic-link/OTP templates to `{{ .Token }}` when `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` are available, and added a dev-only synthetic password sign-in path plus `npm run supabase:auth:debug-account` for repetitive local debug loops. Follow-up review hardening now makes both helpers refuse any Supabase target other than the known non-production `PuppyPlan Dev` ref/URL before Management API or Auth Admin calls. This does not complete the manual OTP smoke until the hosted dev template is actually updated and a fresh OTP is received/verified in the simulator.
+
+2026-06-08 continuation evidence: After the hosted template update, Temp Mail received a code email but Supabase generated an 8-digit OTP because the dev Auth config still had `mailer_otp_length=8`. The native app correctly rejected the longer token because PUP-18 intentionally validates 6-digit codes. Updated `scripts/supabase/configure-dev-auth-email-otp.mjs` so the helper PATCHes `mailer_otp_length=6` together with the confirmation and magic-link templates, added guard coverage in `scripts/checks/dev-auth-config.test.mjs`, re-ran `npm run supabase:auth:otp-template`, and verified hosted config now reports `mailer_otp_length=6` with both templates using `{{ .Token }}`. Requested a fresh OTP through the native app, verified the 6-digit code, and landed on Today. Backend evidence for the freshly signed-in non-debug user showed one active owner membership. Kill/relaunch restored the session to Today without re-sign-in, and More -> Sign out returned to Sign in. No mailbox, OTP, user id, household id, token, or private screenshot evidence was recorded.
+
+- [x] **Step 5: Update Linear**
 
 Move `PUP-18` to In Review with verification evidence (check output, pgTAP result or blocked note, manual smoke status). Do not perform release/push actions beyond the approved remote gate.
 
+2026-05-31 evidence: Linear connector still returns `401 Reauthentication required` for `PUP-18` across repeated continuation rechecks, so no Linear comment/status update was possible from this session.
+
+2026-05-31 continuation evidence: user confirmed Linear reauthentication is not currently possible. Keep Linear sync unchecked and use repo docs plus GitHub PR #18 evidence as the local source of truth until connector auth is restored.
+
+2026-06-08 evidence: `codex_apps` Linear connector still returns `401 Reauthentication required`, but the active Linear MCP issue tools work. `PUP-18` was already `Done` in Linear with PR #18 merged. Added final smoke and local verification evidence in Linear comment `4f5f0f99-ba46-47cf-b86d-342d7e128b26`: manual OTP smoke passed, bootstrap membership confirmed without recording private IDs, `npm run check` passed with 38 Jest suites / 258 tests and 106 Node tests, and no release/production/git remote action was performed.
+
 ### Task 11.2: Decide branch completion
 
-- [ ] **Step 1: Use the finishing-a-development-branch skill**
+- [x] **Step 1: Use the finishing-a-development-branch skill**
 
 REQUIRED SUB-SKILL: superpowers:finishing-a-development-branch to choose merge/PR/cleanup. Opening a PR is a remote mutation — get explicit user approval naming the action first (`AGENTS.md` release guardrail).
+
+2026-05-31 evidence: PR #18 was merged to `main`; no additional commit, push, PR, or release action is authorized by this cleanup.
 
 ---
 
@@ -2477,9 +2501,15 @@ REQUIRED SUB-SKILL: superpowers:finishing-a-development-branch to choose merge/P
 
 ## Changelog
 
+- 2026-06-08: Completed PUP-18 handoff: verified Linear issue status is already `Done`, added final manual-smoke and local verification evidence to Linear comment `4f5f0f99-ba46-47cf-b86d-342d7e128b26`, re-ran `npm run check` after dev-auth cleanup (38 Jest suites / 258 tests, 106 Node tests, scaffold/navigation/i18n/token/privacy/text-hygiene gates), and moved this plan to `completed/`. The older `codex_apps` Linear connector still requires reauth, but the active Linear MCP issue tools are working.
+- 2026-05-31: PR #18 merged to `main`; local/remote gates are green. Manual smoke was attempted only on `Grith iPhone SE 3 iOS 26.3`; signed-out launch reached Sign in without redirect/loading issues, but OTP completion is blocked by dev Auth email validation/rate limiting. Linear sync remains blocked by reauth.
+- 2026-05-31: Continued PUP-18 cleanup after the first smoke attempt: fixed the stale Supabase boundary README so it reflects PR #18 SecureStore-backed session persistence, rechecked Linear (`401 Reauthentication required`), and rechecked dev Auth OTP with fresh synthetic `example.com` addresses (`429 over_email_send_rate_limit`).
+- 2026-05-31: After user confirmed Linear reauth is unavailable and approved other non-production/non-release work, investigated whether manual smoke could continue through Supabase dev Auth. No synthetic token exists, no connector Auth-config path is available, and SQL auth bypass would not prove the required OTP request/verify flow; manual smoke therefore remains blocked on OTP rate-limit clearing or an approved test mailbox/code path.
+- 2026-06-08: Fixed the remaining dev Auth OTP length mismatch: hosted `PuppyPlan Dev` was generating 8-digit `{{ .Token }}` values because `mailer_otp_length` was still 8. The helper now updates `mailer_otp_length=6`, confirmation template, and magic-link template in one guarded Management API PATCH; hosted config was rechecked after running the script. Manual email OTP smoke then passed on `Grith iPhone SE 3 iOS 26.3`: fresh 6-digit code verified to Today, bootstrap owner membership confirmed for the freshly signed-in non-debug user, kill/relaunch restored Today, and More -> Sign out returned to Sign in.
+- 2026-06-02: Confirmed the manual-smoke blocker is Auth email-template/config mismatch, not email delivery: Temp Mail received a Supabase confirmation link and the browser redirect failed at `localhost:3000` because no web callback was running. Added non-production dev support for the chosen path: an Auth template Management API helper to switch hosted dev confirmation + magic-link/OTP emails to `{{ .Token }}`, plus dev-only synthetic password sign-in and an Auth Admin helper for local debug loops. Follow-up hardening added a shared known-dev Supabase target guard, script-level checks before hosted privileged calls, RED/GREEN Node coverage, and CLI smoke evidence that production-like fake targets are refused before any remote mutation. Manual OTP smoke remains open until the dev template update is run with a valid Management API token and a fresh 6-digit code is verified in the native simulator.
 - 2026-05-31: Applied the PUP-18 bootstrap RPC migration to remote dev, then added a follow-up RPC grant-hardening migration because EXECUTE remained available through `PUBLIC`; future fresh databases get the same hardening in the original migration.
 - 2026-05-31: Addressed review follow-up on uncommitted Phase 8/9 changes: `SignOutButton` now catches sign-out failures and shows localized snackbar feedback; `SocialSignInButtons` maps reserved Apple/Google methods through i18n keys; More owns its sign-out component to avoid a cross-feature import from auth; RED/GREEN coverage added for both; `npm run check` passed. Routing double-redirect and index loading blank-frame notes remain accepted manual-smoke risks until a runnable dev build/session is available.
-- 2026-05-31: Implemented Phase 8/9 locally without committing: email OTP sign-in UI, feature auth barrel, route launch resolver, app-level auth route gate, `/sign-in` route, and More sign-out control. Targeted RED/GREEN auth UI/navigation tests, typecheck, navigation contract, and scaffold guardrails pass; commit/push remains pending exact approval.
+- 2026-05-31: Implemented Phase 8/9 locally before PR completion: email OTP sign-in UI, feature auth barrel, route launch resolver, app-level auth route gate, `/sign-in` route, and More sign-out control. Targeted RED/GREEN auth UI/navigation tests, typecheck, navigation contract, and scaffold guardrails passed; changes later merged via PR #18.
 - 2026-05-31: Cleanup after failed subagent batch: local branch renamed to Linear `gitBranchName`, PUP-17 master roadmap restored into this branch to fix the plan source link, ADR-0017 added for the temporary bootstrap RPC cast, plan index updated with PUP-18, privacy-scanner email placeholder fixed, `signOut` now maps backend errors to `auth_sign_out_failed`, `AuthProvider` no longer exposes `signedIn` before bootstrap succeeds, and pgTAP user-isolation comparison no longer reads userA membership through userB RLS.
 - 2026-05-31: Completed Phase 7 after preflight cleanup commit: added `auth` EN/RU/ES locale copy and the `TextField` primitive with RED/GREEN render coverage; committed as `PUP-18 add auth i18n copy and TextField primitive`.
 - 2026-05-30: Created the PUP-18 plan from the master roadmap (Phase 1A). Decisions captured: email-OTP first with a provider-agnostic seam for Apple/Google, SecureStore session persistence with AppState auto-refresh, SECURITY DEFINER `bootstrap_current_user` RPC for new-user household/owner-membership creation, route gating, and sign-out (account deletion deferred). ADR target is ADR-0017.

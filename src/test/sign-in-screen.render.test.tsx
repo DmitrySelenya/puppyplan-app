@@ -20,7 +20,9 @@ afterEach(() => {
 function makeActions() {
   return {
     isBusy: false,
+    isDebugSignInEnabled: false,
     requestCode: jest.fn(async () => undefined),
+    signInWithDebugAccount: jest.fn(async () => undefined),
     verifyCode: jest.fn(async () => undefined),
   };
 }
@@ -94,5 +96,23 @@ describe('SignInScreenView', () => {
     fireEvent.press(screen.getByText(i18n.t('auth.code.cta')));
 
     await waitFor(() => expect(screen.getByText(i18n.t('auth.errors.verify-failed'))).toBeTruthy());
+  });
+
+  it('keeps debug sign-in hidden unless the dev account action is enabled', () => {
+    render(<SignInScreenView actions={makeActions()} />);
+
+    expect(screen.queryByText(i18n.t('auth.debug.cta'))).toBeNull();
+  });
+
+  it('runs the synthetic debug account sign-in action when enabled', async () => {
+    const actions = {
+      ...makeActions(),
+      isDebugSignInEnabled: true,
+    };
+    render(<SignInScreenView actions={actions} />);
+
+    fireEvent.press(screen.getByText(i18n.t('auth.debug.cta')));
+
+    await waitFor(() => expect(actions.signInWithDebugAccount).toHaveBeenCalledTimes(1));
   });
 });

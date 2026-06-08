@@ -44,6 +44,23 @@ export async function verifyEmailOtp(input: Readonly<{ email: string; token: str
   return user;
 }
 
+export async function signInWithPassword(
+  input: Readonly<{ email: string; password: string }>,
+): Promise<SessionUser> {
+  const { data, error } = await getSupabaseClient().auth.signInWithPassword({
+    email: input.email,
+    password: input.password,
+  });
+
+  const user = error ? null : toSessionUser(data.session ?? null);
+
+  if (!user) {
+    throw new Error('auth_password_sign_in_failed');
+  }
+
+  return user;
+}
+
 export async function getCurrentUser(): Promise<SessionUser | null> {
   const { data } = await getSupabaseClient().auth.getSession();
 

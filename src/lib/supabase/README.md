@@ -9,7 +9,7 @@ Raw Supabase clients and wrappers live here. Feature UI and route files must not
 
 Only publishable keys are valid in Expo public env vars. Service-role and secret keys must never be used here.
 
-The current MVP client disables Supabase session persistence until the auth/onboarding implementation provides a SecureStore-backed adapter. Do not store Supabase session tokens in Expo SQLite `localStorage`; auth must also wire token auto-refresh to React Native `AppState` before persistent login ships.
+The current MVP client persists Supabase sessions through the auth-owned SecureStore adapter, with token auto-refresh enabled for React Native `AppState` lifecycle changes. Do not store Supabase session tokens in Expo SQLite `localStorage`, Zustand, analytics, logs, or feature-local storage.
 
 `env.ts` intentionally accepts only `https://*.supabase.co` URLs for MVP dev projects. Self-hosted Supabase or custom domains require an explicit env-policy update instead of silently broadening the client boundary.
 

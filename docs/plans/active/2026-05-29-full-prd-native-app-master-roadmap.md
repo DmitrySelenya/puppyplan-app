@@ -9,7 +9,7 @@
 
 **Plan type:** Master roadmap. This is a reviewable execution map, not a single implementation contract.
 
-**Current execution:** `PUP-17` roadmap/docs hygiene is merged via PR #17. `PUP-18` is the active Phase 1A implementation slice for auth, identity, session persistence, and new-user bootstrap.
+**Current execution:** `PUP-17` roadmap/docs hygiene is merged via PR #17. `PUP-18` auth, identity, session persistence, and new-user bootstrap is complete: PR #18 merged on 2026-05-31, manual email OTP smoke passed on 2026-06-08, and final evidence is mirrored in Linear. The next critical-path product slice is onboarding, puppy profile, and tracker setup, while route/design coverage can still parallelize as synthetic/non-production wiring.
 
 **Architecture:** Future work stays Supabase-first, identity-first, contracts-first, and trust-first: Supabase Auth session identity must exist before durable user flows, Zod contracts and business rules define payloads, Supabase/RLS/Edge Functions enforce access, TanStack Query owns server state, Expo SQLite remains the only durable local-write exception for Quick Log, feature UI uses `src/design` primitives, and all visible strings go through typed EN/RU/ES i18n.
 
@@ -29,9 +29,9 @@
 
 ## Context
 
-The project has a strong foundation but not a full app yet. `PUP-1` through `PUP-16` are complete in Linear. The repo has the Expo Router shell, primary `Today | Health | More` tabs, a Quick Log FAB/action path, Supabase schema/RLS baseline, generated DB types, local and remote verification gates, design tokens, design primitives, typed i18n, Quick Log contracts, the local Quick Log queue, mutation/cache lifecycle, Quick Log sheet UI, Today/Timeline pending/failed visibility, and Quick Log privacy-safe analytics/observability.
+The project has a strong foundation but not a full app yet. `PUP-1` through `PUP-18` are complete in Linear/repo evidence. The repo has the Expo Router shell, primary `Today | Health | More` tabs, a Quick Log FAB/action path, Supabase schema/RLS baseline, generated DB types, local and remote verification gates, design tokens, design primitives, typed i18n, Quick Log contracts, the local Quick Log queue, mutation/cache lifecycle, Quick Log sheet UI, Today/Timeline pending/failed visibility, Quick Log privacy-safe analytics/observability, and the auth/session foundation.
 
-The largest architectural gap is auth/identity. There is no `src` auth/session module yet, and `src/lib/supabase/client.ts` intentionally uses `persistSession: false` until a SecureStore-backed session adapter and React Native `AppState` token-refresh behavior are implemented. PRD §3, §6, and §12 require Supabase Auth, anonymous-or-permanent identity handling, RLS behavior that can distinguish anonymous from permanent users for sensitive actions, and an anonymous-to-permanent upgrade path if anonymous auth ships. This must be an early foundation slice, not a late onboarding detail.
+The largest remaining architectural gap has moved from auth/session to onboarding and care context. PR #18 added the `src/lib/auth` session module, SecureStore-backed Supabase session persistence, React Native `AppState` token-refresh behavior, email OTP sign-in, route gating, sign-out, and the `bootstrap_current_user` RPC for first household + owner membership. Manual OTP smoke passed on 2026-06-08, so later flows must consume this real session actor instead of fake IDs or ephemeral sessions.
 
 Existing backend baseline must be extended and verified, not rebuilt. `supabase/migrations/20260524202620_mvp_schema_baseline.sql` plus follow-up hardening migrations already define the PRD baseline tables for household, membership, puppy, event log, health records, reminders, reminder occurrences, invites, share links, share scopes, push tokens, notification preferences/delivery logs, trusted-sitter completion events, subscription entitlements, media assets, and `app_private` token-secret tables. Existing share projection RPCs/views include `current_share_*`, `share_link_view`, `share_routine_summary`, `share_selected_timeline`, `share_training_notes`, `share_health_summary`, and `share_puppy_profile`. Future Health, Reminder, Family, Trainer, Card, and Paywall work should start by adding Zod contracts, query hooks, feature UI, negative RLS tests, and missing RPC/Edge wrappers over this baseline; new base tables require an explicit scope change and ADR-0007 review.
 
@@ -110,7 +110,7 @@ Current atlas counts from `docs/design/v1/manifest.json`: 17 sections, 65 artboa
 | Atlas group | Current native status | Roadmap target |
 | --- | --- | --- |
 | Foundation | Tokens and first primitives exist; missing several required primitives and native gallery. | Complete shared primitives, `_dev/components` or equivalent gallery, and screen-state fixtures. |
-| Auth/session | No feature module; Supabase client deliberately does not persist sessions yet. | ADR-0017 or equivalent accepted identity decision, SecureStore-backed session persistence, anonymous/permanent upgrade path if enabled, account-boundary tests. |
+| Auth/session | Foundation landed via PR #18: ADR-0017, email OTP sign-in, SecureStore-backed Supabase session persistence, AppState auto-refresh, route gating, sign-out, and new-user bootstrap RPC. Manual smoke remains. | Extend the foundation only through scoped follow-ups: social sign-in, anonymous/permanent upgrade if enabled, account-boundary tests for later sensitive flows, and onboarding/profile consumption of the real session actor. |
 | Onboarding | Missing as a feature group. | Full setup flow, validation, age hint, tracker picker, plan reveal, first log, account/notification prompts using the accepted identity foundation. |
 | Today | Partial Quick Log rows only. | PRD Today hero, day 1/day 2/day 7 variants, activity strip, reminder/guidance cards, loading/offline/pending/error states. |
 | Quick Log | Partial; most Quick Log MVP internals exist. | Wire real care context, details route, slow-saving state, optional detail variants, full visual parity. |
@@ -242,14 +242,14 @@ Each future task plan must map these invariants to automated tests or named manu
 
 ### Phase 1A - Auth, Identity, Session Persistence, And Account Boundary
 
-**Status:** In progress via `PUP-18` (`docs/plans/active/2026-05-30-pup-18-auth-identity-session.md`). The local slice has implemented dependency setup, contracts, bootstrap RPC, SecureStore session persistence, auth API, bootstrap client, AuthProvider, i18n copy, and TextField. Sign-in UI, routing, docs completion, remote Supabase verification/typegen, and manual smoke remain pending.
+**Status:** Complete via `PUP-18` PR #18 on 2026-05-31 (`docs/plans/completed/2026-05-30-pup-18-auth-identity-session.md`). Dependency setup, contracts, bootstrap RPC, SecureStore session persistence, auth API, bootstrap client, AuthProvider, i18n copy, TextField, sign-in UI, routing, sign-out, docs, remote Supabase verification/typegen, local gates, manual email OTP smoke, and Linear evidence are complete.
 
 **Goal:** Establish the durable identity foundation required by every server-backed feature before product flows claim real app behavior.
 
 **Scope:**
 - Write ADR-0017 or an equivalent accepted architecture decision for anonymous-first vs permanent-first onboarding, account boundary, and anonymous-to-permanent upgrade behavior.
 - Add the auth/session module under `src/lib` or an approved ownership boundary, keeping `app/` route-thin.
-- Replace temporary `persistSession: false` with an accepted Supabase React Native session persistence strategy using SecureStore or another approved Supabase-compatible secure adapter.
+- Preserve the PR #18 Supabase React Native session persistence strategy: SecureStore-backed storage, `persistSession: true`, `autoRefreshToken: true`, and React Native `AppState` token refresh.
 - Wire token auto-refresh to React Native `AppState` and expose a shared auth-refresh signal for queue/repository error classification.
 - Define account-required gates for sharing, multi-device, premium, sensitive health/privacy actions, export/delete account, and trainer/family flows.
 - Add pending deep-link intent storage for invite/share flows without persisting raw tokens longer than required.
@@ -458,11 +458,11 @@ Each future task plan must map these invariants to automated tests or named manu
 
 ## Suggested Linear Split After Review
 
-`PUP-18` has been created and is in progress as the first critical-path slice. Do not create the remaining issues until the roadmap is accepted or adjusted.
+`PUP-18` has landed and is complete as the first critical-path slice. Do not create the remaining issues until the roadmap is accepted or adjusted.
 
 | Proposed issue | Purpose | Labels |
 | --- | --- | --- |
-| PUP-18 (created; active on its own branch) | Auth/identity ADR, session persistence, account boundary | `contracts`, `rls`, `privacy` |
+| PUP-18 (complete) | Auth/identity ADR, session persistence, account boundary | `contracts`, `rls`, `privacy` |
 | PUP-19 | Route/dev-gallery coverage map and first implementation contracts | `docs`, `decision`, `needs-plan` |
 | PUP-20 | Full-app shell and native design gallery | `a11y`, `i18n`, `agent-ready` after plan |
 | PUP-21 | Onboarding, puppy profile, tracker settings | `contracts`, `i18n`, `a11y` |
@@ -478,7 +478,7 @@ Each future task plan must map these invariants to automated tests or named manu
 | PUP-31 | Paywall shell and no-op entitlement boundary | `contracts`, `release-gate` |
 | PUP-32 | Closed-beta hardening, E2E, platform and privacy gates | `release-gate`, `privacy`, `a11y` |
 
-Critical path: `PUP-18` auth/identity must land before any production wiring claims durable user behavior. `PUP-19`/`PUP-20` route coverage, design gallery, and synthetic shell work may proceed in parallel, but must not use fake production identity or claim Milestone B before Phase 1A exits.
+Critical path: `PUP-18` auth/identity is complete and downstream production wiring can consume the real session actor. `PUP-19`/`PUP-20` route coverage, design gallery, and synthetic shell work may proceed in parallel, but must not use fake production identity or claim Milestone B without real onboarding/profile care context.
 
 Large issues should be split further only after their task contract is written and the ownership boundaries are clear. The cards/revoked, More/settings, and hardening buckets are expected to split into 2-3 issues each once their contracts are drafted.
 
@@ -498,7 +498,7 @@ Explicit approval is required before:
 Known risks:
 
 - **Design atlas is broad:** dev-gallery coverage must prevent agents from implementing only the visible happy paths.
-- **Auth/session is a foundation blocker:** durable writes, RLS ownership, sharing, and multi-device behavior cannot be validated until an accepted auth/session slice replaces temporary non-persistent sessions.
+- **Auth/session must be consumed correctly:** PR #18 replaced temporary non-persistent sessions with the accepted auth/session foundation and manual smoke passed, but durable writes, RLS ownership, sharing, and multi-device flows still need follow-up tests as each product slice consumes the real session actor.
 - **Backend baseline duplication risk:** health, reminders, sharing, notification, entitlement, media, and trusted-sitter tables already exist. Future agents must extend and verify them instead of creating greenfield duplicate schema.
 - **Sharing can leak data if UI leads the design:** scope projections and RLS tests must land before trainer/share UI is considered done.
 - **Settings namespace can fork:** atlas route names currently mix `/more/*` and `/settings/*`; one documented route tree is required before More/settings implementation scales.
@@ -530,9 +530,11 @@ The full app is complete when:
 
 ## Changelog
 
+- 2026-06-08: Closed PUP-18 as complete after manual email OTP smoke passed on `Grith iPhone SE 3 iOS 26.3`, final evidence was mirrored to Linear, and the PUP-18 plan moved to `docs/plans/completed/`.
+- 2026-05-31: Updated roadmap status after PR #18 merged auth/session foundation to `main`; removed stale "no auth module"/`persistSession: false` references and recorded that PUP-18 only had manual smoke plus Linear sync remaining.
 - 2026-05-29: Created master roadmap under `PUP-17` after reviewing PRD, DESIGN, design atlas, architecture docs, ADR index, active plans, current source tree, Linear PUP status, project graph context, and design exploration results.
 - 2026-05-29: Completed repo-hygiene sync for active plans: moved `PUP-16` to completed, updated the plan index, closed stale Quick Log foundation checklist items, and narrowed the design handoff plan to its remaining Dynamic Type screenshot and dev-gallery follow-ups.
 - 2026-05-29: Applied confirmed external review findings: elevated auth/identity/session persistence to an early Phase 1A foundation slice, added source docs and ADR-0003/ADR-0001, documented the existing backend/schema/RPC baseline, unified share projection ownership under ADR-0009, corrected schema approval wording, called out `/more` vs `/settings` namespace reconciliation, linked Quick Log missing artboard 4.3 to a synthetic state, aligned accessibility/notification invariants, and split suggested Linear buckets accordingly.
 - 2026-05-30: Applied follow-up review nits: made auth/identity the first suggested issue, clarified that shell/gallery work can parallelize only as synthetic/non-production wiring until Phase 1A exits, verified listed share projection RPC/view names against migrations/tests, and removed self-referential wording from ADR-0007.
-- 2026-05-31: Merged `PUP-17` roadmap/docs hygiene via PR #17 and recorded `PUP-18` as the active Phase 1A implementation slice.
+- 2026-05-31: Merged `PUP-17` roadmap/docs hygiene via PR #17 and recorded `PUP-18` as the then-active Phase 1A implementation slice.
 - 2026-05-31: Marked final roadmap approval complete after PR #17 merged to `main`; remaining issue-split follow-ups stay open until new Linear tasks are created.

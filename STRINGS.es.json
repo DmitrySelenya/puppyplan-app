@@ -55,6 +55,9 @@
       "resend": "Enviar un código nuevo",
       "back": "Usar otro correo"
     },
+    "debug": {
+      "cta": "Usar cuenta de depuración"
+    },
     "sign-out": {
       "cta": "Cerrar sesión",
       "error": "No pudimos cerrar sesión. Revisa tu conexión e inténtalo otra vez."
@@ -66,6 +69,7 @@
     "errors": {
       "invalid-email": "Escribe un correo válido.",
       "invalid-code": "Escribe el código de 6 dígitos.",
+      "debug-sign-in-failed": "No pudimos iniciar sesión con la cuenta de depuración. Revisa las credenciales locales de desarrollo.",
       "request-failed": "No pudimos enviar el código. Revisa tu conexión e inténtalo otra vez.",
       "verify-failed": "Ese código no funcionó. Solicita uno nuevo e inténtalo otra vez."
     }
