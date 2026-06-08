@@ -41,6 +41,21 @@
     "loading": "Загрузка"
   },
 
+  "dev": {
+    "gallery": {
+      "title": "Нативная галерея компонентов",
+      "subtitle": "Синтетические состояния для локального дизайн-ревью.",
+      "synthetic-badge": "Синтетика",
+      "shell-preview": "Превью shell",
+      "states": {
+        "onboarding": "Welcome, профиль, подсказка возраста, выбор трекеров и reveal плана.",
+        "profile": "Сохранённое и редактируемое состояния профиля щенка.",
+        "quick-trackers": "Счётчик выбранных трекеров, лимит и строки для будущего reorder.",
+        "global": "Loading, empty, error, offline, pending и permission states."
+      }
+    }
+  },
+
   "auth": {
     "title": "Вход в PuppyPlan",
     "subtitle": "Данные о щенке доступны только вашей семье.",

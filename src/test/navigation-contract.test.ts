@@ -50,17 +50,22 @@ describe('navigation contract', () => {
         expect.objectContaining({
           route: '/onboarding',
           file: 'app/(onboarding)/index.tsx',
-          implementationStage: 'planned',
+          implementationStage: 'existing',
         }),
         expect.objectContaining({
           route: '/settings/puppy-profile',
           file: 'app/(modals)/settings/puppy-profile/index.tsx',
-          implementationStage: 'planned',
+          implementationStage: 'existing',
         }),
         expect.objectContaining({
           route: '/settings/quick-trackers',
           file: 'app/(modals)/settings/quick-trackers/index.tsx',
-          implementationStage: 'planned',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/_dev/components',
+          file: 'app/_dev/components.tsx',
+          implementationStage: 'existing',
         }),
       ]),
     );

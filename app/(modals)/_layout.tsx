@@ -5,6 +5,8 @@ export default function ModalLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="quick-log/index" />
       <Stack.Screen name="timeline/index" />
+      <Stack.Screen name="settings/puppy-profile/index" />
+      <Stack.Screen name="settings/quick-trackers/index" />
     </Stack>
   );
 }

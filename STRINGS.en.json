@@ -40,6 +40,21 @@
     "loading": "Loading"
   },
 
+  "dev": {
+    "gallery": {
+      "title": "Native component gallery",
+      "subtitle": "Synthetic preview states for local design review.",
+      "synthetic-badge": "Synthetic",
+      "shell-preview": "Shell preview",
+      "states": {
+        "onboarding": "Welcome, profile, age hint, tracker picker, and plan reveal.",
+        "profile": "Saved and editing states for the puppy profile settings route.",
+        "quick-trackers": "Selected tracker count, limit state, and reorder-ready rows.",
+        "global": "Loading, empty, error, offline, pending, and permission states."
+      }
+    }
+  },
+
   "auth": {
     "title": "Sign in to PuppyPlan",
     "subtitle": "We keep your puppy's data private to your household.",

@@ -7,13 +7,13 @@
 
 **Status:** Active.
 
-**Current phase:** Phase 2 - `PUP-20` Synthetic Route Shells And Native Gallery.
+**Current phase:** Approval gate before Phase 3 - `PUP-21` Contracts And Data Access.
 
 **Architecture:** The batch is split into two lanes. `PUP-19`/`PUP-20` are synthetic, development-only Milestone A enablers for route coverage, atlas mapping, and native design gallery. `PUP-21` is the production care-context lane: onboarding, puppy profile, selected quick trackers, and active care context consumed by Quick Log/Today. Production work must use the `PUP-18` Supabase Auth session actor, existing Supabase/RLS boundaries, TanStack Query server state, `src/design` primitives, typed EN/RU/ES i18n, and Zod contracts.
 
-**Linear:** `PUP-19`, `PUP-20`, and `PUP-21` created on 2026-06-08 under team `PUP` / project `PuppyPlan MVP`. `PUP-19` owns route coverage/settings namespace/storage recommendation. `PUP-20` owns the synthetic dev-gallery lane and is agent-ready after the `PUP-19` coverage map. `PUP-21` owns production care context and remains `blocked`/`needs-plan` until selected tracker persistence receives exact ADR-0007/CTO schema approval.
+**Linear:** `PUP-19`, `PUP-20`, and `PUP-21` created on 2026-06-08 under team `PUP` / project `PuppyPlan MVP`. `PUP-19` owns route coverage/settings namespace/storage recommendation and is in review. `PUP-20` owns the synthetic dev-gallery lane and is ready for review after local verification. `PUP-21` owns production care context and remains `blocked`/`needs-plan` until selected tracker persistence receives exact ADR-0007/CTO schema approval.
 
-**Branch:** Current implementation branch: `dimaselenya/pup-19-route-coverage-map-settings-namespace-and-selected-tracker`. Linear-generated follow-up branches: `dimaselenya/pup-20-development-only-native-design-gallery-and-synthetic-route`; `dimaselenya/pup-21-onboarding-puppy-profile-tracker-settings-and-active-care`.
+**Branch:** Current implementation branch: `dimaselenya/pup-20-development-only-native-design-gallery-and-synthetic-route`. Completed branch: `dimaselenya/pup-19-route-coverage-map-settings-namespace-and-selected-tracker`. Linear-generated blocked follow-up branch: `dimaselenya/pup-21-onboarding-puppy-profile-tracker-settings-and-active-care`.
 
 **Primary source docs:**
 - PRD: `puppyplan-prd-v2.md` - sections 3, 4, 6, 9, 10, 11, and 12.
@@ -332,11 +332,13 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 - Test/update: route render and navigation contract tests
 
 **Checklist:**
-- [ ] Add development-only native gallery for primitives and key screen states.
-- [ ] Add synthetic route shells for missing atlas groups needed for Milestone A.
-- [ ] Use only synthetic fixtures and typed i18n keys.
-- [ ] Ensure dev-gallery cannot write production data or appear in primary navigation.
-- [ ] Run `npm run check`.
+- [x] Add development-only native gallery for primitives and key screen states.
+- [x] Add synthetic route shells for missing atlas groups needed for Milestone A.
+- [x] Use only synthetic fixtures and typed i18n keys.
+- [x] Ensure dev-gallery cannot write production data or appear in primary navigation.
+- [x] Run `npm run check`.
+
+**Phase 2 result:** Added `/_dev/components`, `/onboarding`, `/settings/puppy-profile`, and `/settings/quick-trackers` route shells backed by `src/features/_dev/design-gallery` synthetic screens. The route shells do not import Supabase or production write adapters, are not linked from primary navigation, and use typed EN/RU/ES strings. Verification passed: `npm run test:unit -- src/test/dev-gallery.render.test.tsx src/test/navigation-contract.test.ts`; `node scripts/checks/check-navigation-contract.mjs`; `npm run typecheck`; `npm run test:scaffold`; `git diff --check`; `npm run check`.
 
 **Acceptance criteria:**
 - Milestone A can be reviewed locally with clickable/screenshotable synthetic states, with no production behavior claims.
@@ -454,3 +456,4 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 - 2026-06-08: Created post-`PUP-18` next-batch plan after reviewing the master roadmap, active design/foundation roadmaps, PRD onboarding/Quick Log/data sections, Design onboarding/profile/quick tracker specs, navigation/RLS/auth ADR docs, current app routes, current Quick Log/Today code, Supabase baseline migrations/tests, Linear PUP issue state, and project graph findings.
 - 2026-06-08: Mirrored planning evidence to Linear `PUP-17` comment `4d1c74ac-1b94-42c1-9d1a-4d45beef89dd`. Verification passed: `git diff --check`; `npm run check` with lint, typecheck, 38 Jest suites / 258 tests, 106 Node tests, scaffold guardrails, token drift, privacy scan, and text hygiene.
 - 2026-06-08: Created Linear `PUP-19`, `PUP-20`, and `PUP-21`; switched to `PUP-19` generated branch; completed `PUP-19` route coverage/settings namespace preflight. Added `docs/design/v1/native-coverage.md`, navigation contract exports/checks for `/settings/*`, atlas route aliasing, planned route metadata, and dev-only `/_dev/components`. Selected tracker persistence remains blocked pending exact ADR-0007/CTO schema approval; no migration or save behavior was added.
+- 2026-06-08: Completed local `PUP-20` synthetic dev-gallery lane on generated branch `dimaselenya/pup-20-development-only-native-design-gallery-and-synthetic-route`. Added `/_dev/components` gallery and synthetic `/onboarding`, `/settings/puppy-profile`, and `/settings/quick-trackers` route shells using typed EN/RU/ES copy and synthetic fixtures only. No production data writes, Supabase imports, primary navigation exposure, schema migration, push, PR, or deploy action was performed. `PUP-21` remains blocked before migration/save behavior pending exact selected tracker persistence approval.

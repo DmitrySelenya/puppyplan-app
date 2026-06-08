@@ -68,22 +68,22 @@ export const plannedRouteFiles = [
   {
     route: '/onboarding',
     file: 'app/(onboarding)/index.tsx',
-    implementationStage: 'planned',
+    implementationStage: 'existing',
   },
   {
     route: '/settings/puppy-profile',
     file: 'app/(modals)/settings/puppy-profile/index.tsx',
-    implementationStage: 'planned',
+    implementationStage: 'existing',
   },
   {
     route: '/settings/quick-trackers',
     file: 'app/(modals)/settings/quick-trackers/index.tsx',
-    implementationStage: 'planned',
+    implementationStage: 'existing',
   },
   {
     route: '/_dev/components',
     file: 'app/_dev/components.tsx',
-    implementationStage: 'planned',
+    implementationStage: 'existing',
   },
 ] as const satisfies readonly {
   route: string;

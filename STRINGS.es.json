@@ -39,6 +39,20 @@
     "open-timeline": "Abrir cronología",
     "loading": "Cargando"
   },
+  "dev": {
+    "gallery": {
+      "title": "Galería nativa de componentes",
+      "subtitle": "Estados sintéticos para revisión local de diseño.",
+      "synthetic-badge": "Sintético",
+      "shell-preview": "Vista de shell",
+      "states": {
+        "onboarding": "Bienvenida, perfil, pista de edad, selección de trackers y plan.",
+        "profile": "Estados guardado y edición para la ruta de perfil del cachorro.",
+        "quick-trackers": "Conteo de trackers elegidos, límite y filas listas para reordenar.",
+        "global": "Estados de carga, vacío, error, offline, pendiente y permisos."
+      }
+    }
+  },
   "auth": {
     "title": "Inicia sesión en PuppyPlan",
     "subtitle": "Los datos de tu cachorro son privados para tu hogar.",
