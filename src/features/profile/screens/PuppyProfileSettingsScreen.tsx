@@ -54,6 +54,7 @@ export function PuppyProfileSettingsScreen({
   );
   const [birthDate, setBirthDate] = useState(puppy?.birth_date ?? '');
   const [errorVisible, setErrorVisible] = useState(false);
+  const [saveErrorVisible, setSaveErrorVisible] = useState(false);
 
   useEffect(() => {
     if (!puppy) {
@@ -82,13 +83,19 @@ export function PuppyProfileSettingsScreen({
 
     if (!result.success) {
       setErrorVisible(true);
+      setSaveErrorVisible(false);
       return;
     }
 
     setErrorVisible(false);
+    setSaveErrorVisible(false);
 
     if (puppy) {
-      await saveProfile(result.data, puppy.id);
+      try {
+        await saveProfile(result.data, puppy.id);
+      } catch {
+        setSaveErrorVisible(true);
+      }
     }
   };
 
@@ -107,6 +114,11 @@ export function PuppyProfileSettingsScreen({
       <Stack gap="lg">
         <AppText variant="title">{t('more.puppy-profile.screen-title')}</AppText>
         <AppText tone="secondary">{t('more.puppy-profile.hint')}</AppText>
+        {saveErrorVisible ? (
+          <Card>
+            <AppText>{t('errors.save-failed-connection')}</AppText>
+          </Card>
+        ) : null}
         <TextField
           errorText={errorVisible ? t('onboarding.puppy-profile.error-required') : undefined}
           label={t('more.puppy-profile.field-name')}

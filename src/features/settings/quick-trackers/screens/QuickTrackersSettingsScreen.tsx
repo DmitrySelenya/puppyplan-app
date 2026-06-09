@@ -60,13 +60,20 @@ export function QuickTrackersSettingsScreen({
     ...initialSelectedTrackerIds,
   ]);
   const [limitVisible, setLimitVisible] = useState(false);
+  const [saveErrorVisible, setSaveErrorVisible] = useState(false);
 
   useEffect(() => {
     setSelectedTrackerIds([...initialSelectedTrackerIds]);
   }, [initialSelectedTrackerIds]);
 
   const handleSave = async () => {
-    await saveSelectedTrackerIds(selectedTrackerIds);
+    setSaveErrorVisible(false);
+
+    try {
+      await saveSelectedTrackerIds(selectedTrackerIds);
+    } catch {
+      setSaveErrorVisible(true);
+    }
   };
 
   return (
@@ -79,6 +86,11 @@ export function QuickTrackersSettingsScreen({
         {limitVisible ? (
           <Card>
             <AppText>{t('more.quick-trackers.max-reached-hint')}</AppText>
+          </Card>
+        ) : null}
+        {saveErrorVisible ? (
+          <Card>
+            <AppText>{t('errors.save-failed-connection')}</AppText>
           </Card>
         ) : null}
         <Stack direction="horizontal" gap="md" wrap>

@@ -1,5 +1,5 @@
 import { AccessibilityInfo } from 'react-native';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import {
   defaultQuickLogTrackerIds,
@@ -57,5 +57,28 @@ describe('Quick tracker settings screen', () => {
       'feeding_meal',
       'zoomies',
     ]);
+  });
+
+  it('shows retry copy when selected tracker save fails', async () => {
+    const saveSelectedTrackerIds = jest.fn(async () => {
+      throw new Error('offline');
+    });
+
+    render(
+      <AppProviders>
+        <QuickTrackersSettingsScreen
+          saveSelectedTrackerIds={saveSelectedTrackerIds}
+          selectedTrackerIds={defaultQuickLogTrackerIds}
+        />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('common.save'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('errors.save-failed-connection'))).toBeTruthy();
+    });
   });
 });

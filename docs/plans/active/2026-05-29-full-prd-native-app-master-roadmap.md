@@ -9,7 +9,7 @@
 
 **Plan type:** Master roadmap. This is a reviewable execution map, not a single implementation contract.
 
-**Current execution:** `PUP-17` roadmap/docs hygiene is merged via PR #17. `PUP-18` auth, identity, session persistence, and new-user bootstrap is complete: PR #18 merged on 2026-05-31, manual email OTP smoke passed on 2026-06-08, and final evidence is mirrored in Linear. The next batch is executing from `docs/plans/active/2026-06-08-post-pup-18-next-batch.md`: `PUP-19` route/coverage/storage decision is complete locally, `PUP-20` synthetic dev gallery and route shells are next, and `PUP-21` production onboarding, puppy profile, tracker setup, and active care context remain blocked before durable selected tracker save behavior pending exact ADR-0007/CTO schema approval.
+**Current execution:** `PUP-17` roadmap/docs hygiene is merged via PR #17. `PUP-18` auth, identity, session persistence, and new-user bootstrap is complete: PR #18 merged on 2026-05-31, manual email OTP smoke passed on 2026-06-08, and final evidence is mirrored in Linear. The next batch is executing from `docs/plans/active/2026-06-08-post-pup-18-next-batch.md`: `PUP-19` route/coverage/storage decision and `PUP-20` synthetic dev-gallery work are complete locally, and `PUP-21` production onboarding, puppy profile, tracker setup, selected tracker persistence, and active care context are implemented locally after explicit `public.puppy.quick_tracker_ids` approval. `PUP-21` non-production schema gates passed on `PuppyPlan Dev`: migration applied, repeat dry-run no-op, runtime pgTAP passed, and remote typegen updated database types. Production migration/release remains unapproved and was not performed.
 
 **Architecture:** Future work stays Supabase-first, identity-first, contracts-first, and trust-first: Supabase Auth session identity must exist before durable user flows, Zod contracts and business rules define payloads, Supabase/RLS/Edge Functions enforce access, TanStack Query owns server state, Expo SQLite remains the only durable local-write exception for Quick Log, feature UI uses `src/design` primitives, and all visible strings go through typed EN/RU/ES i18n.
 
@@ -466,7 +466,7 @@ Each future task plan must map these invariants to automated tests or named manu
 | PUP-18 (complete) | Auth/identity ADR, session persistence, account boundary | `contracts`, `rls`, `privacy` |
 | PUP-19 | Route/dev-gallery coverage map and first implementation contracts | `docs`, `decision`, `needs-plan`, `agent-ready` |
 | PUP-20 | Full-app shell and native design gallery | `a11y`, `i18n`, `privacy`, `agent-ready` after PUP-19 coverage map |
-| PUP-21 | Onboarding, puppy profile, tracker settings | `contracts`, `i18n`, `a11y`, `quick-log`, `privacy`, `blocked`, `needs-plan` until selected tracker persistence approval |
+| PUP-21 | Onboarding, puppy profile, tracker settings | `contracts`, `i18n`, `a11y`, `quick-log`, `privacy`, gated by pgTAP/typegen handoff |
 | PUP-22 | Today core, guidance cards, day 2-7 states | `contracts`, `quick-log`, `a11y`, `i18n` |
 | PUP-23 | Quick Log details and Timeline completion | `quick-log`, `contracts`, `privacy` |
 | PUP-24 | Health records and health_summary behavior | `contracts`, `rls`, `privacy`, `a11y` |
@@ -481,7 +481,7 @@ Each future task plan must map these invariants to automated tests or named manu
 
 Critical path: `PUP-18` auth/identity is complete and downstream production wiring can consume the real session actor. `PUP-19` route coverage is complete locally and `PUP-20` synthetic shell work may proceed, but it must not use fake production identity or claim Milestone B without real onboarding/profile care context.
 
-Post-`PUP-18` batch note: selected quick tracker persistence is the main unresolved trust decision for `PUP-21`. If implementation needs a schema change, follow ADR-0007 and get CTO approval before writing the migration.
+Post-`PUP-18` batch note: selected quick tracker persistence was resolved for `PUP-21` with explicit approval for the additive `public.puppy.quick_tracker_ids` column. The local migration, RLS/pgTAP coverage, non-production migration apply, runtime pgTAP, and remote typegen evidence now exist; do not apply it to production or claim production release durability without exact production migration/release approval.
 
 Large issues should be split further only after their task contract is written and the ownership boundaries are clear. The cards/revoked, More/settings, and hardening buckets are expected to split into 2-3 issues each once their contracts are drafted.
 
@@ -535,7 +535,9 @@ The full app is complete when:
 
 - 2026-06-08: Closed PUP-18 as complete after manual email OTP smoke passed on `Grith iPhone SE 3 iOS 26.3`, final evidence was mirrored to Linear, and the PUP-18 plan moved to `docs/plans/completed/`.
 - 2026-06-08: Added `docs/plans/active/2026-06-08-post-pup-18-next-batch.md` as the current next-batch contract for `PUP-19`/`PUP-20`/`PUP-21`, with production care context split from synthetic route/gallery work and selected tracker persistence marked as a storage decision gate.
-- 2026-06-08: Created Linear `PUP-19`, `PUP-20`, and `PUP-21`; completed the local `PUP-19` route/settings/storage preflight with `docs/design/v1/native-coverage.md`. `PUP-20` is ready after the coverage map; `PUP-21` remains blocked before durable selected tracker save behavior pending exact ADR-0007/CTO schema approval.
+- 2026-06-08: Created Linear `PUP-19`, `PUP-20`, and `PUP-21`; completed the local `PUP-19` route/settings/storage preflight with `docs/design/v1/native-coverage.md`. `PUP-20` became ready after the coverage map; `PUP-21` was initially held before durable selected tracker save behavior until exact ADR-0007/CTO schema approval was received later that day.
+- 2026-06-09: Reconciled post-approval `PUP-21` status: `public.puppy.quick_tracker_ids` was approved on 2026-06-08 and implemented locally; remaining gates are Docker-capable pgTAP and remote/non-production typegen before release/durability claims.
+- 2026-06-09: Updated `PUP-21` schema gate status after non-production verification on `PuppyPlan Dev`: approved migration `20260608212607_puppy_quick_tracker_ids.sql` applied, migration history/dry-run/lint/schema shape verified, focused runtime pgTAP returned plan `1..11` with `ok_count=11` and no failures, and `src/contracts/database.types.ts` was regenerated from the remote dev project. Production remains untouched.
 - 2026-05-31: Updated roadmap status after PR #18 merged auth/session foundation to `main`; removed stale "no auth module"/`persistSession: false` references and recorded that PUP-18 only had manual smoke plus Linear sync remaining.
 - 2026-05-29: Created master roadmap under `PUP-17` after reviewing PRD, DESIGN, design atlas, architecture docs, ADR index, active plans, current source tree, Linear PUP status, project graph context, and design exploration results.
 - 2026-05-29: Completed repo-hygiene sync for active plans: moved `PUP-16` to completed, updated the plan index, closed stale Quick Log foundation checklist items, and narrowed the design handoff plan to its remaining Dynamic Type screenshot and dev-gallery follow-ups.

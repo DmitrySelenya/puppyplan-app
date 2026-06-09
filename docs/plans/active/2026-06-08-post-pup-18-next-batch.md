@@ -7,11 +7,11 @@
 
 **Status:** Active.
 
-**Current phase:** Phase 5 - `PUP-21` local verification and handoff. Remaining gated evidence: Docker-capable pgTAP and remote/non-production typegen after the approved migration is applied outside production.
+**Current phase:** Phase 5 - `PUP-21` local verification and handoff. The selected-tracker schema blocker is removed for non-production: the approved migration is applied to `PuppyPlan Dev`, runtime pgTAP passed, and remote typegen updated `src/contracts/database.types.ts`. Production migration/release remains unapproved and was not performed.
 
 **Architecture:** The batch is split into two lanes. `PUP-19`/`PUP-20` are synthetic, development-only Milestone A enablers for route coverage, atlas mapping, and native design gallery. `PUP-21` is the production care-context lane: onboarding, puppy profile, selected quick trackers, and active care context consumed by Quick Log/Today. Production work must use the `PUP-18` Supabase Auth session actor, existing Supabase/RLS boundaries, TanStack Query server state, `src/design` primitives, typed EN/RU/ES i18n, and Zod contracts.
 
-**Linear:** `PUP-19`, `PUP-20`, and `PUP-21` created on 2026-06-08 under team `PUP` / project `PuppyPlan MVP`. `PUP-19` owns route coverage/settings namespace/storage recommendation and is in review. `PUP-20` owns the synthetic dev-gallery lane and is in review after local verification. `PUP-21` owns production care context; selected tracker persistence received explicit `quick_tracker_ids` approval in this thread and local implementation is complete pending Docker-capable pgTAP plus remote/non-production typegen evidence.
+**Linear:** `PUP-19`, `PUP-20`, and `PUP-21` created on 2026-06-08 under team `PUP` / project `PuppyPlan MVP`. `PUP-19` owns route coverage/settings namespace/storage recommendation and is in review. `PUP-20` owns the synthetic dev-gallery lane and is in review after local verification. `PUP-21` owns production care context; selected tracker persistence received explicit `quick_tracker_ids` approval in this thread, local implementation is complete, and non-production schema/RLS/typegen evidence is recorded.
 
 **Branch:** Current implementation branch: `dimaselenya/pup-21-onboarding-puppy-profile-tracker-settings-and-active-care`. Completed local branches/commits: `dimaselenya/pup-19-route-coverage-map-settings-namespace-and-selected-tracker` (`ba5bbc1`) and `dimaselenya/pup-20-development-only-native-design-gallery-and-synthetic-route` (`c6632bd`).
 
@@ -224,7 +224,7 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 - [x] Destructive migration risk reviewed: `npm run db:push:remote:dry-run` reported only the new additive migration; no production push was performed.
 - [x] RLS policy impact reviewed for puppy create/update and selected tracker updates.
 - [x] pgTAP tests added or updated for owner/caregiver/viewer/non-member behavior.
-- [ ] pgTAP execution evidence pending Docker-capable CI/cloud runner; local script intentionally blocks because Docker is disabled for this M1/8 GB workspace.
+- [x] pgTAP execution evidence recorded against non-production `PuppyPlan Dev`: focused runtime pgTAP returned plan `1..11`, `ok_count=11`, `not_ok_count=0`, no diagnostics. The local Docker-backed `npm run supabase:test` runner still cannot run on this machine, but the selected-tracker RLS/constraint blocker is verified on the real dev database.
 
 ### Edge Functions
 
@@ -405,7 +405,7 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 - [x] Run `npm run typecheck`.
 - [x] Run focused tests for changed contracts/query/UI.
 - [x] Run `npm run check`.
-- [ ] If schema changes were approved, run migration diff/destructive check, pgTAP, and remote typegen gate as appropriate. Completed locally: migration dry-run and Supabase lint. Pending: pgTAP execution on Docker-capable runner and remote/non-production typegen after migration apply.
+- [x] If schema changes were approved, run migration diff/destructive check, pgTAP, and remote typegen gate as appropriate. Completed against non-production `PuppyPlan Dev`: migration applied, repeat dry-run no-op, Supabase lint, focused runtime pgTAP, remote typegen.
 - [x] Record verification evidence in Linear.
 - [x] Update this plan changelog and `docs/plans/README.md`.
 
@@ -425,11 +425,11 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 
 ### Supabase / Contract Gates
 
-- [x] contract/codegen diff checked locally; `src/contracts/database.types.ts` manually reflects approved migration.
-- [x] migration diff/destructive check if persistence changes schema: `npm run db:push:remote:dry-run` showed only `20260608212607_puppy_quick_tracker_ids.sql`; no push was performed.
-- [ ] RLS pgTAP tests if puppy profile or selected tracker writes change: test text updated, execution blocked locally by Docker guard; run in Docker-capable CI/cloud runner.
+- [x] contract/codegen diff checked with remote/non-production typegen; `src/contracts/database.types.ts` was regenerated from `PuppyPlan Dev`.
+- [x] migration diff/destructive check if persistence changes schema: pre-apply `npm run db:push:remote:dry-run` showed only `20260608212607_puppy_quick_tracker_ids.sql`; post-apply dry-run reported the remote database up to date.
+- [x] RLS pgTAP tests if puppy profile or selected tracker writes change: focused runtime pgTAP against `PuppyPlan Dev` returned plan `1..11`, `ok_count=11`, `not_ok_count=0`, no diagnostics. The local `npm run supabase:test` wrapper still requires Docker and fails on this machine before running tests, so the runtime evidence was collected through Supabase MCP/direct SQL instead.
 - [x] no direct feature UI import of `@supabase/supabase-js`
-- [ ] remote/non-production typegen gate pending after applying the migration outside production.
+- [x] remote/non-production typegen gate after applying the migration outside production: `npm run db:types` completed and updated `src/contracts/database.types.ts`.
 
 ### UI / Mobile Gates
 
@@ -462,6 +462,8 @@ The small batch is therefore `PUP-19` + `PUP-20` + the first production phases o
 
 - 2026-06-08: Created post-`PUP-18` next-batch plan after reviewing the master roadmap, active design/foundation roadmaps, PRD onboarding/Quick Log/data sections, Design onboarding/profile/quick tracker specs, navigation/RLS/auth ADR docs, current app routes, current Quick Log/Today code, Supabase baseline migrations/tests, Linear PUP issue state, and project graph findings.
 - 2026-06-08: Mirrored planning evidence to Linear `PUP-17` comment `4d1c74ac-1b94-42c1-9d1a-4d45beef89dd`. Verification passed: `git diff --check`; `npm run check` with lint, typecheck, 38 Jest suites / 258 tests, 106 Node tests, scaffold guardrails, token drift, privacy scan, and text hygiene.
-- 2026-06-08: Created Linear `PUP-19`, `PUP-20`, and `PUP-21`; switched to `PUP-19` generated branch; completed `PUP-19` route coverage/settings namespace preflight. Added `docs/design/v1/native-coverage.md`, navigation contract exports/checks for `/settings/*`, atlas route aliasing, planned route metadata, and dev-only `/_dev/components`. Selected tracker persistence remains blocked pending exact ADR-0007/CTO schema approval; no migration or save behavior was added.
+- 2026-06-08: Created Linear `PUP-19`, `PUP-20`, and `PUP-21`; switched to `PUP-19` generated branch; completed `PUP-19` route coverage/settings namespace preflight. Added `docs/design/v1/native-coverage.md`, navigation contract exports/checks for `/settings/*`, atlas route aliasing, planned route metadata, and dev-only `/_dev/components`. At that point selected tracker persistence was still held pending exact ADR-0007/CTO schema approval, so no migration or save behavior was added in the `PUP-19` phase.
 - 2026-06-08: Completed local `PUP-20` synthetic dev-gallery lane on generated branch `dimaselenya/pup-20-development-only-native-design-gallery-and-synthetic-route`. Added `/_dev/components` gallery and synthetic `/onboarding`, `/settings/puppy-profile`, and `/settings/quick-trackers` route shells using typed EN/RU/ES copy and synthetic fixtures only. No production data writes, Supabase imports, primary navigation exposure, schema migration, push, PR, or deploy action was performed. `PUP-21` remains blocked before migration/save behavior pending exact selected tracker persistence approval.
 - 2026-06-08: Received explicit approval for `public.puppy.quick_tracker_ids` selected-tracker persistence and completed local `PUP-21` implementation on generated branch `dimaselenya/pup-21-onboarding-puppy-profile-tracker-settings-and-active-care`. Added production onboarding, puppy profile, quick tracker settings, active care context, Supabase puppy wrapper/query hooks, approved additive migration, RLS/pgTAP coverage text, More/Today/Quick Log integration, typed EN/RU/ES strings, and focused tests. Verification passed locally: focused changed-area tests, `node --test scripts/checks/supabase-baseline.test.mjs`, `npm run lint`, `npm run typecheck`, `npm run test:scaffold`, `npm run check`, `npm run db:push:remote:dry-run`, and `npm run supabase:lint`. `npm run supabase:test` is blocked locally by the repo Docker guard, and remote/non-production typegen remains pending until the migration is applied outside production. Evidence mirrored to Linear `PUP-21` comment `b0999e55-e841-42d5-a07a-20e4488af697`.
+- 2026-06-09: Applied local review fixes: wired the production Quick Log route to a TanStack Query/SQLite mutation port so active selected trackers render and submit from `/quick-log`, added retryable save-error copy for onboarding/profile/quick-tracker saves, and reconciled selected tracker approval status in native coverage/master roadmap docs. Focused render tests and `npm run typecheck` passed locally.
+- 2026-06-09: Removed the selected-tracker schema blocker on non-production `PuppyPlan Dev` (`olymqppxsadsxfrcyskh`). Confirmed the DB URL project ref before write, applied `20260608212607_puppy_quick_tracker_ids.sql`, verified migration history includes `20260608212607`, confirmed schema shape for `public.puppy.quick_tracker_ids`, reran `npm run db:push:remote:dry-run` with no pending migrations, ran `npm run supabase:lint` with no schema errors, executed focused runtime pgTAP through Supabase MCP/direct SQL with plan `1..11`, `ok_count=11`, `not_ok_count=0`, regenerated `src/contracts/database.types.ts` with `npm run db:types`, and recorded that Supabase advisors only report pre-existing baseline security/performance warnings unrelated to `quick_tracker_ids`. No production migration, deploy, push, PR, release, or git commit was performed.

@@ -27,18 +27,18 @@ This file maps the design atlas to native route ownership after `PUP-18`. It is 
 
 | Atlas ID | Atlas title | Atlas route | Native route / fixture | Owner | Status |
 | --- | --- | --- | --- | --- | --- |
-| 2.1 | Welcome - default | `/onboarding` | `/onboarding` | `PUP-21` | Planned production route |
-| 2.2-default | Profile - default | `/onboarding` | `/onboarding` | `PUP-21` | Planned production route |
-| 2.2-filled | Profile - filled | `/onboarding` | `/onboarding` | `PUP-21` | Planned production route |
-| 2.2-error | Profile - error | `/onboarding` | `/onboarding` | `PUP-21` | Planned production route |
-| 2.4 | Tracker picker - 5 of 5 | `/onboarding` | `/onboarding` | `PUP-21` | Planned production route; durable selected trackers blocked pending schema approval |
-| 2.5 | Plan reveal | `/onboarding` | `/onboarding` | `PUP-21` | Planned production route |
-| 2.6 | First log - pending celebration | `/onboarding` | `/onboarding` + `/quick-log` | `PUP-21` then later `PUP-23` | Planned production route; first-log production durability is not claimed in this batch without selected tracker persistence approval |
-| 14.2-default | Puppy profile - saved view | `/more/puppy-profile` | `/settings/puppy-profile` | `PUP-21` | Planned production route; atlas route alias locked |
-| 14.2-editing | Puppy profile - editing form | `/more/puppy-profile` | `/settings/puppy-profile` | `PUP-21` | Planned production route; atlas route alias locked |
+| 2.1 | Welcome - default | `/onboarding` | `/onboarding` | `PUP-21` | Production route implemented |
+| 2.2-default | Profile - default | `/onboarding` | `/onboarding` | `PUP-21` | Production route implemented |
+| 2.2-filled | Profile - filled | `/onboarding` | `/onboarding` | `PUP-21` | Production route implemented |
+| 2.2-error | Profile - error | `/onboarding` | `/onboarding` | `PUP-21` | Production route implemented |
+| 2.4 | Tracker picker - 5 of 5 | `/onboarding` | `/onboarding` | `PUP-21` | Production route implemented; durable selected trackers use approved `public.puppy.quick_tracker_ids` |
+| 2.5 | Plan reveal | `/onboarding` | `/onboarding` | `PUP-21` | Production route implemented |
+| 2.6 | First log - pending celebration | `/onboarding` | `/onboarding` + `/quick-log` | `PUP-21` then later `PUP-23` | Production route implemented for selected tracker consumption; Quick Log details remain later `PUP-23` scope |
+| 14.2-default | Puppy profile - saved view | `/more/puppy-profile` | `/settings/puppy-profile` | `PUP-21` | Production route implemented; atlas route alias locked |
+| 14.2-editing | Puppy profile - editing form | `/more/puppy-profile` | `/settings/puppy-profile` | `PUP-21` | Production route implemented; atlas route alias locked |
 | 14.2-breed | Puppy profile - breed picker | `/more/puppy-profile` | `/_dev/components` fixture | `PUP-20` | Planned synthetic fixture; breed is out of `PUP-21` production scope |
 | 14.2-breed-q | Puppy profile - breed search | `/more/puppy-profile` | `/_dev/components` fixture | `PUP-20` | Planned synthetic fixture; breed search is out of `PUP-21` production scope |
-| 14.3 | Quick trackers - 5 of 5 | `/settings/quick-trackers` | `/settings/quick-trackers` | `PUP-21` | Planned production route; save behavior blocked pending selected tracker persistence approval |
+| 14.3 | Quick trackers - 5 of 5 | `/settings/quick-trackers` | `/settings/quick-trackers` | `PUP-21` | Production route implemented; save behavior uses approved `public.puppy.quick_tracker_ids` |
 | 14.4 | Notifications | `/more/notifications` | `/_dev/components` fixture | `PUP-20`; production deferred | Planned synthetic fixture; production route deferred to reminders/settings issue |
 | 14.5 | Privacy & account | `/more/privacy` | `/_dev/components` fixture | `PUP-20`; production deferred | Planned synthetic fixture; production route deferred to privacy/account issue |
 | 14.6 | Delete confirm - type DELETE | `/more` | `/_dev/components` fixture | `PUP-20`; production deferred | Planned synthetic fixture; account deletion production behavior is out of this batch |
@@ -68,16 +68,16 @@ This file maps the design atlas to native route ownership after `PUP-18`. It is 
 
 ## Selected Tracker Persistence Decision
 
-Current status: blocked pending exact ADR-0007/CTO schema approval.
+Current status: approved, implemented locally, and verified against the non-production `PuppyPlan Dev` database for `PUP-21`; no production migration has been applied.
 
-Recommendation: add an ordered `quick_tracker_ids` column to `public.puppy` if schema change approval is granted. The column should be additive, per-puppy, max 5, allowed tracker ids only, unique ids, and covered by RLS/pgTAP owner/caregiver/viewer/non-member cases. This avoids a new table and a larger RLS surface.
+Decision: add an ordered `quick_tracker_ids` column to `public.puppy`. The column is additive, per-puppy, max 5, allowed tracker ids only, unique ids, and covered by RLS/pgTAP owner/caregiver/viewer/non-member cases. This avoids a new table and a larger RLS surface.
 
-Until approval is explicit:
+Approval status:
 
-- Do not create a migration for selected tracker persistence.
-- Do not update generated database types for this storage path.
-- Do not implement production save behavior that claims durable selected tracker order.
-- `PUP-21` may define contracts and UI states, but durable selected tracker behavior remains blocked.
+- Explicit approval for `public.puppy.quick_tracker_ids` was received in the implementation thread on 2026-06-08 and recorded in the batch plan plus ADR-0007/data-model docs.
+- Local migration `supabase/migrations/20260608212607_puppy_quick_tracker_ids.sql` and contract/type updates exist.
+- Non-production verification on 2026-06-09: the migration was applied to `PuppyPlan Dev`; repeat dry-run reported the remote database up to date; Supabase lint passed; focused runtime pgTAP returned plan `1..11`, `ok_count=11`, `not_ok_count=0`; remote typegen regenerated `src/contracts/database.types.ts`.
+- Remaining gate before production release claims: explicit production migration/release approval and production-safe rollout verification. Production was not touched.
 
 ## Verification
 

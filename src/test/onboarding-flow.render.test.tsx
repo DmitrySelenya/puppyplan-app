@@ -65,4 +65,41 @@ describe('Onboarding production flow', () => {
 
     expect(openQuickLog).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps tracker setup retryable when profile save fails', async () => {
+    const openQuickLog = jest.fn();
+    const saveProfile = jest.fn(async () => {
+      throw new Error('offline');
+    });
+
+    render(
+      <AppProviders>
+        <OnboardingScreen
+          openQuickLog={openQuickLog}
+          saveProfile={saveProfile}
+        />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.welcome.cta'),
+    }));
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('onboarding.puppy-profile.name-field-label')),
+      'Puppy',
+    );
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.puppy-profile.cta'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.tracker-picker.cta'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('errors.save-failed-connection'))).toBeTruthy();
+    });
+    expect(screen.getByText(i18n.t('onboarding.tracker-picker.title'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('onboarding.plan-reveal.title'))).toBeNull();
+    expect(openQuickLog).not.toHaveBeenCalled();
+  });
 });

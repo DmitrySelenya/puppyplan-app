@@ -59,6 +59,7 @@ export function OnboardingScreen({
   ]);
   const [errorKey, setErrorKey] = useState<'onboarding.puppy-profile.error-required' | null>(null);
   const [limitVisible, setLimitVisible] = useState(false);
+  const [saveErrorVisible, setSaveErrorVisible] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const profileInput = useMemo(() => ({
@@ -78,6 +79,7 @@ export function OnboardingScreen({
     }
 
     setErrorKey(null);
+    setSaveErrorVisible(false);
     setStep('trackers');
   };
 
@@ -91,11 +93,14 @@ export function OnboardingScreen({
     }
 
     setSaving(true);
+    setSaveErrorVisible(false);
 
     try {
       await saveProfile(profileResult.data);
 
       setStep('plan');
+    } catch {
+      setSaveErrorVisible(true);
     } finally {
       setSaving(false);
     }
@@ -178,6 +183,11 @@ export function OnboardingScreen({
           {limitVisible ? (
             <Card>
               <AppText>{t('onboarding.tracker-picker.limit-snackbar')}</AppText>
+            </Card>
+          ) : null}
+          {saveErrorVisible ? (
+            <Card>
+              <AppText>{t('errors.save-failed-connection')}</AppText>
             </Card>
           ) : null}
           <Stack direction="horizontal" gap="md" wrap>

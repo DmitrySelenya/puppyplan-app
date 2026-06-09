@@ -1,9 +1,16 @@
-import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useMutation,
+  useQueryClient,
+  type QueryClient,
+  type QueryKey,
+} from '@tanstack/react-query';
 
 import type { QuickLogRecoverySurface } from '@/contracts/analytics';
 import {
   createQuickLogEventInsert,
   type QuickLogEventInsert,
+  type QuickLogEventType,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
 import {
@@ -17,6 +24,7 @@ import {
   type QuickLogQueueState,
   type QuickLogQueueStorage,
   type QuickLogStoredQueueItem,
+  openQuickLogQueueStorage,
 } from '@/lib/queue';
 import {
   createAnalyticsClient,
@@ -30,6 +38,7 @@ import {
   createSupabaseEventLogRepository,
   type SupabaseEventLogRepository,
 } from '@/lib/supabase/events';
+import { useAuth } from '@/lib/auth';
 
 import { getQuickLogInvalidationKeys, queryKeys, type TimelineFilters } from './keys';
 
@@ -84,6 +93,49 @@ export type QuickLogMutationOptions = Readonly<{
     variables: QuickLogMutationVariables,
     context: QuickLogMutationContext | undefined,
   ): Promise<void>;
+}>;
+
+export type QuickLogMutationPortRequest = Readonly<{
+  requestId: string;
+  variables: QuickLogMutationVariables;
+}>;
+
+export type QuickLogMutationPortUndoRequest = Readonly<{
+  clientEventId: string;
+  eventType: QuickLogEventType;
+  householdId: string;
+  puppyId: string;
+  todayDate: string;
+}>;
+
+export type QuickLogMutationPort = Readonly<{
+  deleteLocal: (clientEventId: string) => unknown;
+  mutate: (request: QuickLogMutationPortRequest) => unknown;
+  retry: (clientEventId: string, recoverySurface: QuickLogRecoverySurface) => unknown;
+  undo: (request: QuickLogMutationPortUndoRequest) => unknown;
+}>;
+
+export type QuickLogMutationEvent =
+  | Readonly<{
+    clientEventId: string;
+    eventType: QuickLogEventType;
+    requestId: string;
+    trackerId: QuickLogTrackerId;
+    type: 'started';
+  }>
+  | Readonly<{
+    clientEventId: string;
+    eventType: QuickLogEventType;
+    requestId: string;
+    state: 'failed_retryable' | 'failed_permanent';
+    trackerId: QuickLogTrackerId;
+    type: 'failed';
+  }>;
+
+export type UseQuickLogMutationPortResult = Readonly<{
+  mutation: QuickLogMutationPort | undefined;
+  mutationEvents: readonly QuickLogMutationEvent[];
+  status: 'loading' | 'ready' | 'unavailable';
 }>;
 
 type QuickLogMutationQueue = Pick<
@@ -368,6 +420,158 @@ export function createQuickLogMutationOptions(
   };
 }
 
+export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  const queueRef = useRef<QuickLogQueueStorage | null>(null);
+  const userIdRef = useRef<string | null>(null);
+  const requestIdsByVariablesRef = useRef(new WeakMap<QuickLogMutationVariables, string>());
+  const [queueReady, setQueueReady] = useState(false);
+  const [queueUnavailable, setQueueUnavailable] = useState(false);
+  const [mutationEvents, setMutationEvents] = useState<readonly QuickLogMutationEvent[]>([]);
+
+  userIdRef.current = auth.user?.id ?? null;
+
+  useEffect(() => {
+    let active = true;
+
+    setQueueUnavailable(false);
+    void openQuickLogQueueStorage().then((queue) => {
+      if (!active) {
+        return;
+      }
+
+      queueRef.current = queue;
+      setQueueReady(true);
+    }).catch(() => {
+      if (!active) {
+        return;
+      }
+
+      queueRef.current = null;
+      setQueueReady(false);
+      setQueueUnavailable(true);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const queue = useMemo(
+    () => createRequiredQuickLogQueueProxy(queueRef),
+    [],
+  );
+  const options = useMemo(
+    () => createQuickLogMutationOptions({
+      getSessionUserId: () => userIdRef.current,
+      queryClient,
+      queue,
+    }),
+    [queryClient, queue],
+  );
+  const quickLogMutation = useMutation<EventLogRecord, unknown, QuickLogMutationVariables, QuickLogMutationContext>({
+    mutationFn: options.mutationFn,
+    onError: async (error, variables, context) => {
+      await options.onError(error, variables, context);
+
+      const requestId = requestIdsByVariablesRef.current.get(variables);
+      if (!requestId || !context) {
+        return;
+      }
+
+      const item = await queue.getByClientEventId(context.clientEventId);
+      if (item?.state !== 'failed_retryable' && item?.state !== 'failed_permanent') {
+        return;
+      }
+
+      appendQuickLogMutationEvent(setMutationEvents, {
+        clientEventId: context.clientEventId,
+        eventType: context.insert.event_type,
+        requestId,
+        state: item.state,
+        trackerId: variables.trackerId,
+        type: 'failed',
+      });
+    },
+    onMutate: async (variables) => {
+      const context = await options.onMutate(variables);
+      const requestId = requestIdsByVariablesRef.current.get(variables);
+
+      if (requestId) {
+        appendQuickLogMutationEvent(setMutationEvents, {
+          clientEventId: context.clientEventId,
+          eventType: context.insert.event_type,
+          requestId,
+          trackerId: variables.trackerId,
+          type: 'started',
+        });
+      }
+
+      return context;
+    },
+    onSettled: async (data, error, variables, context) => {
+      await options.onSettled(data, error, variables, context);
+      requestIdsByVariablesRef.current.delete(variables);
+    },
+    onSuccess: options.onSuccess,
+  });
+
+  const mutation = useMemo<QuickLogMutationPort | undefined>(() => {
+    if (
+      auth.status !== 'signedIn'
+      || auth.user === null
+      || !queueReady
+      || queueUnavailable
+    ) {
+      return undefined;
+    }
+
+    return {
+      deleteLocal: (clientEventId) => {
+        void deleteLocalQuickLogEvent({
+          clientEventId,
+          queryClient,
+          queueRef,
+        });
+      },
+      mutate: (request) => {
+        requestIdsByVariablesRef.current.set(request.variables, request.requestId);
+        quickLogMutation.mutate(request.variables);
+      },
+      retry: (clientEventId) => {
+        void retryLocalQuickLogEvent({
+          clientEventId,
+          queryClient,
+          queueRef,
+        });
+      },
+      undo: (request) => {
+        void removeQuickLogOptimisticEvent({
+          clientEventId: request.clientEventId,
+          eventType: request.eventType,
+          householdId: request.householdId,
+          now: new Date().toISOString(),
+          puppyId: request.puppyId,
+          queryClient,
+          queue,
+          todayDate: request.todayDate,
+        }).catch(() => undefined);
+      },
+    };
+  }, [auth.status, auth.user, queue, queueReady, queueUnavailable, queryClient, quickLogMutation]);
+
+  return {
+    mutation,
+    mutationEvents,
+    status: mutation !== undefined
+      ? 'ready'
+      : queueUnavailable
+        ? 'unavailable'
+        : 'loading',
+  };
+}
+
 export async function removeQuickLogOptimisticEvent(
   input: Readonly<{
     queryClient: QueryClient;
@@ -412,6 +616,85 @@ export async function removeQuickLogOptimisticEvent(
     }),
     timelineRootKey: queryKeys.events.timelineRoot(input.householdId, input.puppyId),
     includeTimeline: true,
+  });
+}
+
+function createRequiredQuickLogQueueProxy(
+  queueRef: Readonly<{ current: QuickLogQueueStorage | null }>,
+): QuickLogMutationDependencies['queue'] {
+  return {
+    enqueue: (input, options) => requireQuickLogQueue(queueRef).enqueue(input, options),
+    getByClientEventId: (clientEventId) =>
+      requireQuickLogQueue(queueRef).getByClientEventId(clientEventId),
+    markDeletedBeforeSync: (clientEventId, options) =>
+      requireQuickLogQueue(queueRef).markDeletedBeforeSync(clientEventId, options),
+    markFailedPermanent: (clientEventId, options) =>
+      requireQuickLogQueue(queueRef).markFailedPermanent(clientEventId, options),
+    markFailedRetryable: (clientEventId, options) =>
+      requireQuickLogQueue(queueRef).markFailedRetryable(clientEventId, options),
+    markSending: (clientEventId, options) =>
+      requireQuickLogQueue(queueRef).markSending(clientEventId, options),
+    remove: (clientEventId) => requireQuickLogQueue(queueRef).remove(clientEventId),
+    resolveInFlightSuccess: (clientEventId, options) =>
+      requireQuickLogQueue(queueRef).resolveInFlightSuccess(clientEventId, options),
+  };
+}
+
+function requireQuickLogQueue(
+  queueRef: Readonly<{ current: QuickLogQueueStorage | null }>,
+): QuickLogQueueStorage {
+  if (queueRef.current === null) {
+    throw new Error('Quick Log queue is not ready');
+  }
+
+  return queueRef.current;
+}
+
+function appendQuickLogMutationEvent(
+  setMutationEvents: (update: (current: readonly QuickLogMutationEvent[]) => readonly QuickLogMutationEvent[]) => void,
+  event: QuickLogMutationEvent,
+): void {
+  setMutationEvents((current) => [...current, event].slice(-50));
+}
+
+async function deleteLocalQuickLogEvent(input: Readonly<{
+  clientEventId: string;
+  queryClient: QueryClient;
+  queueRef: Readonly<{ current: QuickLogQueueStorage | null }>;
+}>): Promise<void> {
+  const queue = requireQuickLogQueue(input.queueRef);
+  const item = await queue.getByClientEventId(input.clientEventId);
+
+  if (!item) {
+    return;
+  }
+
+  await removeQuickLogOptimisticEvent({
+    clientEventId: input.clientEventId,
+    eventType: item.event_type,
+    householdId: item.household_id,
+    now: new Date().toISOString(),
+    puppyId: item.puppy_id,
+    queryClient: input.queryClient,
+    queue,
+    todayDate: item.occurred_at.slice(0, 10),
+  }).catch(() => undefined);
+}
+
+async function retryLocalQuickLogEvent(input: Readonly<{
+  clientEventId: string;
+  queryClient: QueryClient;
+  queueRef: Readonly<{ current: QuickLogQueueStorage | null }>;
+}>): Promise<void> {
+  const queue = requireQuickLogQueue(input.queueRef);
+  const retry = await queue.manualRetry(input.clientEventId, {
+    now: new Date().toISOString(),
+  });
+
+  replayQuickLogQueueItemToCache({
+    item: retry.item,
+    queryClient: input.queryClient,
+    todayDate: retry.item.occurred_at.slice(0, 10),
   });
 }
 

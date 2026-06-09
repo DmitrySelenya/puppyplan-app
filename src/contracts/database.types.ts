@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
       content_version: {
@@ -973,6 +978,10 @@ export type Database = {
           allowed_roles: Database["public"]["Enums"]["household_role"][]
           target_household_id: string
         }
+        Returns: boolean
+      }
+      quick_tracker_ids_are_unique: {
+        Args: { tracker_ids: string[] }
         Returns: boolean
       }
       share_link_has_scope: {
