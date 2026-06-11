@@ -1,7 +1,7 @@
 import {
   defaultQuickLogTrackerIds,
 } from '@/contracts/quick-log';
-import type { PuppyProfile } from '@/contracts/supabase';
+import type { ActivePuppyProfile } from '@/contracts/supabase';
 import {
   createActiveCareContext,
   getTodayDate,
@@ -12,12 +12,13 @@ const householdId = '00000000-0000-4000-8000-000000002101';
 const puppyId = '00000000-0000-4000-8000-000000002102';
 const userId = '00000000-0000-4000-8000-000000002103';
 
-const puppy: PuppyProfile = {
+const puppy: ActivePuppyProfile = {
   age_weeks_estimate: 9,
   birth_date: null,
   created_at: '2026-06-08T08:00:00.000Z',
   deleted_at: null,
   household_id: householdId,
+  household_role: 'owner',
   id: puppyId,
   name: 'Puppy',
   quick_tracker_ids: ['training', 'feeding_meal'],
@@ -41,6 +42,7 @@ describe('active care context query contract', () => {
     })).toEqual({
       authState: 'authenticated',
       householdId,
+      householdRole: 'owner',
       puppyId,
       selectedTrackerIds: ['training', 'feeding_meal'],
       todayDate: '2026-06-08',
@@ -61,7 +63,27 @@ describe('active care context query contract', () => {
     expect(context?.selectedTrackerIds).toEqual(defaultQuickLogTrackerIds);
   });
 
-  it('formats today dates without leaking locale-specific output into query keys', () => {
-    expect(getTodayDate(new Date('2026-06-08T23:45:00.000Z'))).toBe('2026-06-08');
+  it('falls back to default tracker ids when a runtime row carries an empty array', () => {
+    const context = createActiveCareContext({
+      puppy: {
+        ...puppy,
+        quick_tracker_ids: [],
+      },
+      todayDate: '2026-06-08',
+      userId,
+    });
+
+    expect(context?.selectedTrackerIds).toEqual(defaultQuickLogTrackerIds);
+  });
+
+  it('formats today dates from the device-local calendar day', () => {
+    const deviceLocalDate = {
+      getDate: () => 8,
+      getFullYear: () => 2026,
+      getMonth: () => 5,
+      toISOString: () => '2026-06-09T00:30:00.000Z',
+    } as Date;
+
+    expect(getTodayDate(deviceLocalDate)).toBe('2026-06-08');
   });
 });

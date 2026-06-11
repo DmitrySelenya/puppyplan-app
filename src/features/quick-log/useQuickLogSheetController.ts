@@ -9,7 +9,10 @@ import {
 import {
   shouldShowQuickLogDuplicateCareWarning,
 } from '@/contracts/business-rules';
-import type { QuickLogRecoverySurface } from '@/contracts/analytics';
+import type {
+  QuickLogRecoverySurface,
+  QuickLogSourceSurface,
+} from '@/contracts/analytics';
 import {
   quickLogTrackerDefinitions,
   type QuickLogEventType,
@@ -43,7 +46,11 @@ export type QuickLogDeleteRequest = QuickLogEventDeleteRequest;
 export type QuickLogMutationPort = Readonly<{
   deleteLocal: (clientEventId: string) => unknown;
   mutate: (request: QuickLogMutationRequest) => unknown;
-  retry: (clientEventId: string, recoverySurface: QuickLogRecoverySurface) => unknown;
+  retry: (
+    clientEventId: string,
+    recoverySurface: QuickLogRecoverySurface,
+    sourceSurface?: QuickLogSourceSurface,
+  ) => unknown;
   undo: (request: QuickLogUndoRequest) => unknown;
 }>;
 

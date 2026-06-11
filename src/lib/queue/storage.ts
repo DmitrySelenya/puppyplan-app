@@ -21,6 +21,7 @@ import {
   type QuickLogInFlightSuccessResolution,
 } from './state-machine';
 import { createManualQuickLogRetry, type QuickLogManualRetry } from './retry';
+import type { QuickLogRecoverySurface } from '@/contracts/analytics';
 
 export type QuickLogQueueSqlValue = string | number | null;
 export type QuickLogQueueSqlParams = QuickLogQueueSqlValue[];
@@ -66,7 +67,7 @@ export type QuickLogQueueStorage = Readonly<{
   ): Promise<QuickLogStoredQueueItem>;
   manualRetry(
     clientEventId: string,
-    options: Readonly<{ now: string }>,
+    options: Readonly<{ now: string; recoverySurface?: QuickLogRecoverySurface }>,
   ): Promise<QuickLogManualRetry>;
   resolveInFlightSuccess(
     clientEventId: string,

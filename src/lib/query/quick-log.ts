@@ -6,14 +6,19 @@ import {
   type QueryKey,
 } from '@tanstack/react-query';
 
-import type { QuickLogRecoverySurface } from '@/contracts/analytics';
+import type {
+  QuickLogRecoverySurface,
+  QuickLogSourceSurface,
+} from '@/contracts/analytics';
 import {
   createQuickLogEventInsert,
+  isQuickLogEventType,
   type QuickLogEventInsert,
   type QuickLogEventType,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
 import {
+  eventLogInsertSchema,
   eventLogRecordSchema,
   type EventLogInsert,
   type EventLogRecord,
@@ -111,7 +116,11 @@ export type QuickLogMutationPortUndoRequest = Readonly<{
 export type QuickLogMutationPort = Readonly<{
   deleteLocal: (clientEventId: string) => unknown;
   mutate: (request: QuickLogMutationPortRequest) => unknown;
-  retry: (clientEventId: string, recoverySurface: QuickLogRecoverySurface) => unknown;
+  retry: (
+    clientEventId: string,
+    recoverySurface: QuickLogRecoverySurface,
+    sourceSurface?: QuickLogSourceSurface,
+  ) => unknown;
   undo: (request: QuickLogMutationPortUndoRequest) => unknown;
 }>;
 
@@ -148,6 +157,16 @@ type QuickLogMutationQueue = Pick<
   | 'markDeletedBeforeSync'
   | 'resolveInFlightSuccess'
   | 'remove'
+>;
+
+type QuickLogManualRetryQueue = Pick<
+  QuickLogQueueStorage,
+  | 'getByClientEventId'
+  | 'manualRetry'
+  | 'markFailedPermanent'
+  | 'markFailedRetryable'
+  | 'remove'
+  | 'resolveInFlightSuccess'
 >;
 
 export type QuickLogMutationDependencies = Readonly<{
@@ -539,11 +558,13 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
         requestIdsByVariablesRef.current.set(request.variables, request.requestId);
         quickLogMutation.mutate(request.variables);
       },
-      retry: (clientEventId) => {
+      retry: (clientEventId, recoverySurface, sourceSurface = 'quick_log_sheet') => {
         void retryLocalQuickLogEvent({
           clientEventId,
           queryClient,
           queueRef,
+          recoverySurface,
+          sourceSurface,
         });
       },
       undo: (request) => {
@@ -640,9 +661,9 @@ function createRequiredQuickLogQueueProxy(
   };
 }
 
-function requireQuickLogQueue(
-  queueRef: Readonly<{ current: QuickLogQueueStorage | null }>,
-): QuickLogQueueStorage {
+function requireQuickLogQueue<TQueue extends object>(
+  queueRef: Readonly<{ current: TQueue | null }>,
+): TQueue {
   if (queueRef.current === null) {
     throw new Error('Quick Log queue is not ready');
   }
@@ -681,21 +702,227 @@ async function deleteLocalQuickLogEvent(input: Readonly<{
   }).catch(() => undefined);
 }
 
-async function retryLocalQuickLogEvent(input: Readonly<{
+export async function retryLocalQuickLogEvent(input: Readonly<{
+  analytics?: QuickLogAnalyticsClient;
   clientEventId: string;
+  events?: Pick<SupabaseEventLogRepository, 'insertEvent' | 'tombstoneByClientEventId'>;
+  now?: () => string;
+  observability?: ObservabilityReporter;
   queryClient: QueryClient;
-  queueRef: Readonly<{ current: QuickLogQueueStorage | null }>;
+  queueRef: Readonly<{ current: QuickLogManualRetryQueue | null }>;
+  recoverySurface: QuickLogRecoverySurface;
+  sourceSurface?: QuickLogSourceSurface;
 }>): Promise<void> {
   const queue = requireQuickLogQueue(input.queueRef);
+  const events = input.events ?? createSupabaseEventLogRepository();
+  const analytics = input.analytics ?? createAnalyticsClient();
+  const observability = input.observability ?? createObservabilityReporter();
+  const now = input.now ?? (() => new Date().toISOString());
+  const timestamp = now();
   const retry = await queue.manualRetry(input.clientEventId, {
-    now: new Date().toISOString(),
+    now: timestamp,
+    recoverySurface: input.recoverySurface,
+  });
+  const todayDate = retry.item.occurred_at.slice(0, 10);
+  const timelineRootKey = queryKeys.events.timelineRoot(
+    retry.item.household_id,
+    retry.item.puppy_id,
+  );
+  const invalidationKeys = getQuickLogInvalidationKeys({
+    eventType: retry.item.event_type,
+    householdId: retry.item.household_id,
+    puppyId: retry.item.puppy_id,
+    todayDate,
   });
 
   replayQuickLogQueueItemToCache({
     item: retry.item,
     queryClient: input.queryClient,
-    todayDate: retry.item.occurred_at.slice(0, 10),
+    todayDate,
   });
+
+  if (retry.item.created_by === null) {
+    const failedItem = await queue.markFailedPermanent(input.clientEventId, {
+      errorCategory: 'missing_context',
+      now: now(),
+    });
+
+    updateCachedLocalSync(input.queryClient, {
+      timelineRootKey,
+      clientEventId: input.clientEventId,
+      state: failedItem.state,
+      category: failedItem.last_error_category,
+      retryCount: failedItem.retry_count,
+    });
+    await invalidateAffectedQueries(input.queryClient, {
+      invalidationKeys,
+      timelineRootKey,
+      includeTimeline: false,
+    });
+    return;
+  }
+
+  const insert = eventLogInsertSchema.parse({
+    client_event_id: retry.item.client_event_id,
+    created_by: retry.item.created_by,
+    event_type: retry.item.event_type,
+    household_id: retry.item.household_id,
+    occurred_at: retry.item.occurred_at,
+    payload: retry.item.payload,
+    payload_version: retry.item.payload_version,
+    puppy_id: retry.item.puppy_id,
+  }) as EventLogInsert;
+  const quickLogEventType = isQuickLogEventType(insert.event_type)
+    ? insert.event_type
+    : null;
+
+  if (quickLogEventType === null) {
+    const failedItem = await queue.markFailedPermanent(input.clientEventId, {
+      errorCategory: 'unsupported_schema_version',
+      now: now(),
+    });
+
+    updateCachedLocalSync(input.queryClient, {
+      timelineRootKey,
+      clientEventId: input.clientEventId,
+      state: failedItem.state,
+      category: failedItem.last_error_category,
+      retryCount: failedItem.retry_count,
+    });
+    await invalidateAffectedQueries(input.queryClient, {
+      invalidationKeys,
+      timelineRootKey,
+      includeTimeline: false,
+    });
+    return;
+  }
+
+  try {
+    const data = await events.insertEvent(insert);
+    const resolution = await queue.resolveInFlightSuccess(input.clientEventId, {
+      now: now(),
+    });
+
+    if (resolution.outcome === 'requires_server_cleanup') {
+      try {
+        await events.tombstoneByClientEventId({
+          householdId: insert.household_id,
+          clientEventId: input.clientEventId,
+          deletedAt: now(),
+        });
+        removeCachedEventRow(input.queryClient, {
+          timelineRootKey,
+          clientEventId: input.clientEventId,
+        });
+        await queue.remove(input.clientEventId);
+      } catch {
+        await invalidateAffectedQueries(input.queryClient, {
+          invalidationKeys,
+          timelineRootKey,
+          includeTimeline: false,
+        });
+        return;
+      }
+      await invalidateAffectedQueries(input.queryClient, {
+        invalidationKeys,
+        timelineRootKey,
+        includeTimeline: true,
+      });
+      return;
+    }
+
+    replaceCachedEventRow(input.queryClient, {
+      timelineRootKey,
+      clientEventId: input.clientEventId,
+      row: {
+        ...data,
+        localSync: undefined,
+      },
+    });
+    const retryCountBucket = bucketRetryCount(resolution.item.retry_count);
+
+    if (retryCountBucket !== null) {
+      analytics.trackQuickLogEvent({
+        name: 'offline_or_failed_log_recovered',
+        properties: {
+          event_type: quickLogEventType,
+          recovery_surface: retry.recovery_surface ?? input.recoverySurface,
+          retry_count_bucket: retryCountBucket,
+        },
+      });
+    }
+    analytics.trackQuickLogEvent({
+      name: 'event_logged',
+      properties: {
+        connection_state: 'unknown',
+        event_type: quickLogEventType,
+        save_result: 'server_confirmed',
+        source_surface: input.sourceSurface ?? 'quick_log_sheet',
+      },
+    });
+    await queue.remove(input.clientEventId);
+    await invalidateAffectedQueries(input.queryClient, {
+      invalidationKeys,
+      timelineRootKey,
+      includeTimeline: true,
+    });
+  } catch (error) {
+    const latestItem = await queue.getByClientEventId(input.clientEventId).catch(() => null);
+
+    if (latestItem?.state === 'deleted_before_sync') {
+      await invalidateAffectedQueries(input.queryClient, {
+        invalidationKeys,
+        timelineRootKey,
+        includeTimeline: false,
+      });
+      return;
+    }
+
+    const decision = normalizeQuickLogQueueFailureForPersistence({
+      error,
+      retryCount: latestItem?.retry_count ?? retry.item.retry_count,
+    });
+    const failedAt = now();
+    const failedItem = decision.decision === 'retryable'
+      ? await queue.markFailedRetryable(input.clientEventId, {
+        errorCategory: decision.category,
+        retryAfterAt: retryAfterAt(failedAt, decision.retryAfterMs),
+        now: failedAt,
+      })
+      : await queue.markFailedPermanent(input.clientEventId, {
+        errorCategory: decision.category,
+        now: failedAt,
+      });
+
+    updateCachedLocalSync(input.queryClient, {
+      timelineRootKey,
+      clientEventId: input.clientEventId,
+      state: failedItem.state,
+      category: failedItem.last_error_category,
+      retryCount: failedItem.retry_count,
+    });
+    analytics.trackQuickLogEvent({
+      name: 'event_save_failed',
+      properties: {
+        connection_state: 'unknown',
+        error_category: decision.category,
+        event_type: quickLogEventType,
+      },
+    });
+    observability.captureException(new Error('Quick Log operation failed'), {
+      area: 'quick_log',
+      errorCategory: decision.category,
+      operation: 'manual_retry_event',
+      tags: {
+        event_type: quickLogEventType,
+      },
+    });
+    await invalidateAffectedQueries(input.queryClient, {
+      invalidationKeys,
+      timelineRootKey,
+      includeTimeline: false,
+    });
+  }
 }
 
 export function replayQuickLogQueueItemToCache(
@@ -776,11 +1003,24 @@ function upsertCachedEventRow(
       calendarDate: input.calendarDate,
       row: input.row,
     }));
-  const queryKeysToUpdate = [
+  const canonicalDayKey = queryKeys.events.timeline(
+    input.row.household_id,
+    input.row.puppy_id,
+    {
+      from: input.calendarDate,
+      to: input.calendarDate,
+    },
+  );
+  const canonicalTimelineKey = queryKeys.events.timeline(
+    input.row.household_id,
+    input.row.puppy_id,
+  );
+  const queryKeysToUpdate = uniqueQueryKeys([
     input.timelineRootKey,
-    ...compatibleQueryKeys.filter((queryKey) =>
-      !isSameQueryKey(queryKey, input.timelineRootKey)),
-  ];
+    canonicalTimelineKey,
+    canonicalDayKey,
+    ...compatibleQueryKeys,
+  ]);
 
   for (const queryKey of queryKeysToUpdate) {
     queryClient.setQueryData<QuickLogCachedEventRow[]>(queryKey, (previousRows = []) => {
@@ -906,6 +1146,18 @@ function canTimelineQueryContainRow(
   }
 
   return true;
+}
+
+function uniqueQueryKeys(queryKeysToDedupe: readonly QueryKey[]): QueryKey[] {
+  const uniqueKeys: QueryKey[] = [];
+
+  for (const queryKey of queryKeysToDedupe) {
+    if (!uniqueKeys.some((existingQueryKey) => isSameQueryKey(existingQueryKey, queryKey))) {
+      uniqueKeys.push(queryKey);
+    }
+  }
+
+  return uniqueKeys;
 }
 
 function getTimelineQueryFilters(
@@ -1041,13 +1293,45 @@ function isSameQueryKey(left: QueryKey, right: QueryKey): boolean {
 }
 
 function createDefaultClientEventId(): string {
-  const randomUuid = globalThis.crypto?.randomUUID?.();
+  const crypto = globalThis.crypto;
+  const randomUuid = crypto?.randomUUID?.();
 
-  if (!randomUuid) {
-    throw new Error('Quick Log client event id generation is unavailable');
+  if (randomUuid) {
+    return `evt_${randomUuid}`;
   }
 
-  return `evt_${randomUuid}`;
+  return `evt_${createRandomUuidV4(crypto)}`;
+}
+
+function createRandomUuidV4(
+  crypto: Pick<Crypto, 'getRandomValues'> | undefined,
+): string {
+  const bytes = new Uint8Array(16);
+
+  if (crypto?.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    fillPseudoRandomBytes(bytes);
+  }
+
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0'));
+
+  return [
+    hex.slice(0, 4).join(''),
+    hex.slice(4, 6).join(''),
+    hex.slice(6, 8).join(''),
+    hex.slice(8, 10).join(''),
+    hex.slice(10, 16).join(''),
+  ].join('-');
+}
+
+function fillPseudoRandomBytes(bytes: Uint8Array): void {
+  for (let index = 0; index < bytes.length; index += 1) {
+    bytes[index] = Math.floor(Math.random() * 256);
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

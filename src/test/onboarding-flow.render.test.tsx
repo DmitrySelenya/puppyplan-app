@@ -1,6 +1,7 @@
-import { AccessibilityInfo } from 'react-native';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
+import { tokens } from '@/design/tokens';
 import { OnboardingScreen } from '@/features/onboarding/screens/OnboardingScreen';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -11,11 +12,12 @@ describe('Onboarding production flow', () => {
   beforeEach(async () => {
     reduceMotionProbe = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
-      .mockReturnValue(new Promise<boolean>(() => {}));
+      .mockResolvedValue(true);
     await i18n.changeLanguage('en');
   });
 
   afterEach(() => {
+    cleanup();
     reduceMotionProbe.mockRestore();
   });
 
@@ -44,6 +46,13 @@ describe('Onboarding production flow', () => {
     }));
 
     expect(screen.getByText(i18n.t('onboarding.age-hint.6-8-weeks'))).toBeTruthy();
+    const zoomiesTileStyle = screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.zoomies'),
+    }).props.style;
+
+    expect(StyleSheet.flatten(
+      typeof zoomiesTileStyle === 'function' ? zoomiesTileStyle({ pressed: false }) : zoomiesTileStyle,
+    ).width).toBe(tokens.component.trackerTile.twoCol.width - tokens.space[2]);
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('onboarding.tracker-picker.cta'),
@@ -58,6 +67,7 @@ describe('Onboarding production flow', () => {
       }));
     });
     expect(screen.getByText(i18n.t('onboarding.plan-reveal.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('onboarding.plan-reveal.hero')).props.maxFontSizeMultiplier).toBe(2);
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('onboarding.plan-reveal.cta'),
@@ -101,5 +111,131 @@ describe('Onboarding production flow', () => {
     expect(screen.getByText(i18n.t('onboarding.tracker-picker.title'))).toBeTruthy();
     expect(screen.queryByText(i18n.t('onboarding.plan-reveal.title'))).toBeNull();
     expect(openQuickLog).not.toHaveBeenCalled();
+  });
+
+  it('targets profile validation errors and clears them when the affected field changes', () => {
+    const openQuickLog = jest.fn();
+    const saveProfile = jest.fn(async () => undefined);
+
+    render(
+      <AppProviders>
+        <OnboardingScreen
+          openQuickLog={openQuickLog}
+          saveProfile={saveProfile}
+        />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.welcome.cta'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.puppy-profile.cta'),
+    }));
+
+    expect(screen.getByText(i18n.t('onboarding.puppy-profile.error-name-required'))).toBeTruthy();
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('onboarding.puppy-profile.name-field-label')),
+      'Puppy',
+    );
+
+    expect(screen.queryByText(i18n.t('onboarding.puppy-profile.error-name-required'))).toBeNull();
+  });
+
+  it('rejects non-numeric age text before opening tracker setup', () => {
+    const openQuickLog = jest.fn();
+    const saveProfile = jest.fn(async () => undefined);
+
+    render(
+      <AppProviders>
+        <OnboardingScreen
+          openQuickLog={openQuickLog}
+          saveProfile={saveProfile}
+        />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.welcome.cta'),
+    }));
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('onboarding.puppy-profile.name-field-label')),
+      'Puppy',
+    );
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('onboarding.puppy-profile.age-weeks-field-label')),
+      '8abc',
+    );
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.puppy-profile.cta'),
+    }));
+
+    expect(screen.getByText(i18n.t('onboarding.puppy-profile.error-age-required'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('onboarding.tracker-picker.title'))).toBeNull();
+    expect(saveProfile).not.toHaveBeenCalled();
+  });
+
+  it('resets tracker limit warning after a valid deselect and keeps one tracker selected', () => {
+    const openQuickLog = jest.fn();
+    const saveProfile = jest.fn(async () => undefined);
+
+    render(
+      <AppProviders>
+        <OnboardingScreen
+          openQuickLog={openQuickLog}
+          saveProfile={saveProfile}
+        />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.welcome.cta'),
+    }));
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('onboarding.puppy-profile.name-field-label')),
+      'Puppy',
+    );
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.puppy-profile.cta'),
+    }));
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.zoomies'),
+    }));
+
+    expect(screen.getByText(i18n.t('onboarding.tracker-picker.limit-snackbar'))).toBeTruthy();
+    expect(
+      screen.getByLabelText(i18n.t('onboarding.tracker-picker.limit-snackbar')).props,
+    ).toMatchObject({
+      accessibilityLiveRegion: 'polite',
+      accessibilityRole: 'alert',
+    });
+
+    for (const trackerLabel of [
+      'quick-log.trackers.sleep',
+      'quick-log.trackers.potty-inside',
+      'quick-log.trackers.potty-poop',
+      'quick-log.trackers.feeding',
+    ] as const) {
+      fireEvent.press(screen.getByRole('button', {
+        name: i18n.t(trackerLabel),
+      }));
+    }
+
+    expect(screen.queryByText(i18n.t('onboarding.tracker-picker.limit-snackbar'))).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.potty-outside'),
+    }));
+
+    expect(screen.getByText(i18n.t('onboarding.tracker-picker.min-required-snackbar'))).toBeTruthy();
+    expect(
+      screen.getByLabelText(i18n.t('onboarding.tracker-picker.min-required-snackbar')).props,
+    ).toMatchObject({
+      accessibilityLiveRegion: 'polite',
+      accessibilityRole: 'alert',
+    });
+    expect(screen.getByText(i18n.t('onboarding.tracker-picker.counter', { n: 1 }))).toBeTruthy();
   });
 });

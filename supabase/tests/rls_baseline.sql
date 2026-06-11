@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(87);
+SELECT plan(90);
 
 CREATE SCHEMA IF NOT EXISTS tests;
 
@@ -824,6 +824,15 @@ SELECT results_eq(
   'non-member cannot read puppy profile projection RPC rows'
 );
 
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY['feeding_meal', 'training']::text[]
+  ),
+  false,
+  'non-member cannot update puppy selected quick trackers'
+);
+
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000103');
 SELECT is(
   tests.try_insert_event(
@@ -916,6 +925,24 @@ SELECT is(
   ),
   false,
   'puppy selected quick trackers reject more than five ids'
+);
+
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY[]::text[]
+  ),
+  false,
+  'puppy selected quick trackers reject empty selected set'
+);
+
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY['feeding_meal', 'unknown_tracker']::text[]
+  ),
+  false,
+  'puppy selected quick trackers reject unknown tracker ids'
 );
 
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000105');

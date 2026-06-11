@@ -19,6 +19,7 @@ export type ListRowProps = {
   style?: StyleProp<ViewStyle>;
   subtitle?: string;
   title: string;
+  titleNumberOfLines?: number;
   trailing?: ReactNode;
 };
 
@@ -34,6 +35,7 @@ export function ListRow({
   style,
   subtitle,
   title,
+  titleNumberOfLines,
   trailing,
 }: ListRowProps) {
   const reducedMotion = useReducedMotion();
@@ -47,7 +49,7 @@ export function ListRow({
     <>
       {leading ? <View style={styles.slot}>{leading}</View> : null}
       <View style={styles.copy}>
-        <AppText numberOfLines={1} variant="headline">
+        <AppText numberOfLines={titleNumberOfLines} variant="headline">
           {title}
         </AppText>
         {subtitle ? (
@@ -98,7 +100,9 @@ export function ListRow({
 const styles = StyleSheet.create({
   copy: {
     flex: 1,
+    flexShrink: 1,
     gap: tokens.space[1],
+    minWidth: 0,
   },
   disabled: {
     opacity: 0.4,

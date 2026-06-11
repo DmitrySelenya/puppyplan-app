@@ -61,6 +61,25 @@ The full Supabase gate runs in GitHub Actions:
 
 Use Maestro in MVP.
 
+### Local iOS Simulator Profile
+
+Local iOS smoke on the 8 GB M1 MacBook Air uses the existing lightweight simulator profile only:
+
+- Primary: `Grith iPhone SE 3 iOS 26.3` (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`).
+- Fallback: `iPhone SE (3rd generation)` (`1319D7E1-AE4E-4165-8EB9-B3A78DE62867`) if the primary profile is unavailable.
+
+Do not pick the first available simulator from `simctl` or XcodeBuildMCP output. iPhone Pro/Pro Max, iPad, and other high-memory simulator profiles are excluded from local smoke unless the user explicitly approves that exact device for that exact run.
+
+Before a build/run, check the active XcodeBuildMCP session defaults. If they are empty or not pinned to the SE profile, set them to the SE profile before building. Keep only one simulator and one Metro process open at a time.
+
+The same SE simulator may host multiple apps when their bundle identifiers differ. The current local coexistence contract is:
+
+- PuppyPlan: `com.dmitry-selenya.puppyplan-app`;
+- Grith: `com.grith.app`;
+- Expo Go: `host.exp.Exponent`.
+
+Reinstalling PuppyPlan on that simulator updates only the PuppyPlan app/data container and does not replace Grith.
+
 Critical flows:
 
 - onboarding -> puppy profile -> first Quick Log -> Today update;

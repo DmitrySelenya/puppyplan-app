@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import {
   classifyQuickLogSupabaseError,
+  createLocalDayIsoRange,
   createSupabaseEventLogRepository,
   isQuickLogIdempotentDuplicate,
 } from '@/lib/supabase/events';
@@ -146,6 +147,45 @@ describe('Quick Log Supabase event wrappers', () => {
     ]);
   });
 
+  it('lists visible event rows for a puppy timeline with filters', async () => {
+    const client = new RecordingEventLogClient([
+      { data: [serverRow], error: null, status: 200 },
+    ]);
+    const repository = createSupabaseEventLogRepository(client);
+    const fromRange = createLocalDayIsoRange('2026-05-26');
+    const toRange = createLocalDayIsoRange('2026-05-27');
+
+    await expect(repository.listEvents({
+      filters: {
+        eventTypes: ['feeding'],
+        from: '2026-05-26',
+        to: '2026-05-27',
+      },
+      householdId,
+      puppyId,
+    })).resolves.toEqual([serverRow]);
+    expect(client.calls).toEqual([
+      'from:event_log',
+      'select:*',
+      `eq:household_id:${householdId}`,
+      `eq:puppy_id:${puppyId}`,
+      'is:deleted_at:null',
+      `gte:occurred_at:${fromRange.startIso}`,
+      `lte:occurred_at:${toRange.endIso}`,
+      'in:event_type:feeding',
+      'order:occurred_at:false',
+      'order:created_at:false',
+      'limit:50',
+    ]);
+  });
+
+  it('builds date filters from device-local day boundaries', () => {
+    expect(createLocalDayIsoRange('2026-06-08')).toEqual({
+      endIso: new Date(2026, 5, 8, 23, 59, 59, 999).toISOString(),
+      startIso: new Date(2026, 5, 8, 0, 0, 0, 0).toISOString(),
+    });
+  });
+
   it('resolves an insert 23505 through the existing idempotent row', async () => {
     const client = new RecordingEventLogClient([
       { data: null, error: { code: '23505', status: 409 }, status: 409 },
@@ -263,6 +303,44 @@ class RecordingEventLogClient {
       .maybeSingle();
   }
 
+  public async listEventLog(input: {
+    householdId: string;
+    puppyId: string;
+    filters: Readonly<{
+      from?: string;
+      to?: string;
+      eventTypes?: readonly string[];
+      cursor?: string;
+    }>;
+  }): Promise<EventLogClientResponse> {
+    let query = this.from('event_log')
+      .select('*')
+      .eq('household_id', input.householdId)
+      .eq('puppy_id', input.puppyId)
+      .is('deleted_at', null);
+
+    if (input.filters.from !== undefined) {
+      query = query.gte('occurred_at', createLocalDayIsoRange(input.filters.from).startIso);
+    }
+
+    if (input.filters.to !== undefined) {
+      query = query.lte('occurred_at', createLocalDayIsoRange(input.filters.to).endIso);
+    }
+
+    if (input.filters.cursor !== undefined) {
+      query = query.lt('occurred_at', input.filters.cursor);
+    }
+
+    if (input.filters.eventTypes !== undefined && input.filters.eventTypes.length > 0) {
+      query = query.in('event_type', input.filters.eventTypes);
+    }
+
+    return query
+      .order('occurred_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(50);
+  }
+
   public async tombstoneEventLogById(input: {
     id: string;
     deletedAt: string;
@@ -320,6 +398,51 @@ class RecordingEventLogQuery {
     this.client.calls.push(`eq:${column}:${value}`);
 
     return this;
+  }
+
+  public is(column: string, value: null): RecordingEventLogQuery {
+    this.client.calls.push(`is:${column}:${value}`);
+
+    return this;
+  }
+
+  public gte(column: string, value: string): RecordingEventLogQuery {
+    this.client.calls.push(`gte:${column}:${value}`);
+
+    return this;
+  }
+
+  public lte(column: string, value: string): RecordingEventLogQuery {
+    this.client.calls.push(`lte:${column}:${value}`);
+
+    return this;
+  }
+
+  public lt(column: string, value: string): RecordingEventLogQuery {
+    this.client.calls.push(`lt:${column}:${value}`);
+
+    return this;
+  }
+
+  public in(column: string, values: readonly string[]): RecordingEventLogQuery {
+    this.client.calls.push(`in:${column}:${values.join(',')}`);
+
+    return this;
+  }
+
+  public order(
+    column: string,
+    options: Readonly<{ ascending: boolean }>,
+  ): RecordingEventLogQuery {
+    this.client.calls.push(`order:${column}:${options.ascending}`);
+
+    return this;
+  }
+
+  public async limit(count: number): Promise<EventLogClientResponse> {
+    this.client.calls.push(`limit:${count}`);
+
+    return this.client.nextResponse();
   }
 
   public async maybeSingle(): Promise<EventLogClientResponse> {

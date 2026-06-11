@@ -25,6 +25,7 @@ Approved for `PUP-21` after the Post-PUP-18 batch storage gate.
 `public.puppy` stores ordered selected Quick Log tracker ids in `quick_tracker_ids text[]` with:
 
 - default ids matching the first-screen Quick Log defaults;
+- at least 1 selected id;
 - max 5 selected ids;
 - allowed tracker id constraint;
 - uniqueness constraint;

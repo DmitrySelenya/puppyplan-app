@@ -6,6 +6,7 @@ import {
 } from './quick-log';
 import {
   dateSchema,
+  householdMembershipRoleSchema,
   nonEmptyStringSchema,
   uuidSchema,
 } from './supabase';
@@ -48,6 +49,7 @@ export const puppyProfileWriteSchema = z.object({
 export const activeCareContextSchema = z.object({
   authState: z.literal('authenticated'),
   householdId: uuidSchema,
+  householdRole: householdMembershipRoleSchema,
   puppyId: uuidSchema,
   selectedTrackerIds: selectedQuickLogTrackerIdsSchema,
   todayDate: dateSchema,

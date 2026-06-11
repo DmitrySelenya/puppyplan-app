@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { PuppyProfileInput } from '@/contracts/onboarding';
 import { toPuppyProfileWrite } from '@/contracts/onboarding';
-import type { PuppyProfile } from '@/contracts/supabase';
+import type { ActivePuppyProfile } from '@/contracts/supabase';
 import { useAuth } from '@/lib/auth';
 import { ensureUserBootstrapped } from '@/lib/auth/bootstrap';
 import {
@@ -25,7 +25,7 @@ export function useActivePuppyQuery(
 
   return useQuery({
     enabled: auth.status === 'signedIn' && auth.user !== null,
-    queryFn: () => repository.selectActivePuppy(),
+    queryFn: () => repository.selectActivePuppy({ userId }),
     queryKey: queryKeys.puppy.active(userId),
   });
 }
@@ -37,7 +37,7 @@ export function useSavePuppyProfileMutation(
   const auth = useAuth();
 
   return useMutation({
-    mutationFn: async (input: SavePuppyProfileInput): Promise<PuppyProfile> => {
+    mutationFn: async (input: SavePuppyProfileInput): Promise<ActivePuppyProfile> => {
       if (auth.status !== 'signedIn' || auth.user === null) {
         throw new Error('puppy_profile_requires_auth');
       }
@@ -69,4 +69,8 @@ export function useSavePuppyProfileMutation(
       });
     },
   });
+}
+
+export function isPuppyProfileOwnerRequiredError(error: unknown): boolean {
+  return error instanceof Error && error.message === 'puppy_profile_owner_required';
 }

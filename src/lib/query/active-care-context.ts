@@ -6,16 +6,17 @@ import {
 } from '@/contracts/onboarding';
 import {
   defaultQuickLogTrackerIds,
+  type QuickLogTrackerId,
 } from '@/contracts/quick-log';
-import type { PuppyProfile } from '@/contracts/supabase';
+import type { ActivePuppyProfile } from '@/contracts/supabase';
 import { useAuth } from '@/lib/auth';
 
 import { useActivePuppyQuery } from './puppy';
 
 export type ActiveCareContextResult = Readonly<{
   careContext: ActiveCareContext | null;
-  puppy: PuppyProfile | null;
-  status: 'loading' | 'empty' | 'ready';
+  puppy: ActivePuppyProfile | null;
+  status: 'loading' | 'empty' | 'ready' | 'error';
 }>;
 
 export function useActiveCareContext(): ActiveCareContextResult {
@@ -29,6 +30,14 @@ export function useActiveCareContext(): ActiveCareContextResult {
         careContext: null,
         puppy: null,
         status: 'loading',
+      };
+    }
+
+    if (puppyQuery.isError) {
+      return {
+        careContext: null,
+        puppy: null,
+        status: 'error',
       };
     }
 
@@ -51,11 +60,11 @@ export function useActiveCareContext(): ActiveCareContextResult {
       puppy: puppyQuery.data,
       status: careContext === null ? 'empty' : 'ready',
     };
-  }, [auth.status, auth.user, puppyQuery.data, puppyQuery.isLoading, todayDate]);
+  }, [auth.status, auth.user, puppyQuery.data, puppyQuery.isError, puppyQuery.isLoading, todayDate]);
 }
 
 export function createActiveCareContext(input: Readonly<{
-  puppy: PuppyProfile;
+  puppy: ActivePuppyProfile;
   todayDate: string;
   userId: string;
 }>): ActiveCareContext | null {
@@ -66,13 +75,26 @@ export function createActiveCareContext(input: Readonly<{
   return activeCareContextSchema.parse({
     authState: 'authenticated',
     householdId: input.puppy.household_id,
+    householdRole: input.puppy.household_role,
     puppyId: input.puppy.id,
-    selectedTrackerIds: input.puppy.quick_tracker_ids ?? defaultQuickLogTrackerIds,
+    selectedTrackerIds: selectedTrackerIdsOrDefault(input.puppy.quick_tracker_ids),
     todayDate: input.todayDate,
     userId: input.userId,
   });
 }
 
+function selectedTrackerIdsOrDefault(
+  trackerIds: readonly QuickLogTrackerId[] | null,
+): readonly QuickLogTrackerId[] {
+  return trackerIds && trackerIds.length > 0
+    ? trackerIds
+    : defaultQuickLogTrackerIds;
+}
+
 export function getTodayDate(now: Date = new Date()): string {
-  return now.toISOString().slice(0, 10);
+  const year = String(now.getFullYear()).padStart(4, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 }

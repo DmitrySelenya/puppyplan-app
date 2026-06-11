@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 
-import { MoreScreen } from '@/features/more/screens/MoreScreen';
+import { ConnectedMoreScreen } from '@/features/more/screens/MoreScreen';
 
 export default function MoreRoute() {
   return (
-    <MoreScreen
+    <ConnectedMoreScreen
       openPuppyProfile={() => {
         router.push('/settings/puppy-profile');
       }}

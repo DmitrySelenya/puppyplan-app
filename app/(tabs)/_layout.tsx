@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     borderTopColor: tokens.color.stroke.default,
   },
   quickLog: {
-    bottom: 88,
+    bottom: tokens.layout.tabBarHeight + tokens.space[1],
     position: 'absolute',
     right: 16,
   },

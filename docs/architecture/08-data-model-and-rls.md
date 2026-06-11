@@ -27,7 +27,7 @@ MVP entities:
 
 Approved additive profile fields:
 
-- `public.puppy.quick_tracker_ids` stores the ordered selected Quick Log tracker ids for `PUP-21`. It is constrained to allowed ids, uniqueness, and at most 5 entries, and remains under existing `puppy` owner insert/update RLS.
+- `public.puppy.quick_tracker_ids` stores the ordered selected Quick Log tracker ids for `PUP-21`. It is constrained to allowed ids, uniqueness, at least 1 entry, and at most 5 entries, and remains under existing `puppy` owner insert/update RLS.
 
 ## Rejected Schema Changes
 

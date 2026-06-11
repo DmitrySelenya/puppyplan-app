@@ -92,6 +92,8 @@ export const plannedRouteFiles = [
 }[];
 
 export const shellI18nKeys = [
+  'common.loading',
+  'errors.load-failed',
   'tabs.today',
   'tabs.health',
   'tabs.more',
@@ -127,6 +129,9 @@ export const shellI18nKeys = [
   'quick-log.sheet.unavailable.title',
   'quick-log.sheet.unavailable.body',
   'quick-log.sheet.unavailable.close',
+  'quick-log.sheet.permission-denied.title',
+  'quick-log.sheet.permission-denied.body',
+  'quick-log.sheet.permission-denied.close',
   'quick-log.duplicate-warning.title',
   'quick-log.duplicate-warning.question',
   'quick-log.duplicate-warning.primary-alt',

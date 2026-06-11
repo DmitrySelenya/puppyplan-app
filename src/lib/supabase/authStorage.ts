@@ -21,23 +21,44 @@ function loadSecureStore(): SecureStoreModule | null {
 export function createSecureStoreAuthStorage(
   secureStore: SecureStoreModule | null = loadSecureStore(),
 ): SupportedStorage {
-  if (secureStore === null) {
-    const memory = new Map<string, string>();
-
-    return {
-      getItem: async (key) => memory.get(key) ?? null,
-      setItem: async (key, value) => {
-        memory.set(key, value);
-      },
-      removeItem: async (key) => {
-        memory.delete(key);
-      },
-    };
-  }
+  const memory = new Map<string, string>();
 
   return {
-    getItem: (key) => secureStore.getItemAsync(key),
-    setItem: (key, value) => secureStore.setItemAsync(key, value),
-    removeItem: (key) => secureStore.deleteItemAsync(key),
+    getItem: async (key) => {
+      if (secureStore === null) {
+        return memory.get(key) ?? null;
+      }
+
+      try {
+        return await secureStore.getItemAsync(key);
+      } catch {
+        return memory.get(key) ?? null;
+      }
+    },
+    setItem: async (key, value) => {
+      if (secureStore === null) {
+        memory.set(key, value);
+        return;
+      }
+
+      try {
+        await secureStore.setItemAsync(key, value);
+      } catch {
+        memory.set(key, value);
+      }
+    },
+    removeItem: async (key) => {
+      memory.delete(key);
+
+      if (secureStore === null) {
+        return;
+      }
+
+      try {
+        await secureStore.deleteItemAsync(key);
+      } catch {
+        // Runtime keychain availability can fail on Simulator teardown; memory is already cleared.
+      }
+    },
   };
 }

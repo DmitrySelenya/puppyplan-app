@@ -124,11 +124,29 @@ const hasModalGroupLayout = existsSync(repoPath('app/(modals)/_layout.tsx').path
 const rootConfiguresQuickLogModal =
   rootLayoutSource.includes('name="(modals)/quick-log"') ||
   rootLayoutSource.includes("name='(modals)/quick-log'");
+const rootRegistersStaleOnboardingRoute =
+  rootLayoutSource.includes('name="onboarding"') ||
+  rootLayoutSource.includes("name='onboarding'");
+const rootRegistersOnboardingIndexRoute =
+  rootLayoutSource.includes('name="onboarding/index"') ||
+  rootLayoutSource.includes("name='onboarding/index'");
 
 assert.equal(
   hasModalGroupLayout || rootConfiguresQuickLogModal,
   true,
   'Quick Log modal presentation must target an actual modal route or modal group layout',
+);
+
+assert.equal(
+  rootRegistersStaleOnboardingRoute,
+  false,
+  'Root Stack must not register stale onboarding; use onboarding/index to match the Expo Router child route',
+);
+
+assert.equal(
+  rootRegistersOnboardingIndexRoute,
+  true,
+  'Root Stack must register onboarding/index so Expo Router does not show a missing-route warning',
 );
 
 function listFiles(dir) {

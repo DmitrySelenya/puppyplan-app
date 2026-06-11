@@ -221,9 +221,13 @@
       "name-field-hint": "Nombre del cachorro, requerido para continuar",
       "birth-date-placeholder": "AAAA-MM-DD",
       "age-toggle-age": "Edad",
-      "age-toggle-date": "O fecha de nacimiento",
+      "age-toggle-date": "Fecha de nacimiento",
+      "age-weeks-field-label": "Edad en semanas",
       "cta": "Continuar",
       "error-required": "Agrega un nombre y edad o fecha de nacimiento para continuar.",
+      "error-name-required": "Agrega un nombre para continuar.",
+      "error-age-required": "Ingresa la edad en semanas completas.",
+      "error-birth-date-required": "Ingresa la fecha con formato AAAA-MM-DD.",
       "error-future-date": "Esa fecha es en el futuro; verifíquela dos veces",
       "a11y-toggle": "Método de entrada de edad. Seleccionado: edad en semanas.",
       "a11y-stepper": "Edad 8 semanas. Desliza hacia arriba para aumentar."
@@ -240,6 +244,7 @@
       "counter": "{n} de 5 seleccionados",
       "_comment": "{n}: entero 0..5",
       "limit-snackbar": "Hasta 5. Elimina uno para agregar un nuevo rastreador.",
+      "min-required-snackbar": "Mantén al menos un rastreador seleccionado.",
       "zero-state-cta": "Saltar por ahora",
       "cta": "Continuar",
       "tile-feeding-a11y": "Alimentación. Seleccionado. Toca dos veces para eliminar."
@@ -386,7 +391,12 @@
       "title": "¿Qué pasó?",
       "edit-trackers": "Editar rastreadores",
       "edit-screen-title": "Tus rastreadores rápidos",
-      "edit-helper": "Hasta 5. Arrastre para reordenar.",
+      "edit-helper": "Hasta 5 rastreadores. Cámbialos desde Más.",
+      "permission-denied": {
+        "title": "Solo lectura",
+        "body": "Pide al propietario del hogar acceso de cuidador para registrar eventos de cuidado.",
+        "close": "Cerrar"
+      },
       "unavailable": {
         "title": "El registro rápido aún no está listo",
         "body": "Termina la configuración del cachorro antes de registrar cuidados.",
@@ -1212,8 +1222,9 @@
     },
     "quick-trackers": {
       "screen-title-template": "Rastreadores rápidos ({n} de 5 seleccionados)",
-      "hint": "Elige hasta 5 rastreadores para la pantalla Hoy. Arrastra para reordenar.",
+      "hint": "Elige hasta 5 rastreadores para Hoy y Quick Log.",
       "max-reached-hint": "Desactiva uno de los primeros seleccionados",
+      "min-required-hint": "Mantén al menos un rastreador seleccionado",
       "items": [
         "Alimentación",
         "Baño",
@@ -1320,6 +1331,7 @@
     "save-failed": "No se pudo guardar",
     "save-failed-local": "No se pudo guardar. Tu entrada se guarda localmente; lo intentaremos de nuevo más tarde.",
     "save-failed-connection": "No se pudo guardar. Comprueba tu conexión.",
+    "owner-only-settings": "Solo el propietario puede cambiar estos ajustes.",
     "load-failed": "No se pudo cargar",
     "tariffs-load-failed": "No se pudieron cargar los planes. Intenta actualizar.",
     "session-revoked": "El acceso a {puppyName} está cerrado. Si esto te parece incorrecto, contacta al propietario.",

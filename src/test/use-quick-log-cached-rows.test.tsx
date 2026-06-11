@@ -14,6 +14,7 @@ const todayDate = '2026-05-27';
 const careContext = {
   authState: 'authenticated',
   householdId,
+  householdRole: 'owner',
   puppyId,
   todayDate,
 } as const;

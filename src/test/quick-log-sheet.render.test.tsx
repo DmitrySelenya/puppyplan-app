@@ -1,6 +1,6 @@
 import { AccessibilityInfo, ScrollView, StyleSheet } from 'react-native';
 import { useState, type ReactElement } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { MAX_VISIBLE_QUICK_LOG_TRACKERS } from '@/contracts/quick-log';
 import { SnackbarProvider } from '@/design/primitives/Snackbar';
@@ -20,6 +20,7 @@ import { i18n } from '@/lib/i18n';
 const careContext: QuickLogCareContext = {
   authState: 'authenticated',
   householdId: '00000000-0000-4000-8000-000000000501',
+  householdRole: 'owner',
   puppyId: '00000000-0000-4000-8000-000000000502',
   selectedTrackerIds: [
     'potty_pee_outside',
@@ -85,6 +86,7 @@ describe('QuickLogShell', () => {
   });
 
   afterEach(() => {
+    cleanup();
     reduceMotionProbe.mockRestore();
   });
 
@@ -151,6 +153,26 @@ describe('QuickLogShell', () => {
     expect(screen.queryByRole('button', {
       name: i18n.t('quick-log.trackers.potty-outside'),
     })).toBeNull();
+  });
+
+  it('falls back to default trackers when runtime selected tracker ids are empty', () => {
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={{
+          ...careContext,
+          selectedTrackerIds: [],
+        }}
+        mutation={createMutationPort()}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    expect(screen.getAllByTestId('quick-log-tracker-tile')).toHaveLength(
+      MAX_VISIBLE_QUICK_LOG_TRACKERS,
+    );
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.potty-outside'),
+    })).toBeTruthy();
   });
 
   it('treats an active context without a mutation adapter as unavailable', () => {

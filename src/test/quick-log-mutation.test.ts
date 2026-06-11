@@ -4,6 +4,7 @@ import {
   createQuickLogMutationOptions,
   removeQuickLogOptimisticEvent,
   replayQuickLogQueueItemToCache,
+  retryLocalQuickLogEvent,
   type QuickLogCachedEventRow,
   type QuickLogMutationDependencies,
 } from '@/lib/query/quick-log';
@@ -80,6 +81,49 @@ describe('Quick Log mutation lifecycle', () => {
         created_by: createdBy,
       }),
     ]);
+  });
+
+  it('generates client ids in native runtimes without crypto.randomUUID', async () => {
+    const originalCryptoDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue,
+      events: new FakeQuickLogEventsRepository(),
+      getSessionUserId: () => createdBy,
+      now: () => now,
+    });
+
+    Object.defineProperty(globalThis, 'crypto', {
+      configurable: true,
+      value: {
+        getRandomValues: ((array: Uint8Array) => {
+          for (let index = 0; index < array.length; index += 1) {
+            array[index] = index;
+          }
+
+          return array;
+        }) as Crypto['getRandomValues'],
+      },
+    });
+
+    try {
+      const context = await options.onMutate?.({
+        householdId,
+        puppyId,
+        trackerId: 'feeding_meal',
+        occurredAt,
+        todayDate,
+      });
+
+      expect(context?.clientEventId).toBe('evt_00010203-0405-4607-8809-0a0b0c0d0e0f');
+      expect(queue.items.get('evt_00010203-0405-4607-8809-0a0b0c0d0e0f')).toMatchObject({
+        client_event_id: 'evt_00010203-0405-4607-8809-0a0b0c0d0e0f',
+      });
+    } finally {
+      restoreGlobalCrypto(originalCryptoDescriptor);
+    }
   });
 
   it('blocks enqueue when the session actor is missing', async () => {
@@ -931,6 +975,74 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
+  it('creates the Today same-day Timeline cache when Today has not mounted its query yet', async () => {
+    const queryClient = createTestQueryClient();
+    const todayTimelineKey = queryKeys.events.timeline(householdId, puppyId, {
+      from: todayDate,
+      to: todayDate,
+    });
+
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue: new FakeQuickLogQueueStorage(),
+      events: new FakeQuickLogEventsRepository(),
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+
+    expect(queryClient.getQueryData(todayTimelineKey)).toBeUndefined();
+
+    await options.onMutate?.({
+      householdId,
+      puppyId,
+      trackerId: 'feeding_meal',
+      occurredAt,
+      todayDate,
+    });
+
+    expect(queryClient.getQueryData<QuickLogCachedEventRow[]>(todayTimelineKey)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+      }),
+    ]);
+    expect(readTimelineRows(queryClient)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+      }),
+    ]);
+  });
+
+  it('creates the unfiltered Timeline cache when Timeline has not mounted its query yet', async () => {
+    const queryClient = createTestQueryClient();
+    const timelineKey = queryKeys.events.timeline(householdId, puppyId);
+
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue: new FakeQuickLogQueueStorage(),
+      events: new FakeQuickLogEventsRepository(),
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+
+    expect(queryClient.getQueryData(timelineKey)).toBeUndefined();
+
+    await options.onMutate?.({
+      householdId,
+      puppyId,
+      trackerId: 'feeding_meal',
+      occurredAt,
+      todayDate,
+    });
+
+    expect(queryClient.getQueryData<QuickLogCachedEventRow[]>(timelineKey)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+      }),
+    ]);
+  });
+
   it('uses the mutation calendar date for filtered Timeline cache compatibility', async () => {
     const queryClient = createTestQueryClient();
     const localDayKey = queryKeys.events.timeline(householdId, puppyId, {
@@ -988,6 +1100,76 @@ describe('Quick Log mutation lifecycle', () => {
         },
       }),
     ]);
+  });
+
+  it('manual retry resends the existing queued event and emits recovery telemetry', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const analytics = {
+      trackQuickLogEvent: jest.fn(),
+    };
+
+    queue.items.set(clientEventId, createQueueItem({
+      state: 'failed_retryable',
+      last_error_category: 'network_unavailable',
+      retry_count: 1,
+    }));
+
+    await retryLocalQuickLogEvent({
+      clientEventId,
+      events,
+      analytics,
+      now: () => now,
+      queryClient,
+      queueRef: { current: queue },
+      recoverySurface: 'manual_retry',
+      sourceSurface: 'timeline',
+    } as Parameters<typeof retryLocalQuickLogEvent>[0] & {
+      analytics: typeof analytics;
+      events: FakeQuickLogEventsRepository;
+      now: () => string;
+    });
+
+    expect(queue.manualRetryCalls).toEqual([
+      {
+        clientEventId,
+        options: expect.objectContaining({
+          recoverySurface: 'manual_retry',
+        }),
+      },
+    ]);
+    expect(events.inserts).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+        created_by: createdBy,
+        event_type: 'feeding',
+      }),
+    ]);
+    expect(queue.items.has(clientEventId)).toBe(false);
+    expect(readTimelineRows(queryClient)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+        localSync: undefined,
+      }),
+    ]);
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'offline_or_failed_log_recovered',
+      properties: {
+        event_type: 'feeding',
+        recovery_surface: 'manual_retry',
+        retry_count_bucket: 'one',
+      },
+    });
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'event_logged',
+      properties: {
+        connection_state: 'unknown',
+        event_type: 'feeding',
+        save_result: 'server_confirmed',
+        source_surface: 'timeline',
+      },
+    });
   });
 
   it('uses the replay calendar date for filtered Timeline cache compatibility', () => {
@@ -1051,6 +1233,17 @@ function createTestQueryClient(): QueryClient {
   testQueryClients.push(queryClient);
 
   return queryClient;
+}
+
+function restoreGlobalCrypto(
+  descriptor: PropertyDescriptor | undefined,
+): void {
+  if (descriptor) {
+    Object.defineProperty(globalThis, 'crypto', descriptor);
+    return;
+  }
+
+  delete (globalThis as { crypto?: Crypto }).crypto;
 }
 
 function readTimelineRows(queryClient: QueryClient): QuickLogCachedEventRow[] {
@@ -1203,9 +1396,13 @@ class FakeQuickLogEventsRepository {
 class FakeQuickLogQueueStorage implements Pick<
   QuickLogQueueStorage,
   'enqueue' | 'getByClientEventId' | 'markSending' | 'markFailedRetryable' | 'markFailedPermanent'
-  | 'markDeletedBeforeSync' | 'resolveInFlightSuccess' | 'remove'
+  | 'markDeletedBeforeSync' | 'manualRetry' | 'resolveInFlightSuccess' | 'remove'
 > {
   public readonly items = new Map<string, QuickLogStoredQueueItem>();
+  public readonly manualRetryCalls: {
+    clientEventId: string;
+    options: { now: string; recoverySurface?: 'automatic_retry' | 'manual_retry' | 'app_foreground' };
+  }[] = [];
   public enqueueGate: Promise<void> | null = null;
   public enqueueError: unknown = null;
 
@@ -1282,6 +1479,23 @@ class FakeQuickLogQueueStorage implements Pick<
         now: options.now,
       }),
     );
+  }
+
+  public async manualRetry(
+    clientEventIdValue: string,
+    options: { now: string; recoverySurface?: 'automatic_retry' | 'manual_retry' | 'app_foreground' },
+  ) {
+    this.manualRetryCalls.push({
+      clientEventId: clientEventIdValue,
+      options,
+    });
+
+    return {
+      client_event_id: clientEventIdValue,
+      bypasses_delay: true as const,
+      recovery_surface: options.recoverySurface,
+      item: await this.markSending(clientEventIdValue, options),
+    };
   }
 
   public async resolveInFlightSuccess(

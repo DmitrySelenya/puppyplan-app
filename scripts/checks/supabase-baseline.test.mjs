@@ -14,6 +14,8 @@ const shareLinkViewRpcMigrationPath =
   'supabase/migrations/20260525135121_route_share_link_view_through_metadata_rpc.sql';
 const puppyQuickTrackerMigrationPath =
   'supabase/migrations/20260608212607_puppy_quick_tracker_ids.sql';
+const puppyQuickTrackerNonEmptyMigrationPath =
+  'supabase/migrations/20260609120000_puppy_quick_tracker_ids_non_empty.sql';
 const rlsTestPath = 'supabase/tests/rls_baseline.sql';
 const remoteCliPath = 'scripts/supabase/run-remote-cli.mjs';
 const noLocalDockerPath = 'scripts/supabase/no-local-docker.mjs';
@@ -35,6 +37,7 @@ function allMigrationSource() {
     shareSoftDeleteFixMigrationPath,
     shareLinkViewRpcMigrationPath,
     puppyQuickTrackerMigrationPath,
+    puppyQuickTrackerNonEmptyMigrationPath,
   ].map((path) => readFileSync(path, 'utf8')).join('\n');
 }
 
@@ -244,13 +247,18 @@ describe('Supabase baseline migration guardrails', () => {
   });
 
   it('persists selected quick trackers as constrained puppy profile state', () => {
-    const source = readFileSync(puppyQuickTrackerMigrationPath, 'utf8');
+    const source = [
+      puppyQuickTrackerMigrationPath,
+      puppyQuickTrackerNonEmptyMigrationPath,
+    ].map((path) => readFileSync(path, 'utf8')).join('\n');
 
     for (const expected of [
       /ADD COLUMN quick_tracker_ids text\[\] NOT NULL DEFAULT ARRAY/u,
       /puppy_quick_tracker_ids_allowed/u,
       /puppy_quick_tracker_ids_visible_count/u,
       /cardinality\(quick_tracker_ids\) <= 5/u,
+      /puppy_quick_tracker_ids_non_empty/u,
+      /cardinality\(quick_tracker_ids\) >= 1/u,
       /puppy_quick_tracker_ids_unique/u,
       /public\.quick_tracker_ids_are_unique\(quick_tracker_ids\)/u,
       /potty_pee_outside/u,
@@ -317,11 +325,14 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
     const source = readFileSync(rlsTestPath, 'utf8');
 
     for (const expected of [
+      'non-member cannot update puppy selected quick trackers',
       'viewer cannot update puppy selected quick trackers',
       'caregiver cannot update puppy selected quick trackers',
       'owner can update puppy selected quick trackers',
       'puppy selected quick trackers reject duplicate ids',
       'puppy selected quick trackers reject more than five ids',
+      'puppy selected quick trackers reject empty selected set',
+      'puppy selected quick trackers reject unknown tracker ids',
     ]) {
       assert.match(source, new RegExp(expected, 'u'));
     }

@@ -3,8 +3,11 @@ import {
   type QuickLogEventType,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
-import type { QuickLogRecoverySurface } from '@/contracts/analytics';
-import { eventPayloadSchemas } from '@/contracts/supabase';
+import type {
+  QuickLogRecoverySurface,
+  QuickLogSourceSurface,
+} from '@/contracts/analytics';
+import { eventPayloadSchemas, type HouseholdMembershipRole } from '@/contracts/supabase';
 import type { AppTranslate, I18nKey } from '@/lib/i18n';
 
 import type { QuickLogCachedEventRow } from './quick-log';
@@ -12,6 +15,7 @@ import type { QuickLogCachedEventRow } from './quick-log';
 export type QuickLogSurfaceCareContext = Readonly<{
   authState: 'authenticated';
   householdId: string;
+  householdRole: HouseholdMembershipRole;
   puppyId: string;
   selectedTrackerIds?: readonly QuickLogTrackerId[];
   todayDate: string;
@@ -32,7 +36,11 @@ export type QuickLogEventDeleteRequest = Readonly<{
 
 export type QuickLogEventActionHandlers = Readonly<{
   onDelete?: (request: QuickLogEventDeleteRequest) => void;
-  onRetry?: (clientEventId: string, recoverySurface: QuickLogRecoverySurface) => void;
+  onRetry?: (
+    clientEventId: string,
+    recoverySurface: QuickLogRecoverySurface,
+    sourceSurface: QuickLogSourceSurface,
+  ) => void;
   onUndo?: (request: QuickLogEventUndoRequest) => void;
 }>;
 

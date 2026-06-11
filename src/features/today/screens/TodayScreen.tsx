@@ -1,3 +1,5 @@
+import { StyleSheet } from 'react-native';
+
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
@@ -5,6 +7,7 @@ import { Card } from '@/design/primitives/Card';
 import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
+import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 import {
   createQuickLogDeleteRequest,
@@ -14,7 +17,7 @@ import {
   type QuickLogEventView,
   type QuickLogSurfaceCareContext,
 } from '@/lib/query/quick-log-event-view';
-import { useQuickLogCachedRows } from '@/lib/query/useQuickLogCachedRows';
+import { useQuickLogTimelineRows } from '@/lib/query/useQuickLogTimelineRows';
 
 export type TodayScreenProps = Readonly<{
   actions?: QuickLogEventActionHandlers;
@@ -32,7 +35,16 @@ export function TodayScreen({
   openTimeline,
 }: TodayScreenProps) {
   const { locale, t } = useAppTranslation();
-  const rows = useQuickLogCachedRows(careContext);
+  const timelineRows = useQuickLogTimelineRows(
+    careContext,
+    careContext === null
+      ? undefined
+      : {
+        from: careContext.todayDate,
+        to: careContext.todayDate,
+      },
+  );
+  const rows = timelineRows.rows;
 
   if (careContext === null) {
     return (
@@ -64,7 +76,7 @@ export function TodayScreen({
   });
 
   return (
-    <Screen>
+    <Screen contentStyle={styles.content}>
       <AppText variant="title">{t('tabs.today')}</AppText>
       {shouldShowQuickLogFailedBanner(rows) ? (
         <Card>
@@ -72,7 +84,26 @@ export function TodayScreen({
         </Card>
       ) : null}
       <Stack gap="sm">
-        <AppText variant="headline">{t('today.quick-log.section-title')}</AppText>
+        <Stack
+          align="flex-start"
+          direction="horizontal"
+          gap="sm"
+          justify="space-between"
+          wrap>
+          <AppText
+            style={styles.sectionTitle}
+            variant="headline">
+            {t('today.quick-log.section-title')}
+          </AppText>
+          <Button
+            label={t('today.quick-log.timeline-entry')}
+            labelMaxFontSizeMultiplier={2}
+            labelVariant="label"
+            onPress={openTimeline}
+            style={styles.timelineEntry}
+            variant="tertiary"
+          />
+        </Stack>
         {eventViews.length > 0 ? (
           eventViews.map((event) => (
             <TodayQuickLogEventRow
@@ -81,6 +112,13 @@ export function TodayScreen({
               key={event.clientEventId}
             />
           ))
+        ) : timelineRows.status === 'error' ? (
+          <Card
+            accessibilityLabel={t('errors.load-failed')}
+            accessibilityLiveRegion="polite"
+            accessibilityRole="alert">
+            <AppText>{t('errors.load-failed')}</AppText>
+          </Card>
         ) : (
           <Card>
             <Stack gap="sm">
@@ -90,11 +128,6 @@ export function TodayScreen({
           </Card>
         )}
       </Stack>
-      <Button
-        label={t('today.quick-log.timeline-entry')}
-        onPress={openTimeline}
-        variant="secondary"
-      />
     </Screen>
   );
 }
@@ -118,17 +151,30 @@ function TodayQuickLogEventRow({
           align="center"
           direction="horizontal"
           gap="sm"
-          justify="space-between">
-          <Stack gap="xs">
+          justify="space-between"
+          wrap>
+          <Stack
+            gap="xs"
+            style={styles.eventText}>
             <AppText variant="bodyEmph">{event.title}</AppText>
-            <AppText tone="secondary" variant="footnote">
+            <AppText
+              maxFontSizeMultiplier={2}
+              tone="secondary"
+              variant="footnote">
               {event.actorLabel} - {event.occurredAtLabel}
             </AppText>
           </Stack>
           <StatusPill
             accessibilityLabel={event.statusLabel}
-            icon={<AppText accessibilityElementsHidden>{statusIcon(event.status)}</AppText>}
+            icon={
+              <AppText
+                accessibilityElementsHidden
+                maxFontSizeMultiplier={2}>
+                {statusIcon(event.status)}
+              </AppText>
+            }
             label={event.statusLabel}
+            style={styles.statusPill}
             tone={statusTone(event.status)}
           />
         </Stack>
@@ -138,7 +184,7 @@ function TodayQuickLogEventRow({
               <Button
                 label={t('quick-log.failed.primary')}
                 onPress={() => {
-                  onRetry(event.clientEventId, 'manual_retry');
+                  onRetry(event.clientEventId, 'manual_retry', 'today');
                 }}
                 variant="secondary"
               />
@@ -204,3 +250,22 @@ function statusTone(status: QuickLogEventView['status']): 'confirmed' | 'failed'
 
   return 'confirmed';
 }
+
+const styles = StyleSheet.create({
+  content: {
+    paddingBottom: tokens.space[14] * 2 + tokens.space[4],
+  },
+  eventText: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  sectionTitle: {
+    flexShrink: 1,
+  },
+  statusPill: {
+    alignSelf: 'flex-start',
+  },
+  timelineEntry: {
+    alignSelf: 'flex-start',
+  },
+});

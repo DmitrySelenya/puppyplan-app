@@ -68,16 +68,16 @@ This file maps the design atlas to native route ownership after `PUP-18`. It is 
 
 ## Selected Tracker Persistence Decision
 
-Current status: approved, implemented locally, and verified against the non-production `PuppyPlan Dev` database for `PUP-21`; no production migration has been applied.
+Current status: approved, implemented locally, and verified against the development `PuppyPlan Dev` database for `PUP-21`. A production Supabase database is not needed for the current development batch. Production database creation/configuration and production migration verification are deferred until release readiness after exact production Supabase approval.
 
-Decision: add an ordered `quick_tracker_ids` column to `public.puppy`. The column is additive, per-puppy, max 5, allowed tracker ids only, unique ids, and covered by RLS/pgTAP owner/caregiver/viewer/non-member cases. This avoids a new table and a larger RLS surface.
+Decision: add an ordered `quick_tracker_ids` column to `public.puppy`. The column is additive, per-puppy, constrained to 1..5 selected ids, allowed tracker ids only, unique ids, and covered by RLS/pgTAP owner/caregiver/viewer/non-member cases. This avoids a new table and a larger RLS surface.
 
 Approval status:
 
 - Explicit approval for `public.puppy.quick_tracker_ids` was received in the implementation thread on 2026-06-08 and recorded in the batch plan plus ADR-0007/data-model docs.
 - Local migration `supabase/migrations/20260608212607_puppy_quick_tracker_ids.sql` and contract/type updates exist.
-- Non-production verification on 2026-06-09: the migration was applied to `PuppyPlan Dev`; repeat dry-run reported the remote database up to date; Supabase lint passed; focused runtime pgTAP returned plan `1..11`, `ok_count=11`, `not_ok_count=0`; remote typegen regenerated `src/contracts/database.types.ts`.
-- Remaining gate before production release claims: explicit production migration/release approval and production-safe rollout verification. Production was not touched.
+- Development verification on 2026-06-09: the first selected-tracker migration was applied to `PuppyPlan Dev`; repeat dry-run reported the remote database up to date; Supabase lint passed; focused runtime pgTAP returned plan `1..11`, `ok_count=11`, `not_ok_count=0`; remote typegen regenerated `src/contracts/database.types.ts`; tracked pgTAP coverage included owner/caregiver/viewer/non-member update cases plus duplicate, >5, and unknown tracker id constraints. Follow-up verification on 2026-06-11 applied `20260609120000_puppy_quick_tracker_ids_non_empty.sql` to `PuppyPlan Dev` after exact approval; repeat dry-run is no-op, Supabase lint passes, and focused runtime direct constraint evidence returned `check_count=5`, `pass_count=5`, `fail_count=0`, including empty selected-set rejection.
+- Remaining gate before production release claims: during release prep, after exact production Supabase approval, create/connect the real PuppyPlan production Supabase project, apply the repo migrations to a clean production baseline, then run production dry-run/no-op/schema/RLS/typegen/advisor verification. Do not copy development test data into production by default. Production was not touched in this batch.
 
 ## Verification
 

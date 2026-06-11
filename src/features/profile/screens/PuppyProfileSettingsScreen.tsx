@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet } from 'react-native';
 
 import {
   puppyProfileInputSchema,
@@ -13,11 +14,23 @@ import { Screen } from '@/design/primitives/Screen';
 import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { Stack } from '@/design/primitives/Stack';
 import { TextField } from '@/design/primitives/TextField';
+import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
-import { useSavePuppyProfileMutation } from '@/lib/query/puppy';
+import {
+  isPuppyProfileOwnerRequiredError,
+  useSavePuppyProfileMutation,
+} from '@/lib/query/puppy';
+
+type PuppyProfileAccessState = 'loading' | 'empty' | 'error' | 'owner' | 'nonOwner';
+
+const SETTINGS_CONTROL_MAX_FONT_SIZE_MULTIPLIER = 2;
+const SETTINGS_SUPPORTING_MAX_FONT_SIZE_MULTIPLIER = 2;
+const SETTINGS_TITLE_MAX_FONT_SIZE_MULTIPLIER = 2;
 
 export type PuppyProfileSettingsScreenProps = Readonly<{
+  accessState?: PuppyProfileAccessState;
+  canManagePuppySettings?: boolean;
   isSaving?: boolean;
   puppy: PuppyProfile | null;
   saveProfile: (profile: PuppyProfileInput, puppyId: string) => Promise<unknown> | unknown;
@@ -29,6 +42,7 @@ export function ConnectedPuppyProfileSettingsScreen() {
 
   return (
     <PuppyProfileSettingsScreen
+      accessState={getPuppyProfileAccessState(activeCare)}
       isSaving={saveMutation.isPending}
       puppy={activeCare.puppy}
       saveProfile={(profile, puppyId) => saveMutation.mutateAsync({
@@ -40,6 +54,8 @@ export function ConnectedPuppyProfileSettingsScreen() {
 }
 
 export function PuppyProfileSettingsScreen({
+  accessState,
+  canManagePuppySettings = true,
   isSaving = false,
   puppy,
   saveProfile,
@@ -54,7 +70,10 @@ export function PuppyProfileSettingsScreen({
   );
   const [birthDate, setBirthDate] = useState(puppy?.birth_date ?? '');
   const [errorVisible, setErrorVisible] = useState(false);
-  const [saveErrorVisible, setSaveErrorVisible] = useState(false);
+  const [saveErrorKey, setSaveErrorKey] = useState<
+    'errors.owner-only-settings' | 'errors.save-failed-connection' | null
+  >(null);
+  const effectiveAccessState = accessState ?? (canManagePuppySettings ? 'owner' : 'nonOwner');
 
   useEffect(() => {
     if (!puppy) {
@@ -83,23 +102,48 @@ export function PuppyProfileSettingsScreen({
 
     if (!result.success) {
       setErrorVisible(true);
-      setSaveErrorVisible(false);
+      setSaveErrorKey(null);
       return;
     }
 
     setErrorVisible(false);
-    setSaveErrorVisible(false);
+    setSaveErrorKey(null);
 
     if (puppy) {
       try {
         await saveProfile(result.data, puppy.id);
-      } catch {
-        setSaveErrorVisible(true);
+      } catch (error) {
+        setSaveErrorKey(isPuppyProfileOwnerRequiredError(error)
+          ? 'errors.owner-only-settings'
+          : 'errors.save-failed-connection');
       }
     }
   };
 
-  if (!puppy) {
+  if (effectiveAccessState === 'loading') {
+    return (
+      <Screen>
+        <Card>
+          <AppText>{t('common.loading')}</AppText>
+        </Card>
+      </Screen>
+    );
+  }
+
+  if (effectiveAccessState === 'error') {
+    return (
+      <Screen>
+        <Card
+          accessibilityLabel={t('errors.load-failed')}
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert">
+          <AppText>{t('errors.load-failed')}</AppText>
+        </Card>
+      </Screen>
+    );
+  }
+
+  if (!puppy || effectiveAccessState === 'empty') {
     return (
       <Screen>
         <Card>
@@ -109,14 +153,38 @@ export function PuppyProfileSettingsScreen({
     );
   }
 
+  if (effectiveAccessState === 'nonOwner') {
+    return (
+      <Screen>
+        <Card
+          accessibilityLabel={t('errors.owner-only-settings')}
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert">
+          <AppText>{t('errors.owner-only-settings')}</AppText>
+        </Card>
+      </Screen>
+    );
+  }
+
   return (
-    <Screen>
+    <Screen contentStyle={styles.content}>
       <Stack gap="lg">
-        <AppText variant="title">{t('more.puppy-profile.screen-title')}</AppText>
-        <AppText tone="secondary">{t('more.puppy-profile.hint')}</AppText>
-        {saveErrorVisible ? (
-          <Card>
-            <AppText>{t('errors.save-failed-connection')}</AppText>
+        <AppText
+          maxFontSizeMultiplier={SETTINGS_TITLE_MAX_FONT_SIZE_MULTIPLIER}
+          variant="title">
+          {t('more.puppy-profile.screen-title')}
+        </AppText>
+        <AppText
+          maxFontSizeMultiplier={SETTINGS_SUPPORTING_MAX_FONT_SIZE_MULTIPLIER}
+          tone="secondary">
+          {t('more.puppy-profile.hint')}
+        </AppText>
+        {saveErrorKey ? (
+          <Card
+            accessibilityLabel={t(saveErrorKey)}
+            accessibilityLiveRegion="polite"
+            accessibilityRole="alert">
+            <AppText>{t(saveErrorKey)}</AppText>
           </Card>
         ) : null}
         <TextField
@@ -157,6 +225,7 @@ export function PuppyProfileSettingsScreen({
         )}
         <Button
           label={t('more.puppy-profile.save')}
+          labelMaxFontSizeMultiplier={SETTINGS_CONTROL_MAX_FONT_SIZE_MULTIPLIER}
           loading={isSaving}
           onPress={handleSave}
         />
@@ -166,7 +235,37 @@ export function PuppyProfileSettingsScreen({
 }
 
 function parseAgeWeeks(value: string): number | null {
-  const parsed = Number.parseInt(value, 10);
+  const trimmed = value.trim();
 
-  return Number.isFinite(parsed) ? parsed : null;
+  if (!/^\d+$/.test(trimmed)) {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+
+  return Number.isSafeInteger(parsed) ? parsed : null;
 }
+
+function getPuppyProfileAccessState(
+  activeCare: ReturnType<typeof useActiveCareContext>,
+): PuppyProfileAccessState {
+  if (activeCare.status === 'loading') {
+    return 'loading';
+  }
+
+  if (activeCare.status === 'error') {
+    return 'error';
+  }
+
+  if (activeCare.status !== 'ready' || activeCare.careContext === null) {
+    return 'empty';
+  }
+
+  return activeCare.careContext.householdRole === 'owner' ? 'owner' : 'nonOwner';
+}
+
+const styles = StyleSheet.create({
+  content: {
+    paddingBottom: tokens.space[14],
+  },
+});

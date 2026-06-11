@@ -41,6 +41,7 @@ export function StatusPill({
         {icon}
       </View>
       <AppText
+        maxFontSizeMultiplier={2}
         numberOfLines={1}
         style={{ color: toneTokens.text }}
         variant="label">

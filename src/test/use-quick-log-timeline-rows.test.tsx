@@ -1,0 +1,220 @@
+import type { ReactElement } from 'react';
+import { cleanup, render, waitFor } from '@testing-library/react-native';
+import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
+
+import { createPuppyPlanQueryClient } from '@/lib/query/client';
+import { queryKeys, type TimelineFilters } from '@/lib/query/keys';
+import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
+import { useQuickLogTimelineRows } from '@/lib/query/useQuickLogTimelineRows';
+
+const mockListEvents = jest.fn();
+
+jest.mock('@/lib/supabase/events', () => ({
+  ...jest.requireActual('@/lib/supabase/events'),
+  createSupabaseEventLogRepository: () => ({
+    listEvents: mockListEvents,
+  }),
+}));
+
+const householdId = '00000000-0000-4000-8000-000000001901';
+const puppyId = '00000000-0000-4000-8000-000000001902';
+const createdBy = '00000000-0000-4000-8000-000000001903';
+const todayDate = '2026-05-27';
+const careContext = {
+  authState: 'authenticated',
+  householdId,
+  householdRole: 'owner',
+  puppyId,
+  todayDate,
+} as const;
+const testQueryClients: ReturnType<typeof createPuppyPlanQueryClient>[] = [];
+
+function renderWithQuery(
+  element: ReactElement,
+  queryClient: QueryClient = createPuppyPlanQueryClient(),
+) {
+  testQueryClients.push(queryClient);
+
+  const view = render(
+    <QueryClientProvider client={queryClient}>
+      {element}
+    </QueryClientProvider>,
+  );
+
+  return {
+    queryClient,
+    ...view,
+  };
+}
+
+describe('useQuickLogTimelineRows', () => {
+  beforeEach(() => {
+    mockListEvents.mockReset();
+    mockListEvents.mockResolvedValue([createRow()]);
+  });
+
+  afterEach(() => {
+    cleanup();
+    for (const queryClient of testQueryClients) {
+      queryClient.clear();
+    }
+
+    testQueryClients.length = 0;
+  });
+
+  it('fetches durable rows through the Supabase event repository with timeline filters', async () => {
+    let observedRows: readonly QuickLogCachedEventRow[] = [];
+    let observedStatus = '';
+
+    function RowsProbe() {
+      const result = useQuickLogTimelineRows(careContext, {
+        from: todayDate,
+        to: todayDate,
+      });
+      observedRows = result.rows;
+      observedStatus = result.status;
+
+      return null;
+    }
+
+    renderWithQuery(<RowsProbe />);
+
+    await waitFor(() => {
+      expect(observedRows).toHaveLength(1);
+    });
+    expect(observedStatus).toBe('ready');
+    expect(mockListEvents).toHaveBeenCalledWith({
+      filters: {
+        from: todayDate,
+        to: todayDate,
+      },
+      householdId,
+      puppyId,
+    });
+  });
+
+  it('stays unavailable and does not fetch when care context is missing', () => {
+    let observedRows: readonly QuickLogCachedEventRow[] = [];
+    let observedStatus = '';
+
+    function RowsProbe() {
+      const result = useQuickLogTimelineRows(null);
+      observedRows = result.rows;
+      observedStatus = result.status;
+
+      return null;
+    }
+
+    renderWithQuery(<RowsProbe />);
+
+    expect(observedRows).toEqual([]);
+    expect(observedStatus).toBe('unavailable');
+    expect(mockListEvents).not.toHaveBeenCalled();
+  });
+
+  it('reports loading before the first durable Timeline fetch resolves', () => {
+    let observedRows: readonly QuickLogCachedEventRow[] = [];
+    let observedStatus = '';
+
+    mockListEvents.mockReturnValue(new Promise<readonly QuickLogCachedEventRow[]>(() => {}));
+
+    function RowsProbe() {
+      const result = useQuickLogTimelineRows(careContext);
+      observedRows = result.rows;
+      observedStatus = result.status;
+
+      return null;
+    }
+
+    renderWithQuery(<RowsProbe />);
+
+    expect(observedRows).toEqual([]);
+    expect(observedStatus).toBe('loading');
+  });
+
+  it('keeps merged local recovery rows sorted by newest occurrence first', async () => {
+    const queryClient = createPuppyPlanQueryClient();
+    const localRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001906',
+      id: '00000000-0000-4000-8000-000000001907',
+      localSync: {
+        state: 'failed_retryable',
+        category: 'request_timeout',
+        retryCount: 1,
+      },
+      occurred_at: '2026-05-27T08:00:00.000Z',
+    });
+    const durableRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001908',
+      id: '00000000-0000-4000-8000-000000001909',
+      occurred_at: '2026-05-27T09:00:00.000Z',
+    });
+    let observedRows: readonly QuickLogCachedEventRow[] = [];
+
+    queryClient.setQueryData(queryKeys.events.timeline(householdId, puppyId), [localRow], {
+      updatedAt: 0,
+    });
+    mockListEvents.mockResolvedValue([durableRow]);
+
+    function RowsProbe() {
+      observedRows = useQuickLogTimelineRows(careContext).rows;
+
+      return null;
+    }
+
+    renderWithQuery(<RowsProbe />, queryClient);
+
+    await waitFor(() => {
+      expect(observedRows.map((row) => row.client_event_id)).toEqual([
+        durableRow.client_event_id,
+        localRow.client_event_id,
+      ]);
+    });
+  });
+
+  it('uses a stable query key for equivalent empty filter objects', () => {
+    const filters: TimelineFilters = {};
+    let renderCount = 0;
+
+    function RowsProbe() {
+      renderCount += 1;
+      useQuickLogTimelineRows(careContext, filters);
+
+      return null;
+    }
+
+    const view = renderWithQuery(<RowsProbe />);
+
+    view.rerender(
+      <QueryClientProvider client={view.queryClient}>
+        <RowsProbe />
+      </QueryClientProvider>,
+    );
+
+    expect(renderCount).toBe(2);
+    expect(mockListEvents).toHaveBeenCalledTimes(1);
+  });
+});
+
+function createRow(
+  overrides: Partial<QuickLogCachedEventRow> = {},
+): QuickLogCachedEventRow {
+  return {
+    id: '00000000-0000-4000-8000-000000001904',
+    household_id: householdId,
+    puppy_id: puppyId,
+    created_by: createdBy,
+    client_event_id: 'evt_00000000-0000-4000-8000-000000001905',
+    event_type: 'feeding',
+    occurred_at: '2026-05-27T08:00:00.000Z',
+    payload_version: 1,
+    payload: {
+      amount: 'meal',
+    },
+    version: 1,
+    deleted_at: null,
+    created_at: '2026-05-27T08:00:01.000Z',
+    updated_at: '2026-05-27T08:00:01.000Z',
+    ...overrides,
+  };
+}

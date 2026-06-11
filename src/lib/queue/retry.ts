@@ -4,6 +4,7 @@ import {
   type QuickLogQueueErrorCategory,
   type QuickLogStoredQueueItem,
 } from './schema';
+import type { QuickLogRecoverySurface } from '@/contracts/analytics';
 
 export const QUICK_LOG_QUEUE_MAX_UNKNOWN_RETRY_COUNT = 3;
 export const QUICK_LOG_QUEUE_RETRY_BASE_DELAY_MS = 1_000;
@@ -56,6 +57,7 @@ export type QuickLogManualRetry = Readonly<{
   client_event_id: string;
   bypasses_delay: true;
   item: QuickLogStoredQueueItem;
+  recovery_surface?: QuickLogRecoverySurface;
 }>;
 
 export function normalizeQuickLogQueueFailureForPersistence(
@@ -162,7 +164,7 @@ export function getQuickLogRetryDelayMs(
 
 export function createManualQuickLogRetry(
   item: QuickLogStoredQueueItem,
-  options: Readonly<{ now: string }>,
+  options: Readonly<{ now: string; recoverySurface?: QuickLogRecoverySurface }>,
 ): QuickLogManualRetry {
   if (item.state !== 'failed_retryable' && item.state !== 'failed_permanent') {
     throw new Error(`Invalid Quick Log manual retry state: ${item.state}`);
@@ -181,5 +183,6 @@ export function createManualQuickLogRetry(
     client_event_id: item.client_event_id,
     bypasses_delay: true,
     item: retryItem,
+    recovery_surface: options.recoverySurface,
   };
 }

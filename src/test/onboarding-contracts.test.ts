@@ -99,6 +99,14 @@ describe('PUP-21 onboarding and active care contracts', () => {
       ageWeeksEstimate: 12,
       birthDate: null,
       name: 'Puppy',
+      selectedTrackerIds: [],
+    }).success).toBe(false);
+
+    expect(puppyProfileInputSchema.safeParse({
+      ageMode: 'age_weeks',
+      ageWeeksEstimate: 12,
+      birthDate: null,
+      name: 'Puppy',
       selectedTrackerIds: ['walk'],
     }).success).toBe(false);
   });
@@ -115,6 +123,7 @@ describe('PUP-21 onboarding and active care contracts', () => {
     expect(activeCareContextSchema.parse({
       authState: 'authenticated',
       householdId,
+      householdRole: 'owner',
       puppyId,
       selectedTrackerIds: defaultQuickLogTrackerIds,
       todayDate: '2026-06-08',
@@ -124,6 +133,7 @@ describe('PUP-21 onboarding and active care contracts', () => {
     expect(activeCareContextSchema.safeParse({
       authState: 'authenticated',
       householdId,
+      householdRole: 'owner',
       puppyId,
       selectedTrackerIds: ['feeding_meal', 'feeding_meal'],
       todayDate: '2026-06-08',
