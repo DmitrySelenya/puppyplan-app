@@ -164,6 +164,45 @@ describe('QuickLogRoute', () => {
     }));
   });
 
+  it('closes the active Quick Log route through Today fallback when no previous route exists', () => {
+    const mutation = createMutationPort();
+    mockRouterCanGoBack.mockReturnValue(false);
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: '00000000-0000-4000-8000-000000003001',
+        householdRole: 'owner',
+        puppyId: '00000000-0000-4000-8000-000000003002',
+        selectedTrackerIds: ['training', 'feeding_meal'],
+        todayDate: '2026-06-09',
+        userId: '00000000-0000-4000-8000-000000003003',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('common.close'),
+    }));
+
+    expect(mockRouterBack).not.toHaveBeenCalled();
+    expect(mockRouterReplace).toHaveBeenCalledWith('/today');
+    expect(mutation.mutate).not.toHaveBeenCalled();
+  });
+
   it('blocks viewer care contexts before an optimistic Quick Log write can be queued', () => {
     const mutation = createMutationPort();
     mockUseActiveCareContext.mockReturnValue({

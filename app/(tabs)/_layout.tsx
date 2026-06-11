@@ -61,8 +61,9 @@ const styles = StyleSheet.create({
     borderTopColor: tokens.color.stroke.default,
   },
   quickLog: {
-    bottom: tokens.layout.tabBarHeight + tokens.space[1],
+    bottom: tokens.layout.tabBarHeight + tokens.component.fab.size,
+    left: '50%',
+    marginLeft: -tokens.component.fab.size / 2,
     position: 'absolute',
-    right: 16,
   },
 });

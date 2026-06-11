@@ -124,6 +124,9 @@ describe('QuickLogShell', () => {
     expect(screen.getByLabelText(i18n.t('quick-log.sheet.title')).props.accessibilityViewIsModal).toBe(
       true,
     );
+    expect(screen.getByRole('button', {
+      name: i18n.t('common.close'),
+    })).toBeTruthy();
     expect(contentStyle.paddingHorizontal).toBe(0);
     expect(screen.getByTestId('sheet-drag-handle', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getAllByTestId('quick-log-tracker-tile')).toHaveLength(

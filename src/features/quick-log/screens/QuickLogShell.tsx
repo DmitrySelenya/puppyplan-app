@@ -174,11 +174,27 @@ function QuickLogShellContent({
   return (
     <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
       <SheetSurface accessibilityLabel={t('quick-log.sheet.title')}>
-        <AppText
-          maxFontSizeMultiplier={2}
-          variant="title">
-          {t('quick-log.sheet.title')}
-        </AppText>
+        <Stack
+          align="flex-start"
+          direction="horizontal"
+          gap="sm"
+          justify="space-between"
+          wrap>
+          <AppText
+            maxFontSizeMultiplier={2}
+            style={styles.title}
+            variant="title">
+            {t('quick-log.sheet.title')}
+          </AppText>
+          <Button
+            label={t('common.close')}
+            labelMaxFontSizeMultiplier={2}
+            labelVariant="label"
+            onPress={closeSheet}
+            style={styles.closeButton}
+            variant="tertiary"
+          />
+        </Stack>
         <Stack direction="horizontal" gap="md" wrap>
           {selectedTrackerIds.map((trackerId) => (
             <TrackerTile
@@ -256,9 +272,16 @@ const unavailableMutation: QuickLogMutationPort = {
 };
 
 const styles = StyleSheet.create({
+  closeButton: {
+    alignSelf: 'flex-start',
+  },
   sheetContent: {
     flexGrow: 1,
     justifyContent: 'flex-end',
     paddingHorizontal: 0,
+  },
+  title: {
+    flexShrink: 1,
+    minWidth: 0,
   },
 });

@@ -92,6 +92,7 @@ export const plannedRouteFiles = [
 }[];
 
 export const shellI18nKeys = [
+  'common.close',
   'common.loading',
   'errors.load-failed',
   'tabs.today',
