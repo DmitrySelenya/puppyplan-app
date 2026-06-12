@@ -10,6 +10,7 @@ import {
   TextField,
   TrackerTile,
 } from '@/design/primitives';
+import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
 import { SyntheticTodayPreview } from '@/features/today/components/TodayCards';
 import { useAppTranslation } from '@/lib/i18n';
 
@@ -52,6 +53,7 @@ export function DesignGalleryScreen() {
         <SyntheticOnboardingShell />
         <SyntheticPuppyProfileSettingsShell />
         <SyntheticQuickTrackersSettingsShell />
+        <SyntheticQuickLogDetailsShell />
         <SyntheticTodayShell />
       </Stack>
     </Screen>
@@ -148,6 +150,27 @@ export function SyntheticQuickTrackersSettingsShell() {
             title={t(tracker.labelKey)}
           />
         ))}
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticQuickLogDetailsShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.quick-log-details"
+          titleKey="quick-log.details.title"
+        />
+        <QuickLogDetailsScreen
+          initialTrackerId="sleep_nap"
+          status="saving"
+        />
+        <QuickLogDetailsScreen
+          initialTrackerId="zoomies"
+          status="error"
+        />
       </Stack>
     </Card>
   );

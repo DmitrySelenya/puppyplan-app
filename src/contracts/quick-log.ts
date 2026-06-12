@@ -105,6 +105,35 @@ export const selectedQuickLogTrackerIdsSchema = z.array(quickLogTrackerIdSchema)
     });
   });
 
+export const quickLogDetailTrackerIds = [
+  'feeding_meal',
+  'sleep_nap',
+  'zoomies',
+] as const;
+
+export const quickLogDetailTrackerIdSchema = z.enum(quickLogDetailTrackerIds);
+
+export const quickLogFeedingDetailDraftSchema = z.object({
+  amount: z.enum(['meal', 'snack', 'water']).optional(),
+  trackerId: z.literal('feeding_meal'),
+}).strict();
+
+export const quickLogSleepDetailDraftSchema = z.object({
+  durationMinutes: z.number().int().min(1).max(1440).optional(),
+  trackerId: z.literal('sleep_nap'),
+}).strict();
+
+export const quickLogZoomiesDetailDraftSchema = z.object({
+  intensity: z.enum(['low', 'medium', 'high']).optional(),
+  trackerId: z.literal('zoomies'),
+}).strict();
+
+export const quickLogDetailDraftSchema = z.discriminatedUnion('trackerId', [
+  quickLogFeedingDetailDraftSchema,
+  quickLogSleepDetailDraftSchema,
+  quickLogZoomiesDetailDraftSchema,
+]);
+
 export const quickLogCommandSchema = z.object({
   client_event_id: quickLogClientEventIdSchema,
   household_id: uuidSchema,
@@ -116,6 +145,8 @@ export const quickLogCommandSchema = z.object({
 
 export type QuickLogCommand = z.infer<typeof quickLogCommandSchema>;
 export type SelectedQuickLogTrackerIds = z.infer<typeof selectedQuickLogTrackerIdsSchema>;
+export type QuickLogDetailTrackerId = z.infer<typeof quickLogDetailTrackerIdSchema>;
+export type QuickLogDetailDraft = z.infer<typeof quickLogDetailDraftSchema>;
 
 export const quickLogQueueItemSchema = minimalQuickLogQueueItemSchema
   .superRefine((queueItem, context) => {
@@ -157,6 +188,10 @@ export function createQuickLogEventInsert(command: unknown): QuickLogEventInsert
       ...definition.payload,
     },
   }) as QuickLogEventInsert;
+}
+
+export function createQuickLogDetailDraft(input: unknown): QuickLogDetailDraft {
+  return quickLogDetailDraftSchema.parse(input);
 }
 
 const quickLogEventTypeSet = new Set<EventType>(

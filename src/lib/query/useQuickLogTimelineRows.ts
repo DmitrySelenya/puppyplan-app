@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
   useQueries,
   useQueryClient,
+  type QueryClient,
   type QueryKey,
 } from '@tanstack/react-query';
 
@@ -43,8 +44,20 @@ export function useQuickLogTimelineRows(
 
     return queryKeys.events.timeline(householdId, puppyId, normalizedFilters);
   }, [householdId, normalizedFilters, puppyId]);
+  const timelineRootKey = useMemo<QueryKey | null>(() => {
+    if (householdId === null || puppyId === null) {
+      return null;
+    }
+
+    return queryKeys.events.timelineRoot(householdId, puppyId);
+  }, [householdId, puppyId]);
   const queries = useMemo<TimelineRowsQuery[]>(() => {
-    if (queryKey === null || householdId === null || puppyId === null) {
+    if (
+      queryKey === null
+      || timelineRootKey === null
+      || householdId === null
+      || puppyId === null
+    ) {
       return [];
     }
 
@@ -56,15 +69,18 @@ export function useQuickLogTimelineRows(
             householdId,
             puppyId,
           });
-          const cachedRows =
-            queryClient.getQueryData<readonly QuickLogCachedEventRow[]>(queryKey) ?? emptyRows;
+          const cachedRows = getCachedTimelineLocalRows(
+            queryClient,
+            timelineRootKey,
+            normalizedFilters,
+          );
 
           return mergeDurableRowsWithLocalRows(durableRows, cachedRows);
         },
         queryKey,
       },
     ];
-  }, [householdId, normalizedFilters, puppyId, queryClient, queryKey]);
+  }, [householdId, normalizedFilters, puppyId, queryClient, queryKey, timelineRootKey]);
   const results = useQueries({ queries });
   const query = results[0];
 
@@ -149,6 +165,58 @@ function mergeDurableRowsWithLocalRows(
   );
 
   return [...missingLocalRows, ...durableRows].sort(compareRowsByNewestFirst);
+}
+
+function getCachedTimelineLocalRows(
+  queryClient: QueryClient,
+  timelineRootKey: QueryKey,
+  filters: TimelineFilters,
+): readonly QuickLogCachedEventRow[] {
+  const matchingQueries = queryClient.getQueriesData<readonly QuickLogCachedEventRow[]>({
+    queryKey: timelineRootKey,
+  });
+  const localRowsByClientEventId = new Map<string, QuickLogCachedEventRow>();
+
+  for (const [, rows] of matchingQueries) {
+    for (const row of rows ?? emptyRows) {
+      if (
+        row.localSync !== undefined
+        && rowMatchesTimelineFilters(row, filters)
+      ) {
+        localRowsByClientEventId.set(row.client_event_id, row);
+      }
+    }
+  }
+
+  return [...localRowsByClientEventId.values()];
+}
+
+function rowMatchesTimelineFilters(
+  row: QuickLogCachedEventRow,
+  filters: TimelineFilters,
+): boolean {
+  if (filters.cursor !== undefined) {
+    return false;
+  }
+
+  if (
+    filters.eventTypes !== undefined
+    && !filters.eventTypes.includes(row.event_type)
+  ) {
+    return false;
+  }
+
+  const occurredDate = row.occurred_at.slice(0, 10);
+
+  if (filters.from !== undefined && occurredDate < filters.from) {
+    return false;
+  }
+
+  if (filters.to !== undefined && occurredDate > filters.to) {
+    return false;
+  }
+
+  return true;
 }
 
 function compareRowsByNewestFirst(

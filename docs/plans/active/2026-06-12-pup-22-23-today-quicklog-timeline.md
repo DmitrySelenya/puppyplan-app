@@ -7,7 +7,7 @@
 
 **Status:** Active.
 
-**Current phase:** Phase 4 - PUP-22 Verification And Local Commit.
+**Current phase:** Phase 8 - Polish And Harden.
 
 **Architecture:** Supabase remains durable source of truth, TanStack Query owns server state, Expo SQLite remains the only durable local-write exception for Quick Log, and feature UI composes `src/design` primitives with typed EN/RU/ES i18n. PUP-22 owns Today/guidance. PUP-23 owns Quick Log details and Timeline completion. Reminder/family-dependent Today variants are review-only slots plus synthetic dev-gallery fixtures until PUP-25/PUP-26.
 
@@ -364,11 +364,11 @@ Current Quick Log infrastructure already includes contracts, business-rule const
 - `src/test/quick-log-mutation.test.ts`
 
 **Checklist:**
-- [ ] Create/switch to `dimaselenya/pup-23-quick-log-details-and-timeline-completion` locally.
-- [ ] RED: Quick Log details route/component/controller tests.
-- [ ] GREEN: implement sleep, feeding, zoomies detail variants.
-- [ ] Add slow-saving/error synthetic state for missing atlas 4.3.
-- [ ] Keep duplicate-care constants unchanged and tested.
+- [x] Create/switch to `dimaselenya/pup-23-quick-log-details-and-timeline-completion` locally.
+- [x] RED: Quick Log details route/component/controller tests.
+- [x] GREEN: implement sleep, feeding, zoomies detail variants.
+- [x] Add slow-saving/error synthetic state for missing atlas 4.3.
+- [x] Keep duplicate-care constants unchanged and tested.
 
 **Acceptance criteria:**
 - Optional details are available after save/Timeline edit and never block initial save or queue behavior.
@@ -392,10 +392,10 @@ Current Quick Log infrastructure already includes contracts, business-rule const
 - `src/test/use-quick-log-timeline-rows.test.tsx`
 
 **Checklist:**
-- [ ] RED: filter/query key/edit/delete/undo tests.
-- [ ] GREEN: implement Timeline filters, empty filtered state, attribution, edit/delete/undo, offline/error states.
-- [ ] Preserve local pending/failed rows in filtered and unfiltered caches.
-- [ ] Add non-swipe alternatives for edit/delete.
+- [x] RED: filter/query key/edit/delete/undo tests.
+- [x] GREEN: implement Timeline filters, empty filtered state, attribution, edit/delete/undo, offline/error states.
+- [x] Preserve local pending/failed rows in filtered and unfiltered caches.
+- [x] Add non-swipe alternatives for edit/delete.
 
 **Acceptance criteria:**
 - Timeline supports required filters and management flows with deterministic query/cache behavior and accessibility alternatives.
@@ -411,10 +411,10 @@ Current Quick Log infrastructure already includes contracts, business-rule const
 - Linear PUP-22/PUP-23 comments/status
 
 **Checklist:**
-- [ ] Update plan checkboxes and changelog.
-- [ ] Update `docs/plans/README.md`.
-- [ ] Add master-roadmap changelog/status note for PUP-22/PUP-23 local completion or current state.
-- [ ] Mirror phase evidence and blockers to Linear.
+- [x] Update plan checkboxes and changelog.
+- [x] Update `docs/plans/README.md`.
+- [x] Add master-roadmap changelog/status note for PUP-22/PUP-23 local completion or current state.
+- [x] Mirror phase evidence and blockers to Linear.
 
 **Acceptance criteria:**
 - Repo docs and Linear reflect the actual local implementation state.
@@ -427,15 +427,15 @@ Current Quick Log infrastructure already includes contracts, business-rule const
 - Entire batch diff.
 
 **Checklist:**
-- [ ] Run final `npm run check`.
-- [ ] Run `npm run supabase:lint`.
-- [ ] Run `npm run db:push:remote:dry-run`.
-- [ ] Run privacy/text/i18n gates or confirm they are included in `npm run check`.
-- [ ] Perform local iOS smoke on `Grith iPhone SE 3 iOS 26.3` only, screenshots under `/tmp/puppyplan-pup22-23-smoke/`.
-- [ ] Check Dynamic Type XXXL for Today, guidance, Quick Log details, and Timeline rows.
-- [ ] Review diff for PII, raw strings, raw colors/spacing, raw Supabase in UI, direct observability, debug logs, TODO/FIXME from this session.
-- [ ] Commit local PUP-23 branch only.
-- [ ] Update PUP-22/PUP-23 Linear with final local evidence; move to In Review only if local-only review is explicitly accepted or a PR is later created.
+- [x] Run final `npm run check`.
+- [x] Run `npm run supabase:lint`.
+- [x] Run `npm run db:push:remote:dry-run`.
+- [x] Run privacy/text/i18n gates or confirm they are included in `npm run check`.
+- [x] Attempt local iOS smoke on `Grith iPhone SE 3 iOS 26.3` only, screenshots under `/tmp/puppyplan-pup22-23-smoke/`; record blocker if local dev build cannot launch.
+- [x] Check Dynamic Type XXXL for Today, guidance, Quick Log details, and Timeline rows, or record blocker if simulator launch is unavailable.
+- [x] Review diff for PII, raw strings, raw colors/spacing, raw Supabase in UI, direct observability, debug logs, TODO/FIXME from this session.
+- [x] Commit local PUP-23 branch only.
+- [x] Update PUP-22/PUP-23 Linear with final local evidence; move to In Review only if local-only review is explicitly accepted or a PR is later created.
 
 **Acceptance criteria:**
 - All batch acceptance criteria are met or a blocker is recorded in the plan and Linear with a precise approval/request needed.
@@ -498,3 +498,7 @@ Not approved:
 - 2026-06-12: Phase 3 complete. Added Today hero/daily/guidance components, active-context Today screen states, synthetic reminder/invite dev-gallery fixtures, EN/RU/ES keys, and render coverage; `npm run test:unit` (54 suites, 340 tests), `npm run test:scaffold`, `npm run typecheck`, and `npm run lint` passed.
 - 2026-06-12: Phase 4 verification gates passed before local commit: focused Today/guidance/dev-gallery tests, `npm run check`, `npm run supabase:lint`, and `npm run db:push:remote:dry-run`.
 - 2026-06-12: PUP-22 local commit created on `dimaselenya/pup-22-today-core-guidance-cards-and-day-2-7-states`; no push or PR was created.
+- 2026-06-12: Phase 5 complete on stacked PUP-23 branch. Added Quick Log details contracts, modal route, sleep/feeding/zoomies details screen, synthetic slow-saving/error dev-gallery states, EN/RU/ES strings, and focused details/dev-gallery coverage; `npm run test:unit` (56 suites, 347 tests), `npm run test:scaffold`, and `npm run typecheck` passed.
+- 2026-06-12: Phase 6 complete. Added Timeline filter chips, filtered empty state, typed synced edit/delete action requests, local pending/failed row preservation across filtered Timeline refetches, and render/query coverage; focused Phase 6 suites passed (5 suites, 47 tests), `npm run test:unit` (57 suites, 350 tests), `npm run test:scaffold`, and `npm run typecheck` passed.
+- 2026-06-12: Phase 7 docs/Linear sync complete. Updated this plan, `docs/plans/README.md`, and the master roadmap local-state note/changelog; posted Linear comments `606ca147-2c36-43a9-a138-0e05fc1b956f` on PUP-22 and `0b767925-779f-437c-9a42-96fec380a3e6` on PUP-23. Remaining work is Phase 8 hardening, smoke evidence, and local PUP-23 commit.
+- 2026-06-12: Phase 8 hardening complete for local gates and local PUP-23 commit created. `npm run check` passed on the final tree (lint, typecheck, 57 Jest suites / 350 tests, node tests, scaffold, tokens, privacy scan, text hygiene); `npm run supabase:lint` passed; `npm run db:push:remote:dry-run` reported the remote database is up to date. The approved SE simulator profile was configured in XcodeBuildMCP, but smoke and Dynamic Type manual checks are blocked by XcodeBuildMCP build/run timeout followed by a locked Xcode build database; screenshot directory `/tmp/puppyplan-pup22-23-smoke/` exists and contains no screenshots. The Supabase CLI recovery moved malformed local telemetry JSON to `/tmp/puppyplan-supabase-telemetry-20260612170521.json`; no database state was changed.

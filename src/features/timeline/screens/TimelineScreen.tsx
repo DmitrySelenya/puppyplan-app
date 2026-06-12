@@ -1,15 +1,20 @@
+import { useMemo, useState } from 'react';
 import { StyleSheet } from 'react-native';
 
+import type { EventType } from '@/contracts/supabase';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
 import { Screen } from '@/design/primitives/Screen';
+import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
 import { tokens } from '@/design/tokens';
-import { useAppTranslation } from '@/lib/i18n';
+import { useAppTranslation, type AppTranslate, type I18nKey } from '@/lib/i18n';
+import { type TimelineFilters } from '@/lib/query/keys';
 import {
   createQuickLogDeleteRequest,
+  createQuickLogEditRequest,
   createQuickLogEventView,
   createQuickLogUndoRequest,
   type QuickLogEventActionHandlers,
@@ -26,13 +31,71 @@ export type TimelineScreenProps = Readonly<{
 
 const emptyActions: QuickLogEventActionHandlers = {};
 
+type TimelineFilterValue =
+  | 'all'
+  | 'potty'
+  | 'feeding'
+  | 'sleep'
+  | 'zoomies'
+  | 'training'
+  | 'health_record_reference';
+
+const timelineFilterSpecs = [
+  {
+    eventTypes: undefined,
+    labelKey: 'timeline.filter-chips.0',
+    value: 'all',
+  },
+  {
+    eventTypes: ['potty'],
+    labelKey: 'timeline.filter-chips.1',
+    value: 'potty',
+  },
+  {
+    eventTypes: ['feeding'],
+    labelKey: 'timeline.filter-chips.2',
+    value: 'feeding',
+  },
+  {
+    eventTypes: ['sleep'],
+    labelKey: 'timeline.filter-chips.3',
+    value: 'sleep',
+  },
+  {
+    eventTypes: ['zoomies'],
+    labelKey: 'timeline.filter-chips.4',
+    value: 'zoomies',
+  },
+  {
+    eventTypes: ['training'],
+    labelKey: 'timeline.filter-chips.5',
+    value: 'training',
+  },
+  {
+    eventTypes: ['health_record_reference'],
+    labelKey: 'timeline.filter-chips.6',
+    value: 'health_record_reference',
+  },
+] as const satisfies readonly Readonly<{
+  eventTypes: readonly EventType[] | undefined;
+  labelKey: I18nKey;
+  value: TimelineFilterValue;
+}>[];
+
 export function TimelineScreen({
   actions = emptyActions,
   careContext = null,
   onClose,
 }: TimelineScreenProps) {
   const { locale, t } = useAppTranslation();
-  const timelineRows = useQuickLogTimelineRows(careContext);
+  const [selectedFilter, setSelectedFilter] = useState<TimelineFilterValue>('all');
+  const filterOptions = useMemo(() =>
+    timelineFilterSpecs.map((option) => ({
+      label: t(option.labelKey),
+      value: option.value,
+    })), [t]);
+  const filters = useMemo(() => createTimelineFilters(selectedFilter), [selectedFilter]);
+  const timelineRows = useQuickLogTimelineRows(careContext, filters);
   const rows = timelineRows.rows;
 
   if (careContext === null) {
@@ -100,6 +163,12 @@ export function TimelineScreen({
           variant="tertiary"
         />
       </Stack>
+      <TimelineFilterChips
+        options={filterOptions}
+        selectedFilter={selectedFilter}
+        setSelectedFilter={setSelectedFilter}
+        t={t}
+      />
       {eventViews.length > 0 ? (
         <Stack gap="sm">
           {eventViews.map((event) => (
@@ -119,10 +188,38 @@ export function TimelineScreen({
         </Card>
       ) : (
         <Card>
-          <AppText tone="secondary">{t('timeline.empty')}</AppText>
+          <AppText tone="secondary">
+            {selectedFilter === 'all'
+              ? t('timeline.empty')
+              : t('timeline.empty-filter')}
+          </AppText>
         </Card>
       )}
     </Screen>
+  );
+}
+
+function TimelineFilterChips({
+  options,
+  selectedFilter,
+  setSelectedFilter,
+  t,
+}: Readonly<{
+  options: readonly {
+    label: string;
+    value: TimelineFilterValue;
+  }[];
+  selectedFilter: TimelineFilterValue;
+  setSelectedFilter: (value: TimelineFilterValue) => void;
+  t: AppTranslate;
+}>) {
+  return (
+    <SegmentedControl
+      accessibilityLabel={t('timeline.title')}
+      onValueChange={setSelectedFilter}
+      options={options}
+      value={selectedFilter}
+    />
   );
 }
 
@@ -135,6 +232,7 @@ function TimelineQuickLogEventRow({
 }>) {
   const { t } = useAppTranslation();
   const onDelete = actions.onDelete;
+  const onEdit = actions.onEdit;
   const onRetry = actions.onRetry;
   const onUndo = actions.onUndo;
 
@@ -216,9 +314,43 @@ function TimelineQuickLogEventRow({
             ) : null}
           </Stack>
         ) : null}
+        {event.status === 'synced' && (onEdit !== undefined || onDelete !== undefined) ? (
+          <Stack direction="horizontal" gap="sm" wrap>
+            {onEdit !== undefined ? (
+              <Button
+                label={t('timeline.overflow-actions.0')}
+                onPress={() => {
+                  onEdit(createQuickLogEditRequest(event));
+                }}
+                variant="secondary"
+              />
+            ) : null}
+            {onDelete !== undefined ? (
+              <Button
+                label={t('timeline.overflow-actions.1')}
+                onPress={() => {
+                  onDelete(createQuickLogDeleteRequest(event));
+                }}
+                variant="tertiary"
+              />
+            ) : null}
+          </Stack>
+        ) : null}
       </Stack>
     </Card>
   );
+}
+
+function createTimelineFilters(selectedFilter: TimelineFilterValue): TimelineFilters {
+  const spec = timelineFilterSpecs.find((option) => option.value === selectedFilter);
+
+  if (spec?.eventTypes === undefined) {
+    return {};
+  }
+
+  return {
+    eventTypes: spec.eventTypes,
+  };
 }
 
 function statusIcon(status: QuickLogEventView['status']): string {

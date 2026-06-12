@@ -49,6 +49,7 @@
         "onboarding": "Bienvenida, perfil, pista de edad, selección de trackers y plan.",
         "profile": "Estados guardado y edición para la ruta de perfil del cachorro.",
         "quick-trackers": "Conteo de trackers elegidos, límite y filas listas para reordenar.",
+        "quick-log-details": "Ruta de detalles de Quick Log con estados sintéticos de guardado lento y error.",
         "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
         "guidance": "Estados de guía inicial: leído, probado y omitido.",
         "today-deferrals": "Espacios sintéticos de invitación familiar y recordatorios para revisión.",
@@ -597,6 +598,53 @@
       "undo-confirmed": "Deshecho",
       "add-details": "Agregar detalles",
       "a11y": "Registrado: {trackerName}. Acción disponible: deshacer."
+    },
+    "details": {
+      "title": "Agregar detalles",
+      "variant-label": "Tipo de detalle",
+      "save": "Guardar detalles",
+      "skip": "Omitir detalles",
+      "tabs": {
+        "feeding": "Alimentación",
+        "sleep": "Sueño",
+        "zoomies": "Zoomies"
+      },
+      "feeding": {
+        "amount-label": "¿Qué ofreciste?",
+        "amount": {
+          "meal": "Comida",
+          "snack": "Snack",
+          "water": "Agua"
+        }
+      },
+      "sleep": {
+        "duration-label": "¿Cuánto duró?",
+        "duration": {
+          "none": "No estoy seguro",
+          "15": "15 min",
+          "30": "30 min",
+          "60": "1 h"
+        }
+      },
+      "zoomies": {
+        "intensity-label": "¿Qué intensidad tuvo?",
+        "intensity": {
+          "none": "No estoy seguro",
+          "low": "Baja",
+          "medium": "Media",
+          "high": "Alta"
+        }
+      },
+      "states": {
+        "saving": {
+          "title": "Guardando detalles",
+          "body": "El evento de rutina ya está registrado; este detalle opcional se está poniendo al día."
+        },
+        "error": {
+          "title": "Los detalles no se guardaron",
+          "body": "La entrada original de Quick Log sigue guardada. Prueba los detalles más tarde."
+        }
+      }
     },
     "pending": {
       "label": "Guardando"

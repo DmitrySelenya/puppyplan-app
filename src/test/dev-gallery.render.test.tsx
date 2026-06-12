@@ -6,6 +6,7 @@ import { AccessibilityInfo } from 'react-native';
 
 import {
   DesignGalleryScreen,
+  SyntheticQuickLogDetailsShell,
   SyntheticOnboardingShell,
   SyntheticPuppyProfileSettingsShell,
   SyntheticQuickTrackersSettingsShell,
@@ -87,16 +88,19 @@ describe('development-only design gallery', () => {
         <SyntheticPuppyProfileSettingsShell />
         <SyntheticQuickTrackersSettingsShell />
         <SyntheticTodayShell />
+        <SyntheticQuickLogDetailsShell />
       </>,
     );
 
-    expect(screen.getAllByText(i18n.t('dev.gallery.shell-preview')).length).toBe(4);
+    expect(screen.getAllByText(i18n.t('dev.gallery.shell-preview')).length).toBe(5);
     expect(screen.getByText(i18n.t('onboarding.tracker-picker.counter', { n: 5 }))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.puppy-profile.hint'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.quick-trackers.max-reached-hint'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('today.deferred.synthetic-badge')).length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('today.deferred.family-invite'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.deferred.reminders'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.saving.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.error.title'))).toBeTruthy();
     expect(screen.queryByText(/supabase|production write|token/i)).toBeNull();
   });
 

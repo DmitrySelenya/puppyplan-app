@@ -34,8 +34,17 @@ export type QuickLogEventDeleteRequest = Readonly<{
   eventType: QuickLogEventType;
 }>;
 
+export type QuickLogEventEditRequest = Readonly<{
+  clientEventId: string;
+  eventType: QuickLogEventType;
+  householdId: string;
+  puppyId: string;
+  todayDate: string;
+}>;
+
 export type QuickLogEventActionHandlers = Readonly<{
   onDelete?: (request: QuickLogEventDeleteRequest) => void;
+  onEdit?: (request: QuickLogEventEditRequest) => void;
   onRetry?: (
     clientEventId: string,
     recoverySurface: QuickLogRecoverySurface,
@@ -112,6 +121,16 @@ export function createQuickLogDeleteRequest(view: QuickLogEventView): QuickLogEv
   return {
     clientEventId: view.clientEventId,
     eventType: view.eventType,
+  };
+}
+
+export function createQuickLogEditRequest(view: QuickLogEventView): QuickLogEventEditRequest {
+  return {
+    clientEventId: view.clientEventId,
+    eventType: view.eventType,
+    householdId: view.householdId,
+    puppyId: view.puppyId,
+    todayDate: view.todayDate,
   };
 }
 

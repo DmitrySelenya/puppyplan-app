@@ -50,6 +50,7 @@
         "onboarding": "Welcome, profile, age hint, tracker picker, and plan reveal.",
         "profile": "Saved and editing states for the puppy profile settings route.",
         "quick-trackers": "Selected tracker count, limit state, and reorder-ready rows.",
+        "quick-log-details": "Quick Log details route with synthetic slow-saving and error states.",
         "today-core": "Today hero, daily cards, guidance, and data states.",
         "guidance": "Starter guidance read, tried, and skipped states.",
         "today-deferrals": "Synthetic-only family invite and reminder slots for review.",
@@ -580,6 +581,53 @@
       "undo-confirmed": "Undone",
       "add-details": "Add details",
       "a11y": "Logged: {trackerName}. Available action: undo."
+    },
+    "details": {
+      "title": "Add details",
+      "variant-label": "Detail type",
+      "save": "Save details",
+      "skip": "Skip details",
+      "tabs": {
+        "feeding": "Feeding",
+        "sleep": "Sleep",
+        "zoomies": "Zoomies"
+      },
+      "feeding": {
+        "amount-label": "What was offered?",
+        "amount": {
+          "meal": "Meal",
+          "snack": "Snack",
+          "water": "Water"
+        }
+      },
+      "sleep": {
+        "duration-label": "About how long?",
+        "duration": {
+          "none": "Not sure",
+          "15": "15 min",
+          "30": "30 min",
+          "60": "1 hr"
+        }
+      },
+      "zoomies": {
+        "intensity-label": "How intense?",
+        "intensity": {
+          "none": "Not sure",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High"
+        }
+      },
+      "states": {
+        "saving": {
+          "title": "Saving details",
+          "body": "The routine event is already logged; this optional detail is catching up."
+        },
+        "error": {
+          "title": "Details did not save",
+          "body": "The original Quick Log entry stays saved. Try the details again later."
+        }
+      }
     },
     "pending": {
       "label": "Saving"

@@ -158,7 +158,7 @@ describe('Timeline Quick Log state integration', () => {
       expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
     });
     expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
-    expect(screen.queryByText(i18n.t('timeline.filter-chips.0'))).toBeNull();
+    expect(screen.getByText(i18n.t('timeline.filter-chips.0'))).toBeTruthy();
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.snackbar.undo'),

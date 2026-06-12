@@ -39,6 +39,11 @@ export const gallerySections = [
     stateKey: 'dev.gallery.states.quick-trackers',
   },
   {
+    id: 'quick-log-details',
+    titleKey: 'quick-log.details.title',
+    stateKey: 'dev.gallery.states.quick-log-details',
+  },
+  {
     id: 'today-core',
     titleKey: 'tabs.today',
     stateKey: 'dev.gallery.states.today-core',
