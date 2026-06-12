@@ -1,6 +1,15 @@
+import { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
+import {
+  buildTodayPlan,
+  type TodayPlanInput,
+} from '@/contracts/today';
+import {
+  eventPayloadSchemas,
+  type EventType,
+} from '@/contracts/supabase';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
@@ -17,13 +26,25 @@ import {
   type QuickLogEventView,
   type QuickLogSurfaceCareContext,
 } from '@/lib/query/quick-log-event-view';
+import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { useQuickLogTimelineRows } from '@/lib/query/useQuickLogTimelineRows';
+
+import {
+  TodayPlanCards,
+  TodayStatusCard,
+  type TodayStatusState,
+} from '../components/TodayCards';
+
+export type TodayScreenStateOverride = 'offline-read';
 
 export type TodayScreenProps = Readonly<{
   actions?: QuickLogEventActionHandlers;
   careContext?: QuickLogSurfaceCareContext | null;
   openOnboarding?: () => void;
+  openQuickLog?: () => void;
   openTimeline: () => void;
+  screenState?: TodayScreenStateOverride;
+  todayPlanInput?: Partial<TodayPlanInput>;
 }>;
 
 const emptyActions: QuickLogEventActionHandlers = {};
@@ -32,7 +53,10 @@ export function TodayScreen({
   actions = emptyActions,
   careContext = null,
   openOnboarding,
+  openQuickLog,
   openTimeline,
+  screenState,
+  todayPlanInput,
 }: TodayScreenProps) {
   const { locale, t } = useAppTranslation();
   const timelineRows = useQuickLogTimelineRows(
@@ -45,17 +69,23 @@ export function TodayScreen({
       },
   );
   const rows = timelineRows.rows;
+  const todayPlanSourceInput = useMemo(() => careContext === null
+    ? null
+    : createTodayPlanInput({
+      careContext,
+      overrides: todayPlanInput,
+      rows,
+    }), [careContext, rows, todayPlanInput]);
+  const todayPlan = useMemo(
+    () => todayPlanSourceInput === null ? null : buildTodayPlan(todayPlanSourceInput),
+    [todayPlanSourceInput],
+  );
 
   if (careContext === null) {
     return (
       <Screen>
         <AppText variant="title">{t('tabs.today')}</AppText>
-        <Card>
-          <Stack gap="sm">
-            <AppText variant="headline">{t('today.quick-log.unavailable.title')}</AppText>
-            <AppText tone="secondary">{t('today.quick-log.unavailable.body')}</AppText>
-          </Stack>
-        </Card>
+        <TodayStatusCard state="unavailable" />
         <Button
           label={t('today.quick-log.setup-entry')}
           onPress={openOnboarding ?? openTimeline}
@@ -74,10 +104,25 @@ export function TodayScreen({
 
     return event === null ? [] : [event];
   });
+  const todayStatus = getTodayStatusState({
+    careContext,
+    eventViews,
+    rows,
+    screenState,
+    timelineStatus: timelineRows.status,
+  });
 
   return (
     <Screen contentStyle={styles.content}>
       <AppText variant="title">{t('tabs.today')}</AppText>
+      {todayStatus === null ? null : <TodayStatusCard state={todayStatus} />}
+      {todayPlan === null || (timelineRows.status === 'loading' && rows.length === 0) ? null : (
+        <TodayPlanCards
+          onHeroPrimaryAction={openQuickLog}
+          plan={todayPlan}
+        />
+      )}
+      {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
       {shouldShowQuickLogFailedBanner(rows) ? (
         <Card>
           <AppText variant="headline">{t('quick-log.failed.persistent-banner')}</AppText>
@@ -132,6 +177,224 @@ export function TodayScreen({
   );
 }
 
+export function createTodayPlanInputFromPuppy(input: Readonly<{
+  now?: Date;
+  puppyCreatedAt: string;
+  todayDate: string;
+}>): Partial<TodayPlanInput> {
+  return {
+    dayNumber: getPuppyPlanDayNumber(input),
+    timeOfDay: getTodayTimeOfDay(input.now ?? new Date()),
+  };
+}
+
+function getTodayStatusState(input: Readonly<{
+  careContext: QuickLogSurfaceCareContext;
+  eventViews: readonly QuickLogEventView[];
+  rows: readonly QuickLogCachedEventRow[];
+  screenState?: TodayScreenStateOverride;
+  timelineStatus: 'error' | 'loading' | 'ready' | 'unavailable';
+}>): TodayStatusState | null {
+  if (input.screenState === 'offline-read') {
+    return 'offline-read';
+  }
+
+  if (input.careContext.householdRole === 'viewer') {
+    return 'permission-denied';
+  }
+
+  if (input.timelineStatus === 'loading' && input.rows.length === 0) {
+    return 'loading';
+  }
+
+  if (input.timelineStatus === 'error') {
+    return 'error';
+  }
+
+  if (input.timelineStatus === 'ready' && input.eventViews.length === 0) {
+    return 'empty';
+  }
+
+  return null;
+}
+
+function createTodayPlanInput(input: Readonly<{
+  careContext: QuickLogSurfaceCareContext;
+  overrides?: Partial<TodayPlanInput>;
+  rows: readonly QuickLogCachedEventRow[];
+}>): TodayPlanInput {
+  const eventCounts = createEventCounts(input.rows);
+  const lastEvents = input.rows.flatMap((row) => {
+    const summary = createTodayEventSummary(row);
+
+    return summary === null ? [] : [summary];
+  });
+  const latestMealRow = input.rows.find((row) => row.event_type === 'feeding');
+  const baseInput: TodayPlanInput = {
+    dayNumber: 1,
+    eventCounts,
+    feedingPattern: latestMealRow === undefined
+      ? undefined
+      : {
+        lastFeedingLocalTime: formatLocalHourMinute(latestMealRow.occurred_at),
+        usualAmount: 'meal',
+      },
+    lastEvents,
+    suggestedDailyCards: lastEvents.length === 0
+      ? ['quick_log_prompt']
+      : ['timeline_review', 'potty_rhythm', 'sleep_rhythm'],
+    todayDate: input.careContext.todayDate,
+  };
+
+  return {
+    ...baseInput,
+    ...input.overrides,
+  };
+}
+
+function createEventCounts(rows: readonly QuickLogCachedEventRow[]): NonNullable<TodayPlanInput['eventCounts']> {
+  const eventCounts: Partial<Record<EventType, number>> = {};
+
+  for (const row of rows) {
+    eventCounts[row.event_type] = (eventCounts[row.event_type] ?? 0) + 1;
+  }
+
+  return eventCounts;
+}
+
+function createTodayEventSummary(
+  row: QuickLogCachedEventRow,
+): NonNullable<TodayPlanInput['lastEvents']>[number] | null {
+  const occurredAt = Date.parse(row.occurred_at);
+
+  if (Number.isNaN(occurredAt)) {
+    return null;
+  }
+
+  return {
+    eventType: row.event_type,
+    minutesAgo: Math.min(60 * 24 * 7, Math.max(0, Math.floor((Date.now() - occurredAt) / 60000))),
+    quickAction: getTodayQuickAction(row),
+  };
+}
+
+function getPuppyPlanDayNumber(input: Readonly<{
+  puppyCreatedAt: string;
+  todayDate: string;
+}>): number {
+  const createdDate = getLocalCalendarDateFromTimestamp(input.puppyCreatedAt);
+  const createdDayStart = createdDate === null ? null : getUtcDayStartMs(createdDate);
+  const todayDayStart = getUtcDayStartMs(input.todayDate);
+
+  if (createdDayStart === null || todayDayStart === null) {
+    return 1;
+  }
+
+  const inclusiveDayNumber = Math.floor((todayDayStart - createdDayStart) / 86_400_000) + 1;
+
+  return Math.min(90, Math.max(1, inclusiveDayNumber));
+}
+
+function getLocalCalendarDateFromTimestamp(timestamp: string): string | null {
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const year = String(date.getFullYear()).padStart(4, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function getUtcDayStartMs(calendarDate: string): number | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(calendarDate);
+
+  if (match === null) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const timestamp = Date.UTC(year, month - 1, day);
+
+  if (Number.isNaN(timestamp)) {
+    return null;
+  }
+
+  const normalized = new Date(timestamp);
+
+  return normalized.getUTCFullYear() === year
+    && normalized.getUTCMonth() === month - 1
+    && normalized.getUTCDate() === day
+    ? timestamp
+    : null;
+}
+
+function getTodayTimeOfDay(now: Date): NonNullable<TodayPlanInput['timeOfDay']> {
+  const hour = now.getHours();
+
+  if (hour < 11) {
+    return 'morning';
+  }
+
+  if (hour < 17) {
+    return 'midday';
+  }
+
+  return 'evening';
+}
+
+function getTodayQuickAction(
+  row: QuickLogCachedEventRow,
+): NonNullable<TodayPlanInput['lastEvents']>[number]['quickAction'] {
+  if (row.event_type === 'potty') {
+    const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
+
+    if (!payloadResult.success) {
+      return 'other';
+    }
+
+    return payloadResult.data.quick_action;
+  }
+
+  if (row.event_type === 'feeding') {
+    const payloadResult = eventPayloadSchemas.feeding.safeParse(row.payload);
+
+    return payloadResult.success && payloadResult.data.amount === 'meal'
+      ? 'meal'
+      : 'other';
+  }
+
+  if (row.event_type === 'sleep') {
+    const payloadResult = eventPayloadSchemas.sleep.safeParse(row.payload);
+
+    return payloadResult.success && payloadResult.data.sleep_kind === 'nap'
+      ? 'nap'
+      : 'other';
+  }
+
+  return 'other';
+}
+
+function hasPendingLocalRows(rows: readonly QuickLogCachedEventRow[]): boolean {
+  return rows.some((row) =>
+    row.localSync?.state === 'pending_local' || row.localSync?.state === 'sending');
+}
+
+function formatLocalHourMinute(occurredAt: string): string {
+  const date = new Date(occurredAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return '00:00';
+  }
+
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
 function TodayQuickLogEventRow({
   actions,
   event,
@@ -161,7 +424,10 @@ function TodayQuickLogEventRow({
               maxFontSizeMultiplier={2}
               tone="secondary"
               variant="footnote">
-              {event.actorLabel} - {event.occurredAtLabel}
+              {t('timeline.row-meta-template', {
+                actor: event.actorLabel,
+                time: event.occurredAtLabel,
+              })}
             </AppText>
           </Stack>
           <StatusPill

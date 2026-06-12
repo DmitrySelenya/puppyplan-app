@@ -76,6 +76,7 @@ DerivedData/
 .codex/
 .claude/work/
 .claude/settings.local.json
+.supergoal/
 .worktrees/
 .agentplane/worktrees/
 .agentplane/cache/

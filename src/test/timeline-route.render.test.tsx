@@ -7,6 +7,7 @@ import TimelineRoute from '../../app/(modals)/timeline';
 
 const mockRouterBack = jest.fn();
 const mockRouterCanGoBack = jest.fn();
+const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
@@ -18,6 +19,7 @@ jest.mock('expo-router', () => ({
   router: {
     back: () => mockRouterBack(),
     canGoBack: () => mockRouterCanGoBack(),
+    push: (href: string) => mockRouterPush(href),
     replace: (href: string) => mockRouterReplace(href),
   },
 }));
@@ -52,6 +54,7 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
     mockRouterBack.mockClear();
     mockRouterCanGoBack.mockReset();
     mockRouterCanGoBack.mockReturnValue(true);
+    mockRouterPush.mockClear();
     mockRouterReplace.mockClear();
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
@@ -71,8 +74,10 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
   it('passes active care context and recovery handlers to the production screen', () => {
     const mutation = {
       deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(),
       mutate: jest.fn(),
       retry: jest.fn(),
+      updateDetails: jest.fn(),
       undo: jest.fn(),
     };
     mockUseQuickLogMutationPort.mockReturnValue({
@@ -97,6 +102,10 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
     capturedActions?.onDelete?.({
       clientEventId: 'evt_00000000-0000-4000-8000-000000007301',
       eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007201',
+      puppyId: '00000000-0000-4000-8000-000000007202',
+      status: 'failed',
+      todayDate: '2026-06-09',
     });
     capturedActions?.onUndo?.({
       clientEventId: 'evt_00000000-0000-4000-8000-000000007301',
@@ -121,6 +130,117 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
       puppyId: '00000000-0000-4000-8000-000000007202',
       todayDate: '2026-06-09',
     });
+  });
+
+  it('routes synced Timeline delete through the server tombstone path', () => {
+    const mutation = {
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <TimelineRoute />
+      </AppProviders>,
+    );
+
+    capturedActions?.onDelete?.({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007301',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007201',
+      puppyId: '00000000-0000-4000-8000-000000007202',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    });
+
+    expect(mutation.deleteSynced).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007301',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007201',
+      puppyId: '00000000-0000-4000-8000-000000007202',
+      todayDate: '2026-06-09',
+    });
+    expect(mutation.deleteLocal).not.toHaveBeenCalled();
+  });
+
+  it('routes synced Timeline edit to the details modal with validated row context', () => {
+    const mutation = {
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <TimelineRoute />
+      </AppProviders>,
+    );
+
+    capturedActions?.onEdit?.({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007301',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007201',
+      puppyId: '00000000-0000-4000-8000-000000007202',
+      todayDate: '2026-06-09',
+      trackerId: 'feeding_meal',
+    });
+
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      '/quick-log/details?trackerId=feeding_meal&clientEventId=evt_00000000-0000-4000-8000-000000007301&eventType=feeding&householdId=00000000-0000-4000-8000-000000007201&puppyId=00000000-0000-4000-8000-000000007202&todayDate=2026-06-09',
+    );
+  });
+
+  it('does not expose write handlers for viewer care contexts', () => {
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: '00000000-0000-4000-8000-000000007201',
+        householdRole: 'viewer',
+        puppyId: '00000000-0000-4000-8000-000000007202',
+        selectedTrackerIds: ['feeding_meal'],
+        todayDate: '2026-06-09',
+        userId: '00000000-0000-4000-8000-000000007203',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: {
+        deleteLocal: jest.fn(),
+        deleteSynced: jest.fn(),
+        mutate: jest.fn(),
+        retry: jest.fn(),
+        updateDetails: jest.fn(),
+        undo: jest.fn(),
+      },
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <TimelineRoute />
+      </AppProviders>,
+    );
+
+    expect(capturedActions).toBeUndefined();
   });
 
   it('closes through router.back when a previous route exists', () => {

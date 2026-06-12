@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
   useQueries,
   useQueryClient,
+  type QueryClient,
   type QueryKey,
 } from '@tanstack/react-query';
 
@@ -43,8 +44,20 @@ export function useQuickLogTimelineRows(
 
     return queryKeys.events.timeline(householdId, puppyId, normalizedFilters);
   }, [householdId, normalizedFilters, puppyId]);
+  const timelineRootKey = useMemo<QueryKey | null>(() => {
+    if (householdId === null || puppyId === null) {
+      return null;
+    }
+
+    return queryKeys.events.timelineRoot(householdId, puppyId);
+  }, [householdId, puppyId]);
   const queries = useMemo<TimelineRowsQuery[]>(() => {
-    if (queryKey === null || householdId === null || puppyId === null) {
+    if (
+      queryKey === null
+      || timelineRootKey === null
+      || householdId === null
+      || puppyId === null
+    ) {
       return [];
     }
 
@@ -56,15 +69,18 @@ export function useQuickLogTimelineRows(
             householdId,
             puppyId,
           });
-          const cachedRows =
-            queryClient.getQueryData<readonly QuickLogCachedEventRow[]>(queryKey) ?? emptyRows;
+          const cachedRows = getCachedTimelineLocalRows(
+            queryClient,
+            timelineRootKey,
+            normalizedFilters,
+          );
 
           return mergeDurableRowsWithLocalRows(durableRows, cachedRows);
         },
         queryKey,
       },
     ];
-  }, [householdId, normalizedFilters, puppyId, queryClient, queryKey]);
+  }, [householdId, normalizedFilters, puppyId, queryClient, queryKey, timelineRootKey]);
   const results = useQueries({ queries });
   const query = results[0];
 
@@ -149,6 +165,107 @@ function mergeDurableRowsWithLocalRows(
   );
 
   return [...missingLocalRows, ...durableRows].sort(compareRowsByNewestFirst);
+}
+
+function getCachedTimelineLocalRows(
+  queryClient: QueryClient,
+  timelineRootKey: QueryKey,
+  filters: TimelineFilters,
+): readonly QuickLogCachedEventRow[] {
+  const matchingQueries = queryClient.getQueriesData<readonly QuickLogCachedEventRow[]>({
+    exact: false,
+    queryKey: timelineRootKey,
+  });
+  const localRowsByClientEventId = new Map<string, QuickLogCachedEventRow>();
+
+  for (const [, rows] of matchingQueries) {
+    for (const row of rows ?? emptyRows) {
+      if (
+        row.localSync !== undefined
+        && rowMatchesTimelineFilters(row, filters)
+      ) {
+        const currentRow = localRowsByClientEventId.get(row.client_event_id);
+
+        if (
+          currentRow === undefined
+          || isPreferredLocalRowVersion(row, currentRow)
+        ) {
+          localRowsByClientEventId.set(row.client_event_id, row);
+        }
+      }
+    }
+  }
+
+  return [...localRowsByClientEventId.values()];
+}
+
+function isPreferredLocalRowVersion(
+  candidate: QuickLogCachedEventRow,
+  current: QuickLogCachedEventRow,
+): boolean {
+  const candidateUpdatedAt = parseTimestampOrMin(candidate.updated_at);
+  const currentUpdatedAt = parseTimestampOrMin(current.updated_at);
+
+  if (candidateUpdatedAt !== currentUpdatedAt) {
+    return candidateUpdatedAt > currentUpdatedAt;
+  }
+
+  const candidateCreatedAt = parseTimestampOrMin(candidate.created_at);
+  const currentCreatedAt = parseTimestampOrMin(current.created_at);
+
+  if (candidateCreatedAt !== currentCreatedAt) {
+    return candidateCreatedAt > currentCreatedAt;
+  }
+
+  return candidate.id.localeCompare(current.id) > 0;
+}
+
+function parseTimestampOrMin(timestamp: string): number {
+  const parsed = Date.parse(timestamp);
+
+  return Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
+}
+
+function rowMatchesTimelineFilters(
+  row: QuickLogCachedEventRow,
+  filters: TimelineFilters,
+): boolean {
+  if (filters.cursor !== undefined) {
+    return false;
+  }
+
+  if (
+    filters.eventTypes !== undefined
+    && !filters.eventTypes.includes(row.event_type)
+  ) {
+    return false;
+  }
+
+  const occurredDate = formatLocalCalendarDate(row.occurred_at);
+
+  if (filters.from !== undefined && occurredDate < filters.from) {
+    return false;
+  }
+
+  if (filters.to !== undefined && occurredDate > filters.to) {
+    return false;
+  }
+
+  return true;
+}
+
+function formatLocalCalendarDate(timestamp: string): string {
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return timestamp.slice(0, 10);
+  }
+
+  return [
+    String(date.getFullYear()).padStart(4, '0'),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
 }
 
 function compareRowsByNewestFirst(

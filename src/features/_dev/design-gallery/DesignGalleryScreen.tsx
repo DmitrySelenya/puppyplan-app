@@ -10,9 +10,15 @@ import {
   TextField,
   TrackerTile,
 } from '@/design/primitives';
+import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
+import { SyntheticTodayPreview } from '@/features/today/components/TodayCards';
 import { useAppTranslation } from '@/lib/i18n';
 
-import { gallerySections, syntheticTrackers } from './fixtures';
+import {
+  gallerySections,
+  syntheticTodayPlans,
+  syntheticTrackers,
+} from './fixtures';
 
 const noop = () => undefined;
 
@@ -47,6 +53,8 @@ export function DesignGalleryScreen() {
         <SyntheticOnboardingShell />
         <SyntheticPuppyProfileSettingsShell />
         <SyntheticQuickTrackersSettingsShell />
+        <SyntheticQuickLogDetailsShell />
+        <SyntheticTodayShell />
       </Stack>
     </Screen>
   );
@@ -140,6 +148,50 @@ export function SyntheticQuickTrackersSettingsShell() {
             meta={tracker.selected ? t('common.done') : t('common.edit')}
             selected={tracker.selected}
             title={t(tracker.labelKey)}
+          />
+        ))}
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticQuickLogDetailsShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.quick-log-details"
+          titleKey="quick-log.details.title"
+        />
+        <QuickLogDetailsScreen
+          initialTrackerId="sleep_nap"
+          status="saving"
+        />
+        <QuickLogDetailsScreen
+          initialTrackerId="zoomies"
+          status="error"
+        />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticTodayShell() {
+  const { t } = useAppTranslation();
+
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.today-core"
+          titleKey="tabs.today"
+        />
+        <AppText tone="secondary">{t('dev.gallery.today.synthetic-note')}</AppText>
+        {syntheticTodayPlans.map((fixture) => (
+          <SyntheticTodayPreview
+            key={fixture.id}
+            plan={fixture.plan}
+            titleKey={fixture.titleKey}
           />
         ))}
       </Stack>

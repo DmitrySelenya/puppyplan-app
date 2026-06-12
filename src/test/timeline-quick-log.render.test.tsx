@@ -158,7 +158,7 @@ describe('Timeline Quick Log state integration', () => {
       expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
     });
     expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
-    expect(screen.queryByText(i18n.t('timeline.filter-chips.0'))).toBeNull();
+    expect(screen.getByText(i18n.t('timeline.filter-chips.0'))).toBeTruthy();
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.snackbar.undo'),
@@ -177,6 +177,10 @@ describe('Timeline Quick Log state integration', () => {
     expect(actions.onDelete).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000001605',
       eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'pending',
+      todayDate,
     });
   });
 
@@ -226,6 +230,10 @@ describe('Timeline Quick Log state integration', () => {
     expect(actions.onDelete).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000001605',
       eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'failed',
+      todayDate,
     });
   });
 

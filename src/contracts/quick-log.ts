@@ -105,6 +105,35 @@ export const selectedQuickLogTrackerIdsSchema = z.array(quickLogTrackerIdSchema)
     });
   });
 
+export const quickLogDetailTrackerIds = [
+  'feeding_meal',
+  'sleep_nap',
+  'zoomies',
+] as const;
+
+export const quickLogDetailTrackerIdSchema = z.enum(quickLogDetailTrackerIds);
+
+export const quickLogFeedingDetailDraftSchema = z.object({
+  amount: z.enum(['meal', 'snack', 'water']).optional(),
+  trackerId: z.literal('feeding_meal'),
+}).strict();
+
+export const quickLogSleepDetailDraftSchema = z.object({
+  durationMinutes: z.number().int().min(1).max(1440).optional(),
+  trackerId: z.literal('sleep_nap'),
+}).strict();
+
+export const quickLogZoomiesDetailDraftSchema = z.object({
+  intensity: z.enum(['low', 'medium', 'high']).optional(),
+  trackerId: z.literal('zoomies'),
+}).strict();
+
+export const quickLogDetailDraftSchema = z.discriminatedUnion('trackerId', [
+  quickLogFeedingDetailDraftSchema,
+  quickLogSleepDetailDraftSchema,
+  quickLogZoomiesDetailDraftSchema,
+]);
+
 export const quickLogCommandSchema = z.object({
   client_event_id: quickLogClientEventIdSchema,
   household_id: uuidSchema,
@@ -116,6 +145,8 @@ export const quickLogCommandSchema = z.object({
 
 export type QuickLogCommand = z.infer<typeof quickLogCommandSchema>;
 export type SelectedQuickLogTrackerIds = z.infer<typeof selectedQuickLogTrackerIdsSchema>;
+export type QuickLogDetailTrackerId = z.infer<typeof quickLogDetailTrackerIdSchema>;
+export type QuickLogDetailDraft = z.infer<typeof quickLogDetailDraftSchema>;
 
 export const quickLogQueueItemSchema = minimalQuickLogQueueItemSchema
   .superRefine((queueItem, context) => {
@@ -157,6 +188,64 @@ export function createQuickLogEventInsert(command: unknown): QuickLogEventInsert
       ...definition.payload,
     },
   }) as QuickLogEventInsert;
+}
+
+export function createQuickLogDetailDraft(input: unknown): QuickLogDetailDraft {
+  return quickLogDetailDraftSchema.parse(input);
+}
+
+export function getQuickLogDetailTrackerIdForEventType(
+  eventType: QuickLogEventType,
+): QuickLogDetailTrackerId | null {
+  if (eventType === 'feeding') {
+    return 'feeding_meal';
+  }
+
+  if (eventType === 'sleep') {
+    return 'sleep_nap';
+  }
+
+  if (eventType === 'zoomies') {
+    return 'zoomies';
+  }
+
+  return null;
+}
+
+export function createQuickLogDetailPayload(
+  input: Readonly<{
+    draft: QuickLogDetailDraft;
+    eventType: QuickLogEventType;
+  }>,
+): Record<string, JsonValue> {
+  const expectedTrackerId = getQuickLogDetailTrackerIdForEventType(input.eventType);
+
+  if (expectedTrackerId === null || input.draft.trackerId !== expectedTrackerId) {
+    throw new Error('Quick Log detail draft does not match the event type');
+  }
+
+  if (input.draft.trackerId === 'feeding_meal') {
+    return {
+      amount: input.draft.amount ?? 'meal',
+    };
+  }
+
+  if (input.draft.trackerId === 'sleep_nap') {
+    return input.draft.durationMinutes === undefined
+      ? {
+        sleep_kind: 'nap',
+      }
+      : {
+        duration_minutes: input.draft.durationMinutes,
+        sleep_kind: 'nap',
+      };
+  }
+
+  return input.draft.intensity === undefined
+    ? {}
+    : {
+      intensity: input.draft.intensity,
+    };
 }
 
 const quickLogEventTypeSet = new Set<EventType>(

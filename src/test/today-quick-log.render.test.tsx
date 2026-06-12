@@ -116,8 +116,8 @@ describe('Today Quick Log state integration', () => {
       />,
     );
 
-    expect(screen.getByText(i18n.t('today.quick-log.unavailable.title'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('today.quick-log.unavailable.body'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.states.unavailable.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.states.unavailable.body'))).toBeTruthy();
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('today.quick-log.setup-entry'),
     }));
@@ -175,6 +175,10 @@ describe('Today Quick Log state integration', () => {
     expect(actions.onDelete).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
       eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'pending',
+      todayDate,
     });
   });
 
@@ -241,6 +245,10 @@ describe('Today Quick Log state integration', () => {
     expect(actions.onDelete).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
       eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'failed',
+      todayDate,
     });
   });
 

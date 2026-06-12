@@ -1,8 +1,10 @@
 import {
+  eventPayloadSchemas,
   eventLogRecordSchema,
   type EventType,
   type EventLogInsert,
   type EventLogRecord,
+  type JsonValue,
 } from '@/contracts/supabase';
 import type { QuickLogQueueFailureKind } from '@/lib/queue';
 
@@ -12,8 +14,10 @@ export type QuickLogSupabaseErrorPhase =
   | 'insert'
   | 'list'
   | 'select_existing_after_23505'
+  | 'select_for_update_payload'
   | 'select_for_tombstone'
-  | 'tombstone';
+  | 'tombstone'
+  | 'update_payload';
 
 export type QuickLogSupabaseErrorSignals = Readonly<{
   isAuthRefreshing?: boolean;
@@ -52,6 +56,12 @@ export type SupabaseEventLogRepository = Readonly<{
     clientEventId: string;
     deletedAt: string;
   }>): Promise<EventLogRecord>;
+  updatePayloadByClientEventId(input: Readonly<{
+    householdId: string;
+    clientEventId: string;
+    eventType: EventType;
+    payload: Record<string, JsonValue>;
+  }>): Promise<EventLogRecord>;
 }>;
 
 type EventLogClient = Readonly<{
@@ -68,6 +78,10 @@ type EventLogClient = Readonly<{
   tombstoneEventLogById(input: Readonly<{
     id: string;
     deletedAt: string;
+  }>): PromiseLike<EventLogClientResponse>;
+  updateEventLogPayloadById(input: Readonly<{
+    id: string;
+    payload: Record<string, JsonValue>;
   }>): PromiseLike<EventLogClientResponse>;
 }>;
 
@@ -176,6 +190,39 @@ export function createSupabaseEventLogRepository(
 
       return parseEventLogRecord(tombstoneResponse.data, 'tombstone');
     },
+    updatePayloadByClientEventId: async (input) => {
+      const payload = parseEventPayload(input.eventType, input.payload, 'update_payload');
+      const existing = await selectExistingEvent(client, {
+        householdId: input.householdId,
+        clientEventId: input.clientEventId,
+        signals: options.signals,
+        phase: 'select_for_update_payload',
+      });
+
+      if (existing === null || existing.event_type !== input.eventType) {
+        throw createQuickLogSupabaseFailure({
+          code: '23514',
+          status: 400,
+        }, {
+          phase: 'select_for_update_payload',
+          signals: options.signals,
+        });
+      }
+
+      const updateResponse = await client.updateEventLogPayloadById({
+        id: existing.id,
+        payload,
+      });
+
+      if (updateResponse.error) {
+        throw createQuickLogSupabaseFailure(updateResponse.error, {
+          phase: 'update_payload',
+          signals: options.signals,
+        });
+      }
+
+      return parseEventLogRecord(updateResponse.data, 'update_payload');
+    },
   };
 }
 
@@ -225,6 +272,14 @@ function createDefaultEventLogClient(): EventLogClient {
       .from('event_log')
       .update({
         deleted_at: input.deletedAt,
+      })
+      .eq('id', input.id)
+      .select('*')
+      .maybeSingle(),
+    updateEventLogPayloadById: (input) => getSupabaseClient()
+      .from('event_log')
+      .update({
+        payload: input.payload,
       })
       .eq('id', input.id)
       .select('*')
@@ -411,6 +466,25 @@ function parseEventLogRecords(value: unknown): readonly EventLogRecord[] {
   }
 
   return result.data;
+}
+
+function parseEventPayload(
+  eventType: EventType,
+  payload: Record<string, JsonValue>,
+  phase: QuickLogSupabaseErrorPhase,
+): Record<string, JsonValue> {
+  const result = eventPayloadSchemas[eventType].safeParse(payload);
+
+  if (!result.success) {
+    throw createQuickLogSupabaseFailure({
+      code: '23514',
+      status: 400,
+    }, {
+      phase,
+    });
+  }
+
+  return result.data as Record<string, JsonValue>;
 }
 
 export function createLocalDayIsoRange(date: string): Readonly<{

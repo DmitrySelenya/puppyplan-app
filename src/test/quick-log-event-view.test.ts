@@ -69,6 +69,24 @@ describe('Quick Log event view model', () => {
       }).format(new Date('2026-05-27T08:00:00.000Z')),
     );
   });
+
+  it('keeps valid edited feeding detail rows visible', () => {
+    for (const amount of ['snack', 'water'] as const) {
+      const event = createQuickLogEventView(createRow({
+        payload: {
+          amount,
+        },
+      }), {
+        t,
+        todayDate,
+      });
+
+      expect(event).toMatchObject({
+        eventType: 'feeding',
+        title: i18n.t('quick-log.trackers.feeding'),
+      });
+    }
+  });
 });
 
 function createRow(

@@ -22,7 +22,6 @@ import { noopAnalyticsClient, type QuickLogAnalyticsClient } from '@/lib/analyti
 import type { I18nKey, I18nTOptions } from '@/lib/i18n';
 import {
   getQuickLogTrackerLabelKey,
-  type QuickLogEventDeleteRequest,
   type QuickLogEventUndoRequest,
   type QuickLogSurfaceCareContext,
 } from '@/lib/query/quick-log-event-view';
@@ -41,7 +40,10 @@ export type QuickLogMutationRequest = Readonly<{
 }>;
 
 export type QuickLogUndoRequest = QuickLogEventUndoRequest;
-export type QuickLogDeleteRequest = QuickLogEventDeleteRequest;
+export type QuickLogDeleteRequest = Readonly<{
+  clientEventId: string;
+  eventType: QuickLogEventType;
+}>;
 
 export type QuickLogMutationPort = Readonly<{
   deleteLocal: (clientEventId: string) => unknown;

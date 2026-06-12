@@ -172,6 +172,95 @@ describe('useQuickLogTimelineRows', () => {
     });
   });
 
+  it('matches local recovery rows against local calendar dates instead of UTC prefixes', async () => {
+    const queryClient = createPuppyPlanQueryClient();
+    const occurredAt = '2026-05-26T22:30:00.000Z';
+    const localOccurredDate = formatTestLocalCalendarDate(occurredAt);
+    const localRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001916',
+      id: '00000000-0000-4000-8000-000000001917',
+      localSync: {
+        state: 'pending_local',
+        category: null,
+        retryCount: 0,
+      },
+      occurred_at: occurredAt,
+    });
+    let observedRows: readonly QuickLogCachedEventRow[] = [];
+
+    queryClient.setQueryData(queryKeys.events.timeline(householdId, puppyId), [localRow], {
+      updatedAt: 0,
+    });
+    mockListEvents.mockResolvedValue([]);
+
+    function RowsProbe() {
+      observedRows = useQuickLogTimelineRows(careContext, {
+        from: localOccurredDate,
+        to: localOccurredDate,
+      }).rows;
+
+      return null;
+    }
+
+    renderWithQuery(<RowsProbe />, queryClient);
+
+    await waitFor(() => {
+      expect(observedRows.map((row) => row.client_event_id)).toEqual([
+        localRow.client_event_id,
+      ]);
+    });
+  });
+
+  it('dedupes cached local recovery rows by freshest row timestamps', async () => {
+    const queryClient = createPuppyPlanQueryClient();
+    const staleRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001926',
+      id: '00000000-0000-4000-8000-000000001927',
+      localSync: {
+        state: 'failed_retryable',
+        category: 'request_timeout',
+        retryCount: 1,
+      },
+      updated_at: '2026-05-27T08:00:01.000Z',
+    });
+    const freshRow = createRow({
+      client_event_id: staleRow.client_event_id,
+      id: '00000000-0000-4000-8000-000000001928',
+      localSync: {
+        state: 'failed_retryable',
+        category: 'request_timeout',
+        retryCount: 2,
+      },
+      updated_at: '2026-05-27T08:00:02.000Z',
+    });
+    let observedRows: readonly QuickLogCachedEventRow[] = [];
+
+    queryClient.setQueryData(
+      queryKeys.events.timeline(householdId, puppyId, {
+        from: todayDate,
+      }),
+      [freshRow],
+    );
+    queryClient.setQueryData(queryKeys.events.timeline(householdId, puppyId), [staleRow]);
+    mockListEvents.mockResolvedValue([]);
+
+    function RowsProbe() {
+      observedRows = useQuickLogTimelineRows(careContext, {
+        to: todayDate,
+      }).rows;
+
+      return null;
+    }
+
+    renderWithQuery(<RowsProbe />, queryClient);
+
+    await waitFor(() => {
+      expect(observedRows[0]?.id).toBe(freshRow.id);
+    });
+    expect(observedRows).toHaveLength(1);
+    expect(observedRows[0]?.localSync?.retryCount).toBe(2);
+  });
+
   it('uses a stable query key for equivalent empty filter objects', () => {
     const filters: TimelineFilters = {};
     let renderCount = 0;
@@ -217,4 +306,14 @@ function createRow(
     updated_at: '2026-05-27T08:00:01.000Z',
     ...overrides,
   };
+}
+
+function formatTestLocalCalendarDate(timestamp: string): string {
+  const date = new Date(timestamp);
+
+  return [
+    String(date.getFullYear()).padStart(4, '0'),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
 }
