@@ -1,9 +1,12 @@
+import { StyleSheet } from 'react-native';
+
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
 import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
+import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 import {
   createQuickLogDeleteRequest,
@@ -13,7 +16,7 @@ import {
   type QuickLogEventView,
   type QuickLogSurfaceCareContext,
 } from '@/lib/query/quick-log-event-view';
-import { useQuickLogCachedRows } from '@/lib/query/useQuickLogCachedRows';
+import { useQuickLogTimelineRows } from '@/lib/query/useQuickLogTimelineRows';
 
 export type TimelineScreenProps = Readonly<{
   actions?: QuickLogEventActionHandlers;
@@ -29,19 +32,29 @@ export function TimelineScreen({
   onClose,
 }: TimelineScreenProps) {
   const { locale, t } = useAppTranslation();
-  const rows = useQuickLogCachedRows(careContext);
+  const timelineRows = useQuickLogTimelineRows(careContext);
+  const rows = timelineRows.rows;
 
   if (careContext === null) {
     return (
-      <Screen>
+      <Screen contentStyle={styles.content}>
         <Stack
-          align="center"
+          align="flex-start"
           direction="horizontal"
-          justify="space-between">
-          <AppText variant="title">{t('timeline.title')}</AppText>
+          gap="sm"
+          justify="space-between"
+          wrap>
+          <AppText
+            style={styles.title}
+            variant="title">
+            {t('timeline.title')}
+          </AppText>
           <Button
             label={t('timeline.close')}
+            labelMaxFontSizeMultiplier={2}
+            labelVariant="label"
             onPress={onClose}
+            style={styles.closeButton}
             variant="tertiary"
           />
         </Stack>
@@ -66,15 +79,24 @@ export function TimelineScreen({
   });
 
   return (
-    <Screen>
+    <Screen contentStyle={styles.content}>
       <Stack
-        align="center"
-        direction="horizontal"
-        justify="space-between">
-        <AppText variant="title">{t('timeline.title')}</AppText>
+        align="flex-start"
+          direction="horizontal"
+          gap="sm"
+          justify="space-between"
+          wrap>
+        <AppText
+          style={styles.title}
+          variant="title">
+          {t('timeline.title')}
+        </AppText>
         <Button
           label={t('timeline.close')}
+          labelMaxFontSizeMultiplier={2}
+          labelVariant="label"
           onPress={onClose}
+          style={styles.closeButton}
           variant="tertiary"
         />
       </Stack>
@@ -88,6 +110,13 @@ export function TimelineScreen({
             />
           ))}
         </Stack>
+      ) : timelineRows.status === 'error' ? (
+        <Card
+          accessibilityLabel={t('errors.load-failed')}
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert">
+          <AppText>{t('errors.load-failed')}</AppText>
+        </Card>
       ) : (
         <Card>
           <AppText tone="secondary">{t('timeline.empty')}</AppText>
@@ -116,17 +145,30 @@ function TimelineQuickLogEventRow({
           align="center"
           direction="horizontal"
           gap="sm"
-          justify="space-between">
-          <Stack gap="xs">
+          justify="space-between"
+          wrap>
+          <Stack
+            gap="xs"
+            style={styles.eventText}>
             <AppText variant="bodyEmph">{event.title}</AppText>
-            <AppText tone="secondary" variant="footnote">
+            <AppText
+              maxFontSizeMultiplier={2}
+              tone="secondary"
+              variant="footnote">
               {event.actorLabel} - {event.occurredAtLabel}
             </AppText>
           </Stack>
           <StatusPill
             accessibilityLabel={event.statusLabel}
-            icon={<AppText accessibilityElementsHidden>{statusIcon(event.status)}</AppText>}
+            icon={
+              <AppText
+                accessibilityElementsHidden
+                maxFontSizeMultiplier={2}>
+                {statusIcon(event.status)}
+              </AppText>
+            }
             label={event.statusLabel}
+            style={styles.statusPill}
             tone={statusTone(event.status)}
           />
         </Stack>
@@ -136,7 +178,7 @@ function TimelineQuickLogEventRow({
               <Button
                 label={t('quick-log.failed.primary')}
                 onPress={() => {
-                  onRetry(event.clientEventId, 'manual_retry');
+                  onRetry(event.clientEventId, 'manual_retry', 'timeline');
                 }}
                 variant="secondary"
               />
@@ -202,3 +244,23 @@ function statusTone(status: QuickLogEventView['status']): 'confirmed' | 'failed'
 
   return 'confirmed';
 }
+
+const styles = StyleSheet.create({
+  closeButton: {
+    alignSelf: 'flex-start',
+  },
+  content: {
+    paddingBottom: tokens.space[10],
+  },
+  eventText: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  statusPill: {
+    alignSelf: 'flex-start',
+  },
+  title: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
+});

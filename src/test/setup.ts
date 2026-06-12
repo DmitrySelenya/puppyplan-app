@@ -1,3 +1,6 @@
+import { act } from '@testing-library/react-native';
+import { notifyManager } from '@tanstack/query-core';
+
 jest.mock('react-native-safe-area-context', () =>
   jest.requireActual('react-native-safe-area-context/jest/mock').default,
 );
@@ -20,6 +23,10 @@ jest.spyOn(console, 'info').mockImplementation((message?: unknown, ...optionalPa
   }
 
   originalConsoleInfo(message, ...optionalParams);
+});
+
+notifyManager.setNotifyFunction((callback) => {
+  act(callback);
 });
 
 afterAll(() => {

@@ -68,7 +68,11 @@ export function TrackerTile({
           {icon}
         </View>
       ) : null}
-      <AppText numberOfLines={2} style={styles.label} variant="label">
+      <AppText
+        maxFontSizeMultiplier={2}
+        numberOfLines={3}
+        style={styles.label}
+        variant="label">
         {label}
       </AppText>
     </Touchable>

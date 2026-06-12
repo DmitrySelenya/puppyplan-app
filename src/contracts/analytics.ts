@@ -137,6 +137,7 @@ export const quickLogAnalyticsEventSchema = z.discriminatedUnion('name', [
 
 export type QuickLogAnalyticsEvent = z.infer<typeof quickLogAnalyticsEventSchema>;
 export type QuickLogRecoverySurface = z.infer<typeof analyticsRecoverySurfaceSchema>;
+export type QuickLogSourceSurface = z.infer<typeof analyticsSourceSurfaceSchema>;
 
 export function createQuickLogAnalyticsEvent(input: unknown): QuickLogAnalyticsEvent {
   return quickLogAnalyticsEventSchema.parse(input);

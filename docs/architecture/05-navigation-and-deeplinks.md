@@ -19,6 +19,8 @@ Expected route groups:
 ```text
 app/
   _layout.tsx
+  _dev/
+    components/
   (auth)/
   (onboarding)/
   (tabs)/
@@ -34,10 +36,24 @@ app/
     sharing/trainer-preview/
     sharing/scope-selector/
     health/record-edit/
+    settings/puppy-profile/
     settings/quick-trackers/
   invite/[token].tsx
   share/[token].tsx
 ```
+
+## Settings Namespace
+
+More is the user-facing entry point for settings and care-context management, but editable settings screens use a single production namespace under `/settings/*`.
+
+Locked routes:
+
+- `/settings/puppy-profile`
+- `/settings/quick-trackers`
+
+Design atlas labels that use `/more/puppy-profile` map to `/settings/puppy-profile`. Do not create parallel `/more/*` and `/settings/*` edit trees for the same setting.
+
+The development-only native design gallery uses `/_dev/components`. It must not appear in primary tabs, More rows, production modal stacks, analytics funnels, or deep-link allowlists.
 
 ## Deep Links
 

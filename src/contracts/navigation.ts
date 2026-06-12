@@ -42,6 +42,8 @@ export const quickLogAction = {
   accessibilityHintKey: I18nKey;
 };
 
+export const settingsRoutes = ['/settings/puppy-profile', '/settings/quick-trackers'] as const;
+
 export const modalRoutes = [
   quickLogAction.href,
   '/quick-log/details',
@@ -51,12 +53,48 @@ export const modalRoutes = [
   '/sharing/trainer-preview',
   '/sharing/scope-selector',
   '/health/record-edit',
-  '/settings/quick-trackers',
+  ...settingsRoutes,
 ] as const;
+
+export const developmentOnlyRoutes = ['/_dev/components'] as const;
 
 export const deepLinkPlaceholders = ['/invite/[token]', '/share/[token]'] as const;
 
+export const atlasRouteAliases = {
+  '/more/puppy-profile': '/settings/puppy-profile',
+} as const satisfies Record<string, (typeof settingsRoutes)[number]>;
+
+export const plannedRouteFiles = [
+  {
+    route: '/onboarding',
+    file: 'app/onboarding/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/settings/puppy-profile',
+    file: 'app/(modals)/settings/puppy-profile/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/settings/quick-trackers',
+    file: 'app/(modals)/settings/quick-trackers/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/_dev/components',
+    file: 'app/_dev/components.tsx',
+    implementationStage: 'existing',
+  },
+] as const satisfies readonly {
+  route: string;
+  file: string;
+  implementationStage: 'existing' | 'planned';
+}[];
+
 export const shellI18nKeys = [
+  'common.close',
+  'common.loading',
+  'errors.load-failed',
   'tabs.today',
   'tabs.health',
   'tabs.more',
@@ -67,6 +105,7 @@ export const shellI18nKeys = [
   'today.quick-log.unavailable.title',
   'today.quick-log.unavailable.body',
   'today.quick-log.timeline-entry',
+  'today.quick-log.setup-entry',
   'today.quick-log.section-title',
   'today.quick-log.empty.title',
   'today.quick-log.empty.body',
@@ -80,13 +119,20 @@ export const shellI18nKeys = [
   'quick-log.snackbar.undo',
   'health.footer-hint',
   'more.screen-title',
+  'more.sections.puppy',
+  'more.sections.records',
   'more.sections.support',
+  'more.rows.puppy-profile',
+  'more.rows.quick-trackers',
   'more.rows.timeline',
   'quick-log.sheet.title',
   'quick-log.sheet.edit-helper',
   'quick-log.sheet.unavailable.title',
   'quick-log.sheet.unavailable.body',
   'quick-log.sheet.unavailable.close',
+  'quick-log.sheet.permission-denied.title',
+  'quick-log.sheet.permission-denied.body',
+  'quick-log.sheet.permission-denied.close',
   'quick-log.duplicate-warning.title',
   'quick-log.duplicate-warning.question',
   'quick-log.duplicate-warning.primary-alt',
@@ -97,4 +143,5 @@ export const shellI18nKeys = [
 
 export type PrimaryTabId = (typeof primaryTabs)[number]['id'];
 export type PrimaryTabHref = (typeof primaryTabs)[number]['href'];
+export type SettingsRoute = (typeof settingsRoutes)[number];
 export type ShellI18nKey = (typeof shellI18nKeys)[number];

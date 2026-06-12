@@ -40,6 +40,12 @@ Before implementing a feature that changes data shape:
 - `any`, `as unknown as`, or `ts-ignore` without ADR;
 - changing generated `ios/` or `android/` directly.
 
+## Known Platform Caveats
+
+Expo/RN debug or dev-client logs may include duplicate `RCTSwiftUI*` class warnings and generated UIApplication background delegate warnings for missing `UIBackgroundModes`. Treat these as a tracked platform caveat, not an app-owned blocker, unless a release-like native audit proves they reproduce in a releasable build or app-owned Expo config/dependencies require the capability.
+
+Do not add false `UIBackgroundModes` only to silence logs. If background execution becomes product scope, declare only the real required modes through `app.config.ts` or an approved config plugin.
+
 ## PR Checklist
 
 Every PR must answer:

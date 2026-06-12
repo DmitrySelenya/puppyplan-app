@@ -2,6 +2,8 @@ import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
+import { normalizeGeneratedTypes } from './typegen-output.mjs';
+
 const mode = process.argv[2];
 const rawDbUrl = process.env.SUPABASE_DB_URL || readDotenvValue('SUPABASE_DB_URL');
 const dbUrl = normalizeDbUrl(rawDbUrl);
@@ -93,7 +95,7 @@ function runSupabase(args, options = {}) {
     if (status === 0) {
       const outputPath = resolve(options.outputFile);
       const tempPath = `${outputPath}.${process.pid}.tmp`;
-      writeFileSync(tempPath, stdout);
+      writeFileSync(tempPath, normalizeGeneratedTypes(stdout));
       renameSync(tempPath, outputPath);
     } else if (stdout) {
       process.stdout.write(stdout);

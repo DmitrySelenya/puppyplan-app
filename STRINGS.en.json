@@ -40,6 +40,21 @@
     "loading": "Loading"
   },
 
+  "dev": {
+    "gallery": {
+      "title": "Native component gallery",
+      "subtitle": "Synthetic preview states for local design review.",
+      "synthetic-badge": "Synthetic",
+      "shell-preview": "Shell preview",
+      "states": {
+        "onboarding": "Welcome, profile, age hint, tracker picker, and plan reveal.",
+        "profile": "Saved and editing states for the puppy profile settings route.",
+        "quick-trackers": "Selected tracker count, limit state, and reorder-ready rows.",
+        "global": "Loading, empty, error, offline, pending, and permission states."
+      }
+    }
+  },
+
   "auth": {
     "title": "Sign in to PuppyPlan",
     "subtitle": "We keep your puppy's data private to your household.",
@@ -210,9 +225,15 @@
       "helper": "You can change this later.",
       "name-field-label": "Name",
       "name-field-hint": "Puppy's name, required to continue",
+      "birth-date-placeholder": "YYYY-MM-DD",
       "age-toggle-age": "Age",
-      "age-toggle-date": "Or date of birth",
+      "age-toggle-date": "Birth date",
+      "age-weeks-field-label": "Age in weeks",
       "cta": "Continue",
+      "error-required": "Add a name and age or date of birth to continue.",
+      "error-name-required": "Add a name to continue.",
+      "error-age-required": "Enter age in whole weeks.",
+      "error-birth-date-required": "Enter a birth date in YYYY-MM-DD format.",
       "error-future-date": "That date is in the future — please double-check",
       "a11y-toggle": "Age entry method. Selected: age in weeks.",
       "a11y-stepper": "Age 8 weeks. Swipe up to increase."
@@ -229,6 +250,7 @@
       "counter": "{n} of 5 selected",
       "_comment": "{n} — integer 0..5",
       "limit-snackbar": "Up to 5. Remove one to add a new tracker.",
+      "min-required-snackbar": "Keep at least one tracker selected.",
       "zero-state-cta": "Skip for now",
       "cta": "Continue",
       "tile-feeding-a11y": "Feeding. Selected. Double tap to remove."
@@ -343,6 +365,7 @@
     "quick-log": {
       "section-title": "Recent Quick Log",
       "timeline-entry": "Open Timeline",
+      "setup-entry": "Set up puppy",
       "unavailable": {
         "title": "Puppy setup is needed",
         "body": "Quick Log events will appear here after an active puppy profile is available."
@@ -366,7 +389,12 @@
       "title": "What happened?",
       "edit-trackers": "Edit trackers",
       "edit-screen-title": "Your quick trackers",
-      "edit-helper": "Up to 5. Drag to reorder.",
+      "edit-helper": "Up to 5 trackers. Change them from More.",
+      "permission-denied": {
+        "title": "View only",
+        "body": "Ask the household owner for caregiver access to log routine events.",
+        "close": "Close"
+      },
       "unavailable": {
         "title": "Quick Log is not ready yet",
         "body": "Finish puppy setup before logging care events.",
@@ -1103,8 +1131,9 @@
     },
     "quick-trackers": {
       "screen-title-template": "Quick trackers ({n} of 5 selected)",
-      "hint": "Pick up to 5 trackers for the Today screen. Drag to reorder.",
+      "hint": "Pick up to 5 trackers for Today and Quick Log.",
       "max-reached-hint": "Turn off one of the selected first",
+      "min-required-hint": "Keep at least one tracker selected",
       "items": ["Feeding", "Potty", "Sleep", "Walk", "Weight", "Play", "Biting"]
     },
     "notifications": {
@@ -1206,6 +1235,7 @@
     "save-failed": "Couldn't save",
     "save-failed-local": "Couldn't save. Your entry is kept locally — we'll try again later.",
     "save-failed-connection": "Couldn't save. Check your connection.",
+    "owner-only-settings": "Only the household owner can change these settings.",
     "load-failed": "Couldn't load",
     "tariffs-load-failed": "Couldn't load the plans. Try refreshing",
     "session-revoked": "Access to {puppyName} is closed. If this seems wrong, reach out to the owner.",

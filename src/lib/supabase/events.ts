@@ -1,5 +1,6 @@
 import {
   eventLogRecordSchema,
+  type EventType,
   type EventLogInsert,
   type EventLogRecord,
 } from '@/contracts/supabase';
@@ -9,6 +10,7 @@ import { getSupabaseClient } from './client';
 
 export type QuickLogSupabaseErrorPhase =
   | 'insert'
+  | 'list'
   | 'select_existing_after_23505'
   | 'select_for_tombstone'
   | 'tombstone';
@@ -27,8 +29,20 @@ export type QuickLogSupabaseFailure = Error & {
   retryAfterMs: number | null;
 };
 
+export type EventLogListFilters = Readonly<{
+  from?: string;
+  to?: string;
+  eventTypes?: readonly EventType[];
+  cursor?: string;
+}>;
+
 export type SupabaseEventLogRepository = Readonly<{
   insertEvent(insert: EventLogInsert): Promise<EventLogRecord>;
+  listEvents(input: Readonly<{
+    householdId: string;
+    puppyId: string;
+    filters?: EventLogListFilters;
+  }>): Promise<readonly EventLogRecord[]>;
   selectExistingEvent(input: Readonly<{
     householdId: string;
     clientEventId: string;
@@ -42,6 +56,11 @@ export type SupabaseEventLogRepository = Readonly<{
 
 type EventLogClient = Readonly<{
   insertEventLog(insert: EventLogInsert): PromiseLike<EventLogClientResponse>;
+  listEventLog(input: Readonly<{
+    householdId: string;
+    puppyId: string;
+    filters: EventLogListFilters;
+  }>): PromiseLike<EventLogClientResponse>;
   selectEventLogByClientEventId(input: Readonly<{
     householdId: string;
     clientEventId: string;
@@ -67,7 +86,7 @@ export function createSupabaseEventLogRepository(
       const insertResponse = await client.insertEventLog(insert);
 
       if (!insertResponse.error) {
-        return parseEventLogRecord(insertResponse.data);
+        return parseEventLogRecord(insertResponse.data, 'insert');
       }
 
       if (getErrorCode(insertResponse.error) !== '23505') {
@@ -105,6 +124,22 @@ export function createSupabaseEventLogRepository(
 
       return existing;
     },
+    listEvents: async (input) => {
+      const response = await client.listEventLog({
+        filters: input.filters ?? {},
+        householdId: input.householdId,
+        puppyId: input.puppyId,
+      });
+
+      if (response.error) {
+        throw createQuickLogSupabaseFailure(response.error, {
+          phase: 'list',
+          signals: options.signals,
+        });
+      }
+
+      return parseEventLogRecords(response.data);
+    },
     selectExistingEvent: (input) => selectExistingEvent(client, {
       ...input,
       signals: options.signals,
@@ -139,7 +174,7 @@ export function createSupabaseEventLogRepository(
         });
       }
 
-      return parseEventLogRecord(tombstoneResponse.data);
+      return parseEventLogRecord(tombstoneResponse.data, 'tombstone');
     },
   };
 }
@@ -151,6 +186,35 @@ function createDefaultEventLogClient(): EventLogClient {
       .insert(insert)
       .select('*')
       .maybeSingle(),
+    listEventLog: (input) => {
+      let query = getSupabaseClient()
+        .from('event_log')
+        .select('*')
+        .eq('household_id', input.householdId)
+        .eq('puppy_id', input.puppyId)
+        .is('deleted_at', null);
+
+      if (input.filters.from !== undefined) {
+        query = query.gte('occurred_at', createLocalDayIsoRange(input.filters.from).startIso);
+      }
+
+      if (input.filters.to !== undefined) {
+        query = query.lte('occurred_at', createLocalDayIsoRange(input.filters.to).endIso);
+      }
+
+      if (input.filters.cursor !== undefined) {
+        query = query.lt('occurred_at', input.filters.cursor);
+      }
+
+      if (input.filters.eventTypes !== undefined && input.filters.eventTypes.length > 0) {
+        query = query.in('event_type', [...input.filters.eventTypes]);
+      }
+
+      return query
+        .order('occurred_at', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(50);
+    },
     selectEventLogByClientEventId: (input) => getSupabaseClient()
       .from('event_log')
       .select('*')
@@ -313,10 +377,13 @@ async function selectExistingEvent(
     return null;
   }
 
-  return parseEventLogRecord(response.data);
+  return parseEventLogRecord(response.data, input.phase ?? 'select_existing_after_23505');
 }
 
-function parseEventLogRecord(value: unknown): EventLogRecord {
+function parseEventLogRecord(
+  value: unknown,
+  phase: QuickLogSupabaseErrorPhase,
+): EventLogRecord {
   const result = eventLogRecordSchema.safeParse(value);
 
   if (!result.success) {
@@ -324,11 +391,47 @@ function parseEventLogRecord(value: unknown): EventLogRecord {
       code: '23514',
       status: 400,
     }, {
-      phase: 'insert',
+      phase,
     });
   }
 
   return result.data;
+}
+
+function parseEventLogRecords(value: unknown): readonly EventLogRecord[] {
+  const result = eventLogRecordSchema.array().safeParse(value);
+
+  if (!result.success) {
+    throw createQuickLogSupabaseFailure({
+      code: '23514',
+      status: 400,
+    }, {
+      phase: 'list',
+    });
+  }
+
+  return result.data;
+}
+
+export function createLocalDayIsoRange(date: string): Readonly<{
+  endIso: string;
+  startIso: string;
+}> {
+  const [year, month, day] = date.split('-').map((part) => Number.parseInt(part, 10));
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    throw createQuickLogSupabaseFailure({
+      code: '23514',
+      status: 400,
+    }, {
+      phase: 'list',
+    });
+  }
+
+  return {
+    endIso: new Date(year, month - 1, day, 23, 59, 59, 999).toISOString(),
+    startIso: new Date(year, month - 1, day, 0, 0, 0, 0).toISOString(),
+  };
 }
 
 function getErrorCode(error: unknown): string | undefined {

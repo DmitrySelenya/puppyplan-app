@@ -60,7 +60,8 @@ export function SegmentedControl<Value extends string>({
               pressedScaleStyle(pressed && !optionDisabled, reducedMotion),
             ]}>
             <AppText
-              numberOfLines={1}
+              maxFontSizeMultiplier={2}
+              numberOfLines={2}
               style={selected ? styles.selectedLabel : styles.label}
               variant="label">
               {option.label}

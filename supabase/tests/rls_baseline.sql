@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(82);
+SELECT plan(90);
 
 CREATE SCHEMA IF NOT EXISTS tests;
 
@@ -253,6 +253,25 @@ BEGIN
     puppy_id = target_puppy_id,
     created_by = target_user_id
   WHERE id = target_event_id;
+
+  RETURN FOUND;
+EXCEPTION
+  WHEN insufficient_privilege OR check_violation OR with_check_option_violation THEN
+    RETURN false;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION tests.try_update_puppy_quick_tracker_ids(
+  target_puppy_id uuid,
+  tracker_ids text[]
+)
+RETURNS boolean
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE public.puppy
+  SET quick_tracker_ids = tracker_ids
+  WHERE id = target_puppy_id;
 
   RETURN FOUND;
 EXCEPTION
@@ -805,6 +824,15 @@ SELECT results_eq(
   'non-member cannot read puppy profile projection RPC rows'
 );
 
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY['feeding_meal', 'training']::text[]
+  ),
+  false,
+  'non-member cannot update puppy selected quick trackers'
+);
+
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000103');
 SELECT is(
   tests.try_insert_event(
@@ -817,6 +845,15 @@ SELECT is(
   'viewer cannot insert routine events'
 );
 
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY['feeding_meal', 'training']::text[]
+  ),
+  false,
+  'viewer cannot update puppy selected quick trackers'
+);
+
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
 SELECT is(
   tests.try_insert_event(
@@ -827,6 +864,15 @@ SELECT is(
   ),
   true,
   'caregiver can insert routine events'
+);
+
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY['feeding_meal', 'training']::text[]
+  ),
+  false,
+  'caregiver cannot update puppy selected quick trackers'
 );
 
 SELECT is(
@@ -846,6 +892,59 @@ SELECT is(
   'caregiver cannot manage billing entitlements'
 );
 
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY['feeding_meal', 'training']::text[]
+  ),
+  true,
+  'owner can update puppy selected quick trackers'
+);
+
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY['feeding_meal', 'feeding_meal']::text[]
+  ),
+  false,
+  'puppy selected quick trackers reject duplicate ids'
+);
+
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY[
+      'potty_pee_outside',
+      'potty_pee_inside',
+      'potty_poop',
+      'feeding_meal',
+      'sleep_nap',
+      'training'
+    ]::text[]
+  ),
+  false,
+  'puppy selected quick trackers reject more than five ids'
+);
+
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY[]::text[]
+  ),
+  false,
+  'puppy selected quick trackers reject empty selected set'
+);
+
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY['feeding_meal', 'unknown_tracker']::text[]
+  ),
+  false,
+  'puppy selected quick trackers reject unknown tracker ids'
+);
+
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000105');
 SELECT results_eq(
   'SELECT count(*)::int FROM public.event_log',
@@ -853,7 +952,6 @@ SELECT results_eq(
   'revoked member loses household event access'
 );
 
-SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
 SELECT is(
   tests.try_insert_share_link(
     '00000000-0000-4000-8000-000000000201',

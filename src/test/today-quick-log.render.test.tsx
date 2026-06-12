@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { AccessibilityInfo } from 'react-native';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 
@@ -10,6 +10,15 @@ import { queryKeys } from '@/lib/query/keys';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { TodayScreen } from '@/features/today/screens/TodayScreen';
 
+const mockListEvents = jest.fn();
+
+jest.mock('@/lib/supabase/events', () => ({
+  ...jest.requireActual('@/lib/supabase/events'),
+  createSupabaseEventLogRepository: () => ({
+    listEvents: mockListEvents,
+  }),
+}));
+
 const householdId = '00000000-0000-4000-8000-000000001501';
 const puppyId = '00000000-0000-4000-8000-000000001502';
 const createdBy = '00000000-0000-4000-8000-000000001503';
@@ -18,11 +27,20 @@ const todayDate = '2026-05-27';
 const careContext = {
   authState: 'authenticated',
   householdId,
+  householdRole: 'owner',
   puppyId,
   todayDate,
 } as const;
 const openTimeline = jest.fn();
+const openOnboarding = jest.fn();
 const testQueryClients: ReturnType<typeof createPuppyPlanQueryClient>[] = [];
+
+function todayTimelineKey() {
+  return queryKeys.events.timeline(householdId, puppyId, {
+    from: todayDate,
+    to: todayDate,
+  });
+}
 
 function renderWithQuery(element: ReactElement) {
   const queryClient = createPuppyPlanQueryClient();
@@ -69,7 +87,10 @@ describe('Today Quick Log state integration', () => {
   let reduceMotionProbe: jest.SpyInstance;
 
   beforeEach(async () => {
+    mockListEvents.mockReset();
+    mockListEvents.mockResolvedValue([]);
     openTimeline.mockClear();
+    openOnboarding.mockClear();
     reduceMotionProbe = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
       .mockReturnValue(new Promise<boolean>(() => {}));
@@ -77,8 +98,8 @@ describe('Today Quick Log state integration', () => {
   });
 
   afterEach(() => {
-    reduceMotionProbe.mockRestore();
     cleanup();
+    reduceMotionProbe.mockRestore();
     for (const queryClient of testQueryClients) {
       queryClient.clear();
     }
@@ -90,17 +111,23 @@ describe('Today Quick Log state integration', () => {
     const { queryClient } = renderWithQuery(
       <TodayScreen
         careContext={null}
+        openOnboarding={openOnboarding}
         openTimeline={openTimeline}
       />,
     );
 
     expect(screen.getByText(i18n.t('today.quick-log.unavailable.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.quick-log.unavailable.body'))).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('today.quick-log.setup-entry'),
+    }));
+    expect(openOnboarding).toHaveBeenCalledTimes(1);
+    expect(openTimeline).not.toHaveBeenCalled();
     expect(screen.queryByText(i18n.t('states.empty-first-run.title'))).toBeNull();
     expect(queryClient.getQueryCache().findAll()).toHaveLength(0);
   });
 
-  it('renders pending Quick Log rows with Undo and Delete actions', () => {
+  it('renders pending Quick Log rows with Undo and Delete actions', async () => {
     const actions = {
       onDelete: jest.fn(),
       onRetry: jest.fn(),
@@ -115,7 +142,7 @@ describe('Today Quick Log state integration', () => {
     );
 
     act(() => {
-      queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), [
+      queryClient.setQueryData(todayTimelineKey(), [
         createRow({
           localSync: {
             state: 'pending_local',
@@ -126,7 +153,9 @@ describe('Today Quick Log state integration', () => {
       ]);
     });
 
-    expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
     expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
 
     fireEvent.press(screen.getByRole('button', {
@@ -149,7 +178,7 @@ describe('Today Quick Log state integration', () => {
     });
   });
 
-  it('renders failed rows with Retry/Delete and gates the persistent banner by retry count', () => {
+  it('renders failed rows with Retry/Delete and gates the persistent banner by retry count', async () => {
     const actions = {
       onDelete: jest.fn(),
       onRetry: jest.fn(),
@@ -164,7 +193,7 @@ describe('Today Quick Log state integration', () => {
     );
 
     act(() => {
-      queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), [
+      queryClient.setQueryData(todayTimelineKey(), [
         createRow({
           localSync: {
             state: 'failed_retryable',
@@ -175,11 +204,13 @@ describe('Today Quick Log state integration', () => {
       ]);
     });
 
-    expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
+    });
     expect(screen.queryByText(i18n.t('quick-log.failed.persistent-banner'))).toBeNull();
 
     act(() => {
-      queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), [
+      queryClient.setQueryData(todayTimelineKey(), [
         createRow({
           localSync: {
             state: 'failed_retryable',
@@ -190,7 +221,9 @@ describe('Today Quick Log state integration', () => {
       ]);
     });
 
-    expect(screen.getByText(i18n.t('quick-log.failed.persistent-banner'))).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.failed.persistent-banner'))).toBeTruthy();
+    });
     expect(screen.queryByLabelText(i18n.t('quick-log.failed.persistent-banner'))).toBeNull();
 
     fireEvent.press(screen.getByRole('button', {
@@ -203,6 +236,7 @@ describe('Today Quick Log state integration', () => {
     expect(actions.onRetry).toHaveBeenCalledWith(
       'evt_00000000-0000-4000-8000-000000001505',
       'manual_retry',
+      'today',
     );
     expect(actions.onDelete).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
@@ -210,7 +244,8 @@ describe('Today Quick Log state integration', () => {
     });
   });
 
-  it('renders synced rows with a non-color-only status and no local-only actions', () => {
+  it('renders synced rows with a non-color-only status and no local-only actions', async () => {
+    mockListEvents.mockResolvedValue([createRow()]);
     const actions = {
       onDelete: jest.fn(),
       onRetry: jest.fn(),
@@ -225,12 +260,14 @@ describe('Today Quick Log state integration', () => {
     );
 
     act(() => {
-      queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), [
+      queryClient.setQueryData(todayTimelineKey(), [
         createRow(),
       ]);
     });
 
-    expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
     expect(screen.getByText(i18n.t('timeline.pills.synced'))).toBeTruthy();
     expect(screen.queryByText('OK')).toBeNull();
     expect(JSON.stringify(toJSON())).not.toContain('"OK"');
@@ -242,7 +279,7 @@ describe('Today Quick Log state integration', () => {
     })).toBeNull();
   });
 
-  it('omits pending and failed action buttons when handlers are not wired', () => {
+  it('omits pending and failed action buttons when handlers are not wired', async () => {
     const { queryClient } = renderWithQuery(
       <TodayScreen
         careContext={careContext}
@@ -251,7 +288,7 @@ describe('Today Quick Log state integration', () => {
     );
 
     act(() => {
-      queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), [
+      queryClient.setQueryData(todayTimelineKey(), [
         createRow({
           localSync: {
             state: 'pending_local',
@@ -262,7 +299,9 @@ describe('Today Quick Log state integration', () => {
       ]);
     });
 
-    expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
+    });
     expect(screen.queryByRole('button', {
       name: i18n.t('quick-log.snackbar.undo'),
     })).toBeNull();
@@ -271,7 +310,7 @@ describe('Today Quick Log state integration', () => {
     })).toBeNull();
 
     act(() => {
-      queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), [
+      queryClient.setQueryData(todayTimelineKey(), [
         createRow({
           localSync: {
             state: 'failed_retryable',
@@ -282,12 +321,37 @@ describe('Today Quick Log state integration', () => {
       ]);
     });
 
-    expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
+    });
     expect(screen.queryByRole('button', {
       name: i18n.t('quick-log.failed.primary'),
     })).toBeNull();
     expect(screen.queryByRole('button', {
       name: i18n.t('quick-log.failed.tertiary'),
     })).toBeNull();
+  });
+
+  it('fetches same-day durable rows when Today opens with an empty cache', async () => {
+    mockListEvents.mockResolvedValue([createRow()]);
+
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
+    expect(mockListEvents).toHaveBeenCalledWith({
+      filters: {
+        from: todayDate,
+        to: todayDate,
+      },
+      householdId,
+      puppyId,
+    });
   });
 });

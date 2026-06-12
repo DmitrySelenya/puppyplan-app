@@ -1,6 +1,6 @@
 import { AccessibilityInfo, ScrollView, StyleSheet } from 'react-native';
 import { useState, type ReactElement } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { MAX_VISIBLE_QUICK_LOG_TRACKERS } from '@/contracts/quick-log';
 import { SnackbarProvider } from '@/design/primitives/Snackbar';
@@ -20,7 +20,15 @@ import { i18n } from '@/lib/i18n';
 const careContext: QuickLogCareContext = {
   authState: 'authenticated',
   householdId: '00000000-0000-4000-8000-000000000501',
+  householdRole: 'owner',
   puppyId: '00000000-0000-4000-8000-000000000502',
+  selectedTrackerIds: [
+    'potty_pee_outside',
+    'potty_pee_inside',
+    'potty_poop',
+    'feeding_meal',
+    'sleep_nap',
+  ],
   todayDate: '2026-05-27',
 };
 
@@ -78,6 +86,7 @@ describe('QuickLogShell', () => {
   });
 
   afterEach(() => {
+    cleanup();
     reduceMotionProbe.mockRestore();
   });
 
@@ -115,6 +124,9 @@ describe('QuickLogShell', () => {
     expect(screen.getByLabelText(i18n.t('quick-log.sheet.title')).props.accessibilityViewIsModal).toBe(
       true,
     );
+    expect(screen.getByRole('button', {
+      name: i18n.t('common.close'),
+    })).toBeTruthy();
     expect(contentStyle.paddingHorizontal).toBe(0);
     expect(screen.getByTestId('sheet-drag-handle', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getAllByTestId('quick-log-tracker-tile')).toHaveLength(
@@ -122,6 +134,48 @@ describe('QuickLogShell', () => {
     );
     expect(screen.queryByText(i18n.t('quick-log.snackbar.add-details'))).toBeNull();
     expect(screen.queryByText(i18n.t('quick-log.sheet.edit-trackers'))).toBeNull();
+  });
+
+  it('renders selected tracker ids from the active care context in order', () => {
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={{
+          ...careContext,
+          selectedTrackerIds: ['training', 'feeding_meal'],
+        }}
+        mutation={createMutationPort()}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    const trackerTiles = screen.getAllByTestId('quick-log-tracker-tile');
+
+    expect(trackerTiles).toHaveLength(2);
+    expect(trackerTiles[0].props.accessibilityLabel).toBe(i18n.t('quick-log.trackers.training'));
+    expect(trackerTiles[1].props.accessibilityLabel).toBe(i18n.t('quick-log.trackers.feeding'));
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.trackers.potty-outside'),
+    })).toBeNull();
+  });
+
+  it('falls back to default trackers when runtime selected tracker ids are empty', () => {
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={{
+          ...careContext,
+          selectedTrackerIds: [],
+        }}
+        mutation={createMutationPort()}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    expect(screen.getAllByTestId('quick-log-tracker-tile')).toHaveLength(
+      MAX_VISIBLE_QUICK_LOG_TRACKERS,
+    );
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.potty-outside'),
+    })).toBeTruthy();
   });
 
   it('treats an active context without a mutation adapter as unavailable', () => {

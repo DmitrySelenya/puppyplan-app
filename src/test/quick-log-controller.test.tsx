@@ -17,6 +17,7 @@ const now = new Date('2026-05-27T08:30:00.000Z');
 const careContext: QuickLogCareContext = {
   authState: 'authenticated',
   householdId,
+  householdRole: 'owner',
   puppyId,
   todayDate: '2026-05-27',
 };

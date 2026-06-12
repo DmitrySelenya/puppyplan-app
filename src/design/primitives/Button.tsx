@@ -4,7 +4,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { decorativeViewProps } from '@/design/a11y';
 import { pressedScaleStyle, useReducedMotion } from '@/design/motion';
-import { AppText } from '@/design/primitives/AppText';
+import { AppText, type AppTextVariant } from '@/design/primitives/AppText';
 import { Touchable } from '@/design/primitives/Touchable';
 import { tokens } from '@/design/tokens';
 
@@ -13,6 +13,8 @@ type ButtonPressHandler = NonNullable<PressableProps['onPress']>;
 
 export type ButtonProps = Omit<PressableProps, 'children' | 'onPress' | 'style'> & {
   label: string;
+  labelMaxFontSizeMultiplier?: number;
+  labelVariant?: AppTextVariant;
   leading?: ReactNode;
   loading?: boolean;
   onPress: ButtonPressHandler;
@@ -27,6 +29,8 @@ export function Button({
   accessibilityLabel,
   disabled = false,
   label,
+  labelMaxFontSizeMultiplier,
+  labelVariant = 'headline',
   leading,
   loading = false,
   onPress,
@@ -72,8 +76,9 @@ export function Button({
           />
         ) : null}
         <AppText
+          maxFontSizeMultiplier={labelMaxFontSizeMultiplier}
           style={[styles.label, variantStyle.label, loading ? styles.hiddenLabel : null, textStyle]}
-          variant="headline">
+          variant={labelVariant}>
           {label}
         </AppText>
       </View>

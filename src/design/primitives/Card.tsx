@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react';
-import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
+import type { PressableProps, StyleProp, ViewProps, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { pressedScaleStyle, useReducedMotion } from '@/design/motion';
@@ -11,7 +11,9 @@ export type CardVariant = 'resting' | 'interactive' | 'hero' | 'mutedTemplate';
 type StaticCardVariant = Exclude<CardVariant, 'interactive'>;
 
 type StaticCardProps = PropsWithChildren<{
+  accessibilityLiveRegion?: ViewProps['accessibilityLiveRegion'];
   accessibilityLabel?: string;
+  accessibilityRole?: ViewProps['accessibilityRole'];
   onPress?: undefined;
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -19,7 +21,9 @@ type StaticCardProps = PropsWithChildren<{
 }>;
 
 type InteractiveCardProps = PropsWithChildren<{
+  accessibilityLiveRegion?: never;
   accessibilityLabel: string;
+  accessibilityRole?: never;
   onPress: PressableProps['onPress'];
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -30,6 +34,8 @@ export type CardProps = StaticCardProps | InteractiveCardProps;
 
 export function Card({
   accessibilityLabel,
+  accessibilityLiveRegion,
+  accessibilityRole,
   children,
   onPress,
   style,
@@ -64,7 +70,9 @@ export function Card({
   return (
     <View
       accessibilityLabel={accessibilityLabel}
-      accessible={Boolean(accessibilityLabel)}
+      accessibilityLiveRegion={accessibilityLiveRegion}
+      accessibilityRole={accessibilityRole}
+      accessible={Boolean(accessibilityLabel || accessibilityLiveRegion || accessibilityRole)}
       style={rootStyle}
       testID={testID}>
       {children}

@@ -484,6 +484,7 @@ export type Database = {
           household_id: string
           id: string
           name: string
+          quick_tracker_ids: string[]
           updated_at: string
         }
         Insert: {
@@ -494,6 +495,7 @@ export type Database = {
           household_id: string
           id?: string
           name: string
+          quick_tracker_ids?: string[]
           updated_at?: string
         }
         Update: {
@@ -504,6 +506,7 @@ export type Database = {
           household_id?: string
           id?: string
           name?: string
+          quick_tracker_ids?: string[]
           updated_at?: string
         }
         Relationships: [
@@ -972,6 +975,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      quick_tracker_ids_are_unique: {
+        Args: { tracker_ids: string[] }
+        Returns: boolean
+      }
       share_link_has_scope: {
         Args: {
           target_scope: Database["public"]["Enums"]["share_scope_type"]
@@ -1186,4 +1193,3 @@ export const Constants = {
     },
   },
 } as const
-

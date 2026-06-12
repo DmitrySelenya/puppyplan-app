@@ -11,7 +11,9 @@ import { Screen } from '@/design/primitives/Screen';
 import { SheetSurface } from '@/design/primitives/SheetSurface';
 import { Stack } from '@/design/primitives/Stack';
 import { TrackerTile } from '@/design/primitives/TrackerTile';
-import { useAppTranslation } from '@/lib/i18n';
+import { useAppTranslation, type AppTranslate } from '@/lib/i18n';
+import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
+import { createQuickLogEventView } from '@/lib/query/quick-log-event-view';
 
 import {
   QuickLogLocalEvents,
@@ -40,6 +42,37 @@ export type QuickLogShellProps = Readonly<{
   snackbar?: QuickLogSnackbarPort;
 }>;
 
+export function createQuickLogLocalEventViews(
+  rows: readonly QuickLogCachedEventRow[],
+  input: Readonly<{
+    locale?: string;
+    t: AppTranslate;
+    todayDate: string;
+  }>,
+): readonly QuickLogLocalEventView[] {
+  return rows.flatMap((row) => {
+    if (!row.localSync || !isQuickLogLocalEventState(row.localSync.state)) {
+      return [];
+    }
+
+    const event = createQuickLogEventView(row, input);
+
+    if (event === null) {
+      return [];
+    }
+
+    return [{
+      clientEventId: event.clientEventId,
+      eventType: event.eventType,
+      householdId: event.householdId,
+      puppyId: event.puppyId,
+      state: row.localSync.state,
+      todayDate: event.todayDate,
+      trackerName: event.title,
+    }];
+  });
+}
+
 export function QuickLogShell(props: QuickLogShellProps) {
   const feedback = useQuickLogFeedback();
   const snackbar = props.snackbar ?? feedback.snackbar;
@@ -58,6 +91,15 @@ export function QuickLogShell(props: QuickLogShellProps) {
   );
 }
 
+function isQuickLogLocalEventState(
+  state: NonNullable<QuickLogCachedEventRow['localSync']>['state'],
+): state is QuickLogLocalEventView['state'] {
+  return state === 'pending_local'
+    || state === 'sending'
+    || state === 'failed_retryable'
+    || state === 'failed_permanent';
+}
+
 function QuickLogShellContent({
   careContext = null,
   closeSheet = () => undefined,
@@ -71,7 +113,8 @@ function QuickLogShellContent({
   feedback: QuickLogFeedbackPort;
 }) {
   const { t } = useAppTranslation();
-  const readyCareContext = mutation === undefined
+  const isViewOnly = careContext?.householdRole === 'viewer';
+  const readyCareContext = mutation === undefined || isViewOnly
     ? null
     : careContext;
   const controller = useQuickLogSheetController({
@@ -84,12 +127,39 @@ function QuickLogShellContent({
     now,
     recentEvent,
   });
+  const selectedTrackerIds = readyCareContext?.selectedTrackerIds?.length
+    ? readyCareContext.selectedTrackerIds
+    : defaultQuickLogTrackerIds;
+
+  if (isViewOnly) {
+    return (
+      <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
+        <SheetSurface accessibilityLabel={t('quick-log.sheet.permission-denied.title')}>
+          <AppText
+            maxFontSizeMultiplier={2}
+            variant="title">
+            {t('quick-log.sheet.permission-denied.title')}
+          </AppText>
+          <AppText tone="secondary">{t('quick-log.sheet.permission-denied.body')}</AppText>
+          <Button
+            label={t('quick-log.sheet.permission-denied.close')}
+            onPress={closeSheet}
+            variant="secondary"
+          />
+        </SheetSurface>
+      </Screen>
+    );
+  }
 
   if (controller.status === 'unavailable') {
     return (
       <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
         <SheetSurface accessibilityLabel={t('quick-log.sheet.unavailable.title')}>
-          <AppText variant="title">{t('quick-log.sheet.unavailable.title')}</AppText>
+          <AppText
+            maxFontSizeMultiplier={2}
+            variant="title">
+            {t('quick-log.sheet.unavailable.title')}
+          </AppText>
           <AppText tone="secondary">{t('quick-log.sheet.unavailable.body')}</AppText>
           <Button
             label={t('quick-log.sheet.unavailable.close')}
@@ -104,9 +174,29 @@ function QuickLogShellContent({
   return (
     <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
       <SheetSurface accessibilityLabel={t('quick-log.sheet.title')}>
-        <AppText variant="title">{t('quick-log.sheet.title')}</AppText>
+        <Stack
+          align="flex-start"
+          direction="horizontal"
+          gap="sm"
+          justify="space-between"
+          wrap>
+          <AppText
+            maxFontSizeMultiplier={2}
+            style={styles.title}
+            variant="title">
+            {t('quick-log.sheet.title')}
+          </AppText>
+          <Button
+            label={t('common.close')}
+            labelMaxFontSizeMultiplier={2}
+            labelVariant="label"
+            onPress={closeSheet}
+            style={styles.closeButton}
+            variant="tertiary"
+          />
+        </Stack>
         <Stack direction="horizontal" gap="md" wrap>
-          {defaultQuickLogTrackerIds.map((trackerId) => (
+          {selectedTrackerIds.map((trackerId) => (
             <TrackerTile
               accessibilityLabel={t(getQuickLogTrackerLabelKey(trackerId))}
               key={trackerId}
@@ -118,7 +208,11 @@ function QuickLogShellContent({
             />
           ))}
         </Stack>
-        <AppText tone="secondary">{t('quick-log.sheet.edit-helper')}</AppText>
+        <AppText
+          maxFontSizeMultiplier={2}
+          tone="secondary">
+          {t('quick-log.sheet.edit-helper')}
+        </AppText>
         {controller.duplicateWarning ? (
           <DuplicateWarning
             onCancel={controller.cancelDuplicate}
@@ -146,7 +240,10 @@ function DuplicateWarning({
   const { t } = useAppTranslation();
 
   return (
-    <Card>
+    <Card
+      accessibilityLabel={t('quick-log.duplicate-warning.title')}
+      accessibilityLiveRegion="polite"
+      accessibilityRole="alert">
       <Stack gap="md">
         <AppText variant="headline">{t('quick-log.duplicate-warning.title')}</AppText>
         <AppText tone="secondary">{t('quick-log.duplicate-warning.question')}</AppText>
@@ -175,9 +272,16 @@ const unavailableMutation: QuickLogMutationPort = {
 };
 
 const styles = StyleSheet.create({
+  closeButton: {
+    alignSelf: 'flex-start',
+  },
   sheetContent: {
     flexGrow: 1,
     justifyContent: 'flex-end',
     paddingHorizontal: 0,
+  },
+  title: {
+    flexShrink: 1,
+    minWidth: 0,
   },
 });

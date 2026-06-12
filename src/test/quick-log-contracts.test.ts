@@ -101,7 +101,7 @@ describe('Quick Log tracker contracts', () => {
         'potty_pee_outside',
       ]).success,
     ).toBe(false);
-    expect(selectedQuickLogTrackerIdsSchema.safeParse([]).success).toBe(true);
+    expect(selectedQuickLogTrackerIdsSchema.safeParse([]).success).toBe(false);
     expect(
       selectedQuickLogTrackerIdsSchema.safeParse([
         'potty_pee_outside',

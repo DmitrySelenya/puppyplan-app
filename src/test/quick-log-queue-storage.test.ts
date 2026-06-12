@@ -602,11 +602,13 @@ describe('Quick Log queue SQLite storage boundary', () => {
 
     const retry = await storage.manualRetry(clientEventId, {
       now: '2026-05-26T08:01:13.000Z',
+      recoverySurface: 'manual_retry',
     });
 
     expect(retry).toMatchObject({
       client_event_id: clientEventId,
       bypasses_delay: true,
+      recovery_surface: 'manual_retry',
       item: {
         state: 'sending',
         last_error_category: null,

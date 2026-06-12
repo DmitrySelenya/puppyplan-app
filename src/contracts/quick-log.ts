@@ -92,7 +92,7 @@ export type QuickLogEventInsert = EventLogInsert & Readonly<{
 }>;
 
 export const selectedQuickLogTrackerIdsSchema = z.array(quickLogTrackerIdSchema)
-  .min(0)
+  .min(1)
   .max(MAX_VISIBLE_QUICK_LOG_TRACKERS)
   .superRefine((trackerIds, context) => {
     if (new Set(trackerIds).size === trackerIds.length) {

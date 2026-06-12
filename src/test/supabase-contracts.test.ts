@@ -1,4 +1,5 @@
 import {
+  activePuppyProfileSchema,
   createInviteRequestSchema,
   createShareLinkRequestSchema,
   dateSchema,
@@ -15,6 +16,7 @@ import {
   type EventLogInsert,
   type EventLogRecord,
 } from '@/contracts/supabase';
+import { defaultQuickLogTrackerIds } from '@/contracts/quick-log';
 
 const uuidA = '00000000-0000-4000-8000-000000000001';
 const uuidB = '00000000-0000-4000-8000-000000000002';
@@ -173,6 +175,7 @@ describe('profile, token, and share refinements', () => {
       name: 'Puppy',
       birth_date: null,
       age_weeks_estimate: 12,
+      quick_tracker_ids: defaultQuickLogTrackerIds,
       created_at: '2026-05-17T08:35:00.000Z',
       updated_at: '2026-05-17T08:35:00.000Z',
       deleted_at: null,
@@ -184,6 +187,59 @@ describe('profile, token, and share refinements', () => {
       birth_date: null,
       age_weeks_estimate: null,
     }).success).toBe(false);
+  });
+
+  it('keeps selected quick trackers on puppy profile rows capped and unique', () => {
+    const profile = {
+      id: uuidA,
+      household_id: uuidB,
+      name: 'Puppy',
+      birth_date: null,
+      age_weeks_estimate: 12,
+      quick_tracker_ids: ['training', 'feeding_meal'],
+      created_at: '2026-05-17T08:35:00.000Z',
+      updated_at: '2026-05-17T08:35:00.000Z',
+      deleted_at: null,
+    };
+
+    expect(puppyProfileSchema.safeParse(profile).success).toBe(true);
+    expect(puppyProfileSchema.safeParse({
+      ...profile,
+      quick_tracker_ids: ['feeding_meal', 'feeding_meal'],
+    }).success).toBe(false);
+    expect(puppyProfileSchema.safeParse({
+      ...profile,
+      quick_tracker_ids: [],
+    }).success).toBe(false);
+    expect(puppyProfileSchema.safeParse({
+      ...profile,
+      quick_tracker_ids: [
+        ...defaultQuickLogTrackerIds,
+        'training',
+      ],
+    }).success).toBe(false);
+  });
+
+  it('adds current household role only to active puppy profile boundary results', () => {
+    const activeProfile = {
+      id: uuidA,
+      household_id: uuidB,
+      household_role: 'caregiver',
+      name: 'Puppy',
+      birth_date: null,
+      age_weeks_estimate: 12,
+      quick_tracker_ids: ['training', 'feeding_meal'],
+      created_at: '2026-05-17T08:35:00.000Z',
+      updated_at: '2026-05-17T08:35:00.000Z',
+      deleted_at: null,
+    };
+
+    expect(activePuppyProfileSchema.safeParse(activeProfile).success).toBe(true);
+    expect(activePuppyProfileSchema.safeParse({
+      ...activeProfile,
+      household_role: 'trainer_viewer',
+    }).success).toBe(false);
+    expect(puppyProfileSchema.safeParse(activeProfile).success).toBe(false);
   });
 
   it('requires at least one push token value for a device token record', () => {

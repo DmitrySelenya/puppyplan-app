@@ -218,6 +218,14 @@ Graph output is advisory only. Always read the actual source files and tests bef
 
 Use Maestro for MVP E2E once an installable Expo dev build exists.
 
+Local iOS simulator smoke on this M1 MacBook Air must use the lightweight SE profile:
+
+- Primary simulator: `Grith iPhone SE 3 iOS 26.3` (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`).
+- Fallback simulator, only if the primary profile is missing: `iPhone SE (3rd generation)` (`1319D7E1-AE4E-4165-8EB9-B3A78DE62867`).
+- Do not auto-select the first available simulator from `xcrun simctl list` or XcodeBuildMCP `list_sims`; high-end devices such as iPhone Pro/Pro Max and iPad simulators are not allowed for local smoke unless the user explicitly approves that exact device.
+- Before any iOS simulator build/run, confirm XcodeBuildMCP/session defaults point at the SE profile. If defaults are empty or point elsewhere, set them to the SE profile or stop and report the blocker.
+- Keep one simulator plus Metro open at a time. PuppyPlan (`com.dmitry-selenya.puppyplan-app`) can coexist on the same SE simulator with Grith (`com.grith.app`) because the bundle identifiers and app data containers are separate; reinstalling PuppyPlan updates only PuppyPlan.
+
 Critical future flows:
 
 - onboarding -> puppy profile -> first Quick Log -> Today update

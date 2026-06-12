@@ -571,6 +571,8 @@ describe('design primitives', () => {
     expect(tabList.props.accessibilityRole).toBe('tablist');
     expect(selectedSegment.props.accessibilityState).toMatchObject({ selected: true });
     expect(selectedSegmentStyle.backgroundColor).toBe(tokens.color.primary[600]);
+    expect(screen.getByText('Vaccines').props.maxFontSizeMultiplier).toBe(2);
+    expect(screen.getByText('Vaccines').props.numberOfLines).toBe(2);
     expect(sheet.props.accessibilityViewIsModal).toBe(true);
     expect(sheet.props.importantForAccessibility).toBe('yes');
     expect(sheet.props.accessible).not.toBe(true);

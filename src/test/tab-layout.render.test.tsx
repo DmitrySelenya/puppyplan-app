@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import * as React from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { primaryTabs, quickLogAction } from '@/contracts/navigation';
+import { tokens } from '@/design/tokens';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
 
@@ -87,5 +88,32 @@ describe('TabLayout', () => {
 
     expect(mockRouterPush).toHaveBeenCalledTimes(1);
     expect(mockRouterPush).toHaveBeenCalledWith(quickLogAction.href);
+  });
+
+  it('positions Quick Log above tab hit areas on compact phones', async () => {
+    render(
+      <AppProviders>
+        <TabLayout />
+      </AppProviders>,
+    );
+
+    const quickLogButton = await waitFor(() => {
+      return screen.getByRole('button', {
+        name: i18n.t(quickLogAction.labelKey),
+      });
+    });
+
+    const styleProp = quickLogButton.props.style;
+    const flattenedStyle = StyleSheet.flatten(
+      typeof styleProp === 'function' ? styleProp({ pressed: false }) : styleProp,
+    );
+
+    expect(flattenedStyle.position).toBe('absolute');
+    expect(flattenedStyle.right).toBeUndefined();
+    expect(flattenedStyle.left).toBe('50%');
+    expect(flattenedStyle.marginLeft).toBe(-tokens.component.fab.size / 2);
+    expect(flattenedStyle.bottom).toBeGreaterThanOrEqual(
+      tokens.layout.tabBarHeight + tokens.space[8],
+    );
   });
 });
