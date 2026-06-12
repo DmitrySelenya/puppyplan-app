@@ -50,7 +50,17 @@
         "onboarding": "Welcome, profile, age hint, tracker picker, and plan reveal.",
         "profile": "Saved and editing states for the puppy profile settings route.",
         "quick-trackers": "Selected tracker count, limit state, and reorder-ready rows.",
+        "today-core": "Today hero, daily cards, guidance, and data states.",
+        "guidance": "Starter guidance read, tried, and skipped states.",
+        "today-deferrals": "Synthetic-only family invite and reminder slots for review.",
         "global": "Loading, empty, error, offline, pending, and permission states."
+      },
+      "today": {
+        "day-one": "Today · day one",
+        "day-two-morning": "Today · day two morning",
+        "after-invite": "Today · after invite slot",
+        "missed-reminder": "Today · missed reminder slot",
+        "synthetic-note": "These states do not write reminders, invites, or household activity."
       }
     }
   },
@@ -303,7 +313,37 @@
       "potty-time-meta": "Last break was {duration} ago.",
       "_comment-potty-time-meta": "{duration} — e.g. \"1 hr 40 min\"",
       "potty-time-primary": "Log it",
-      "potty-time-tertiary": "Later"
+      "potty-time-tertiary": "Later",
+      "eyebrow": "Today",
+      "first-day": {
+        "title": "Start with one small log",
+        "body": "A first potty, meal, or nap gives Today enough context to guide the next step.",
+        "primary": "Open Quick Log"
+      },
+      "day-2-morning": {
+        "title": "Morning rhythm check",
+        "body": "Use the first break, meal, and nap to make day two easier to read.",
+        "primary": "Log the morning"
+      },
+      "accident-recovery": {
+        "title": "Reset after an indoor pee",
+        "body": "Skip blame. The next useful cue is usually sleep, food, play, or a short outside break.",
+        "primary": "Plan the next break"
+      },
+      "missed-reminder": {
+        "title": "Reminder slot preview",
+        "body": "This synthetic card shows where a missed reminder will sit after reminders ship.",
+        "primary": "Preview only"
+      },
+      "day-7-weekly-rhythm": {
+        "title": "One week of rhythm",
+        "body": "The weekly card highlights repeated feeding, potty, and sleep patterns from logged care.",
+        "primary": "Review the week"
+      },
+      "steady-day": {
+        "title": "Keep the rhythm visible",
+        "body": "Today stays quiet when logs are current and no urgent care pattern stands out."
+      }
     },
     "starter-guidance": {
       "first-day": "The first day is about observing, not results.",
@@ -374,6 +414,92 @@
         "title": "No Quick Log events yet",
         "body": "Use Quick Log when something happens, and the latest events will stay visible here."
       }
+    },
+    "daily-cards": {
+      "starter-action-potty": {
+        "title": "First potty cue",
+        "body": "Try a short outside break after sleep, food, or active play."
+      },
+      "starter-action-sleep": {
+        "title": "Protect one quiet nap",
+        "body": "A calm rest spot helps the rest of the day stay easier to read."
+      },
+      "starter-action-feeding": {
+        "title": "Mark the next meal",
+        "body": "One meal log is enough to start seeing the feeding rhythm."
+      },
+      "recap-yesterday": {
+        "title": "Yesterday gives a hint",
+        "body": "Use what was logged yesterday to choose the first calm action today."
+      },
+      "feeding-pattern": {
+        "title": "Feeding pattern noticed",
+        "body": "Today will keep meals near the top while the pattern is forming."
+      },
+      "after-invite": {
+        "title": "Caregiver activity slot",
+        "body": "A synthetic preview of how new household activity will appear in Today."
+      },
+      "quick-log-prompt": {
+        "title": "Log what just happened",
+        "body": "A single recent event keeps the rest of Today grounded."
+      },
+      "sleep-rhythm": {
+        "title": "Sleep rhythm",
+        "body": "Short naps and quiet wake-ups make the next potty cue easier to spot."
+      },
+      "potty-rhythm": {
+        "title": "Potty rhythm",
+        "body": "Recent potty logs help Today keep outside breaks timely."
+      },
+      "timeline-review": {
+        "title": "Recent care is saved",
+        "body": "Timeline keeps the durable record when the Today card stays brief."
+      },
+      "health-calm-check": {
+        "title": "Calm health check",
+        "body": "If something feels off, record the observation in Health."
+      },
+      "tracker-settings": {
+        "title": "Tune quick trackers",
+        "body": "Keep the five fastest actions matched to this puppy's routine."
+      }
+    },
+    "states": {
+      "loading": {
+        "title": "Refreshing Today",
+        "body": "Saved routine events are loading for this puppy."
+      },
+      "empty": {
+        "title": "Nothing logged today",
+        "body": "Today will fill in after the first routine event."
+      },
+      "error": {
+        "title": "Could not refresh Today",
+        "body": "Showing the saved view that is already on this device."
+      },
+      "offline-read": {
+        "title": "Offline view",
+        "body": "Saved events are visible. New changes will sync when connection returns."
+      },
+      "pending-write": {
+        "title": "Sync in progress",
+        "body": "One or more local care events are waiting to sync."
+      },
+      "permission-denied": {
+        "title": "View-only access",
+        "body": "Today is readable, but routine logging needs caregiver access."
+      },
+      "unavailable": {
+        "title": "Puppy setup is needed",
+        "body": "Create or select an active puppy profile before Today can guide care."
+      }
+    },
+    "deferred": {
+      "title": "Production deferral",
+      "synthetic-badge": "Preview only",
+      "family-invite": "Family invite activity is shown only in synthetic fixtures until sharing writes ship.",
+      "reminders": "Reminder cards are shown only in synthetic fixtures until reminder writes ship."
     },
     "error-banner": "Couldn't refresh. Showing the last saved view.",
     "weekly-example": {
@@ -1063,6 +1189,86 @@
     "practiced-summary": "Tried: {title}",
     "skip-timeline-event": "Tip skipped",
     "escalation-pattern": "If {sign}, reach out to your vet clinic",
+    "action-labels": {
+      "read": "Read",
+      "practiced": "Tried it",
+      "skip": "Skip"
+    },
+    "status": {
+      "read": "Marked as read",
+      "practiced": "Marked as tried",
+      "skipped": "Tip skipped for today"
+    },
+    "first-night": {
+      "title": "First night at home",
+      "body": "Keep the bed close, lights low, and trips outside brief. Quiet whimpering can be normal.",
+      "escalation": "Call your clinic if breathing stays fast or the puppy cannot settle at all."
+    },
+    "potty-rhythm": {
+      "title": "Potty rhythm",
+      "body": "Offer short outside breaks after sleep, food, and play. Praise calmly the moment it happens outside.",
+      "escalation": "Call your clinic if there is no urination across a full day."
+    },
+    "biting-play": {
+      "title": "Mouthing during play",
+      "body": "Pause play when teeth touch skin, then offer a toy before restarting.",
+      "escalation": "Ask a behavior specialist if biting repeatedly breaks adult skin."
+    },
+    "crate-settling": {
+      "title": "Crate settling",
+      "body": "Make the crate a quiet open-door spot first. Add short closed-door moments only when the puppy is calm.",
+      "escalation": "Pause crate practice and ask for help if panic lasts more than a few minutes."
+    },
+    "handling": {
+      "title": "Gentle handling",
+      "body": "Pair tiny touches on paws, ears, and collar with food so care feels predictable.",
+      "escalation": "Ask your clinic if touch causes pain, limping, or sudden guarding."
+    },
+    "socialization-window": {
+      "title": "Socialization window",
+      "body": "Choose calm distance, not busy contact. Let the puppy observe people, sounds, and surfaces safely.",
+      "escalation": "Ask your clinic which outings fit the current vaccine stage."
+    },
+    "vet-visit-prep": {
+      "title": "Vet visit prep",
+      "body": "Practice brief carrier or car moments with treats before the appointment day.",
+      "escalation": "Call ahead if eating stops, vomiting repeats, or energy drops sharply."
+    },
+    "quiet-sleep": {
+      "title": "Quiet sleep",
+      "body": "Protect naps from extra handling. Overtired puppies often bite, bark, or sprint more.",
+      "escalation": "Ask your clinic if sleepiness comes with weakness, fever, or poor appetite."
+    },
+    "feeding-rhythm": {
+      "title": "Feeding rhythm",
+      "body": "Keep meals predictable and log the portion style. Patterns matter more than perfect grams.",
+      "escalation": "Call your clinic if meals are refused repeatedly or water intake changes suddenly."
+    },
+    "alone-time": {
+      "title": "Tiny alone-time steps",
+      "body": "Step away for seconds while the puppy is calm, then return before worry builds.",
+      "escalation": "Ask a trainer if alone time causes panic, drooling, or frantic escape attempts."
+    },
+    "leash-intro": {
+      "title": "Leash intro",
+      "body": "Let the leash appear indoors first, then reward a few relaxed steps beside you.",
+      "escalation": "Stop and ask for help if the puppy freezes, coughs, or fights the collar."
+    },
+    "calm-greetings": {
+      "title": "Calm greetings",
+      "body": "Reward four paws on the floor before attention. Keep greetings short and predictable.",
+      "escalation": "Ask for training help if jumping turns into repeated nipping."
+    },
+    "chew-swap": {
+      "title": "Chew swap",
+      "body": "Trade household objects for a legal chew instead of chasing or grabbing.",
+      "escalation": "Call your clinic if anything sharp, toxic, or string-like may have been swallowed."
+    },
+    "weekly-rhythm": {
+      "title": "Weekly rhythm",
+      "body": "At the end of two weeks, compare sleep, potty, and meals to pick one routine to simplify.",
+      "escalation": "Ask your clinic if a pattern changes abruptly with appetite, stool, or energy."
+    },
     "topics": {
       "first-night": {
         "eyebrow": "Tip of the day · 1 of 14",

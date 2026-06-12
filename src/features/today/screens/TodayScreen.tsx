@@ -1,6 +1,14 @@
 import { StyleSheet } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
+import {
+  buildTodayPlan,
+  type TodayPlanInput,
+} from '@/contracts/today';
+import {
+  eventPayloadSchemas,
+  type EventType,
+} from '@/contracts/supabase';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
@@ -17,13 +25,24 @@ import {
   type QuickLogEventView,
   type QuickLogSurfaceCareContext,
 } from '@/lib/query/quick-log-event-view';
+import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { useQuickLogTimelineRows } from '@/lib/query/useQuickLogTimelineRows';
+
+import {
+  TodayPlanCards,
+  TodayStatusCard,
+  type TodayStatusState,
+} from '../components/TodayCards';
+
+export type TodayScreenStateOverride = 'offline-read';
 
 export type TodayScreenProps = Readonly<{
   actions?: QuickLogEventActionHandlers;
   careContext?: QuickLogSurfaceCareContext | null;
   openOnboarding?: () => void;
   openTimeline: () => void;
+  screenState?: TodayScreenStateOverride;
+  todayPlanInput?: Partial<TodayPlanInput>;
 }>;
 
 const emptyActions: QuickLogEventActionHandlers = {};
@@ -33,6 +52,8 @@ export function TodayScreen({
   careContext = null,
   openOnboarding,
   openTimeline,
+  screenState,
+  todayPlanInput,
 }: TodayScreenProps) {
   const { locale, t } = useAppTranslation();
   const timelineRows = useQuickLogTimelineRows(
@@ -50,12 +71,7 @@ export function TodayScreen({
     return (
       <Screen>
         <AppText variant="title">{t('tabs.today')}</AppText>
-        <Card>
-          <Stack gap="sm">
-            <AppText variant="headline">{t('today.quick-log.unavailable.title')}</AppText>
-            <AppText tone="secondary">{t('today.quick-log.unavailable.body')}</AppText>
-          </Stack>
-        </Card>
+        <TodayStatusCard state="unavailable" />
         <Button
           label={t('today.quick-log.setup-entry')}
           onPress={openOnboarding ?? openTimeline}
@@ -74,10 +90,27 @@ export function TodayScreen({
 
     return event === null ? [] : [event];
   });
+  const todayStatus = getTodayStatusState({
+    careContext,
+    eventViews,
+    rows,
+    screenState,
+    timelineStatus: timelineRows.status,
+  });
+  const todayPlan = buildTodayPlan(createTodayPlanInput({
+    careContext,
+    overrides: todayPlanInput,
+    rows,
+  }));
 
   return (
     <Screen contentStyle={styles.content}>
       <AppText variant="title">{t('tabs.today')}</AppText>
+      {todayStatus === null ? null : <TodayStatusCard state={todayStatus} />}
+      {timelineRows.status === 'loading' && rows.length === 0 ? null : (
+        <TodayPlanCards plan={todayPlan} />
+      )}
+      {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
       {shouldShowQuickLogFailedBanner(rows) ? (
         <Card>
           <AppText variant="headline">{t('quick-log.failed.persistent-banner')}</AppText>
@@ -130,6 +163,143 @@ export function TodayScreen({
       </Stack>
     </Screen>
   );
+}
+
+function getTodayStatusState(input: Readonly<{
+  careContext: QuickLogSurfaceCareContext;
+  eventViews: readonly QuickLogEventView[];
+  rows: readonly QuickLogCachedEventRow[];
+  screenState?: TodayScreenStateOverride;
+  timelineStatus: 'error' | 'loading' | 'ready' | 'unavailable';
+}>): TodayStatusState | null {
+  if (input.screenState === 'offline-read') {
+    return 'offline-read';
+  }
+
+  if (input.careContext.householdRole === 'viewer') {
+    return 'permission-denied';
+  }
+
+  if (input.timelineStatus === 'loading' && input.rows.length === 0) {
+    return 'loading';
+  }
+
+  if (input.timelineStatus === 'error') {
+    return 'error';
+  }
+
+  if (input.timelineStatus === 'ready' && input.eventViews.length === 0) {
+    return 'empty';
+  }
+
+  return null;
+}
+
+function createTodayPlanInput(input: Readonly<{
+  careContext: QuickLogSurfaceCareContext;
+  overrides?: Partial<TodayPlanInput>;
+  rows: readonly QuickLogCachedEventRow[];
+}>): TodayPlanInput {
+  const eventCounts = createEventCounts(input.rows);
+  const lastEvents = input.rows.flatMap((row) => {
+    const summary = createTodayEventSummary(row);
+
+    return summary === null ? [] : [summary];
+  });
+  const latestMealRow = input.rows.find((row) => row.event_type === 'feeding');
+  const baseInput: TodayPlanInput = {
+    dayNumber: 1,
+    eventCounts,
+    feedingPattern: latestMealRow === undefined
+      ? undefined
+      : {
+        lastFeedingLocalTime: formatLocalHourMinute(latestMealRow.occurred_at),
+        usualAmount: 'meal',
+      },
+    lastEvents,
+    suggestedDailyCards: lastEvents.length === 0
+      ? ['quick_log_prompt']
+      : ['timeline_review', 'potty_rhythm', 'sleep_rhythm'],
+    todayDate: input.careContext.todayDate,
+  };
+
+  return {
+    ...baseInput,
+    ...input.overrides,
+  };
+}
+
+function createEventCounts(rows: readonly QuickLogCachedEventRow[]): NonNullable<TodayPlanInput['eventCounts']> {
+  const eventCounts: Partial<Record<EventType, number>> = {};
+
+  for (const row of rows) {
+    eventCounts[row.event_type] = (eventCounts[row.event_type] ?? 0) + 1;
+  }
+
+  return eventCounts;
+}
+
+function createTodayEventSummary(
+  row: QuickLogCachedEventRow,
+): NonNullable<TodayPlanInput['lastEvents']>[number] | null {
+  const occurredAt = Date.parse(row.occurred_at);
+
+  if (Number.isNaN(occurredAt)) {
+    return null;
+  }
+
+  return {
+    eventType: row.event_type,
+    minutesAgo: Math.min(60 * 24 * 7, Math.max(0, Math.floor((Date.now() - occurredAt) / 60000))),
+    quickAction: getTodayQuickAction(row),
+  };
+}
+
+function getTodayQuickAction(
+  row: QuickLogCachedEventRow,
+): NonNullable<TodayPlanInput['lastEvents']>[number]['quickAction'] {
+  if (row.event_type === 'potty') {
+    const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
+
+    if (!payloadResult.success) {
+      return 'other';
+    }
+
+    return payloadResult.data.quick_action;
+  }
+
+  if (row.event_type === 'feeding') {
+    const payloadResult = eventPayloadSchemas.feeding.safeParse(row.payload);
+
+    return payloadResult.success && payloadResult.data.amount === 'meal'
+      ? 'meal'
+      : 'other';
+  }
+
+  if (row.event_type === 'sleep') {
+    const payloadResult = eventPayloadSchemas.sleep.safeParse(row.payload);
+
+    return payloadResult.success && payloadResult.data.sleep_kind === 'nap'
+      ? 'nap'
+      : 'other';
+  }
+
+  return 'other';
+}
+
+function hasPendingLocalRows(rows: readonly QuickLogCachedEventRow[]): boolean {
+  return rows.some((row) =>
+    row.localSync?.state === 'pending_local' || row.localSync?.state === 'sending');
+}
+
+function formatLocalHourMinute(occurredAt: string): string {
+  const date = new Date(occurredAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return '00:00';
+  }
+
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
 function TodayQuickLogEventRow({

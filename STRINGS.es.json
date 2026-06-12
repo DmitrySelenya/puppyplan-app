@@ -49,7 +49,17 @@
         "onboarding": "Bienvenida, perfil, pista de edad, selección de trackers y plan.",
         "profile": "Estados guardado y edición para la ruta de perfil del cachorro.",
         "quick-trackers": "Conteo de trackers elegidos, límite y filas listas para reordenar.",
+        "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
+        "guidance": "Estados de guía inicial: leído, probado y omitido.",
+        "today-deferrals": "Espacios sintéticos de invitación familiar y recordatorios para revisión.",
         "global": "Estados de carga, vacío, error, offline, pendiente y permisos."
+      },
+      "today": {
+        "day-one": "Hoy · día uno",
+        "day-two-morning": "Hoy · mañana del día dos",
+        "after-invite": "Hoy · espacio tras invitación",
+        "missed-reminder": "Hoy · espacio de recordatorio pendiente",
+        "synthetic-note": "Estos estados no escriben recordatorios, invitaciones ni actividad del hogar."
       }
     }
   },
@@ -296,7 +306,37 @@
       "potty-time-meta": "La última pausa fue hace {duration}.",
       "_comment-potty-time-meta": "{duration} — p.ej. \"1 hora 40 minutos\"",
       "potty-time-primary": "Regístrelo",
-      "potty-time-tertiary": "Más tarde"
+      "potty-time-tertiary": "Más tarde",
+      "eyebrow": "Hoy",
+      "first-day": {
+        "title": "Empieza con un registro pequeño",
+        "body": "Un primer baño, comida o descanso da a Hoy contexto suficiente para guiar el siguiente paso.",
+        "primary": "Abrir Quick Log"
+      },
+      "day-2-morning": {
+        "title": "Revisión del ritmo matutino",
+        "body": "La primera salida, comida y descanso hacen que el segundo día sea más fácil de leer.",
+        "primary": "Registrar la mañana"
+      },
+      "accident-recovery": {
+        "title": "Reinicia tras un pipí dentro",
+        "body": "Sin culpas. La pista útil suele ser sueño, comida, juego o una salida corta.",
+        "primary": "Planificar la salida"
+      },
+      "missed-reminder": {
+        "title": "Vista previa del recordatorio",
+        "body": "Esta tarjeta sintética muestra dónde aparecerá un recordatorio pendiente cuando se lance recordatorios.",
+        "primary": "Solo vista previa"
+      },
+      "day-7-weekly-rhythm": {
+        "title": "Una semana de ritmo",
+        "body": "La tarjeta semanal destaca patrones repetidos de comida, baño y sueño desde los cuidados registrados.",
+        "primary": "Revisar la semana"
+      },
+      "steady-day": {
+        "title": "Mantén visible el ritmo",
+        "body": "Hoy se mantiene tranquilo cuando los registros están al día y no destaca ningún patrón urgente."
+      }
     },
     "starter-guidance": {
       "first-day": "El primer día se trata de observar, no de resultados.",
@@ -377,6 +417,92 @@
         "title": "Aún no hay eventos de Quick Log",
         "body": "Usa Quick Log cuando ocurra algo y los eventos recientes quedarán visibles aquí."
       }
+    },
+    "daily-cards": {
+      "starter-action-potty": {
+        "title": "Primera pista de baño",
+        "body": "Prueba una salida corta después de dormir, comer o jugar activo."
+      },
+      "starter-action-sleep": {
+        "title": "Protege un descanso tranquilo",
+        "body": "Un lugar calmado de descanso hace que el resto del día sea más fácil de leer."
+      },
+      "starter-action-feeding": {
+        "title": "Marca la próxima comida",
+        "body": "Un registro de comida basta para empezar a ver el ritmo de alimentación."
+      },
+      "recap-yesterday": {
+        "title": "Ayer da una pista",
+        "body": "Usa lo registrado ayer para elegir la primera acción tranquila de hoy."
+      },
+      "feeding-pattern": {
+        "title": "Patrón de comida visto",
+        "body": "Hoy mantendrá las comidas arriba mientras se forma el patrón."
+      },
+      "after-invite": {
+        "title": "Espacio de actividad del cuidador",
+        "body": "Una vista previa sintética de cómo aparecerá nueva actividad del hogar en Hoy."
+      },
+      "quick-log-prompt": {
+        "title": "Registra lo que acaba de pasar",
+        "body": "Un evento reciente mantiene el resto de Hoy con contexto."
+      },
+      "sleep-rhythm": {
+        "title": "Ritmo de sueño",
+        "body": "Siestas cortas y despertares tranquilos facilitan detectar la siguiente salida."
+      },
+      "potty-rhythm": {
+        "title": "Ritmo de baño",
+        "body": "Los registros recientes ayudan a mantener oportunas las salidas."
+      },
+      "timeline-review": {
+        "title": "El cuidado reciente está guardado",
+        "body": "Timeline conserva el registro duradero cuando la tarjeta de Hoy se mantiene breve."
+      },
+      "health-calm-check": {
+        "title": "Revisión tranquila de salud",
+        "body": "Si algo se siente raro, registra la observación en Health."
+      },
+      "tracker-settings": {
+        "title": "Ajusta los rastreadores rápidos",
+        "body": "Mantén las cinco acciones más rápidas alineadas con la rutina de este cachorro."
+      }
+    },
+    "states": {
+      "loading": {
+        "title": "Actualizando Hoy",
+        "body": "Los eventos guardados de rutina se están cargando para este cachorro."
+      },
+      "empty": {
+        "title": "Nada registrado hoy",
+        "body": "Hoy se llenará después del primer evento de rutina."
+      },
+      "error": {
+        "title": "No se pudo actualizar Hoy",
+        "body": "Mostrando la vista guardada que ya está en este dispositivo."
+      },
+      "offline-read": {
+        "title": "Vista sin conexión",
+        "body": "Los eventos guardados son visibles. Los cambios nuevos se sincronizarán cuando vuelva la conexión."
+      },
+      "pending-write": {
+        "title": "Sincronización en curso",
+        "body": "Uno o más eventos locales de cuidado esperan sincronizarse."
+      },
+      "permission-denied": {
+        "title": "Acceso de solo lectura",
+        "body": "Hoy se puede leer, pero registrar rutinas requiere acceso de cuidador."
+      },
+      "unavailable": {
+        "title": "Configura un perfil de cachorro",
+        "body": "Crea o elige un perfil activo antes de que Hoy pueda guiar el cuidado."
+      }
+    },
+    "deferred": {
+      "title": "Aplazado para producción",
+      "synthetic-badge": "Solo vista previa",
+      "family-invite": "La actividad de invitación familiar aparece solo en fixtures sintéticos hasta que se lancen escrituras de sharing.",
+      "reminders": "Las tarjetas de recordatorio aparecen solo en fixtures sintéticos hasta que se lancen escrituras de reminders."
     },
     "error-banner": "No se pudo actualizar. Mostrando la última vista guardada.",
     "weekly-example": {
@@ -1155,6 +1281,86 @@
     "practiced-summary": "Probado: {title}",
     "skip-timeline-event": "Consejo omitido",
     "escalation-pattern": "Si {sign}, contacta a tu clínica veterinaria.",
+    "action-labels": {
+      "read": "Leer",
+      "practiced": "Lo intenté",
+      "skip": "Saltar"
+    },
+    "status": {
+      "read": "Marcado como leído",
+      "practiced": "Marcado como probado",
+      "skipped": "Consejo omitido por hoy"
+    },
+    "first-night": {
+      "title": "Primera noche en casa",
+      "body": "Mantén la cama cerca, luces bajas y salidas breves. Un lloriqueo suave puede ser normal.",
+      "escalation": "Llama a tu clínica si la respiración sigue rápida o el cachorro no logra calmarse."
+    },
+    "potty-rhythm": {
+      "title": "Ritmo de baño",
+      "body": "Ofrece salidas cortas después de dormir, comer y jugar. Elogia con calma justo cuando ocurre afuera.",
+      "escalation": "Llama a tu clínica si no hay orina durante un día completo."
+    },
+    "biting-play": {
+      "title": "Mordidas durante el juego",
+      "body": "Pausa el juego cuando los dientes toquen la piel y ofrece un juguete antes de continuar.",
+      "escalation": "Pregunta a un especialista si las mordidas rompen la piel adulta repetidamente."
+    },
+    "crate-settling": {
+      "title": "Calma en la jaula",
+      "body": "Primero haz que la jaula sea un lugar tranquilo con la puerta abierta. Cierra por momentos breves solo cuando haya calma.",
+      "escalation": "Pausa la práctica y pide ayuda si el pánico dura más de unos minutos."
+    },
+    "handling": {
+      "title": "Manejo suave",
+      "body": "Une toques pequeños en patas, orejas y collar con comida para que el cuidado sea predecible.",
+      "escalation": "Pregunta a tu clínica si tocar causa dolor, cojera o defensa repentina."
+    },
+    "socialization-window": {
+      "title": "Ventana de socialización",
+      "body": "Elige distancia tranquila, no contacto intenso. Deja que observe personas, sonidos y superficies con seguridad.",
+      "escalation": "Pregunta a tu clínica qué salidas encajan con la etapa de vacunas."
+    },
+    "vet-visit-prep": {
+      "title": "Preparar visita veterinaria",
+      "body": "Practica momentos breves en transportín o coche con premios antes del día de la cita.",
+      "escalation": "Llama antes si deja de comer, vomita varias veces o la energía cae de golpe."
+    },
+    "quiet-sleep": {
+      "title": "Sueño tranquilo",
+      "body": "Protege las siestas de manipulación extra. El cansancio suele traer más mordidas, ladridos o carreras.",
+      "escalation": "Pregunta a tu clínica si la somnolencia viene con debilidad, fiebre o poco apetito."
+    },
+    "feeding-rhythm": {
+      "title": "Ritmo de alimentación",
+      "body": "Mantén comidas predecibles y registra el tipo de porción. El patrón importa más que gramos perfectos.",
+      "escalation": "Llama a tu clínica si rechaza comidas repetidamente o cambia de golpe la sed."
+    },
+    "alone-time": {
+      "title": "Pasos pequeños a solas",
+      "body": "Aléjate por segundos cuando haya calma y vuelve antes de que crezca la preocupación.",
+      "escalation": "Pregunta a un entrenador si estar a solas causa pánico, babeo o intentos frenéticos de escapar."
+    },
+    "leash-intro": {
+      "title": "Introducción a la correa",
+      "body": "Deja que la correa aparezca dentro de casa primero y premia unos pasos relajados junto a ti.",
+      "escalation": "Detente y pide ayuda si se queda inmóvil, tose o lucha contra el collar."
+    },
+    "calm-greetings": {
+      "title": "Saludos tranquilos",
+      "body": "Premia cuatro patas en el suelo antes de dar atención. Mantén saludos cortos y predecibles.",
+      "escalation": "Pide ayuda de entrenamiento si los saltos se vuelven mordidas repetidas."
+    },
+    "chew-swap": {
+      "title": "Intercambio para morder",
+      "body": "Cambia objetos de casa por un mordedor permitido en lugar de perseguir o arrancar.",
+      "escalation": "Llama a tu clínica si pudo tragar algo afilado, tóxico o parecido a una cuerda."
+    },
+    "weekly-rhythm": {
+      "title": "Ritmo semanal",
+      "body": "Al final de dos semanas, compara sueño, baño y comidas para simplificar una rutina.",
+      "escalation": "Pregunta a tu clínica si un patrón cambia de golpe junto con apetito, heces o energía."
+    },
     "topics": {
       "first-night": {
         "eyebrow": "Consejo del día · 1 de 14",

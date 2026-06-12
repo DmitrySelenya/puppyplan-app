@@ -116,8 +116,8 @@ describe('Today Quick Log state integration', () => {
       />,
     );
 
-    expect(screen.getByText(i18n.t('today.quick-log.unavailable.title'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('today.quick-log.unavailable.body'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.states.unavailable.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.states.unavailable.body'))).toBeTruthy();
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('today.quick-log.setup-entry'),
     }));

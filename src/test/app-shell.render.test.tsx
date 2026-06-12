@@ -68,8 +68,8 @@ describe('app shell screens', () => {
     renderWithProviders(<TodayScreen openTimeline={noop} />);
 
     expect(screen.getByText(i18n.t('tabs.today'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('today.quick-log.unavailable.title'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('today.quick-log.unavailable.body'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.states.unavailable.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.states.unavailable.body'))).toBeTruthy();
   });
 
   it('renders the Health shell with localized support copy', () => {

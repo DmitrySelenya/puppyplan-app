@@ -9,6 +9,7 @@ import {
   SyntheticOnboardingShell,
   SyntheticPuppyProfileSettingsShell,
   SyntheticQuickTrackersSettingsShell,
+  SyntheticTodayShell,
 } from '@/features/_dev/design-gallery/DesignGalleryScreen';
 import { i18n } from '@/lib/i18n';
 
@@ -75,6 +76,8 @@ describe('development-only design gallery', () => {
     expect(
       screen.getAllByText(i18n.t('more.quick-trackers.screen-title-template', { count: 5, max: 5 })).length,
     ).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('tabs.today')).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.today.synthetic-note'))).toBeTruthy();
   });
 
   it('renders route-shell preview states without production actions', () => {
@@ -83,13 +86,17 @@ describe('development-only design gallery', () => {
         <SyntheticOnboardingShell />
         <SyntheticPuppyProfileSettingsShell />
         <SyntheticQuickTrackersSettingsShell />
+        <SyntheticTodayShell />
       </>,
     );
 
-    expect(screen.getAllByText(i18n.t('dev.gallery.shell-preview')).length).toBe(3);
+    expect(screen.getAllByText(i18n.t('dev.gallery.shell-preview')).length).toBe(4);
     expect(screen.getByText(i18n.t('onboarding.tracker-picker.counter', { n: 5 }))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.puppy-profile.hint'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.quick-trackers.max-reached-hint'))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('today.deferred.synthetic-badge')).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('today.deferred.family-invite'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.deferred.reminders'))).toBeTruthy();
     expect(screen.queryByText(/supabase|production write|token/i)).toBeNull();
   });
 
