@@ -174,6 +174,8 @@ describe('useQuickLogTimelineRows', () => {
 
   it('matches local recovery rows against local calendar dates instead of UTC prefixes', async () => {
     const queryClient = createPuppyPlanQueryClient();
+    const occurredAt = '2026-05-26T22:30:00.000Z';
+    const localOccurredDate = formatTestLocalCalendarDate(occurredAt);
     const localRow = createRow({
       client_event_id: 'evt_00000000-0000-4000-8000-000000001916',
       id: '00000000-0000-4000-8000-000000001917',
@@ -182,7 +184,7 @@ describe('useQuickLogTimelineRows', () => {
         category: null,
         retryCount: 0,
       },
-      occurred_at: '2026-05-26T22:30:00.000Z',
+      occurred_at: occurredAt,
     });
     let observedRows: readonly QuickLogCachedEventRow[] = [];
 
@@ -193,8 +195,8 @@ describe('useQuickLogTimelineRows', () => {
 
     function RowsProbe() {
       observedRows = useQuickLogTimelineRows(careContext, {
-        from: todayDate,
-        to: todayDate,
+        from: localOccurredDate,
+        to: localOccurredDate,
       }).rows;
 
       return null;
@@ -304,4 +306,14 @@ function createRow(
     updated_at: '2026-05-27T08:00:01.000Z',
     ...overrides,
   };
+}
+
+function formatTestLocalCalendarDate(timestamp: string): string {
+  const date = new Date(timestamp);
+
+  return [
+    String(date.getFullYear()).padStart(4, '0'),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
 }
