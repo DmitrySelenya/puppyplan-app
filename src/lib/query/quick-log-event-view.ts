@@ -1,5 +1,7 @@
 import {
   isQuickLogEventType,
+  getQuickLogDetailTrackerIdForEventType,
+  type QuickLogDetailTrackerId,
   type QuickLogEventType,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
@@ -32,6 +34,10 @@ export type QuickLogEventUndoRequest = Readonly<{
 export type QuickLogEventDeleteRequest = Readonly<{
   clientEventId: string;
   eventType: QuickLogEventType;
+  householdId: string;
+  puppyId: string;
+  status: QuickLogEventView['status'];
+  todayDate: string;
 }>;
 
 export type QuickLogEventEditRequest = Readonly<{
@@ -40,6 +46,7 @@ export type QuickLogEventEditRequest = Readonly<{
   householdId: string;
   puppyId: string;
   todayDate: string;
+  trackerId: QuickLogDetailTrackerId;
 }>;
 
 export type QuickLogEventActionHandlers = Readonly<{
@@ -121,16 +128,27 @@ export function createQuickLogDeleteRequest(view: QuickLogEventView): QuickLogEv
   return {
     clientEventId: view.clientEventId,
     eventType: view.eventType,
+    householdId: view.householdId,
+    puppyId: view.puppyId,
+    status: view.status,
+    todayDate: view.todayDate,
   };
 }
 
-export function createQuickLogEditRequest(view: QuickLogEventView): QuickLogEventEditRequest {
+export function createQuickLogEditRequest(view: QuickLogEventView): QuickLogEventEditRequest | null {
+  const trackerId = getQuickLogDetailTrackerIdForEventType(view.eventType);
+
+  if (trackerId === null) {
+    return null;
+  }
+
   return {
     clientEventId: view.clientEventId,
     eventType: view.eventType,
     householdId: view.householdId,
     puppyId: view.puppyId,
     todayDate: view.todayDate,
+    trackerId,
   };
 }
 
@@ -222,9 +240,7 @@ function getQuickLogEventLabelKey(row: QuickLogCachedEventRow): I18nKey | null {
       return null;
     }
 
-    return payloadResult.data.amount === 'meal'
-      ? 'quick-log.trackers.feeding'
-      : null;
+    return 'quick-log.trackers.feeding';
   }
 
   return null;

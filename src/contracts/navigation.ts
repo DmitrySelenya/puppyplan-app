@@ -113,6 +113,7 @@ export const shellI18nKeys = [
   'timeline.pills.failed',
   'timeline.pills.synced',
   'timeline.actor-you',
+  'timeline.row-meta-template',
   'quick-log.failed.persistent-banner',
   'quick-log.failed.primary',
   'quick-log.failed.tertiary',

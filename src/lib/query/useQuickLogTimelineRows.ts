@@ -173,6 +173,7 @@ function getCachedTimelineLocalRows(
   filters: TimelineFilters,
 ): readonly QuickLogCachedEventRow[] {
   const matchingQueries = queryClient.getQueriesData<readonly QuickLogCachedEventRow[]>({
+    exact: false,
     queryKey: timelineRootKey,
   });
   const localRowsByClientEventId = new Map<string, QuickLogCachedEventRow>();
@@ -183,12 +184,46 @@ function getCachedTimelineLocalRows(
         row.localSync !== undefined
         && rowMatchesTimelineFilters(row, filters)
       ) {
-        localRowsByClientEventId.set(row.client_event_id, row);
+        const currentRow = localRowsByClientEventId.get(row.client_event_id);
+
+        if (
+          currentRow === undefined
+          || isPreferredLocalRowVersion(row, currentRow)
+        ) {
+          localRowsByClientEventId.set(row.client_event_id, row);
+        }
       }
     }
   }
 
   return [...localRowsByClientEventId.values()];
+}
+
+function isPreferredLocalRowVersion(
+  candidate: QuickLogCachedEventRow,
+  current: QuickLogCachedEventRow,
+): boolean {
+  const candidateUpdatedAt = parseTimestampOrMin(candidate.updated_at);
+  const currentUpdatedAt = parseTimestampOrMin(current.updated_at);
+
+  if (candidateUpdatedAt !== currentUpdatedAt) {
+    return candidateUpdatedAt > currentUpdatedAt;
+  }
+
+  const candidateCreatedAt = parseTimestampOrMin(candidate.created_at);
+  const currentCreatedAt = parseTimestampOrMin(current.created_at);
+
+  if (candidateCreatedAt !== currentCreatedAt) {
+    return candidateCreatedAt > currentCreatedAt;
+  }
+
+  return candidate.id.localeCompare(current.id) > 0;
+}
+
+function parseTimestampOrMin(timestamp: string): number {
+  const parsed = Date.parse(timestamp);
+
+  return Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
 }
 
 function rowMatchesTimelineFilters(
@@ -206,7 +241,7 @@ function rowMatchesTimelineFilters(
     return false;
   }
 
-  const occurredDate = row.occurred_at.slice(0, 10);
+  const occurredDate = formatLocalCalendarDate(row.occurred_at);
 
   if (filters.from !== undefined && occurredDate < filters.from) {
     return false;
@@ -217,6 +252,20 @@ function rowMatchesTimelineFilters(
   }
 
   return true;
+}
+
+function formatLocalCalendarDate(timestamp: string): string {
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return timestamp.slice(0, 10);
+  }
+
+  return [
+    String(date.getFullYear()).padStart(4, '0'),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
 }
 
 function compareRowsByNewestFirst(

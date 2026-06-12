@@ -175,6 +175,10 @@ describe('Today Quick Log state integration', () => {
     expect(actions.onDelete).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
       eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'pending',
+      todayDate,
     });
   });
 
@@ -241,6 +245,10 @@ describe('Today Quick Log state integration', () => {
     expect(actions.onDelete).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
       eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'failed',
+      todayDate,
     });
   });
 

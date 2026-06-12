@@ -235,6 +235,7 @@ function TimelineQuickLogEventRow({
   const onEdit = actions.onEdit;
   const onRetry = actions.onRetry;
   const onUndo = actions.onUndo;
+  const editRequest = createQuickLogEditRequest(event);
 
   return (
     <Card>
@@ -253,7 +254,10 @@ function TimelineQuickLogEventRow({
               maxFontSizeMultiplier={2}
               tone="secondary"
               variant="footnote">
-              {event.actorLabel} - {event.occurredAtLabel}
+              {t('timeline.row-meta-template', {
+                actor: event.actorLabel,
+                time: event.occurredAtLabel,
+              })}
             </AppText>
           </Stack>
           <StatusPill
@@ -314,13 +318,13 @@ function TimelineQuickLogEventRow({
             ) : null}
           </Stack>
         ) : null}
-        {event.status === 'synced' && (onEdit !== undefined || onDelete !== undefined) ? (
+        {event.status === 'synced' && ((onEdit !== undefined && editRequest !== null) || onDelete !== undefined) ? (
           <Stack direction="horizontal" gap="sm" wrap>
-            {onEdit !== undefined ? (
+            {onEdit !== undefined && editRequest !== null ? (
               <Button
                 label={t('timeline.overflow-actions.0')}
                 onPress={() => {
-                  onEdit(createQuickLogEditRequest(event));
+                  onEdit(editRequest);
                 }}
                 variant="secondary"
               />

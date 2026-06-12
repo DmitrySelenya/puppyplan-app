@@ -2,9 +2,11 @@ import { MutationObserver, QueryClient, QueryObserver } from '@tanstack/react-qu
 
 import {
   createQuickLogMutationOptions,
+  deleteSyncedQuickLogEvent,
   removeQuickLogOptimisticEvent,
   replayQuickLogQueueItemToCache,
   retryLocalQuickLogEvent,
+  saveQuickLogDetailsDraft,
   type QuickLogCachedEventRow,
   type QuickLogMutationDependencies,
 } from '@/lib/query/quick-log';
@@ -18,7 +20,7 @@ import {
   applyQuickLogQueueTransition,
   resolveQuickLogInFlightSuccess,
 } from '@/lib/queue';
-import type { EventLogInsert, EventLogRecord } from '@/contracts/supabase';
+import type { EventLogInsert, EventLogRecord, JsonValue } from '@/contracts/supabase';
 
 const householdId = '00000000-0000-4000-8000-000000000201';
 const puppyId = '00000000-0000-4000-8000-000000000202';
@@ -621,6 +623,97 @@ describe('Quick Log mutation lifecycle', () => {
     expect(readTimelineRows(queryClient)).toEqual([]);
     expect(queue.items.has(clientEventId)).toBe(false);
     expect(events.tombstones).toEqual([]);
+    expect(invalidations).toEqual([
+      { queryKey: queryKeys.today.dashboard(householdId, puppyId, todayDate), exact: true },
+      { queryKey: queryKeys.events.timelineRoot(householdId, puppyId), exact: false },
+      { queryKey: queryKeys.puppy.summary(householdId, puppyId), exact: true },
+      { queryKey: queryKeys.events.duplicateWarningSource(householdId, puppyId, 'feeding'), exact: true },
+    ]);
+  });
+
+  it('tombstones synced server rows through the typed event repository', async () => {
+    const queryClient = createTestQueryClient();
+    const events = new FakeQuickLogEventsRepository();
+    const invalidations: unknown[] = [];
+
+    jest.spyOn(queryClient, 'invalidateQueries').mockImplementation(async (filters) => {
+      invalidations.push(filters);
+    });
+    queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), [
+      serverRow(),
+    ]);
+
+    await deleteSyncedQuickLogEvent({
+      clientEventId,
+      eventType: 'feeding',
+      events,
+      householdId,
+      now: () => now,
+      puppyId,
+      queryClient,
+      todayDate,
+    });
+
+    expect(events.tombstones).toEqual([
+      {
+        clientEventId,
+        deletedAt: now,
+        householdId,
+      },
+    ]);
+    expect(readTimelineRows(queryClient)).toEqual([]);
+    expect(invalidations).toEqual([
+      { queryKey: queryKeys.today.dashboard(householdId, puppyId, todayDate), exact: true },
+      { queryKey: queryKeys.events.timelineRoot(householdId, puppyId), exact: false },
+      { queryKey: queryKeys.puppy.summary(householdId, puppyId), exact: true },
+      { queryKey: queryKeys.events.duplicateWarningSource(householdId, puppyId, 'feeding'), exact: true },
+    ]);
+  });
+
+  it('saves Quick Log detail drafts to the synced event payload and updates cached rows', async () => {
+    const queryClient = createTestQueryClient();
+    const events = new FakeQuickLogEventsRepository();
+    const invalidations: unknown[] = [];
+
+    jest.spyOn(queryClient, 'invalidateQueries').mockImplementation(async (filters) => {
+      invalidations.push(filters);
+    });
+    queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), [
+      serverRow(),
+    ]);
+
+    await saveQuickLogDetailsDraft({
+      clientEventId,
+      draft: {
+        amount: 'water',
+        trackerId: 'feeding_meal',
+      },
+      eventType: 'feeding',
+      events,
+      householdId,
+      puppyId,
+      queryClient,
+      todayDate,
+    });
+
+    expect(events.payloadUpdates).toEqual([
+      {
+        clientEventId,
+        eventType: 'feeding',
+        householdId,
+        payload: {
+          amount: 'water',
+        },
+      },
+    ]);
+    expect(readTimelineRows(queryClient)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+        payload: {
+          amount: 'water',
+        },
+      }),
+    ]);
     expect(invalidations).toEqual([
       { queryKey: queryKeys.today.dashboard(householdId, puppyId, todayDate), exact: true },
       { queryKey: queryKeys.events.timelineRoot(householdId, puppyId), exact: false },
@@ -1357,9 +1450,16 @@ class FakeQuickLogEventsRepository {
     clientEventId: string;
     deletedAt: string;
   }[] = [];
+  public readonly payloadUpdates: {
+    householdId: string;
+    clientEventId: string;
+    eventType: string;
+    payload: Record<string, JsonValue>;
+  }[] = [];
   public insertError: unknown = null;
   public insertGate: Promise<void> | null = null;
   public tombstoneError: unknown = null;
+  public payloadUpdateError: unknown = null;
 
   public async insertEvent(insert: EventLogInsert): Promise<EventLogRecord> {
     this.inserts.push(insert);
@@ -1389,6 +1489,26 @@ class FakeQuickLogEventsRepository {
     return {
       ...serverRow(),
       deleted_at: input.deletedAt,
+    };
+  }
+
+  public async updatePayloadByClientEventId(input: {
+    householdId: string;
+    clientEventId: string;
+    eventType: string;
+    payload: Record<string, JsonValue>;
+  }): Promise<EventLogRecord> {
+    this.payloadUpdates.push(input);
+
+    if (this.payloadUpdateError !== null) {
+      throw this.payloadUpdateError;
+    }
+
+    return {
+      ...serverRow(),
+      event_type: input.eventType as EventLogRecord['event_type'],
+      payload: input.payload,
+      updated_at: now,
     };
   }
 }

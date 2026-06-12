@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
@@ -40,6 +41,7 @@ export type TodayScreenProps = Readonly<{
   actions?: QuickLogEventActionHandlers;
   careContext?: QuickLogSurfaceCareContext | null;
   openOnboarding?: () => void;
+  openQuickLog?: () => void;
   openTimeline: () => void;
   screenState?: TodayScreenStateOverride;
   todayPlanInput?: Partial<TodayPlanInput>;
@@ -51,6 +53,7 @@ export function TodayScreen({
   actions = emptyActions,
   careContext = null,
   openOnboarding,
+  openQuickLog,
   openTimeline,
   screenState,
   todayPlanInput,
@@ -66,6 +69,17 @@ export function TodayScreen({
       },
   );
   const rows = timelineRows.rows;
+  const todayPlanSourceInput = useMemo(() => careContext === null
+    ? null
+    : createTodayPlanInput({
+      careContext,
+      overrides: todayPlanInput,
+      rows,
+    }), [careContext, rows, todayPlanInput]);
+  const todayPlan = useMemo(
+    () => todayPlanSourceInput === null ? null : buildTodayPlan(todayPlanSourceInput),
+    [todayPlanSourceInput],
+  );
 
   if (careContext === null) {
     return (
@@ -97,18 +111,16 @@ export function TodayScreen({
     screenState,
     timelineStatus: timelineRows.status,
   });
-  const todayPlan = buildTodayPlan(createTodayPlanInput({
-    careContext,
-    overrides: todayPlanInput,
-    rows,
-  }));
 
   return (
     <Screen contentStyle={styles.content}>
       <AppText variant="title">{t('tabs.today')}</AppText>
       {todayStatus === null ? null : <TodayStatusCard state={todayStatus} />}
-      {timelineRows.status === 'loading' && rows.length === 0 ? null : (
-        <TodayPlanCards plan={todayPlan} />
+      {todayPlan === null || (timelineRows.status === 'loading' && rows.length === 0) ? null : (
+        <TodayPlanCards
+          onHeroPrimaryAction={openQuickLog}
+          plan={todayPlan}
+        />
       )}
       {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
       {shouldShowQuickLogFailedBanner(rows) ? (
@@ -163,6 +175,17 @@ export function TodayScreen({
       </Stack>
     </Screen>
   );
+}
+
+export function createTodayPlanInputFromPuppy(input: Readonly<{
+  now?: Date;
+  puppyCreatedAt: string;
+  todayDate: string;
+}>): Partial<TodayPlanInput> {
+  return {
+    dayNumber: getPuppyPlanDayNumber(input),
+    timeOfDay: getTodayTimeOfDay(input.now ?? new Date()),
+  };
 }
 
 function getTodayStatusState(input: Readonly<{
@@ -255,6 +278,76 @@ function createTodayEventSummary(
   };
 }
 
+function getPuppyPlanDayNumber(input: Readonly<{
+  puppyCreatedAt: string;
+  todayDate: string;
+}>): number {
+  const createdDate = getLocalCalendarDateFromTimestamp(input.puppyCreatedAt);
+  const createdDayStart = createdDate === null ? null : getUtcDayStartMs(createdDate);
+  const todayDayStart = getUtcDayStartMs(input.todayDate);
+
+  if (createdDayStart === null || todayDayStart === null) {
+    return 1;
+  }
+
+  const inclusiveDayNumber = Math.floor((todayDayStart - createdDayStart) / 86_400_000) + 1;
+
+  return Math.min(90, Math.max(1, inclusiveDayNumber));
+}
+
+function getLocalCalendarDateFromTimestamp(timestamp: string): string | null {
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const year = String(date.getFullYear()).padStart(4, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function getUtcDayStartMs(calendarDate: string): number | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(calendarDate);
+
+  if (match === null) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const timestamp = Date.UTC(year, month - 1, day);
+
+  if (Number.isNaN(timestamp)) {
+    return null;
+  }
+
+  const normalized = new Date(timestamp);
+
+  return normalized.getUTCFullYear() === year
+    && normalized.getUTCMonth() === month - 1
+    && normalized.getUTCDate() === day
+    ? timestamp
+    : null;
+}
+
+function getTodayTimeOfDay(now: Date): NonNullable<TodayPlanInput['timeOfDay']> {
+  const hour = now.getHours();
+
+  if (hour < 11) {
+    return 'morning';
+  }
+
+  if (hour < 17) {
+    return 'midday';
+  }
+
+  return 'evening';
+}
+
 function getTodayQuickAction(
   row: QuickLogCachedEventRow,
 ): NonNullable<TodayPlanInput['lastEvents']>[number]['quickAction'] {
@@ -331,7 +424,10 @@ function TodayQuickLogEventRow({
               maxFontSizeMultiplier={2}
               tone="secondary"
               variant="footnote">
-              {event.actorLabel} - {event.occurredAtLabel}
+              {t('timeline.row-meta-template', {
+                actor: event.actorLabel,
+                time: event.occurredAtLabel,
+              })}
             </AppText>
           </Stack>
           <StatusPill

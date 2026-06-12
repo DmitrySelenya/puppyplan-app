@@ -699,6 +699,7 @@
     },
     "actor-you": "Registrado por: tú",
     "actor-template": "Registrado por: {name}",
+    "row-meta-template": "{actor} · {time}",
     "pills": {
       "pending": "Guardando",
       "failed": "No guardado",

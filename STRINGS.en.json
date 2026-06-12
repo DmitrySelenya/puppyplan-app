@@ -670,6 +670,7 @@
     },
     "actor-you": "Logged by: You",
     "actor-template": "Logged by: {name}",
+    "row-meta-template": "{actor} · {time}",
     "pills": {
       "pending": "Saving",
       "failed": "Not saved",

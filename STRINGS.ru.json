@@ -666,6 +666,7 @@
     },
     "actor-you": "Записано: Вы",
     "actor-template": "Записано: {name}",
+    "row-meta-template": "{actor} · {time}",
     "pills": {
       "pending": "Сохраняется",
       "failed": "Не сохранено",

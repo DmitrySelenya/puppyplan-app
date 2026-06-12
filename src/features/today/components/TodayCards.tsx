@@ -43,10 +43,19 @@ type HeroCopy = CopyPair & Readonly<{
   primaryKey?: I18nKey;
 }>;
 
-export function TodayPlanCards({ plan }: Readonly<{ plan: TodayPlan }>) {
+export function TodayPlanCards({
+  onHeroPrimaryAction,
+  plan,
+}: Readonly<{
+  onHeroPrimaryAction?: () => void;
+  plan: TodayPlan;
+}>) {
   return (
     <Stack gap="md">
-      <TodayHeroCard variant={plan.hero.variant} />
+      <TodayHeroCard
+        onPrimaryAction={onHeroPrimaryAction}
+        variant={plan.hero.variant}
+      />
       <TodayDailyCardList cards={plan.dailyCards.map((card) => ({
         syntheticOnly: card.syntheticOnly === true,
         variant: card.variant,
@@ -61,7 +70,13 @@ export function TodayPlanCards({ plan }: Readonly<{ plan: TodayPlan }>) {
   );
 }
 
-export function TodayHeroCard({ variant }: Readonly<{ variant: TodayHeroVariant }>) {
+export function TodayHeroCard({
+  onPrimaryAction,
+  variant,
+}: Readonly<{
+  onPrimaryAction?: () => void;
+  variant: TodayHeroVariant;
+}>) {
   const { t } = useAppTranslation();
   const copy: HeroCopy = todayHeroCopy[variant];
 
@@ -79,10 +94,10 @@ export function TodayHeroCard({ variant }: Readonly<{ variant: TodayHeroVariant 
         />
         <AppText variant="title">{t(copy.titleKey)}</AppText>
         <AppText tone="secondary">{t(copy.bodyKey)}</AppText>
-        {copy.primaryKey === undefined ? null : (
+        {copy.primaryKey === undefined || onPrimaryAction === undefined ? null : (
           <Button
             label={t(copy.primaryKey)}
-            onPress={noop}
+            onPress={onPrimaryAction}
             variant="secondary"
           />
         )}
@@ -520,10 +535,6 @@ const guidanceTopicCopy = {
     titleKey: 'guidance.weekly-rhythm.title',
   },
 } as const satisfies Record<StarterGuidanceTopicId, CopyPair & Readonly<{ escalationKey: I18nKey }>>;
-
-function noop() {
-  return undefined;
-}
 
 const styles = StyleSheet.create({
   cardTitle: {

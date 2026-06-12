@@ -269,6 +269,69 @@ describe('Quick Log Supabase event wrappers', () => {
       'maybeSingle',
     ]);
   });
+
+  it('selects a server row by composite id before updating a validated payload by row id', async () => {
+    const client = new RecordingEventLogClient([
+      { data: serverRow, error: null, status: 200 },
+      {
+        data: {
+          ...serverRow,
+          payload: {
+            amount: 'water',
+          },
+          updated_at: '2026-05-26T08:00:04.000Z',
+        },
+        error: null,
+        status: 200,
+      },
+    ]);
+    const repository = createSupabaseEventLogRepository(client);
+
+    await expect(repository.updatePayloadByClientEventId({
+      clientEventId,
+      eventType: 'feeding',
+      householdId,
+      payload: {
+        amount: 'water',
+      },
+    })).resolves.toMatchObject({
+      id: serverRow.id,
+      payload: {
+        amount: 'water',
+      },
+    });
+
+    expect(client.calls).toEqual([
+      'from:event_log',
+      'select:*',
+      `eq:household_id:${householdId}`,
+      `eq:client_event_id:${clientEventId}`,
+      'maybeSingle',
+      'from:event_log',
+      'update:payload',
+      `eq:id:${serverRow.id}`,
+      'select:*',
+      'maybeSingle',
+    ]);
+  });
+
+  it('rejects detail payload updates that do not match the event type contract', async () => {
+    const client = new RecordingEventLogClient([]);
+    const repository = createSupabaseEventLogRepository(client);
+
+    await expect(repository.updatePayloadByClientEventId({
+      clientEventId,
+      eventType: 'feeding',
+      householdId,
+      payload: {
+        sleep_kind: 'nap',
+      },
+    })).rejects.toMatchObject({
+      kind: 'invalid_payload',
+      retryAfterMs: null,
+    });
+    expect(client.calls).toEqual([]);
+  });
 });
 
 type EventLogClientResponse = Readonly<{
@@ -348,6 +411,19 @@ class RecordingEventLogClient {
     return this.from('event_log')
       .update({
         deleted_at: input.deletedAt,
+      })
+      .eq('id', input.id)
+      .select('*')
+      .maybeSingle();
+  }
+
+  public async updateEventLogPayloadById(input: {
+    id: string;
+    payload: Record<string, unknown>;
+  }): Promise<EventLogClientResponse> {
+    return this.from('event_log')
+      .update({
+        payload: input.payload,
       })
       .eq('id', input.id)
       .select('*')

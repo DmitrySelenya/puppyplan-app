@@ -194,6 +194,60 @@ export function createQuickLogDetailDraft(input: unknown): QuickLogDetailDraft {
   return quickLogDetailDraftSchema.parse(input);
 }
 
+export function getQuickLogDetailTrackerIdForEventType(
+  eventType: QuickLogEventType,
+): QuickLogDetailTrackerId | null {
+  if (eventType === 'feeding') {
+    return 'feeding_meal';
+  }
+
+  if (eventType === 'sleep') {
+    return 'sleep_nap';
+  }
+
+  if (eventType === 'zoomies') {
+    return 'zoomies';
+  }
+
+  return null;
+}
+
+export function createQuickLogDetailPayload(
+  input: Readonly<{
+    draft: QuickLogDetailDraft;
+    eventType: QuickLogEventType;
+  }>,
+): Record<string, JsonValue> {
+  const expectedTrackerId = getQuickLogDetailTrackerIdForEventType(input.eventType);
+
+  if (expectedTrackerId === null || input.draft.trackerId !== expectedTrackerId) {
+    throw new Error('Quick Log detail draft does not match the event type');
+  }
+
+  if (input.draft.trackerId === 'feeding_meal') {
+    return {
+      amount: input.draft.amount ?? 'meal',
+    };
+  }
+
+  if (input.draft.trackerId === 'sleep_nap') {
+    return input.draft.durationMinutes === undefined
+      ? {
+        sleep_kind: 'nap',
+      }
+      : {
+        duration_minutes: input.draft.durationMinutes,
+        sleep_kind: 'nap',
+      };
+  }
+
+  return input.draft.intensity === undefined
+    ? {}
+    : {
+      intensity: input.draft.intensity,
+    };
+}
+
 const quickLogEventTypeSet = new Set<EventType>(
   Object.values(quickLogTrackerDefinitions).map((definition) => definition.event_type),
 );

@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { AccessibilityInfo } from 'react-native';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 
@@ -33,6 +33,7 @@ const careContext = {
 } as const;
 
 const openTimeline = jest.fn();
+const openQuickLog = jest.fn();
 const testQueryClients: ReturnType<typeof createPuppyPlanQueryClient>[] = [];
 
 function todayTimelineKey() {
@@ -87,6 +88,7 @@ describe('Today core card rendering', () => {
   beforeEach(async () => {
     mockListEvents.mockReset();
     mockListEvents.mockResolvedValue([]);
+    openQuickLog.mockClear();
     openTimeline.mockClear();
     reduceMotionProbe = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
@@ -149,6 +151,26 @@ describe('Today core card rendering', () => {
     );
 
     expect(screen.getByText(i18n.t('today.states.loading.title'))).toBeTruthy();
+  });
+
+  it('wires the hero primary CTA to the Quick Log action', async () => {
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openQuickLog={openQuickLog}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('today.hero.first-day.title'))).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('today.hero.first-day.primary'),
+    }));
+
+    expect(openQuickLog).toHaveBeenCalledTimes(1);
   });
 
   it('renders the empty state after an active care context loads without events', async () => {

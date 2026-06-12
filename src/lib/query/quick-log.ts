@@ -11,8 +11,10 @@ import type {
   QuickLogSourceSurface,
 } from '@/contracts/analytics';
 import {
+  createQuickLogDetailPayload,
   createQuickLogEventInsert,
   isQuickLogEventType,
+  type QuickLogDetailDraft,
   type QuickLogEventInsert,
   type QuickLogEventType,
   type QuickLogTrackerId,
@@ -113,14 +115,28 @@ export type QuickLogMutationPortUndoRequest = Readonly<{
   todayDate: string;
 }>;
 
+export type QuickLogMutationPortSyncedDeleteRequest = Readonly<{
+  clientEventId: string;
+  eventType: QuickLogEventType;
+  householdId: string;
+  puppyId: string;
+  todayDate: string;
+}>;
+
+export type QuickLogMutationPortUpdateDetailsRequest = QuickLogMutationPortSyncedDeleteRequest & Readonly<{
+  draft: QuickLogDetailDraft;
+}>;
+
 export type QuickLogMutationPort = Readonly<{
   deleteLocal: (clientEventId: string) => unknown;
+  deleteSynced: (request: QuickLogMutationPortSyncedDeleteRequest) => unknown;
   mutate: (request: QuickLogMutationPortRequest) => unknown;
   retry: (
     clientEventId: string,
     recoverySurface: QuickLogRecoverySurface,
     sourceSurface?: QuickLogSourceSurface,
   ) => unknown;
+  updateDetails: (request: QuickLogMutationPortUpdateDetailsRequest) => unknown;
   undo: (request: QuickLogMutationPortUndoRequest) => unknown;
 }>;
 
@@ -174,7 +190,7 @@ export type QuickLogMutationDependencies = Readonly<{
   queue: QuickLogMutationQueue;
   analytics?: QuickLogAnalyticsClient;
   observability?: ObservabilityReporter;
-  events?: Pick<SupabaseEventLogRepository, 'insertEvent' | 'tombstoneByClientEventId'>;
+  events?: Pick<SupabaseEventLogRepository, 'insertEvent' | 'tombstoneByClientEventId' | 'updatePayloadByClientEventId'>;
   // Optional only while production Quick Log is gated by the deferred active care context.
   // Production wiring must inject the synchronous session actor instead of using the null default.
   getSessionUserId?: () => string | null;
@@ -554,6 +570,12 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
           queueRef,
         });
       },
+      deleteSynced: (request) => {
+        void deleteSyncedQuickLogEvent({
+          ...request,
+          queryClient,
+        }).catch(() => undefined);
+      },
       mutate: (request) => {
         requestIdsByVariablesRef.current.set(request.variables, request.requestId);
         quickLogMutation.mutate(request.variables);
@@ -577,6 +599,12 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
           queryClient,
           queue,
           todayDate: request.todayDate,
+        }).catch(() => undefined);
+      },
+      updateDetails: (request) => {
+        void saveQuickLogDetailsDraft({
+          ...request,
+          queryClient,
         }).catch(() => undefined);
       },
     };
@@ -636,6 +664,77 @@ export async function removeQuickLogOptimisticEvent(
       todayDate: input.todayDate,
     }),
     timelineRootKey: queryKeys.events.timelineRoot(input.householdId, input.puppyId),
+    includeTimeline: true,
+  });
+}
+
+export async function deleteSyncedQuickLogEvent(
+  input: QuickLogMutationPortSyncedDeleteRequest & Readonly<{
+    events?: Pick<SupabaseEventLogRepository, 'tombstoneByClientEventId'>;
+    now?: () => string;
+    queryClient: QueryClient;
+  }>,
+): Promise<void> {
+  const events = input.events ?? createSupabaseEventLogRepository();
+  const now = input.now ?? (() => new Date().toISOString());
+  const timelineRootKey = queryKeys.events.timelineRoot(input.householdId, input.puppyId);
+
+  await events.tombstoneByClientEventId({
+    clientEventId: input.clientEventId,
+    deletedAt: now(),
+    householdId: input.householdId,
+  });
+  removeCachedEventRow(input.queryClient, {
+    timelineRootKey,
+    clientEventId: input.clientEventId,
+  });
+  await invalidateAffectedQueries(input.queryClient, {
+    invalidationKeys: getQuickLogInvalidationKeys({
+      eventType: input.eventType,
+      householdId: input.householdId,
+      puppyId: input.puppyId,
+      todayDate: input.todayDate,
+    }),
+    timelineRootKey,
+    includeTimeline: true,
+  });
+}
+
+export async function saveQuickLogDetailsDraft(
+  input: QuickLogMutationPortUpdateDetailsRequest & Readonly<{
+    events?: Pick<SupabaseEventLogRepository, 'updatePayloadByClientEventId'>;
+    queryClient: QueryClient;
+  }>,
+): Promise<void> {
+  const events = input.events ?? createSupabaseEventLogRepository();
+  const timelineRootKey = queryKeys.events.timelineRoot(input.householdId, input.puppyId);
+  const payload = createQuickLogDetailPayload({
+    draft: input.draft,
+    eventType: input.eventType,
+  });
+  const updatedRow = await events.updatePayloadByClientEventId({
+    clientEventId: input.clientEventId,
+    eventType: input.eventType,
+    householdId: input.householdId,
+    payload,
+  });
+
+  replaceCachedEventRow(input.queryClient, {
+    timelineRootKey,
+    clientEventId: input.clientEventId,
+    row: {
+      ...updatedRow,
+      localSync: undefined,
+    },
+  });
+  await invalidateAffectedQueries(input.queryClient, {
+    invalidationKeys: getQuickLogInvalidationKeys({
+      eventType: input.eventType,
+      householdId: input.householdId,
+      puppyId: input.puppyId,
+      todayDate: input.todayDate,
+    }),
+    timelineRootKey,
     includeTimeline: true,
   });
 }

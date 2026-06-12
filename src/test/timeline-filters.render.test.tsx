@@ -193,10 +193,15 @@ describe('Timeline filters and actions', () => {
       householdId,
       puppyId,
       todayDate,
+      trackerId: 'feeding_meal',
     });
     expect(actions.onDelete).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000004605',
       eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'synced',
+      todayDate,
     });
   });
 });
