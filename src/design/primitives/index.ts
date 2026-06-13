@@ -5,6 +5,7 @@ export {
   type AppTextTone,
   type AppTextVariant,
 } from '@/design/primitives/AppText';
+export { AppIcon, type AppIconName, type AppIconProps } from '@/design/primitives/AppIcon';
 export { Button, type ButtonProps, type ButtonVariant } from '@/design/primitives/Button';
 export { Card, type CardProps, type CardVariant } from '@/design/primitives/Card';
 export { FAB } from '@/design/primitives/FAB';
@@ -14,6 +15,7 @@ export {
   type IconButtonVariant,
 } from '@/design/primitives/IconButton';
 export { ListRow, type ListRowProps } from '@/design/primitives/ListRow';
+export { PuppyHeader, type PuppyHeaderProps } from '@/design/primitives/PuppyHeader';
 export { Screen, type ScreenProps } from '@/design/primitives/Screen';
 export {
   SegmentedControl,

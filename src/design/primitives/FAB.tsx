@@ -1,10 +1,10 @@
-import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet } from 'react-native';
 
-import { THUMB_TOUCH_TARGET, decorativeViewProps } from '@/design/a11y';
+import { THUMB_TOUCH_TARGET } from '@/design/a11y';
 import { haptic } from '@/design/haptics';
 import { pressedScaleStyle, useReducedMotion } from '@/design/motion';
-import { AppText } from '@/design/primitives/AppText';
+import { AppIcon } from '@/design/primitives/AppIcon';
 import { Touchable } from '@/design/primitives/Touchable';
 import { elevationStyle } from '@/design/primitives/elevationStyle';
 import { tokens } from '@/design/tokens';
@@ -37,14 +37,12 @@ export function FAB({ accessibilityHint, accessibilityLabel, onPress, style }: F
         pressedScaleStyle(pressed, reducedMotion),
         style,
       ]}>
-      <AppText
-        {...decorativeViewProps}
-        allowFontScaling={false}
-        maxFontSizeMultiplier={1}
-        style={styles.symbol}
-        testID="fab-symbol">
-        +
-      </AppText>
+      <AppIcon
+        color={tokens.color.surface.raised}
+        name="plus"
+        size={32}
+        testID="fab-symbol"
+      />
     </Touchable>
   );
 }
@@ -52,7 +50,6 @@ export function FAB({ accessibilityHint, accessibilityLabel, onPress, style }: F
 const styles = StyleSheet.create<{
   pressed: ViewStyle;
   root: ViewStyle;
-  symbol: TextStyle;
 }>({
   pressed: {
     opacity: 0.82,
@@ -67,11 +64,5 @@ const styles = StyleSheet.create<{
     minWidth: THUMB_TOUCH_TARGET,
     ...elevationStyle(2),
     width: tokens.component.fab.size,
-  },
-  symbol: {
-    color: tokens.color.surface.raised,
-    fontSize: 32,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    lineHeight: 36,
   },
 });

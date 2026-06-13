@@ -2,6 +2,14 @@
 
 This package preserves the Cloud Design export as a repo-native design reference for agents. Treat the raw files as source artifacts, not production React Native code.
 
+## Current Source Of Truth
+
+The repo-native design source is `docs/design/v1/raw/PuppyPlan.html`, its support files, `manifest.json`, and the generated screenshot atlas under `docs/design/v1/screenshots/`.
+
+On 2026-06-12 this package was compared with the original local export at `/Users/dmitryselenya/Downloads/puppy_app`. The folders are not byte-identical, but the screen/module inventory matches. The differences are small curated changes: synthetic placeholder names in place of private-looking design examples, duplicate-window copy aligned with the 60-second product invariant, and token/audit refinements. The repo package remains the source agents should implement against because it is the sanitized, manifest-backed, screenshot-backed version.
+
+If a newer external design package is provided later and the actual visual layout or screen inventory differs from this package, compare it, update this README, regenerate the manifest/screenshots, and use the newer approved package as the visual source. If the exact source cannot be determined, stop implementation and request exact screenshots or a fresh export.
+
 ## Source Status
 
 | File or folder | Status | Notes |
@@ -25,7 +33,8 @@ This package preserves the Cloud Design export as a repo-native design reference
 2. Use `docs/design/v1/raw/screens/*.jsx`, `components.jsx`, `icons.jsx`, and `tokens.css` only to understand visual intent.
 3. Use `docs/design/v1/manifest.json` as the canonical artboard inventory for sections, routes, states, dimensions, source files, and priority tags.
 4. Keep production UI native: Expo Router routes stay thin, feature screens use `src/design` primitives, and all visible strings go through typed i18n.
-5. Treat stale/reference files as context only. Do not implement from them unless the manifest records why they are current.
+5. For every UI batch, capture native screenshots and compare them against the matching atlas artboards before approving the batch or moving to the next roadmap batch.
+6. Treat stale/reference files as context only. Do not implement from them unless the manifest records why they are current.
 
 ## Generated Inventory
 

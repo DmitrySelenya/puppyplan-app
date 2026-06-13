@@ -173,7 +173,7 @@ describe('Today core card rendering', () => {
     expect(openQuickLog).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the empty state after an active care context loads without events', async () => {
+  it('renders the design first-day plan instead of a separate empty card without events', async () => {
     mockListEvents.mockResolvedValue([]);
     renderWithQuery(
       <TodayScreen
@@ -183,8 +183,10 @@ describe('Today core card rendering', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('today.states.empty.title'))).toBeTruthy();
+      expect(screen.getByText(i18n.t('today.hero.first-day.title'))).toBeTruthy();
     });
+    expect(screen.queryByText(i18n.t('today.states.empty.title'))).toBeNull();
+    expect(screen.getByText(i18n.t('today.daily-cards.first-day-banner'))).toBeTruthy();
   });
 
   it('renders the error state when active care events cannot refresh', async () => {

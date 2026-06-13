@@ -127,6 +127,7 @@ export const shellI18nKeys = [
   'more.rows.quick-trackers',
   'more.rows.timeline',
   'quick-log.sheet.title',
+  'quick-log.sheet.edit-trackers',
   'quick-log.sheet.edit-helper',
   'quick-log.sheet.unavailable.title',
   'quick-log.sheet.unavailable.body',

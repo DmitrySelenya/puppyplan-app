@@ -844,17 +844,9 @@ describe('design primitives', () => {
     });
     expect(baseStyle.shadowOpacity).toBe(0.1);
     expect(baseStyle.shadowRadius).toBe(tokens.elevation[2].blur);
-    expect(screen.getByTestId('fab-symbol', { includeHiddenElements: true }).props.allowFontScaling).toBe(
-      false,
-    );
-    expect(
-      screen.getByTestId('fab-symbol', { includeHiddenElements: true }).props.maxFontSizeMultiplier,
-    ).toBe(1);
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId('fab-symbol', { includeHiddenElements: true }).props.style,
-      ).fontWeight,
-    ).toBe(tokens.typography.fontWeight.semibold);
+    const fabSymbol = screen.getByTestId('fab-symbol', { includeHiddenElements: true });
+    expect(fabSymbol.props.width).toBe(32);
+    expect(fabSymbol.props.height).toBe(32);
 
     fireEvent.press(button);
     expect(onPress).toHaveBeenCalledTimes(1);

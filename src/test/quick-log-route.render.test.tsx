@@ -10,6 +10,7 @@ import QuickLogRoute from '../../app/(modals)/quick-log';
 
 const mockRouterBack = jest.fn();
 const mockRouterCanGoBack = jest.fn();
+const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogCachedRows = jest.fn();
@@ -28,6 +29,7 @@ jest.mock('expo-router', () => ({
   router: {
     back: () => mockRouterBack(),
     canGoBack: () => mockRouterCanGoBack(),
+    push: (href: string) => mockRouterPush(href),
     replace: (href: string) => mockRouterReplace(href),
   },
 }));
@@ -52,6 +54,7 @@ describe('QuickLogRoute', () => {
     mockRouterBack.mockClear();
     mockRouterCanGoBack.mockReset();
     mockRouterCanGoBack.mockReturnValue(true);
+    mockRouterPush.mockClear();
     mockRouterReplace.mockClear();
     mockUseActiveCareContext.mockReturnValue({
       careContext: null,
@@ -164,7 +167,7 @@ describe('QuickLogRoute', () => {
     }));
   });
 
-  it('closes the active Quick Log route through Today fallback when no previous route exists', () => {
+  it('closes the active Quick Log route through Today fallback after logging when no previous route exists', () => {
     const mutation = createMutationPort();
     mockRouterCanGoBack.mockReturnValue(false);
     mockUseActiveCareContext.mockReturnValue({
@@ -195,11 +198,49 @@ describe('QuickLogRoute', () => {
     );
 
     fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('common.close'),
+      name: i18n.t('quick-log.trackers.training'),
     }));
 
+    expect(mutation.mutate).toHaveBeenCalledTimes(1);
     expect(mockRouterBack).not.toHaveBeenCalled();
     expect(mockRouterReplace).toHaveBeenCalledWith('/today');
+  });
+
+  it('opens the Quick Trackers settings route from the active sheet edit-trackers action', () => {
+    const mutation = createMutationPort();
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: '00000000-0000-4000-8000-000000003001',
+        householdRole: 'owner',
+        puppyId: '00000000-0000-4000-8000-000000003002',
+        selectedTrackerIds: ['training', 'feeding_meal'],
+        todayDate: '2026-06-09',
+        userId: '00000000-0000-4000-8000-000000003003',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.edit-trackers'),
+    }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith('/settings/quick-trackers');
+    expect(mockRouterBack).not.toHaveBeenCalled();
     expect(mutation.mutate).not.toHaveBeenCalled();
   });
 

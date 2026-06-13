@@ -310,9 +310,9 @@
       "potty-time-tertiary": "Más tarde",
       "eyebrow": "Hoy",
       "first-day": {
-        "title": "Empieza con un registro pequeño",
-        "body": "Un primer baño, comida o descanso da a Hoy contexto suficiente para guiar el siguiente paso.",
-        "primary": "Abrir Quick Log"
+        "title": "Registra tu primer evento: toma unos cinco segundos.",
+        "body": "Empieza con el primer baño, comida o descanso.",
+        "primary": "Empezar"
       },
       "day-2-morning": {
         "title": "Revisión del ritmo matutino",
@@ -420,16 +420,18 @@
       }
     },
     "daily-cards": {
+      "first-day-banner": "El primer día se trata de observar, no de resultados.",
+      "starter-section-title": "Qué hacer ahora",
       "starter-action-potty": {
-        "title": "Primera pista de baño",
+        "title": "Salidas cortas cada 1–2 horas",
         "body": "Prueba una salida corta después de dormir, comer o jugar activo."
       },
       "starter-action-sleep": {
-        "title": "Protege un descanso tranquilo",
+        "title": "Un lugar tranquilo para dormir",
         "body": "Un lugar calmado de descanso hace que el resto del día sea más fácil de leer."
       },
       "starter-action-feeding": {
-        "title": "Marca la próxima comida",
+        "title": "Observa el patrón de comida",
         "body": "Un registro de comida basta para empezar a ver el ritmo de alimentación."
       },
       "recap-yesterday": {

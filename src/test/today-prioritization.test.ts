@@ -63,6 +63,7 @@ describe('Today prioritization contract', () => {
 
   it('covers first day, day 2 morning, accident recovery, feeding pattern, and day 7 rhythm', () => {
     expect(buildTodayPlan(createInput({ dayNumber: 1 })).hero.variant).toBe('first_day');
+    expect(buildTodayPlan(createInput({ dayNumber: 4 })).hero.variant).toBe('first_day');
 
     expect(buildTodayPlan(createInput({
       dayNumber: 2,
@@ -131,7 +132,14 @@ describe('Today prioritization contract', () => {
   });
 
   it('adds one guidance card per day when an eligible topic exists', () => {
-    const plan = buildTodayPlan(createInput({ dayNumber: 5 }));
+    const plan = buildTodayPlan(createInput({
+      dayNumber: 5,
+      lastEvents: [{
+        eventType: 'feeding',
+        minutesAgo: 30,
+        quickAction: 'meal',
+      }],
+    }));
 
     expect(plan.guidanceCard).toMatchObject({
       contentVersion: expect.stringMatching(/^local-/),

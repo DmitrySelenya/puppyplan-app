@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   STARTER_GUIDANCE_CONTENT,
@@ -16,6 +16,7 @@ import type {
 } from '@/contracts/today';
 import {
   AppText,
+  AppIcon,
   Button,
   Card,
   ListRow,
@@ -59,7 +60,8 @@ export function TodayPlanCards({
       <TodayDailyCardList cards={plan.dailyCards.map((card) => ({
         syntheticOnly: card.syntheticOnly === true,
         variant: card.variant,
-      }))} />
+      }))}
+      firstDayMode={plan.hero.variant === 'first_day'} />
       {plan.guidanceCard === null ? null : (
         <StarterGuidanceCard topicId={plan.guidanceCard.topicId} />
       )}
@@ -79,6 +81,7 @@ export function TodayHeroCard({
 }>) {
   const { t } = useAppTranslation();
   const copy: HeroCopy = todayHeroCopy[variant];
+  const body = variant === 'first_day' ? '' : t(copy.bodyKey);
 
   return (
     <Card
@@ -86,19 +89,19 @@ export function TodayHeroCard({
       testID="today-hero-card"
       variant="hero">
       <Stack gap="sm">
-        <StatusPill
-          accessibilityLabel={t(copy.eyebrowKey)}
-          icon={<AppText accessibilityElementsHidden>1</AppText>}
-          label={t(copy.eyebrowKey)}
-          tone="completed"
-        />
-        <AppText variant="title">{t(copy.titleKey)}</AppText>
-        <AppText tone="secondary">{t(copy.bodyKey)}</AppText>
+        <AppText
+          maxFontSizeMultiplier={1.6}
+          tone="tertiary"
+          variant="caption">
+          {t(copy.eyebrowKey)}
+        </AppText>
+        <AppText variant="title3">{t(copy.titleKey)}</AppText>
+        {body.trim() ? <AppText tone="secondary">{body}</AppText> : null}
         {copy.primaryKey === undefined || onPrimaryAction === undefined ? null : (
           <Button
             label={t(copy.primaryKey)}
             onPress={onPrimaryAction}
-            variant="secondary"
+            variant="primary"
           />
         )}
       </Stack>
@@ -108,14 +111,58 @@ export function TodayHeroCard({
 
 export function TodayDailyCardList({
   cards,
+  firstDayMode = false,
 }: Readonly<{
   cards: readonly Readonly<{ syntheticOnly?: boolean; variant: TodayDailyCardVariant }>[];
+  firstDayMode?: boolean;
 }>) {
   const { t } = useAppTranslation();
+  const starterCards = cards.filter((card) => isStarterActionCard(card.variant));
+  const otherCards = firstDayMode
+    ? []
+    : cards.filter((card) => !isStarterActionCard(card.variant));
 
   return (
     <Stack gap="sm" testID="today-daily-card-list">
-      {cards.map((card) => {
+      {starterCards.length > 0 ? (
+        <>
+          <AppText
+            maxFontSizeMultiplier={1.4}
+            style={styles.sectionHeader}
+            tone="tertiary"
+            variant="caption">
+            {t('today.daily-cards.starter-section-title')}
+          </AppText>
+          <View style={styles.listGroup}>
+            {starterCards.map((card) => {
+              const copy = todayDailyCardCopy[card.variant];
+
+              return (
+                <ListRow
+                  key={card.variant}
+                  leading={<AppIcon name={dailyCardIcon(card.variant)} size={22} />}
+                  title={t(copy.titleKey)}
+                  trailing={<AppIcon color="#72756A" name="chevronRight" size={20} />}
+                  titleNumberOfLines={2}
+                />
+              );
+            })}
+          </View>
+          <Card style={styles.infoBanner} variant="mutedTemplate">
+            <Stack align="center" direction="horizontal" gap="sm">
+              <AppIcon color="#3C5C7A" name="book" size={18} />
+              <AppText
+                maxFontSizeMultiplier={1.5}
+                style={styles.infoText}
+                tone="secondary"
+                variant="footnote">
+                {t('today.daily-cards.first-day-banner')}
+              </AppText>
+            </Stack>
+          </Card>
+        </>
+      ) : null}
+      {otherCards.map((card) => {
         const copy = todayDailyCardCopy[card.variant];
 
         return (
@@ -540,4 +587,43 @@ const styles = StyleSheet.create({
   cardTitle: {
     flexShrink: 1,
   },
+  infoBanner: {
+    backgroundColor: '#E2E8EF',
+    borderColor: 'transparent',
+    marginBottom: 72,
+    paddingHorizontal: 12,
+    paddingRight: 84,
+    paddingVertical: 10,
+  },
+  infoText: {
+    color: '#3C5C7A',
+    flex: 1,
+  },
+  listGroup: {
+    borderColor: '#E2DDD2',
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    textTransform: 'uppercase',
+  },
 });
+
+function isStarterActionCard(variant: TodayDailyCardVariant): boolean {
+  return variant === 'starter_action_feeding'
+    || variant === 'starter_action_potty'
+    || variant === 'starter_action_sleep';
+}
+
+function dailyCardIcon(variant: TodayDailyCardVariant): 'bowl' | 'moon' | 'water' {
+  if (variant === 'starter_action_feeding') {
+    return 'bowl';
+  }
+
+  if (variant === 'starter_action_sleep') {
+    return 'moon';
+  }
+
+  return 'water';
+}

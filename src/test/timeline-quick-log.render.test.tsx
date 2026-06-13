@@ -153,7 +153,7 @@ describe('Timeline Quick Log state integration', () => {
       ]);
     });
 
-    expect(screen.getByText(i18n.t('timeline.title'))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('timeline.title')).length).toBeGreaterThan(0);
     await waitFor(() => {
       expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
     });

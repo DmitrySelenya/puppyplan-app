@@ -131,10 +131,13 @@ export type TodayDeferredProductionFeature = z.infer<typeof todayDeferredProduct
 export function buildTodayPlan(input: TodayPlanInput): TodayPlan {
   const parsedInput = todayPlanInputSchema.parse(input);
   const deferredProductionFeatures = createDeferredProductionFeatures(parsedInput);
-  const guidanceTopic = getStarterGuidanceForDay({
-    completedTopicIds: parsedInput.completedGuidanceTopicIds,
-    dayNumber: parsedInput.dayNumber,
-  });
+  const hero = buildHero(parsedInput);
+  const guidanceTopic = hero.variant === 'first_day'
+    ? null
+    : getStarterGuidanceForDay({
+      completedTopicIds: parsedInput.completedGuidanceTopicIds,
+      dayNumber: parsedInput.dayNumber,
+    });
 
   return todayPlanSchema.parse({
     dailyCards: buildDailyCards(parsedInput),
@@ -147,7 +150,7 @@ export function buildTodayPlan(input: TodayPlanInput): TodayPlan {
         slot: 'guidance',
         topicId: guidanceTopic.id,
       },
-    hero: buildHero(parsedInput),
+    hero,
     todayDate: parsedInput.todayDate,
   });
 }
@@ -181,7 +184,7 @@ function selectHeroVariant(input: z.infer<typeof todayPlanInputSchema>): TodayHe
     return 'day_2_morning';
   }
 
-  if (input.dayNumber === 1) {
+  if (input.dayNumber === 1 || input.lastEvents.length === 0) {
     return 'first_day';
   }
 
@@ -211,11 +214,11 @@ function buildDailyCards(
     variants.push({ variant: 'recap_yesterday' });
   }
 
-  if (input.dayNumber === 1) {
+  if (input.dayNumber === 1 || input.lastEvents.length === 0) {
     variants.push(
+      { variant: 'starter_action_feeding' },
       { variant: 'starter_action_potty' },
       { variant: 'starter_action_sleep' },
-      { variant: 'starter_action_feeding' },
     );
   }
 

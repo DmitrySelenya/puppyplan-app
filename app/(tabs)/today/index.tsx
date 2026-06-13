@@ -51,6 +51,10 @@ export default function TodayRoute() {
       openTimeline={() => {
         router.push('/timeline');
       }}
+      puppyAgeLabel={activeCare.puppy?.age_weeks_estimate === null || activeCare.puppy?.age_weeks_estimate === undefined
+        ? undefined
+        : `${activeCare.puppy.age_weeks_estimate} weeks`}
+      puppyName={activeCare.puppy?.name}
       todayPlanInput={activeCare.careContext === null || activeCare.puppy === null
         ? undefined
         : createTodayPlanInputFromPuppy({
