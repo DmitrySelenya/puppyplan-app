@@ -125,7 +125,7 @@ describe('QuickLogShell', () => {
       true,
     );
     expect(screen.getByRole('button', {
-      name: i18n.t('common.close'),
+      name: i18n.t('quick-log.sheet.edit-trackers'),
     })).toBeTruthy();
     expect(contentStyle.paddingHorizontal).toBe(0);
     expect(screen.getByTestId('sheet-drag-handle', { includeHiddenElements: true })).toBeTruthy();
@@ -133,7 +133,7 @@ describe('QuickLogShell', () => {
       MAX_VISIBLE_QUICK_LOG_TRACKERS,
     );
     expect(screen.queryByText(i18n.t('quick-log.snackbar.add-details'))).toBeNull();
-    expect(screen.queryByText(i18n.t('quick-log.sheet.edit-trackers'))).toBeNull();
+    expect(screen.queryByText(i18n.t('common.close'))).toBeNull();
   });
 
   it('renders selected tracker ids from the active care context in order', () => {

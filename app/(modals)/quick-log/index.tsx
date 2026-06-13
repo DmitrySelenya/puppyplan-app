@@ -27,6 +27,9 @@ export default function QuickLogRoute() {
       closeSheet={() => {
         closeModalRoute(router);
       }}
+      editTrackers={() => {
+        router.push('/settings/quick-trackers');
+      }}
       localEvents={localEvents}
       mutation={quickLogMutation.mutation}
       mutationEvents={quickLogMutation.mutationEvents}

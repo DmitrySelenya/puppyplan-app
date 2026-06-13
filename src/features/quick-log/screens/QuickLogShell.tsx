@@ -3,7 +3,9 @@ import { StyleSheet } from 'react-native';
 
 import {
   defaultQuickLogTrackerIds,
+  type QuickLogTrackerId,
 } from '@/contracts/quick-log';
+import { AppIcon } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
@@ -34,6 +36,7 @@ import {
 export type QuickLogShellProps = Readonly<{
   careContext?: QuickLogCareContext | null;
   closeSheet?: () => void;
+  editTrackers?: () => void;
   mutation?: QuickLogMutationPort;
   mutationEvents?: readonly QuickLogMutationEvent[];
   localEvents?: readonly QuickLogLocalEventView[];
@@ -103,6 +106,7 @@ function isQuickLogLocalEventState(
 function QuickLogShellContent({
   careContext = null,
   closeSheet = () => undefined,
+  editTrackers = () => undefined,
   feedback,
   localEvents = [],
   mutation,
@@ -175,30 +179,30 @@ function QuickLogShellContent({
     <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
       <SheetSurface accessibilityLabel={t('quick-log.sheet.title')}>
         <Stack
-          align="flex-start"
+          align="center"
           direction="horizontal"
           gap="sm"
-          justify="space-between"
-          wrap>
+          justify="space-between">
           <AppText
             maxFontSizeMultiplier={2}
             style={styles.title}
-            variant="title">
+            variant="title2">
             {t('quick-log.sheet.title')}
           </AppText>
           <Button
-            label={t('common.close')}
+            label={t('quick-log.sheet.edit-trackers')}
             labelMaxFontSizeMultiplier={2}
             labelVariant="label"
-            onPress={closeSheet}
-            style={styles.closeButton}
+            onPress={editTrackers}
+            style={styles.editTrackersButton}
             variant="tertiary"
           />
         </Stack>
-        <Stack direction="horizontal" gap="md" wrap>
+        <Stack direction="horizontal" gap="sm" wrap>
           {selectedTrackerIds.map((trackerId) => (
             <TrackerTile
               accessibilityLabel={t(getQuickLogTrackerLabelKey(trackerId))}
+              icon={<AppIcon name={quickLogTrackerIcon(trackerId)} size={24} />}
               key={trackerId}
               label={t(getQuickLogTrackerLabelKey(trackerId))}
               onPress={() => {
@@ -208,11 +212,6 @@ function QuickLogShellContent({
             />
           ))}
         </Stack>
-        <AppText
-          maxFontSizeMultiplier={2}
-          tone="secondary">
-          {t('quick-log.sheet.edit-helper')}
-        </AppText>
         {controller.duplicateWarning ? (
           <DuplicateWarning
             onCancel={controller.cancelDuplicate}
@@ -272,7 +271,7 @@ const unavailableMutation: QuickLogMutationPort = {
 };
 
 const styles = StyleSheet.create({
-  closeButton: {
+  editTrackersButton: {
     alignSelf: 'flex-start',
   },
   sheetContent: {
@@ -285,3 +284,27 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
 });
+
+function quickLogTrackerIcon(trackerId: QuickLogTrackerId): 'bowl' | 'calendar' | 'moon' | 'poop' | 'spark' | 'water' {
+  if (trackerId === 'feeding_meal') {
+    return 'bowl';
+  }
+
+  if (trackerId === 'sleep_nap') {
+    return 'moon';
+  }
+
+  if (trackerId === 'zoomies') {
+    return 'spark';
+  }
+
+  if (trackerId === 'training') {
+    return 'calendar';
+  }
+
+  if (trackerId === 'potty_poop') {
+    return 'poop';
+  }
+
+  return 'water';
+}

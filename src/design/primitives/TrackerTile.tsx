@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   label: {
     color: tokens.color.text.primary,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   pressed: {
     opacity: 0.88,
@@ -100,13 +100,13 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.color.primary[50],
   },
   root: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: tokens.color.surface.raised,
     borderColor: tokens.color.stroke.default,
     borderRadius: tokens.radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     gap: tokens.space[2],
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     minHeight: tokens.component.trackerTile.min.height,
     minWidth: tokens.component.trackerTile.min.width,
     padding: tokens.space[3],

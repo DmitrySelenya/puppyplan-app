@@ -109,11 +109,11 @@ describe('TabLayout', () => {
     );
 
     expect(flattenedStyle.position).toBe('absolute');
-    expect(flattenedStyle.right).toBeUndefined();
-    expect(flattenedStyle.left).toBe('50%');
-    expect(flattenedStyle.marginLeft).toBe(-tokens.component.fab.size / 2);
+    expect(flattenedStyle.right).toBe(tokens.space[4]);
+    expect(flattenedStyle.left).toBeUndefined();
+    expect(flattenedStyle.marginLeft).toBeUndefined();
     expect(flattenedStyle.bottom).toBeGreaterThanOrEqual(
-      tokens.layout.tabBarHeight + tokens.space[8],
+      tokens.layout.tabBarHeight + tokens.space[3],
     );
   });
 });

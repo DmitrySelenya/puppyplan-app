@@ -24,6 +24,7 @@ Failure semantics:
 
 - no EAS build smoke until typecheck, tests, RLS, migration diff, and contract/codegen checks pass;
 - no Maestro smoke until an installable build artifact exists;
+- no UI/design batch is complete until the native screens are visually checked against the matching design atlas artboards and the result is recorded;
 - no release candidate until platform compliance preflight is clean.
 
 ## Unit Tests
@@ -88,6 +89,18 @@ Critical flows:
 - trainer share preview and revoke;
 - reminder schedule/fire/action;
 - notification permission denied fallback.
+
+### Visual Design Fidelity
+
+For every changed UI surface, record a visual acceptance set before the issue can move to `Done` or the next roadmap batch can start:
+
+- affected atlas artboards from `docs/design/v1/manifest.json`;
+- reference screenshots from `docs/design/v1/screenshots/`;
+- native screenshots captured on the approved simulator profile, plus any explicitly approved larger-device responsive check;
+- result of manual side-by-side comparison for layout, spacing, typography, color, iconography, copy hierarchy, tab/FAB placement, and screen states;
+- explicit list of unresolved deviations or a note that none remain.
+
+If the implementation cannot be compared because the source mockup is missing, stale, or ambiguous, the batch is blocked until the user supplies exact screenshots or a fresh design export. Functional tests, `npm run check`, and simulator launch success do not override a failed visual fidelity check.
 
 ## Accessibility
 

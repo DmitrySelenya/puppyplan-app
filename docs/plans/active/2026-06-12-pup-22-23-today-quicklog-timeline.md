@@ -7,9 +7,9 @@
 
 **Status:** Active.
 
-**Current phase:** Phase 8 - Polish And Harden.
+**Current phase:** Phase 9 - Design Fidelity Recovery Gate.
 
-**Architecture:** Supabase remains durable source of truth, TanStack Query owns server state, Expo SQLite remains the only durable local-write exception for Quick Log, and feature UI composes `src/design` primitives with typed EN/RU/ES i18n. PUP-22 owns Today/guidance. PUP-23 owns Quick Log details and Timeline completion. Reminder/family-dependent Today variants are review-only slots plus synthetic dev-gallery fixtures until PUP-25/PUP-26.
+**Architecture:** Supabase remains durable source of truth, TanStack Query owns server state, Expo SQLite remains the only durable local-write exception for Quick Log, and feature UI composes `src/design` primitives with typed EN/RU/ES i18n. PUP-22 owns Today/guidance. PUP-23 owns Quick Log details and Timeline completion. Reminder/family-dependent Today variants are review-only slots plus synthetic dev-gallery fixtures until PUP-26/PUP-27 (reminders/family slices; renumbered 2026-06-12 after PUP-24 icon issue).
 
 **Linear:** `PUP-22` and `PUP-23` in team `PUP`, project `PuppyPlan MVP`.
 
@@ -36,6 +36,8 @@ Current Quick Log infrastructure already includes contracts, business-rule const
 - **Context placement:** Linear issues hold operational acceptance and status; this plan holds implementation contract and evidence; `.supergoal` holds execution protocol; final PR text is out of scope until push/PR approval.
 - **What already exists:** primary tabs, Quick Log FAB/modal, active care context, selected trackers, Quick Log queue/mutation/cache, partial Today/Timeline Quick Log rows, typed i18n, design primitives, dev gallery.
 - **Unsolved:** Today prioritization/day-state model, one daily guidance card with detail states, synthetic review states for future reminder/family dependencies, Quick Log details route and slow-save state, Timeline filters/edit/delete/undo/full empty/error/offline states.
+
+**2026-06-12 design-fidelity blocker:** Post-batch simulator review showed that the production native Today and Quick Log surfaces are functional but not visually aligned with the approved atlas. This blocks moving PUP-22/PUP-23 to Done and blocks starting the next roadmap batch until the Design Fidelity Gate passes or the user explicitly approves named deviations.
 
 ---
 
@@ -81,7 +83,7 @@ Current Quick Log infrastructure already includes contracts, business-rule const
 
 1. **Reminder/family-dependent Today variants**
    - **Chosen:** Build composable card slots and synthetic `/_dev/components` fixtures only.
-   - **Reason:** PUP-25/PUP-26 own real reminders and family invite behavior; this batch must not fake production reminders or sharing.
+   - **Reason:** PUP-26/PUP-27 (reminders/family slices; renumbered 2026-06-12 after PUP-24 icon issue) own real reminders and family invite behavior; this batch must not fake production reminders or sharing.
 
 2. **Guidance content storage**
    - **Chosen:** Local versioned content in contracts/feature code for this batch unless server-backed content already exists.
@@ -450,6 +452,54 @@ Current Quick Log infrastructure already includes contracts, business-rule const
 
 ---
 
+### Phase 9 - Design Fidelity Recovery Gate
+
+**Files:**
+- `docs/design/v1/manifest.json`
+- `docs/design/v1/screenshots/index.md`
+- `src/design/primitives/*`
+- `app/(tabs)/_layout.tsx`
+- `src/features/today/*`
+- `src/features/quick-log/*`
+- `src/features/timeline/*`
+- Related render tests under `src/test/`
+
+**Checklist:**
+- [x] Re-read the Today, Quick Log, and Timeline atlas entries and screenshots affected by PUP-22/PUP-23.
+- [ ] Capture current native screenshots for Today, Quick Log default, Quick Log details, and Timeline on the approved simulator profile.
+- [x] Compare native screenshots side-by-side against `docs/design/v1/screenshots/today/*`, `quicklog/*`, and `timeline/*`.
+- [x] Fix visual mismatches in shared primitives or feature screens while preserving i18n, accessibility, and architecture boundaries.
+- [ ] Re-run native screenshots after fixes and record screenshot paths.
+- [ ] Run relevant render tests plus `npm run check`.
+- [ ] Update Linear PUP-22/PUP-23 with visual evidence and remaining deviations.
+
+**2026-06-12 partial recovery evidence:**
+- Re-read the original design source under `/Users/dmitryselenya/Downloads/puppy_app/screens/{today,quicklog,timeline}.jsx` and the in-repo design atlas.
+- Launched the app on `Grith iPhone SE 3 iOS 26.3` with Metro running and captured local native screenshots for Today, Quick Log default, Timeline, More, and Health. Screenshot files are not recorded or attached here because the simulator session contains private local account data.
+- Brought PUP-22/PUP-23 surfaces materially closer to the atlas:
+  - Today first-day state now uses the atlas header/title/date/hero/list/banner shape, first-day card priority, and bottom-right Quick Log FAB.
+  - Quick Log default sheet now uses the atlas title/edit-trackers header, tracker icons, and 3-column SE-friendly grid.
+  - Timeline now uses the atlas large-title modal header, horizontal filter chips, grouped list, and compact `time + icon + title + meta` rows.
+- Fresh verification passed:
+  - `npm run typecheck`
+  - `npm run test:unit -- --runTestsByPath src/test/today-prioritization.test.ts src/test/today-core.render.test.tsx src/test/quick-log-sheet.render.test.tsx src/test/tab-layout.render.test.tsx src/test/timeline-filters.render.test.tsx src/test/timeline-quick-log.render.test.tsx src/test/timeline-route.render.test.tsx` (7 suites / 44 tests)
+  - `npm run test:scaffold`
+  - `git diff --check`
+
+**Remaining unapproved deviations:**
+- Not yet a full 1:1 pass: Quick Log details was not re-captured in this recovery pass, and `npm run check` was not rerun after the visual-only follow-up.
+- Timeline still exposes compact `Edit`/`Delete` text actions for PUP-23 non-swipe accessibility acceptance; the atlas shows a cleaner row without those visible controls.
+- Today on the SE profile reserves space around the FAB so it does not cover banner text, but the FAB still visually overlaps the banner background in the first-day short-screen state.
+- Icons are lightweight app glyphs, not exact SF Symbols/Material assets from the atlas.
+- `Health` and `More` remain placeholder/operational tab screens from other roadmap scope, not final atlas-complete screens.
+
+**Acceptance criteria:**
+- Today, Quick Log, Quick Log details, and Timeline match the approved atlas in layout, spacing, typography scale, colors, iconography, tab/FAB placement, copy hierarchy, and required screen states.
+- Any intentional difference from the atlas is explicitly named and approved by the user before the batch can close.
+- The app launches locally without the `No script URL provided` failure when Metro is running.
+
+---
+
 ## Verification Commands
 
 Expected final gate:
@@ -465,6 +515,7 @@ Focused commands are phase-specific and should use `npm run test:unit -- --runTe
 Manual evidence:
 - iOS smoke on `Grith iPhone SE 3 iOS 26.3` (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) only, fallback `iPhone SE (3rd generation)` only if primary is missing.
 - Screenshots saved locally under `/tmp/puppyplan-pup22-23-smoke/`.
+- Design fidelity screenshots saved under `/tmp/puppyplan-pup22-23-fidelity/` with artboard references in the plan/Linear evidence.
 - Dynamic Type XXXL checks for affected screens.
 
 ---
@@ -512,3 +563,4 @@ Not approved:
 - 2026-06-12: Phase 8 hardening complete for local gates and local PUP-23 commit created. `npm run check` passed on the final tree (lint, typecheck, 57 Jest suites / 350 tests, node tests, scaffold, tokens, privacy scan, text hygiene); `npm run supabase:lint` passed; `npm run db:push:remote:dry-run` reported the remote database is up to date. The approved SE simulator profile was configured in XcodeBuildMCP, but smoke and Dynamic Type manual checks are blocked by XcodeBuildMCP build/run timeout followed by a locked Xcode build database; screenshot directory `/tmp/puppyplan-pup22-23-smoke/` exists and contains no screenshots. The Supabase CLI recovery moved malformed local telemetry JSON to `/tmp/puppyplan-supabase-telemetry-20260612170521.json`; no database state was changed.
 - 2026-06-12: External review follow-up complete. Confirmed and fixed synced Timeline delete via tombstone, Timeline edit details routing, details payload persistence, local-calendar pending-row filtering, deterministic cached-local-row dedupe, production Today day-number derivation, Today hero CTA wiring, locale-aware row meta, and route-level coverage. Confirmed but deferred guidance durable progress persistence pending a storage/server-state contract, and dev-gallery cross-feature preview imports pending an architecture exception or gallery relocation. Verification passed: focused review-fix suites (10 suites, 87 tests), `npm run check` (57 Jest suites / 362 tests plus node/scaffold gates), and `npm run supabase:lint`. Linear comments posted: PUP-22 `ecefd25c-105f-4ef0-a0c0-f16c34a5bc74`, PUP-23 `dc0e9295-fd6c-49ec-8238-21551a6aaa7a`.
 - 2026-06-12: Review fix follow-up complete. Added failing coverage and fixed edited feeding detail rows so `snack`/`water` payloads remain visible in Today/Timeline/Quick Log surfaces; Timeline, Today, and direct Quick Log details routes now withhold write actions/saves for viewer care contexts; `.supergoal/` local execution artifacts are ignored. Verification passed: focused route/event-view suites (4 suites, 17 tests), `npm run check` (57 Jest suites / 366 tests plus node/scaffold gates), `npm run test:scaffold`, and `git diff --check`.
+- 2026-06-12: Added a blocking Design Fidelity Recovery Gate after user review found the native app visually misaligned with the approved atlas. PUP-22/PUP-23 cannot be treated as done, and the next roadmap batch cannot start, until affected native screenshots pass side-by-side atlas comparison or the user approves named deviations.

@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: tokens.radius.lg,
     borderTopRightRadius: tokens.radius.lg,
     gap: tokens.space[4],
+    minHeight: 460,
     padding: tokens.layout.cardPadding,
     ...elevationStyle(2),
   },

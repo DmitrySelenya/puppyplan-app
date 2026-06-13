@@ -266,9 +266,11 @@ Important PuppyPlan invariants to reuse when relevant:
 - [ ] Add loading/empty/error/offline/permission states.
 - [ ] Add i18n keys and string budget updates.
 - [ ] Add render/integration tests for critical flows.
+- [ ] Map each changed screen/state to `docs/design/v1/manifest.json` artboards and reference screenshots.
+- [ ] Capture native screenshots for affected screen states and compare them side-by-side with the atlas.
 
 **Acceptance criteria:**
-- UI matches design contracts and does not bypass architecture boundaries.
+- UI matches design contracts and approved atlas screenshots; any deviation is explicitly recorded and approved before the batch can close.
 - Critical user path works with realistic mocked data.
 
 ---
@@ -300,6 +302,7 @@ Use only if this feature touches notifications, sharing, analytics, observabilit
 - [ ] Update architecture docs, diagrams, ADRs, and screen-states matrix if applicable.
 - [ ] Run relevant local verification.
 - [ ] Capture manual QA notes/screenshots only with synthetic data.
+- [ ] Record Design Fidelity Gate result: affected artboards, simulator/device, screenshot paths, pass/fail, and unresolved deviations.
 - [ ] Review platform privacy/compliance impact.
 - [ ] Update Changelog.
 
@@ -331,6 +334,7 @@ Run what exists and applies. Record exact commands and results in the Changelog.
 - [ ] React Native Testing Library render/integration tests
 - [ ] Maestro flow, if an installable build exists
 - [ ] Dynamic Type XXL/XXXL review for affected screens
+- [ ] Design atlas side-by-side screenshot review for every changed UI state
 - [ ] VoiceOver/TalkBack checklist if core flow changed
 - [ ] token drift / contrast / string budget checks
 

@@ -317,9 +317,9 @@
       "potty-time-tertiary": "Later",
       "eyebrow": "Today",
       "first-day": {
-        "title": "Start with one small log",
-        "body": "A first potty, meal, or nap gives Today enough context to guide the next step.",
-        "primary": "Open Quick Log"
+        "title": "Log your first event — it takes about five seconds.",
+        "body": "Start with a first potty, meal, or nap.",
+        "primary": "Start"
       },
       "day-2-morning": {
         "title": "Morning rhythm check",
@@ -417,16 +417,18 @@
       }
     },
     "daily-cards": {
+      "first-day-banner": "The first day is about observing, not results.",
+      "starter-section-title": "What to do now",
       "starter-action-potty": {
-        "title": "First potty cue",
+        "title": "Short potty breaks every 1–2 hours",
         "body": "Try a short outside break after sleep, food, or active play."
       },
       "starter-action-sleep": {
-        "title": "Protect one quiet nap",
+        "title": "A quiet spot for sleep",
         "body": "A calm rest spot helps the rest of the day stay easier to read."
       },
       "starter-action-feeding": {
-        "title": "Mark the next meal",
+        "title": "Watch the feeding pattern",
         "body": "One meal log is enough to start seeing the feeding rhythm."
       },
       "recap-yesterday": {

@@ -2,6 +2,7 @@ import { router, Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { primaryTabs, quickLogAction } from '@/contracts/navigation';
+import { AppIcon } from '@/design/primitives/AppIcon';
 import { FAB } from '@/design/primitives/FAB';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
@@ -23,6 +24,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="today/index"
           options={{
+            tabBarIcon: ({ color, size }) => (
+              <AppIcon color={color} name="today" size={size} />
+            ),
             title: t(todayTab.labelKey),
             tabBarAccessibilityLabel: t(todayTab.accessibilityLabelKey),
           }}
@@ -30,6 +34,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="health/index"
           options={{
+            tabBarIcon: ({ color, size }) => (
+              <AppIcon color={color} name="heart" size={size} />
+            ),
             title: t(healthTab.labelKey),
             tabBarAccessibilityLabel: t(healthTab.accessibilityLabelKey),
           }}
@@ -37,6 +44,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="more/index"
           options={{
+            tabBarIcon: ({ color, size }) => (
+              <AppIcon color={color} name="more" size={size} />
+            ),
             title: t(moreTab.labelKey),
             tabBarAccessibilityLabel: t(moreTab.accessibilityLabelKey),
           }}
@@ -61,9 +71,8 @@ const styles = StyleSheet.create({
     borderTopColor: tokens.color.stroke.default,
   },
   quickLog: {
-    bottom: tokens.layout.tabBarHeight + tokens.component.fab.size,
-    left: '50%',
-    marginLeft: -tokens.component.fab.size / 2,
+    bottom: tokens.layout.tabBarHeight + tokens.space[3],
     position: 'absolute',
+    right: tokens.space[4],
   },
 });

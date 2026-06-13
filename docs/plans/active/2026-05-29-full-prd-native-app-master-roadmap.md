@@ -469,15 +469,18 @@ Each future task plan must map these invariants to automated tests or named manu
 | PUP-21 | Onboarding, puppy profile, tracker settings | `contracts`, `i18n`, `a11y`, `quick-log`, `privacy`, gated by pgTAP/typegen handoff |
 | PUP-22 | Today core, guidance cards, day 2-7 states | `contracts`, `quick-log`, `a11y`, `i18n` |
 | PUP-23 | Quick Log details and Timeline completion | `quick-log`, `contracts`, `privacy` |
-| PUP-24 | Health records and health_summary behavior | `contracts`, `rls`, `privacy`, `a11y` |
-| PUP-25 | Reminders, local notifications, preferences | `contracts`, `release-gate`, `a11y` |
-| PUP-26 | Family sharing and invite lifecycle | `contracts`, `rls`, `privacy` |
-| PUP-27 | Trusted sitter mode | `contracts`, `privacy`, `a11y` |
-| PUP-28 | Trainer sharing and scoped share projections | `contracts`, `rls`, `privacy`, `a11y` |
-| PUP-29 | Shareable cards and revoked/expired states | `privacy`, `i18n`, `a11y` |
-| PUP-30 | More/settings namespace and settings completion | `privacy`, `i18n`, `a11y` |
-| PUP-31 | Paywall shell and no-op entitlement boundary | `contracts`, `release-gate` |
-| PUP-32 | Closed-beta hardening, E2E, platform and privacy gates | `release-gate`, `privacy`, `a11y` |
+| PUP-24 (created 2026-06-12) | Design-fidelity icon set: replace AppIcon Unicode glyph placeholders with v1 design icons | `a11y`, `design` |
+| PUP-25 | Health records and health_summary behavior | `contracts`, `rls`, `privacy`, `a11y` |
+| PUP-26 | Reminders, local notifications, preferences | `contracts`, `release-gate`, `a11y` |
+| PUP-27 | Family sharing and invite lifecycle | `contracts`, `rls`, `privacy` |
+| PUP-28 | Trusted sitter mode | `contracts`, `privacy`, `a11y` |
+| PUP-29 | Trainer sharing and scoped share projections | `contracts`, `rls`, `privacy`, `a11y` |
+| PUP-30 | Shareable cards and revoked/expired states | `privacy`, `i18n`, `a11y` |
+| PUP-31 | More/settings namespace and settings completion | `privacy`, `i18n`, `a11y` |
+| PUP-32 | Paywall shell and no-op entitlement boundary | `contracts`, `release-gate` |
+| PUP-33 | Closed-beta hardening, E2E, platform and privacy gates | `release-gate`, `privacy`, `a11y` |
+
+Numbering note (2026-06-12): the icon design-fidelity issue was created in Linear and received the auto-generated number `PUP-24`, so the previously proposed numbers for the remaining slices shifted by one. Numbers below PUP-24 in this table are proposals only until the issues are actually created in Linear; treat slice names as the stable identifiers.
 
 Critical path: `PUP-18` auth/identity is complete and downstream production wiring can consume the real session actor. `PUP-19` route coverage is complete locally and `PUP-20` synthetic shell work may proceed, but it must not use fake production identity or claim Milestone B without real onboarding/profile care context.
 

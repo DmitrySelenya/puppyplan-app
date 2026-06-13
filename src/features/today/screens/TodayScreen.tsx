@@ -13,6 +13,7 @@ import {
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { PuppyHeader } from '@/design/primitives/PuppyHeader';
 import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
@@ -43,6 +44,8 @@ export type TodayScreenProps = Readonly<{
   openOnboarding?: () => void;
   openQuickLog?: () => void;
   openTimeline: () => void;
+  puppyAgeLabel?: string;
+  puppyName?: string;
   screenState?: TodayScreenStateOverride;
   todayPlanInput?: Partial<TodayPlanInput>;
 }>;
@@ -55,6 +58,8 @@ export function TodayScreen({
   openOnboarding,
   openQuickLog,
   openTimeline,
+  puppyAgeLabel,
+  puppyName,
   screenState,
   todayPlanInput,
 }: TodayScreenProps) {
@@ -84,7 +89,8 @@ export function TodayScreen({
   if (careContext === null) {
     return (
       <Screen>
-        <AppText variant="title">{t('tabs.today')}</AppText>
+        <PuppyHeader ageLabel={puppyAgeLabel} name={puppyName} />
+        <TodayTitle todayDate={undefined} />
         <TodayStatusCard state="unavailable" />
         <Button
           label={t('today.quick-log.setup-entry')}
@@ -111,11 +117,18 @@ export function TodayScreen({
     screenState,
     timelineStatus: timelineRows.status,
   });
+  const showQuickLogSection = eventViews.length > 0
+    || timelineRows.status === 'error'
+    || hasPendingLocalRows(rows)
+    || shouldShowQuickLogFailedBanner(rows);
 
   return (
     <Screen contentStyle={styles.content}>
-      <AppText variant="title">{t('tabs.today')}</AppText>
-      {todayStatus === null ? null : <TodayStatusCard state={todayStatus} />}
+      <PuppyHeader ageLabel={puppyAgeLabel} name={puppyName} />
+      <TodayTitle todayDate={careContext.todayDate} />
+      {todayStatus === null || (todayStatus === 'empty' && todayPlan !== null)
+        ? null
+        : <TodayStatusCard state={todayStatus} />}
       {todayPlan === null || (timelineRows.status === 'loading' && rows.length === 0) ? null : (
         <TodayPlanCards
           onHeroPrimaryAction={openQuickLog}
@@ -128,6 +141,7 @@ export function TodayScreen({
           <AppText variant="headline">{t('quick-log.failed.persistent-banner')}</AppText>
         </Card>
       ) : null}
+      {showQuickLogSection ? (
       <Stack gap="sm">
         <Stack
           align="flex-start"
@@ -173,6 +187,7 @@ export function TodayScreen({
           </Card>
         )}
       </Stack>
+      ) : null}
     </Screen>
   );
 }
@@ -241,7 +256,7 @@ function createTodayPlanInput(input: Readonly<{
       },
     lastEvents,
     suggestedDailyCards: lastEvents.length === 0
-      ? ['quick_log_prompt']
+      ? []
       : ['timeline_review', 'potty_rhythm', 'sleep_rhythm'],
     todayDate: input.careContext.todayDate,
   };
@@ -519,7 +534,8 @@ function statusTone(status: QuickLogEventView['status']): 'confirmed' | 'failed'
 
 const styles = StyleSheet.create({
   content: {
-    paddingBottom: tokens.space[14] * 2 + tokens.space[4],
+    paddingBottom: tokens.layout.tabBarHeight + tokens.component.fab.size + tokens.space[6],
+    paddingTop: tokens.space[2],
   },
   eventText: {
     flexShrink: 1,
@@ -535,3 +551,30 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
 });
+
+function TodayTitle({ todayDate }: Readonly<{ todayDate?: string }>) {
+  const { locale, t } = useAppTranslation();
+
+  return (
+    <Stack gap="xs">
+      <AppText variant="title1">{t('tabs.today')}</AppText>
+      <AppText tone="tertiary" variant="callout">
+        {formatTodayDate(todayDate, locale)}
+      </AppText>
+    </Stack>
+  );
+}
+
+function formatTodayDate(todayDate: string | undefined, locale: string): string {
+  const date = todayDate === undefined ? new Date() : new Date(`${todayDate}T12:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    weekday: 'long',
+  }).format(date).replace(',', ' ·');
+}

@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { EventType } from '@/contracts/supabase';
 import { AppText } from '@/design/primitives/AppText';
+import { AppIcon } from '@/design/primitives/AppIcon';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
 import { Screen } from '@/design/primitives/Screen';
-import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
+import { Touchable } from '@/design/primitives/Touchable';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation, type AppTranslate, type I18nKey } from '@/lib/i18n';
 import { type TimelineFilters } from '@/lib/query/keys';
@@ -101,26 +102,7 @@ export function TimelineScreen({
   if (careContext === null) {
     return (
       <Screen contentStyle={styles.content}>
-        <Stack
-          align="flex-start"
-          direction="horizontal"
-          gap="sm"
-          justify="space-between"
-          wrap>
-          <AppText
-            style={styles.title}
-            variant="title">
-            {t('timeline.title')}
-          </AppText>
-          <Button
-            label={t('timeline.close')}
-            labelMaxFontSizeMultiplier={2}
-            labelVariant="label"
-            onPress={onClose}
-            style={styles.closeButton}
-            variant="tertiary"
-          />
-        </Stack>
+        <TimelineHeader onClose={onClose} />
         <Card>
           <Stack gap="sm">
             <AppText variant="headline">{t('timeline.unavailable.title')}</AppText>
@@ -143,26 +125,7 @@ export function TimelineScreen({
 
   return (
     <Screen contentStyle={styles.content}>
-      <Stack
-        align="flex-start"
-          direction="horizontal"
-          gap="sm"
-          justify="space-between"
-          wrap>
-        <AppText
-          style={styles.title}
-          variant="title">
-          {t('timeline.title')}
-        </AppText>
-        <Button
-          label={t('timeline.close')}
-          labelMaxFontSizeMultiplier={2}
-          labelVariant="label"
-          onPress={onClose}
-          style={styles.closeButton}
-          variant="tertiary"
-        />
-      </Stack>
+      <TimelineHeader onClose={onClose} />
       <TimelineFilterChips
         options={filterOptions}
         selectedFilter={selectedFilter}
@@ -170,7 +133,7 @@ export function TimelineScreen({
         t={t}
       />
       {eventViews.length > 0 ? (
-        <Stack gap="sm">
+        <View style={styles.timelineList}>
           {eventViews.map((event) => (
             <TimelineQuickLogEventRow
               actions={actions}
@@ -178,7 +141,7 @@ export function TimelineScreen({
               key={event.clientEventId}
             />
           ))}
-        </Stack>
+        </View>
       ) : timelineRows.status === 'error' ? (
         <Card
           accessibilityLabel={t('errors.load-failed')}
@@ -214,12 +177,55 @@ function TimelineFilterChips({
   t: AppTranslate;
 }>) {
   return (
-    <SegmentedControl
-      accessibilityLabel={t('timeline.title')}
-      onValueChange={setSelectedFilter}
-      options={options}
-      value={selectedFilter}
-    />
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.chipScroller}>
+      <Stack direction="horizontal" gap="sm">
+        {options.map((option) => {
+          const selected = option.value === selectedFilter;
+
+          return (
+            <Touchable
+              accessibilityLabel={option.label}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              key={option.value}
+              onPress={() => setSelectedFilter(option.value)}
+              style={[styles.chip, selected ? styles.chipSelected : null]}>
+              <AppText
+                maxFontSizeMultiplier={1.4}
+                style={selected ? styles.chipLabelSelected : styles.chipLabel}
+                variant="label">
+                {option.label}
+              </AppText>
+            </Touchable>
+          );
+        })}
+      </Stack>
+    </ScrollView>
+  );
+}
+
+function TimelineHeader({ onClose }: Readonly<{ onClose: () => void }>) {
+  const { t } = useAppTranslation();
+
+  return (
+    <Stack gap="sm">
+      <Stack align="center" direction="horizontal" justify="space-between">
+        <Button
+          label={t('tabs.today')}
+          labelMaxFontSizeMultiplier={1.4}
+          labelVariant="callout"
+          onPress={onClose}
+          style={styles.navButton}
+          variant="tertiary"
+        />
+        <AppText variant="headline">{t('timeline.title')}</AppText>
+        <AppIcon name="search" size={24} />
+      </Stack>
+      <AppText variant="title1">{t('timeline.title')}</AppText>
+    </Stack>
   );
 }
 
@@ -238,34 +244,46 @@ function TimelineQuickLogEventRow({
   const editRequest = createQuickLogEditRequest(event);
 
   return (
-    <Card>
-      <Stack gap="md">
+    <View style={styles.eventRow}>
+      <View style={styles.eventTimeColumn}>
+        <AppText
+          maxFontSizeMultiplier={1.4}
+          numberOfLines={1}
+          style={styles.eventTime}
+          tone="tertiary"
+          variant="footnote">
+          {event.occurredAtLabel}
+        </AppText>
+      </View>
+      <View style={styles.eventIconColumn}>
+        <AppIcon
+          color={tokens.color.text.primary}
+          name={eventIcon(event.title)}
+          size={22}
+        />
+      </View>
+      <Stack
+        gap="xs"
+        style={styles.eventText}>
         <Stack
           align="center"
           direction="horizontal"
           gap="sm"
-          justify="space-between"
-          wrap>
-          <Stack
-            gap="xs"
-            style={styles.eventText}>
-            <AppText variant="bodyEmph">{event.title}</AppText>
-            <AppText
-              maxFontSizeMultiplier={2}
-              tone="secondary"
-              variant="footnote">
-              {t('timeline.row-meta-template', {
-                actor: event.actorLabel,
-                time: event.occurredAtLabel,
-              })}
-            </AppText>
-          </Stack>
+          justify="space-between">
+          <AppText
+            numberOfLines={1}
+            style={styles.eventTitle}
+            variant="bodyEmph">
+            {event.title}
+          </AppText>
           <StatusPill
             accessibilityLabel={event.statusLabel}
             icon={
               <AppText
                 accessibilityElementsHidden
-                maxFontSizeMultiplier={2}>
+                allowFontScaling={false}
+                style={styles.statusGlyph}
+                variant="caption">
                 {statusIcon(event.status)}
               </AppText>
             }
@@ -274,74 +292,108 @@ function TimelineQuickLogEventRow({
             tone={statusTone(event.status)}
           />
         </Stack>
+        <AppText
+          maxFontSizeMultiplier={1.4}
+          numberOfLines={1}
+          tone="tertiary"
+          variant="footnote">
+          {t('timeline.row-meta-template', {
+            actor: event.actorLabel,
+            time: event.occurredAtLabel,
+          })}
+        </AppText>
+        <Stack
+          direction="horizontal"
+          gap="sm"
+          style={styles.compactActions}
+          wrap>
         {event.status === 'failed' && (onRetry !== undefined || onDelete !== undefined) ? (
-          <Stack direction="horizontal" gap="sm" wrap>
+          <>
             {onRetry !== undefined ? (
               <Button
                 label={t('quick-log.failed.primary')}
+                labelMaxFontSizeMultiplier={1.2}
+                labelVariant="footnote"
                 onPress={() => {
                   onRetry(event.clientEventId, 'manual_retry', 'timeline');
                 }}
+                style={styles.compactActionButton}
                 variant="secondary"
               />
             ) : null}
             {onDelete !== undefined ? (
               <Button
                 label={t('quick-log.failed.tertiary')}
+                labelMaxFontSizeMultiplier={1.2}
+                labelVariant="footnote"
                 onPress={() => {
                   onDelete(createQuickLogDeleteRequest(event));
                 }}
+                style={styles.compactActionButton}
                 variant="tertiary"
               />
             ) : null}
-          </Stack>
+          </>
         ) : null}
         {event.status === 'pending' && (onUndo !== undefined || onDelete !== undefined) ? (
-          <Stack direction="horizontal" gap="sm" wrap>
+          <>
             {onUndo !== undefined ? (
               <Button
                 label={t('quick-log.snackbar.undo')}
+                labelMaxFontSizeMultiplier={1.2}
+                labelVariant="footnote"
                 onPress={() => {
                   onUndo(createQuickLogUndoRequest(event));
                 }}
+                style={styles.compactActionButton}
                 variant="tertiary"
               />
             ) : null}
             {onDelete !== undefined ? (
               <Button
                 label={t('quick-log.failed.tertiary')}
+                labelMaxFontSizeMultiplier={1.2}
+                labelVariant="footnote"
                 onPress={() => {
                   onDelete(createQuickLogDeleteRequest(event));
                 }}
+                style={styles.compactActionButton}
                 variant="tertiary"
               />
             ) : null}
-          </Stack>
+          </>
         ) : null}
         {event.status === 'synced' && ((onEdit !== undefined && editRequest !== null) || onDelete !== undefined) ? (
-          <Stack direction="horizontal" gap="sm" wrap>
+          <>
             {onEdit !== undefined && editRequest !== null ? (
               <Button
                 label={t('timeline.overflow-actions.0')}
+                labelMaxFontSizeMultiplier={1.2}
+                labelVariant="footnote"
                 onPress={() => {
                   onEdit(editRequest);
                 }}
+                style={styles.compactActionButton}
                 variant="secondary"
               />
             ) : null}
             {onDelete !== undefined ? (
               <Button
                 label={t('timeline.overflow-actions.1')}
+                labelMaxFontSizeMultiplier={1.2}
+                labelVariant="footnote"
                 onPress={() => {
                   onDelete(createQuickLogDeleteRequest(event));
                 }}
+                style={styles.compactActionButton}
                 variant="tertiary"
               />
             ) : null}
-          </Stack>
+          </>
         ) : null}
       </Stack>
-    </Card>
+      </Stack>
+    </View>
   );
 }
 
@@ -381,19 +433,117 @@ function statusTone(status: QuickLogEventView['status']): 'confirmed' | 'failed'
   return 'confirmed';
 }
 
+function eventIcon(title: string): 'bowl' | 'moon' | 'poop' | 'spark' | 'today' | 'water' {
+  const normalized = title.toLowerCase();
+
+  if (normalized.includes('feed') || normalized.includes('food') || normalized.includes('корм')) {
+    return 'bowl';
+  }
+
+  if (normalized.includes('sleep') || normalized.includes('nap') || normalized.includes('сон')) {
+    return 'moon';
+  }
+
+  if (normalized.includes('zoom')) {
+    return 'spark';
+  }
+
+  if (normalized.includes('poop') || normalized.includes('potty') || normalized.includes('pee')) {
+    return 'poop';
+  }
+
+  return 'today';
+}
+
 const styles = StyleSheet.create({
+  chip: {
+    alignItems: 'center',
+    backgroundColor: tokens.color.surface.raised,
+    borderColor: tokens.color.stroke.default,
+    borderRadius: tokens.radius.full,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    minHeight: 34,
+    paddingHorizontal: tokens.space[4],
+    paddingVertical: tokens.space[2],
+  },
+  chipLabel: {
+    color: tokens.color.text.secondary,
+  },
+  chipLabelSelected: {
+    color: tokens.color.text.onPrimary,
+  },
+  chipScroller: {
+    marginHorizontal: -tokens.layout.screenPaddingPhone,
+    paddingHorizontal: tokens.layout.screenPaddingPhone,
+  },
+  chipSelected: {
+    backgroundColor: tokens.color.primary[600],
+    borderColor: tokens.color.primary[600],
+  },
   closeButton: {
     alignSelf: 'flex-start',
   },
   content: {
     paddingBottom: tokens.space[10],
+    paddingTop: tokens.space[2],
+  },
+  compactActionButton: {
+    minHeight: 32,
+    paddingHorizontal: tokens.space[2],
+    paddingVertical: tokens.space[1],
+  },
+  compactActions: {
+    marginLeft: -tokens.space[2],
+    marginTop: tokens.space[1],
+  },
+  eventIconColumn: {
+    alignItems: 'center',
+    paddingTop: tokens.space[1],
+    width: 24,
+  },
+  eventRow: {
+    alignItems: 'flex-start',
+    backgroundColor: tokens.color.surface.raised,
+    borderBottomColor: tokens.color.stroke.dividerHairline,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: tokens.space[3],
+    paddingHorizontal: tokens.space[4],
+    paddingVertical: tokens.space[3],
   },
   eventText: {
+    flex: 1,
     flexShrink: 1,
     minWidth: 0,
   },
+  eventTime: {
+    fontVariant: ['tabular-nums'],
+  },
+  eventTimeColumn: {
+    paddingTop: tokens.space[1],
+    width: 48,
+  },
+  eventTitle: {
+    flex: 1,
+    minWidth: 0,
+  },
+  navButton: {
+    paddingHorizontal: 0,
+  },
+  statusGlyph: {
+    color: tokens.color.pill.confirmed.text,
+    lineHeight: tokens.component.pill.icon,
+  },
   statusPill: {
     alignSelf: 'flex-start',
+    flexShrink: 0,
+  },
+  timelineList: {
+    borderColor: tokens.color.stroke.default,
+    borderRadius: tokens.radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
   },
   title: {
     flexShrink: 1,

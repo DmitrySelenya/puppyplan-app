@@ -33,7 +33,22 @@ For solo development, the final reviewer is the user. Agent self-review is usefu
 6. Implement in a small diff. Keep one primary issue per branch and avoid cross-workstream edits unless a plan or ADR explains the boundary crossing.
 7. Update the plan checklist/changelog, docs, ADRs, diagrams, i18n keys, contracts, migrations, generated types, and tests as needed. Mirror phase/checklist progress, blockers, and scope changes back to the Linear issue before ending the turn. Move completed plans to `docs/plans/completed/` and update `docs/plans/README.md`.
 8. Run targeted verification. Once scripts exist, prefer `npm run check` as the full local gate.
-9. Put verification evidence in the PR and Linear issue. Move the issue to `In Review` only when the work is ready for review.
+9. For any UI, screen, design-system, visual-state, or navigation-surface work, complete the Design Fidelity Gate before treating the batch as done or starting the next roadmap batch.
+10. Put verification evidence in the PR and Linear issue. Move the issue to `In Review` only when the work is ready for review.
+
+## Design Fidelity Gate
+
+This gate is mandatory for every batch that creates, changes, or claims completion for UI surfaces. Passing functional tests is not enough.
+
+- Identify every affected design artboard from `docs/design/v1/manifest.json` and `docs/design/v1/screenshots/index.md`.
+- Confirm the current visual source is understood before implementation. The default source is `docs/design/v1/raw/PuppyPlan.html` plus the generated PNG atlas under `docs/design/v1/screenshots/`.
+- If the repo source conflicts with a newer external design package, compare the files and record the decision. If the visual source cannot be resolved, stop and ask the user for exact screenshots or a fresh design export.
+- Capture native screenshots for each affected screen/state on the approved local simulator profile. A user-approved larger device such as iPhone 16e may be used as an additional responsive check, but it does not replace the compact-device gate unless the user explicitly approves that exact substitution.
+- Compare native screenshots against the matching atlas screenshots for layout, spacing, typography scale, colors, iconography, tab/FAB placement, copy hierarchy, loading/offline/error states, and interaction states.
+- Record the result in the active plan and Linear: `PASS` only when the native app is visually aligned with the approved artboards, or `BLOCKED/FAIL` with exact mismatches and screenshots.
+- Do not move the issue to `Done`, close the plan, or start the next roadmap batch while affected screens are visually off-mockup unless the user explicitly approves a named deviation.
+
+Use synthetic data in screenshots. Do not put raw puppy names, private notes, real emails, provider names, photos, tokens, or production data into repo docs, Linear, PRs, screenshots, or logs.
 
 ## Task Contract
 
