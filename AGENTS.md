@@ -15,6 +15,7 @@ Read these before non-trivial work:
 4. Related ADRs under `docs/architecture/adr/`
 5. Feature-local `AGENTS.md`, once feature directories exist
 
+Task router (which docs to read for a given task type): `docs/INDEX.md`.
 Primary architecture entry point: `docs/architecture/00-overview.md`.
 Agent-specific rules: `docs/architecture/18-ai-agent-guide.md`.
 Agent operating model: `docs/agents/00-operating-model.md`.
@@ -31,6 +32,7 @@ Canonical PuppyPlan project skills live under `.agents/skills/`:
 - `.agents/skills/review/SKILL.md`
 - `.agents/skills/review-deep/SKILL.md`
 - `.agents/skills/tdd/SKILL.md`
+- `.agents/skills/design-fidelity/SKILL.md` — routes any UI/screen/component work to the mandatory Design Fidelity Pipeline (complementary to `plan`/`implement`, not a replacement)
 
 Use these project skills before generic or personal skills with the same names. Claude Code discovers `.claude/skills/*` adapters that point back to `.agents/skills/*`. Codex may not auto-discover repo-local skills, so Codex agents must read the matching `.agents/skills/<name>/SKILL.md` manually when the task matches one of these workflows.
 

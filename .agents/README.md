@@ -9,6 +9,7 @@ Use these skills before generic or personal skills when the task matches:
 - `plan`: create a `docs/plans/active/YYYY-MM-DD-<topic>.md` plan.
 - `implement`: execute an existing plan phase by phase.
 - `tdd`: run a test-first loop for behavior changes.
+- `design-fidelity`: route PuppyPlan screen, layout, component, and UI review work through the mandatory Design Fidelity Pipeline.
 
 ## Agent Adapters
 

@@ -5,6 +5,7 @@ Primary project rules live in `AGENTS.md`. This file is intentionally short and 
 ## Must Follow
 
 - Read `AGENTS.md` first.
+- Use `docs/INDEX.md` to find which docs to read for your task type.
 - Read the relevant PRD, `DESIGN.md`, architecture file, and ADR before non-trivial work.
 - Keep `app/` thin: routes/layouts/providers only.
 - Use Supabase through `src/lib/supabase` / `src/lib/query`; never use raw Supabase clients in feature UI.
@@ -12,7 +13,7 @@ Primary project rules live in `AGENTS.md`. This file is intentionally short and 
 - Start data-shape changes in `src/contracts/`; update migrations, generated DB types, RLS tests, docs, and ADRs as needed.
 - Every user-facing string uses typed i18n keys.
 - Feature code uses `src/design` primitives/wrappers, not raw `Pressable`, colors, spacing, haptics, or direct business-error alerts.
-- For any UI work, follow `docs/agents/design-fidelity-pipeline.md`: lock the design (artboard IDs + spec card) before code, build primitives-first, add structural anatomy tests, and compare each screen to the atlas before Done — never as a later recovery pass.
+- For any UI work, use the `design-fidelity` skill and follow `docs/agents/design-fidelity-pipeline.md`: lock the design (artboard IDs + spec card) before code, build primitives-first, add structural anatomy tests, and compare each screen to the atlas before Done — never as a later recovery pass.
 - Do not log or document raw puppy names, notes, emails, provider names, photos, tokens, or other private user data.
 - Do not edit generated `ios/` or `android/` files directly.
 
