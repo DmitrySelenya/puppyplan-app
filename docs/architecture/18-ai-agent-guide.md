@@ -18,6 +18,10 @@ An agent must read:
 6. relevant `.agents/skills/<name>/SKILL.md` workflow when planning, implementing, reviewing, deep-reviewing, or using TDD;
 7. feature `AGENTS.md` once it exists.
 
+For behavior work, `.agents/skills/tdd/` is the canonical PuppyPlan TDD workflow. Use heavy/full-isolated TDD for new behavior, security/privacy/RLS, contracts, query/cache, Quick Log, i18n, design-fidelity, and cross-boundary changes. Lightweight TDD is only acceptable for small low-risk edits. If high-risk work lacks authorized isolation tooling, stop unless the user explicitly approves a lower-assurance lightweight run for that exact work; record the approval and reduced assurance in the plan and Linear.
+
+If the locked spec is contradictory, unimplementable, privacy-unsafe, schema-unsafe, or impossible to verify, halt before tests/code and repair the spec. Passing tests are evidence, not proof; add negative, property-style, mutation-style, or broader checks where shallow-green risk matters.
+
 ## Contracts First
 
 Before implementing a feature that changes data shape:

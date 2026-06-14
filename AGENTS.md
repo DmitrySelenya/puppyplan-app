@@ -38,6 +38,13 @@ Use these project skills before generic or personal skills with the same names. 
 
 Do not put PuppyPlan-specific process rules in global user skills such as `~/.codex/skills` or `~/.claude/skills`; keep project behavior in this repo.
 
+PuppyPlan TDD is spec-driven and repo-local:
+
+- Use heavy/full-isolated TDD for new behavior, security/privacy/RLS, contracts, query/cache, Quick Log, i18n, design-fidelity, and cross-boundary changes.
+- Use lightweight TDD only for small low-risk edits. If high-risk work lacks authorized isolation tooling, stop unless the user explicitly approves a lower-assurance lightweight run for that exact work; record the approval and reduced assurance in the plan and Linear.
+- Halt before tests/code when the spec is contradictory, privacy-unsafe, schema-unsafe, design-ambiguous, or impossible to verify.
+- Treat green tests as evidence, not proof; hardcoded lookup-table implementations can pass unless negative, property-style, mutation-style, or broader checks cover the risk.
+
 ## Target Tech Stack
 
 - Expo native mobile app, not a PWA-first product
@@ -157,7 +164,7 @@ Never put secrets, tokens, production credentials, raw puppy names, raw notes, r
 - For UX, flow, API, storage, schema, permissions, release, or architecture changes, create or update a `docs/plans/active/YYYY-MM-DD-<topic>.md` plan/contract.
 - If a plan exists, read the full plan before implementation, identify the current phase, and update checkboxes/changelog as work completes.
 - When a plan has no remaining plan-owned work, move it to `docs/plans/completed/`, update its `Status`, and update `docs/plans/README.md`.
-- For behavior changes, write or update tests before, or at minimum alongside, implementation.
+- For behavior changes, use `.agents/skills/tdd/`; write or update tests before implementation unless a documented spec-defect halt blocks RED.
 - If anything is unclear, ask one blocking question rather than guessing.
 
 ## Task Contract
