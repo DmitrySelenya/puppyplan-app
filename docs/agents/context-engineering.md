@@ -47,6 +47,10 @@ Do not put timestamps, request IDs, large raw logs, or volatile search output be
 - Project skills live in `.agents/skills/` and override generic or personal skills with the same workflow name.
 - Claude uses `.claude/skills/*` adapters. Codex must read `.agents/skills/<name>/SKILL.md` manually if repo-local skills are not auto-discovered in the current session.
 - Load relevant skills before work. Use only the smallest skill set needed.
+- For behavior work that uses `.agents/skills/tdd/`, include the selected TDD mode in the context package:
+  - heavy/full-isolated for new behavior, security/privacy/RLS, contracts, query/cache, Quick Log, i18n, design-fidelity, or cross-boundary changes;
+  - lightweight only for small low-risk edits. If high-risk work lacks authorized isolation tooling, stop unless the user explicitly approves a lower-assurance lightweight run for that exact work; include the approval and reduced-assurance note.
+- Treat green test output as evidence, not proof. If a shallow-green implementation could satisfy examples by hardcoding or lookup tables, add negative, property-style, mutation-style, or broader scenario checks when feasible.
 - Use Linear tools for issue/project/document state. Read first, then mutate only the intended `PUP` resources.
 - Use GitHub for PR/issue/code-review operations when explicitly requested or when PR work requires it.
 - Use `project-graph-context` after the app scaffold exists and code can be indexed. Graph output is advisory; always read real files before editing or reviewing.

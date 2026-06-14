@@ -12,6 +12,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
+| Active task plan | [Isolated Spec-Driven TDD Workflow](active/2026-06-14-isolated-tdd-workflow.md) | `PUP-25` | Complete locally; deep-review fixes verified in visible review workspace; no push/PR/release action |
 | Active follow-up plan | [Design Fidelity UX Audit](active/2026-06-13-design-fidelity-ux-audit.md) | `PUP-22`, `PUP-23` | Four-subagent audit complete; next action is product/implementation decision on H1-H7 before coding |
 | Active task plan | [PUP-22/PUP-23 Today, Quick Log Details, Timeline](active/2026-06-12-pup-22-23-today-quicklog-timeline.md) | `PUP-22`, `PUP-23` | PUP-22 and PUP-23 locally committed; final local gates passed, with approved-SE simulator smoke/Dynamic Type blocked by XcodeBuildMCP build launch failure |
 | Active task plan | [Post-PUP-18 Next Batch](active/2026-06-08-post-pup-18-next-batch.md) | `PUP-19`, `PUP-20`, `PUP-21` | `PUP-19` and `PUP-20` are locally complete/in review. `PUP-21` local implementation, both development selected-tracker migrations, runtime RLS/constraint verification, remote typegen, and SE emulator repair flow are complete on `PuppyPlan Dev` after approved `quick_tracker_ids`; production database setup/migration verification is deferred until release readiness after exact production Supabase approval, and native generated warnings remain a release-signoff decision |

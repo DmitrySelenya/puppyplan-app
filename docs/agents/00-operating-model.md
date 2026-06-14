@@ -31,10 +31,11 @@ For solo development, the final reviewer is the user. Agent self-review is usefu
 4. Build a context package: source docs, current files, constraints, acceptance criteria, risks, expected verification, and open questions.
 5. Create or update a `docs/plans/active/YYYY-MM-DD-<topic>.md` plan for non-trivial UX, flow, API, storage, schema, permissions, release, or architecture changes.
 6. Implement in a small diff. Keep one primary issue per branch and avoid cross-workstream edits unless a plan or ADR explains the boundary crossing.
-7. Update the plan checklist/changelog, docs, ADRs, diagrams, i18n keys, contracts, migrations, generated types, and tests as needed. Mirror phase/checklist progress, blockers, and scope changes back to the Linear issue before ending the turn. Move completed plans to `docs/plans/completed/` and update `docs/plans/README.md`.
-8. Run targeted verification. Once scripts exist, prefer `npm run check` as the full local gate.
-9. For any UI, screen, design-system, visual-state, or navigation-surface work, complete the Design Fidelity Gate before treating the batch as done or starting the next roadmap batch.
-10. Put verification evidence in the PR and Linear issue. Move the issue to `In Review` only when the work is ready for review.
+7. For behavior work, use `.agents/skills/tdd/` and record the selected mode. Heavy/full-isolated TDD is required for new behavior, security/privacy/RLS, contracts, query/cache, Quick Log, i18n, design-fidelity, and cross-boundary changes. Lightweight TDD is only for small low-risk edits. If high-risk work lacks authorized isolation tooling, stop unless the user explicitly approves a lower-assurance lightweight run for that exact work; record the approval and reduced assurance in the plan and Linear.
+8. Update the plan checklist/changelog, docs, ADRs, diagrams, i18n keys, contracts, migrations, generated types, and tests as needed. Mirror phase/checklist progress, blockers, and scope changes back to the Linear issue before ending the turn. Move completed plans to `docs/plans/completed/` and update `docs/plans/README.md`.
+9. Run targeted verification. Once scripts exist, prefer `npm run check` as the full local gate. Treat green tests as evidence, not proof; add negative, property-style, mutation-style, or broader scenario checks where shallow-green risk is meaningful.
+10. For any UI, screen, design-system, visual-state, or navigation-surface work, complete the Design Fidelity Gate before treating the batch as done or starting the next roadmap batch.
+11. Put verification evidence in the PR and Linear issue. Move the issue to `In Review` only when the work is ready for review.
 
 ## Design Fidelity Gate
 
@@ -66,6 +67,8 @@ Every non-trivial Linear issue and plan must include:
 An issue is `agent-ready` only when this contract is complete enough for an implementation agent to start without guessing.
 
 Keep the Linear issue short but current: task contract, owner/status, active phase, blockers, concise progress, verification evidence, and links. Keep the long-form implementation reasoning in `docs/plans/`.
+
+Spec defects, acknowledged TDD gaps, and reduced-assurance lightweight runs must be recorded in the active plan and mirrored to Linear comments. Do not create a hidden local `.tdd/debt.md` ledger for PuppyPlan work.
 
 ## Approval Gates
 

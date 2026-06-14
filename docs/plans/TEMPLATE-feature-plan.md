@@ -16,6 +16,8 @@
 
 **Branch:** Linear `gitBranchName` / N/A
 
+**TDD mode:** heavy/full-isolated / lightweight / N/A. If lightweight is used for high-risk work, record the exact user approval and reduced-assurance reason.
+
 **Primary source docs:**
 - PRD: `puppyplan-prd-v2.md` - [section]
 - Design: `DESIGN.md` - [section]
@@ -75,6 +77,8 @@ These decisions are fixed for this implementation pass:
 Each invariant must map to at least one automated test. Use property-based tests only when the state space justifies it and the dependency is approved.
 
 - **Acceptance mapping:** Linear issue -> this plan -> automated test/manual check -> PR verification evidence.
+- **Spec-defect halt rule:** if criteria are contradictory, privacy-unsafe, schema-unsafe, design-ambiguous, or impossible to verify, stop before RED and repair the spec.
+- **Shallow-green caveat:** green tests are evidence, not proof. Add negative, property-style, mutation-style, or broader scenario checks when hardcoded or lookup-table implementations could pass examples.
 - **Invariant 1:** [Always/never rule.]
   - **Test:** `src/test/[feature].test.ts` or `supabase/tests/[feature].sql`
 - **Invariant 2:** [Always/never rule.]
@@ -223,6 +227,8 @@ Important PuppyPlan invariants to reuse when relevant:
 - Modify/Create: `supabase/tests/[feature].sql` if RLS changes
 
 **Checklist:**
+- [ ] Confirm TDD mode: heavy/full-isolated for high-risk behavior; lightweight only for small low-risk edits unless the user explicitly approves a lower-assurance lightweight run for exact high-risk work.
+- [ ] Lock AC/EC/ERR criteria before RED or document spec-defect halt.
 - [ ] Write failing contract/business-rule tests.
 - [ ] Add/update Zod schemas and business constants.
 - [ ] Add/update RLS tests if permissions change.
