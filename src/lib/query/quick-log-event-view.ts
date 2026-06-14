@@ -114,6 +114,62 @@ export function createQuickLogEventView(
   };
 }
 
+export function getQuickLogTrackerIdForEventRow(
+  row: QuickLogCachedEventRow,
+): QuickLogTrackerId | null {
+  if (!isQuickLogEventType(row.event_type)) {
+    return null;
+  }
+
+  if (row.event_type === 'potty') {
+    const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
+
+    if (!payloadResult.success) {
+      return null;
+    }
+
+    if (payloadResult.data.quick_action === 'pee_outside') {
+      return 'potty_pee_outside';
+    }
+
+    if (payloadResult.data.quick_action === 'pee_inside') {
+      return 'potty_pee_inside';
+    }
+
+    return 'potty_poop';
+  }
+
+  if (row.event_type === 'sleep') {
+    const payloadResult = eventPayloadSchemas.sleep.safeParse(row.payload);
+
+    if (!payloadResult.success || payloadResult.data.sleep_kind !== 'nap') {
+      return null;
+    }
+
+    return 'sleep_nap';
+  }
+
+  if (row.event_type === 'zoomies') {
+    const payloadResult = eventPayloadSchemas.zoomies.safeParse(row.payload);
+
+    return payloadResult.success ? 'zoomies' : null;
+  }
+
+  if (row.event_type === 'training') {
+    const payloadResult = eventPayloadSchemas.training.safeParse(row.payload);
+
+    return payloadResult.success ? 'training' : null;
+  }
+
+  if (row.event_type === 'feeding') {
+    const payloadResult = eventPayloadSchemas.feeding.safeParse(row.payload);
+
+    return payloadResult.success ? 'feeding_meal' : null;
+  }
+
+  return null;
+}
+
 export function createQuickLogUndoRequest(view: QuickLogEventView): QuickLogEventUndoRequest {
   return {
     clientEventId: view.clientEventId,
@@ -183,67 +239,9 @@ function getQuickLogStatusLabel(
 }
 
 function getQuickLogEventLabelKey(row: QuickLogCachedEventRow): I18nKey | null {
-  if (row.event_type === 'potty') {
-    const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
+  const trackerId = getQuickLogTrackerIdForEventRow(row);
 
-    if (!payloadResult.success) {
-      return null;
-    }
-
-    if (payloadResult.data.quick_action === 'pee_outside') {
-      return 'quick-log.trackers.potty-outside';
-    }
-
-    if (payloadResult.data.quick_action === 'pee_inside') {
-      return 'quick-log.trackers.potty-inside';
-    }
-
-    return 'quick-log.trackers.potty-poop';
-  }
-
-  if (row.event_type === 'sleep') {
-    const payloadResult = eventPayloadSchemas.sleep.safeParse(row.payload);
-
-    if (!payloadResult.success) {
-      return null;
-    }
-
-    return payloadResult.data.sleep_kind === 'nap'
-      ? 'quick-log.trackers.sleep'
-      : null;
-  }
-
-  if (row.event_type === 'zoomies') {
-    const payloadResult = eventPayloadSchemas.zoomies.safeParse(row.payload);
-
-    if (!payloadResult.success) {
-      return null;
-    }
-
-    return 'quick-log.trackers.zoomies';
-  }
-
-  if (row.event_type === 'training') {
-    const payloadResult = eventPayloadSchemas.training.safeParse(row.payload);
-
-    if (!payloadResult.success) {
-      return null;
-    }
-
-    return 'quick-log.trackers.training';
-  }
-
-  if (row.event_type === 'feeding') {
-    const payloadResult = eventPayloadSchemas.feeding.safeParse(row.payload);
-
-    if (!payloadResult.success) {
-      return null;
-    }
-
-    return 'quick-log.trackers.feeding';
-  }
-
-  return null;
+  return trackerId === null ? null : trackerLabelKeys[trackerId];
 }
 
 function formatEventTime(occurredAt: string, locale?: string): string {

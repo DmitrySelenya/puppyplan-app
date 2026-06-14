@@ -1,19 +1,25 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import {
+  MAX_VISIBLE_QUICK_LOG_TRACKERS,
   quickLogTrackerIds,
   selectedQuickLogTrackerIdsSchema,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
+import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
-import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { ListGroup } from '@/design/primitives/ListGroup';
+import { ListRow } from '@/design/primitives/ListRow';
 import { Screen } from '@/design/primitives/Screen';
+import { ScreenHeader } from '@/design/primitives/ScreenHeader';
+import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { Stack } from '@/design/primitives/Stack';
-import { TrackerTile } from '@/design/primitives/TrackerTile';
+import { Toggle } from '@/design/primitives/Toggle';
 import { tokens } from '@/design/tokens';
-import { useAppTranslation } from '@/lib/i18n';
+import { type AppTranslate, useAppTranslation } from '@/lib/i18n';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 import { getQuickLogTrackerLabelKey } from '@/lib/query/quick-log-event-view';
 import {
@@ -23,16 +29,21 @@ import {
 
 type QuickTrackersAccessState = 'loading' | 'empty' | 'error' | 'owner' | 'nonOwner';
 
-const SETTINGS_CONTROL_MAX_FONT_SIZE_MULTIPLIER = 2;
-const SETTINGS_SUPPORTING_MAX_FONT_SIZE_MULTIPLIER = 2;
-const SETTINGS_TITLE_MAX_FONT_SIZE_MULTIPLIER = 2;
-const SETTINGS_TRACKER_TILE_WIDTH =
-  tokens.component.trackerTile.twoCol.width - tokens.space[2];
+const trackerIconNames: Record<QuickLogTrackerId, AppIconName> = {
+  feeding_meal: 'bowl',
+  potty_pee_inside: 'pottyInside',
+  potty_pee_outside: 'paw',
+  potty_poop: 'poop',
+  sleep_nap: 'moon',
+  training: 'trainingPaw',
+  zoomies: 'spark',
+};
 
 export type QuickTrackersSettingsScreenProps = Readonly<{
   accessState?: QuickTrackersAccessState;
   canManagePuppySettings?: boolean;
   isSaving?: boolean;
+  onBack?: () => void;
   saveSelectedTrackerIds: (trackerIds: QuickLogTrackerId[]) => Promise<unknown> | unknown;
   selectedTrackerIds: readonly QuickLogTrackerId[];
 }>;
@@ -40,11 +51,13 @@ export type QuickTrackersSettingsScreenProps = Readonly<{
 export function ConnectedQuickTrackersSettingsScreen() {
   const activeCare = useActiveCareContext();
   const saveMutation = useSavePuppyProfileMutation();
+  const router = useRouter();
 
   return (
     <QuickTrackersSettingsScreen
       accessState={getQuickTrackersAccessState(activeCare)}
       isSaving={saveMutation.isPending}
+      onBack={() => router.back()}
       saveSelectedTrackerIds={(selectedTrackerIds) => {
         if (!activeCare.puppy) {
           return undefined;
@@ -69,7 +82,7 @@ export function ConnectedQuickTrackersSettingsScreen() {
 export function QuickTrackersSettingsScreen({
   accessState,
   canManagePuppySettings = true,
-  isSaving = false,
+  onBack,
   saveSelectedTrackerIds,
   selectedTrackerIds: initialSelectedTrackerIds,
 }: QuickTrackersSettingsScreenProps) {
@@ -77,138 +90,336 @@ export function QuickTrackersSettingsScreen({
   const [selectedTrackerIds, setSelectedTrackerIds] = useState<QuickLogTrackerId[]>([
     ...initialSelectedTrackerIds,
   ]);
+  const selectedTrackerIdsRef = useRef<QuickLogTrackerId[]>([
+    ...initialSelectedTrackerIds,
+  ]);
+  const lastConfirmedTrackerIdsRef = useRef<QuickLogTrackerId[]>([
+    ...initialSelectedTrackerIds,
+  ]);
+  const saveQueueRef = useRef<Promise<void> | null>(null);
   const [selectionWarningKey, setSelectionWarningKey] = useState<
     'more.quick-trackers.max-reached-hint' | 'more.quick-trackers.min-required-hint' | null
-  >(null);
+  >(getSelectionCapWarningKey(initialSelectedTrackerIds));
   const [saveErrorKey, setSaveErrorKey] = useState<
     'errors.owner-only-settings' | 'errors.save-failed-connection' | null
   >(null);
   const effectiveAccessState = accessState ?? (canManagePuppySettings ? 'owner' : 'nonOwner');
 
   useEffect(() => {
-    setSelectedTrackerIds([...initialSelectedTrackerIds]);
+    const next = [...initialSelectedTrackerIds];
+
+    selectedTrackerIdsRef.current = next;
+    lastConfirmedTrackerIdsRef.current = next;
+    setSelectedTrackerIds(next);
+    setSelectionWarningKey(getSelectionCapWarningKey(initialSelectedTrackerIds));
   }, [initialSelectedTrackerIds]);
 
-  const handleSave = async () => {
-    setSaveErrorKey(null);
+  const commitSelectedTrackerIds = (next: QuickLogTrackerId[]) => {
+    selectedTrackerIdsRef.current = [...next];
+    setSelectedTrackerIds(next);
+  };
 
-    try {
-      await saveSelectedTrackerIds(selectedTrackerIds);
-    } catch (error) {
+  // Implicit-save model: any valid change to the selection (toggle or reorder)
+  // persists immediately via the save mutation. There is no bottom Save CTA.
+  const persist = (
+    next: QuickLogTrackerId[],
+  ) => {
+    const handleSaveSuccess = () => {
+      lastConfirmedTrackerIdsRef.current = [...next];
+    };
+    const handleSaveError = (error: unknown) => {
+      if (!areTrackerSelectionsEqual(selectedTrackerIdsRef.current, next)) {
+        return;
+      }
+
+      const confirmedTrackerIds = [...lastConfirmedTrackerIdsRef.current];
+
+      selectedTrackerIdsRef.current = confirmedTrackerIds;
+      setSelectedTrackerIds(confirmedTrackerIds);
+      setSelectionWarningKey(getSelectionCapWarningKey(confirmedTrackerIds));
       setSaveErrorKey(isPuppyProfileOwnerRequiredError(error)
         ? 'errors.owner-only-settings'
         : 'errors.save-failed-connection');
+    };
+    const runSave = (): Promise<void> | null => {
+      setSaveErrorKey(null);
+
+      try {
+        const result = saveSelectedTrackerIds(next);
+
+        if (isPromiseLike(result)) {
+          return Promise.resolve(result).then(handleSaveSuccess, handleSaveError);
+        }
+
+        handleSaveSuccess();
+      } catch (error) {
+        handleSaveError(error);
+      }
+
+      return null;
+    };
+    const queuedSave = saveQueueRef.current === null
+      ? runSave()
+      : saveQueueRef.current.then(
+        () => runSave() ?? undefined,
+        () => runSave() ?? undefined,
+      );
+
+    if (queuedSave === null) {
+      return;
     }
+
+    const queueSlot = queuedSave.catch(() => undefined);
+
+    saveQueueRef.current = queueSlot;
+    void queueSlot.finally(() => {
+      if (saveQueueRef.current === queueSlot) {
+        saveQueueRef.current = null;
+      }
+    });
+  };
+
+  const applyToggle = (trackerId: QuickLogTrackerId) => {
+    const current = selectedTrackerIdsRef.current;
+    const next = toggleTracker(current, trackerId, {
+      onLimit: () => {
+        setSelectionWarningKey('more.quick-trackers.max-reached-hint');
+      },
+      onMinimum: () => {
+        setSelectionWarningKey('more.quick-trackers.min-required-hint');
+      },
+      onValid: (next) => {
+        setSelectionWarningKey(getSelectionCapWarningKey(next));
+        persist(next);
+      },
+    });
+
+    commitSelectedTrackerIds(next);
+  };
+
+  const applyReorder = (trackerId: QuickLogTrackerId, actionName: 'moveUp' | 'moveDown') => {
+    const current = selectedTrackerIdsRef.current;
+    const next = moveSelectedTracker(current, trackerId, actionName);
+
+    if (!areTrackerSelectionsEqual(next, current)) {
+      setSelectionWarningKey(getSelectionCapWarningKey(next));
+      persist(next);
+    }
+
+    commitSelectedTrackerIds(next);
   };
 
   if (effectiveAccessState === 'loading') {
-    return (
-      <Screen>
-        <Card>
-          <AppText>{t('common.loading')}</AppText>
-        </Card>
-      </Screen>
-    );
+    return <StateCard message={t('common.loading')} />;
   }
 
   if (effectiveAccessState === 'error') {
-    return (
-      <Screen>
-        <Card
-          accessibilityLabel={t('errors.load-failed')}
-          accessibilityLiveRegion="polite"
-          accessibilityRole="alert">
-          <AppText>{t('errors.load-failed')}</AppText>
-        </Card>
-      </Screen>
-    );
+    return <AlertStateCard message={t('errors.load-failed')} />;
   }
 
   if (effectiveAccessState === 'empty') {
-    return (
-      <Screen>
-        <Card>
-          <AppText>{t('today.quick-log.unavailable.title')}</AppText>
-        </Card>
-      </Screen>
-    );
+    return <StateCard message={t('today.quick-log.unavailable.title')} />;
   }
 
   if (effectiveAccessState === 'nonOwner') {
-    return (
-      <Screen>
-        <Card
-          accessibilityLabel={t('errors.owner-only-settings')}
-          accessibilityLiveRegion="polite"
-          accessibilityRole="alert">
-          <AppText>{t('errors.owner-only-settings')}</AppText>
-        </Card>
-      </Screen>
-    );
+    return <AlertStateCard message={t('errors.owner-only-settings')} />;
   }
 
+  const selectedRows = selectedTrackerIds;
+  const moreRows = quickLogTrackerIds.filter((trackerId) => !selectedTrackerIds.includes(trackerId));
+  const atCap = selectedTrackerIds.length >= MAX_VISIBLE_QUICK_LOG_TRACKERS;
+
   return (
-    <Screen contentStyle={styles.content}>
-      <Stack gap="lg">
-        <AppText
-          maxFontSizeMultiplier={SETTINGS_TITLE_MAX_FONT_SIZE_MULTIPLIER}
-          variant="title">
-          {t('more.quick-trackers.screen-title-template', { n: selectedTrackerIds.length })}
-        </AppText>
-        <AppText
-          maxFontSizeMultiplier={SETTINGS_SUPPORTING_MAX_FONT_SIZE_MULTIPLIER}
-          tone="secondary">
-          {t('more.quick-trackers.hint')}
-        </AppText>
-        {selectionWarningKey ? (
-          <Card
-            accessibilityLabel={t(selectionWarningKey)}
-            accessibilityLiveRegion="polite"
-            accessibilityRole="alert">
-            <AppText>{t(selectionWarningKey)}</AppText>
-          </Card>
-        ) : null}
-        {saveErrorKey ? (
-          <Card
-            accessibilityLabel={t(saveErrorKey)}
-            accessibilityLiveRegion="polite"
-            accessibilityRole="alert">
-            <AppText>{t(saveErrorKey)}</AppText>
-          </Card>
-        ) : null}
-        <Stack direction="horizontal" gap="md" wrap>
-          {quickLogTrackerIds.map((trackerId) => (
-            <TrackerTile
-              accessibilityLabel={t(getQuickLogTrackerLabelKey(trackerId))}
-              key={trackerId}
-              label={t(getQuickLogTrackerLabelKey(trackerId))}
-              onPress={() => {
-                setSelectedTrackerIds((current) => toggleTracker(current, trackerId, {
-                  onLimit: () => {
-                    setSelectionWarningKey('more.quick-trackers.max-reached-hint');
-                  },
-                  onMinimum: () => {
-                    setSelectionWarningKey('more.quick-trackers.min-required-hint');
-                  },
-                  onValid: () => {
-                    setSelectionWarningKey(null);
-                  },
-                }));
-              }}
-              selected={selectedTrackerIds.includes(trackerId)}
-              size="twoColumn"
-              style={styles.trackerTile}
-            />
-          ))}
-        </Stack>
-        <Button
-          label={t('common.save')}
-          labelMaxFontSizeMultiplier={SETTINGS_CONTROL_MAX_FONT_SIZE_MULTIPLIER}
-          loading={isSaving}
-          onPress={handleSave}
+    <Screen>
+      {onBack ? (
+        <ScreenHeader
+          backLabel={t('more.screen-title')}
+          onBack={onBack}
+          title={t('more.quick-trackers.screen-title')}
         />
-      </Stack>
+      ) : (
+        <ScreenHeader title={t('more.quick-trackers.screen-title')} />
+      )}
+      <AppText tone="secondary">{t('more.quick-trackers.hint')}</AppText>
+      <AppText tone="secondary" variant="subheadline">
+        {t('more.quick-trackers.selected-count', {
+          count: selectedTrackerIds.length,
+          max: MAX_VISIBLE_QUICK_LOG_TRACKERS,
+        })}
+      </AppText>
+      {selectionWarningKey === 'more.quick-trackers.min-required-hint' ? (
+        <AlertStateCardContent message={t(selectionWarningKey)} />
+      ) : null}
+      {saveErrorKey ? <AlertStateCardContent message={t(saveErrorKey)} /> : null}
+      <ListGroup>
+        {selectedRows.map((trackerId, index) => (
+          <TrackerSettingsRow
+            key={trackerId}
+            disabled={false}
+            onReorderAction={(actionName) => applyReorder(trackerId, actionName)}
+            onToggle={() => applyToggle(trackerId)}
+            reorderActions={createReorderActions(index, selectedRows.length, t)}
+            selected
+            trackerId={trackerId}
+          />
+        ))}
+      </ListGroup>
+      {moreRows.length > 0 ? (
+        <Stack gap="xs">
+          <SectionHeader
+            title={t('more.quick-trackers.more-options')}
+            titleStyle={styles.sectionTitle}
+          />
+          <ListGroup>
+            {moreRows.map((trackerId) => (
+              <TrackerSettingsRow
+                key={trackerId}
+                disabled={atCap}
+                onReorderAction={() => undefined}
+                onToggle={() => applyToggle(trackerId)}
+                reorderActions={[]}
+                selected={false}
+                trackerId={trackerId}
+              />
+            ))}
+          </ListGroup>
+        </Stack>
+      ) : null}
+      {selectionWarningKey === 'more.quick-trackers.max-reached-hint' ? (
+        <AppText style={styles.footerHint} tone="tertiary" variant="footnote">
+          {t('more.quick-trackers.max-reached-hint')}
+        </AppText>
+      ) : null}
     </Screen>
+  );
+}
+
+function TrackerSettingsRow({
+  disabled,
+  onReorderAction,
+  onToggle,
+  reorderActions,
+  selected,
+  trackerId,
+}: Readonly<{
+  disabled: boolean;
+  onReorderAction: (actionName: 'moveUp' | 'moveDown') => void;
+  onToggle: () => void;
+  reorderActions: readonly { label: string; name: 'moveUp' | 'moveDown' }[];
+  selected: boolean;
+  trackerId: QuickLogTrackerId;
+}>) {
+  const { t } = useAppTranslation();
+  const label = t(getQuickLogTrackerLabelKey(trackerId));
+  const iconColor = selected ? tokens.color.text.primary : tokens.color.text.tertiary;
+
+  return (
+    <ListRow
+      accessibilityActions={reorderActions}
+      accessibilityLabel={label}
+      disabled={disabled}
+      leading={(
+        <View style={styles.leading}>
+          <AppIcon
+            color={tokens.color.text.tertiary}
+            name="sliders"
+            size={18}
+            testID={`tracker-reorder-handle-${trackerId}`}
+          />
+          <AppIcon color={iconColor} name={trackerIconNames[trackerId]} />
+        </View>
+      )}
+      onAccessibilityAction={(actionEvent) => {
+        const actionName = actionEvent.nativeEvent.actionName;
+
+        if (actionName === 'moveUp' || actionName === 'moveDown') {
+          onReorderAction(actionName);
+        }
+      }}
+      onPress={onToggle}
+      selected={selected}
+      title={label}
+      trailing={(
+        <Toggle
+          accessibilityLabel={t('more.quick-trackers.toggle-a11y', { label })}
+          disabled={disabled}
+          onValueChange={onToggle}
+          testID={`tracker-toggle-${trackerId}`}
+          value={selected}
+        />
+      )}
+      variant="settings"
+    />
+  );
+}
+
+function moveSelectedTracker(
+  current: readonly QuickLogTrackerId[],
+  trackerId: QuickLogTrackerId,
+  actionName: 'moveUp' | 'moveDown',
+): QuickLogTrackerId[] {
+  const fromIndex = current.indexOf(trackerId);
+
+  if (fromIndex < 0) {
+    return [...current];
+  }
+
+  const toIndex = actionName === 'moveUp' ? fromIndex - 1 : fromIndex + 1;
+
+  if (toIndex < 0 || toIndex >= current.length) {
+    return [...current];
+  }
+
+  const next = [...current];
+  [next[fromIndex], next[toIndex]] = [next[toIndex], next[fromIndex]];
+
+  return next;
+}
+
+function createReorderActions(
+  index: number,
+  rowCount: number,
+  t: AppTranslate,
+): { label: string; name: 'moveUp' | 'moveDown' }[] {
+  const actions: { label: string; name: 'moveUp' | 'moveDown' }[] = [];
+
+  if (index > 0) {
+    actions.push({ label: t('more.quick-trackers.move-up'), name: 'moveUp' });
+  }
+
+  if (index < rowCount - 1) {
+    actions.push({ label: t('more.quick-trackers.move-down'), name: 'moveDown' });
+  }
+
+  return actions;
+}
+
+function StateCard({ message }: Readonly<{ message: string }>) {
+  return (
+    <Screen>
+      <Card>
+        <AppText>{message}</AppText>
+      </Card>
+    </Screen>
+  );
+}
+
+function AlertStateCard({ message }: Readonly<{ message: string }>) {
+  return (
+    <Screen>
+      <AlertStateCardContent message={message} />
+    </Screen>
+  );
+}
+
+function AlertStateCardContent({ message }: Readonly<{ message: string }>) {
+  return (
+    <Card
+      accessibilityLabel={message}
+      accessibilityLiveRegion="polite"
+      accessibilityRole="alert">
+      <AppText>{message}</AppText>
+    </Card>
   );
 }
 
@@ -218,7 +429,7 @@ function toggleTracker(
   callbacks: Readonly<{
     onLimit: () => void;
     onMinimum: () => void;
-    onValid: () => void;
+    onValid: (next: QuickLogTrackerId[]) => void;
   }>,
 ): QuickLogTrackerId[] {
   if (current.includes(trackerId)) {
@@ -227,8 +438,9 @@ function toggleTracker(
       return [...current];
     }
 
-    callbacks.onValid();
-    return current.filter((selected) => selected !== trackerId);
+    const next = current.filter((selected) => selected !== trackerId);
+    callbacks.onValid(next);
+    return next;
   }
 
   const candidate = [...current, trackerId];
@@ -239,9 +451,47 @@ function toggleTracker(
     return [...current];
   }
 
-  callbacks.onValid();
+  callbacks.onValid(result.data);
   return result.data;
 }
+
+function getSelectionCapWarningKey(
+  trackerIds: readonly QuickLogTrackerId[],
+): 'more.quick-trackers.max-reached-hint' | null {
+  return trackerIds.length >= MAX_VISIBLE_QUICK_LOG_TRACKERS
+    ? 'more.quick-trackers.max-reached-hint'
+    : null;
+}
+
+function areTrackerSelectionsEqual(
+  left: readonly QuickLogTrackerId[],
+  right: readonly QuickLogTrackerId[],
+): boolean {
+  return left.length === right.length && left.every((trackerId, index) => trackerId === right[index]);
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'then' in value
+    && typeof value.then === 'function'
+  );
+}
+
+const styles = StyleSheet.create({
+  footerHint: {
+    paddingLeft: tokens.space[1],
+  },
+  leading: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: tokens.space[2],
+  },
+  sectionTitle: {
+    textTransform: 'uppercase',
+  },
+});
 
 function getQuickTrackersAccessState(
   activeCare: ReturnType<typeof useActiveCareContext>,
@@ -260,12 +510,3 @@ function getQuickTrackersAccessState(
 
   return activeCare.careContext.householdRole === 'owner' ? 'owner' : 'nonOwner';
 }
-
-const styles = StyleSheet.create({
-  content: {
-    paddingBottom: tokens.space[14],
-  },
-  trackerTile: {
-    width: SETTINGS_TRACKER_TILE_WIDTH,
-  },
-});

@@ -128,12 +128,63 @@ describe('QuickLogShell', () => {
       name: i18n.t('quick-log.sheet.edit-trackers'),
     })).toBeTruthy();
     expect(contentStyle.paddingHorizontal).toBe(0);
+    expect(screen.getByTestId('quick-log-sheet-scrim')).toBeTruthy();
+    expect(screen.getByTestId('quick-log-sheet-anchor')).toBeTruthy();
     expect(screen.getByTestId('sheet-drag-handle', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.dismiss'),
+    })).toBeTruthy();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('common.close'),
+    })).toBeNull();
+    expect(screen.getByTestId('quick-log-sheet-scrim').props.accessibilityRole).toBe('button');
+    expect(screen.getByTestId('quick-log-sheet-scrim').props.accessibilityLabel)
+      .toBe(i18n.t('quick-log.sheet.dismiss'));
+    expect(StyleSheet.flatten(screen.getByTestId('quick-log-sheet-scrim').props.style).bottom)
+      .toBe(0);
     expect(screen.getAllByTestId('quick-log-tracker-tile')).toHaveLength(
       MAX_VISIBLE_QUICK_LOG_TRACKERS,
     );
-    expect(screen.queryByText(i18n.t('quick-log.snackbar.add-details'))).toBeNull();
     expect(screen.queryByText(i18n.t('common.close'))).toBeNull();
+  });
+
+  it('maps pee inside to the pee-pad glyph and pee outside to the droplet', () => {
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={createMutationPort()}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    expect(screen.getByTestId('quick-log-tracker-icon-pottyInside', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByTestId('quick-log-tracker-icon-water', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.queryAllByTestId('quick-log-tracker-icon-pottyInside', {
+      includeHiddenElements: true,
+    })).toHaveLength(1);
+  });
+
+  it('wires the sheet dismiss affordance to the route close handler', () => {
+    const closeSheet = jest.fn();
+
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        closeSheet={closeSheet}
+        mutation={createMutationPort()}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.dismiss'),
+    }));
+
+    expect(closeSheet).toHaveBeenCalledTimes(1);
   });
 
   it('renders selected tracker ids from the active care context in order', () => {
@@ -190,7 +241,7 @@ describe('QuickLogShell', () => {
     })).toBeNull();
   });
 
-  it('renders duplicate warning inline and lets Add anyway proceed', () => {
+  it('renders duplicate warning as a dedicated sheet state and lets Add anyway proceed', () => {
     const mutation = createMutationPort();
 
     renderWithQuickLogFeedback(
@@ -211,6 +262,7 @@ describe('QuickLogShell', () => {
     }));
 
     expect(screen.getByText(i18n.t('quick-log.duplicate-warning.title'))).toBeTruthy();
+    expect(screen.queryAllByTestId('quick-log-tracker-tile')).toHaveLength(0);
     expect(mutation.mutate).not.toHaveBeenCalled();
 
     fireEvent.press(screen.getByRole('button', {
@@ -218,6 +270,42 @@ describe('QuickLogShell', () => {
     }));
 
     expect(mutation.mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels an active duplicate warning from the scrim instead of closing the sheet', () => {
+    const closeSheet = jest.fn();
+    const mutation = createMutationPort();
+
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        closeSheet={closeSheet}
+        mutation={mutation}
+        now={() => new Date('2026-05-27T08:30:00.000Z')}
+        recentEvent={{
+          occurredAtMs: Date.parse('2026-05-27T08:29:30.000Z'),
+          trackerId: 'feeding_meal',
+        }}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.feeding'),
+    }));
+
+    expect(screen.getByText(i18n.t('quick-log.duplicate-warning.title'))).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.dismiss'),
+    }));
+
+    expect(closeSheet).not.toHaveBeenCalled();
+    expect(mutation.mutate).not.toHaveBeenCalled();
+    expect(screen.queryByText(i18n.t('quick-log.duplicate-warning.title'))).toBeNull();
+    expect(screen.getAllByTestId('quick-log-tracker-tile')).toHaveLength(
+      MAX_VISIBLE_QUICK_LOG_TRACKERS,
+    );
   });
 
   it('uses provider analytics for controller-owned duplicate warning events', () => {

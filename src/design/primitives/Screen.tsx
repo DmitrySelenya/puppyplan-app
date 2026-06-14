@@ -9,6 +9,7 @@ import { tokens } from '@/design/tokens';
 export type ScreenProps = PropsWithChildren<{
   contentStyle?: StyleProp<ViewStyle>;
   edges?: Edges;
+  modal?: boolean;
   scroll?: boolean;
   style?: StyleProp<ViewStyle>;
 }>;
@@ -17,11 +18,16 @@ export function Screen({
   children,
   contentStyle,
   edges = ['top'],
+  modal = false,
   scroll = true,
   style,
 }: ScreenProps) {
   return (
-    <SafeAreaView edges={edges} style={[styles.safeArea, style]}>
+    <SafeAreaView
+      accessibilityViewIsModal={modal}
+      edges={edges}
+      importantForAccessibility={modal ? 'yes' : undefined}
+      style={[styles.safeArea, style]}>
       {scroll ? (
         <ScrollView contentContainerStyle={[styles.content, contentStyle]}>
           {children}

@@ -313,6 +313,7 @@
       "potty-time-tertiary": "Позже",
       "eyebrow": "Сегодня",
       "first-day": {
+        "eyebrow": "Старт",
         "title": "Запишите первое событие — это займёт около пяти секунд.",
         "body": "Начните с первого туалета, еды или сна.",
         "primary": "Начать"
@@ -512,6 +513,7 @@
   "quick-log": {
     "sheet": {
       "title": "Что произошло?",
+      "dismiss": "Закрыть быструю запись",
       "edit-trackers": "Изменить трекеры",
       "edit-screen-title": "Ваши быстрые трекеры",
       "edit-helper": "До 5 трекеров. Изменить их можно в разделе «Ещё».",
@@ -578,7 +580,8 @@
       "undo": "Отменить",
       "undo-confirmed": "Отменено",
       "add-details": "Добавить детали",
-      "a11y": "Записано: {trackerName}. Доступное действие: отменить."
+      "a11y": "Записано: {trackerName}. Доступное действие: отменить.",
+      "a11y-with-details": "Записано: {trackerName}. Доступные действия: отменить и добавить детали."
     },
     "details": {
       "title": "Добавить детали",
@@ -656,6 +659,7 @@
     "close": "Закрыть",
     "section-today": "Сегодня · {weekday}",
     "section-yesterday": "Вчера · {weekday}",
+    "section-date": "{date} · {weekday}",
     "filter-chips": ["Все", "Потти", "Еда", "Сон", "Zoomies", "Тренировка", "Здоровье"],
     "range-default": "Сегодня",
     "range-options": ["Сегодня", "3 дня", "Неделя", "Произвольно"],
@@ -688,6 +692,7 @@
       "secondary": "Отмена"
     },
     "delete-snackbar": "Запись удалена.",
+    "more-actions": "Ещё действия",
     "swipe-actions": ["Изменить", "Удалить"],
     "overflow-actions": ["Изменить", "Удалить"],
     "pending-overflow-actions": ["Отменить отправку", "Удалить"]
@@ -1033,6 +1038,16 @@
     "footer-hint": "Это журнал записей, а не медицинская консультация.",
     "segments": ["Все", "Прививки", "Обработки", "Визиты"],
     "filter-chips": ["Шаблоны", "Подтверждено", "Готово"],
+    "rows": {
+      "current-section": "Май 2026",
+      "previous-section": "Апрель 2026",
+      "dhpp-title": "Вакцина DHPP",
+      "dhpp-meta": "Шаблон · 12 недель",
+      "deworming-title": "Обработка от паразитов",
+      "deworming-meta": "Подтверждено · Выполнено 12 мая · Клиника не указана",
+      "vet-visit-title": "Визит к ветеринару",
+      "vet-visit-meta": "Готово · 28 апреля · Добавлено вами"
+    },
     "error-card": "Не удалось загрузить записи. Попробуйте обновить.",
     "refresh": "Обновить",
     "pills": {
@@ -1362,18 +1377,34 @@
       "data-account": "Данные и аккаунт",
       "help": "Помощь",
       "about": "О приложении",
-      "puppyplan-plus": "PuppyPlan Plus"
+      "puppyplan-plus": "PuppyPlan Plus",
+      "deferred": "Позже"
+    },
+    "puppy-summary": {
+      "age-weeks": "{count} нед.",
+      "no-age": "Возраст не указан"
     },
     "puppy-profile": {
       "screen-title": "Профиль щенка",
       "save": "Сохранить",
       "change-photo": "Изменить фото",
+      "sections": {
+        "about": "О щенке",
+        "optional": "Дополнительно"
+      },
       "field-name": "Имя",
       "field-birth": "Дата рождения / approx.",
+      "field-birth-default": "Дата рождения",
+      "dob-subtitle-weeks": "≈ {count} нед.",
       "field-breed": "Порода / смесь / неизвестно",
       "field-gender": "Пол",
       "field-weight": "Вес (опционально)",
+      "field-microchip": "Микрочип",
       "field-note": "Заметка",
+      "note-subtitle": "Аллергии, особенности, любимая игрушка…",
+      "add-value": "Добавить",
+      "age-weeks-value": "{count} нед.",
+      "missing-value": "Не указано",
       "hint": "Эти данные используются только внутри приложения и в общих ссылках, которые вы создаёте.",
       "photo-permission-denied": "Доступ к фото выключен. Можно использовать встроенные аватары",
       "avatar-actions": [
@@ -1383,8 +1414,17 @@
       ]
     },
     "quick-trackers": {
+      "screen-title": "Быстрые трекеры",
       "screen-title-template": "Быстрые трекеры (выбрано {n} из 5)",
-      "hint": "Выберите до 5 трекеров для экранов «Сегодня» и Quick Log.",
+      "hint": "Выберите до 5 трекеров для экранов «Сегодня» и «Быстрая запись».",
+      "selected-count": "Выбрано {count} из {max}",
+      "more-options": "Ещё варианты",
+      "toggle-on": "Вкл.",
+      "toggle-off": "Выкл.",
+      "toggle-a11y": "Трекер «{label}»",
+      "reorder": "Переместить",
+      "move-up": "Переместить выше",
+      "move-down": "Переместить ниже",
       "max-reached-hint": "Сначала выключите один из выбранных",
       "min-required-hint": "Оставьте выбранным хотя бы один трекер",
       "items": ["Кормление", "Туалет", "Сон", "Прогулка", "Вес", "Игра", "Кусание"]

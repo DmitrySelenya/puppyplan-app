@@ -8,13 +8,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 import { AppText } from '@/design/primitives/AppText';
+import { AppIcon } from '@/design/primitives/AppIcon';
+import { Avatar } from '@/design/primitives/Avatar';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { EmptyState } from '@/design/primitives/EmptyState';
 import { FAB } from '@/design/primitives/FAB';
 import { IconButton } from '@/design/primitives/IconButton';
+import { ListGroup } from '@/design/primitives/ListGroup';
 import { ListRow } from '@/design/primitives/ListRow';
+import { PendingDot } from '@/design/primitives/PendingDot';
 import { Screen } from '@/design/primitives/Screen';
 import { SegmentedControl } from '@/design/primitives/SegmentedControl';
+import { SectionHeader } from '@/design/primitives/SectionHeader';
+import { SheetHeader } from '@/design/primitives/SheetHeader';
 import { SheetSurface } from '@/design/primitives/SheetSurface';
 import {
   SNACKBAR_BOTTOM_OFFSET_WITH_FAB,
@@ -570,7 +577,10 @@ describe('design primitives', () => {
     expect(statusStyle.minHeight).toBe(tokens.component.pill.height);
     expect(tabList.props.accessibilityRole).toBe('tablist');
     expect(selectedSegment.props.accessibilityState).toMatchObject({ selected: true });
-    expect(selectedSegmentStyle.backgroundColor).toBe(tokens.color.primary[600]);
+    expect(selectedSegmentStyle.backgroundColor).toBe(tokens.color.surface.raised);
+    expect(StyleSheet.flatten(screen.getByText('All').props.style).color).toBe(
+      tokens.color.text.primary,
+    );
     expect(screen.getByText('Vaccines').props.maxFontSizeMultiplier).toBe(2);
     expect(screen.getByText('Vaccines').props.numberOfLines).toBe(2);
     expect(sheet.props.accessibilityViewIsModal).toBe(true);
@@ -587,6 +597,215 @@ describe('design primitives', () => {
     expect(onRowPress).toHaveBeenCalledTimes(1);
     expect(onTrackerPress).toHaveBeenCalledTimes(1);
     expect(onSegmentChange).toHaveBeenCalledWith('vaccines');
+  });
+
+  it('keeps segmented options compact enough for four atlas labels on narrow phones', () => {
+    render(
+      <SegmentedControl
+        accessibilityLabel="Health filters"
+        onValueChange={jest.fn()}
+        options={[
+          { label: 'All', value: 'all' },
+          { label: 'Vaccinations', value: 'vaccinations' },
+          { label: 'Treatments', value: 'treatments' },
+          { label: 'Visits', value: 'visits' },
+        ]}
+        value="all"
+      />,
+    );
+
+    const vaccinationsTab = screen.getByRole('tab', { name: 'Vaccinations' });
+    const tabStyle = flattenViewStyle(vaccinationsTab.props.style);
+
+    expect(tabStyle.paddingHorizontal).toBeLessThanOrEqual(tokens.space[1]);
+  });
+
+  it('keeps health row metadata in the copy column so long titles are not squeezed', () => {
+    render(
+      <ListRow
+        leading={<AppIcon name="docText" />}
+        meta="Confirmed · Done May 12 · No clinic listed"
+        title="Parasite treatment"
+        variant="health"
+      />,
+    );
+
+    const title = screen.getByText('Parasite treatment');
+    const meta = screen.getByText('Confirmed · Done May 12 · No clinic listed');
+
+    expect(title.props.numberOfLines).toBeUndefined();
+    expect(meta.props.numberOfLines).toBe(2);
+  });
+
+  it('renders atlas-aligned grouped settings rows, section headers, avatar, and sheet header affordances', () => {
+    const onProfilePress = jest.fn();
+    const onClose = jest.fn();
+
+    render(
+      <>
+        <SectionHeader title="Puppy" />
+        <ListGroup testID="puppy-settings-group">
+          <ListRow
+            accessory="chevron"
+            leading={<Avatar label="Puppy avatar" initials="PP" size="sm" />}
+            meta="2 fields"
+            onPress={onProfilePress}
+            title="Puppy profile"
+            variant="settings"
+          />
+          <ListRow
+            accessory="chevron"
+            leading={<AppIcon name="sliders" />}
+            title="Quick trackers"
+            variant="settings"
+          />
+        </ListGroup>
+        <SheetHeader
+          closeAccessibilityLabel="Close quick log"
+          onClose={onClose}
+          title="What happened?"
+        />
+      </>,
+    );
+
+    const sectionTitle = screen.getByRole('header', { name: 'Puppy' });
+    const sectionStyle = StyleSheet.flatten(sectionTitle.props.style);
+    const groupStyle = StyleSheet.flatten(screen.getByTestId('puppy-settings-group').props.style);
+    const profileRow = screen.getByRole('button', { name: 'Puppy profile' });
+    const profileRowStyle = flattenViewStyle(profileRow.props.style);
+    const avatar = screen.getByLabelText('Puppy avatar');
+    const avatarStyle = StyleSheet.flatten(avatar.props.style);
+    const sheetTitle = screen.getByRole('header', { name: 'What happened?' });
+    const closeButton = screen.getByRole('button', { name: 'Close quick log' });
+    const closeStyle = flattenViewStyle(closeButton.props.style);
+
+    expect(sectionStyle.color).toBe(tokens.color.text.secondary);
+    expect(sectionStyle.fontSize).toBe(tokens.typography.scale.subheadline.fontSize);
+    expect(groupStyle.backgroundColor).toBe(tokens.color.surface.raised);
+    expect(groupStyle.borderRadius).toBe(tokens.radius.md);
+    expect(groupStyle.borderColor).toBe(tokens.color.stroke.default);
+    expect(profileRowStyle.minHeight).toBeGreaterThanOrEqual(tokens.component.listItem.minHeight);
+    expect(profileRowStyle.paddingHorizontal).toBe(tokens.layout.cardPadding);
+    expect(screen.getAllByTestId('list-row-chevron', { includeHiddenElements: true })).toHaveLength(2);
+    expect(avatarStyle.width).toBe(32);
+    expect(avatarStyle.height).toBe(32);
+    expect(avatarStyle.borderRadius).toBe(tokens.radius.full);
+    expect(screen.getByText('PP')).toBeTruthy();
+    expect(StyleSheet.flatten(sheetTitle.props.style).fontSize).toBe(
+      tokens.typography.scale.title2.fontSize,
+    );
+    expect(closeStyle.minHeight).toBe(MIN_TOUCH_TARGET);
+    expect(closeStyle.minWidth).toBe(MIN_TOUCH_TARGET);
+
+    fireEvent.press(profileRow);
+    fireEvent.press(closeButton);
+
+    expect(onProfilePress).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders neutral empty states and pending dots without relying on color alone', () => {
+    const onPrimaryPress = jest.fn();
+    const onSecondaryPress = jest.fn();
+
+    render(
+      <>
+        <EmptyState
+          body="Add the first record to keep history in one place."
+          icon={<AppIcon name="docText" />}
+          primaryAction={{
+            label: 'Add record',
+            onPress: onPrimaryPress,
+          }}
+          secondaryAction={{
+            label: 'View templates',
+            onPress: onSecondaryPress,
+          }}
+          title="No records yet"
+        />
+        <View testID="pending-row-probe">
+          <PendingDot accessibilityLabel="Saving changes" />
+          <AppText>Saving changes</AppText>
+        </View>
+      </>,
+    );
+
+    expect(screen.getByRole('header', { name: 'No records yet' })).toBeTruthy();
+    expect(screen.getByText('Add the first record to keep history in one place.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add record' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'View templates' })).toBeTruthy();
+
+    const pendingDot = screen.getByLabelText('Saving changes');
+    const pendingDotStyle = StyleSheet.flatten(pendingDot.props.style);
+
+    expect(pendingDotStyle.width).toBe(8);
+    expect(pendingDotStyle.height).toBe(8);
+    expect(pendingDotStyle.borderRadius).toBe(tokens.radius.full);
+    expect(pendingDotStyle.backgroundColor).toBe(tokens.color.status.info);
+    expect(screen.getByText('Saving changes')).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Add record' }));
+    fireEvent.press(screen.getByRole('button', { name: 'View templates' }));
+
+    expect(onPrimaryPress).toHaveBeenCalledTimes(1);
+    expect(onSecondaryPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('covers atlas row, health, more, and tracker icons through AppIcon', () => {
+    render(
+      <>
+        <AppIcon name="close" testID="icon-close" />
+        <AppIcon name="docText" testID="icon-doc-text" />
+        <AppIcon name="gear" testID="icon-gear" />
+        <AppIcon name="home" testID="icon-home" />
+        <AppIcon name="infoCircle" testID="icon-info" />
+        <AppIcon name="lock" testID="icon-lock" />
+        <AppIcon name="paw" testID="icon-paw" />
+        <AppIcon name="personCluster" testID="icon-cluster" />
+        <AppIcon name="sliders" testID="icon-sliders" />
+        <AppIcon name="stethoscope" testID="icon-stethoscope" />
+        <AppIcon name="trainingPaw" testID="icon-training-paw" />
+        <AppIcon name="vaccine" testID="icon-vaccine" />
+        <AppIcon name="weight" testID="icon-weight" />
+        <AppIcon name="pottyInside" testID="icon-potty-inside" />
+        <AppIcon name="today" filled testID="icon-today-filled" />
+      </>,
+    );
+
+    [
+      'icon-close',
+      'icon-doc-text',
+      'icon-gear',
+      'icon-home',
+      'icon-info',
+      'icon-lock',
+      'icon-paw',
+      'icon-cluster',
+      'icon-sliders',
+      'icon-stethoscope',
+      'icon-training-paw',
+      'icon-vaccine',
+      'icon-weight',
+    ].forEach((testID) => {
+      const icon = screen.getByTestId(testID, { includeHiddenElements: true });
+
+      expect(icon.props.width).toBe(22);
+      expect(icon.props.height).toBe(22);
+      expect(icon.props.strokeWidth).toBe(tokens.icon.specs.stroke);
+      expect(icon.props.accessibilityElementsHidden).toBe(true);
+    });
+
+    const pottyInside = screen.getByTestId('icon-potty-inside', { includeHiddenElements: true });
+
+    expect(pottyInside.props.strokeWidth).toBe(tokens.icon.specs.stroke);
+    expect(pottyInside.props.fill).toBe('none');
+    expect(pottyInside.props.accessibilityElementsHidden).toBe(true);
+
+    const todayFilled = screen.getByTestId('icon-today-filled', { includeHiddenElements: true });
+
+    expect(todayFilled.props.fill).toBe(tokens.color.text.primary);
+    expect(todayFilled.props.stroke).toBe('none');
+    expect(todayFilled.props.accessibilityElementsHidden).toBe(true);
   });
 
   it('renders Stack layout spacing through the design boundary', () => {
@@ -845,8 +1064,8 @@ describe('design primitives', () => {
     expect(baseStyle.shadowOpacity).toBe(0.1);
     expect(baseStyle.shadowRadius).toBe(tokens.elevation[2].blur);
     const fabSymbol = screen.getByTestId('fab-symbol', { includeHiddenElements: true });
-    expect(fabSymbol.props.width).toBe(32);
-    expect(fabSymbol.props.height).toBe(32);
+    expect(fabSymbol.props.width).toBe(28);
+    expect(fabSymbol.props.height).toBe(28);
 
     fireEvent.press(button);
     expect(onPress).toHaveBeenCalledTimes(1);

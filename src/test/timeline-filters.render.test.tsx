@@ -159,7 +159,43 @@ describe('Timeline filters and actions', () => {
     expect(screen.queryByText(i18n.t('timeline.empty-filter'))).toBeNull();
   });
 
-  it('renders synced edit and delete as visible non-swipe alternatives', async () => {
+  it('renders the actor subline without duplicating the left-column time', async () => {
+    mockListEvents.mockResolvedValue([createRow({ event_type: 'feeding' })]);
+
+    const { toJSON } = renderWithQuery(
+      <TimelineScreen
+        careContext={careContext}
+        onClose={onClose}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('timeline.actor-you'))).toBeTruthy();
+    });
+    const tree = JSON.stringify(toJSON());
+    expect(tree).not.toContain(`${i18n.t('timeline.actor-you')} · `);
+  });
+
+  it('keys row icons from event type instead of localized title text', async () => {
+    mockListEvents.mockResolvedValue([createRow({
+      event_type: 'feeding',
+    })]);
+
+    renderWithQuery(
+      <TimelineScreen
+        careContext={careContext}
+        onClose={onClose}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('timeline-event-icon-feeding', {
+        includeHiddenElements: true,
+      })).toBeTruthy();
+    });
+  });
+
+  it('opens synced row overflow actions without running edit or delete on menu press', async () => {
     const actions = {
       onDelete: jest.fn(),
       onEdit: jest.fn(),
@@ -177,14 +213,46 @@ describe('Timeline filters and actions', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('timeline.pills.synced'))).toBeTruthy();
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
     });
+    expect(screen.queryByText(i18n.t('timeline.pills.synced'))).toBeNull();
+
+    expect(screen.queryByRole('button', {
+      name: i18n.t('timeline.overflow-actions.0'),
+    })).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('timeline.overflow-actions.1'),
+    })).toBeNull();
+
+    const overflowButton = screen.getByRole('button', {
+      name: i18n.t('timeline.more-actions'),
+    });
+
+    expect(overflowButton.props.accessibilityActions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: i18n.t('timeline.overflow-actions.0'),
+          name: 'edit',
+        }),
+        expect.objectContaining({
+          label: i18n.t('timeline.overflow-actions.1'),
+          name: 'delete',
+        }),
+      ]),
+    );
+
+    fireEvent.press(overflowButton);
+    expect(actions.onEdit).not.toHaveBeenCalled();
+    expect(actions.onDelete).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', {
+      name: i18n.t('timeline.overflow-actions.0'),
+    })).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('timeline.overflow-actions.1'),
+    })).toBeTruthy();
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('timeline.overflow-actions.0'),
-    }));
-    fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('timeline.overflow-actions.1'),
     }));
 
     expect(actions.onEdit).toHaveBeenCalledWith({
@@ -195,9 +263,62 @@ describe('Timeline filters and actions', () => {
       todayDate,
       trackerId: 'feeding_meal',
     });
-    expect(actions.onDelete).toHaveBeenCalledWith({
+
+    fireEvent(overflowButton, 'accessibilityAction', {
+      nativeEvent: { actionName: 'edit' },
+    });
+
+    expect(actions.onEdit).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000004605',
       eventType: 'feeding',
+      householdId,
+      puppyId,
+      todayDate,
+      trackerId: 'feeding_meal',
+    });
+  });
+
+  it('requires explicit confirmation before deleting a synced row from overflow actions', async () => {
+    const actions = {
+      onDelete: jest.fn(),
+      onEdit: jest.fn(),
+    };
+    mockListEvents.mockResolvedValue([createRow({
+      event_type: 'potty',
+      payload: {
+        quick_action: 'pee_outside',
+      },
+    })]);
+
+    renderWithQuery(
+      <TimelineScreen
+        actions={actions}
+        careContext={careContext}
+        onClose={onClose}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.potty-outside'))).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('timeline.more-actions'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('timeline.overflow-actions.1'),
+    }));
+
+    expect(actions.onDelete).not.toHaveBeenCalled();
+    expect(screen.getByText(i18n.t('timeline.delete-confirm.title'))).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('timeline.delete-confirm.primary'),
+    }));
+
+    expect(actions.onDelete).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000004605',
+      eventType: 'potty',
       householdId,
       puppyId,
       status: 'synced',

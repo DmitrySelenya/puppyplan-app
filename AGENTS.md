@@ -18,6 +18,7 @@ Read these before non-trivial work:
 Primary architecture entry point: `docs/architecture/00-overview.md`.
 Agent-specific rules: `docs/architecture/18-ai-agent-guide.md`.
 Agent operating model: `docs/agents/00-operating-model.md`.
+Design fidelity pipeline (mandatory for all UI work): `docs/agents/design-fidelity-pipeline.md`.
 Linear workflow rules: `docs/agents/linear-workflow.md`.
 Context engineering rules: `docs/agents/context-engineering.md`.
 
@@ -176,6 +177,7 @@ Use this shape for non-trivial tasks:
 - No PII or secrets are exposed in logs, analytics, fixtures, docs, screenshots, or PR text.
 - Touched behavior has focused tests.
 - Touched UI uses design primitives, has accessibility labels/states, respects touch-target and Dynamic Type rules, and uses i18n keys.
+- UI work followed the Design Fidelity Pipeline (`docs/agents/design-fidelity-pipeline.md`): Stage 0 Design Lock recorded before code, primitives-first, structural anatomy render tests added, and per-screen native-vs-atlas comparison recorded `PASS` (or a named, approved deviation) before Done.
 - Checks for the touched area are run and reported. Once scripts exist, prefer `npm run check` as the full local gate.
 
 Target gate order once the app scaffold exists:

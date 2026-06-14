@@ -25,6 +25,7 @@ describe('resolveAuthRouteRedirect', () => {
   it('moves signed-out users away from protected tabs and modals', () => {
     expect(resolveAuthRouteRedirect('signedOut', ['(tabs)', 'more'])).toBe('/sign-in');
     expect(resolveAuthRouteRedirect('signedOut', ['(modals)', 'quick-log'])).toBe('/sign-in');
+    expect(resolveAuthRouteRedirect('signedOut', ['(sheets)', 'quick-log'])).toBe('/sign-in');
   });
 
   it('allows signed-out users to stay on sign-in and public access screens', () => {

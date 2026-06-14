@@ -40,6 +40,8 @@ For solo development, the final reviewer is the user. Agent self-review is usefu
 
 This gate is mandatory for every batch that creates, changes, or claims completion for UI surfaces. Passing functional tests is not enough.
 
+This gate is the post-build comparison stage (Stage 4) of the full **Design Fidelity Pipeline** in `docs/agents/design-fidelity-pipeline.md`, which is mandatory and starts **before code**. UI work must begin with a Stage 0 Design Lock (artboard IDs → states → device sizes → allowed deviations → screenshot refs + a per-screen spec card), build primitives-first, and add structural anatomy render tests, before this comparison runs. Run the comparison **per screen/state and before Done**, not as a batch-end audit.
+
 - Identify every affected design artboard from `docs/design/v1/manifest.json` and `docs/design/v1/screenshots/index.md`.
 - Confirm the current visual source is understood before implementation. The default source is `docs/design/v1/raw/PuppyPlan.html` plus the generated PNG atlas under `docs/design/v1/screenshots/`.
 - If the repo source conflicts with a newer external design package, compare the files and record the decision. If the visual source cannot be resolved, stop and ask the user for exact screenshots or a fresh design export.

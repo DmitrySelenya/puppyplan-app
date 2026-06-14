@@ -1,9 +1,19 @@
+import type { ComponentProps, ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
+
+import type { PuppyProfile } from '@/contracts/supabase';
+import { AppIcon } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
+import { Avatar } from '@/design/primitives/Avatar';
 import { Card } from '@/design/primitives/Card';
+import { ListGroup } from '@/design/primitives/ListGroup';
 import { ListRow } from '@/design/primitives/ListRow';
 import { Screen } from '@/design/primitives/Screen';
+import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { Stack } from '@/design/primitives/Stack';
-import { useAppTranslation } from '@/lib/i18n';
+import { tokens } from '@/design/tokens';
+import { type AppTranslate, type SupportedLocale, useAppTranslation } from '@/lib/i18n';
+import { formatCalendarDate } from '@/lib/i18n/format-date';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 
 import { SignOutButton } from '../components/SignOutButton';
@@ -15,6 +25,7 @@ export type MoreScreenProps = Readonly<{
   openPuppyProfile?: () => void;
   openQuickTrackers?: () => void;
   openTimeline: () => void;
+  puppy?: PuppyProfile | null;
   puppySettingsState?: PuppySettingsAccessState;
 }>;
 
@@ -24,6 +35,7 @@ export function ConnectedMoreScreen(props: Omit<MoreScreenProps, 'canManagePuppy
   return (
     <MoreScreen
       {...props}
+      puppy={activeCare.puppy}
       puppySettingsState={getPuppySettingsAccessState(activeCare)}
     />
   );
@@ -34,37 +46,121 @@ export function MoreScreen({
   openPuppyProfile,
   openQuickTrackers,
   openTimeline,
+  puppy = null,
   puppySettingsState,
 }: MoreScreenProps) {
-  const { t } = useAppTranslation();
+  const { locale, t } = useAppTranslation();
   const settingsState = puppySettingsState ?? (canManagePuppySettings ? 'owner' : 'nonOwner');
 
   return (
-    <Screen>
+    <Screen contentStyle={styles.content}>
       <AppText variant="title">{t('more.screen-title')}</AppText>
+      {puppy ? (
+        <PuppySummaryCard
+          locale={locale}
+          onPress={openPuppyProfile}
+          puppy={puppy}
+          t={t}
+        />
+      ) : null}
       <PuppySettingsSection
         openPuppyProfile={openPuppyProfile}
         openQuickTrackers={openQuickTrackers}
+        puppy={puppy}
         state={settingsState}
       />
-      <AppText>{t('more.sections.records')}</AppText>
-      <ListRow
-        onPress={openTimeline}
-        title={t('more.rows.timeline')}
-      />
-      <AppText>{t('more.sections.support')}</AppText>
+      <SettingsSection title={t('more.sections.sharing')}>
+        <DeferredListRow icon="personCluster" title={t('more.rows.family')} />
+        <DeferredListRow icon="lock" title={t('more.rows.trainer-sitter')} />
+      </SettingsSection>
+      <SettingsSection title={t('more.sections.records')}>
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="docText" />}
+          onPress={openTimeline}
+          title={t('more.rows.timeline')}
+          variant="settings"
+        />
+        <DeferredListRow icon="bell" title={t('more.rows.reminders')} />
+        <DeferredListRow icon="gear" title={t('more.rows.notifications')} />
+      </SettingsSection>
+      <SettingsSection title={t('more.sections.privacy')}>
+        <DeferredListRow icon="lock" title={t('more.rows.data-account')} />
+      </SettingsSection>
+      <SettingsSection title={t('more.sections.support')}>
+        <DeferredListRow icon="infoCircle" title={t('more.rows.help')} />
+        <DeferredListRow icon="infoCircle" title={t('more.rows.about')} />
+      </SettingsSection>
       <SignOutButton />
     </Screen>
   );
 }
 
+function PuppySummaryCard({
+  locale,
+  onPress,
+  puppy,
+  t,
+}: Readonly<{
+  locale: SupportedLocale;
+  onPress?: () => void;
+  puppy: PuppyProfile;
+  t: AppTranslate;
+}>) {
+  const content = (
+    <>
+      <Avatar label={puppy.name} size="xl" tone="accent" />
+      <Stack gap="xs" style={styles.summaryText}>
+        <AppText variant="headline">{puppy.name}</AppText>
+        <AppText tone="secondary" variant="subheadline">
+          {formatPuppySummary(puppy, t, locale)}
+        </AppText>
+      </Stack>
+      {onPress ? <AppIcon color={tokens.color.text.tertiary} name="chevronRight" /> : null}
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <Card
+        accessibilityLabel={puppy.name}
+        onPress={onPress}
+        style={styles.summaryCard}>
+        {content}
+      </Card>
+    );
+  }
+
+  return <Card style={styles.summaryCard}>{content}</Card>;
+}
+
+const styles = StyleSheet.create({
+  content: {
+    paddingBottom: tokens.layout.tabBarHeight + tokens.component.fab.size + tokens.space[6],
+  },
+  summaryCard: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: tokens.space[3],
+  },
+  summaryText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  sectionTitle: {
+    textTransform: 'uppercase',
+  },
+});
+
 function PuppySettingsSection({
   openPuppyProfile,
   openQuickTrackers,
   state,
+  puppy,
 }: Readonly<{
   openPuppyProfile?: () => void;
   openQuickTrackers?: () => void;
+  puppy: PuppyProfile | null;
   state: PuppySettingsAccessState;
 }>) {
   const { t } = useAppTranslation();
@@ -74,8 +170,7 @@ function PuppySettingsSection({
   }
 
   return (
-    <Stack gap="sm">
-      <AppText>{t('more.sections.puppy')}</AppText>
+    <SettingsSection title={t('more.sections.puppy')}>
       {state === 'loading' ? (
         <Card>
           <AppText>{t('common.loading')}</AppText>
@@ -92,17 +187,79 @@ function PuppySettingsSection({
       {state === 'owner' ? (
         <>
           <ListRow
+            accessory="chevron"
+            leading={<AppIcon name="paw" />}
             onPress={openPuppyProfile}
             title={t('more.rows.puppy-profile')}
+            variant="settings"
           />
           <ListRow
+            accessory="chevron"
+            leading={<AppIcon name="plus" />}
+            meta={t('more.quick-trackers.selected-count', {
+              count: puppy?.quick_tracker_ids?.length ?? 0,
+              max: 5,
+            })}
             onPress={openQuickTrackers}
             title={t('more.rows.quick-trackers')}
+            variant="settings"
           />
         </>
       ) : null}
+    </SettingsSection>
+  );
+}
+
+function SettingsSection({
+  children,
+  title,
+}: Readonly<{
+  children: ReactNode;
+  title: string;
+}>) {
+  return (
+    <Stack gap="xs">
+      <SectionHeader title={title} titleStyle={styles.sectionTitle} />
+      <ListGroup>{children}</ListGroup>
     </Stack>
   );
+}
+
+function DeferredListRow({
+  icon,
+  title,
+}: Readonly<{
+  icon: ComponentProps<typeof AppIcon>['name'];
+  title: string;
+}>) {
+  const { t } = useAppTranslation();
+
+  return (
+    <ListRow
+      accessory="chevron"
+      disabled
+      leading={<AppIcon name={icon} />}
+      meta={t('more.rows.deferred')}
+      title={title}
+      variant="settings"
+    />
+  );
+}
+
+function formatPuppySummary(
+  puppy: PuppyProfile,
+  t: AppTranslate,
+  locale: SupportedLocale,
+): string {
+  if (typeof puppy.age_weeks_estimate === 'number') {
+    return t('more.puppy-summary.age-weeks', { count: puppy.age_weeks_estimate });
+  }
+
+  if (puppy.birth_date) {
+    return formatCalendarDate(puppy.birth_date, locale);
+  }
+
+  return t('more.puppy-summary.no-age');
 }
 
 function getPuppySettingsAccessState(

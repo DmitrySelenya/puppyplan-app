@@ -6,6 +6,7 @@ import {
   type QuickLogCareContext,
   type QuickLogMutationEvent,
   type QuickLogMutationPort,
+  type QuickLogRecentEvent,
   type QuickLogSnackbarPort,
 } from '@/features/quick-log/useQuickLogSheetController';
 
@@ -48,9 +49,12 @@ function createAnalyticsPort() {
 function renderController(input: {
   analytics?: ReturnType<typeof createAnalyticsPort>;
   care?: QuickLogCareContext | null;
+  createClientEventId?: () => string;
   events?: readonly QuickLogMutationEvent[];
   lastLoggedAtMs?: number;
   mutation?: jest.Mocked<QuickLogMutationPort>;
+  openDetails?: jest.Mock;
+  recentEvents?: readonly QuickLogRecentEvent[];
   snackbar?: jest.Mocked<QuickLogSnackbarPort>;
 } = {}) {
   const mutation = input.mutation ?? createMutationPort();
@@ -65,16 +69,19 @@ function renderController(input: {
       analytics: input.analytics,
       careContext: input.care === undefined ? careContext : input.care,
       closeSheet,
+      createClientEventId: input.createClientEventId,
       feedback,
       mutation,
       mutationEvents: props.events,
       now: () => now,
+      openDetails: input.openDetails,
       recentEvent: input.lastLoggedAtMs === undefined
         ? null
         : {
           occurredAtMs: input.lastLoggedAtMs,
           trackerId: 'feeding_meal',
         },
+      recentEvents: input.recentEvents,
     }), {
       initialProps: {
         events: input.events ?? [],
@@ -121,13 +128,13 @@ describe('useQuickLogSheetController', () => {
     expect(returnValue).toBeUndefined();
     expect(mutation.mutate).toHaveBeenCalledWith(expect.objectContaining({
       requestId: expect.stringMatching(/^quick-log:/),
-      variables: {
+      variables: expect.objectContaining({
         householdId,
         occurredAt: now.toISOString(),
         puppyId,
         todayDate: '2026-05-27',
         trackerId: 'feeding_meal',
-      },
+      }),
     }));
     expect(snackbar.showSnackbar).toHaveBeenCalledWith(expect.objectContaining({
       id: expect.stringMatching(/^quick-log:/),
@@ -135,6 +142,34 @@ describe('useQuickLogSheetController', () => {
       tone: 'success',
     }));
     expect(closeSheet).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens Add details for the logged event from the success snackbar', () => {
+    const openDetails = jest.fn();
+    const { result, snackbar } = renderController({
+      createClientEventId: () => clientEventId,
+      openDetails,
+    });
+
+    result.current.logTracker('feeding_meal');
+
+    const message = snackbar.showSnackbar.mock.calls[0]?.[0];
+
+    expect(message).toEqual(expect.objectContaining({
+      clientEventId,
+      secondaryActionKey: 'quick-log.snackbar.add-details',
+    }));
+
+    message?.onSecondaryAction?.();
+
+    expect(openDetails).toHaveBeenCalledWith({
+      clientEventId,
+      eventType: 'feeding',
+      householdId,
+      puppyId,
+      todayDate: '2026-05-27',
+      trackerId: 'feeding_meal',
+    });
   });
 
   it('replaces the post-dismiss success snackbar when mutation failure arrives', () => {
@@ -285,6 +320,42 @@ describe('useQuickLogSheetController', () => {
       name: 'duplicate_warning_confirmed',
       properties: {
         event_type: 'feeding',
+      },
+    });
+  });
+
+  it('uses the most recent qualifying event when duplicate-warning candidates overlap', () => {
+    const analytics = createAnalyticsPort();
+    const { result } = renderController({
+      analytics,
+      recentEvents: [
+        {
+          occurredAtMs: now.getTime() - 30_000,
+          trackerId: 'feeding_meal',
+        },
+        {
+          occurredAtMs: now.getTime() - 2_000,
+          trackerId: 'feeding_meal',
+        },
+        {
+          occurredAtMs: now.getTime() - 1_000,
+          trackerId: 'sleep_nap',
+        },
+      ],
+    });
+
+    act(() => {
+      result.current.logTracker('feeding_meal');
+    });
+
+    expect(result.current.duplicateWarning).toEqual(expect.objectContaining({
+      trackerId: 'feeding_meal',
+    }));
+    expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'duplicate_warning_seen',
+      properties: {
+        event_type: 'feeding',
+        time_since_previous_bucket: 'under_3s',
       },
     });
   });

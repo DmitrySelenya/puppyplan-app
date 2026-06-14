@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
+import type { PressableProps, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { decorativeViewProps } from '@/design/a11y';
@@ -91,6 +91,8 @@ const styles = StyleSheet.create({
   },
   label: {
     color: tokens.color.text.primary,
+    fontSize: 14,
+    fontWeight: String(tokens.typography.fontWeight.semibold) as TextStyle['fontWeight'],
     textAlign: 'left',
   },
   pressed: {
@@ -106,7 +108,7 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     gap: tokens.space[2],
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     minHeight: tokens.component.trackerTile.min.height,
     minWidth: tokens.component.trackerTile.min.width,
     padding: tokens.space[3],

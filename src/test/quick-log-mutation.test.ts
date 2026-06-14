@@ -85,6 +85,45 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
+  it('uses a caller-provided client id when the sheet needs an immediate details target', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => {
+        throw new Error('caller-provided client id should be used');
+      },
+      now: () => now,
+    });
+    const variables = {
+      clientEventId,
+      householdId,
+      puppyId,
+      trackerId: 'feeding_meal' as const,
+      occurredAt,
+      todayDate,
+    };
+
+    const context = await options.onMutate?.(variables);
+    await expect(options.mutationFn?.(variables)).resolves.toMatchObject({
+      client_event_id: clientEventId,
+    });
+
+    expect(context?.clientEventId).toBe(clientEventId);
+    expect(queue.items.get(clientEventId)).toMatchObject({
+      client_event_id: clientEventId,
+    });
+    expect(events.inserts).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+      }),
+    ]);
+  });
+
   it('generates client ids in native runtimes without crypto.randomUUID', async () => {
     const originalCryptoDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
     const queryClient = createTestQueryClient();

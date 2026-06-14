@@ -1,7 +1,8 @@
 import { useEffect, type ReactElement } from 'react';
-import { AccessibilityInfo } from 'react-native';
-import { render, screen, waitFor } from '@testing-library/react-native';
+import { AccessibilityInfo, ScrollView, StyleSheet } from 'react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
+import { tokens } from '@/design/tokens';
 import { AppProviders } from '@/lib/providers/AppProviders';
 import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
@@ -72,11 +73,47 @@ describe('app shell screens', () => {
     expect(screen.getByText(i18n.t('today.states.unavailable.body'))).toBeTruthy();
   });
 
-  it('renders the Health shell with localized support copy', () => {
-    renderWithProviders(<HealthScreen />);
+  it('renders the Health shell as an honest empty deferred state by default', () => {
+    const result = renderWithProviders(<HealthScreen />);
 
     expect(screen.getByText(i18n.t('tabs.health'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.segments.0'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.segments.1'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.filter-chips.0'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.empty.title'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('health.rows.dhpp-title'))).toBeNull();
+    expect(screen.queryByText(i18n.t('health.rows.deworming-title'))).toBeNull();
+    expect(screen.queryByText(i18n.t('health.rows.vet-visit-title'))).toBeNull();
+    expect(screen.getByRole('button', {
+      name: i18n.t('health.empty.primary'),
+    }).props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByRole('button', {
+      name: i18n.t('health.empty.secondary'),
+    }).props.accessibilityState.disabled).toBe(true);
     expect(screen.getByText(i18n.t('health.footer-hint'))).toBeTruthy();
+    expect(screen.queryByText(/diagnosis|dose|urgent/i)).toBeNull();
+
+    const scrollView = result.UNSAFE_getByType(ScrollView);
+    const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
+
+    expect(contentStyle.paddingBottom).toBeGreaterThanOrEqual(
+      tokens.layout.tabBarHeight + tokens.component.fab.size + tokens.space[6],
+    );
+  });
+
+  it('renders the Health review mixed-list fixture only when explicitly requested', () => {
+    renderWithProviders(<HealthScreen reviewState="mixed-list" />);
+
+    expect(screen.getByText(i18n.t('health.rows.dhpp-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.rows.deworming-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.rows.vet-visit-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.footer-hint'))).toBeTruthy();
+    expect(screen.queryByText(/diagnosis|dose|urgent/i)).toBeNull();
+
+    fireEvent.press(screen.getByRole('tab', { name: i18n.t('health.segments.1') }));
+    expect(screen.getByText(i18n.t('health.rows.dhpp-title'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('health.rows.deworming-title'))).toBeNull();
+    expect(screen.queryByText(i18n.t('health.rows.vet-visit-title'))).toBeNull();
   });
 
   it('renders the More shell with localized support copy and a sign-out control', () => {

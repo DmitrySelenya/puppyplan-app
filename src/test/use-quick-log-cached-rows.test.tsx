@@ -77,6 +77,36 @@ describe('useQuickLogCachedRows', () => {
     expect(observedRows).toHaveLength(1);
   });
 
+  it('includes rows from filtered timeline queries under the same root', () => {
+    let observedRows: readonly QuickLogCachedEventRow[] = [];
+
+    function RowsProbe() {
+      observedRows = useQuickLogCachedRows(careContext);
+
+      return null;
+    }
+
+    const { queryClient } = renderWithQuery(<RowsProbe />);
+    const durableRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001806',
+      id: '00000000-0000-4000-8000-000000001807',
+    });
+
+    act(() => {
+      queryClient.setQueryData(
+        queryKeys.events.timeline(householdId, puppyId, {
+          from: todayDate,
+          to: todayDate,
+        }),
+        [durableRow],
+      );
+    });
+
+    expect(observedRows.map((row) => row.client_event_id)).toEqual([
+      durableRow.client_event_id,
+    ]);
+  });
+
   it('does not resubscribe to the query cache on unrelated parent rerenders', () => {
     let renderCount = 0;
 
@@ -110,7 +140,7 @@ describe('useQuickLogCachedRows', () => {
   });
 });
 
-function createRow(): QuickLogCachedEventRow {
+function createRow(overrides: Partial<QuickLogCachedEventRow> = {}): QuickLogCachedEventRow {
   return {
     id: '00000000-0000-4000-8000-000000001804',
     household_id: householdId,
@@ -127,5 +157,6 @@ function createRow(): QuickLogCachedEventRow {
     deleted_at: null,
     created_at: '2026-05-27T08:00:01.000Z',
     updated_at: '2026-05-27T08:00:01.000Z',
+    ...overrides,
   };
 }

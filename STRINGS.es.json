@@ -310,6 +310,7 @@
       "potty-time-tertiary": "Más tarde",
       "eyebrow": "Hoy",
       "first-day": {
+        "eyebrow": "Inicio",
         "title": "Registra tu primer evento: toma unos cinco segundos.",
         "body": "Empieza con el primer baño, comida o descanso.",
         "primary": "Empezar"
@@ -518,6 +519,7 @@
   "quick-log": {
     "sheet": {
       "title": "¿Qué pasó?",
+      "dismiss": "Cerrar registro rápido",
       "edit-trackers": "Editar rastreadores",
       "edit-screen-title": "Tus rastreadores rápidos",
       "edit-helper": "Hasta 5 rastreadores. Cámbialos desde Más.",
@@ -599,7 +601,8 @@
       "undo": "Deshacer",
       "undo-confirmed": "Deshecho",
       "add-details": "Agregar detalles",
-      "a11y": "Registrado: {trackerName}. Acción disponible: deshacer."
+      "a11y": "Registrado: {trackerName}. Acción disponible: deshacer.",
+      "a11y-with-details": "Registrado: {trackerName}. Acciones disponibles: deshacer y agregar detalles."
     },
     "details": {
       "title": "Agregar detalles",
@@ -676,6 +679,7 @@
     "close": "Cerrar",
     "section-today": "Hoy · {weekday}",
     "section-yesterday": "Ayer · {weekday}",
+    "section-date": "{date} · {weekday}",
     "filter-chips": [
       "Todo",
       "Baño",
@@ -721,6 +725,7 @@
       "secondary": "Cancelar"
     },
     "delete-snackbar": "Entrada eliminada.",
+    "more-actions": "Más acciones",
     "swipe-actions": [
       "Editar",
       "Borrar"
@@ -1095,6 +1100,16 @@
       "Confirmado",
       "Hecho"
     ],
+    "rows": {
+      "current-section": "Mayo de 2026",
+      "previous-section": "Abril de 2026",
+      "dhpp-title": "Vacuna DHPP",
+      "dhpp-meta": "Plantilla · 12 semanas",
+      "deworming-title": "Tratamiento de parásitos",
+      "deworming-meta": "Confirmado · Hecho el 12 de mayo · Sin clínica indicada",
+      "vet-visit-title": "Visita al veterinario",
+      "vet-visit-meta": "Hecho · 28 de abril · Agregado por ti"
+    },
     "error-card": "No se pudieron cargar las entradas. Intenta actualizar.",
     "refresh": "Refrescar",
     "pills": {
@@ -1457,18 +1472,34 @@
       "data-account": "Datos y cuenta",
       "help": "Ayuda",
       "about": "Acerca de",
-      "puppyplan-plus": "PuppyPlan Plus"
+      "puppyplan-plus": "PuppyPlan Plus",
+      "deferred": "Diferido"
+    },
+    "puppy-summary": {
+      "age-weeks": "{count} semanas",
+      "no-age": "Edad sin configurar"
     },
     "puppy-profile": {
       "screen-title": "Perfil de cachorro",
       "save": "Guardar",
       "change-photo": "Cambiar foto",
+      "sections": {
+        "about": "Acerca del cachorro",
+        "optional": "Opcional"
+      },
       "field-name": "Nombre",
       "field-birth": "Fecha de nacimiento / aprox.",
+      "field-birth-default": "Fecha de nacimiento",
+      "dob-subtitle-weeks": "≈ {count} semanas",
       "field-breed": "Raza / mezcla / desconocida",
       "field-gender": "Sexo",
       "field-weight": "Peso (opcional)",
+      "field-microchip": "Microchip",
       "field-note": "Nota",
+      "note-subtitle": "Alergias, manías, juguete favorito…",
+      "add-value": "Añadir",
+      "age-weeks-value": "{count} semanas",
+      "missing-value": "Sin configurar",
       "hint": "Esta información se utiliza únicamente dentro de la aplicación y en los enlaces compartidos que creas.",
       "photo-permission-denied": "El acceso a fotografías está desactivado. Puedes usar uno de los avatares integrados.",
       "avatar-actions": [
@@ -1478,8 +1509,17 @@
       ]
     },
     "quick-trackers": {
+      "screen-title": "Rastreadores rápidos",
       "screen-title-template": "Rastreadores rápidos ({n} de 5 seleccionados)",
-      "hint": "Elige hasta 5 rastreadores para Hoy y Quick Log.",
+      "hint": "Elige hasta 5 rastreadores para Hoy y Registro rápido.",
+      "selected-count": "{count} de {max} seleccionados",
+      "more-options": "Más opciones",
+      "toggle-on": "Activado",
+      "toggle-off": "Desactivado",
+      "toggle-a11y": "Rastreador {label}",
+      "reorder": "Reordenar",
+      "move-up": "Mover arriba",
+      "move-down": "Mover abajo",
       "max-reached-hint": "Desactiva uno de los primeros seleccionados",
       "min-required-hint": "Mantén al menos un rastreador seleccionado",
       "items": [

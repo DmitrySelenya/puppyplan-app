@@ -10,19 +10,34 @@ export type AppIconName =
   | 'bowl'
   | 'calendar'
   | 'chevronRight'
+  | 'close'
+  | 'docText'
+  | 'gear'
   | 'heart'
+  | 'home'
+  | 'infoCircle'
+  | 'lock'
   | 'moon'
   | 'more'
+  | 'paw'
+  | 'personCluster'
   | 'plus'
   | 'poop'
+  | 'pottyInside'
   | 'search'
+  | 'sliders'
   | 'spark'
+  | 'stethoscope'
   | 'today'
   | 'trash'
+  | 'trainingPaw'
+  | 'vaccine'
+  | 'weight'
   | 'water';
 
 export type AppIconProps = {
   color?: string;
+  filled?: boolean;
   name: AppIconName;
   size?: number;
   style?: StyleProp<ViewStyle>;
@@ -49,8 +64,40 @@ const iconShapes: Record<AppIconName, React.JSX.Element> = {
     </>
   ),
   chevronRight: <Path d="M9 6l6 6-6 6" />,
+  close: <Path d="M6 6l12 12M18 6L6 18" />,
+  docText: (
+    <>
+      <Path d="M7 3h7l4 4v14H7V3zM14 3v5h5" />
+      <Path d="M10 12h6M10 16h5" />
+    </>
+  ),
+  gear: (
+    <>
+      <Circle cx={12} cy={12} r={3} />
+      <Path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a7 7 0 0 0-2-1.1L14 3h-4l-.5 2.8a7 7 0 0 0-2 1.1l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1a7 7 0 0 0 2 1.1L10 21h4l.5-2.8a7 7 0 0 0 2-1.1l2.4 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z" />
+    </>
+  ),
   heart: (
     <Path d="M3.5 9.5C3.5 6.7 5.6 4.5 8.4 4.5c1.9 0 3 1 3.6 2 .6-1 1.7-2 3.6-2 2.8 0 4.9 2.2 4.9 5 0 4.7-8.5 9.5-8.5 9.5S3.5 14.2 3.5 9.5z" />
+  ),
+  home: (
+    <>
+      <Path d="M4 11l8-7 8 7" />
+      <Path d="M6.5 10.5V20h11v-9.5" />
+      <Path d="M10 20v-5h4v5" />
+    </>
+  ),
+  infoCircle: (
+    <>
+      <Circle cx={12} cy={12} r={8.5} />
+      <Path d="M12 11v5M12 8h.01" />
+    </>
+  ),
+  lock: (
+    <>
+      <Rect height={10} rx={2} width={14} x={5} y={10} />
+      <Path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </>
   ),
   moon: <Path d="M20 14.5A8 8 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" />,
   more: (
@@ -61,8 +108,31 @@ const iconShapes: Record<AppIconName, React.JSX.Element> = {
     </>
   ),
   plus: <Path d="M12 5v14M5 12h14" />,
+  paw: (
+    <>
+      <Circle cx={7.5} cy={9} r={1.8} />
+      <Circle cx={12} cy={7} r={1.8} />
+      <Circle cx={16.5} cy={9} r={1.8} />
+      <Path d="M7 17c0-2.4 2.2-4.5 5-4.5s5 2.1 5 4.5c0 1.5-1 2.5-2.3 2.5-.9 0-1.6-.4-2.7-.4s-1.8.4-2.7.4C8 19.5 7 18.5 7 17z" />
+    </>
+  ),
+  personCluster: (
+    <>
+      <Circle cx={9} cy={8} r={3} />
+      <Path d="M4 20a5 5 0 0 1 10 0" />
+      <Circle cx={17} cy={9} r={2.5} />
+      <Path d="M15 15.5a4.5 4.5 0 0 1 5 4.5" />
+    </>
+  ),
   poop: (
     <Path d="M8 11a3 3 0 0 1 1.5-5.5c.7-1.5 3-1.5 3.5 0a3 3 0 0 1 3 4 3 3 0 0 1 .5 5.5H7a3 3 0 0 1 1-4z" />
+  ),
+  // Indoor "pee pad" tray: rounded rectangle with a small centered top tab.
+  pottyInside: (
+    <>
+      <Rect height={12} rx={2.5} width={15} x={4.5} y={7} />
+      <Path d="M10 7V5.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V7" />
+    </>
   ),
   search: (
     <>
@@ -70,8 +140,22 @@ const iconShapes: Record<AppIconName, React.JSX.Element> = {
       <Path d="M20 20l-4.5-4.5" />
     </>
   ),
+  sliders: (
+    <>
+      <Path d="M4 7h5M15 7h5M4 17h9M19 17h1" />
+      <Circle cx={12} cy={7} r={3} />
+      <Circle cx={16} cy={17} r={3} />
+    </>
+  ),
   spark: (
     <Path d="M12 4v3M12 17v3M4 12h3M17 12h3M6.5 6.5l2 2M15.5 15.5l2 2M6.5 17.5l2-2M15.5 8.5l2-2" />
+  ),
+  stethoscope: (
+    <>
+      <Path d="M6 4v5a4 4 0 0 0 8 0V4" />
+      <Path d="M10 13v2a4 4 0 0 0 8 0v-1" />
+      <Circle cx={18} cy={13} r={2} />
+    </>
   ),
   today: (
     <>
@@ -82,16 +166,74 @@ const iconShapes: Record<AppIconName, React.JSX.Element> = {
   trash: (
     <Path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
   ),
+  trainingPaw: (
+    <>
+      <Path d="M5 16l4-4 3 3 7-7" />
+      <Path d="M5 20h14" />
+      <Circle cx={7.5} cy={7.5} r={1.5} />
+      <Circle cx={11.5} cy={6} r={1.5} />
+      <Circle cx={15.5} cy={7.5} r={1.5} />
+    </>
+  ),
+  vaccine: (
+    <>
+      <Path d="M15 4l5 5M17.5 6.5L8 16" />
+      <Path d="M6 14l4 4M5 19l3-3M12 8l4 4" />
+    </>
+  ),
+  weight: (
+    <>
+      <Path d="M6 8h12l2 12H4L6 8z" />
+      <Path d="M9 8a3 3 0 0 1 6 0" />
+      <Path d="M10 14h4" />
+    </>
+  ),
   water: <Path d="M12 3.5C9 7.5 6 11 6 14a6 6 0 0 0 12 0c0-3-3-6.5-6-10.5z" />,
+};
+
+// Filled silhouettes used for the active tab-bar state (the design atlas shows
+// a solid tinted glyph for the focused tab). Only the nav icons are provided;
+// other names fall back to their stroked glyph.
+const filledIconShapes: Partial<Record<AppIconName, React.JSX.Element>> = {
+  today: <Circle cx={12} cy={12} r={8.5} />,
+  heart: (
+    <Path d="M3.5 9.5C3.5 6.7 5.6 4.5 8.4 4.5c1.9 0 3 1 3.6 2 .6-1 1.7-2 3.6-2 2.8 0 4.9 2.2 4.9 5 0 4.7-8.5 9.5-8.5 9.5S3.5 14.2 3.5 9.5z" />
+  ),
+  more: (
+    <>
+      <Circle cx={6} cy={12} r={1.9} />
+      <Circle cx={12} cy={12} r={1.9} />
+      <Circle cx={18} cy={12} r={1.9} />
+    </>
+  ),
 };
 
 export function AppIcon({
   color = tokens.color.text.primary,
+  filled = false,
   name,
   size = 22,
   style,
   testID,
 }: AppIconProps) {
+  const filledShape = filled ? filledIconShapes[name] : undefined;
+
+  if (filledShape) {
+    return (
+      <Svg
+        {...decorativeViewProps}
+        fill={color}
+        height={size}
+        testID={testID}
+        stroke="none"
+        style={style}
+        viewBox="0 0 24 24"
+        width={size}>
+        {filledShape}
+      </Svg>
+    );
+  }
+
   return (
     <Svg
       {...decorativeViewProps}

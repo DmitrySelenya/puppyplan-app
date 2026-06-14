@@ -58,6 +58,7 @@ export type QuickLogCachedEventRow = EventLogRecord & {
 };
 
 export type QuickLogMutationVariables = Readonly<{
+  clientEventId?: string;
   householdId: string;
   puppyId: string;
   trackerId: QuickLogTrackerId;
@@ -213,7 +214,7 @@ export function createQuickLogMutationOptions(
   const analytics = dependencies.analytics ?? createAnalyticsClient();
   const observability = dependencies.observability ?? createObservabilityReporter();
   const getSessionUserId = dependencies.getSessionUserId ?? (() => null);
-  const createClientEventId = dependencies.createClientEventId ?? createDefaultClientEventId;
+  const createClientEventId = dependencies.createClientEventId ?? createQuickLogClientEventId;
   const now = dependencies.now ?? (() => new Date().toISOString());
 
   return {
@@ -224,7 +225,7 @@ export function createQuickLogMutationOptions(
         throw new Error('Quick Log requires an authenticated session');
       }
 
-      const clientEventId = createClientEventId();
+      const clientEventId = variables.clientEventId ?? createClientEventId();
       const insert = createQuickLogEventInsert({
         client_event_id: clientEventId,
         household_id: variables.householdId,
@@ -1391,7 +1392,7 @@ function isSameQueryKey(left: QueryKey, right: QueryKey): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function createDefaultClientEventId(): string {
+export function createQuickLogClientEventId(): string {
   const crypto = globalThis.crypto;
   const randomUuid = crypto?.randomUUID?.();
 

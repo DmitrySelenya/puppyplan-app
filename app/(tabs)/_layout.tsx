@@ -17,15 +17,15 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: tokens.color.primary[600],
+          tabBarActiveTintColor: tokens.color.primary[700],
           tabBarInactiveTintColor: tokens.color.text.secondary,
           tabBarStyle: styles.tabBar,
         }}>
         <Tabs.Screen
           name="today/index"
           options={{
-            tabBarIcon: ({ color, size }) => (
-              <AppIcon color={color} name="today" size={size} />
+            tabBarIcon: ({ color, focused, size }) => (
+              <AppIcon color={color} filled={focused} name="today" size={size} />
             ),
             title: t(todayTab.labelKey),
             tabBarAccessibilityLabel: t(todayTab.accessibilityLabelKey),
@@ -34,8 +34,8 @@ export default function TabLayout() {
         <Tabs.Screen
           name="health/index"
           options={{
-            tabBarIcon: ({ color, size }) => (
-              <AppIcon color={color} name="heart" size={size} />
+            tabBarIcon: ({ color, focused, size }) => (
+              <AppIcon color={color} filled={focused} name="heart" size={size} />
             ),
             title: t(healthTab.labelKey),
             tabBarAccessibilityLabel: t(healthTab.accessibilityLabelKey),
@@ -44,8 +44,8 @@ export default function TabLayout() {
         <Tabs.Screen
           name="more/index"
           options={{
-            tabBarIcon: ({ color, size }) => (
-              <AppIcon color={color} name="more" size={size} />
+            tabBarIcon: ({ color, focused, size }) => (
+              <AppIcon color={color} filled={focused} name="more" size={size} />
             ),
             title: t(moreTab.labelKey),
             tabBarAccessibilityLabel: t(moreTab.accessibilityLabelKey),
@@ -71,7 +71,10 @@ const styles = StyleSheet.create({
     borderTopColor: tokens.color.stroke.default,
   },
   quickLog: {
-    bottom: tokens.layout.tabBarHeight + tokens.space[3],
+    bottom:
+      tokens.layout.tabBarHeight +
+      tokens.component.fab.size / 2 +
+      tokens.layout.tapGapMin,
     position: 'absolute',
     right: tokens.space[4],
   },

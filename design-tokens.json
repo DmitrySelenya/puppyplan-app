@@ -246,6 +246,7 @@
       "active":   "primary/700 + filled icon"
     },
     "bottom-sheet": {
+      "min-height":    "460pt",
       "radius-top":   "16pt",
       "drag-handle":  { "width": "36pt", "height": "4pt" },
       "elevation":    "elev/2"

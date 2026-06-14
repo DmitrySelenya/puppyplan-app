@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { pressedScaleStyle, useReducedMotion } from '@/design/motion';
 import { AppText } from '@/design/primitives/AppText';
 import { Touchable } from '@/design/primitives/Touchable';
+import { elevationStyle } from '@/design/primitives/elevationStyle';
 import { tokens } from '@/design/tokens';
 
 export type SegmentedControlOption<Value extends string> = {
@@ -78,14 +79,14 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   label: {
-    color: tokens.color.primary[700],
+    color: tokens.color.text.secondary,
   },
   option: {
     alignItems: 'center',
     borderRadius: tokens.radius.sm,
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: tokens.space[3],
+    paddingHorizontal: tokens.space[1],
     paddingVertical: tokens.space[2],
   },
   pressedOption: {
@@ -99,9 +100,10 @@ const styles = StyleSheet.create({
     padding: tokens.space[1],
   },
   selectedLabel: {
-    color: tokens.color.text.onPrimary,
+    color: tokens.color.text.primary,
   },
   selectedOption: {
-    backgroundColor: tokens.color.primary[600],
+    backgroundColor: tokens.color.surface.raised,
+    ...elevationStyle(1),
   },
 });

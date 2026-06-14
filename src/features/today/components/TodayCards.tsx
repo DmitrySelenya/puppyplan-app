@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import {
   STARTER_GUIDANCE_CONTENT,
@@ -19,10 +19,13 @@ import {
   AppIcon,
   Button,
   Card,
+  ListGroup,
   ListRow,
+  SectionHeader,
   Stack,
   StatusPill,
 } from '@/design/primitives';
+import { tokens } from '@/design/tokens';
 import { useAppTranslation, type I18nKey } from '@/lib/i18n';
 
 export type TodayStatusState =
@@ -91,6 +94,7 @@ export function TodayHeroCard({
       <Stack gap="sm">
         <AppText
           maxFontSizeMultiplier={1.6}
+          style={styles.eyebrow}
           tone="tertiary"
           variant="caption">
           {t(copy.eyebrowKey)}
@@ -126,31 +130,28 @@ export function TodayDailyCardList({
     <Stack gap="sm" testID="today-daily-card-list">
       {starterCards.length > 0 ? (
         <>
-          <AppText
-            maxFontSizeMultiplier={1.4}
-            style={styles.sectionHeader}
-            tone="tertiary"
-            variant="caption">
-            {t('today.daily-cards.starter-section-title')}
-          </AppText>
-          <View style={styles.listGroup}>
+          <SectionHeader
+            title={t('today.daily-cards.starter-section-title')}
+            titleStyle={styles.sectionHeader}
+          />
+          <ListGroup>
             {starterCards.map((card) => {
               const copy = todayDailyCardCopy[card.variant];
 
               return (
                 <ListRow
+                  accessory="chevron"
                   key={card.variant}
-                  leading={<AppIcon name={dailyCardIcon(card.variant)} size={22} />}
+                  leading={<AppIcon color={tokens.color.text.secondary} name={dailyCardIcon(card.variant)} size={22} />}
                   title={t(copy.titleKey)}
-                  trailing={<AppIcon color="#72756A" name="chevronRight" size={20} />}
                   titleNumberOfLines={2}
                 />
               );
             })}
-          </View>
+          </ListGroup>
           <Card style={styles.infoBanner} variant="mutedTemplate">
             <Stack align="center" direction="horizontal" gap="sm">
-              <AppIcon color="#3C5C7A" name="book" size={18} />
+              <AppIcon color={tokens.color.status.info} name="book" size={18} />
               <AppText
                 maxFontSizeMultiplier={1.5}
                 style={styles.infoText}
@@ -406,7 +407,7 @@ const todayHeroCopy = {
   },
   first_day: {
     bodyKey: 'today.hero.first-day.body',
-    eyebrowKey: 'today.hero.eyebrow',
+    eyebrowKey: 'today.hero.first-day.eyebrow',
     primaryKey: 'today.hero.first-day.primary',
     titleKey: 'today.hero.first-day.title',
   },
@@ -587,23 +588,19 @@ const styles = StyleSheet.create({
   cardTitle: {
     flexShrink: 1,
   },
+  eyebrow: {
+    textTransform: 'uppercase',
+  },
   infoBanner: {
-    backgroundColor: '#E2E8EF',
+    backgroundColor: tokens.color.status.infoTint,
     borderColor: 'transparent',
     marginBottom: 72,
     paddingHorizontal: 12,
-    paddingRight: 84,
     paddingVertical: 10,
   },
   infoText: {
-    color: '#3C5C7A',
+    color: tokens.color.status.info,
     flex: 1,
-  },
-  listGroup: {
-    borderColor: '#E2DDD2',
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
   },
   sectionHeader: {
     textTransform: 'uppercase',

@@ -317,6 +317,7 @@
       "potty-time-tertiary": "Later",
       "eyebrow": "Today",
       "first-day": {
+        "eyebrow": "Start",
         "title": "Log your first event — it takes about five seconds.",
         "body": "Start with a first potty, meal, or nap.",
         "primary": "Start"
@@ -516,6 +517,7 @@
   "quick-log": {
     "sheet": {
       "title": "What happened?",
+      "dismiss": "Dismiss Quick Log",
       "edit-trackers": "Edit trackers",
       "edit-screen-title": "Your quick trackers",
       "edit-helper": "Up to 5 trackers. Change them from More.",
@@ -582,7 +584,8 @@
       "undo": "Undo",
       "undo-confirmed": "Undone",
       "add-details": "Add details",
-      "a11y": "Logged: {trackerName}. Available action: undo."
+      "a11y": "Logged: {trackerName}. Available action: undo.",
+      "a11y-with-details": "Logged: {trackerName}. Available actions: undo and add details."
     },
     "details": {
       "title": "Add details",
@@ -660,6 +663,7 @@
     "close": "Close",
     "section-today": "Today · {weekday}",
     "section-yesterday": "Yesterday · {weekday}",
+    "section-date": "{date} · {weekday}",
     "filter-chips": ["All", "Potty", "Food", "Sleep", "Zoomies", "Training", "Health"],
     "range-default": "Today",
     "range-options": ["Today", "3 days", "Week", "Custom"],
@@ -692,6 +696,7 @@
       "secondary": "Cancel"
     },
     "delete-snackbar": "Entry deleted.",
+    "more-actions": "More actions",
     "swipe-actions": ["Edit", "Delete"],
     "overflow-actions": ["Edit", "Delete"],
     "pending-overflow-actions": ["Cancel sending", "Delete"]
@@ -1037,6 +1042,16 @@
     "footer-hint": "This is a record of entries, not medical advice.",
     "segments": ["All", "Vaccinations", "Treatments", "Visits"],
     "filter-chips": ["Templates", "Confirmed", "Done"],
+    "rows": {
+      "current-section": "May 2026",
+      "previous-section": "April 2026",
+      "dhpp-title": "DHPP vaccine",
+      "dhpp-meta": "Template · 12 weeks",
+      "deworming-title": "Parasite treatment",
+      "deworming-meta": "Confirmed · Done May 12 · No clinic listed",
+      "vet-visit-title": "Vet visit",
+      "vet-visit-meta": "Done · April 28 · Added by you"
+    },
     "error-card": "Couldn't load entries. Try refreshing.",
     "refresh": "Refresh",
     "pills": {
@@ -1366,18 +1381,34 @@
       "data-account": "Data and account",
       "help": "Help",
       "about": "About",
-      "puppyplan-plus": "PuppyPlan Plus"
+      "puppyplan-plus": "PuppyPlan Plus",
+      "deferred": "Deferred"
+    },
+    "puppy-summary": {
+      "age-weeks": "{count} weeks",
+      "no-age": "Age not set"
     },
     "puppy-profile": {
       "screen-title": "Puppy profile",
       "save": "Save",
       "change-photo": "Change photo",
+      "sections": {
+        "about": "About",
+        "optional": "Optional"
+      },
       "field-name": "Name",
       "field-birth": "Date of birth / approx.",
+      "field-birth-default": "Date of birth",
+      "dob-subtitle-weeks": "≈ {count} weeks",
       "field-breed": "Breed / mix / unknown",
       "field-gender": "Sex",
       "field-weight": "Weight (optional)",
+      "field-microchip": "Microchip",
       "field-note": "Note",
+      "note-subtitle": "Allergies, quirks, favourite toy…",
+      "add-value": "Add",
+      "age-weeks-value": "{count} weeks",
+      "missing-value": "Not set",
       "hint": "This information is used only inside the app and in shared links you create.",
       "photo-permission-denied": "Photo access is off. You can use one of the built-in avatars",
       "avatar-actions": [
@@ -1387,8 +1418,17 @@
       ]
     },
     "quick-trackers": {
+      "screen-title": "Quick trackers",
       "screen-title-template": "Quick trackers ({n} of 5 selected)",
       "hint": "Pick up to 5 trackers for Today and Quick Log.",
+      "selected-count": "{count} of {max} selected",
+      "more-options": "More options",
+      "toggle-on": "On",
+      "toggle-off": "Off",
+      "toggle-a11y": "{label} tracker",
+      "reorder": "Reorder",
+      "move-up": "Move up",
+      "move-down": "Move down",
       "max-reached-hint": "Turn off one of the selected first",
       "min-required-hint": "Keep at least one tracker selected",
       "items": ["Feeding", "Potty", "Sleep", "Walk", "Weight", "Play", "Biting"]

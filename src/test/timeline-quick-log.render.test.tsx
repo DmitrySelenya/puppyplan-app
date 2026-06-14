@@ -127,7 +127,7 @@ describe('Timeline Quick Log state integration', () => {
     expect(screen.queryByText(i18n.t('timeline.empty-filter'))).toBeNull();
   });
 
-  it('renders pending rows with non-swipe Undo/Delete actions', async () => {
+  it('renders pending rows with overflow-only Undo/Delete actions', async () => {
     const actions = {
       onDelete: jest.fn(),
       onRetry: jest.fn(),
@@ -159,9 +159,23 @@ describe('Timeline Quick Log state integration', () => {
     });
     expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
     expect(screen.getByText(i18n.t('timeline.filter-chips.0'))).toBeTruthy();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.snackbar.undo'),
+    })).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.failed.tertiary'),
+    })).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('timeline.more-actions'),
+    }));
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.snackbar.undo'),
+    }));
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('timeline.more-actions'),
     }));
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.failed.tertiary'),
@@ -237,7 +251,7 @@ describe('Timeline Quick Log state integration', () => {
     });
   });
 
-  it('renders synced rows with a non-color-only status and no local-only actions', async () => {
+  it('renders synced rows without non-synced status pills or local-only actions', async () => {
     mockListEvents.mockResolvedValue([createRow()]);
     const actions = {
       onDelete: jest.fn(),
@@ -261,7 +275,7 @@ describe('Timeline Quick Log state integration', () => {
     await waitFor(() => {
       expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
     });
-    expect(screen.getByText(i18n.t('timeline.pills.synced'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('timeline.pills.synced'))).toBeNull();
     expect(screen.queryByText('OK')).toBeNull();
     expect(JSON.stringify(toJSON())).not.toContain('"OK"');
     expect(screen.queryByRole('button', {
@@ -323,6 +337,53 @@ describe('Timeline Quick Log state integration', () => {
     expect(screen.queryByRole('button', {
       name: i18n.t('quick-log.failed.tertiary'),
     })).toBeNull();
+  });
+
+  it('groups events under per-day section captions with their own grouped card', async () => {
+    const todayWeekday = new Intl.DateTimeFormat('en', {
+      timeZone: 'UTC',
+      weekday: 'long',
+    }).format(new Date(Date.UTC(2026, 4, 27)));
+    const yesterdayWeekday = new Intl.DateTimeFormat('en', {
+      timeZone: 'UTC',
+      weekday: 'long',
+    }).format(new Date(Date.UTC(2026, 4, 26)));
+    mockListEvents.mockResolvedValue([
+      createRow({
+        client_event_id: 'evt_today',
+        event_type: 'feeding',
+        occurred_at: '2026-05-27T08:00:00.000Z',
+      }),
+      createRow({
+        client_event_id: 'evt_yesterday',
+        event_type: 'potty',
+        id: '00000000-0000-4000-8000-000000001699',
+        occurred_at: '2026-05-26T18:00:00.000Z',
+        payload: { quick_action: 'pee_outside' },
+      }),
+    ]);
+
+    renderWithQuery(
+      <TimelineScreen
+        careContext={careContext}
+        onClose={onClose}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(i18n.t('timeline.section-today', { weekday: todayWeekday })),
+      ).toBeTruthy();
+    });
+    expect(
+      screen.getByText(i18n.t('timeline.section-yesterday', { weekday: yesterdayWeekday })),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('timeline-day-group-2026-05-27', { includeHiddenElements: true }),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('timeline-day-group-2026-05-26', { includeHiddenElements: true }),
+    ).toBeTruthy();
   });
 
   it('fetches durable timeline rows when Timeline opens with an empty cache', async () => {

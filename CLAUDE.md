@@ -12,6 +12,7 @@ Primary project rules live in `AGENTS.md`. This file is intentionally short and 
 - Start data-shape changes in `src/contracts/`; update migrations, generated DB types, RLS tests, docs, and ADRs as needed.
 - Every user-facing string uses typed i18n keys.
 - Feature code uses `src/design` primitives/wrappers, not raw `Pressable`, colors, spacing, haptics, or direct business-error alerts.
+- For any UI work, follow `docs/agents/design-fidelity-pipeline.md`: lock the design (artboard IDs + spec card) before code, build primitives-first, add structural anatomy tests, and compare each screen to the atlas before Done — never as a later recovery pass.
 - Do not log or document raw puppy names, notes, emails, provider names, photos, tokens, or other private user data.
 - Do not edit generated `ios/` or `android/` files directly.
 

@@ -40,7 +40,7 @@ export function FAB({ accessibilityHint, accessibilityLabel, onPress, style }: F
       <AppIcon
         color={tokens.color.surface.raised}
         name="plus"
-        size={32}
+        size={28}
         testID="fab-symbol"
       />
     </Touchable>

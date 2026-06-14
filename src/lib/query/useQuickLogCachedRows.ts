@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
-import type { QueryKey } from '@tanstack/react-query';
+import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { QuickLogSurfaceCareContext } from './quick-log-event-view';
@@ -21,6 +21,13 @@ export function useQuickLogCachedRows(
 
     return queryKeys.events.timelineRoot(householdId, puppyId);
   }, [householdId, puppyId]);
+  const snapshotReader = useMemo(() => {
+    if (queryKey === null) {
+      return null;
+    }
+
+    return createCachedRowsSnapshotReader(queryClient, queryKey);
+  }, [queryClient, queryKey]);
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
@@ -38,18 +45,129 @@ export function useQuickLogCachedRows(
   );
 
   const getSnapshot = useCallback(() => {
-    if (queryKey === null) {
+    if (snapshotReader === null) {
       return emptyRows;
     }
 
-    return queryClient.getQueryData<readonly QuickLogCachedEventRow[]>(queryKey) ?? emptyRows;
-  }, [queryClient, queryKey]);
+    return snapshotReader();
+  }, [snapshotReader]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getEmptyRowsSnapshot);
 }
 
 function getEmptyRowsSnapshot(): readonly QuickLogCachedEventRow[] {
   return emptyRows;
+}
+
+function createCachedRowsSnapshotReader(
+  queryClient: QueryClient,
+  timelineRootKey: QueryKey,
+): () => readonly QuickLogCachedEventRow[] {
+  let previousSignature = '';
+  let previousRows: readonly QuickLogCachedEventRow[] = emptyRows;
+
+  return () => {
+    const rows = getCachedRowsForTimelineRoot(queryClient, timelineRootKey);
+
+    if (rows.length === 0) {
+      previousSignature = '';
+      previousRows = emptyRows;
+
+      return emptyRows;
+    }
+
+    const signature = createRowsSignature(rows);
+
+    if (signature === previousSignature) {
+      return previousRows;
+    }
+
+    previousSignature = signature;
+    previousRows = rows;
+
+    return rows;
+  };
+}
+
+function getCachedRowsForTimelineRoot(
+  queryClient: QueryClient,
+  timelineRootKey: QueryKey,
+): readonly QuickLogCachedEventRow[] {
+  const matchingQueries = queryClient.getQueriesData<readonly QuickLogCachedEventRow[]>({
+    exact: false,
+    queryKey: timelineRootKey,
+  });
+  const rowsByClientEventId = new Map<string, QuickLogCachedEventRow>();
+
+  for (const [, rows] of matchingQueries) {
+    for (const row of rows ?? emptyRows) {
+      const currentRow = rowsByClientEventId.get(row.client_event_id);
+
+      if (
+        currentRow === undefined
+        || isPreferredCachedRowVersion(row, currentRow)
+      ) {
+        rowsByClientEventId.set(row.client_event_id, row);
+      }
+    }
+  }
+
+  return [...rowsByClientEventId.values()].sort(compareRowsByNewestFirst);
+}
+
+function isPreferredCachedRowVersion(
+  candidate: QuickLogCachedEventRow,
+  current: QuickLogCachedEventRow,
+): boolean {
+  const candidateUpdatedAt = parseTimestampOrMin(candidate.updated_at);
+  const currentUpdatedAt = parseTimestampOrMin(current.updated_at);
+
+  if (candidateUpdatedAt !== currentUpdatedAt) {
+    return candidateUpdatedAt > currentUpdatedAt;
+  }
+
+  const candidateCreatedAt = parseTimestampOrMin(candidate.created_at);
+  const currentCreatedAt = parseTimestampOrMin(current.created_at);
+
+  if (candidateCreatedAt !== currentCreatedAt) {
+    return candidateCreatedAt > currentCreatedAt;
+  }
+
+  return candidate.id.localeCompare(current.id) > 0;
+}
+
+function compareRowsByNewestFirst(
+  left: QuickLogCachedEventRow,
+  right: QuickLogCachedEventRow,
+): number {
+  const leftOccurredAt = parseTimestampOrMin(left.occurred_at);
+  const rightOccurredAt = parseTimestampOrMin(right.occurred_at);
+
+  if (leftOccurredAt !== rightOccurredAt) {
+    return rightOccurredAt - leftOccurredAt;
+  }
+
+  return right.id.localeCompare(left.id);
+}
+
+function parseTimestampOrMin(timestamp: string): number {
+  const parsed = Date.parse(timestamp);
+
+  return Number.isFinite(parsed) ? parsed : Number.NEGATIVE_INFINITY;
+}
+
+function createRowsSignature(rows: readonly QuickLogCachedEventRow[]): string {
+  return rows.map((row) => [
+    row.client_event_id,
+    row.id,
+    row.updated_at,
+    row.created_at,
+    row.deleted_at ?? '',
+    row.localSync?.state ?? '',
+    row.localSync?.category ?? '',
+    row.localSync?.retryCount ?? '',
+    row.occurred_at,
+  ].join('|')).join('\n');
 }
 
 function isQueryCacheEventForKey(event: unknown, queryKey: QueryKey): boolean {

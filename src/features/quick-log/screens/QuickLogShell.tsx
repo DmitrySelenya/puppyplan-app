@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import type { ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import {
   defaultQuickLogTrackerIds,
@@ -10,12 +11,19 @@ import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
 import { Screen } from '@/design/primitives/Screen';
+import { SheetHeader } from '@/design/primitives/SheetHeader';
 import { SheetSurface } from '@/design/primitives/SheetSurface';
 import { Stack } from '@/design/primitives/Stack';
+import { Touchable } from '@/design/primitives/Touchable';
 import { TrackerTile } from '@/design/primitives/TrackerTile';
+import { tokens } from '@/design/tokens';
 import { useAppTranslation, type AppTranslate } from '@/lib/i18n';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
-import { createQuickLogEventView } from '@/lib/query/quick-log-event-view';
+import {
+  createQuickLogEventView,
+  getQuickLogTrackerIdForEventRow,
+  type QuickLogEventEditRequest,
+} from '@/lib/query/quick-log-event-view';
 
 import {
   QuickLogLocalEvents,
@@ -41,7 +49,9 @@ export type QuickLogShellProps = Readonly<{
   mutationEvents?: readonly QuickLogMutationEvent[];
   localEvents?: readonly QuickLogLocalEventView[];
   now?: () => Date;
+  openDetails?: (request: QuickLogEventEditRequest) => void;
   recentEvent?: QuickLogRecentEvent | null;
+  recentEvents?: readonly QuickLogRecentEvent[];
   snackbar?: QuickLogSnackbarPort;
 }>;
 
@@ -74,6 +84,28 @@ export function createQuickLogLocalEventViews(
       trackerName: event.title,
     }];
   });
+}
+
+export function createQuickLogRecentEvents(
+  rows: readonly QuickLogCachedEventRow[],
+): readonly QuickLogRecentEvent[] {
+  return rows.flatMap((row) => {
+    if (row.deleted_at !== null) {
+      return [];
+    }
+
+    const trackerId = getQuickLogTrackerIdForEventRow(row);
+    const occurredAtMs = Date.parse(row.occurred_at);
+
+    if (trackerId === null || !Number.isFinite(occurredAtMs)) {
+      return [];
+    }
+
+    return [{
+      occurredAtMs,
+      trackerId,
+    }];
+  }).sort((left, right) => right.occurredAtMs - left.occurredAtMs);
 }
 
 export function QuickLogShell(props: QuickLogShellProps) {
@@ -112,7 +144,9 @@ function QuickLogShellContent({
   mutation,
   mutationEvents = [],
   now,
+  openDetails,
   recentEvent = null,
+  recentEvents = [],
 }: QuickLogShellProps & {
   feedback: QuickLogFeedbackPort;
 }) {
@@ -129,7 +163,9 @@ function QuickLogShellContent({
     mutation: mutation ?? unavailableMutation,
     mutationEvents,
     now,
+    openDetails,
     recentEvent,
+    recentEvents,
   });
   const selectedTrackerIds = readyCareContext?.selectedTrackerIds?.length
     ? readyCareContext.selectedTrackerIds
@@ -137,13 +173,15 @@ function QuickLogShellContent({
 
   if (isViewOnly) {
     return (
-      <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
+      <QuickLogSheetFrame
+        dismissAccessibilityLabel={t('quick-log.sheet.dismiss')}
+        onDismiss={closeSheet}>
         <SheetSurface accessibilityLabel={t('quick-log.sheet.permission-denied.title')}>
-          <AppText
-            maxFontSizeMultiplier={2}
-            variant="title">
-            {t('quick-log.sheet.permission-denied.title')}
-          </AppText>
+          <SheetHeader
+            closeAccessibilityLabel={t('quick-log.sheet.dismiss')}
+            onClose={closeSheet}
+            title={t('quick-log.sheet.permission-denied.title')}
+          />
           <AppText tone="secondary">{t('quick-log.sheet.permission-denied.body')}</AppText>
           <Button
             label={t('quick-log.sheet.permission-denied.close')}
@@ -151,19 +189,21 @@ function QuickLogShellContent({
             variant="secondary"
           />
         </SheetSurface>
-      </Screen>
+      </QuickLogSheetFrame>
     );
   }
 
   if (controller.status === 'unavailable') {
     return (
-      <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
+      <QuickLogSheetFrame
+        dismissAccessibilityLabel={t('quick-log.sheet.dismiss')}
+        onDismiss={closeSheet}>
         <SheetSurface accessibilityLabel={t('quick-log.sheet.unavailable.title')}>
-          <AppText
-            maxFontSizeMultiplier={2}
-            variant="title">
-            {t('quick-log.sheet.unavailable.title')}
-          </AppText>
+          <SheetHeader
+            closeAccessibilityLabel={t('quick-log.sheet.dismiss')}
+            onClose={closeSheet}
+            title={t('quick-log.sheet.unavailable.title')}
+          />
           <AppText tone="secondary">{t('quick-log.sheet.unavailable.body')}</AppText>
           <Button
             label={t('quick-log.sheet.unavailable.close')}
@@ -171,60 +211,109 @@ function QuickLogShellContent({
             variant="secondary"
           />
         </SheetSurface>
-      </Screen>
+      </QuickLogSheetFrame>
     );
   }
 
   return (
-    <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
-      <SheetSurface accessibilityLabel={t('quick-log.sheet.title')}>
-        <Stack
-          align="center"
-          direction="horizontal"
-          gap="sm"
-          justify="space-between">
-          <AppText
-            maxFontSizeMultiplier={2}
-            style={styles.title}
-            variant="title2">
-            {t('quick-log.sheet.title')}
-          </AppText>
-          <Button
-            label={t('quick-log.sheet.edit-trackers')}
-            labelMaxFontSizeMultiplier={2}
-            labelVariant="label"
-            onPress={editTrackers}
-            style={styles.editTrackersButton}
-            variant="tertiary"
-          />
-        </Stack>
-        <Stack direction="horizontal" gap="sm" wrap>
-          {selectedTrackerIds.map((trackerId) => (
-            <TrackerTile
-              accessibilityLabel={t(getQuickLogTrackerLabelKey(trackerId))}
-              icon={<AppIcon name={quickLogTrackerIcon(trackerId)} size={24} />}
-              key={trackerId}
-              label={t(getQuickLogTrackerLabelKey(trackerId))}
-              onPress={() => {
-                controller.logTracker(trackerId);
-              }}
-              testID="quick-log-tracker-tile"
-            />
-          ))}
-        </Stack>
+    <QuickLogSheetFrame
+      dismissAccessibilityLabel={t('quick-log.sheet.dismiss')}
+      onDismiss={
+        controller.duplicateWarning
+          ? controller.cancelDuplicate
+          : closeSheet
+      }>
+      <SheetSurface
+        accessibilityLabel={
+          controller.duplicateWarning
+            ? t('quick-log.duplicate-warning.title')
+            : t('quick-log.sheet.title')
+        }>
         {controller.duplicateWarning ? (
           <DuplicateWarning
             onCancel={controller.cancelDuplicate}
             onConfirm={controller.confirmDuplicate}
           />
-        ) : null}
-        <QuickLogLocalEvents
-          events={localEvents}
-          onDelete={controller.deleteLocal}
-          onRetry={controller.retry}
-          onUndo={controller.undoLocal}
-        />
+        ) : (
+          <>
+            <Stack
+              align="center"
+              direction="horizontal"
+              gap="sm"
+              justify="space-between">
+              <SheetHeader
+                style={styles.title}
+                title={t('quick-log.sheet.title')}
+              />
+              <Button
+                label={t('quick-log.sheet.edit-trackers')}
+                labelMaxFontSizeMultiplier={2}
+                labelVariant="label"
+                onPress={editTrackers}
+                style={styles.editTrackersButton}
+                variant="tertiary"
+              />
+            </Stack>
+            <Stack direction="horizontal" gap="sm" wrap>
+              {selectedTrackerIds.map((trackerId) => (
+                <TrackerTile
+                  accessibilityLabel={t(getQuickLogTrackerLabelKey(trackerId))}
+                  icon={(
+                    <AppIcon
+                      name={quickLogTrackerIcon(trackerId)}
+                      size={24}
+                      testID={`quick-log-tracker-icon-${quickLogTrackerIcon(trackerId)}`}
+                    />
+                  )}
+                  key={trackerId}
+                  label={t(getQuickLogTrackerLabelKey(trackerId))}
+                  onPress={() => {
+                    controller.logTracker(trackerId);
+                  }}
+                  testID="quick-log-tracker-tile"
+                />
+              ))}
+            </Stack>
+            <QuickLogLocalEvents
+              events={localEvents}
+              onDelete={controller.deleteLocal}
+              onRetry={controller.retry}
+              onUndo={controller.undoLocal}
+            />
+          </>
+        )}
       </SheetSurface>
+    </QuickLogSheetFrame>
+  );
+}
+
+function QuickLogSheetFrame({
+  children,
+  dismissAccessibilityLabel,
+  onDismiss,
+}: Readonly<{
+  children: ReactNode;
+  dismissAccessibilityLabel: string;
+  onDismiss: () => void;
+}>) {
+  return (
+    <Screen
+      contentStyle={styles.sheetContent}
+      edges={['bottom']}
+      style={styles.transparentScreen}>
+      <Touchable
+        accessibilityLabel={dismissAccessibilityLabel}
+        accessibilityRole="button"
+        minTarget="none"
+        onPress={onDismiss}
+        style={styles.scrim}
+        testID="quick-log-sheet-scrim"
+      />
+      <View
+        style={styles.sheetAnchor}
+        testID="quick-log-sheet-anchor">
+        {children}
+      </View>
     </Screen>
   );
 }
@@ -279,13 +368,32 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingHorizontal: 0,
   },
+  transparentScreen: {
+    backgroundColor: 'transparent',
+  },
+  sheetAnchor: {
+    width: '100%',
+    zIndex: 1,
+  },
+  scrim: {
+    backgroundColor: tokens.color.surface.scrim,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 0,
+  },
   title: {
+    flex: 1,
     flexShrink: 1,
     minWidth: 0,
   },
 });
 
-function quickLogTrackerIcon(trackerId: QuickLogTrackerId): 'bowl' | 'calendar' | 'moon' | 'poop' | 'spark' | 'water' {
+function quickLogTrackerIcon(
+  trackerId: QuickLogTrackerId,
+): 'bowl' | 'calendar' | 'moon' | 'poop' | 'pottyInside' | 'spark' | 'water' {
   if (trackerId === 'feeding_meal') {
     return 'bowl';
   }
@@ -304,6 +412,10 @@ function quickLogTrackerIcon(trackerId: QuickLogTrackerId): 'bowl' | 'calendar' 
 
   if (trackerId === 'potty_poop') {
     return 'poop';
+  }
+
+  if (trackerId === 'potty_pee_inside') {
+    return 'pottyInside';
   }
 
   return 'water';

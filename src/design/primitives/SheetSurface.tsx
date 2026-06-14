@@ -46,11 +46,11 @@ const styles = StyleSheet.create({
     width: tokens.component.bottomSheet.dragHandle.width,
   },
   root: {
-    backgroundColor: tokens.color.surface.overlay,
+    backgroundColor: tokens.color.surface.raised,
     borderTopLeftRadius: tokens.radius.lg,
     borderTopRightRadius: tokens.radius.lg,
     gap: tokens.space[4],
-    minHeight: 460,
+    minHeight: tokens.component.bottomSheet.minHeight,
     padding: tokens.layout.cardPadding,
     ...elevationStyle(2),
   },

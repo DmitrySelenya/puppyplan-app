@@ -541,6 +541,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
   },
+  largeTitle: {
+    fontWeight: '700',
+  },
   sectionTitle: {
     flexShrink: 1,
   },
@@ -557,7 +560,7 @@ function TodayTitle({ todayDate }: Readonly<{ todayDate?: string }>) {
 
   return (
     <Stack gap="xs">
-      <AppText variant="title1">{t('tabs.today')}</AppText>
+      <AppText style={styles.largeTitle} variant="display">{t('tabs.today')}</AppText>
       <AppText tone="tertiary" variant="callout">
         {formatTodayDate(todayDate, locale)}
       </AppText>

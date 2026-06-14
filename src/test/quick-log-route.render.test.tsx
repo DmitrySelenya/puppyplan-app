@@ -4,9 +4,10 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { QuickLogFeedbackProvider } from '@/features/quick-log/QuickLogFeedbackProvider';
 import type { QuickLogMutationPort } from '@/features/quick-log/useQuickLogSheetController';
 import { i18n } from '@/lib/i18n';
+import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { AppProviders } from '@/lib/providers/AppProviders';
 
-import QuickLogRoute from '../../app/(modals)/quick-log';
+import QuickLogRoute from '../../app/(sheets)/quick-log';
 
 const mockRouterBack = jest.fn();
 const mockRouterCanGoBack = jest.fn();
@@ -22,6 +23,29 @@ function createMutationPort(): jest.Mocked<QuickLogMutationPort> {
     mutate: jest.fn(),
     retry: jest.fn(),
     undo: jest.fn(),
+  };
+}
+
+function createCachedRow(
+  overrides: Partial<QuickLogCachedEventRow> = {},
+): QuickLogCachedEventRow {
+  return {
+    id: '00000000-0000-4000-8000-000000003101',
+    household_id: '00000000-0000-4000-8000-000000003001',
+    puppy_id: '00000000-0000-4000-8000-000000003002',
+    created_by: '00000000-0000-4000-8000-000000003003',
+    client_event_id: 'evt_00000000-0000-4000-8000-000000003104',
+    event_type: 'feeding',
+    occurred_at: new Date(Date.now() - 30_000).toISOString(),
+    payload_version: 1,
+    payload: {
+      amount: 'meal',
+    },
+    version: 1,
+    deleted_at: null,
+    created_at: new Date(Date.now() - 30_000).toISOString(),
+    updated_at: new Date(Date.now() - 30_000).toISOString(),
+    ...overrides,
   };
 }
 
@@ -165,6 +189,45 @@ describe('QuickLogRoute', () => {
       householdId: '00000000-0000-4000-8000-000000003001',
       puppyId: '00000000-0000-4000-8000-000000003002',
     }));
+  });
+
+  it('derives duplicate warning context from cached rows before mutating', () => {
+    const mutation = createMutationPort();
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: '00000000-0000-4000-8000-000000003001',
+        householdRole: 'owner',
+        puppyId: '00000000-0000-4000-8000-000000003002',
+        selectedTrackerIds: ['feeding_meal', 'sleep_nap'],
+        todayDate: '2026-06-09',
+        userId: '00000000-0000-4000-8000-000000003003',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+    mockUseQuickLogCachedRows.mockReturnValue([createCachedRow()]);
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.feeding'),
+    }));
+
+    expect(screen.getByText(i18n.t('quick-log.duplicate-warning.title'))).toBeTruthy();
+    expect(mutation.mutate).not.toHaveBeenCalled();
+    expect(mockRouterBack).not.toHaveBeenCalled();
   });
 
   it('closes the active Quick Log route through Today fallback after logging when no previous route exists', () => {

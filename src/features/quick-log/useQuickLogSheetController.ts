@@ -14,6 +14,7 @@ import type {
   QuickLogSourceSurface,
 } from '@/contracts/analytics';
 import {
+  getQuickLogDetailTrackerIdForEventType,
   quickLogTrackerDefinitions,
   type QuickLogEventType,
   type QuickLogTrackerId,
@@ -22,10 +23,14 @@ import { noopAnalyticsClient, type QuickLogAnalyticsClient } from '@/lib/analyti
 import type { I18nKey, I18nTOptions } from '@/lib/i18n';
 import {
   getQuickLogTrackerLabelKey,
+  type QuickLogEventEditRequest,
   type QuickLogEventUndoRequest,
   type QuickLogSurfaceCareContext,
 } from '@/lib/query/quick-log-event-view';
-import type { QuickLogMutationVariables } from '@/lib/query/quick-log';
+import {
+  createQuickLogClientEventId,
+  type QuickLogMutationVariables,
+} from '@/lib/query/quick-log';
 
 export type QuickLogCareContext = QuickLogSurfaceCareContext;
 
@@ -135,12 +140,15 @@ export type UseQuickLogSheetControllerInput = Readonly<{
   analytics?: QuickLogAnalyticsClient;
   careContext: QuickLogCareContext | null;
   closeSheet: () => void;
+  createClientEventId?: () => string;
   createRequestId?: () => string;
   feedback: QuickLogFeedbackPort;
   mutation: QuickLogMutationPort;
   mutationEvents?: readonly QuickLogMutationEvent[];
   now?: () => Date;
+  openDetails?: (request: QuickLogEventEditRequest) => void;
   recentEvent?: QuickLogRecentEvent | null;
+  recentEvents?: readonly QuickLogRecentEvent[];
 }>;
 
 let quickLogRequestCounter = 0;
@@ -149,12 +157,15 @@ export function useQuickLogSheetController({
   analytics = noopAnalyticsClient,
   careContext,
   closeSheet,
+  createClientEventId = createQuickLogClientEventId,
   createRequestId = createDefaultRequestId,
   feedback,
   mutation,
   mutationEvents = [],
   now = () => new Date(),
+  openDetails,
   recentEvent = null,
+  recentEvents = [],
 }: UseQuickLogSheetControllerInput): QuickLogSheetController {
   const duplicateWarningRef = useRef<QuickLogDuplicateWarning | null>(null);
   const lastRequestIdRef = useRef<string | null>(null);
@@ -185,14 +196,30 @@ export function useQuickLogSheetController({
     }
 
     const requestId = createRequestId();
+    const clientEventId = createClientEventId();
     const occurredAt = now().toISOString();
+    const eventType = quickLogTrackerDefinitions[trackerId].event_type;
+    const detailTrackerId = getQuickLogDetailTrackerIdForEventType(eventType);
+    const detailsRequest = detailTrackerId === null
+      ? null
+      : {
+          clientEventId,
+          eventType,
+          householdId: careContext.householdId,
+          puppyId: careContext.puppyId,
+          todayDate: careContext.todayDate,
+          trackerId: detailTrackerId,
+        } satisfies QuickLogEventEditRequest;
 
     lastRequestIdRef.current = requestId;
     feedback.snackbar.showSnackbar({
-      accessibilityLabelKey: 'quick-log.snackbar.a11y',
+      accessibilityLabelKey: detailsRequest === null || openDetails === undefined
+        ? 'quick-log.snackbar.a11y'
+        : 'quick-log.snackbar.a11y-with-details',
       accessibilityOptionKeys: {
         trackerName: getQuickLogTrackerLabelKey(trackerId),
       },
+      clientEventId,
       id: requestId,
       messageKey: 'quick-log.snackbar.saved-template',
       messageOptionKeys: {
@@ -201,13 +228,20 @@ export function useQuickLogSheetController({
       onPrimaryAction: () => {
         undoRequest(requestId);
       },
+      onSecondaryAction: detailsRequest === null || openDetails === undefined
+        ? undefined
+        : () => openDetails(detailsRequest),
       primaryActionKey: 'quick-log.snackbar.undo',
+      secondaryActionKey: detailsRequest === null || openDetails === undefined
+        ? undefined
+        : 'quick-log.snackbar.add-details',
       tone: 'success',
     });
     closeSheet();
     mutation.mutate({
       requestId,
       variables: {
+        clientEventId,
         householdId: careContext.householdId,
         occurredAt,
         puppyId: careContext.puppyId,
@@ -215,7 +249,17 @@ export function useQuickLogSheetController({
         trackerId,
       },
     });
-  }, [careContext, closeSheet, createRequestId, feedback, mutation, now, undoRequest]);
+  }, [
+    careContext,
+    closeSheet,
+    createClientEventId,
+    createRequestId,
+    feedback,
+    mutation,
+    now,
+    openDetails,
+    undoRequest,
+  ]);
 
   const logTracker = useCallback((trackerId: QuickLogTrackerId): void => {
     if (careContext === null) {
@@ -224,15 +268,15 @@ export function useQuickLogSheetController({
 
     const currentNowMs = now().getTime();
 
-    if (
-      recentEvent !== null
-      && shouldShowQuickLogDuplicateCareWarning({
-        nextOccurredAtMs: currentNowMs,
-        nextTrackerId: trackerId,
-        previousOccurredAtMs: recentEvent.occurredAtMs,
-        previousTrackerId: recentEvent.trackerId,
-      })
-    ) {
+    const duplicateSource = findDuplicateWarningSource([
+      ...recentEvents,
+      ...(recentEvent === null ? [] : [recentEvent]),
+    ], {
+      nextOccurredAtMs: currentNowMs,
+      nextTrackerId: trackerId,
+    });
+
+    if (duplicateSource !== null) {
       duplicateWarningRef.current = {
         trackerId,
       };
@@ -242,7 +286,7 @@ export function useQuickLogSheetController({
         properties: {
           event_type: quickLogTrackerDefinitions[trackerId].event_type,
           time_since_previous_bucket: bucketDuplicateWarningMs(
-            currentNowMs - recentEvent.occurredAtMs,
+            currentNowMs - duplicateSource.occurredAtMs,
           ),
         },
       });
@@ -251,7 +295,7 @@ export function useQuickLogSheetController({
     }
 
     commitTracker(trackerId);
-  }, [analytics, careContext, commitTracker, now, recentEvent, rerender]);
+  }, [analytics, careContext, commitTracker, now, recentEvent, recentEvents, rerender]);
 
   const confirmDuplicate = useCallback(() => {
     const trackerId = pendingDuplicateRef.current;
@@ -335,6 +379,33 @@ export function useQuickLogSheetController({
 function bucketDuplicateWarningMs(elapsedMs: number): 'under_3s' | 'under_60s' {
   // under_3s is intentional: it preserves the accidental double-tap window in telemetry.
   return elapsedMs <= 3_000 ? 'under_3s' : 'under_60s';
+}
+
+function findDuplicateWarningSource(
+  recentEvents: readonly QuickLogRecentEvent[],
+  input: Readonly<{
+    nextOccurredAtMs: number;
+    nextTrackerId: QuickLogTrackerId;
+  }>,
+): QuickLogRecentEvent | null {
+  let match: QuickLogRecentEvent | null = null;
+
+  for (const event of recentEvents) {
+    if (!shouldShowQuickLogDuplicateCareWarning({
+      nextOccurredAtMs: input.nextOccurredAtMs,
+      nextTrackerId: input.nextTrackerId,
+      previousOccurredAtMs: event.occurredAtMs,
+      previousTrackerId: event.trackerId,
+    })) {
+      continue;
+    }
+
+    if (match === null || event.occurredAtMs > match.occurredAtMs) {
+      match = event;
+    }
+  }
+
+  return match;
 }
 
 export { getQuickLogTrackerLabelKey };

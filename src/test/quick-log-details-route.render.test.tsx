@@ -193,4 +193,51 @@ describe('QuickLogDetailsRoute', () => {
     expect(mutation.updateDetails).not.toHaveBeenCalled();
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
   });
+
+  it.each([
+    ['householdId', '00000000-0000-4000-8000-000000007912'],
+    ['puppyId', '00000000-0000-4000-8000-000000007913'],
+    ['todayDate', '2026-06-10'],
+  ] as const)('does not persist detail drafts when %s does not match active care context', (
+    field,
+    value,
+  ) => {
+    const mutation = {
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseLocalSearchParams.mockReturnValue({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007901',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007902',
+      puppyId: '00000000-0000-4000-8000-000000007903',
+      todayDate: '2026-06-09',
+      trackerId: 'feeding_meal',
+      [field]: value,
+    });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogDetailsRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.details.save'),
+    }));
+
+    expect(mutation.updateDetails).not.toHaveBeenCalled();
+    expect(mockRouterBack).toHaveBeenCalledTimes(1);
+  });
 });

@@ -128,6 +128,7 @@ export const tokens = {
       "active": "primary/700 + filled icon"
     },
     "bottomSheet": {
+      "minHeight": 460,
       "radiusTop": 16,
       "dragHandle": {
         "width": 36,

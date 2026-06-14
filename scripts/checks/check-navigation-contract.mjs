@@ -84,7 +84,7 @@ const routeFiles = [
   'app/(tabs)/today/index.tsx',
   'app/(tabs)/health/index.tsx',
   'app/(tabs)/more/index.tsx',
-  'app/(modals)/quick-log/index.tsx',
+  'app/(sheets)/quick-log/index.tsx',
   'app/invite/[token].tsx',
   'app/share/[token].tsx',
 ];
@@ -121,6 +121,7 @@ for (const plannedRoute of plannedRouteFiles) {
 
 const rootLayoutSource = readFileSync(repoPath('app/_layout.tsx'), 'utf8');
 const hasModalGroupLayout = existsSync(repoPath('app/(modals)/_layout.tsx').pathname);
+const hasSheetGroupLayout = existsSync(repoPath('app/(sheets)/_layout.tsx').pathname);
 const rootConfiguresQuickLogModal =
   rootLayoutSource.includes('name="(modals)/quick-log"') ||
   rootLayoutSource.includes("name='(modals)/quick-log'");
@@ -132,7 +133,7 @@ const rootRegistersOnboardingIndexRoute =
   rootLayoutSource.includes("name='onboarding/index'");
 
 assert.equal(
-  hasModalGroupLayout || rootConfiguresQuickLogModal,
+  hasSheetGroupLayout || hasModalGroupLayout || rootConfiguresQuickLogModal,
   true,
   'Quick Log modal presentation must target an actual modal route or modal group layout',
 );

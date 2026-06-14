@@ -6,12 +6,20 @@ import { AppText } from '@/design/primitives/AppText';
 import { AppIcon } from '@/design/primitives/AppIcon';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { IconButton } from '@/design/primitives/IconButton';
+import { ListGroup } from '@/design/primitives/ListGroup';
 import { Screen } from '@/design/primitives/Screen';
+import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
 import { Touchable } from '@/design/primitives/Touchable';
 import { tokens } from '@/design/tokens';
-import { useAppTranslation, type AppTranslate, type I18nKey } from '@/lib/i18n';
+import {
+  useAppTranslation,
+  type AppTranslate,
+  type I18nKey,
+  type SupportedLocale,
+} from '@/lib/i18n';
 import { type TimelineFilters } from '@/lib/query/keys';
 import {
   createQuickLogDeleteRequest,
@@ -113,18 +121,25 @@ export function TimelineScreen({
     );
   }
 
-  const eventViews = rows.flatMap((row) => {
-    const event = createQuickLogEventView(row, {
-      locale,
-      t,
-      todayDate: careContext.todayDate,
-    });
+  const dayBuckets = groupEventsByDay(
+    rows.flatMap((row) => {
+      const event = createQuickLogEventView(row, {
+        locale,
+        t,
+        todayDate: careContext.todayDate,
+      });
 
-    return event === null ? [] : [event];
-  });
+      return event === null
+        ? []
+        : [{ event, occurredDate: formatLocalCalendarDate(row.occurred_at) }];
+    }),
+    careContext.todayDate,
+    locale,
+    t,
+  );
 
   return (
-    <Screen contentStyle={styles.content}>
+    <Screen contentStyle={styles.content} modal>
       <TimelineHeader onClose={onClose} />
       <TimelineFilterChips
         options={filterOptions}
@@ -132,14 +147,27 @@ export function TimelineScreen({
         setSelectedFilter={setSelectedFilter}
         t={t}
       />
-      {eventViews.length > 0 ? (
-        <View style={styles.timelineList}>
-          {eventViews.map((event) => (
-            <TimelineQuickLogEventRow
-              actions={actions}
-              event={event}
-              key={event.clientEventId}
-            />
+      {dayBuckets.length > 0 ? (
+        <View>
+          {dayBuckets.map((bucket, index) => (
+            <Stack
+              gap="xs"
+              key={bucket.key}
+              style={index > 0 ? styles.dayGroupSpacing : undefined}>
+              <SectionHeader
+                title={bucket.caption}
+                titleStyle={styles.sectionCaption}
+              />
+              <ListGroup testID={`timeline-day-group-${bucket.key}`}>
+                {bucket.events.map((event) => (
+                  <TimelineQuickLogEventRow
+                    actions={actions}
+                    event={event}
+                    key={event.clientEventId}
+                  />
+                ))}
+              </ListGroup>
+            </Stack>
           ))}
         </View>
       ) : timelineRows.status === 'error' ? (
@@ -241,7 +269,18 @@ function TimelineQuickLogEventRow({
   const onEdit = actions.onEdit;
   const onRetry = actions.onRetry;
   const onUndo = actions.onUndo;
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [overflowOpen, setOverflowOpen] = useState(false);
   const editRequest = createQuickLogEditRequest(event);
+  const showOverflow = (
+    event.status === 'synced'
+    && ((onEdit !== undefined && editRequest !== null) || onDelete !== undefined)
+  ) || (
+    event.status === 'pending'
+    && (onUndo !== undefined || onDelete !== undefined)
+  );
+  const showCompactActions = event.status === 'failed' && (onRetry !== undefined || onDelete !== undefined);
+  const deleteRequest = createQuickLogDeleteRequest(event);
 
   return (
     <View style={styles.eventRow}>
@@ -258,8 +297,9 @@ function TimelineQuickLogEventRow({
       <View style={styles.eventIconColumn}>
         <AppIcon
           color={tokens.color.text.primary}
-          name={eventIcon(event.title)}
+          name={eventIcon(event.eventType)}
           size={22}
+          testID={`timeline-event-icon-${event.eventType}`}
         />
       </View>
       <Stack
@@ -276,37 +316,177 @@ function TimelineQuickLogEventRow({
             variant="bodyEmph">
             {event.title}
           </AppText>
-          <StatusPill
-            accessibilityLabel={event.statusLabel}
-            icon={
-              <AppText
-                accessibilityElementsHidden
-                allowFontScaling={false}
-                style={styles.statusGlyph}
-                variant="caption">
-                {statusIcon(event.status)}
-              </AppText>
-            }
-            label={event.statusLabel}
-            style={styles.statusPill}
-            tone={statusTone(event.status)}
-          />
+          {event.status === 'synced' ? null : (
+            <StatusPill
+              accessibilityLabel={event.statusLabel}
+              icon={
+                <AppText
+                  accessibilityElementsHidden
+                  allowFontScaling={false}
+                  style={styles.statusGlyph}
+                  variant="caption">
+                  {statusIcon(event.status)}
+                </AppText>
+              }
+              label={event.statusLabel}
+              style={styles.statusPill}
+              tone={statusTone(event.status)}
+            />
+          )}
+          {showOverflow ? (
+            <IconButton
+              accessibilityActions={[
+                ...(onEdit !== undefined && editRequest !== null
+                  ? [{
+                      label: t('timeline.overflow-actions.0'),
+                      name: 'edit',
+                    } as const]
+                  : []),
+                ...(onDelete !== undefined
+                  ? [{
+                      label: event.status === 'pending'
+                        ? t('quick-log.failed.tertiary')
+                        : t('timeline.overflow-actions.1'),
+                      name: 'delete',
+                    } as const]
+                  : []),
+                ...(event.status === 'pending' && onUndo !== undefined
+                  ? [{
+                      label: t('quick-log.snackbar.undo'),
+                      name: 'undo',
+                    } as const]
+                  : []),
+              ]}
+              accessibilityLabel={t('timeline.more-actions')}
+              icon={<AppIcon name="more" size={20} />}
+              onAccessibilityAction={(actionEvent) => {
+                const actionName = actionEvent.nativeEvent.actionName;
+
+                if (actionName === 'edit' && onEdit !== undefined && editRequest !== null) {
+                  onEdit(editRequest);
+                }
+
+                if (actionName === 'delete' && onDelete !== undefined) {
+                  if (event.status === 'pending') {
+                    onDelete(deleteRequest);
+                  } else {
+                    setDeleteConfirmOpen(true);
+                  }
+                  setOverflowOpen(false);
+                }
+
+                if (actionName === 'undo' && event.status === 'pending' && onUndo !== undefined) {
+                  onUndo(createQuickLogUndoRequest(event));
+                  setOverflowOpen(false);
+                }
+              }}
+              onPress={() => {
+                setDeleteConfirmOpen(false);
+                setOverflowOpen((isOpen) => !isOpen);
+              }}
+              style={styles.overflowButton}
+            />
+          ) : null}
         </Stack>
         <AppText
           maxFontSizeMultiplier={1.4}
           numberOfLines={1}
           tone="tertiary"
           variant="footnote">
-          {t('timeline.row-meta-template', {
-            actor: event.actorLabel,
-            time: event.occurredAtLabel,
-          })}
+          {event.actorLabel}
         </AppText>
-        <Stack
-          direction="horizontal"
-          gap="sm"
-          style={styles.compactActions}
-          wrap>
+        {overflowOpen ? (
+          <Stack
+            direction="horizontal"
+            gap="sm"
+            style={styles.compactActions}
+            wrap>
+            {onEdit !== undefined && editRequest !== null ? (
+              <Button
+                label={t('timeline.overflow-actions.0')}
+                labelMaxFontSizeMultiplier={1.2}
+                labelVariant="footnote"
+                onPress={() => {
+                  setOverflowOpen(false);
+                  onEdit(editRequest);
+                }}
+                style={styles.compactActionButton}
+                variant="secondary"
+              />
+            ) : null}
+            {onDelete !== undefined ? (
+              <Button
+                label={event.status === 'pending'
+                  ? t('quick-log.failed.tertiary')
+                  : t('timeline.overflow-actions.1')}
+                labelMaxFontSizeMultiplier={1.2}
+                labelVariant="footnote"
+                onPress={() => {
+                  setOverflowOpen(false);
+                  if (event.status === 'pending') {
+                    onDelete(deleteRequest);
+                  } else {
+                    setDeleteConfirmOpen(true);
+                  }
+                }}
+                style={styles.compactActionButton}
+                variant="tertiary"
+              />
+            ) : null}
+            {event.status === 'pending' && onUndo !== undefined ? (
+              <Button
+                label={t('quick-log.snackbar.undo')}
+                labelMaxFontSizeMultiplier={1.2}
+                labelVariant="footnote"
+                onPress={() => {
+                  setOverflowOpen(false);
+                  onUndo(createQuickLogUndoRequest(event));
+                }}
+                style={styles.compactActionButton}
+                variant="tertiary"
+              />
+            ) : null}
+          </Stack>
+        ) : null}
+        {deleteConfirmOpen && onDelete !== undefined ? (
+          <Card
+            accessibilityLabel={t('timeline.delete-confirm.title')}
+            accessibilityLiveRegion="polite"
+            accessibilityRole="alert"
+            style={styles.deleteConfirmCard}>
+            <Stack gap="sm">
+              <AppText variant="headline">{t('timeline.delete-confirm.title')}</AppText>
+              <AppText tone="secondary" variant="footnote">{t('timeline.delete-confirm.body')}</AppText>
+              <Stack direction="horizontal" gap="sm" wrap>
+                <Button
+                  label={t('timeline.delete-confirm.primary')}
+                  labelMaxFontSizeMultiplier={1.2}
+                  labelVariant="footnote"
+                  onPress={() => {
+                    setDeleteConfirmOpen(false);
+                    onDelete(deleteRequest);
+                  }}
+                  style={styles.compactActionButton}
+                  variant="destructive"
+                />
+                <Button
+                  label={t('timeline.delete-confirm.secondary')}
+                  labelMaxFontSizeMultiplier={1.2}
+                  labelVariant="footnote"
+                  onPress={() => setDeleteConfirmOpen(false)}
+                  style={styles.compactActionButton}
+                  variant="tertiary"
+                />
+              </Stack>
+            </Stack>
+          </Card>
+        ) : null}
+        {showCompactActions ? (
+          <Stack
+            direction="horizontal"
+            gap="sm"
+            style={styles.compactActions}
+            wrap>
         {event.status === 'failed' && (onRetry !== undefined || onDelete !== undefined) ? (
           <>
             {onRetry !== undefined ? (
@@ -335,66 +515,135 @@ function TimelineQuickLogEventRow({
             ) : null}
           </>
         ) : null}
-        {event.status === 'pending' && (onUndo !== undefined || onDelete !== undefined) ? (
-          <>
-            {onUndo !== undefined ? (
-              <Button
-                label={t('quick-log.snackbar.undo')}
-                labelMaxFontSizeMultiplier={1.2}
-                labelVariant="footnote"
-                onPress={() => {
-                  onUndo(createQuickLogUndoRequest(event));
-                }}
-                style={styles.compactActionButton}
-                variant="tertiary"
-              />
-            ) : null}
-            {onDelete !== undefined ? (
-              <Button
-                label={t('quick-log.failed.tertiary')}
-                labelMaxFontSizeMultiplier={1.2}
-                labelVariant="footnote"
-                onPress={() => {
-                  onDelete(createQuickLogDeleteRequest(event));
-                }}
-                style={styles.compactActionButton}
-                variant="tertiary"
-              />
-            ) : null}
-          </>
+          </Stack>
         ) : null}
-        {event.status === 'synced' && ((onEdit !== undefined && editRequest !== null) || onDelete !== undefined) ? (
-          <>
-            {onEdit !== undefined && editRequest !== null ? (
-              <Button
-                label={t('timeline.overflow-actions.0')}
-                labelMaxFontSizeMultiplier={1.2}
-                labelVariant="footnote"
-                onPress={() => {
-                  onEdit(editRequest);
-                }}
-                style={styles.compactActionButton}
-                variant="secondary"
-              />
-            ) : null}
-            {onDelete !== undefined ? (
-              <Button
-                label={t('timeline.overflow-actions.1')}
-                labelMaxFontSizeMultiplier={1.2}
-                labelVariant="footnote"
-                onPress={() => {
-                  onDelete(createQuickLogDeleteRequest(event));
-                }}
-                style={styles.compactActionButton}
-                variant="tertiary"
-              />
-            ) : null}
-          </>
-        ) : null}
-      </Stack>
       </Stack>
     </View>
   );
+}
+
+type TimelineDayBucket = Readonly<{
+  caption: string;
+  events: readonly QuickLogEventView[];
+  key: string;
+}>;
+
+function groupEventsByDay(
+  entries: readonly Readonly<{
+    event: QuickLogEventView;
+    occurredDate: string;
+  }>[],
+  todayDate: string,
+  locale: SupportedLocale,
+  t: AppTranslate,
+): readonly TimelineDayBucket[] {
+  const order: string[] = [];
+  const eventsByDate = new Map<string, QuickLogEventView[]>();
+
+  for (const entry of entries) {
+    const existing = eventsByDate.get(entry.occurredDate);
+
+    if (existing === undefined) {
+      eventsByDate.set(entry.occurredDate, [entry.event]);
+      order.push(entry.occurredDate);
+    } else {
+      existing.push(entry.event);
+    }
+  }
+
+  return order.map((occurredDate) => ({
+    caption: formatDayCaption(occurredDate, todayDate, locale, t),
+    events: eventsByDate.get(occurredDate) ?? [],
+    key: occurredDate,
+  }));
+}
+
+function formatDayCaption(
+  occurredDate: string,
+  todayDate: string,
+  locale: SupportedLocale,
+  t: AppTranslate,
+): string {
+  const weekday = formatWeekday(occurredDate, locale);
+
+  if (occurredDate === todayDate) {
+    return t('timeline.section-today', { weekday });
+  }
+
+  if (occurredDate === shiftCalendarDate(todayDate, -1)) {
+    return t('timeline.section-yesterday', { weekday });
+  }
+
+  return t('timeline.section-date', {
+    date: formatDayDate(occurredDate, locale),
+    weekday,
+  });
+}
+
+function formatLocalCalendarDate(timestamp: string): string {
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return timestamp.slice(0, 10);
+  }
+
+  return [
+    String(date.getFullYear()).padStart(4, '0'),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function shiftCalendarDate(calendarDate: string, deltaDays: number): string {
+  const [year, month, day] = calendarDate.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  date.setUTCDate(date.getUTCDate() + deltaDays);
+
+  return [
+    String(date.getUTCFullYear()).padStart(4, '0'),
+    String(date.getUTCMonth() + 1).padStart(2, '0'),
+    String(date.getUTCDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function calendarDateToUtc(calendarDate: string): Date | null {
+  const parts = calendarDate.split('-').map(Number);
+
+  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) {
+    return null;
+  }
+
+  const [year, month, day] = parts;
+
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function formatWeekday(calendarDate: string, locale: SupportedLocale): string {
+  const date = calendarDateToUtc(calendarDate);
+
+  if (date === null) {
+    return calendarDate;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: 'UTC',
+    weekday: 'long',
+  }).format(date);
+}
+
+function formatDayDate(calendarDate: string, locale: SupportedLocale): string {
+  const date = calendarDateToUtc(calendarDate);
+
+  if (date === null) {
+    return calendarDate;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(date);
 }
 
 function createTimelineFilters(selectedFilter: TimelineFilterValue): TimelineFilters {
@@ -433,22 +682,22 @@ function statusTone(status: QuickLogEventView['status']): 'confirmed' | 'failed'
   return 'confirmed';
 }
 
-function eventIcon(title: string): 'bowl' | 'moon' | 'poop' | 'spark' | 'today' | 'water' {
-  const normalized = title.toLowerCase();
-
-  if (normalized.includes('feed') || normalized.includes('food') || normalized.includes('корм')) {
+function eventIcon(
+  eventType: QuickLogEventView['eventType'],
+): 'bowl' | 'moon' | 'poop' | 'spark' | 'today' {
+  if (eventType === 'feeding') {
     return 'bowl';
   }
 
-  if (normalized.includes('sleep') || normalized.includes('nap') || normalized.includes('сон')) {
+  if (eventType === 'sleep') {
     return 'moon';
   }
 
-  if (normalized.includes('zoom')) {
+  if (eventType === 'zoomies') {
     return 'spark';
   }
 
-  if (normalized.includes('poop') || normalized.includes('potty') || normalized.includes('pee')) {
+  if (eventType === 'potty') {
     return 'poop';
   }
 
@@ -481,12 +730,12 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.color.primary[600],
     borderColor: tokens.color.primary[600],
   },
-  closeButton: {
-    alignSelf: 'flex-start',
-  },
   content: {
     paddingBottom: tokens.space[10],
-    paddingTop: tokens.space[2],
+    paddingTop: tokens.space[6],
+  },
+  dayGroupSpacing: {
+    marginTop: tokens.space[5],
   },
   compactActionButton: {
     minHeight: 32,
@@ -496,6 +745,10 @@ const styles = StyleSheet.create({
   compactActions: {
     marginLeft: -tokens.space[2],
     marginTop: tokens.space[1],
+  },
+  deleteConfirmCard: {
+    marginTop: tokens.space[2],
+    padding: tokens.space[3],
   },
   eventIconColumn: {
     alignItems: 'center',
@@ -531,22 +784,21 @@ const styles = StyleSheet.create({
   navButton: {
     paddingHorizontal: 0,
   },
+  overflowButton: {
+    minHeight: 32,
+    minWidth: 32,
+  },
   statusGlyph: {
     color: tokens.color.pill.confirmed.text,
     lineHeight: tokens.component.pill.icon,
   },
+  sectionCaption: {
+    color: tokens.color.text.tertiary,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
   statusPill: {
     alignSelf: 'flex-start',
     flexShrink: 0,
-  },
-  timelineList: {
-    borderColor: tokens.color.stroke.default,
-    borderRadius: tokens.radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-  },
-  title: {
-    flexShrink: 1,
-    minWidth: 0,
   },
 });

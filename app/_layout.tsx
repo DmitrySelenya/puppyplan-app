@@ -22,7 +22,8 @@ export default function RootLayout() {
               <Stack.Screen name="sign-in" />
               <Stack.Screen name="onboarding/index" />
               <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="(sheets)" options={{ presentation: 'transparentModal' }} />
+              <Stack.Screen name="(modals)" options={{ presentation: 'fullScreenModal' }} />
               <Stack.Screen name="invite/[token]" />
               <Stack.Screen name="share/[token]" />
             </Stack>
