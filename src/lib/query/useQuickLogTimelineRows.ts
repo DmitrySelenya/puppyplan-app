@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 
 import type { EventType } from '@/contracts/supabase';
+import { formatLocalCalendarDate } from '@/lib/i18n/format-date';
 import { createSupabaseEventLogRepository } from '@/lib/supabase/events';
 
 import { queryKeys, type TimelineFilters } from './keys';
@@ -252,20 +253,6 @@ function rowMatchesTimelineFilters(
   }
 
   return true;
-}
-
-function formatLocalCalendarDate(timestamp: string): string {
-  const date = new Date(timestamp);
-
-  if (Number.isNaN(date.getTime())) {
-    return timestamp.slice(0, 10);
-  }
-
-  return [
-    String(date.getFullYear()).padStart(4, '0'),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0'),
-  ].join('-');
 }
 
 function compareRowsByNewestFirst(

@@ -20,6 +20,11 @@ import {
   type I18nKey,
   type SupportedLocale,
 } from '@/lib/i18n';
+import {
+  calendarDateToUtc,
+  formatLocalCalendarDate,
+  shiftCalendarDate,
+} from '@/lib/i18n/format-date';
 import { type TimelineFilters } from '@/lib/query/keys';
 import {
   createQuickLogDeleteRequest,
@@ -578,45 +583,6 @@ function formatDayCaption(
     date: formatDayDate(occurredDate, locale),
     weekday,
   });
-}
-
-function formatLocalCalendarDate(timestamp: string): string {
-  const date = new Date(timestamp);
-
-  if (Number.isNaN(date.getTime())) {
-    return timestamp.slice(0, 10);
-  }
-
-  return [
-    String(date.getFullYear()).padStart(4, '0'),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0'),
-  ].join('-');
-}
-
-function shiftCalendarDate(calendarDate: string, deltaDays: number): string {
-  const [year, month, day] = calendarDate.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  date.setUTCDate(date.getUTCDate() + deltaDays);
-
-  return [
-    String(date.getUTCFullYear()).padStart(4, '0'),
-    String(date.getUTCMonth() + 1).padStart(2, '0'),
-    String(date.getUTCDate()).padStart(2, '0'),
-  ].join('-');
-}
-
-function calendarDateToUtc(calendarDate: string): Date | null {
-  const parts = calendarDate.split('-').map(Number);
-
-  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) {
-    return null;
-  }
-
-  const [year, month, day] = parts;
-
-  return new Date(Date.UTC(year, month - 1, day));
 }
 
 function formatWeekday(calendarDate: string, locale: SupportedLocale): string {

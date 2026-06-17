@@ -19,6 +19,7 @@ import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
+import { getLocalCalendarDate } from '@/lib/i18n/format-date';
 import {
   createQuickLogDeleteRequest,
   createQuickLogEventView,
@@ -297,7 +298,7 @@ function getPuppyPlanDayNumber(input: Readonly<{
   puppyCreatedAt: string;
   todayDate: string;
 }>): number {
-  const createdDate = getLocalCalendarDateFromTimestamp(input.puppyCreatedAt);
+  const createdDate = getLocalCalendarDate(input.puppyCreatedAt);
   const createdDayStart = createdDate === null ? null : getUtcDayStartMs(createdDate);
   const todayDayStart = getUtcDayStartMs(input.todayDate);
 
@@ -308,20 +309,6 @@ function getPuppyPlanDayNumber(input: Readonly<{
   const inclusiveDayNumber = Math.floor((todayDayStart - createdDayStart) / 86_400_000) + 1;
 
   return Math.min(90, Math.max(1, inclusiveDayNumber));
-}
-
-function getLocalCalendarDateFromTimestamp(timestamp: string): string | null {
-  const date = new Date(timestamp);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  const year = String(date.getFullYear()).padStart(4, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
 }
 
 function getUtcDayStartMs(calendarDate: string): number | null {

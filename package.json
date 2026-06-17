@@ -18,16 +18,13 @@
     "test:scaffold": "node scripts/checks/check-navigation-contract.mjs && node scripts/checks/check-shell-i18n.mjs && node scripts/checks/check-i18n.mjs && node scripts/checks/check-scaffold-guardrails.mjs && npm run tokens:check && node scripts/checks/privacy-scan.mjs && node scripts/checks/text-hygiene.mjs",
     "check": "npm run lint && npm run typecheck && npm run test",
     "supabase:test": "node scripts/supabase/run-remote-cli.mjs test",
-    "supabase:test:remote": "node scripts/supabase/run-remote-cli.mjs test",
     "supabase:lint": "node scripts/supabase/run-remote-cli.mjs lint",
-    "supabase:lint:remote": "node scripts/supabase/run-remote-cli.mjs lint",
     "supabase:auth:otp-template": "node scripts/supabase/configure-dev-auth-email-otp.mjs",
     "supabase:auth:debug-account": "node scripts/supabase/upsert-dev-debug-account.mjs",
     "db:types": "node scripts/supabase/run-remote-cli.mjs types",
-    "db:types:remote": "node scripts/supabase/run-remote-cli.mjs types",
     "db:push:remote:dry-run": "node scripts/supabase/run-remote-cli.mjs push-dry-run",
-    "supabase:verify:remote": "npm run db:push:remote:dry-run && npm run supabase:lint:remote",
-    "supabase:ci:remote": "npm run supabase:verify:remote && npm run supabase:test:remote && npm run db:types:remote && node scripts/checks/check-database-types-generated.mjs"
+    "supabase:verify:remote": "npm run db:push:remote:dry-run && npm run supabase:lint",
+    "supabase:ci:remote": "npm run supabase:verify:remote && npm run supabase:test && npm run db:types && node scripts/checks/check-database-types-generated.mjs"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.15.5",

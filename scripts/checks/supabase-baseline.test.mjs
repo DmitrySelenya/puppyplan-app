@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { describe, it } from 'node:test';
@@ -18,7 +18,6 @@ const puppyQuickTrackerNonEmptyMigrationPath =
   'supabase/migrations/20260609120000_puppy_quick_tracker_ids_non_empty.sql';
 const rlsTestPath = 'supabase/tests/rls_baseline.sql';
 const remoteCliPath = 'scripts/supabase/run-remote-cli.mjs';
-const noLocalDockerPath = 'scripts/supabase/no-local-docker.mjs';
 const supabaseContractPath = 'src/contracts/supabase.ts';
 const packageJsonPath = 'package.json';
 const envExamplePath = '.env.example';
@@ -342,7 +341,6 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
 describe('remote Supabase CLI wrapper guardrails', () => {
   it('keeps short Supabase scripts on the remote path instead of local Docker', () => {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
-    const noLocalDockerSource = readFileSync(noLocalDockerPath, 'utf8');
 
     assert.equal(
       packageJson.scripts['supabase:test'],
@@ -359,7 +357,10 @@ describe('remote Supabase CLI wrapper guardrails', () => {
     assert.doesNotMatch(packageJson.scripts['supabase:test'], /--local|supabase start/u);
     assert.doesNotMatch(packageJson.scripts['supabase:lint'], /--local|supabase start/u);
     assert.doesNotMatch(packageJson.scripts['db:types'], /--local|supabase start/u);
-    assert.match(noLocalDockerSource, /Local Supabase Docker commands are disabled/u);
+    assert.equal(existsSync('scripts/supabase/no-local-docker.mjs'), false);
+    assert.equal(packageJson.scripts['supabase:test:remote'], undefined);
+    assert.equal(packageJson.scripts['supabase:lint:remote'], undefined);
+    assert.equal(packageJson.scripts['db:types:remote'], undefined);
   });
 
   it('requires an explicit DB URL for remote database checks and pins the Supabase CLI package', () => {
@@ -407,8 +408,11 @@ describe('remote Supabase CLI wrapper guardrails', () => {
       /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02\s+#\s+v4\.6\.2/u,
     );
     assert.match(workflow, /path: src\/contracts\/database\.types\.ts/u);
-    assert.match(packageJson.scripts['supabase:ci:remote'], /supabase:test:remote/u);
-    assert.match(packageJson.scripts['supabase:ci:remote'], /db:types:remote/u);
+    assert.match(packageJson.scripts['supabase:verify:remote'], /supabase:lint/u);
+    assert.doesNotMatch(packageJson.scripts['supabase:verify:remote'], /supabase:lint:remote/u);
+    assert.match(packageJson.scripts['supabase:ci:remote'], /supabase:test/u);
+    assert.match(packageJson.scripts['supabase:ci:remote'], /db:types/u);
+    assert.doesNotMatch(packageJson.scripts['supabase:ci:remote'], /supabase:test:remote|db:types:remote/u);
   });
 
   it('redacts raw and percent-encoded database credentials from command output', () => {

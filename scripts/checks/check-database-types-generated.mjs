@@ -20,7 +20,7 @@ if (status.status !== 0) {
 if (status.stdout.trim()) {
   console.error([
     `${databaseTypesPath} is not committed or is out of date.`,
-    'Run npm run db:types:remote against the approved dev database, review the diff, and commit the generated file.',
+    'Run npm run db:types against the approved dev database, review the diff, and commit the generated file.',
     status.stdout.trim(),
   ].join('\n'));
   process.exit(1);
