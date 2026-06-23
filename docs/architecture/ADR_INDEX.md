@@ -18,6 +18,8 @@ Accepted ADRs for the closed-beta baseline:
 - `adr/0014-ota-disabled-for-mvp.md`
 - `adr/0015-ios-compliance-gates.md`
 - `adr/0016-android-compliance-and-exact-alarms.md`
+- `adr/0017-auth-identity-session.md`
+- `adr/0018-sharing-surface-split-web-trainer-app-sitter.md`
 
 ## Decisions Captured Outside Dedicated ADRs
 

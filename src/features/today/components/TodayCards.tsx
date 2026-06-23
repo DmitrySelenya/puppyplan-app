@@ -47,6 +47,10 @@ type HeroCopy = CopyPair & Readonly<{
   primaryKey?: I18nKey;
 }>;
 
+type StatusCopy = CopyPair & Readonly<{
+  statusKey: I18nKey;
+}>;
+
 export function TodayPlanCards({
   onHeroPrimaryAction,
   plan,
@@ -207,14 +211,27 @@ export function TodayStatusCard({
 }>) {
   const { t } = useAppTranslation();
   const copy = todayStatusCopy[state];
+  const iconName = todayStatusIcon[state];
+  const tone = todayStatusTone[state];
 
   return (
     <Card
-      accessibilityLabel={t(copy.titleKey)}
-      accessibilityLiveRegion={state === 'error' ? 'polite' : undefined}
+      accessibilityLabel={`${t(copy.titleKey)}. ${t(copy.bodyKey)}`}
+      accessibilityLiveRegion={state === 'error' || state === 'pending-write' ? 'polite' : undefined}
       accessibilityRole={state === 'error' ? 'alert' : undefined}
       testID={`today-state-${state}`}>
-      <Stack gap="xs">
+      <Stack gap="sm">
+        <Stack
+          align="center"
+          direction="horizontal"
+          gap="sm">
+          <StatusPill
+            accessibilityLabel={t(copy.statusKey)}
+            icon={<AppIcon color={tokens.color.pill[tone].text} name={iconName} size={14} />}
+            label={t(copy.statusKey)}
+            tone={tone}
+          />
+        </Stack>
         <AppText variant="headline">{t(copy.titleKey)}</AppText>
         <AppText tone="secondary">{t(copy.bodyKey)}</AppText>
       </Stack>
@@ -478,33 +495,60 @@ const todayDailyCardCopy = {
 const todayStatusCopy = {
   empty: {
     bodyKey: 'today.states.empty.body',
+    statusKey: 'today.states.empty.status',
     titleKey: 'today.states.empty.title',
   },
   error: {
     bodyKey: 'today.states.error.body',
+    statusKey: 'today.states.error.status',
     titleKey: 'today.states.error.title',
   },
   loading: {
     bodyKey: 'today.states.loading.body',
+    statusKey: 'today.states.loading.status',
     titleKey: 'today.states.loading.title',
   },
   'offline-read': {
     bodyKey: 'today.states.offline-read.body',
+    statusKey: 'today.states.offline-read.status',
     titleKey: 'today.states.offline-read.title',
   },
   'pending-write': {
     bodyKey: 'today.states.pending-write.body',
+    statusKey: 'today.states.pending-write.status',
     titleKey: 'today.states.pending-write.title',
   },
   'permission-denied': {
     bodyKey: 'today.states.permission-denied.body',
+    statusKey: 'today.states.permission-denied.status',
     titleKey: 'today.states.permission-denied.title',
   },
   unavailable: {
     bodyKey: 'today.states.unavailable.body',
+    statusKey: 'today.states.unavailable.status',
     titleKey: 'today.states.unavailable.title',
   },
-} as const satisfies Record<TodayStatusState, CopyPair>;
+} as const satisfies Record<TodayStatusState, StatusCopy>;
+
+const todayStatusIcon = {
+  empty: 'docText',
+  error: 'infoCircle',
+  loading: 'spark',
+  'offline-read': 'lock',
+  'pending-write': 'infoCircle',
+  'permission-denied': 'lock',
+  unavailable: 'docText',
+} as const satisfies Record<TodayStatusState, Parameters<typeof AppIcon>[0]['name']>;
+
+const todayStatusTone = {
+  empty: 'template',
+  error: 'failed',
+  loading: 'pending',
+  'offline-read': 'template',
+  'pending-write': 'pending',
+  'permission-denied': 'template',
+  unavailable: 'template',
+} as const satisfies Record<TodayStatusState, Parameters<typeof StatusPill>[0]['tone']>;
 
 const todayDeferredCopy = {
   family_invite: 'today.deferred.family-invite',

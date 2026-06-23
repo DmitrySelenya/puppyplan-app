@@ -14,6 +14,7 @@ import type { I18nKey } from '@/lib/i18n';
 
 export const puppyAgeModes = ['age_weeks', 'birth_date'] as const;
 export const puppyAgeModeSchema = z.enum(puppyAgeModes);
+export const futureBirthDateIssueMessage = 'Birth date cannot be in the future.';
 
 export const puppyProfileInputSchema = z.object({
   ageMode: puppyAgeModeSchema,
@@ -34,6 +35,16 @@ export const puppyProfileInputSchema = z.object({
     context.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Birth date is required when birth date mode is selected.',
+      path: ['birthDate'],
+    });
+  }
+
+  if (profile.ageMode === 'birth_date'
+    && profile.birthDate !== null
+    && profile.birthDate > getTodayDateString()) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: futureBirthDateIssueMessage,
       path: ['birthDate'],
     });
   }
@@ -90,4 +101,8 @@ export function getPuppyAgeHintKey(ageWeeks: number | null): I18nKey {
   }
 
   return 'onboarding.age-hint.fallback';
+}
+
+function getTodayDateString(): string {
+  return new Date().toISOString().slice(0, 10);
 }

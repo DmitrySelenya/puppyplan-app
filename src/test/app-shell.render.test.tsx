@@ -82,7 +82,7 @@ describe('app shell screens', () => {
     expect(screen.getByText(i18n.t('health.filter-chips.0'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.empty.title'))).toBeTruthy();
     expect(screen.queryByText(i18n.t('health.rows.dhpp-title'))).toBeNull();
-    expect(screen.queryByText(i18n.t('health.rows.deworming-title'))).toBeNull();
+    expect(screen.queryByText(i18n.t('health.rows.parasite-review-title'))).toBeNull();
     expect(screen.queryByText(i18n.t('health.rows.vet-visit-title'))).toBeNull();
     expect(screen.getByRole('button', {
       name: i18n.t('health.empty.primary'),
@@ -103,14 +103,16 @@ describe('app shell screens', () => {
     renderWithProviders(<HealthScreen reviewState="mixed-list" />);
 
     expect(screen.getByText(i18n.t('health.rows.dhpp-title'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('health.rows.deworming-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.rows.weight-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.rows.parasite-review-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.rows.dhpp-template-title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.rows.vet-visit-title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.footer-hint'))).toBeTruthy();
     expect(screen.queryByText(/diagnosis|dose|urgent/i)).toBeNull();
 
     fireEvent.press(screen.getByRole('tab', { name: i18n.t('health.segments.1') }));
     expect(screen.getByText(i18n.t('health.rows.dhpp-title'))).toBeTruthy();
-    expect(screen.queryByText(i18n.t('health.rows.deworming-title'))).toBeNull();
+    expect(screen.queryByText(i18n.t('health.rows.parasite-review-title'))).toBeNull();
     expect(screen.queryByText(i18n.t('health.rows.vet-visit-title'))).toBeNull();
   });
 

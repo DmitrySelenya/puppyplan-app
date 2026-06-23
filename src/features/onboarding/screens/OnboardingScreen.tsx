@@ -1,25 +1,35 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
+  futureBirthDateIssueMessage,
   getPuppyAgeHintKey,
   puppyProfileInputSchema,
   type PuppyAgeMode,
   type PuppyProfileInput,
 } from '@/contracts/onboarding';
 import {
+  primaryTabs,
+  quickLogAction,
+} from '@/contracts/navigation';
+import {
   defaultQuickLogTrackerIds,
   quickLogTrackerIds,
   selectedQuickLogTrackerIdsSchema,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
+import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { FAB } from '@/design/primitives/FAB';
+import { ListRow } from '@/design/primitives/ListRow';
 import { Screen } from '@/design/primitives/Screen';
 import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { Stack } from '@/design/primitives/Stack';
+import { StatusPill } from '@/design/primitives/StatusPill';
 import { TextField } from '@/design/primitives/TextField';
+import { Touchable } from '@/design/primitives/Touchable';
 import { TrackerTile } from '@/design/primitives/TrackerTile';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
@@ -42,6 +52,7 @@ type ProfileErrorTarget = 'ageWeeksEstimate' | 'birthDate' | 'name';
 type ProfileErrorKey =
   | 'onboarding.puppy-profile.error-age-required'
   | 'onboarding.puppy-profile.error-birth-date-required'
+  | 'onboarding.puppy-profile.error-future-date'
   | 'onboarding.puppy-profile.error-name-required';
 type ProfileError = Readonly<{
   key: ProfileErrorKey;
@@ -340,6 +351,99 @@ export function OnboardingScreen({
   );
 }
 
+export function OnboardingFirstLogPreview() {
+  const { t } = useAppTranslation();
+
+  return (
+    <View style={styles.firstLogRoot}>
+      <Screen contentStyle={styles.firstLogContent}>
+        <Stack gap="lg">
+          <Stack gap="xs">
+            <AppText tone="tertiary" variant="caption">
+              {t('onboarding.first-log.eyebrow')}
+            </AppText>
+            <AppText
+              maxFontSizeMultiplier={ONBOARDING_TITLE_MAX_FONT_SIZE_MULTIPLIER}
+              variant="title">
+              {t('onboarding.first-log.today-title')}
+            </AppText>
+          </Stack>
+          <Card accessibilityLabel={t('onboarding.first-log.hero-after-first')}>
+            <Stack gap="sm">
+              <StatusPill
+                accessibilityLabel={t('timeline.pills.synced')}
+                icon={<AppIcon name="spark" size={14} />}
+                label={t('timeline.pills.synced')}
+                tone="completed"
+              />
+              <AppText
+                maxFontSizeMultiplier={ONBOARDING_SUPPORTING_MAX_FONT_SIZE_MULTIPLIER}
+                variant="headline">
+                {t('onboarding.first-log.hero-after-first')}
+              </AppText>
+              <AppText
+                maxFontSizeMultiplier={ONBOARDING_SUPPORTING_MAX_FONT_SIZE_MULTIPLIER}
+                tone="secondary">
+                {t('onboarding.first-log.body-after-first')}
+              </AppText>
+            </Stack>
+          </Card>
+          <ListRow
+            accessibilityLabel={[
+              t('onboarding.first-log.event-title'),
+              t('onboarding.first-log.event-meta'),
+              t('timeline.pills.synced'),
+            ].join(', ')}
+            leading={<AppIcon name="pottyInside" size={22} />}
+            meta={t('timeline.pills.synced')}
+            subtitle={t('onboarding.first-log.event-meta')}
+            title={t('onboarding.first-log.event-title')}
+            variant="timeline"
+          />
+        </Stack>
+      </Screen>
+      <View style={styles.firstLogChrome}>
+        <View
+          accessibilityRole="tablist"
+          style={styles.tabBar}>
+          {primaryTabs.map((tab) => {
+            const selected = tab.id === 'today';
+
+            return (
+              <Touchable
+                accessibilityLabel={t(tab.accessibilityLabelKey)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected }}
+                key={tab.id}
+                minTarget="thumb"
+                onPress={() => undefined}
+                style={styles.tabButton}>
+                <AppIcon
+                  color={selected ? tokens.color.primary[700] : tokens.color.text.tertiary}
+                  filled={selected}
+                  name={tabIconById[tab.id]}
+                  size={22}
+                />
+                <AppText
+                  tone={selected ? 'primary' : 'tertiary'}
+                  variant="caption">
+                  {t(tab.labelKey)}
+                </AppText>
+              </Touchable>
+            );
+          })}
+        </View>
+        <FAB
+          accessibilityHint={t(quickLogAction.accessibilityHintKey)}
+          accessibilityLabel={t(quickLogAction.labelKey)}
+          onPress={() => undefined}
+          style={styles.firstLogFab}
+        />
+      </View>
+    </View>
+  );
+}
+
 function parseAgeWeeks(value: string): number | null {
   const trimmed = value.trim();
 
@@ -360,14 +464,13 @@ function clearProfileError(
 }
 
 function getProfileValidationError(
-  issues: readonly { path: readonly (number | string)[] }[],
+  issues: readonly { message?: string; path: readonly (number | string)[] }[],
 ): ProfileError {
-  const target = issues
-    .map((issue) => issue.path[0])
-    .find(isProfileErrorTarget) ?? 'name';
+  const issue = issues.find((candidate) => isProfileErrorTarget(candidate.path[0]));
+  const target = isProfileErrorTarget(issue?.path[0]) ? issue.path[0] : 'name';
 
   return {
-    key: getProfileErrorKey(target),
+    key: getProfileErrorKey(target, issue?.message),
     target,
   };
 }
@@ -376,12 +479,19 @@ function isProfileErrorTarget(value: number | string | undefined): value is Prof
   return value === 'name' || value === 'ageWeeksEstimate' || value === 'birthDate';
 }
 
-function getProfileErrorKey(target: ProfileErrorTarget): ProfileErrorKey {
+function getProfileErrorKey(
+  target: ProfileErrorTarget,
+  issueMessage?: string,
+): ProfileErrorKey {
   if (target === 'ageWeeksEstimate') {
     return 'onboarding.puppy-profile.error-age-required';
   }
 
   if (target === 'birthDate') {
+    if (issueMessage === futureBirthDateIssueMessage) {
+      return 'onboarding.puppy-profile.error-future-date';
+    }
+
     return 'onboarding.puppy-profile.error-birth-date-required';
   }
 
@@ -419,9 +529,53 @@ function toggleTracker(
   return result.data;
 }
 
+const tabIconById: Record<(typeof primaryTabs)[number]['id'], AppIconName> = {
+  health: 'heart',
+  more: 'more',
+  today: 'today',
+};
+
 const styles = StyleSheet.create({
   content: {
     paddingBottom: tokens.space[14] + tokens.space[10],
+  },
+  firstLogChrome: {
+    alignItems: 'center',
+    backgroundColor: tokens.color.surface.base,
+    borderTopColor: tokens.color.stroke.dividerHairline,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    bottom: 0,
+    flexDirection: 'row',
+    gap: tokens.space[3],
+    justifyContent: 'space-between',
+    left: 0,
+    paddingBottom: tokens.space[5],
+    paddingHorizontal: tokens.space[4],
+    paddingTop: tokens.space[2],
+    position: 'absolute',
+    right: 0,
+  },
+  firstLogContent: {
+    paddingBottom: tokens.layout.bottomInsetFab,
+  },
+  firstLogFab: {
+    position: 'relative',
+  },
+  firstLogRoot: {
+    minHeight: 620,
+  },
+  tabBar: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: tokens.space[1],
+    justifyContent: 'space-between',
+  },
+  tabButton: {
+    alignItems: 'center',
+    flex: 1,
+    gap: tokens.space[1],
+    justifyContent: 'center',
+    minHeight: 52,
   },
   trackerTile: {
     width: ONBOARDING_TRACKER_TILE_WIDTH,

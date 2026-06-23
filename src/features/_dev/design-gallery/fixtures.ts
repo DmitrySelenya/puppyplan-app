@@ -39,9 +39,29 @@ export const gallerySections = [
     stateKey: 'dev.gallery.states.quick-trackers',
   },
   {
+    id: 'more-settings',
+    titleKey: 'more.screen-title',
+    stateKey: 'dev.gallery.states.more-settings',
+  },
+  {
+    id: 'quick-log-sheet',
+    titleKey: 'quick-log.sheet.title',
+    stateKey: 'dev.gallery.states.quick-log-sheet',
+  },
+  {
     id: 'quick-log-details',
     titleKey: 'quick-log.details.title',
     stateKey: 'dev.gallery.states.quick-log-details',
+  },
+  {
+    id: 'health-v2',
+    titleKey: 'tabs.health',
+    stateKey: 'dev.gallery.states.health-v2',
+  },
+  {
+    id: 'timeline-v2',
+    titleKey: 'timeline.title',
+    stateKey: 'dev.gallery.states.timeline-v2',
   },
   {
     id: 'today-core',
@@ -114,6 +134,36 @@ export const syntheticTodayPlans = [
       suggestedDailyCards: ['quick_log_prompt', 'sleep_rhythm'],
       timeOfDay: 'morning',
       todayDate: '2026-06-12',
+    }),
+  },
+  {
+    id: 'today-day-seven',
+    titleKey: 'dev.gallery.today.day-seven',
+    plan: buildTodayPlan({
+      dayNumber: 7,
+      eventCounts: {
+        feeding: 14,
+        potty: 21,
+        sleep: 7,
+      },
+      feedingPattern: {
+        lastFeedingLocalTime: '07:30',
+        usualAmount: 'meal',
+      },
+      lastEvents: [
+        {
+          eventType: 'potty',
+          minutesAgo: 100,
+          quickAction: 'pee_outside',
+        },
+      ],
+      suggestedDailyCards: ['feeding_pattern', 'timeline_review', 'potty_rhythm'],
+      todayDate: '2026-06-12',
+      weeklySummary: {
+        feedingCount: 14,
+        pottyCount: 21,
+        sleepHoursPerDay: 18,
+      },
     }),
   },
   {

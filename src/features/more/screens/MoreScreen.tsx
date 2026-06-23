@@ -82,15 +82,34 @@ export function MoreScreen({
           variant="settings"
         />
         <DeferredListRow icon="bell" title={t('more.rows.reminders')} />
-        <DeferredListRow icon="gear" title={t('more.rows.notifications')} />
+        <DeferredListRow
+          icon="gear"
+          subtitle={t('more.notifications.push-hint')}
+          title={t('more.rows.notifications')}
+        />
       </SettingsSection>
       <SettingsSection title={t('more.sections.privacy')}>
-        <DeferredListRow icon="lock" title={t('more.rows.data-account')} />
+        <DeferredListRow
+          icon="lock"
+          subtitle={t('more.privacy.section-account-removal')}
+          title={t('more.rows.data-account')}
+        />
       </SettingsSection>
       <SettingsSection title={t('more.sections.support')}>
         <DeferredListRow icon="infoCircle" title={t('more.rows.help')} />
-        <DeferredListRow icon="infoCircle" title={t('more.rows.about')} />
+        <DeferredListRow
+          icon="infoCircle"
+          subtitle={t('more.about.version')}
+          title={t('more.rows.about')}
+        />
       </SettingsSection>
+      <ListGroup>
+        <DeferredListRow
+          icon="paw"
+          subtitle={t('more.plus.subtitle')}
+          title={t('more.rows.puppyplan-plus')}
+        />
+      </ListGroup>
       <SignOutButton />
     </Screen>
   );
@@ -227,9 +246,11 @@ function SettingsSection({
 
 function DeferredListRow({
   icon,
+  subtitle,
   title,
 }: Readonly<{
   icon: ComponentProps<typeof AppIcon>['name'];
+  subtitle?: string;
   title: string;
 }>) {
   const { t } = useAppTranslation();
@@ -240,6 +261,7 @@ function DeferredListRow({
       disabled
       leading={<AppIcon name={icon} />}
       meta={t('more.rows.deferred')}
+      subtitle={subtitle}
       title={title}
       variant="settings"
     />

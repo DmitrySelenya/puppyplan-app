@@ -50,7 +50,11 @@
         "onboarding": "Welcome, profile, age hint, tracker picker, and plan reveal.",
         "profile": "Saved and editing states for the puppy profile settings route.",
         "quick-trackers": "Selected tracker count, limit state, and reorder-ready rows.",
+        "more-settings": "More hub, profile entry, tracker settings, notification note, privacy, account removal, and Plus placeholder.",
+        "quick-log-sheet": "Quick Log sheet, subtype choices, duplicate warning, local pending, failed retry, and access states.",
         "quick-log-details": "Quick Log details route with synthetic slow-saving and error states.",
+        "health-v2": "Health list, empty, edit, detail, review, delete, and weight entry states.",
+        "timeline-v2": "Timeline default, filtered, empty, pending, failed, and delete-confirm states.",
         "today-core": "Today hero, daily cards, guidance, and data states.",
         "guidance": "Starter guidance read, tried, and skipped states.",
         "today-deferrals": "Synthetic-only family invite and reminder slots for review.",
@@ -59,8 +63,10 @@
       "today": {
         "day-one": "Today · day one",
         "day-two-morning": "Today · day two morning",
+        "day-seven": "Today · day seven",
         "after-invite": "Today · after invite slot",
         "missed-reminder": "Today · missed reminder slot",
+        "state-fixtures": "Today · loading, offline, and pending",
         "synthetic-note": "These states do not write reminders, invites, or household activity."
       }
     }
@@ -277,7 +283,15 @@
     },
     "first-log": {
       "hero-after-first": "First event saved. From here, a calm rhythm.",
+      "body-after-first": "Today now shows the saved event, the next step, and the same Quick Log action.",
+      "eyebrow": "First Today",
+      "today-title": "Your first event",
+      "event-title": "Pee outside · 9:42",
+      "event-meta": "Saved just now",
       "celebration-snackbar": "Done. You can keep going."
+    },
+    "preview": {
+      "name-value": "Puppy"
     },
     "account-wall": {
       "title": "Save your progress",
@@ -471,30 +485,37 @@
     },
     "states": {
       "loading": {
+        "status": "Loading",
         "title": "Refreshing Today",
         "body": "Saved routine events are loading for this puppy."
       },
       "empty": {
+        "status": "Empty",
         "title": "Nothing logged today",
         "body": "Today will fill in after the first routine event."
       },
       "error": {
+        "status": "Saved view",
         "title": "Could not refresh Today",
         "body": "Showing the saved view that is already on this device."
       },
       "offline-read": {
+        "status": "Offline",
         "title": "Offline view",
         "body": "Saved events are visible. New changes will sync when connection returns."
       },
       "pending-write": {
+        "status": "Syncing",
         "title": "Sync in progress",
         "body": "One or more local care events are waiting to sync."
       },
       "permission-denied": {
+        "status": "View only",
         "title": "View-only access",
         "body": "Today is readable, but routine logging needs caregiver access."
       },
       "unavailable": {
+        "status": "Setup needed",
         "title": "Puppy setup is needed",
         "body": "Create or select an active puppy profile before Today can guide care."
       }
@@ -669,12 +690,14 @@
     "section-today": "Today · {weekday}",
     "section-yesterday": "Yesterday · {weekday}",
     "section-date": "{date} · {weekday}",
-    "filter-chips": ["All", "Potty", "Food", "Sleep", "Zoomies", "Training", "Health"],
+    "filter-chips": ["All", "Potty", "Feeding", "Sleep", "Walk", "Zoomies", "Health"],
     "range-default": "Today",
     "range-options": ["Today", "3 days", "Week", "Custom"],
     "range-custom-title": "Pick a range",
     "empty": "No events yet.",
+    "empty-filter-title": "Nothing here",
     "empty-filter": "No events in this range.",
+    "empty-filter-clear": "Clear filters",
     "unavailable": {
       "title": "Timeline needs an active puppy",
       "body": "Events will appear here after an active household and puppy profile are available."
@@ -1051,9 +1074,14 @@
       "current-section": "May 2026",
       "previous-section": "April 2026",
       "dhpp-title": "DHPP vaccine",
-      "dhpp-meta": "Template · 12 weeks",
-      "deworming-title": "Parasite treatment",
-      "deworming-meta": "Confirmed · Done May 12 · No clinic listed",
+      "dhpp-meta": "May 12 · Confirmed by you",
+      "weight-title": "Weight check · 4.2 kg",
+      "weight-meta": "May 10",
+      "parasite-review-title": "Parasite treatment",
+      "parasite-review-meta": "Template",
+      "parasite-review-subline": "Worth discussing with your vet",
+      "dhpp-template-title": "DHPP, 12 weeks",
+      "dhpp-template-meta": "Suggested",
       "vet-visit-title": "Vet visit",
       "vet-visit-meta": "Done · April 28 · Added by you"
     },
@@ -1061,13 +1089,13 @@
     "refresh": "Refresh",
     "pills": {
       "template": "Template",
-      "needs-vet-review": "Ask your vet",
+      "needs-vet-review": "Needs vet review",
       "confirmed": "Confirmed",
       "completed": "Done"
     },
     "template-row-subline": "Template, not a prescription",
     "confirmed-meta-template": "Done {date} · {provider}",
-    "confirmed-meta-no-provider": "Done {date} · No clinic listed",
+    "confirmed-meta-no-provider": "Done {date}",
     "sync-error-row": "Changes not synced. Try again",
     "record-types": {
       "vaccination": "Vaccination",
@@ -1086,10 +1114,12 @@
       "field-name": "Name",
       "field-date": "Date",
       "field-status": "Status",
+      "default-date": "Today",
       "status-segments": ["Template", "Confirmed", "Done"],
       "field-clinic": "Clinic or vet (optional)",
       "field-note": "Note (optional)",
       "urgent-toggle": "Mark as urgent",
+      "urgent-off": "Off",
       "urgent-hint": "Use this if you've already spoken to your vet",
       "note-hint": "Notes aren't used in analytics",
       "privacy-hint": "Notes are visible only to you and invited family members.",
@@ -1123,9 +1153,29 @@
       "add": "Add"
     },
     "status-transitions": {
-      "stages": ["Template", "Ask your vet", "Confirmed", "Done"],
+      "stages": ["Template", "Needs vet review", "Confirmed", "Done"],
+      "now-template": "Now: {currentLabel} · Next: {nextLabel}",
+      "complete-label": "Complete",
       "hint": "You can change this manually any time",
-      "a11y-template": "Stage {current} of 4: {currentLabel}. Available: template, ask your vet, confirmed, done."
+      "a11y-template": "Stage {current} of 4: {currentLabel}. Available: template, needs vet review, confirmed, done."
+    },
+    "detail": {
+      "subtitle": "Vaccination · 12 weeks",
+      "date-label": "Date",
+      "date-value": "May 12, 2026",
+      "status-label": "Status",
+      "clinic-label": "Clinic",
+      "clinic-value": "Example clinic",
+      "note-label": "Note",
+      "note-value": "Mild post-visit note, resolved within 24 hours.",
+      "stage-section": "Stage",
+      "history-date": "May 12, 2026"
+    },
+    "weight-entry": {
+      "title": "Weight entry",
+      "value": "4.2 kg",
+      "body": "Weight is tracked as a record entry so caregivers can review growth without turning Health into medical advice.",
+      "action": "Open weight entry"
     },
     "vet-prep": {
       "title": "Getting ready for the visit",
@@ -1389,6 +1439,12 @@
       "puppyplan-plus": "PuppyPlan Plus",
       "deferred": "Deferred"
     },
+    "about": {
+      "version": "Version 1.0.0"
+    },
+    "plus": {
+      "subtitle": "Extra features for the puppy stage"
+    },
     "puppy-summary": {
       "age-weeks": "{count} weeks",
       "no-age": "Age not set"
@@ -1426,6 +1482,7 @@
       "screen-title": "Quick trackers",
       "screen-title-template": "Quick trackers ({n} of 5 selected)",
       "hint": "Pick up to 5 trackers for Today and Quick Log.",
+      "history-hint": "Turning a tracker off keeps its history — you can re-enable it any time without losing data.",
       "selected-count": "{count} of {max} selected",
       "more-options": "More options",
       "toggle-on": "On",
@@ -1446,7 +1503,7 @@
       "section-push": "Push to your device",
       "row-push-reminders": "Reminders",
       "row-push-sitter": "Sitter finished checklist",
-      "push-hint": "In beta, push is sent only for these events. Family activity isn't pushed.",
+      "push-hint": "For now, push is sent only for these events. Family activity isn't pushed.",
       "section-quiet-hours": "Quiet hours",
       "quiet-hours-example": "10:00 pm – 7:00 am",
       "section-tz": "Time zone",
@@ -1463,6 +1520,7 @@
       "section-your-data": "Your data",
       "row-export": "Export your data",
       "section-account": "Account",
+      "section-account-removal": "Account removal",
       "row-delete": "Delete account",
       "export-sheet": "We'll gather your records and send a link to your email within 24 hours",
       "delete-sheet": {
@@ -1482,7 +1540,7 @@
       "row-privacy-policy": "Privacy Policy",
       "row-terms": "Terms of Use",
       "section-about": "About",
-      "row-version": "Version 1.0.0 (beta)",
+      "row-version": "Version 1.0.0",
       "row-health-disclaimer": "Health disclaimer",
       "health-disclaimer-sheet": "PuppyPlan helps you keep records and reminders. It is not medical advice. For any health questions about your puppy, please consult your veterinarian"
     }

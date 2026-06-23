@@ -108,8 +108,13 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('more.sections.support'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.rows.help'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.rows.about'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.about.version'))).toBeTruthy();
+    expect(screen.queryByText(/beta/i)).toBeNull();
+    expect(screen.getByText(i18n.t('more.rows.puppyplan-plus'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
 
     expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(7);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(8);
 
     const scrollView = result.UNSAFE_getByType(ScrollView);
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
@@ -213,6 +218,34 @@ describe('More settings entries', () => {
     })).toBeNull();
     expect(screen.queryByRole('button', {
       name: i18n.t('more.rows.quick-trackers'),
+    })).toBeNull();
+  });
+
+  it('keeps notification and privacy placeholders aligned with V2 pass-3 copy without adding routes', () => {
+    render(
+      <AppProviders>
+        <AuthProvider dependencies={authDependencies}>
+          <MoreScreen
+            canManagePuppySettings
+            openPuppyProfile={jest.fn()}
+            openQuickTrackers={jest.fn()}
+            openTimeline={jest.fn()}
+            puppy={puppy}
+          />
+        </AuthProvider>
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('more.notifications.push-hint'))).toBeTruthy();
+    expect(i18n.t('more.notifications.push-hint')).toMatch(/^For now,/);
+    expect(screen.getByText(i18n.t('more.privacy.section-account-removal'))).toBeTruthy();
+    expect(screen.queryByText(/Danger zone/i)).toBeNull();
+
+    expect(screen.queryByRole('button', {
+      name: i18n.t('more.notifications.screen-title'),
+    })).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('more.privacy.screen-title'),
     })).toBeNull();
   });
 

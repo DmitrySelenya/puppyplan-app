@@ -138,7 +138,10 @@ export function TodayScreen({
       )}
       {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
       {shouldShowQuickLogFailedBanner(rows) ? (
-        <Card>
+        <Card
+          accessibilityLabel={t('quick-log.failed.persistent-banner')}
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert">
           <AppText variant="headline">{t('quick-log.failed.persistent-banner')}</AppText>
         </Card>
       ) : null}

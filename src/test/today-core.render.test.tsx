@@ -108,7 +108,7 @@ describe('Today core card rendering', () => {
   });
 
   it('renders one hero, capped daily cards, and one guidance card from the active care context', async () => {
-    const { queryClient } = renderWithQuery(
+    const { queryClient, toJSON } = renderWithQuery(
       <TodayScreen
         careContext={careContext}
         openTimeline={openTimeline}
@@ -139,6 +139,7 @@ describe('Today core card rendering', () => {
     expect(screen.getAllByTestId('today-guidance-card')).toHaveLength(1);
     expect(screen.getByText(i18n.t('today.hero.day-2-morning.title'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('guidance.potty-rhythm.title')).length).toBeGreaterThan(0);
+    expect(JSON.stringify(toJSON())).toContain(i18n.t('today.hero.day-2-morning.title'));
   });
 
   it('renders the loading state while active care events load', () => {
@@ -150,7 +151,7 @@ describe('Today core card rendering', () => {
       />,
     );
 
-    expect(screen.getByText(i18n.t('today.states.loading.title'))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('today.states.loading.title')).length).toBeGreaterThan(0);
   });
 
   it('wires the hero primary CTA to the Quick Log action', async () => {
@@ -201,6 +202,8 @@ describe('Today core card rendering', () => {
     await waitFor(() => {
       expect(screen.getByText(i18n.t('today.states.error.title'))).toBeTruthy();
     });
+    expect(screen.getByText(i18n.t('today.states.error.status'))).toBeTruthy();
+    expect(screen.getByLabelText(`${i18n.t('today.states.error.title')}. ${i18n.t('today.states.error.body')}`)).toBeTruthy();
   });
 
   it('renders the offline-read state from the synthetic review override', () => {
@@ -214,6 +217,8 @@ describe('Today core card rendering', () => {
     );
 
     expect(screen.getByText(i18n.t('today.states.offline-read.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.states.offline-read.status'))).toBeTruthy();
+    expect(screen.getByLabelText(`${i18n.t('today.states.offline-read.title')}. ${i18n.t('today.states.offline-read.body')}`)).toBeTruthy();
   });
 
   it('renders the pending-write state when local care events are waiting to sync', async () => {
@@ -240,6 +245,8 @@ describe('Today core card rendering', () => {
     await waitFor(() => {
       expect(screen.getByText(i18n.t('today.states.pending-write.title'))).toBeTruthy();
     });
+    expect(screen.getByText(i18n.t('today.states.pending-write.status'))).toBeTruthy();
+    expect(screen.getByLabelText(`${i18n.t('today.states.pending-write.title')}. ${i18n.t('today.states.pending-write.body')}`)).toBeTruthy();
   });
 
   it('renders the permission state for view-only household access', () => {
@@ -254,6 +261,50 @@ describe('Today core card rendering', () => {
       />,
     );
 
-    expect(screen.getByText(i18n.t('today.states.permission-denied.title'))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('today.states.permission-denied.title')).length).toBeGreaterThan(0);
+  });
+
+  it('keeps the V2 Today anatomy in top-to-bottom order with one Timeline entry button', async () => {
+    mockListEvents.mockResolvedValue([
+      createRow({
+        event_type: 'potty',
+        payload: {
+          subtype: 'outside',
+        },
+      }),
+    ]);
+    const { toJSON } = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+        todayPlanInput={{
+          dayNumber: 7,
+          suggestedDailyCards: ['feeding_pattern', 'timeline_review', 'potty_rhythm'],
+          weeklySummary: {
+            feedingCount: 14,
+            pottyCount: 21,
+            sleepHoursPerDay: 18,
+          },
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('today.quick-log.section-title'))).toBeTruthy();
+    });
+
+    const tree = JSON.stringify(toJSON());
+    const titleIndex = tree.indexOf(i18n.t('tabs.today'));
+    const heroIndex = tree.indexOf(i18n.t('today.hero.day-7-weekly-rhythm.title'));
+    const sectionIndex = tree.indexOf(i18n.t('today.quick-log.section-title'));
+    const timelineIndex = tree.indexOf(i18n.t('today.quick-log.timeline-entry'));
+
+    expect(titleIndex).toBeGreaterThanOrEqual(0);
+    expect(heroIndex).toBeGreaterThan(titleIndex);
+    expect(sectionIndex).toBeGreaterThan(heroIndex);
+    expect(timelineIndex).toBeGreaterThan(sectionIndex);
+    expect(screen.getAllByRole('button', {
+      name: i18n.t('today.quick-log.timeline-entry'),
+    })).toHaveLength(1);
   });
 });
