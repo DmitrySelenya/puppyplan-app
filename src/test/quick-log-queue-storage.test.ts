@@ -107,6 +107,39 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
       return;
     }
 
+    if (/UPDATE queue_item\s+SET state = \?,\s+retry_count = retry_count \+ 1/i.test(sql)) {
+      const state = params[0];
+      const last_error_category = params[1];
+      const payload_json = params[2];
+      const client_event_id = params[3];
+
+      if (
+        typeof state !== 'string' ||
+        typeof last_error_category !== 'string' ||
+        typeof payload_json !== 'string' ||
+        typeof client_event_id !== 'string'
+      ) {
+        throw new Error('Missing corrupt payload quarantine update parameters');
+      }
+
+      const existing = this.rows.get(client_event_id);
+
+      if (!existing) {
+        return;
+      }
+
+      this.rows.set(client_event_id, {
+        ...existing,
+        state,
+        retry_count: existing.retry_count + 1,
+        last_error_category,
+        retry_after_at: null,
+        payload_json,
+      });
+
+      return;
+    }
+
     if (/UPDATE queue_item/i.test(sql)) {
       // Parameter order mirrors writeQueueItemState in src/lib/queue/storage.ts.
       const client_event_id = params[5];
@@ -182,7 +215,7 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
   ): Promise<T[]> {
     this.statements.push(sql);
 
-    if (/SELECT client_event_id, payload_json\s+FROM queue_item/i.test(sql)) {
+    if (/SELECT client_event_id, payload_json, state\s+FROM queue_item/i.test(sql)) {
       const eventType = String(params[0]);
 
       return Array.from(this.rows.values())
@@ -190,6 +223,7 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
         .map((row) => ({
           client_event_id: row.client_event_id,
           payload_json: row.payload_json,
+          state: row.state,
         })) as T[];
     }
 
@@ -331,6 +365,266 @@ describe('Quick Log queue SQLite storage boundary', () => {
       payload: {
         subtype: 'inside',
       },
+    });
+  });
+
+  it('AC-1/AC-2: quarantines corrupt v2 legacy potty payloads without blocking healthy rows', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const observability = {
+      captureException: jest.fn(),
+    };
+    const corruptJsonClientEventId = 'evt_00000000-0000-4000-8000-000000000018';
+    const nonObjectClientEventId = 'evt_00000000-0000-4000-8000-000000000019';
+    const invalidObjectClientEventId = 'evt_00000000-0000-4000-8000-000000000020';
+    const invalidSubtypeClientEventId = 'evt_00000000-0000-4000-8000-000000000021';
+
+    executor.userVersion = 2;
+    executor.columns.add('created_by');
+    executor.rows.set(corruptJsonClientEventId, {
+      client_event_id: corruptJsonClientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: createdBy,
+      event_type: 'potty',
+      payload_version: 1,
+      payload_json: '{not-json',
+      occurred_at: occurredAt,
+      state: 'pending_local',
+      retry_count: 0,
+      last_error_category: null,
+      retry_after_at: null,
+      created_at: '2026-05-26T07:58:00.000Z',
+      updated_at: '2026-05-26T07:58:00.000Z',
+    });
+    executor.rows.set(nonObjectClientEventId, {
+      client_event_id: nonObjectClientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: createdBy,
+      event_type: 'potty',
+      payload_version: 1,
+      payload_json: '[]',
+      occurred_at: occurredAt,
+      state: 'pending_local',
+      retry_count: 2,
+      last_error_category: null,
+      retry_after_at: null,
+      created_at: '2026-05-26T07:59:00.000Z',
+      updated_at: '2026-05-26T07:59:00.000Z',
+    });
+    executor.rows.set(invalidObjectClientEventId, {
+      client_event_id: invalidObjectClientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: createdBy,
+      event_type: 'potty',
+      payload_version: 1,
+      payload_json: '{}',
+      occurred_at: occurredAt,
+      state: 'pending_local',
+      retry_count: 1,
+      last_error_category: null,
+      retry_after_at: null,
+      created_at: '2026-05-26T07:59:30.000Z',
+      updated_at: '2026-05-26T07:59:30.000Z',
+    });
+    executor.rows.set(invalidSubtypeClientEventId, {
+      client_event_id: invalidSubtypeClientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: createdBy,
+      event_type: 'potty',
+      payload_version: 1,
+      payload_json: '{"subtype":"pee_outside"}',
+      occurred_at: occurredAt,
+      state: 'pending_local',
+      retry_count: 1,
+      last_error_category: null,
+      retry_after_at: null,
+      created_at: '2026-05-26T07:59:45.000Z',
+      updated_at: '2026-05-26T07:59:45.000Z',
+    });
+    executor.rows.set(clientEventId, {
+      client_event_id: clientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: createdBy,
+      event_type: 'potty',
+      payload_version: 1,
+      payload_json: '{"quick_action":"poop"}',
+      occurred_at: occurredAt,
+      state: 'pending_local',
+      retry_count: 0,
+      last_error_category: null,
+      retry_after_at: null,
+      created_at: createdAt,
+      updated_at: createdAt,
+    });
+
+    await applyQuickLogQueueMigrations(executor, { observability });
+
+    expect(executor.userVersion).toBe(QUICK_LOG_QUEUE_SCHEMA_VERSION);
+    expect(executor.rows.get(corruptJsonClientEventId)).toMatchObject({
+      state: 'failed_permanent',
+      retry_count: 1,
+      last_error_category: 'corrupt_payload',
+      retry_after_at: null,
+      payload_json: '{}',
+    });
+    expect(executor.rows.get(nonObjectClientEventId)).toMatchObject({
+      state: 'failed_permanent',
+      retry_count: 3,
+      last_error_category: 'corrupt_payload',
+      retry_after_at: null,
+      payload_json: '{}',
+    });
+    expect(executor.rows.get(invalidObjectClientEventId)).toMatchObject({
+      state: 'failed_permanent',
+      retry_count: 2,
+      last_error_category: 'corrupt_payload',
+      retry_after_at: null,
+      payload_json: '{}',
+    });
+    expect(executor.rows.get(invalidSubtypeClientEventId)).toMatchObject({
+      state: 'failed_permanent',
+      retry_count: 2,
+      last_error_category: 'corrupt_payload',
+      retry_after_at: null,
+      payload_json: '{}',
+    });
+    expect(executor.rows.get(clientEventId)?.payload_json).toBe('{"subtype":"poop"}');
+    expect(observability.captureException).toHaveBeenCalledTimes(4);
+    expect(observability.captureException).toHaveBeenCalledWith(expect.any(Error), {
+      area: 'quick_log_queue',
+      errorCategory: 'corrupt_payload',
+      operation: 'schema_migration_v3',
+      tags: {
+        migration: 'v3',
+      },
+    });
+
+    const storage = createQuickLogQueueStorage(executor);
+
+    await expect(storage.getByClientEventId(corruptJsonClientEventId)).resolves.toMatchObject({
+      client_event_id: corruptJsonClientEventId,
+      last_error_category: 'corrupt_payload',
+      payload: {},
+      state: 'failed_permanent',
+    });
+    await expect(storage.getByClientEventId(invalidSubtypeClientEventId)).resolves.toMatchObject({
+      client_event_id: invalidSubtypeClientEventId,
+      last_error_category: 'corrupt_payload',
+      payload: {},
+      state: 'failed_permanent',
+    });
+    await expect(storage.manualRetry(invalidSubtypeClientEventId, {
+      now: '2026-05-26T08:01:00.000Z',
+    })).rejects.toThrow();
+    await expect(storage.remove(corruptJsonClientEventId)).resolves.toBeUndefined();
+    expect(executor.rows.has(corruptJsonClientEventId)).toBe(false);
+    await expect(storage.claimNextReadyToSend({
+      now: '2026-05-26T08:02:00.000Z',
+    })).resolves.toMatchObject({
+      client_event_id: clientEventId,
+      payload: {
+        subtype: 'poop',
+      },
+      state: 'sending',
+    });
+  });
+
+  it('AC-3: preserves deleted-before-sync corrupt rows as terminal during v3 migration', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const observability = {
+      captureException: jest.fn(),
+    };
+    const deletedClientEventId = 'evt_00000000-0000-4000-8000-000000000022';
+
+    executor.userVersion = 2;
+    executor.columns.add('created_by');
+    executor.rows.set(deletedClientEventId, {
+      client_event_id: deletedClientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: createdBy,
+      event_type: 'potty',
+      payload_version: 1,
+      payload_json: '{not-json',
+      occurred_at: occurredAt,
+      state: 'deleted_before_sync',
+      retry_count: 0,
+      last_error_category: null,
+      retry_after_at: null,
+      created_at: '2026-05-26T07:57:00.000Z',
+      updated_at: '2026-05-26T07:57:00.000Z',
+    });
+
+    await applyQuickLogQueueMigrations(executor, { observability });
+
+    expect(executor.rows.get(deletedClientEventId)).toMatchObject({
+      state: 'deleted_before_sync',
+      retry_count: 1,
+      last_error_category: 'corrupt_payload',
+      retry_after_at: null,
+      payload_json: '{}',
+    });
+
+    const storage = createQuickLogQueueStorage(executor);
+
+    await expect(storage.getByClientEventId(deletedClientEventId)).resolves.toMatchObject({
+      client_event_id: deletedClientEventId,
+      last_error_category: 'corrupt_payload',
+      payload: {},
+      state: 'deleted_before_sync',
+    });
+    await expect(storage.claimNextReadyToSend({
+      now: '2026-05-26T08:02:00.000Z',
+    })).resolves.toBeNull();
+  });
+
+  it('AC-1: keeps corrupt server-confirmed rows terminal and readable during v3 migration', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const observability = {
+      captureException: jest.fn(),
+    };
+    const confirmedClientEventId = 'evt_00000000-0000-4000-8000-000000000023';
+
+    executor.userVersion = 2;
+    executor.columns.add('created_by');
+    executor.rows.set(confirmedClientEventId, {
+      client_event_id: confirmedClientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: createdBy,
+      event_type: 'potty',
+      payload_version: 1,
+      payload_json: '{not-json',
+      occurred_at: occurredAt,
+      state: 'server_confirmed',
+      retry_count: 0,
+      last_error_category: null,
+      retry_after_at: null,
+      created_at: '2026-05-26T07:56:00.000Z',
+      updated_at: '2026-05-26T07:56:00.000Z',
+    });
+
+    await applyQuickLogQueueMigrations(executor, { observability });
+
+    expect(executor.rows.get(confirmedClientEventId)).toMatchObject({
+      state: 'server_confirmed',
+      retry_count: 1,
+      last_error_category: 'corrupt_payload',
+      retry_after_at: null,
+      payload_json: '{}',
+    });
+
+    const storage = createQuickLogQueueStorage(executor);
+
+    await expect(storage.getByClientEventId(confirmedClientEventId)).resolves.toMatchObject({
+      client_event_id: confirmedClientEventId,
+      last_error_category: 'corrupt_payload',
+      payload: {},
+      state: 'server_confirmed',
     });
   });
 

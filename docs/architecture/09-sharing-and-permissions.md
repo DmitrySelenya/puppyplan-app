@@ -11,6 +11,8 @@ There are two different access models:
 
 Trusted Sitter Mode is a view over accepted caregiver membership, not a new role.
 
+Render context (ADR-0018): the trainer/share recipient surface is a **public, read-only web view** served from the sanitized projection — no account, no app install — and the card "revocable link" recipient uses the same web surface. The sitter surface is **in-app**: accepting an invite adds a `caregiver` membership flagged `sitter`, and the shared puppy appears alongside the invitee's own puppies (one account holds many memberships), badged and switchable. Recipient web views never embed app chrome and collapse expired/revoked/used/invalid into one neutral unavailable state.
+
 ## Server Enforcement
 
 UI guards are convenience only. Real enforcement is:

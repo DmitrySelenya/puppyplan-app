@@ -358,6 +358,9 @@ MVP:
 - owner может remove caregiver, и access прекращается сразу.
 
 Trusted Sitter Mode:
+
+> **V2 (2026-06-23, ADR-0018):** приглашение пэтситтера — **в один шаг** («Поделиться с пэтситтером»: человек + окно + чеклист). Щенок появляется у пэтситтера в его же приложении, помеченным бейджем, рядом с его собственными щенками (один аккаунт — много доступов). Богатая модель (окно/чеклист/completion-push/авто-истечение) сохраняется.
+
 - owner может пометить единственного invited caregiver как trusted sitter на выбранный период, когда owner уезжает или передает уход;
 - sitter видит общий Today, Timeline и checklist из выбранных trackers/reminders, без доступа к billing, owner settings или private share scopes;
 - sitter получает reminders/checklist prompts на своем устройстве после accept;
@@ -377,6 +380,8 @@ Non-MVP:
 - paid sitter management, shifts, rates или multi-day rota.
 
 ### Trainer / Kinologist Sharing
+
+> **V2 (2026-06-23, ADR-0018):** trainer-доступ показывается как **живая read-only веб-страница** (ссылка `/share/*`, без аккаунта и установки приложения); owner-флоу — link-first («Создать ссылку»). Старый in-app «trainer accepted view» отменён. См. `docs/design/v2/specs/sharing-sitter-trainer-v2.md`.
 
 Цель: дать владельцу безопасно поделиться полезным контекстом щенка без раскрытия всего household.
 

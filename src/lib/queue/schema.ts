@@ -65,6 +65,17 @@ export const quickLogStoredQueueItemSchema = z.object({
   created_at: timestampSchema,
   updated_at: timestampSchema,
 }).strict().superRefine((item, context) => {
+  if (
+    item.last_error_category === 'corrupt_payload'
+    && (
+      item.state === 'failed_permanent'
+      || item.state === 'deleted_before_sync'
+      || item.state === 'server_confirmed'
+    )
+  ) {
+    return;
+  }
+
   const quickLogItemResult = quickLogQueueItemSchema.safeParse({
     client_event_id: item.client_event_id,
     household_id: item.household_id,

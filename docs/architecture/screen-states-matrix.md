@@ -29,8 +29,12 @@ Every key screen must define these states unless explicitly carved out:
 | Family Sharing | loading, empty, error, offline-read, pending-write, permission-denied | Viewer write actions hidden/disabled by role |
 | Family Invite | loading, error, pending-write, permission-denied | Account required before sending invite |
 | Trainer Scope Selector | loading, error, pending-write, permission-denied | Preview must match server projection |
-| Trainer Preview | loading, empty, error, offline-read, pending-write, permission-denied, revoked/expired-share | Health summary excludes private fields |
-| Share Link View | loading, empty, error, revoked/expired-share | Neutral unavailable copy |
+| Trainer Preview (owner) | loading, empty, error, offline-read, pending-write, permission-denied, revoked/expired-share | Link-first; preview must match server projection; health summary excludes private fields |
+| Trainer Web View (recipient) | loading, empty (per scope), error, revoked/expired-share | Browser `WebFrame`, no account, live projection; ADR-0018 |
+| Share Link View (web) | loading, empty, error, revoked/expired-share | One neutral unavailable state for expired/revoked/used/invalid |
+| Sitter Invite Accept | loading, error, pending-write, permission-denied, revoked/expired-share | Recoverable identity only; reuses §3.1.4 accept; ADR-0018 |
+| Shared-Access Home / Switcher | loading, empty, error, offline-read | Shared puppy badged; one account, many memberships |
+| Sitter Checklist (reduced) | loading, empty, error, offline-read, pending-write | Deadline strip; completion-push to owner |
 | More | loading, empty, error, offline-read, permission-denied | Paywall shell hidden/off in beta |
 | Privacy/About | default, permission-denied if applicable | Static carve-out |
 

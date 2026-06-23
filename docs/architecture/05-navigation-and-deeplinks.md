@@ -71,6 +71,8 @@ Production invite/share URLs must use HTTPS paths:
 - `/invite/*`;
 - `/share/*`.
 
+Render target differs by path (ADR-0018): `/invite/*` opens the **app** (sitter/caregiver accept → thin account → household membership), while `/share/*` renders a **public read-only web view** (trainer and card recipients — no account, no app install). The one-step "Поделиться с пэтситтером" owner flow issues an `/invite/*` link.
+
 ## iOS Requirements
 
 - Associated Domains in `app.config.ts`.
