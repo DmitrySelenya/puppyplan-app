@@ -1,19 +1,21 @@
 # Design Fidelity Recovery - Today, Quick Log, Timeline, Health, More
 
-> Implementation agents: use `AGENTS.md`, `.agents/skills/implement`, `.agents/skills/tdd`, `.agents/skills/review`, and this plan task-by-task. Keep the design source of truth in `DESIGN.md`, `docs/design/v1/native-coverage.md`, and `docs/design/v1/screenshots/index.md`.
+> Implementation agents: use `AGENTS.md`, `.agents/skills/implement`, `.agents/skills/tdd`, `.agents/skills/review`, and this plan task-by-task. This plan is historical recovery evidence for the V1 pass; new redesign intake acceptance now locks against `docs/design/v2/manifest.json` and `docs/design/v2/screenshots/index.md`.
 
 **Goal:** Bring production-visible PuppyPlan native screens back into close visual and interaction alignment with the approved Claude Design / design atlas while preserving architecture boundaries and future design-editability.
 
-**Status:** Local implementation complete; awaiting user visual review.
+**Status:** Retargeted to V2 intake; V1 recovery remains historical evidence.
 
-**Current phase:** Phase 6 - X-Ray Review and Final Verification complete.
+**Current phase:** V1 Phase 6 complete; continue new work from `2026-06-22-redesign-v2-intake.md` and the V2 atlas.
 
 **Linear:** Mirrored to `PUP-22` and `PUP-23` on 2026-06-13.
 
 **Primary source docs:**
+- `docs/design/v2/manifest.json`.
+- `docs/design/v2/screenshots/index.md`.
+- `docs/design/v2/README.md`.
 - `DESIGN.md` sections 1.2, 2.2, 2.3, 2.4, 4.1, 4.4.
-- `docs/design/v1/native-coverage.md`.
-- `docs/design/v1/screenshots/index.md`.
+- `docs/design/v1/native-coverage.md` and `docs/design/v1/screenshots/index.md` as historical comparison only.
 - `docs/architecture/05-navigation-and-deeplinks.md`.
 - `docs/architecture/06-design-system-and-ui-contracts.md`.
 - `docs/architecture/12-i18n-and-content.md`.
@@ -122,6 +124,7 @@ Retained screenshots are local-only under `/tmp/puppyplan-design-fidelity-2026-0
 
 ## Changelog
 
+- 2026-06-23: Retargeted this plan from active V1 acceptance to V2 intake. V1 screenshots/native evidence remain historical comparison material; new design-fidelity acceptance uses `docs/design/v2/manifest.json`, `docs/design/v2/screenshots/index.md`, and the active `2026-06-22-redesign-v2-intake.md` plan. No source code, schema, native generated files, production config, remote state, or Linear issue was changed.
 - 2026-06-14: Applied review-deep fix pass for H1/H2/H3 and related Medium/Low findings. Health now renders the safe mixed-list shell; Quick Log duplicate warnings are derived from cached rows and render as a dedicated sheet state; Quick Log success snackbar exposes Add details for detail-capable trackers using a precomputed `clientEventId`; Timeline pending Undo/Delete moved behind overflow; Quick Trackers rolls back optimistic UI on save failure; `output/` is ignored as local visual evidence. Verification so far: targeted suites for Quick Log controller/sheet/route, Timeline Quick Log, Health app shell, Quick Trackers, and Quick Log mutation passed; `npm run typecheck`, `npm run lint`, `node scripts/checks/check-i18n.mjs`, `node scripts/checks/check-navigation-contract.mjs`, and `git diff --check` passed.
 - 2026-06-14: Ran full local gate: `npm run check` exited `0` with 59 Jest suites / 396 tests and 109 node tests passing; known non-failing React `act(...)` warning remains in `src/test/screen-header.render.test.tsx`. XcodeBuildMCP session defaults were set to `Grith iPhone SE 3 iOS 26.3` (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`), `PuppyPlan`, Debug. `build_run_sim` timed out twice at the tool 120s limit while native build work continued; direct `install_app_sim` and `launch_app_sim` then succeeded for `com.dmitry-selenya.puppyplan-app`. Redacted SE Today startup screenshot saved at `/tmp/puppyplan-design-fidelity-2026-06-14/after/se-today-launch-smoke-redacted.jpg`; SE Health mixed-list screenshot saved at `/tmp/puppyplan-design-fidelity-2026-06-14/after/se-health-mixed-list.jpg`; unredacted Today local copy was deleted.
 - 2026-06-14: Addressed follow-up review remarks. Health production default no longer renders static mixed-list fixture rows; the mixed rows require explicit `reviewState="mixed-list"` and the production empty/deferred CTAs are disabled until PUP-25 health records ship. Quick Log duplicate-warning scrim now cancels the warning instead of closing the sheet, and the scrim covers the full background rather than stopping at the bottom-sheet min height. Added focused hardening coverage for Quick Log details household/puppy/date mismatch rejection, `formatCalendarDate` invalid/boundary inputs, `createQuickLogRecentEvents` row sorting/filtering, and duplicate-source most-recent selection. Verification: targeted `npm run test:unit -- src/test/app-shell.render.test.tsx src/test/quick-log-sheet.render.test.tsx src/test/quick-log-details-route.render.test.tsx src/test/quick-log-controller.test.tsx src/test/format-date.test.ts src/test/quick-log-recent-events.test.ts` passed with 6 suites / 46 tests; full `npm run check` passed with 61 Jest suites / 409 tests and 109 node tests. Known non-failing React `act(...)` warning remains in `src/test/screen-header.render.test.tsx`.

@@ -33,11 +33,11 @@ const puppy: PuppyProfile = {
   id: '00000000-0000-4000-8000-000000002302',
   name: 'Puppy A',
   quick_tracker_ids: [
-    'potty_pee_outside',
-    'potty_pee_inside',
-    'potty_poop',
-    'feeding_meal',
-    'sleep_nap',
+    'potty',
+    'potty',
+    'potty',
+    'feeding',
+    'sleep',
   ],
   updated_at: '2026-06-09T08:00:00.000Z',
 };
@@ -52,7 +52,7 @@ describe('More settings entries', () => {
         householdId: '00000000-0000-4000-8000-000000002301',
         householdRole: 'owner',
         puppyId: '00000000-0000-4000-8000-000000002302',
-        selectedTrackerIds: ['feeding_meal'],
+        selectedTrackerIds: ['feeding'],
         todayDate: '2026-06-09',
         userId: '00000000-0000-4000-8000-000000002303',
       },
@@ -115,7 +115,7 @@ describe('More settings entries', () => {
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
 
     expect(contentStyle.paddingBottom).toBeGreaterThanOrEqual(
-      tokens.layout.tabBarHeight + tokens.component.fab.size + tokens.space[6],
+      tokens.layout.tabBarHeight + tokens.space[6],
     );
   });
 

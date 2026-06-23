@@ -1,11 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import {
   defaultQuickLogTrackerIds,
+  type QuickLogPottySubtype,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
+import type { QuickLogDuplicateCareWarningPayload } from '@/contracts/business-rules';
+import { eventPayloadSchemas } from '@/contracts/supabase';
 import { AppIcon } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
@@ -101,11 +104,45 @@ export function createQuickLogRecentEvents(
       return [];
     }
 
+    const payload = createRecentEventPayload(row, trackerId);
+
     return [{
       occurredAtMs,
+      ...(payload === undefined ? {} : { payload }),
       trackerId,
     }];
   }).sort((left, right) => right.occurredAtMs - left.occurredAtMs);
+}
+
+function createRecentEventPayload(
+  row: QuickLogCachedEventRow,
+  trackerId: QuickLogTrackerId,
+): QuickLogDuplicateCareWarningPayload | undefined {
+  if (trackerId !== 'potty') {
+    return undefined;
+  }
+
+  const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
+
+  if (payloadResult.success) {
+    return {
+      subtype: payloadResult.data.subtype,
+    };
+  }
+
+  if (row.payload.quick_action === 'pee_outside') {
+    return { subtype: 'outside' };
+  }
+
+  if (row.payload.quick_action === 'pee_inside') {
+    return { subtype: 'inside' };
+  }
+
+  if (row.payload.quick_action === 'poop') {
+    return { subtype: 'poop' };
+  }
+
+  return undefined;
 }
 
 export function QuickLogShell(props: QuickLogShellProps) {
@@ -151,6 +188,7 @@ function QuickLogShellContent({
   feedback: QuickLogFeedbackPort;
 }) {
   const { t } = useAppTranslation();
+  const [pottySubtypePickerOpen, setPottySubtypePickerOpen] = useState(false);
   const isViewOnly = careContext?.householdRole === 'viewer';
   const readyCareContext = mutation === undefined || isViewOnly
     ? null
@@ -221,18 +259,33 @@ function QuickLogShellContent({
       onDismiss={
         controller.duplicateWarning
           ? controller.cancelDuplicate
-          : closeSheet
+          : pottySubtypePickerOpen
+            ? () => setPottySubtypePickerOpen(false)
+            : closeSheet
       }>
       <SheetSurface
         accessibilityLabel={
           controller.duplicateWarning
             ? t('quick-log.duplicate-warning.title')
+            : pottySubtypePickerOpen
+              ? t('quick-log.potty-subtype.title')
             : t('quick-log.sheet.title')
         }>
         {controller.duplicateWarning ? (
           <DuplicateWarning
             onCancel={controller.cancelDuplicate}
             onConfirm={controller.confirmDuplicate}
+          />
+        ) : pottySubtypePickerOpen ? (
+          <PottySubtypePicker
+            onBack={() => setPottySubtypePickerOpen(false)}
+            onSelect={(pottySubtype) => {
+              setPottySubtypePickerOpen(false);
+              controller.logTracker({
+                pottySubtype,
+                trackerId: 'potty',
+              });
+            }}
           />
         ) : (
           <>
@@ -268,7 +321,12 @@ function QuickLogShellContent({
                   key={trackerId}
                   label={t(getQuickLogTrackerLabelKey(trackerId))}
                   onPress={() => {
-                    controller.logTracker(trackerId);
+                    if (trackerId === 'potty') {
+                      setPottySubtypePickerOpen(true);
+                      return;
+                    }
+
+                    controller.logTracker({ trackerId });
                   }}
                   testID="quick-log-tracker-tile"
                 />
@@ -284,6 +342,59 @@ function QuickLogShellContent({
         )}
       </SheetSurface>
     </QuickLogSheetFrame>
+  );
+}
+
+function PottySubtypePicker({
+  onBack,
+  onSelect,
+}: Readonly<{
+  onBack: () => void;
+  onSelect: (subtype: QuickLogPottySubtype) => void;
+}>) {
+  const { t } = useAppTranslation();
+
+  return (
+    <Stack gap="md">
+      <Stack
+        align="flex-start"
+        direction="horizontal"
+        gap="sm"
+        justify="space-between"
+        wrap>
+        <SheetHeader
+          style={styles.title}
+          title={t('quick-log.potty-subtype.title')}
+        />
+        <Button
+          label={t('common.back')}
+          labelMaxFontSizeMultiplier={2}
+          labelVariant="label"
+          onPress={onBack}
+          style={styles.editTrackersButton}
+          variant="tertiary"
+        />
+      </Stack>
+      <AppText tone="secondary">{t('quick-log.potty-subtype.body')}</AppText>
+      <Stack direction="horizontal" gap="sm" wrap>
+        {pottySubtypeOptions.map((option) => (
+          <TrackerTile
+            accessibilityLabel={t(option.labelKey)}
+            icon={(
+              <AppIcon
+                name={option.icon}
+                size={24}
+                testID={`quick-log-potty-subtype-icon-${option.icon}`}
+              />
+            )}
+            key={option.value}
+            label={t(option.labelKey)}
+            onPress={() => onSelect(option.value)}
+            testID="quick-log-potty-subtype-tile"
+          />
+        ))}
+      </Stack>
+    </Stack>
   );
 }
 
@@ -394,11 +505,11 @@ const styles = StyleSheet.create({
 function quickLogTrackerIcon(
   trackerId: QuickLogTrackerId,
 ): 'bowl' | 'calendar' | 'moon' | 'poop' | 'pottyInside' | 'spark' | 'water' {
-  if (trackerId === 'feeding_meal') {
+  if (trackerId === 'feeding') {
     return 'bowl';
   }
 
-  if (trackerId === 'sleep_nap') {
+  if (trackerId === 'sleep') {
     return 'moon';
   }
 
@@ -406,17 +517,31 @@ function quickLogTrackerIcon(
     return 'spark';
   }
 
-  if (trackerId === 'training') {
+  if (trackerId === 'walk') {
     return 'calendar';
-  }
-
-  if (trackerId === 'potty_poop') {
-    return 'poop';
-  }
-
-  if (trackerId === 'potty_pee_inside') {
-    return 'pottyInside';
   }
 
   return 'water';
 }
+
+const pottySubtypeOptions = [
+  {
+    icon: 'water',
+    labelKey: 'quick-log.trackers.potty-outside',
+    value: 'outside',
+  },
+  {
+    icon: 'pottyInside',
+    labelKey: 'quick-log.trackers.potty-inside',
+    value: 'inside',
+  },
+  {
+    icon: 'poop',
+    labelKey: 'quick-log.trackers.potty-poop',
+    value: 'poop',
+  },
+] as const satisfies readonly {
+  icon: ReturnType<typeof quickLogTrackerIcon>;
+  labelKey: ReturnType<typeof getQuickLogTrackerLabelKey>;
+  value: QuickLogPottySubtype;
+}[];

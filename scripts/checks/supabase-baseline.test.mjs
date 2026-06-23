@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { describe, it } from 'node:test';
@@ -22,22 +22,42 @@ const supabaseContractPath = 'src/contracts/supabase.ts';
 const packageJsonPath = 'package.json';
 const envExamplePath = '.env.example';
 const remoteWorkflowPath = '.github/workflows/supabase-remote-dev.yml';
+const databaseTypesGeneratedCheckPath = 'scripts/checks/check-database-types-generated.mjs';
+const migrationDir = 'supabase/migrations';
 
 function migrationSource() {
   return readFileSync(baselineMigrationPath, 'utf8');
 }
 
+function migrationPaths() {
+  return readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_.*\.sql$/u.test(filename))
+    .sort()
+    .map((filename) => `${migrationDir}/${filename}`);
+}
+
 function allMigrationSource() {
-  return [
-    baselineMigrationPath,
-    hardeningMigrationPath,
-    reviewFixesMigrationPath,
-    remoteCiHardeningMigrationPath,
-    shareSoftDeleteFixMigrationPath,
-    shareLinkViewRpcMigrationPath,
-    puppyQuickTrackerMigrationPath,
-    puppyQuickTrackerNonEmptyMigrationPath,
-  ].map((path) => readFileSync(path, 'utf8')).join('\n');
+  return migrationPaths().map((path) => readFileSync(path, 'utf8')).join('\n');
+}
+
+function canonicalQuickTrackerMigrationPaths() {
+  const paths = readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_.*(?:canonical.*quick.*tracker|quick.*tracker.*canonical|quick.*log.*tracker|tracker.*taxonomy|taxonomy.*tracker).*\.sql$/u.test(filename))
+    .map((filename) => `${migrationDir}/${filename}`)
+    .filter((path) => path !== puppyQuickTrackerMigrationPath && path !== puppyQuickTrackerNonEmptyMigrationPath);
+
+  assert.ok(
+    paths.length > 0,
+    'missing a new canonical Quick Log tracker taxonomy migration',
+  );
+
+  return paths;
+}
+
+function canonicalQuickTrackerMigrationSource() {
+  return canonicalQuickTrackerMigrationPaths()
+    .map((path) => readFileSync(path, 'utf8'))
+    .join('\n');
 }
 
 function viewBlock(source, viewName) {
@@ -72,6 +92,16 @@ function functionBlock(source, functionName) {
   return matches.at(-1)?.[0] ?? '';
 }
 
+function latestConstraintBlock(source, constraintName) {
+  const matches = [
+    ...source.matchAll(
+      new RegExp(`ADD CONSTRAINT ${constraintName} CHECK \\([\\s\\S]*?\\);`, 'gu'),
+    ),
+  ];
+  assert.ok(matches.length > 0, `missing ${constraintName} constraint`);
+  return matches.at(-1)?.[0] ?? '';
+}
+
 function exportedArrayValues(source, name) {
   const match = source.match(new RegExp(`export const ${name} = \\[([\\s\\S]*?)\\] as const;`, 'u'));
   assert.ok(match, `missing ${name} export`);
@@ -86,6 +116,49 @@ function postgresEnumValues(source, name) {
   return [...match[1].matchAll(/'([^']+)'/gu)].map((item) => item[1]);
 }
 
+function effectivePostgresEnumValues(name) {
+  const values = postgresEnumValues(migrationSource(), name);
+
+  for (const source of migrationPaths().map((path) => readFileSync(path, 'utf8'))) {
+    const alterPattern = new RegExp(
+      [
+        `ALTER\\s+TYPE\\s+public\\.${name}\\s+ADD\\s+VALUE`,
+        `(?:\\s+IF\\s+NOT\\s+EXISTS)?`,
+        `\\s+'([^']+)'`,
+        `(?:\\s+(BEFORE|AFTER)\\s+'([^']+)')?`,
+        `\\s*;`,
+      ].join(''),
+      'giu',
+    );
+
+    for (const match of source.matchAll(alterPattern)) {
+      const value = match[1];
+      const placement = match[2]?.toUpperCase();
+      const neighbor = match[3];
+
+      if (values.includes(value)) {
+        continue;
+      }
+
+      if (placement === undefined) {
+        values.push(value);
+        continue;
+      }
+
+      const neighborIndex = values.indexOf(neighbor);
+      assert.notEqual(
+        neighborIndex,
+        -1,
+        `${name} enum migration adds ${value} ${placement} missing neighbor ${neighbor}`,
+      );
+
+      values.splice(placement === 'BEFORE' ? neighborIndex : neighborIndex + 1, 0, value);
+    }
+  }
+
+  return values;
+}
+
 describe('Supabase baseline migration guardrails', () => {
   it('keeps SQL enums and table names aligned with TypeScript contracts', () => {
     const sql = migrationSource();
@@ -98,7 +171,7 @@ describe('Supabase baseline migration guardrails', () => {
     assert.deepEqual(postgresEnumValues(sql, 'household_role'), exportedArrayValues(contract, 'householdMembershipRoles'));
     assert.deepEqual(postgresEnumValues(sql, 'share_role'), exportedArrayValues(contract, 'shareRoles'));
     assert.deepEqual(postgresEnumValues(sql, 'share_scope_type'), exportedArrayValues(contract, 'shareScopes'));
-    assert.deepEqual(postgresEnumValues(sql, 'event_type'), exportedArrayValues(contract, 'eventTypes'));
+    assert.deepEqual(effectivePostgresEnumValues('event_type'), exportedArrayValues(contract, 'eventTypes'));
     assert.deepEqual(publicTables, exportedArrayValues(contract, 'supabaseMvpTableNames'));
     assert.deepEqual(appPrivateTables, exportedArrayValues(contract, 'appPrivateMvpTableNames'));
     assert.ok(!publicTables.includes('minimal_quick_log_queue_item'));
@@ -267,6 +340,87 @@ describe('Supabase baseline migration guardrails', () => {
       assert.match(source, expected);
     }
   });
+
+  it('AC-6: keeps applied quick tracker migrations historical and adds a new canonical migration', () => {
+    const originalQuickTrackerMigration = readFileSync(puppyQuickTrackerMigrationPath, 'utf8');
+    const originalNonEmptyMigration = readFileSync(puppyQuickTrackerNonEmptyMigrationPath, 'utf8');
+
+    assert.match(originalQuickTrackerMigration, /potty_pee_outside/u);
+    assert.match(originalQuickTrackerMigration, /feeding_meal/u);
+    assert.match(originalQuickTrackerMigration, /training/u);
+    assert.match(originalNonEmptyMigration, /potty_pee_outside/u);
+    assert.match(canonicalQuickTrackerMigrationSource(), /quick_tracker_ids/u);
+  });
+
+  it('AC-6 AC-7: canonical tracker migration remaps selected ids before enforcing final constraints', () => {
+    const source = canonicalQuickTrackerMigrationSource();
+    const finalAllowedConstraint = latestConstraintBlock(source, 'puppy_quick_tracker_ids_allowed');
+
+    for (const expected of [
+      /DROP CONSTRAINT IF EXISTS puppy_quick_tracker_ids_allowed/u,
+      /ALTER COLUMN quick_tracker_ids SET DEFAULT ARRAY\[\s*'potty',\s*'feeding',\s*'sleep',\s*'walk',\s*'zoomies'\s*\]::text\[\]/u,
+      /potty_pee_outside[\s\S]*potty/u,
+      /potty_pee_inside[\s\S]*potty/u,
+      /potty_poop[\s\S]*potty/u,
+      /feeding_meal[\s\S]*feeding/u,
+      /sleep_nap[\s\S]*sleep/u,
+      /cardinality\(quick_tracker_ids\) = 0[\s\S]*ARRAY\[\s*'potty',\s*'feeding',\s*'sleep',\s*'walk',\s*'zoomies'\s*\]::text\[\]/u,
+      /public\.quick_tracker_ids_are_unique\(quick_tracker_ids\)/u,
+    ]) {
+      assert.match(source, expected);
+    }
+
+    assert.match(
+      finalAllowedConstraint,
+      /quick_tracker_ids <@ ARRAY\[\s*'potty',\s*'feeding',\s*'sleep',\s*'walk',\s*'zoomies'\s*\]::text\[\]/u,
+    );
+
+    for (const rejectedLegacyId of [
+      'potty_pee_outside',
+      'potty_pee_inside',
+      'potty_poop',
+      'feeding_meal',
+      'sleep_nap',
+      'training',
+      'weight',
+    ]) {
+      assert.doesNotMatch(finalAllowedConstraint, new RegExp(rejectedLegacyId, 'u'));
+    }
+  });
+
+  it('AC-8: canonical tracker migration rewrites legacy potty quick_action payloads to subtype', () => {
+    const source = canonicalQuickTrackerMigrationSource();
+
+    for (const expected of [
+      /event_log/u,
+      /event_type = 'potty'/u,
+      /payload\s*\?\s*'quick_action'/u,
+      /jsonb_set\([\s\S]*payload[\s\S]*\{subtype\}/u,
+      /pee_outside[\s\S]*outside/u,
+      /pee_inside[\s\S]*inside/u,
+      /poop[\s\S]*poop/u,
+      /payload - 'quick_action'/u,
+      /payload\s*\?\s*'subtype'/u,
+    ]) {
+      assert.match(source, expected);
+    }
+  });
+
+  it('AC-2 AC-9: migration and TypeScript contracts expose walk without Quick Log weight', () => {
+    const source = canonicalQuickTrackerMigrationSource();
+    const contract = readFileSync(supabaseContractPath, 'utf8');
+
+    assert.match(source, /ALTER TYPE public\.event_type ADD VALUE IF NOT EXISTS 'walk'/u);
+    assert.deepEqual(exportedArrayValues(contract, 'puppyQuickTrackerIds'), [
+      'potty',
+      'feeding',
+      'sleep',
+      'walk',
+      'zoomies',
+    ]);
+    assert.match(contract, /export const walkEventPayloadSchema/u);
+    assert.doesNotMatch(contract, /'weight'/u);
+  });
 });
 
 describe('Supabase RLS pgTAP coverage guardrails', () => {
@@ -332,40 +486,79 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
       'puppy selected quick trackers reject more than five ids',
       'puppy selected quick trackers reject empty selected set',
       'puppy selected quick trackers reject unknown tracker ids',
+      'puppy selected quick trackers reject legacy tracker ids',
+      'puppy selected quick trackers reject health-only weight tracker',
     ]) {
-      assert.match(source, new RegExp(expected, 'u'));
+      assert.ok(source.includes(expected), `missing RLS coverage text: ${expected}`);
+    }
+
+    for (const expected of [
+      /ARRAY\['feeding', 'walk'\]::text\[\]/u,
+      /ARRAY\['potty', 'feeding', 'sleep', 'walk', 'zoomies'\]::text\[\]/u,
+    ]) {
+      assert.ok(expected.test(source), `missing canonical selected-tracker fixture: ${expected}`);
+    }
+
+    for (const rejectedLegacyId of [
+      'potty_pee_outside',
+      'potty_pee_inside',
+      'potty_poop',
+      'feeding_meal',
+      'sleep_nap',
+      'training',
+    ]) {
+      const legacyFixturePattern = new RegExp(`ARRAY\\[[^\\]]*${rejectedLegacyId}[^\\]]*\\]::text\\[\\]`, 'u');
+      assert.ok(
+        !legacyFixturePattern.test(source),
+        `RLS selected-tracker fixtures still use legacy id: ${rejectedLegacyId}`,
+      );
     }
   });
 });
 
-describe('remote Supabase CLI wrapper guardrails', () => {
-  it('keeps short Supabase scripts on the remote path instead of local Docker', () => {
+describe('no-Docker Supabase guardrails', () => {
+  it('keeps local aggregate gates on static checks, not Supabase CLI wrappers', () => {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+
+    assert.match(packageJson.scripts.check, /npm run lint && npm run typecheck && npm run test/u);
+    assert.match(packageJson.scripts['test:node'], /scripts\/checks\/\*\.test\.mjs/u);
+
+    for (const localScriptName of ['check', 'test', 'test:node', 'test:scaffold']) {
+      assert.doesNotMatch(
+        packageJson.scripts[localScriptName],
+        /supabase:(?:test|lint|ci:remote|verify:remote)|db:push:remote:dry-run|run-remote-cli/u,
+        `${localScriptName} must remain no-Docker and non-remote`,
+      );
+    }
+  });
+
+  it('provides an explicit static SQL/RLS/typegen guardrail script for schema work', () => {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
 
     assert.equal(
-      packageJson.scripts['supabase:test'],
-      'node scripts/supabase/run-remote-cli.mjs test',
+      packageJson.scripts['supabase:guardrails'],
+      'node --test scripts/checks/supabase-baseline.test.mjs scripts/checks/supabase-typegen-output.test.mjs && node scripts/checks/check-database-types-generated.mjs',
     );
-    assert.equal(
-      packageJson.scripts['supabase:lint'],
-      'node scripts/supabase/run-remote-cli.mjs lint',
+    assert.doesNotMatch(
+      packageJson.scripts['supabase:guardrails'],
+      /run-remote-cli|supabase:(?:test|lint|ci:remote|verify:remote)|db:push:remote:dry-run/u,
     );
-    assert.equal(
-      packageJson.scripts['db:types'],
-      'node scripts/supabase/run-remote-cli.mjs types',
-    );
-    assert.doesNotMatch(packageJson.scripts['supabase:test'], /--local|supabase start/u);
-    assert.doesNotMatch(packageJson.scripts['supabase:lint'], /--local|supabase start/u);
-    assert.doesNotMatch(packageJson.scripts['db:types'], /--local|supabase start/u);
-    assert.equal(existsSync('scripts/supabase/no-local-docker.mjs'), false);
-    assert.equal(packageJson.scripts['supabase:test:remote'], undefined);
-    assert.equal(packageJson.scripts['supabase:lint:remote'], undefined);
-    assert.equal(packageJson.scripts['db:types:remote'], undefined);
   });
 
-  it('requires an explicit DB URL for remote database checks and pins the Supabase CLI package', () => {
+  it('keeps generated database type drift as a full-file git status gate', () => {
+    const source = readFileSync(databaseTypesGeneratedCheckPath, 'utf8');
+
+    assert.match(source, /spawnSync\('git', \['status', '--short', '--', databaseTypesPath\]/u);
+    assert.match(source, /Run npm run db:types/u);
+  });
+
+  it('keeps remote database wrappers explicit-only and pins the Supabase CLI package', () => {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
     const source = readFileSync(remoteCliPath, 'utf8');
 
+    assert.equal(packageJson.scripts['supabase:test'], 'node scripts/supabase/run-remote-cli.mjs test');
+    assert.equal(packageJson.scripts['supabase:lint'], 'node scripts/supabase/run-remote-cli.mjs lint');
+    assert.equal(packageJson.scripts['db:types'], 'node scripts/supabase/run-remote-cli.mjs types');
     assert.match(source, /supabase@2\.101\.0/u);
     assert.doesNotMatch(source, /--linked/u);
     assert.match(source, /push: \['db', 'push', '--db-url', dbUrl, '--yes'\]/u);
@@ -373,13 +566,14 @@ describe('remote Supabase CLI wrapper guardrails', () => {
     assert.match(source, /SUPABASE_DB_URL is required/u);
   });
 
-  it('allows no-Docker typegen through project ref and blocks Docker-only modes unless explicitly allowed', () => {
+  it('allows no-Docker typegen through project ref and disables Docker-only modes', () => {
     const source = readFileSync(remoteCliPath, 'utf8');
 
     assert.match(source, /SUPABASE_PROJECT_REF/u);
     assert.match(source, /--project-id/u);
-    assert.match(source, /SUPABASE_CLI_DOCKER_ALLOWED !== '1'/u);
+    assert.doesNotMatch(source, /SUPABASE_CLI_DOCKER_ALLOWED/u);
     assert.match(source, /requires Docker/u);
+    assert.match(source, /Docker is disabled/u);
   });
 
   it('documents Expo public env and remote-only Supabase secrets separately', () => {
@@ -393,14 +587,15 @@ describe('remote Supabase CLI wrapper guardrails', () => {
     assert.doesNotMatch(source, /SERVICE_ROLE|SECRET_KEY/u);
   });
 
-  it('adds a Docker-capable CI gate for remote pgTAP and generated database types', () => {
+  it('keeps the remote workflow off Docker and on static/typegen checks', () => {
     const workflow = readFileSync(remoteWorkflowPath, 'utf8');
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
 
     assert.match(workflow, /name: Supabase Remote Dev/u);
     assert.match(workflow, /runs-on: ubuntu-latest/u);
     assert.match(workflow, /persist-credentials:\s*false/u);
-    assert.match(workflow, /SUPABASE_CLI_DOCKER_ALLOWED: '1'/u);
+    assert.doesNotMatch(workflow, /SUPABASE_CLI_DOCKER_ALLOWED/u);
+    assert.match(workflow, /SUPABASE_PROJECT_REF: olymqppxsadsxfrcyskh/u);
     assert.match(workflow, /PUPPYPLAN_DEV_SUPABASE_DB_URL/u);
     assert.match(workflow, /npm run supabase:ci:remote/u);
     assert.match(
@@ -410,7 +605,7 @@ describe('remote Supabase CLI wrapper guardrails', () => {
     assert.match(workflow, /path: src\/contracts\/database\.types\.ts/u);
     assert.match(packageJson.scripts['supabase:verify:remote'], /supabase:lint/u);
     assert.doesNotMatch(packageJson.scripts['supabase:verify:remote'], /supabase:lint:remote/u);
-    assert.match(packageJson.scripts['supabase:ci:remote'], /supabase:test/u);
+    assert.doesNotMatch(packageJson.scripts['supabase:ci:remote'], /supabase:test/u);
     assert.match(packageJson.scripts['supabase:ci:remote'], /db:types/u);
     assert.doesNotMatch(packageJson.scripts['supabase:ci:remote'], /supabase:test:remote|db:types:remote/u);
   });

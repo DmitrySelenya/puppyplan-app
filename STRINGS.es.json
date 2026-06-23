@@ -534,7 +534,12 @@
         "close": "Cerrar"
       }
     },
+    "potty-subtype": {
+      "title": "Elige el tipo de baño",
+      "body": "Elige el evento exacto antes de guardar."
+    },
     "trackers": {
+      "potty": "Baño",
       "potty-outside": "Orinar afuera",
       "potty-inside": "Orinar dentro",
       "potty-poop": "Caca",

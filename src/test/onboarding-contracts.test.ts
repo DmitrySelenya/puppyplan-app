@@ -20,7 +20,7 @@ describe('PUP-21 onboarding and active care contracts', () => {
       ageWeeksEstimate: 8,
       birthDate: null,
       name: '  Puppy  ',
-      selectedTrackerIds: ['feeding_meal', 'training'],
+      selectedTrackerIds: ['feeding', 'walk'],
     });
 
     expect(profile.name).toBe('Puppy');
@@ -28,7 +28,7 @@ describe('PUP-21 onboarding and active care contracts', () => {
       age_weeks_estimate: 8,
       birth_date: null,
       name: 'Puppy',
-      quick_tracker_ids: ['feeding_meal', 'training'],
+      quick_tracker_ids: ['feeding', 'walk'],
     });
   });
 
@@ -65,14 +65,14 @@ describe('PUP-21 onboarding and active care contracts', () => {
       birthDate: null,
       name: 'Puppy',
       selectedTrackerIds: [
-        'training',
-        'feeding_meal',
-        'sleep_nap',
+        'walk',
+        'feeding',
+        'sleep',
       ],
     }).selectedTrackerIds).toEqual([
-      'training',
-      'feeding_meal',
-      'sleep_nap',
+      'walk',
+      'feeding',
+      'sleep',
     ]);
 
     expect(puppyProfileInputSchema.safeParse({
@@ -82,7 +82,7 @@ describe('PUP-21 onboarding and active care contracts', () => {
       name: 'Puppy',
       selectedTrackerIds: [
         ...defaultQuickLogTrackerIds,
-        'training',
+        'walk',
       ],
     }).success).toBe(false);
 
@@ -91,7 +91,7 @@ describe('PUP-21 onboarding and active care contracts', () => {
       ageWeeksEstimate: 12,
       birthDate: null,
       name: 'Puppy',
-      selectedTrackerIds: ['feeding_meal', 'feeding_meal'],
+      selectedTrackerIds: ['feeding', 'feeding'],
     }).success).toBe(false);
 
     expect(puppyProfileInputSchema.safeParse({
@@ -107,7 +107,7 @@ describe('PUP-21 onboarding and active care contracts', () => {
       ageWeeksEstimate: 12,
       birthDate: null,
       name: 'Puppy',
-      selectedTrackerIds: ['walk'],
+      selectedTrackerIds: ['weight'],
     }).success).toBe(false);
   });
 
@@ -135,7 +135,7 @@ describe('PUP-21 onboarding and active care contracts', () => {
       householdId,
       householdRole: 'owner',
       puppyId,
-      selectedTrackerIds: ['feeding_meal', 'feeding_meal'],
+      selectedTrackerIds: ['feeding', 'feeding'],
       todayDate: '2026-06-08',
       userId,
     }).success).toBe(false);

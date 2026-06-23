@@ -43,9 +43,9 @@ export type SnackbarController = Readonly<{
 }>;
 
 const SnackbarContext = createContext<SnackbarController | null>(null);
+const SnackbarActivityContext = createContext(false);
 export const SNACKBAR_DEFAULT_DURATION_MS = 4_000;
-export const SNACKBAR_BOTTOM_OFFSET_WITH_FAB =
-  tokens.layout.tabBarHeight + tokens.component.fab.size + tokens.space[10];
+export const SNACKBAR_BOTTOM_OFFSET_WITH_FAB = tokens.layout.bottomInsetFab;
 
 export function SnackbarProvider({ children }: PropsWithChildren) {
   const [message, setMessage] = useState<SnackbarMessage | null>(null);
@@ -97,8 +97,10 @@ export function SnackbarProvider({ children }: PropsWithChildren) {
 
   return (
     <SnackbarContext.Provider value={controller}>
-      {children}
-      <SnackbarHost message={message} />
+      <SnackbarActivityContext.Provider value={message !== null}>
+        {children}
+        <SnackbarHost message={message} />
+      </SnackbarActivityContext.Provider>
     </SnackbarContext.Provider>
   );
 }
@@ -111,6 +113,10 @@ export function useSnackbar(): SnackbarController {
   }
 
   return controller;
+}
+
+export function useSnackbarActive(): boolean {
+  return useContext(SnackbarActivityContext);
 }
 
 function SnackbarHost({ message }: { message: SnackbarMessage | null }) {

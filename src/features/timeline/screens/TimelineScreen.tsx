@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import {
+  quickLogTrackerDefinitions,
+  quickLogTrackerIds,
+  type QuickLogTrackerId,
+} from '@/contracts/quick-log';
 import type { EventType } from '@/contracts/supabase';
 import { AppText } from '@/design/primitives/AppText';
 import { AppIcon } from '@/design/primitives/AppIcon';
@@ -30,6 +35,7 @@ import {
   createQuickLogDeleteRequest,
   createQuickLogEditRequest,
   createQuickLogEventView,
+  getQuickLogTrackerLabelKey,
   createQuickLogUndoRequest,
   type QuickLogEventActionHandlers,
   type QuickLogEventView,
@@ -47,12 +53,20 @@ const emptyActions: QuickLogEventActionHandlers = {};
 
 type TimelineFilterValue =
   | 'all'
-  | 'potty'
-  | 'feeding'
-  | 'sleep'
-  | 'zoomies'
-  | 'training'
+  | QuickLogTrackerId
   | 'health_record_reference';
+
+type TimelineFilterSpec = Readonly<{
+  eventTypes: readonly EventType[] | undefined;
+  labelKey: I18nKey;
+  value: TimelineFilterValue;
+}>;
+
+const quickLogTimelineFilterSpecs = quickLogTrackerIds.map((trackerId) => ({
+  eventTypes: [quickLogTrackerDefinitions[trackerId].event_type],
+  labelKey: getQuickLogTrackerLabelKey(trackerId),
+  value: trackerId,
+})) satisfies readonly TimelineFilterSpec[];
 
 const timelineFilterSpecs = [
   {
@@ -60,41 +74,13 @@ const timelineFilterSpecs = [
     labelKey: 'timeline.filter-chips.0',
     value: 'all',
   },
-  {
-    eventTypes: ['potty'],
-    labelKey: 'timeline.filter-chips.1',
-    value: 'potty',
-  },
-  {
-    eventTypes: ['feeding'],
-    labelKey: 'timeline.filter-chips.2',
-    value: 'feeding',
-  },
-  {
-    eventTypes: ['sleep'],
-    labelKey: 'timeline.filter-chips.3',
-    value: 'sleep',
-  },
-  {
-    eventTypes: ['zoomies'],
-    labelKey: 'timeline.filter-chips.4',
-    value: 'zoomies',
-  },
-  {
-    eventTypes: ['training'],
-    labelKey: 'timeline.filter-chips.5',
-    value: 'training',
-  },
+  ...quickLogTimelineFilterSpecs,
   {
     eventTypes: ['health_record_reference'],
     labelKey: 'timeline.filter-chips.6',
     value: 'health_record_reference',
   },
-] as const satisfies readonly Readonly<{
-  eventTypes: readonly EventType[] | undefined;
-  labelKey: I18nKey;
-  value: TimelineFilterValue;
-}>[];
+] as const satisfies readonly TimelineFilterSpec[];
 
 export function TimelineScreen({
   actions = emptyActions,
@@ -697,7 +683,7 @@ const styles = StyleSheet.create({
     borderColor: tokens.color.primary[600],
   },
   content: {
-    paddingBottom: tokens.space[10],
+    paddingBottom: tokens.layout.bottomInsetFab,
     paddingTop: tokens.space[6],
   },
   dayGroupSpacing: {

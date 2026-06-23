@@ -30,16 +30,22 @@ export type QuickLogAccidentalDoubleTapInput = Readonly<{
 }>;
 
 export type QuickLogDuplicateCareWarningInput = Readonly<{
+  previousPayload?: QuickLogDuplicateCareWarningPayload;
   previousTrackerId: QuickLogTrackerId;
+  nextPayload?: QuickLogDuplicateCareWarningPayload;
   nextTrackerId: QuickLogTrackerId;
   previousOccurredAtMs: number;
   nextOccurredAtMs: number;
 }>;
 
 export type QuickLogDuplicateCareWarningKey =
-  | 'feeding_meal'
-  | 'potty_pee_outside'
-  | 'potty_poop';
+  | 'feeding'
+  | 'potty:outside'
+  | 'potty:poop';
+
+export type QuickLogDuplicateCareWarningPayload = Readonly<{
+  subtype?: unknown;
+}>;
 
 export function isQuickLogAccidentalDoubleTap(input: QuickLogAccidentalDoubleTapInput): boolean {
   return input.previousTrackerId === input.nextTrackerId
@@ -53,8 +59,11 @@ export function isQuickLogAccidentalDoubleTap(input: QuickLogAccidentalDoubleTap
 export function shouldShowQuickLogDuplicateCareWarning(
   input: QuickLogDuplicateCareWarningInput,
 ): boolean {
-  const previousWarningKey = getQuickLogDuplicateCareWarningKey(input.previousTrackerId);
-  const nextWarningKey = getQuickLogDuplicateCareWarningKey(input.nextTrackerId);
+  const previousWarningKey = getQuickLogDuplicateCareWarningKey(
+    input.previousTrackerId,
+    input.previousPayload,
+  );
+  const nextWarningKey = getQuickLogDuplicateCareWarningKey(input.nextTrackerId, input.nextPayload);
 
   return previousWarningKey !== null
     && previousWarningKey === nextWarningKey
@@ -75,7 +84,20 @@ export function shouldShowQuickLogFailedBanner(
 
 export function getQuickLogDuplicateCareWarningKey(
   trackerId: QuickLogTrackerId,
+  payload?: QuickLogDuplicateCareWarningPayload,
 ): QuickLogDuplicateCareWarningKey | null {
+  if (trackerId === 'potty') {
+    if (payload?.subtype === 'outside') {
+      return 'potty:outside';
+    }
+
+    if (payload?.subtype === 'poop') {
+      return 'potty:poop';
+    }
+
+    return null;
+  }
+
   return quickLogDuplicateCareWarningKeys[trackerId];
 }
 
@@ -90,12 +112,9 @@ function isForwardDeltaWithinWindow(
 }
 
 const quickLogDuplicateCareWarningKeys = {
-  // PRD excludes indoor accidents; sleep, zoomies, and training stay non-warning visibility trackers.
-  potty_pee_outside: 'potty_pee_outside',
-  potty_pee_inside: null,
-  potty_poop: 'potty_poop',
-  feeding_meal: 'feeding_meal',
-  sleep_nap: null,
+  potty: null,
+  feeding: 'feeding',
+  sleep: null,
+  walk: null,
   zoomies: null,
-  training: null,
 } as const satisfies Record<QuickLogTrackerId, QuickLogDuplicateCareWarningKey | null>;

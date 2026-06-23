@@ -32,3 +32,29 @@ Approved for `PUP-21` after the Post-PUP-18 batch storage gate.
 - existing `puppy` owner insert/update RLS policies.
 
 Reason: selected quick tracker order is per puppy, low-cardinality profile state. Keeping it on `public.puppy` avoids a new table and broader RLS surface.
+
+### 2026-06-23: Canonical Quick Log tracker taxonomy
+
+Approved for the V2 redesign intake taxonomy pass.
+
+The Quick Log selected-tracker vocabulary is reconciled to the canonical ids:
+
+- `potty`
+- `feeding`
+- `sleep`
+- `walk`
+- `zoomies`
+
+`weight` remains a Health record concept and is not a loggable Quick Log tracker or `event_log` event type for this pass. `zoomies` remains named `zoomies`; it is not renamed to `play`.
+
+`public.event_type` adds `walk`. Potty Quick Log events remain `event_type = 'potty'` and carry `payload.subtype` constrained by contracts to `outside`, `inside`, or `poop`; new Quick Log writes do not use the legacy `payload.quick_action` field.
+
+Migration `supabase/migrations/20260623120000_canonical_quick_log_tracker_taxonomy.sql` preserves existing data by:
+
+- mapping selected `quick_tracker_ids` values `potty_pee_outside`, `potty_pee_inside`, and `potty_poop` to one `potty` id;
+- preserving canonical tracker order as much as possible and deduplicating after mapping;
+- removing unknown selected ids before the final allowed-id constraint is applied;
+- repairing empty mapped selections to the canonical default;
+- rewriting existing potty `event_log` payloads from legacy `quick_action = pee_outside|pee_inside|poop` to canonical `subtype = outside|inside|poop`, while leaving already-canonical subtype payloads unchanged.
+
+Reason: V2 collapses three potty tiles into one operational tracker while keeping subtype as event data. This stays within the ADR-0007 table model, avoids new tables, preserves history, and keeps RLS ownership on the existing `puppy` and `event_log` policies.

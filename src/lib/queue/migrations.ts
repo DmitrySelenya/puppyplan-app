@@ -46,14 +46,106 @@ PRAGMA user_version = ${QUICK_LOG_QUEUE_SCHEMA_VERSION};
   }
 
   if (currentVersion < 2) {
-    const columns = await executor.getAllAsync<{ name: string }>(
-      `PRAGMA table_info(${QUICK_LOG_QUEUE_TABLE_NAME})`,
-    );
-    const hasCreatedBy = columns.some((column) => column.name === 'created_by');
-
-    await executor.execAsync(`
-${hasCreatedBy ? '' : `ALTER TABLE ${QUICK_LOG_QUEUE_TABLE_NAME} ADD COLUMN created_by TEXT;`}
-PRAGMA user_version = ${QUICK_LOG_QUEUE_SCHEMA_VERSION};
-`);
+    await migrateQuickLogQueueSchemaV2(executor);
   }
+
+  if (currentVersion < 3) {
+    await migrateQuickLogQueueSchemaV3(executor);
+  }
+}
+
+async function migrateQuickLogQueueSchemaV2(
+  executor: QuickLogQueueSqlRunner,
+): Promise<void> {
+  const columns = await executor.getAllAsync<{ name: string }>(
+    `PRAGMA table_info(${QUICK_LOG_QUEUE_TABLE_NAME})`,
+  );
+  const hasCreatedBy = columns.some((column) => column.name === 'created_by');
+
+  await executor.execAsync(`
+${hasCreatedBy ? '' : `ALTER TABLE ${QUICK_LOG_QUEUE_TABLE_NAME} ADD COLUMN created_by TEXT;`}
+PRAGMA user_version = 2;
+`);
+}
+
+async function migrateQuickLogQueueSchemaV3(
+  executor: QuickLogQueueSqlRunner,
+): Promise<void> {
+  const rows = await executor.getAllAsync<{
+    client_event_id: string;
+    payload_json: string;
+  }>(
+    `SELECT client_event_id, payload_json
+      FROM ${QUICK_LOG_QUEUE_TABLE_NAME}
+      WHERE event_type = ?`,
+    ['potty'],
+  );
+
+  for (const row of rows) {
+    const migratedPayloadJson = migrateLegacyPottyPayloadJson(row);
+
+    if (migratedPayloadJson === null) {
+      continue;
+    }
+
+    await executor.runAsync(
+      `UPDATE ${QUICK_LOG_QUEUE_TABLE_NAME}
+        SET payload_json = ?
+        WHERE client_event_id = ?`,
+      [migratedPayloadJson, row.client_event_id],
+    );
+  }
+
+  await executor.execAsync(`PRAGMA user_version = ${QUICK_LOG_QUEUE_SCHEMA_VERSION};`);
+}
+
+function migrateLegacyPottyPayloadJson(row: Readonly<{
+  client_event_id: string;
+  payload_json: string;
+}>): string | null {
+  const payload = parseQueueMigrationPayload(row);
+
+  if ('subtype' in payload) {
+    return null;
+  }
+
+  const quickAction = payload.quick_action;
+
+  if (quickAction === 'pee_outside') {
+    return JSON.stringify({ subtype: 'outside' });
+  }
+
+  if (quickAction === 'pee_inside') {
+    return JSON.stringify({ subtype: 'inside' });
+  }
+
+  if (quickAction === 'poop') {
+    return JSON.stringify({ subtype: 'poop' });
+  }
+
+  return null;
+}
+
+function parseQueueMigrationPayload(row: Readonly<{
+  client_event_id: string;
+  payload_json: string;
+}>): Record<string, unknown> {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(row.payload_json);
+  } catch (error) {
+    throw new Error(
+      `Quick Log queue payload migration failed for ${row.client_event_id}: invalid JSON`,
+      { cause: error },
+    );
+  }
+
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(
+      `Quick Log queue payload migration failed for ${row.client_event_id}: expected object payload`,
+    );
+  }
+
+  return parsed as Record<string, unknown>;
 }

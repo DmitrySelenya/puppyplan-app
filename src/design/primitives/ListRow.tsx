@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
+import type { AccessibilityRole, PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { pressedScaleStyle, useReducedMotion } from '@/design/motion';
@@ -20,6 +20,7 @@ export type ListRowProps = {
   meta?: string;
   onAccessibilityAction?: PressableProps['onAccessibilityAction'];
   onPress?: PressableProps['onPress'];
+  selectionRole?: Extract<AccessibilityRole, 'checkbox' | 'radio'>;
   selected?: boolean;
   style?: StyleProp<ViewStyle>;
   subtitle?: string;
@@ -38,6 +39,7 @@ export function ListRow({
   meta,
   onAccessibilityAction,
   onPress,
+  selectionRole,
   selected = false,
   style,
   subtitle,
@@ -96,7 +98,7 @@ export function ListRow({
       <Touchable
         accessibilityActions={accessibilityActions}
         accessibilityLabel={accessibilityLabel ?? title}
-        accessibilityRole="button"
+        accessibilityRole={selectionRole ?? 'button'}
         accessibilityState={{ disabled, selected }}
         disabled={disabled}
         onAccessibilityAction={onAccessibilityAction}

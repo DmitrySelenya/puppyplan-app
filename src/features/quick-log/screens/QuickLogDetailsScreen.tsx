@@ -34,7 +34,7 @@ type ZoomiesIntensityValue = 'none' | 'low' | 'medium' | 'high';
 const noop = () => undefined;
 
 export function QuickLogDetailsScreen({
-  initialTrackerId = 'feeding_meal',
+  initialTrackerId = 'feeding',
   onClose = noop,
   onSave = noop,
   status = 'ready',
@@ -90,13 +90,13 @@ export function QuickLogDetailsScreen({
             value={trackerId}
           />
           {status === 'ready' ? null : <QuickLogDetailsStatusCard status={status} />}
-          {trackerId === 'feeding_meal' ? (
+          {trackerId === 'feeding' ? (
             <FeedingDetailsFields
               value={feedingAmount}
               onValueChange={setFeedingAmount}
             />
           ) : null}
-          {trackerId === 'sleep_nap' ? (
+          {trackerId === 'sleep' ? (
             <SleepDetailsFields
               value={sleepDuration}
               onValueChange={setSleepDuration}
@@ -232,7 +232,7 @@ function QuickLogDetailsStatusCard({
 function normalizeDetailTrackerId(trackerId: string): QuickLogDetailTrackerId {
   const result = quickLogDetailTrackerIdSchema.safeParse(trackerId);
 
-  return result.success ? result.data : 'feeding_meal';
+  return result.success ? result.data : 'feeding';
 }
 
 function createDraftInput(input: Readonly<{
@@ -241,14 +241,14 @@ function createDraftInput(input: Readonly<{
   trackerId: QuickLogDetailTrackerId;
   zoomiesIntensity: ZoomiesIntensityValue;
 }>): QuickLogDetailDraft {
-  if (input.trackerId === 'feeding_meal') {
+  if (input.trackerId === 'feeding') {
     return {
       amount: input.feedingAmount,
       trackerId: input.trackerId,
     };
   }
 
-  if (input.trackerId === 'sleep_nap') {
+  if (input.trackerId === 'sleep') {
     return {
       durationMinutes: input.sleepDuration === 'none'
         ? undefined
@@ -268,11 +268,11 @@ function createDraftInput(input: Readonly<{
 const detailTrackerOptions = [
   {
     labelKey: 'quick-log.details.tabs.feeding',
-    value: 'feeding_meal',
+    value: 'feeding',
   },
   {
     labelKey: 'quick-log.details.tabs.sleep',
-    value: 'sleep_nap',
+    value: 'sleep',
   },
   {
     labelKey: 'quick-log.details.tabs.zoomies',

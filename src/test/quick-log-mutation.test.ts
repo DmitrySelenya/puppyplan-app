@@ -55,7 +55,7 @@ describe('Quick Log mutation lifecycle', () => {
     const variables = {
       householdId,
       puppyId,
-      trackerId: 'feeding_meal' as const,
+      trackerId: 'feeding' as const,
       occurredAt,
       todayDate,
     };
@@ -103,7 +103,7 @@ describe('Quick Log mutation lifecycle', () => {
       clientEventId,
       householdId,
       puppyId,
-      trackerId: 'feeding_meal' as const,
+      trackerId: 'feeding' as const,
       occurredAt,
       todayDate,
     };
@@ -122,6 +122,50 @@ describe('Quick Log mutation lifecycle', () => {
         client_event_id: clientEventId,
       }),
     ]);
+  });
+
+  it('AC-1: creates canonical potty events with the selected subtype before enqueue', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+    const variables = {
+      householdId,
+      pottySubtype: 'outside' as const,
+      puppyId,
+      trackerId: 'potty' as const,
+      occurredAt,
+      todayDate,
+    };
+
+    const context = await options.onMutate?.(variables);
+    await expect(options.mutationFn?.(variables)).resolves.toMatchObject({
+      client_event_id: clientEventId,
+      event_type: 'potty',
+      payload: {
+        subtype: 'outside',
+      },
+    });
+
+    expect(context?.insert).toMatchObject({
+      event_type: 'potty',
+      payload: {
+        subtype: 'outside',
+      },
+    });
+    expect(queue.items.get(clientEventId)).toMatchObject({
+      event_type: 'potty',
+      payload: {
+        subtype: 'outside',
+      },
+    });
   });
 
   it('generates client ids in native runtimes without crypto.randomUUID', async () => {
@@ -153,7 +197,7 @@ describe('Quick Log mutation lifecycle', () => {
       const context = await options.onMutate?.({
         householdId,
         puppyId,
-        trackerId: 'feeding_meal',
+        trackerId: 'feeding',
         occurredAt,
         todayDate,
       });
@@ -182,7 +226,7 @@ describe('Quick Log mutation lifecycle', () => {
     await expect(options.onMutate?.({
       householdId,
       puppyId,
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
       occurredAt,
       todayDate,
     })).rejects.toThrow('Quick Log requires an authenticated session');
@@ -219,7 +263,7 @@ describe('Quick Log mutation lifecycle', () => {
     await options.onMutate?.({
       householdId,
       puppyId,
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
       occurredAt,
       todayDate,
     });
@@ -252,7 +296,7 @@ describe('Quick Log mutation lifecycle', () => {
     const variables = {
       householdId,
       puppyId,
-      trackerId: 'feeding_meal' as const,
+      trackerId: 'feeding' as const,
       occurredAt,
       todayDate,
     };
@@ -597,7 +641,7 @@ describe('Quick Log mutation lifecycle', () => {
     const variables = {
       householdId,
       puppyId,
-      trackerId: 'feeding_meal' as const,
+      trackerId: 'feeding' as const,
       occurredAt,
       todayDate,
     };
@@ -642,7 +686,7 @@ describe('Quick Log mutation lifecycle', () => {
     const variables = {
       householdId,
       puppyId,
-      trackerId: 'feeding_meal' as const,
+      trackerId: 'feeding' as const,
       occurredAt,
       todayDate,
     };
@@ -725,7 +769,7 @@ describe('Quick Log mutation lifecycle', () => {
       clientEventId,
       draft: {
         amount: 'water',
-        trackerId: 'feeding_meal',
+        trackerId: 'feeding',
       },
       eventType: 'feeding',
       events,
@@ -776,7 +820,7 @@ describe('Quick Log mutation lifecycle', () => {
     const variables = {
       householdId,
       puppyId,
-      trackerId: 'feeding_meal' as const,
+      trackerId: 'feeding' as const,
       occurredAt,
       todayDate,
     };
@@ -876,7 +920,7 @@ describe('Quick Log mutation lifecycle', () => {
     const variables = {
       householdId,
       puppyId,
-      trackerId: 'feeding_meal' as const,
+      trackerId: 'feeding' as const,
       occurredAt,
       todayDate,
     };
@@ -1054,7 +1098,7 @@ describe('Quick Log mutation lifecycle', () => {
     await options.onMutate?.({
       householdId,
       puppyId,
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
       occurredAt,
       todayDate,
     });
@@ -1090,7 +1134,7 @@ describe('Quick Log mutation lifecycle', () => {
     await options.onMutate?.({
       householdId,
       puppyId,
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
       occurredAt,
       todayDate,
     });
@@ -1128,7 +1172,7 @@ describe('Quick Log mutation lifecycle', () => {
     await options.onMutate?.({
       householdId,
       puppyId,
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
       occurredAt,
       todayDate,
     });
@@ -1163,7 +1207,7 @@ describe('Quick Log mutation lifecycle', () => {
     await options.onMutate?.({
       householdId,
       puppyId,
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
       occurredAt,
       todayDate,
     });
@@ -1197,7 +1241,7 @@ describe('Quick Log mutation lifecycle', () => {
     await options.onMutate?.({
       householdId,
       puppyId,
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
       occurredAt: '2026-05-25T22:30:00.000Z',
       todayDate,
     });
@@ -1388,7 +1432,7 @@ function createMutationVariables() {
   return {
     householdId,
     puppyId,
-    trackerId: 'feeding_meal' as const,
+    trackerId: 'feeding' as const,
     occurredAt,
     todayDate,
   };
@@ -1500,8 +1544,8 @@ class FakeQuickLogEventsRepository {
   public tombstoneError: unknown = null;
   public payloadUpdateError: unknown = null;
 
-  public async insertEvent(insert: EventLogInsert): Promise<EventLogRecord> {
-    this.inserts.push(insert);
+	  public async insertEvent(insert: EventLogInsert): Promise<EventLogRecord> {
+	    this.inserts.push(insert);
 
     if (this.insertGate !== null) {
       await this.insertGate;
@@ -1511,8 +1555,15 @@ class FakeQuickLogEventsRepository {
       throw this.insertError;
     }
 
-    return serverRow();
-  }
+	    return {
+	      ...serverRow(),
+	      ...insert,
+	      version: 1,
+	      deleted_at: null,
+	      created_at: now,
+	      updated_at: now,
+	    };
+	  }
 
   public async tombstoneByClientEventId(input: {
     householdId: string;

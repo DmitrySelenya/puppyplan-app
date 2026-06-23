@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { primaryTabs, quickLogAction } from '@/contracts/navigation';
+import { useSnackbar } from '@/design/primitives/Snackbar';
 import { tokens } from '@/design/tokens';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -33,8 +34,24 @@ type TabScreenOptions = {
 const mockRouterPush = jest.fn();
 const mockTabScreens: ScreenRegistration[] = [];
 let mockScreenOptions: TabScreenOptions | undefined;
+let mockPathname = '/today';
 const mockReact = React;
 const mockView = View;
+
+function ActiveSnackbarProbe() {
+  const snackbar = useSnackbar();
+
+  React.useEffect(() => {
+    snackbar.showSnackbar({
+      accessibilityLabel: 'Saved.',
+      id: 'tab-layout-fab-policy',
+      message: 'Saved',
+      tone: 'success',
+    });
+  }, [snackbar]);
+
+  return null;
+}
 
 jest.mock('expo-router', () => {
   function MockTabs({
@@ -60,6 +77,7 @@ jest.mock('expo-router', () => {
       push: (href: string) => mockRouterPush(href),
     },
     Tabs: MockTabs,
+    usePathname: () => mockPathname,
   };
 });
 
@@ -68,6 +86,7 @@ describe('TabLayout', () => {
     mockRouterPush.mockClear();
     mockTabScreens.length = 0;
     mockScreenOptions = undefined;
+    mockPathname = '/today';
     await i18n.changeLanguage('en');
   });
 
@@ -147,6 +166,51 @@ describe('TabLayout', () => {
 
     expect(mockRouterPush).toHaveBeenCalledTimes(1);
     expect(mockRouterPush).toHaveBeenCalledWith(quickLogAction.href);
+  });
+
+  it('limits the Quick Log FAB to log surfaces and hides it while snackbar is active', async () => {
+    mockPathname = '/more';
+
+    const more = render(
+      <AppProviders>
+        <TabLayout />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(mockTabScreens.length).toBe(primaryTabs.length);
+    });
+    expect(screen.queryByRole('button', {
+      name: i18n.t(quickLogAction.labelKey),
+    })).toBeNull();
+    more.unmount();
+
+    mockPathname = '/health';
+    render(
+      <AppProviders>
+        <TabLayout />
+      </AppProviders>,
+    );
+
+    expect(await screen.findByRole('button', {
+      name: i18n.t(quickLogAction.labelKey),
+    })).toBeTruthy();
+  });
+
+  it('hides the Quick Log FAB while a snackbar is active', async () => {
+    mockPathname = '/today';
+
+    render(
+      <AppProviders>
+        <TabLayout />
+        <ActiveSnackbarProbe />
+      </AppProviders>,
+    );
+
+    expect(await screen.findByText('Saved')).toBeTruthy();
+    expect(screen.queryByRole('button', {
+      name: i18n.t(quickLogAction.labelKey),
+    })).toBeNull();
   });
 
   it('positions Quick Log above the tab bar without covering tab hit areas on compact phones', async () => {

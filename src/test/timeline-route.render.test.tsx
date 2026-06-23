@@ -62,7 +62,7 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
         householdId: '00000000-0000-4000-8000-000000007201',
         householdRole: 'owner',
         puppyId: '00000000-0000-4000-8000-000000007202',
-        selectedTrackerIds: ['feeding_meal'],
+        selectedTrackerIds: ['feeding'],
         todayDate: '2026-06-09',
         userId: '00000000-0000-4000-8000-000000007203',
       },
@@ -199,11 +199,11 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
       householdId: '00000000-0000-4000-8000-000000007201',
       puppyId: '00000000-0000-4000-8000-000000007202',
       todayDate: '2026-06-09',
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     });
 
     expect(mockRouterPush).toHaveBeenCalledWith(
-      '/quick-log/details?trackerId=feeding_meal&clientEventId=evt_00000000-0000-4000-8000-000000007301&eventType=feeding&householdId=00000000-0000-4000-8000-000000007201&puppyId=00000000-0000-4000-8000-000000007202&todayDate=2026-06-09',
+      '/quick-log/details?trackerId=feeding&clientEventId=evt_00000000-0000-4000-8000-000000007301&eventType=feeding&householdId=00000000-0000-4000-8000-000000007201&puppyId=00000000-0000-4000-8000-000000007202&todayDate=2026-06-09',
     );
   });
 
@@ -214,7 +214,7 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
         householdId: '00000000-0000-4000-8000-000000007201',
         householdRole: 'viewer',
         puppyId: '00000000-0000-4000-8000-000000007202',
-        selectedTrackerIds: ['feeding_meal'],
+        selectedTrackerIds: ['feeding'],
         todayDate: '2026-06-09',
         userId: '00000000-0000-4000-8000-000000007203',
       },

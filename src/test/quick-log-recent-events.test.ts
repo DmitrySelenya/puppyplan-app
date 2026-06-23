@@ -58,11 +58,46 @@ describe('createQuickLogRecentEvents', () => {
     ])).toEqual([
       {
         occurredAtMs: Date.parse('2026-06-09T08:00:40.000Z'),
-        trackerId: 'feeding_meal',
+        trackerId: 'feeding',
       },
       {
         occurredAtMs: Date.parse('2026-06-09T08:00:00.000Z'),
-        trackerId: 'feeding_meal',
+        trackerId: 'feeding',
+      },
+    ]);
+  });
+
+  it('AC-2: preserves potty subtype payloads for duplicate-care checks', () => {
+    expect(createQuickLogRecentEvents([
+      createCachedRow({
+        event_type: 'potty',
+        occurred_at: '2026-06-09T08:00:00.000Z',
+        payload: {
+          subtype: 'outside',
+        },
+      }),
+      createCachedRow({
+        client_event_id: 'evt_00000000-0000-4000-8000-000000008301',
+        event_type: 'potty',
+        occurred_at: '2026-06-09T08:01:00.000Z',
+        payload: {
+          subtype: 'inside',
+        },
+      }),
+    ])).toEqual([
+      {
+        occurredAtMs: Date.parse('2026-06-09T08:01:00.000Z'),
+        payload: {
+          subtype: 'inside',
+        },
+        trackerId: 'potty',
+      },
+      {
+        occurredAtMs: Date.parse('2026-06-09T08:00:00.000Z'),
+        payload: {
+          subtype: 'outside',
+        },
+        trackerId: 'potty',
       },
     ]);
   });

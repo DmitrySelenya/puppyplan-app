@@ -85,6 +85,28 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
       return;
     }
 
+    if (/UPDATE queue_item\s+SET payload_json = \?/i.test(sql)) {
+      const payload_json = params[0];
+      const client_event_id = params[1];
+
+      if (typeof payload_json !== 'string' || typeof client_event_id !== 'string') {
+        throw new Error('Missing payload migration update parameters');
+      }
+
+      const existing = this.rows.get(client_event_id);
+
+      if (!existing) {
+        return;
+      }
+
+      this.rows.set(client_event_id, {
+        ...existing,
+        payload_json,
+      });
+
+      return;
+    }
+
     if (/UPDATE queue_item/i.test(sql)) {
       // Parameter order mirrors writeQueueItemState in src/lib/queue/storage.ts.
       const client_event_id = params[5];
@@ -159,6 +181,17 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
     params: QuickLogQueueSqlParams = [],
   ): Promise<T[]> {
     this.statements.push(sql);
+
+    if (/SELECT client_event_id, payload_json\s+FROM queue_item/i.test(sql)) {
+      const eventType = String(params[0]);
+
+      return Array.from(this.rows.values())
+        .filter((row) => row.event_type === eventType)
+        .map((row) => ({
+          client_event_id: row.client_event_id,
+          payload_json: row.payload_json,
+        })) as T[];
+    }
 
     if (/SELECT \* FROM queue_item/i.test(sql)) {
       let rows = Array.from(this.rows.values());
@@ -239,6 +272,7 @@ describe('Quick Log queue SQLite storage boundary', () => {
 
     await applyQuickLogQueueMigrations(executor);
 
+    expect(QUICK_LOG_QUEUE_SCHEMA_VERSION).toBe(3);
     expect(executor.userVersion).toBe(QUICK_LOG_QUEUE_SCHEMA_VERSION);
     expect(QUICK_LOG_QUEUE_TABLE_NAME).toBe('queue_item');
     expect(executor.statements.join('\n')).toContain('CREATE TABLE IF NOT EXISTS queue_item');
@@ -246,7 +280,7 @@ describe('Quick Log queue SQLite storage boundary', () => {
     expect(executor.statements.join('\n')).toContain('created_by TEXT');
     expect(executor.statements.join('\n')).toContain('payload_json TEXT NOT NULL');
     expect(executor.statements.join('\n')).toContain('last_error_category TEXT');
-    expect(executor.statements.join('\n')).toContain('PRAGMA user_version = 2');
+    expect(executor.statements.join('\n')).toContain('PRAGMA user_version = 3');
   });
 
   it('migrates local schema v1 queues by adding created_by in place', async () => {
@@ -260,6 +294,44 @@ describe('Quick Log queue SQLite storage boundary', () => {
     expect(executor.columns.has('created_by')).toBe(true);
     expect(executor.statements.join('\n')).toContain('ALTER TABLE queue_item ADD COLUMN created_by TEXT');
     expect(executor.statements.join('\n')).not.toContain('CREATE TABLE IF NOT EXISTS queue_item');
+  });
+
+  it('migrates local schema v2 legacy potty quick_action payloads before queue parsing', async () => {
+    const executor = new TestQueueSqlExecutor();
+
+    executor.userVersion = 2;
+    executor.columns.add('created_by');
+    executor.rows.set(clientEventId, {
+      client_event_id: clientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: createdBy,
+      event_type: 'potty',
+      payload_version: 1,
+      payload_json: '{"quick_action":"pee_inside"}',
+      occurred_at: occurredAt,
+      state: 'pending_local',
+      retry_count: 0,
+      last_error_category: null,
+      retry_after_at: null,
+      created_at: createdAt,
+      updated_at: createdAt,
+    });
+
+    await applyQuickLogQueueMigrations(executor);
+
+    expect(executor.userVersion).toBe(QUICK_LOG_QUEUE_SCHEMA_VERSION);
+    expect(executor.rows.get(clientEventId)?.payload_json).toBe('{"subtype":"inside"}');
+
+    const storage = createQuickLogQueueStorage(executor);
+
+    await expect(storage.getByClientEventId(clientEventId)).resolves.toMatchObject({
+      client_event_id: clientEventId,
+      event_type: 'potty',
+      payload: {
+        subtype: 'inside',
+      },
+    });
   });
 
   it('serializes the minimal Quick Log queue payload with the original actor', async () => {

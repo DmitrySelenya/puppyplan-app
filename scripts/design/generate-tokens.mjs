@@ -13,7 +13,9 @@ const defaultRepoRoot = fileURLToPath(new URL('../..', import.meta.url));
 const generatedTokensPath = 'src/design/tokens.ts';
 const sourceTokensPath = 'design-tokens.json';
 const optionalGeneratedCssPath = 'tokens.css';
-const rawDesignCssPath = 'docs/design/v1/raw/tokens.css';
+const legacyRawDesignCssPath = 'docs/design/v1/raw/tokens.css';
+const v2RawDesignCssPath = 'docs/design/v2/raw/tokens.css';
+const v2TokenPatchCssPath = 'docs/design/v2/raw/puppy-tokens-patch.css';
 
 function repoRelative(repoRoot, path) {
   return relative(repoRoot, path).replaceAll('\\', '/');
@@ -196,8 +198,9 @@ function normalizeGeneratedFile(value) {
 function readCssCustomProperties(css) {
   const properties = new Map();
   const propertyPattern = /(--[A-Za-z0-9_-]+)\s*:\s*([^;]+);/g;
+  const cssWithoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
 
-  for (const match of css.matchAll(propertyPattern)) {
+  for (const match of cssWithoutComments.matchAll(propertyPattern)) {
     properties.set(match[1], normalizeCssComparisonValue(match[2]));
   }
 
@@ -327,11 +330,35 @@ function rawDesignCssVariables(payload) {
   );
 }
 
-function checkRawDesignCssDrift(path, payload, repoRoot) {
+function v2RawDesignCssVariables(payload) {
+  return Object.fromEntries(
+    Object.entries({
+      '--pp-bottom-inset-fab': payload.layout?.bottomInsetFab === undefined
+        ? undefined
+        : `${payload.layout.bottomInsetFab}px`,
+      '--pp-info': payload.color.status?.info,
+      '--pp-info-tint': payload.color.status?.infoTint,
+    }).filter(([, value]) => value !== undefined),
+  );
+}
+
+function v2TokenPatchCssVariables(payload) {
+  const displayFont = payload.typography.fontFamily?.display;
+
+  return Object.fromEntries(
+    Object.entries({
+      '--pp-font-display': displayFont ? `"${displayFont}", Georgia, serif` : undefined,
+      '--pp-info': payload.color.status?.info,
+      '--pp-info-tint': payload.color.status?.infoTint,
+    }).filter(([, value]) => value !== undefined),
+  );
+}
+
+function checkRawDesignCssDrift(path, expectedVariables, repoRoot) {
   const actual = readCssCustomProperties(readFileSync(path, 'utf8'));
   const errors = [];
 
-  for (const [variable, expected] of Object.entries(rawDesignCssVariables(payload))) {
+  for (const [variable, expected] of Object.entries(expectedVariables)) {
     const actualValue = actual.get(variable);
     const expectedValue = normalizeCssComparisonValue(expected);
 
@@ -424,10 +451,27 @@ export function checkTokenDrift({ repoRoot = defaultRepoRoot } = {}) {
     checkedCss.push(repoRelative(repoRoot, generatedCssPath));
   }
 
-  const rawCssPath = join(repoRoot, rawDesignCssPath);
-  if (existsSync(rawCssPath)) {
-    checkRawDesignCssDrift(rawCssPath, payload, repoRoot);
-    checkedCss.push(repoRelative(repoRoot, rawCssPath));
+  const v2CssPath = join(repoRoot, v2RawDesignCssPath);
+  const v2PatchPath = join(repoRoot, v2TokenPatchCssPath);
+  if (existsSync(v2CssPath) || existsSync(v2PatchPath)) {
+    if (!existsSync(v2CssPath)) {
+      throw new Error(`${v2RawDesignCssPath} drift: raw V2 token CSS is missing`);
+    }
+
+    if (!existsSync(v2PatchPath)) {
+      throw new Error(`${v2TokenPatchCssPath} drift: V2 token patch CSS is missing`);
+    }
+
+    checkRawDesignCssDrift(v2CssPath, v2RawDesignCssVariables(payload), repoRoot);
+    checkRawDesignCssDrift(v2PatchPath, v2TokenPatchCssVariables(payload), repoRoot);
+    checkedCss.push(repoRelative(repoRoot, v2CssPath));
+    checkedCss.push(repoRelative(repoRoot, v2PatchPath));
+  } else {
+    const legacyRawCssPath = join(repoRoot, legacyRawDesignCssPath);
+    if (existsSync(legacyRawCssPath)) {
+      checkRawDesignCssDrift(legacyRawCssPath, rawDesignCssVariables(payload), repoRoot);
+      checkedCss.push(repoRelative(repoRoot, legacyRawCssPath));
+    }
   }
 
   return {

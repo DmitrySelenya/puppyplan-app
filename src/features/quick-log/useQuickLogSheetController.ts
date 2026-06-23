@@ -7,6 +7,7 @@ import {
 } from 'react';
 
 import {
+  type QuickLogDuplicateCareWarningPayload,
   shouldShowQuickLogDuplicateCareWarning,
 } from '@/contracts/business-rules';
 import type {
@@ -17,6 +18,8 @@ import {
   getQuickLogDetailTrackerIdForEventType,
   quickLogTrackerDefinitions,
   type QuickLogEventType,
+  type QuickLogNonPottyTrackerId,
+  type QuickLogPottySubtype,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
 import { noopAnalyticsClient, type QuickLogAnalyticsClient } from '@/lib/analytics';
@@ -36,6 +39,7 @@ export type QuickLogCareContext = QuickLogSurfaceCareContext;
 
 export type QuickLogRecentEvent = Readonly<{
   occurredAtMs: number;
+  payload?: QuickLogDuplicateCareWarningPayload;
   trackerId: QuickLogTrackerId;
 }>;
 
@@ -122,12 +126,21 @@ export type QuickLogDuplicateWarning = Readonly<{
   trackerId: QuickLogTrackerId;
 }>;
 
+export type QuickLogTrackerLogRequest =
+  | Readonly<{
+    pottySubtype: QuickLogPottySubtype;
+    trackerId: 'potty';
+  }>
+  | Readonly<{
+    trackerId: QuickLogNonPottyTrackerId;
+  }>;
+
 export type QuickLogSheetController = Readonly<{
   cancelDuplicate: () => void;
   confirmDuplicate: () => void;
   deleteLocal: (request: QuickLogDeleteRequest) => void;
   readonly duplicateWarning: QuickLogDuplicateWarning | null;
-  logTracker: (trackerId: QuickLogTrackerId) => void;
+  logTracker: (request: QuickLogTrackerLogRequest) => void;
   retry: (clientEventId: string) => void;
   status: 'ready' | 'unavailable';
   undo: (requestId: string) => void;
@@ -169,7 +182,7 @@ export function useQuickLogSheetController({
 }: UseQuickLogSheetControllerInput): QuickLogSheetController {
   const duplicateWarningRef = useRef<QuickLogDuplicateWarning | null>(null);
   const lastRequestIdRef = useRef<string | null>(null);
-  const pendingDuplicateRef = useRef<QuickLogTrackerId | null>(null);
+  const pendingDuplicateRef = useRef<QuickLogTrackerLogRequest | null>(null);
   const [, forceRender] = useState(0);
 
   const rerender = useCallback(() => {
@@ -190,11 +203,12 @@ export function useQuickLogSheetController({
     });
   }, [careContext, feedback, mutation]);
 
-  const commitTracker = useCallback((trackerId: QuickLogTrackerId) => {
+  const commitTracker = useCallback((request: QuickLogTrackerLogRequest) => {
     if (careContext === null) {
       return;
     }
 
+    const trackerId = request.trackerId;
     const requestId = createRequestId();
     const clientEventId = createClientEventId();
     const occurredAt = now().toISOString();
@@ -238,16 +252,28 @@ export function useQuickLogSheetController({
       tone: 'success',
     });
     closeSheet();
+    const variables: QuickLogMutationVariables = trackerId === 'potty'
+      ? {
+          clientEventId,
+          householdId: careContext.householdId,
+          occurredAt,
+          pottySubtype: request.pottySubtype,
+          puppyId: careContext.puppyId,
+          todayDate: careContext.todayDate,
+          trackerId,
+        }
+      : {
+          clientEventId,
+          householdId: careContext.householdId,
+          occurredAt,
+          puppyId: careContext.puppyId,
+          todayDate: careContext.todayDate,
+          trackerId,
+        };
+
     mutation.mutate({
       requestId,
-      variables: {
-        clientEventId,
-        householdId: careContext.householdId,
-        occurredAt,
-        puppyId: careContext.puppyId,
-        todayDate: careContext.todayDate,
-        trackerId,
-      },
+      variables,
     });
   }, [
     careContext,
@@ -261,18 +287,20 @@ export function useQuickLogSheetController({
     undoRequest,
   ]);
 
-  const logTracker = useCallback((trackerId: QuickLogTrackerId): void => {
+  const logTracker = useCallback((request: QuickLogTrackerLogRequest): void => {
     if (careContext === null) {
       return;
     }
 
     const currentNowMs = now().getTime();
+    const trackerId = request.trackerId;
 
     const duplicateSource = findDuplicateWarningSource([
       ...recentEvents,
       ...(recentEvent === null ? [] : [recentEvent]),
     ], {
       nextOccurredAtMs: currentNowMs,
+      nextPayload: getQuickLogPayloadForDuplicateCheck(request),
       nextTrackerId: trackerId,
     });
 
@@ -280,7 +308,7 @@ export function useQuickLogSheetController({
       duplicateWarningRef.current = {
         trackerId,
       };
-      pendingDuplicateRef.current = trackerId;
+      pendingDuplicateRef.current = request;
       analytics.trackQuickLogEvent({
         name: 'duplicate_warning_seen',
         properties: {
@@ -294,22 +322,22 @@ export function useQuickLogSheetController({
       return;
     }
 
-    commitTracker(trackerId);
+    commitTracker(request);
   }, [analytics, careContext, commitTracker, now, recentEvent, recentEvents, rerender]);
 
   const confirmDuplicate = useCallback(() => {
-    const trackerId = pendingDuplicateRef.current;
+    const request = pendingDuplicateRef.current;
 
     clearDuplicateWarning();
 
-    if (trackerId) {
+    if (request) {
       analytics.trackQuickLogEvent({
         name: 'duplicate_warning_confirmed',
         properties: {
-          event_type: quickLogTrackerDefinitions[trackerId].event_type,
+          event_type: quickLogTrackerDefinitions[request.trackerId].event_type,
         },
       });
-      commitTracker(trackerId);
+      commitTracker(request);
     }
   }, [analytics, clearDuplicateWarning, commitTracker]);
 
@@ -385,6 +413,7 @@ function findDuplicateWarningSource(
   recentEvents: readonly QuickLogRecentEvent[],
   input: Readonly<{
     nextOccurredAtMs: number;
+    nextPayload?: QuickLogDuplicateCareWarningPayload;
     nextTrackerId: QuickLogTrackerId;
   }>,
 ): QuickLogRecentEvent | null {
@@ -393,7 +422,9 @@ function findDuplicateWarningSource(
   for (const event of recentEvents) {
     if (!shouldShowQuickLogDuplicateCareWarning({
       nextOccurredAtMs: input.nextOccurredAtMs,
+      nextPayload: input.nextPayload,
       nextTrackerId: input.nextTrackerId,
+      previousPayload: event.payload,
       previousOccurredAtMs: event.occurredAtMs,
       previousTrackerId: event.trackerId,
     })) {
@@ -406,6 +437,14 @@ function findDuplicateWarningSource(
   }
 
   return match;
+}
+
+function getQuickLogPayloadForDuplicateCheck(
+  request: QuickLogTrackerLogRequest,
+): QuickLogDuplicateCareWarningPayload | undefined {
+  return request.trackerId === 'potty'
+    ? { subtype: request.pottySubtype }
+    : undefined;
 }
 
 export { getQuickLogTrackerLabelKey };

@@ -1,11 +1,23 @@
 # Design Fidelity UX Audit - Subagent Pass
 
 **Date:** 2026-06-13
-**Status:** Audit complete; implementation not started in this pass.
+**Status:** Retargeted to V2 intake; V1 audit remains historical evidence.
 **Plan type:** Active follow-up audit.
-**Current phase:** Awaiting product/implementation decision on high-priority findings.
+**Current phase:** H1-H7 triaged against V2 intake; continue from `2026-06-22-redesign-v2-intake.md`.
 **Related plan:** `docs/plans/active/2026-06-13-design-fidelity-recovery.md`
-**Design source:** `docs/design/v1/raw/PuppyPlan.html`, `docs/design/v1/raw/screens/*.jsx`, and `docs/design/v1/screenshots/`.
+**Design source:** V2 intake uses `docs/design/v2/manifest.json`, `docs/design/v2/screenshots/index.md`, and `docs/design/v2/raw/**`. The V1 audit source (`docs/design/v1/raw/PuppyPlan.html`, `docs/design/v1/raw/screens/*.jsx`, and `docs/design/v1/screenshots/`) remains historical comparison evidence only.
+
+## V2 Intake Triage
+
+| Finding | V2 status | Follow-up |
+| --- | --- | --- |
+| H1 - Health `11.1` claimed covered but current code renders empty-only | Re-scoped | V2 Health work is Phase 4 taxonomy/foundation propagation only in this Supergoal run; durable Health CRUD and full screen re-skin remain outside this branch. |
+| H2 - Quick Log duplicate warning not production-reachable / wrong anatomy | Kept as regression guard | Existing 2026-06-14 fix remains expected; Phase 4 must preserve duplicate-warning behavior while collapsing potty taxonomy. |
+| H3 - Quick Log snackbar missing `Add details` | Kept as regression guard | Existing 2026-06-14 fix remains expected; Phase 2/4 FAB/Snackbar policy must not remove the detail action. |
+| H4 - Timeline events not grouped like atlas | Re-scoped | Full Timeline V2 re-skin is out of this Supergoal run; Phase 4 may touch Timeline only for canonical tracker/filter/subtype propagation. |
+| H5 - Settings screens lack atlas navigation headers | Re-scoped | Full settings-header re-skin is out of this Supergoal run; Phase 2 may improve primitive action semantics only. |
+| H6 - Quick Trackers rows do not match atlas controls | Re-scoped | Phase 4 updates tracker vocabulary structurally without starting the full V2 list-control re-skin. |
+| H7 - Quick Trackers save model diverges from atlas | Resolved by prior fix / regression guard | The implicit-save model remains expected; Phase 4 must not reintroduce a bottom save CTA for taxonomy changes. |
 
 ## Goal
 

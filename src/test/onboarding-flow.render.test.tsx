@@ -63,7 +63,7 @@ describe('Onboarding production flow', () => {
         ageMode: 'age_weeks',
         ageWeeksEstimate: 8,
         name: 'Puppy',
-        selectedTrackerIds: expect.arrayContaining(['potty_pee_outside', 'feeding_meal']),
+        selectedTrackerIds: expect.arrayContaining(['potty', 'feeding']),
       }));
     });
     expect(screen.getByText(i18n.t('onboarding.plan-reveal.title'))).toBeTruthy();
@@ -176,7 +176,7 @@ describe('Onboarding production flow', () => {
     expect(saveProfile).not.toHaveBeenCalled();
   });
 
-  it('resets tracker limit warning after a valid deselect and keeps one tracker selected', () => {
+  it('resets tracker warning after a valid select and keeps one tracker selected', () => {
     const openQuickLog = jest.fn();
     const saveProfile = jest.fn(async () => undefined);
 
@@ -200,22 +200,10 @@ describe('Onboarding production flow', () => {
       name: i18n.t('onboarding.puppy-profile.cta'),
     }));
 
-    fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('quick-log.trackers.zoomies'),
-    }));
-
-    expect(screen.getByText(i18n.t('onboarding.tracker-picker.limit-snackbar'))).toBeTruthy();
-    expect(
-      screen.getByLabelText(i18n.t('onboarding.tracker-picker.limit-snackbar')).props,
-    ).toMatchObject({
-      accessibilityLiveRegion: 'polite',
-      accessibilityRole: 'alert',
-    });
-
     for (const trackerLabel of [
       'quick-log.trackers.sleep',
-      'quick-log.trackers.potty-inside',
-      'quick-log.trackers.potty-poop',
+      'quick-log.trackers.walk',
+      'quick-log.trackers.zoomies',
       'quick-log.trackers.feeding',
     ] as const) {
       fireEvent.press(screen.getByRole('button', {
@@ -223,10 +211,8 @@ describe('Onboarding production flow', () => {
       }));
     }
 
-    expect(screen.queryByText(i18n.t('onboarding.tracker-picker.limit-snackbar'))).toBeNull();
-
     fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('quick-log.trackers.potty-outside'),
+      name: i18n.t('quick-log.trackers.potty'),
     }));
 
     expect(screen.getByText(i18n.t('onboarding.tracker-picker.min-required-snackbar'))).toBeTruthy();
@@ -237,5 +223,12 @@ describe('Onboarding production flow', () => {
       accessibilityRole: 'alert',
     });
     expect(screen.getByText(i18n.t('onboarding.tracker-picker.counter', { n: 1 }))).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.feeding'),
+    }));
+
+    expect(screen.queryByText(i18n.t('onboarding.tracker-picker.min-required-snackbar'))).toBeNull();
+    expect(screen.getByText(i18n.t('onboarding.tracker-picker.counter', { n: 2 }))).toBeTruthy();
   });
 });

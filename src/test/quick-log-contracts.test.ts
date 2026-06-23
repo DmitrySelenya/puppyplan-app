@@ -11,6 +11,7 @@ import {
   defaultQuickLogTrackerIds,
   quickLogQueueItemSchema,
   quickLogCommandSchema,
+  quickLogTrackerIdSchema,
   quickLogTrackerDefinitions,
   quickLogTrackerIds,
   selectedQuickLogTrackerIdsSchema,
@@ -28,45 +29,28 @@ const occurredAt = '2026-05-26T06:55:00.000Z';
 const clientEventId = 'evt_00000000-0000-4000-8000-000000000004';
 
 const expectedQuickLogTrackerDefinitions = {
-  potty_pee_outside: {
+  potty: {
     event_type: 'potty',
-    payload: {
-      quick_action: 'pee_outside',
-    },
   },
-  potty_pee_inside: {
-    event_type: 'potty',
-    payload: {
-      quick_action: 'pee_inside',
-    },
-  },
-  potty_poop: {
-    event_type: 'potty',
-    payload: {
-      quick_action: 'poop',
-    },
-  },
-  feeding_meal: {
+  feeding: {
     event_type: 'feeding',
     payload: {
       amount: 'meal',
     },
   },
-  sleep_nap: {
+  sleep: {
     event_type: 'sleep',
     payload: {
       sleep_kind: 'nap',
     },
   },
+  walk: {
+    event_type: 'walk',
+    payload: {},
+  },
   zoomies: {
     event_type: 'zoomies',
     payload: {},
-  },
-  training: {
-    event_type: 'training',
-    payload: {
-      topic: 'other',
-    },
   },
 } as const;
 
@@ -75,64 +59,61 @@ function quickLogClientEventId(index: number): string {
 }
 
 describe('Quick Log tracker contracts', () => {
-  it('keeps the first-screen tracker selection capped at five visible trackers', () => {
+  it('AC-1: keeps the selected Quick Log tracker vocabulary canonical and capped at five', () => {
     expect(MAX_VISIBLE_QUICK_LOG_TRACKERS).toBe(5);
-    expect(defaultQuickLogTrackerIds).toEqual([
-      'potty_pee_outside',
-      'potty_pee_inside',
-      'potty_poop',
-      'feeding_meal',
-      'sleep_nap',
-    ]);
+    expect(quickLogTrackerIds).toEqual(['potty', 'feeding', 'sleep', 'walk', 'zoomies']);
+    expect(defaultQuickLogTrackerIds).toEqual(['potty', 'feeding', 'sleep', 'walk', 'zoomies']);
     expect(defaultQuickLogTrackerIds).toHaveLength(MAX_VISIBLE_QUICK_LOG_TRACKERS);
-    expect(defaultQuickLogTrackerIds).not.toContain('zoomies');
-    expect(defaultQuickLogTrackerIds).not.toContain('training');
 
     expect(selectedQuickLogTrackerIdsSchema.safeParse(defaultQuickLogTrackerIds).success).toBe(true);
-    expect(
-      selectedQuickLogTrackerIdsSchema.safeParse([
-        ...defaultQuickLogTrackerIds,
-        'zoomies',
-      ]).success,
-    ).toBe(false);
-    expect(
-      selectedQuickLogTrackerIdsSchema.safeParse([
-        'potty_pee_outside',
-        'potty_pee_outside',
-      ]).success,
-    ).toBe(false);
+    expect(selectedQuickLogTrackerIdsSchema.safeParse(['potty', 'potty']).success).toBe(false);
     expect(selectedQuickLogTrackerIdsSchema.safeParse([]).success).toBe(false);
     expect(
       selectedQuickLogTrackerIdsSchema.safeParse([
-        'potty_pee_outside',
-        'feeding_meal',
-        'sleep_nap',
+        'potty',
+        'feeding',
+        'sleep',
+        'walk',
         'zoomies',
-        'training',
+        'weight',
       ]).success,
-    ).toBe(true);
-  });
+    ).toBe(false);
 
-  it('maps every selectable tracker to a strict existing event payload contract', () => {
-    expect(quickLogTrackerIds).toEqual([
+    for (const rejectedTrackerId of [
+      'weight',
+      'training',
       'potty_pee_outside',
       'potty_pee_inside',
       'potty_poop',
       'feeding_meal',
       'sleep_nap',
+    ]) {
+      expect(quickLogTrackerIdSchema.safeParse(rejectedTrackerId).success).toBe(false);
+      expect(selectedQuickLogTrackerIdsSchema.safeParse([rejectedTrackerId]).success).toBe(false);
+    }
+  });
+
+  it('AC-2 AC-3: maps canonical trackers to strict event payload contracts', () => {
+    expect(Object.keys(quickLogTrackerDefinitions)).toEqual([
+      'potty',
+      'feeding',
+      'sleep',
+      'walk',
       'zoomies',
-      'training',
     ]);
+    expect(quickLogTrackerDefinitions).toMatchObject(expectedQuickLogTrackerDefinitions);
 
-    for (const trackerId of quickLogTrackerIds) {
-      const definition = quickLogTrackerDefinitions[trackerId];
-      expect(definition).toEqual(expectedQuickLogTrackerDefinitions[trackerId]);
-
+    for (const definition of [
+      expectedQuickLogTrackerDefinitions.feeding,
+      expectedQuickLogTrackerDefinitions.sleep,
+      expectedQuickLogTrackerDefinitions.walk,
+      expectedQuickLogTrackerDefinitions.zoomies,
+    ]) {
       const result = eventLogInsertSchema.safeParse({
         puppy_id: puppyId,
         household_id: householdId,
         created_by: userId,
-        client_event_id: `event-${trackerId}`,
+        client_event_id: clientEventId,
         event_type: definition.event_type,
         occurred_at: occurredAt,
         payload_version: 1,
@@ -143,44 +124,116 @@ describe('Quick Log tracker contracts', () => {
     }
   });
 
-  it('converts every one-tap tracker command into its canonical event insert', () => {
-    for (const [index, trackerId] of quickLogTrackerIds.entries()) {
+  it('AC-2: converts feeding, sleep, walk, and zoomies commands into canonical event inserts', () => {
+    const commands = [
+      {
+        commandPayload: undefined,
+        expected: expectedQuickLogTrackerDefinitions.feeding,
+        trackerId: 'feeding',
+      },
+      {
+        commandPayload: undefined,
+        expected: expectedQuickLogTrackerDefinitions.sleep,
+        trackerId: 'sleep',
+      },
+      {
+        commandPayload: undefined,
+        expected: expectedQuickLogTrackerDefinitions.walk,
+        trackerId: 'walk',
+      },
+      {
+        commandPayload: { duration_minutes: 22 },
+        expected: {
+          event_type: 'walk',
+          payload: { duration_minutes: 22 },
+        },
+        trackerId: 'walk',
+      },
+      {
+        commandPayload: undefined,
+        expected: expectedQuickLogTrackerDefinitions.zoomies,
+        trackerId: 'zoomies',
+      },
+    ] as const;
+
+    for (const [index, item] of commands.entries()) {
       const command = {
         client_event_id: quickLogClientEventId(index + 10),
         household_id: householdId,
         puppy_id: puppyId,
         created_by: userId,
-        tracker_id: trackerId,
+        tracker_id: item.trackerId,
         occurred_at: occurredAt,
+        ...(item.commandPayload === undefined
+          ? {}
+          : { payload: item.commandPayload }),
       };
 
       expect(quickLogCommandSchema.safeParse(command).success).toBe(true);
 
       const insert = createQuickLogEventInsert(command);
-      const definition = expectedQuickLogTrackerDefinitions[trackerId];
 
       expect(insert).toEqual({
         puppy_id: puppyId,
         household_id: householdId,
         created_by: userId,
         client_event_id: command.client_event_id,
-        event_type: definition.event_type,
+        event_type: item.expected.event_type,
         occurred_at: occurredAt,
         payload_version: 1,
-        payload: definition.payload,
+        payload: item.expected.payload,
       });
       expect(eventLogInsertSchema.safeParse(insert).success).toBe(true);
     }
   });
 
-  it('rejects invalid or incomplete commands before event inserts are created', () => {
+  it('AC-3: requires potty subtype commands and emits subtype payloads without quick_action', () => {
+    for (const subtype of ['outside', 'inside', 'poop'] as const) {
+      const command = {
+        client_event_id: clientEventId,
+        household_id: householdId,
+        puppy_id: puppyId,
+        created_by: userId,
+        tracker_id: 'potty',
+        occurred_at: occurredAt,
+        subtype,
+      };
+
+      expect(quickLogCommandSchema.safeParse(command).success).toBe(true);
+      expect(createQuickLogEventInsert(command)).toEqual({
+        puppy_id: puppyId,
+        household_id: householdId,
+        created_by: userId,
+        client_event_id: clientEventId,
+        event_type: 'potty',
+        occurred_at: occurredAt,
+        payload_version: 1,
+        payload: { subtype },
+      });
+    }
+
+    const outsideInsert = createQuickLogEventInsert({
+      client_event_id: clientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: userId,
+      tracker_id: 'potty',
+      occurred_at: occurredAt,
+      subtype: 'outside',
+    });
+
+    expect(outsideInsert.payload).not.toHaveProperty('quick_action');
+  });
+
+  it('AC-3: rejects invalid or incomplete commands before event inserts are created', () => {
     const command = {
       client_event_id: clientEventId,
       household_id: householdId,
       puppy_id: puppyId,
       created_by: userId,
-      tracker_id: 'feeding_meal',
+      tracker_id: 'potty',
       occurred_at: occurredAt,
+      subtype: 'outside',
     };
 
     expect(() => createQuickLogEventInsert({
@@ -191,16 +244,25 @@ describe('Quick Log tracker contracts', () => {
       ...command,
       occurred_at: undefined,
     })).toThrow();
+    expect(() => createQuickLogEventInsert({
+      ...command,
+      subtype: undefined,
+    })).toThrow();
+    expect(() => createQuickLogEventInsert({
+      ...command,
+      subtype: 'pee_outside',
+    })).toThrow();
   });
 
-  it('rejects private or free-text fields on Quick Log commands', () => {
+  it('AC-3 AC-4: rejects private or free-text fields on Quick Log commands', () => {
     const command = {
       client_event_id: clientEventId,
       household_id: householdId,
       puppy_id: puppyId,
       created_by: userId,
-      tracker_id: 'feeding_meal',
+      tracker_id: 'potty',
       occurred_at: occurredAt,
+      subtype: 'outside',
     };
 
     expect(quickLogCommandSchema.safeParse({
@@ -235,101 +297,134 @@ describe('Quick Log tracker contracts', () => {
 });
 
 describe('Quick Log duplicate windows', () => {
-  it('uses the canonical 3s accidental double-tap and 60s duplicate-care windows', () => {
+  it('AC-5: uses the canonical 3s accidental double-tap and 60s duplicate-care windows', () => {
     expect(QUICK_LOG_ACCIDENTAL_DOUBLE_TAP_WINDOW_MS).toBe(3000);
     expect(QUICK_LOG_DUPLICATE_CARE_WARNING_WINDOW_MS).toBe(60000);
 
     expect(isQuickLogAccidentalDoubleTap({
-      previousTrackerId: 'feeding_meal',
-      nextTrackerId: 'feeding_meal',
+      previousTrackerId: 'feeding',
+      nextTrackerId: 'feeding',
       previousOccurredAtMs: 1000,
       nextOccurredAtMs: 1000 + QUICK_LOG_ACCIDENTAL_DOUBLE_TAP_WINDOW_MS,
     })).toBe(true);
     expect(isQuickLogAccidentalDoubleTap({
-      previousTrackerId: 'feeding_meal',
-      nextTrackerId: 'feeding_meal',
+      previousTrackerId: 'feeding',
+      nextTrackerId: 'feeding',
       previousOccurredAtMs: 1000,
       nextOccurredAtMs: 1001 + QUICK_LOG_ACCIDENTAL_DOUBLE_TAP_WINDOW_MS,
     })).toBe(false);
     expect(isQuickLogAccidentalDoubleTap({
-      previousTrackerId: 'feeding_meal',
-      nextTrackerId: 'sleep_nap',
+      previousTrackerId: 'feeding',
+      nextTrackerId: 'sleep',
       previousOccurredAtMs: 1000,
       nextOccurredAtMs: 2000,
     })).toBe(false);
     expect(isQuickLogAccidentalDoubleTap({
-      previousTrackerId: 'feeding_meal',
-      nextTrackerId: 'feeding_meal',
+      previousTrackerId: 'feeding',
+      nextTrackerId: 'feeding',
       previousOccurredAtMs: 2000,
       nextOccurredAtMs: 1000,
     })).toBe(false);
     expect(isQuickLogAccidentalDoubleTap({
-      previousTrackerId: 'feeding_meal',
-      nextTrackerId: 'feeding_meal',
+      previousTrackerId: 'feeding',
+      nextTrackerId: 'feeding',
       previousOccurredAtMs: 1000,
       nextOccurredAtMs: Number.POSITIVE_INFINITY,
     })).toBe(false);
 
-    expect(shouldShowQuickLogDuplicateCareWarning({
-      previousTrackerId: 'feeding_meal',
-      nextTrackerId: 'feeding_meal',
+    expect(duplicateWarningFor({
+      previousTrackerId: 'feeding',
+      nextTrackerId: 'feeding',
       previousOccurredAtMs: 1000,
       nextOccurredAtMs: 1000 + QUICK_LOG_DUPLICATE_CARE_WARNING_WINDOW_MS,
     })).toBe(true);
-    expect(shouldShowQuickLogDuplicateCareWarning({
-      previousTrackerId: 'feeding_meal',
-      nextTrackerId: 'feeding_meal',
+    expect(duplicateWarningFor({
+      previousTrackerId: 'feeding',
+      nextTrackerId: 'feeding',
       previousOccurredAtMs: 1000,
       nextOccurredAtMs: 1001 + QUICK_LOG_DUPLICATE_CARE_WARNING_WINDOW_MS,
     })).toBe(false);
-    expect(shouldShowQuickLogDuplicateCareWarning({
-      previousTrackerId: 'feeding_meal',
-      nextTrackerId: 'sleep_nap',
+    expect(duplicateWarningFor({
+      previousTrackerId: 'feeding',
+      nextTrackerId: 'sleep',
       previousOccurredAtMs: 1000,
       nextOccurredAtMs: 2000,
     })).toBe(false);
-    expect(shouldShowQuickLogDuplicateCareWarning({
-      previousTrackerId: 'potty_pee_inside',
-      nextTrackerId: 'potty_pee_inside',
+    expect(duplicateWarningFor({
+      previousPayload: { subtype: 'outside' },
+      previousTrackerId: 'potty',
+      nextPayload: { subtype: 'outside' },
+      nextTrackerId: 'potty',
+      previousOccurredAtMs: 1000,
+      nextOccurredAtMs: 2000,
+    })).toBe(true);
+    expect(duplicateWarningFor({
+      previousPayload: { subtype: 'poop' },
+      previousTrackerId: 'potty',
+      nextPayload: { subtype: 'poop' },
+      nextTrackerId: 'potty',
+      previousOccurredAtMs: 1000,
+      nextOccurredAtMs: 2000,
+    })).toBe(true);
+    expect(duplicateWarningFor({
+      previousPayload: { subtype: 'inside' },
+      previousTrackerId: 'potty',
+      nextPayload: { subtype: 'inside' },
+      nextTrackerId: 'potty',
       previousOccurredAtMs: 1000,
       nextOccurredAtMs: 2000,
     })).toBe(false);
-    expect(shouldShowQuickLogDuplicateCareWarning({
-      previousTrackerId: 'sleep_nap',
-      nextTrackerId: 'sleep_nap',
+    expect(duplicateWarningFor({
+      previousTrackerId: 'sleep',
+      nextTrackerId: 'sleep',
       previousOccurredAtMs: 1000,
       nextOccurredAtMs: 2000,
     })).toBe(false);
-    expect(shouldShowQuickLogDuplicateCareWarning({
-      previousTrackerId: 'feeding_meal',
-      nextTrackerId: 'feeding_meal',
+    expect(duplicateWarningFor({
+      previousTrackerId: 'walk',
+      nextTrackerId: 'walk',
+      previousOccurredAtMs: 1000,
+      nextOccurredAtMs: 2000,
+    })).toBe(false);
+    expect(duplicateWarningFor({
+      previousTrackerId: 'zoomies',
+      nextTrackerId: 'zoomies',
+      previousOccurredAtMs: 1000,
+      nextOccurredAtMs: 2000,
+    })).toBe(false);
+    expect(duplicateWarningFor({
+      previousTrackerId: 'feeding',
+      nextTrackerId: 'feeding',
       previousOccurredAtMs: 2000,
       nextOccurredAtMs: 1000,
     })).toBe(false);
-    expect(shouldShowQuickLogDuplicateCareWarning({
-      previousTrackerId: 'feeding_meal',
-      nextTrackerId: 'feeding_meal',
+    expect(duplicateWarningFor({
+      previousTrackerId: 'feeding',
+      nextTrackerId: 'feeding',
       previousOccurredAtMs: 1000,
       nextOccurredAtMs: Number.NaN,
     })).toBe(false);
   });
 
-  it('maps duplicate-care warning keys only for product-approved care buckets', () => {
+  it('AC-5: maps duplicate-care warning keys only for product-approved care buckets', () => {
     expect(
-      Object.fromEntries(
-        quickLogTrackerIds.map((trackerId) => [
-          trackerId,
-          getQuickLogDuplicateCareWarningKey(trackerId),
-        ]),
-      ),
+      Object.fromEntries([
+        ['potty:outside', duplicateCareWarningKeyFor('potty', { subtype: 'outside' })],
+        ['potty:inside', duplicateCareWarningKeyFor('potty', { subtype: 'inside' })],
+        ['potty:poop', duplicateCareWarningKeyFor('potty', { subtype: 'poop' })],
+        ['feeding', duplicateCareWarningKeyFor('feeding')],
+        ['sleep', duplicateCareWarningKeyFor('sleep')],
+        ['walk', duplicateCareWarningKeyFor('walk')],
+        ['zoomies', duplicateCareWarningKeyFor('zoomies')],
+      ]),
     ).toEqual({
-      potty_pee_outside: 'potty_pee_outside',
-      potty_pee_inside: null,
-      potty_poop: 'potty_poop',
-      feeding_meal: 'feeding_meal',
-      sleep_nap: null,
+      'potty:outside': 'potty:outside',
+      'potty:inside': null,
+      'potty:poop': 'potty:poop',
+      feeding: 'feeding',
+      sleep: null,
+      walk: null,
       zoomies: null,
-      training: null,
     });
   });
 });
@@ -398,6 +493,66 @@ describe('Quick Log queue payload boundary', () => {
         duration_minutes: 0,
       },
     }).success).toBe(false);
+
+    expect(minimalQuickLogQueueItemSchema.safeParse({
+      ...validQueueItem,
+      event_type: 'potty',
+      payload: {
+        quick_action: 'pee_outside',
+      },
+    }).success).toBe(false);
+
+    expect(minimalQuickLogQueueItemSchema.safeParse({
+      ...validQueueItem,
+      event_type: 'walk',
+      payload: {
+        duration_minutes: 0,
+      },
+    }).success).toBe(false);
+  });
+
+  it('AC-4: accepts canonical potty subtype and walk queue payloads', () => {
+    expect(quickLogQueueItemSchema.safeParse({
+      ...validQueueItem,
+      event_type: 'potty',
+      payload: {
+        subtype: 'outside',
+      },
+    }).success).toBe(true);
+    expect(quickLogQueueItemSchema.safeParse({
+      ...validQueueItem,
+      event_type: 'potty',
+      payload: {
+        subtype: 'inside',
+      },
+    }).success).toBe(true);
+    expect(quickLogQueueItemSchema.safeParse({
+      ...validQueueItem,
+      event_type: 'potty',
+      payload: {
+        subtype: 'poop',
+      },
+    }).success).toBe(true);
+    expect(quickLogQueueItemSchema.safeParse({
+      ...validQueueItem,
+      event_type: 'walk',
+      payload: {},
+    }).success).toBe(true);
+    expect(quickLogQueueItemSchema.safeParse({
+      ...validQueueItem,
+      event_type: 'walk',
+      payload: {
+        duration_minutes: 22,
+      },
+    }).success).toBe(true);
+    expect(quickLogQueueItemSchema.safeParse({
+      ...validQueueItem,
+      event_type: 'walk',
+      payload: {
+        duration_minutes: 22,
+        notes: 'free text must not cross the Quick Log trust boundary',
+      },
+    }).success).toBe(false);
   });
 
   it('keeps the Quick Log queue schema scoped to Quick Log routine events and generated IDs', () => {
@@ -419,3 +574,14 @@ describe('Quick Log queue payload boundary', () => {
     }).success).toBe(false);
   });
 });
+
+function duplicateCareWarningKeyFor(
+  trackerId: string,
+  payload?: Readonly<Record<string, string>>,
+): string | null {
+  return Reflect.apply(getQuickLogDuplicateCareWarningKey, undefined, [trackerId, payload]) as string | null;
+}
+
+function duplicateWarningFor(input: Readonly<Record<string, unknown>>): boolean {
+  return Reflect.apply(shouldShowQuickLogDuplicateCareWarning, undefined, [input]) as boolean;
+}

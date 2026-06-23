@@ -532,7 +532,12 @@
         "close": "Close"
       }
     },
+    "potty-subtype": {
+      "title": "Choose potty type",
+      "body": "Pick the exact potty event before saving."
+    },
     "trackers": {
+      "potty": "Potty",
       "potty-outside": "Pee outside",
       "potty-inside": "Pee inside",
       "potty-poop": "Poop",

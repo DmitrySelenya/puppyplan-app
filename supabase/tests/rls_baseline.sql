@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(90);
+SELECT plan(92);
 
 CREATE SCHEMA IF NOT EXISTS tests;
 
@@ -827,7 +827,7 @@ SELECT results_eq(
 SELECT is(
   tests.try_update_puppy_quick_tracker_ids(
     '00000000-0000-4000-8000-000000000401',
-    ARRAY['feeding_meal', 'training']::text[]
+    ARRAY['feeding', 'walk']::text[]
   ),
   false,
   'non-member cannot update puppy selected quick trackers'
@@ -848,7 +848,7 @@ SELECT is(
 SELECT is(
   tests.try_update_puppy_quick_tracker_ids(
     '00000000-0000-4000-8000-000000000401',
-    ARRAY['feeding_meal', 'training']::text[]
+    ARRAY['feeding', 'walk']::text[]
   ),
   false,
   'viewer cannot update puppy selected quick trackers'
@@ -869,7 +869,7 @@ SELECT is(
 SELECT is(
   tests.try_update_puppy_quick_tracker_ids(
     '00000000-0000-4000-8000-000000000401',
-    ARRAY['feeding_meal', 'training']::text[]
+    ARRAY['feeding', 'walk']::text[]
   ),
   false,
   'caregiver cannot update puppy selected quick trackers'
@@ -896,7 +896,7 @@ SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
 SELECT is(
   tests.try_update_puppy_quick_tracker_ids(
     '00000000-0000-4000-8000-000000000401',
-    ARRAY['feeding_meal', 'training']::text[]
+    ARRAY['potty', 'feeding', 'sleep', 'walk', 'zoomies']::text[]
   ),
   true,
   'owner can update puppy selected quick trackers'
@@ -905,7 +905,7 @@ SELECT is(
 SELECT is(
   tests.try_update_puppy_quick_tracker_ids(
     '00000000-0000-4000-8000-000000000401',
-    ARRAY['feeding_meal', 'feeding_meal']::text[]
+    ARRAY['feeding', 'feeding']::text[]
   ),
   false,
   'puppy selected quick trackers reject duplicate ids'
@@ -915,12 +915,12 @@ SELECT is(
   tests.try_update_puppy_quick_tracker_ids(
     '00000000-0000-4000-8000-000000000401',
     ARRAY[
-      'potty_pee_outside',
-      'potty_pee_inside',
-      'potty_poop',
-      'feeding_meal',
-      'sleep_nap',
-      'training'
+      'potty',
+      'feeding',
+      'sleep',
+      'walk',
+      'zoomies',
+      'weight'
     ]::text[]
   ),
   false,
@@ -939,10 +939,28 @@ SELECT is(
 SELECT is(
   tests.try_update_puppy_quick_tracker_ids(
     '00000000-0000-4000-8000-000000000401',
-    ARRAY['feeding_meal', 'unknown_tracker']::text[]
+    ARRAY['feeding', 'unknown_tracker']::text[]
   ),
   false,
   'puppy selected quick trackers reject unknown tracker ids'
+);
+
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY['feeding', ('potty' || '_pee_outside')]::text[]
+  ),
+  false,
+  'puppy selected quick trackers reject legacy tracker ids'
+);
+
+SELECT is(
+  tests.try_update_puppy_quick_tracker_ids(
+    '00000000-0000-4000-8000-000000000401',
+    ARRAY['feeding', 'weight']::text[]
+  ),
+  false,
+  'puppy selected quick trackers reject health-only weight tracker'
 );
 
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000105');

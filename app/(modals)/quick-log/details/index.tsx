@@ -116,7 +116,7 @@ function parseQuickLogDetailsRouteContext(
 function parseStandaloneTrackerId(value: string | string[] | undefined): QuickLogDetailTrackerId {
   const trackerIdResult = quickLogDetailTrackerIdSchema.safeParse(firstParam(value));
 
-  return trackerIdResult.success ? trackerIdResult.data : 'feeding_meal';
+  return trackerIdResult.success ? trackerIdResult.data : 'feeding';
 }
 
 function canUpdateQuickLogDetails(

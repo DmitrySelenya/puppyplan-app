@@ -67,18 +67,8 @@ export const gallerySections = [
 
 export const syntheticTrackers = [
   {
-    id: 'potty-outside',
-    labelKey: 'quick-log.trackers.potty-outside',
-    selected: true,
-  },
-  {
-    id: 'potty-inside',
-    labelKey: 'quick-log.trackers.potty-inside',
-    selected: true,
-  },
-  {
-    id: 'potty-poop',
-    labelKey: 'quick-log.trackers.potty-poop',
+    id: 'potty',
+    labelKey: 'quick-log.trackers.potty',
     selected: true,
   },
   {
@@ -92,9 +82,14 @@ export const syntheticTrackers = [
     selected: true,
   },
   {
-    id: 'training',
-    labelKey: 'quick-log.trackers.training',
-    selected: false,
+    id: 'walk',
+    labelKey: 'quick-log.trackers.walk',
+    selected: true,
+  },
+  {
+    id: 'zoomies',
+    labelKey: 'quick-log.trackers.zoomies',
+    selected: true,
   },
 ] as const satisfies readonly GalleryTrackerFixture[];
 

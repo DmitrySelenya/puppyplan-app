@@ -14,7 +14,7 @@ const puppy: PuppyProfile = {
   household_id: '00000000-0000-4000-8000-000000004001',
   id: '00000000-0000-4000-8000-000000004002',
   name: 'Puppy',
-  quick_tracker_ids: ['potty_pee_outside', 'feeding_meal'],
+  quick_tracker_ids: ['potty', 'feeding'],
   updated_at: '2026-06-09T08:00:00.000Z',
 };
 

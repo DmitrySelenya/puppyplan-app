@@ -145,7 +145,7 @@ describe('QuickLogRoute', () => {
         householdId: '00000000-0000-4000-8000-000000003001',
         householdRole: 'owner',
         puppyId: '00000000-0000-4000-8000-000000003002',
-        selectedTrackerIds: ['training', 'feeding_meal'],
+        selectedTrackerIds: ['walk', 'feeding'],
         todayDate: '2026-06-09',
         userId: '00000000-0000-4000-8000-000000003003',
       },
@@ -169,11 +169,11 @@ describe('QuickLogRoute', () => {
     const trackerTiles = screen.getAllByTestId('quick-log-tracker-tile');
 
     expect(trackerTiles).toHaveLength(2);
-    expect(trackerTiles[0].props.accessibilityLabel).toBe(i18n.t('quick-log.trackers.training'));
+    expect(trackerTiles[0].props.accessibilityLabel).toBe(i18n.t('quick-log.trackers.walk'));
     expect(trackerTiles[1].props.accessibilityLabel).toBe(i18n.t('quick-log.trackers.feeding'));
 
     fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('quick-log.trackers.training'),
+      name: i18n.t('quick-log.trackers.walk'),
     }));
 
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
@@ -182,7 +182,7 @@ describe('QuickLogRoute', () => {
         householdId: '00000000-0000-4000-8000-000000003001',
         puppyId: '00000000-0000-4000-8000-000000003002',
         todayDate: '2026-06-09',
-        trackerId: 'training',
+        trackerId: 'walk',
       }),
     }));
     expect(mockUseQuickLogCachedRows).toHaveBeenCalledWith(expect.objectContaining({
@@ -199,7 +199,7 @@ describe('QuickLogRoute', () => {
         householdId: '00000000-0000-4000-8000-000000003001',
         householdRole: 'owner',
         puppyId: '00000000-0000-4000-8000-000000003002',
-        selectedTrackerIds: ['feeding_meal', 'sleep_nap'],
+        selectedTrackerIds: ['feeding', 'sleep'],
         todayDate: '2026-06-09',
         userId: '00000000-0000-4000-8000-000000003003',
       },
@@ -239,7 +239,7 @@ describe('QuickLogRoute', () => {
         householdId: '00000000-0000-4000-8000-000000003001',
         householdRole: 'owner',
         puppyId: '00000000-0000-4000-8000-000000003002',
-        selectedTrackerIds: ['training', 'feeding_meal'],
+        selectedTrackerIds: ['walk', 'feeding'],
         todayDate: '2026-06-09',
         userId: '00000000-0000-4000-8000-000000003003',
       },
@@ -261,7 +261,7 @@ describe('QuickLogRoute', () => {
     );
 
     fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('quick-log.trackers.training'),
+      name: i18n.t('quick-log.trackers.walk'),
     }));
 
     expect(mutation.mutate).toHaveBeenCalledTimes(1);
@@ -277,7 +277,7 @@ describe('QuickLogRoute', () => {
         householdId: '00000000-0000-4000-8000-000000003001',
         householdRole: 'owner',
         puppyId: '00000000-0000-4000-8000-000000003002',
-        selectedTrackerIds: ['training', 'feeding_meal'],
+        selectedTrackerIds: ['walk', 'feeding'],
         todayDate: '2026-06-09',
         userId: '00000000-0000-4000-8000-000000003003',
       },
@@ -315,7 +315,7 @@ describe('QuickLogRoute', () => {
         householdId: '00000000-0000-4000-8000-000000003001',
         householdRole: 'viewer',
         puppyId: '00000000-0000-4000-8000-000000003002',
-        selectedTrackerIds: ['training', 'feeding_meal'],
+        selectedTrackerIds: ['walk', 'feeding'],
         todayDate: '2026-06-09',
         userId: '00000000-0000-4000-8000-000000003003',
       },
@@ -338,7 +338,7 @@ describe('QuickLogRoute', () => {
 
     expect(screen.getByText(i18n.t('quick-log.sheet.permission-denied.title'))).toBeTruthy();
     expect(screen.queryByRole('button', {
-      name: i18n.t('quick-log.trackers.training'),
+      name: i18n.t('quick-log.trackers.walk'),
     })).toBeNull();
     expect(mutation.mutate).not.toHaveBeenCalled();
   });

@@ -38,17 +38,17 @@ describe('Quick Log details', () => {
   it('parses optional detail drafts for feeding, sleep, and zoomies only', () => {
     expect(createQuickLogDetailDraft({
       amount: 'water',
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     })).toEqual({
       amount: 'water',
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     });
     expect(createQuickLogDetailDraft({
       durationMinutes: 30,
-      trackerId: 'sleep_nap',
+      trackerId: 'sleep',
     })).toEqual({
       durationMinutes: 30,
-      trackerId: 'sleep_nap',
+      trackerId: 'sleep',
     });
     expect(createQuickLogDetailDraft({
       intensity: 'high',
@@ -58,7 +58,7 @@ describe('Quick Log details', () => {
       trackerId: 'zoomies',
     });
     expect(quickLogDetailDraftSchema.safeParse({
-      trackerId: 'potty_pee_inside',
+      trackerId: 'potty',
     }).success).toBe(false);
   });
 
@@ -67,7 +67,7 @@ describe('Quick Log details', () => {
 
     renderDetails(
       <QuickLogDetailsScreen
-        initialTrackerId="feeding_meal"
+        initialTrackerId="feeding"
         onSave={onSave}
       />,
     );
@@ -84,7 +84,7 @@ describe('Quick Log details', () => {
 
     expect(onSave).toHaveBeenCalledWith({
       amount: 'water',
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     });
   });
 
@@ -93,7 +93,7 @@ describe('Quick Log details', () => {
 
     renderDetails(
       <QuickLogDetailsScreen
-        initialTrackerId="sleep_nap"
+        initialTrackerId="sleep"
         onSave={onSave}
       />,
     );
@@ -108,7 +108,7 @@ describe('Quick Log details', () => {
 
     expect(onSave).toHaveBeenCalledWith({
       durationMinutes: 30,
-      trackerId: 'sleep_nap',
+      trackerId: 'sleep',
     });
   });
 
@@ -139,7 +139,7 @@ describe('Quick Log details', () => {
   it('renders the synthetic slow-saving state for dev review', () => {
     renderDetails(
       <QuickLogDetailsScreen
-        initialTrackerId="feeding_meal"
+        initialTrackerId="feeding"
         status="saving"
       />,
     );
@@ -150,7 +150,7 @@ describe('Quick Log details', () => {
   it('renders the synthetic error state for dev review', () => {
     renderDetails(
       <QuickLogDetailsScreen
-        initialTrackerId="feeding_meal"
+        initialTrackerId="feeding"
         status="error"
       />,
     );

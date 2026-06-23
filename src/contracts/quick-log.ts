@@ -5,6 +5,7 @@ import {
   minimalQuickLogQueueItemSchema,
   timestampSchema,
   uuidSchema,
+  walkEventPayloadSchema,
   type EventLogInsert,
   type EventType,
   type JsonValue,
@@ -13,26 +14,29 @@ import {
 export const MAX_VISIBLE_QUICK_LOG_TRACKERS = 5;
 
 export const quickLogTrackerIds = [
-  'potty_pee_outside',
-  'potty_pee_inside',
-  'potty_poop',
-  'feeding_meal',
-  'sleep_nap',
+  'potty',
+  'feeding',
+  'sleep',
+  'walk',
   'zoomies',
-  'training',
 ] as const;
 
+export const quickLogPottySubtypes = ['outside', 'inside', 'poop'] as const;
+
 export const defaultQuickLogTrackerIds = [
-  'potty_pee_outside',
-  'potty_pee_inside',
-  'potty_poop',
-  'feeding_meal',
-  'sleep_nap',
+  'potty',
+  'feeding',
+  'sleep',
+  'walk',
+  'zoomies',
 ] as const;
 
 export const quickLogTrackerIdSchema = z.enum(quickLogTrackerIds);
+export const quickLogPottySubtypeSchema = z.enum(quickLogPottySubtypes);
 
 export type QuickLogTrackerId = z.infer<typeof quickLogTrackerIdSchema>;
+export type QuickLogNonPottyTrackerId = Exclude<QuickLogTrackerId, 'potty'>;
+export type QuickLogPottySubtype = z.infer<typeof quickLogPottySubtypeSchema>;
 
 export type QuickLogTrackerDefinition = Readonly<{
   event_type: EventType;
@@ -43,45 +47,29 @@ export const quickLogClientEventIdSchema = z.string()
   .regex(/^evt_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
 
 export const quickLogTrackerDefinitions = {
-  potty_pee_outside: {
+  potty: {
     event_type: 'potty',
-    payload: {
-      quick_action: 'pee_outside',
-    },
+    payload: {},
   },
-  potty_pee_inside: {
-    event_type: 'potty',
-    payload: {
-      quick_action: 'pee_inside',
-    },
-  },
-  potty_poop: {
-    event_type: 'potty',
-    payload: {
-      quick_action: 'poop',
-    },
-  },
-  feeding_meal: {
+  feeding: {
     event_type: 'feeding',
     payload: {
       amount: 'meal',
     },
   },
-  sleep_nap: {
+  sleep: {
     event_type: 'sleep',
     payload: {
       sleep_kind: 'nap',
     },
   },
+  walk: {
+    event_type: 'walk',
+    payload: {},
+  },
   zoomies: {
     event_type: 'zoomies',
     payload: {},
-  },
-  training: {
-    event_type: 'training',
-    payload: {
-      topic: 'other',
-    },
   },
 } as const satisfies Record<QuickLogTrackerId, QuickLogTrackerDefinition>;
 
@@ -106,8 +94,8 @@ export const selectedQuickLogTrackerIdsSchema = z.array(quickLogTrackerIdSchema)
   });
 
 export const quickLogDetailTrackerIds = [
-  'feeding_meal',
-  'sleep_nap',
+  'feeding',
+  'sleep',
   'zoomies',
 ] as const;
 
@@ -115,12 +103,12 @@ export const quickLogDetailTrackerIdSchema = z.enum(quickLogDetailTrackerIds);
 
 export const quickLogFeedingDetailDraftSchema = z.object({
   amount: z.enum(['meal', 'snack', 'water']).optional(),
-  trackerId: z.literal('feeding_meal'),
+  trackerId: z.literal('feeding'),
 }).strict();
 
 export const quickLogSleepDetailDraftSchema = z.object({
   durationMinutes: z.number().int().min(1).max(1440).optional(),
-  trackerId: z.literal('sleep_nap'),
+  trackerId: z.literal('sleep'),
 }).strict();
 
 export const quickLogZoomiesDetailDraftSchema = z.object({
@@ -134,14 +122,38 @@ export const quickLogDetailDraftSchema = z.discriminatedUnion('trackerId', [
   quickLogZoomiesDetailDraftSchema,
 ]);
 
-export const quickLogCommandSchema = z.object({
+const quickLogCommandBaseSchema = {
   client_event_id: quickLogClientEventIdSchema,
   household_id: uuidSchema,
   puppy_id: uuidSchema,
   created_by: uuidSchema,
-  tracker_id: quickLogTrackerIdSchema,
   occurred_at: timestampSchema,
-}).strict();
+} as const;
+
+export const quickLogCommandSchema = z.discriminatedUnion('tracker_id', [
+  z.object({
+    ...quickLogCommandBaseSchema,
+    tracker_id: z.literal('potty'),
+    subtype: quickLogPottySubtypeSchema,
+  }).strict(),
+  z.object({
+    ...quickLogCommandBaseSchema,
+    tracker_id: z.literal('feeding'),
+  }).strict(),
+  z.object({
+    ...quickLogCommandBaseSchema,
+    tracker_id: z.literal('sleep'),
+  }).strict(),
+  z.object({
+    ...quickLogCommandBaseSchema,
+    tracker_id: z.literal('walk'),
+    payload: walkEventPayloadSchema.optional(),
+  }).strict(),
+  z.object({
+    ...quickLogCommandBaseSchema,
+    tracker_id: z.literal('zoomies'),
+  }).strict(),
+]);
 
 export type QuickLogCommand = z.infer<typeof quickLogCommandSchema>;
 export type SelectedQuickLogTrackerIds = z.infer<typeof selectedQuickLogTrackerIdsSchema>;
@@ -175,6 +187,11 @@ export type QuickLogQueueItem = z.infer<typeof quickLogQueueItemSchema>;
 export function createQuickLogEventInsert(command: unknown): QuickLogEventInsert {
   const parsedCommand = quickLogCommandSchema.parse(command);
   const definition = quickLogTrackerDefinitions[parsedCommand.tracker_id];
+  const payload = parsedCommand.tracker_id === 'potty'
+    ? { subtype: parsedCommand.subtype }
+    : parsedCommand.tracker_id === 'walk'
+      ? { ...definition.payload, ...(parsedCommand.payload ?? {}) }
+      : { ...definition.payload };
 
   return eventLogInsertSchema.parse({
     puppy_id: parsedCommand.puppy_id,
@@ -184,9 +201,7 @@ export function createQuickLogEventInsert(command: unknown): QuickLogEventInsert
     event_type: definition.event_type,
     occurred_at: parsedCommand.occurred_at,
     payload_version: 1,
-    payload: {
-      ...definition.payload,
-    },
+    payload,
   }) as QuickLogEventInsert;
 }
 
@@ -198,11 +213,11 @@ export function getQuickLogDetailTrackerIdForEventType(
   eventType: QuickLogEventType,
 ): QuickLogDetailTrackerId | null {
   if (eventType === 'feeding') {
-    return 'feeding_meal';
+    return 'feeding';
   }
 
   if (eventType === 'sleep') {
-    return 'sleep_nap';
+    return 'sleep';
   }
 
   if (eventType === 'zoomies') {
@@ -224,13 +239,13 @@ export function createQuickLogDetailPayload(
     throw new Error('Quick Log detail draft does not match the event type');
   }
 
-  if (input.draft.trackerId === 'feeding_meal') {
+  if (input.draft.trackerId === 'feeding') {
     return {
       amount: input.draft.amount ?? 'meal',
     };
   }
 
-  if (input.draft.trackerId === 'sleep_nap') {
+  if (input.draft.trackerId === 'sleep') {
     return input.draft.durationMinutes === undefined
       ? {
         sleep_kind: 'nap',

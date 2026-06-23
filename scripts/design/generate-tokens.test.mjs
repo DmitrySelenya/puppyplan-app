@@ -118,6 +118,28 @@ const sourceTokens = {
   },
 };
 
+const sourceTokensWithV2Foundation = {
+  ...sourceTokens,
+  color: {
+    ...sourceTokens.color,
+    status: {
+      info: { $value: '#6E5862' },
+      'info-tint': { $value: '#ECE4E6' },
+    },
+  },
+  layout: {
+    'bottom-inset-fab': { $value: '120pt' },
+  },
+  typography: {
+    ...sourceTokens.typography,
+    fontFamily: {
+      ...sourceTokens.typography.fontFamily,
+      display: { $value: 'Lora' },
+      text: { $value: 'Nunito' },
+    },
+  },
+};
+
 function withTempRepo(fn) {
   const repoRoot = mkdtempSync(join(tmpdir(), 'puppyplan-tokens-'));
 
@@ -146,6 +168,16 @@ test('buildTokenPayload normalizes design-token values for native runtime use', 
     accidentalDoubleTapWindowSeconds: 3,
     duplicateCareWarningWindowSeconds: 60,
   });
+});
+
+test('buildTokenPayload exposes V2 foundation font and FAB inset tokens', () => {
+  const payload = buildTokenPayload(sourceTokensWithV2Foundation);
+
+  assert.equal(payload.color.status.info, '#6E5862');
+  assert.equal(payload.color.status.infoTint, '#ECE4E6');
+  assert.equal(payload.layout.bottomInsetFab, 120);
+  assert.equal(payload.typography.fontFamily.display, 'Lora');
+  assert.equal(payload.typography.fontFamily.text, 'Nunito');
 });
 
 test('buildTokenPayload preserves explicit typography letterSpacing values', () => {
@@ -259,6 +291,71 @@ test('checkTokenDrift checks the raw design CSS mirror when present', () => {
     const result = checkTokenDrift({ repoRoot });
 
     assert.deepEqual(result.checkedCss, ['docs/design/v1/raw/tokens.css']);
+  });
+});
+
+test('checkTokenDrift checks the V2 foundation CSS and patch when present', () => {
+  withTempRepo((repoRoot) => {
+    writeFileSync(
+      join(repoRoot, 'design-tokens.json'),
+      `${JSON.stringify(sourceTokensWithV2Foundation, null, 2)}\n`,
+    );
+    writeGeneratedTokens({ repoRoot });
+    mkdirSync(join(repoRoot, 'docs/design/v2/raw'), { recursive: true });
+    writeFileSync(
+      join(repoRoot, 'docs/design/v2/raw/tokens.css'),
+      [
+        ':root {',
+        '  --pp-info: #6E5862;',
+        '  --pp-info-tint: #ECE4E6;',
+        '  --pp-bottom-inset-fab: 120px;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    writeFileSync(
+      join(repoRoot, 'docs/design/v2/raw/puppy-tokens-patch.css'),
+      [
+        '/* previous value: --pp-info: #5B6E7A; */',
+        ':root {',
+        '  --pp-info: #6E5862;',
+        '  --pp-info-tint: #ECE4E6;',
+        '  --pp-font-display: "Lora", Georgia, serif;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+
+    const result = checkTokenDrift({ repoRoot });
+
+    assert.deepEqual(result.checkedCss, [
+      'docs/design/v2/raw/tokens.css',
+      'docs/design/v2/raw/puppy-tokens-patch.css',
+    ]);
+  });
+});
+
+test('checkTokenDrift fails when the V2 foundation patch drifts from JSON', () => {
+  withTempRepo((repoRoot) => {
+    writeFileSync(
+      join(repoRoot, 'design-tokens.json'),
+      `${JSON.stringify(sourceTokensWithV2Foundation, null, 2)}\n`,
+    );
+    writeGeneratedTokens({ repoRoot });
+    mkdirSync(join(repoRoot, 'docs/design/v2/raw'), { recursive: true });
+    writeFileSync(
+      join(repoRoot, 'docs/design/v2/raw/tokens.css'),
+      ':root {\n  --pp-info: #6E5862;\n  --pp-info-tint: #ECE4E6;\n  --pp-bottom-inset-fab: 120px;\n}\n',
+    );
+    writeFileSync(
+      join(repoRoot, 'docs/design/v2/raw/puppy-tokens-patch.css'),
+      ':root {\n  --pp-font-display: "Quicksand", Georgia, serif;\n}\n',
+    );
+
+    assert.throws(
+      () => checkTokenDrift({ repoRoot }),
+      /docs\/design\/v2\/raw\/puppy-tokens-patch\.css drift/,
+    );
   });
 });
 

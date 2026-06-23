@@ -360,7 +360,15 @@ function getTodayQuickAction(
       return 'other';
     }
 
-    return payloadResult.data.quick_action;
+    if (payloadResult.data.subtype === 'outside') {
+      return 'pee_outside';
+    }
+
+    if (payloadResult.data.subtype === 'inside') {
+      return 'pee_inside';
+    }
+
+    return 'poop';
   }
 
   if (row.event_type === 'feeding') {
@@ -521,7 +529,7 @@ function statusTone(status: QuickLogEventView['status']): 'confirmed' | 'failed'
 
 const styles = StyleSheet.create({
   content: {
-    paddingBottom: tokens.layout.tabBarHeight + tokens.component.fab.size + tokens.space[6],
+    paddingBottom: tokens.layout.bottomInsetFab,
     paddingTop: tokens.space[2],
   },
   eventText: {

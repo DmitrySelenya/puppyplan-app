@@ -21,20 +21,20 @@ const commandByMode = {
 };
 
 if (!['push', 'test', 'lint', 'types', 'push-dry-run'].includes(mode)) {
-  console.error('Usage: node scripts/supabase/run-remote-cli.mjs <push|test|lint|types|push-dry-run>');
+  writeError('Usage: node scripts/supabase/run-remote-cli.mjs <push|test|lint|types|push-dry-run>');
   process.exit(2);
 }
 
 if (['push', 'test', 'lint', 'push-dry-run'].includes(mode) && !dbUrl) {
-  console.error('SUPABASE_DB_URL is required for remote Supabase CLI checks.');
+  writeError('SUPABASE_DB_URL is required for remote Supabase CLI checks.');
   process.exit(2);
 }
 
-if (mode === 'test' && process.env.SUPABASE_CLI_DOCKER_ALLOWED !== '1') {
-  console.error([
+if (mode === 'test') {
+  writeError([
     'Supabase CLI remote pgTAP requires Docker even when --db-url points at a remote database.',
     'Docker is disabled for this M1/8 GB workspace.',
-    'Run this mode only on a Docker-capable CI/cloud runner with SUPABASE_CLI_DOCKER_ALLOWED=1.',
+    'Use npm run supabase:guardrails for the no-Docker local SQL/RLS/typegen gate.',
   ].join('\n'));
   process.exit(2);
 }
@@ -55,26 +55,19 @@ function runTypeGeneration() {
   }
 
   if (!dbUrl) {
-    console.error([
+    writeError([
       'SUPABASE_PROJECT_REF is required for no-Docker Supabase type generation.',
-      'Set SUPABASE_PROJECT_REF and authenticate the Supabase CLI, or run with SUPABASE_DB_URL on a Docker-capable CI/cloud runner.',
+      'Set SUPABASE_PROJECT_REF and authenticate the Supabase CLI.',
     ].join('\n'));
     process.exit(2);
   }
 
-  if (process.env.SUPABASE_CLI_DOCKER_ALLOWED !== '1') {
-    console.error([
-      'Supabase CLI type generation with --db-url requires Docker.',
-      'Docker is disabled for this M1/8 GB workspace.',
-      'Set SUPABASE_PROJECT_REF for no-Docker typegen, or run this mode on a Docker-capable CI/cloud runner with SUPABASE_CLI_DOCKER_ALLOWED=1.',
-    ].join('\n'));
-    process.exit(2);
-  }
-
-  runSupabase(
-    ['gen', 'types', 'typescript', '--db-url', dbUrl, '--schema', 'public'],
-    { outputFile: 'src/contracts/database.types.ts' },
-  );
+  writeError([
+    'Supabase CLI type generation with --db-url requires Docker.',
+    'Docker is disabled for this M1/8 GB workspace.',
+    'Set SUPABASE_PROJECT_REF for no-Docker hosted-project typegen.',
+  ].join('\n'));
+  process.exit(2);
 }
 
 function runSupabase(args, options = {}) {
@@ -109,6 +102,10 @@ function runSupabase(args, options = {}) {
   }
 
   process.exit(status);
+}
+
+function writeError(message) {
+  process.stderr.write(`${message}\n`);
 }
 
 function readDotenvValue(key) {

@@ -136,7 +136,7 @@ function PuppySummaryCard({
 
 const styles = StyleSheet.create({
   content: {
-    paddingBottom: tokens.layout.tabBarHeight + tokens.component.fab.size + tokens.space[6],
+    paddingBottom: tokens.layout.tabBarHeight + tokens.space[6],
   },
   summaryCard: {
     alignItems: 'center',

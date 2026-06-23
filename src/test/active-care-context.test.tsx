@@ -21,7 +21,7 @@ const puppy: ActivePuppyProfile = {
   household_role: 'owner',
   id: puppyId,
   name: 'Puppy',
-  quick_tracker_ids: ['training', 'feeding_meal'],
+  quick_tracker_ids: ['walk', 'feeding'],
   updated_at: '2026-06-08T08:00:00.000Z',
 };
 
@@ -44,7 +44,7 @@ describe('active care context query contract', () => {
       householdId,
       householdRole: 'owner',
       puppyId,
-      selectedTrackerIds: ['training', 'feeding_meal'],
+      selectedTrackerIds: ['walk', 'feeding'],
       todayDate: '2026-06-08',
       userId,
     });

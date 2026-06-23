@@ -96,9 +96,7 @@ describe('app shell screens', () => {
     const scrollView = result.UNSAFE_getByType(ScrollView);
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
 
-    expect(contentStyle.paddingBottom).toBeGreaterThanOrEqual(
-      tokens.layout.tabBarHeight + tokens.component.fab.size + tokens.space[6],
-    );
+    expect(contentStyle.paddingBottom).toBeGreaterThanOrEqual(tokens.layout.bottomInsetFab);
   });
 
   it('renders the Health review mixed-list fixture only when explicitly requested', () => {

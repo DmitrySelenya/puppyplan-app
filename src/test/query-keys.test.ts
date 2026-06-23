@@ -136,8 +136,8 @@ describe('Quick Log invalidation map', () => {
       'potty',
       'feeding',
       'sleep',
+      'walk',
       'zoomies',
-      'training',
     ]);
 
     for (const eventType of quickLogEventTypes) {
