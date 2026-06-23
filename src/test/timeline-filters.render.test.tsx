@@ -147,6 +147,73 @@ describe('Timeline filters and actions', () => {
     expect(screen.queryByRole('tab', {
       name: i18n.t('quick-log.trackers.training'),
     })).toBeNull();
+    expect(screen.queryByRole('tab', {
+      name: 'Food',
+    })).toBeNull();
+    expect(i18n.getResource('en', 'translation', 'timeline.filter-chips')).toEqual([
+      'All',
+      'Potty',
+      'Feeding',
+      'Sleep',
+      'Walk',
+      'Zoomies',
+      'Health',
+    ]);
+  });
+
+  it('renders potty subtype in Timeline row title and row accessibility text', async () => {
+    mockListEvents.mockResolvedValue([
+      createRow({
+        event_type: 'potty',
+        payload: {
+          subtype: 'outside',
+        },
+      }),
+    ]);
+
+    renderWithQuery(
+      <TimelineScreen
+        careContext={careContext}
+        onClose={onClose}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.potty-outside'))).toBeTruthy();
+    });
+    expect(screen.getByLabelText([
+      i18n.t('quick-log.trackers.potty-outside'),
+      i18n.t('timeline.actor-you'),
+      i18n.t('timeline.pills.synced'),
+    ].join(', '))).toBeTruthy();
+  });
+
+  it('renders filtered empty state with a clear-filter action', async () => {
+    renderWithQuery(
+      <TimelineScreen
+        careContext={careContext}
+        onClose={onClose}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('tab', {
+      name: i18n.t('timeline.filter-chips.6'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {
+        name: i18n.t('timeline.empty-filter-clear'),
+      })).toBeTruthy();
+    });
+    expect(screen.getByText(i18n.t('timeline.empty-filter-title'))).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('timeline.empty-filter-clear'),
+    }));
+
+    expect(screen.getByRole('tab', {
+      name: i18n.t('timeline.filter-chips.0'),
+    }).props.accessibilityState.selected).toBe(true);
   });
 
   it('keeps pending local rows visible when a matching filtered Timeline query refetches', async () => {

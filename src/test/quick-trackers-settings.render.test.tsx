@@ -41,8 +41,18 @@ describe('Quick tracker settings screen', () => {
     })).toBeTruthy();
     expect(i18n.t('more.quick-trackers.screen-title')).not.toMatch(/\d|selected/i);
     expect(screen.getByText(i18n.t('more.quick-trackers.hint'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.quick-trackers.history-hint'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.quick-trackers.selected-count', { count: 5, max: 5 }))).toBeTruthy();
     expect(i18n.t('more.quick-trackers.hint')).not.toMatch(/drag|reorder-ready/i);
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.trackers.potty-outside'),
+    })).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.trackers.potty-inside'),
+    })).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.trackers.potty-poop'),
+    })).toBeNull();
 
     // Real Toggle switches + leading tracker icon and reorder handle
     expect(screen.getByTestId('tracker-toggle-feeding').props.value).toBe(true);

@@ -237,6 +237,24 @@ function getQuickLogStatusLabel(
 }
 
 function getQuickLogEventLabelKey(row: QuickLogCachedEventRow): I18nKey | null {
+  if (row.event_type === 'potty') {
+    const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
+
+    if (payloadResult.success) {
+      return pottySubtypeLabelKeys[payloadResult.data.subtype];
+    }
+
+    const legacyPayloadResult = legacyPottyEventPayloadSchema.safeParse(row.payload);
+
+    if (legacyPayloadResult.success) {
+      const quickAction = legacyPayloadResult.data.quick_action;
+
+      if (isLegacyPottyQuickAction(quickAction)) {
+        return legacyPottyQuickActionLabelKeys[quickAction];
+      }
+    }
+  }
+
   const trackerId = getQuickLogTrackerIdForEventRow(row);
 
   return trackerId === null ? null : trackerLabelKeys[trackerId];
@@ -262,6 +280,24 @@ const trackerLabelKeys = {
   walk: 'quick-log.trackers.walk',
   zoomies: 'quick-log.trackers.zoomies',
 } as const satisfies Record<QuickLogTrackerId, I18nKey>;
+
+const pottySubtypeLabelKeys = {
+  inside: 'quick-log.trackers.potty-inside',
+  outside: 'quick-log.trackers.potty-outside',
+  poop: 'quick-log.trackers.potty-poop',
+} as const satisfies Record<'inside' | 'outside' | 'poop', I18nKey>;
+
+type LegacyPottyQuickAction = 'pee_inside' | 'pee_outside' | 'poop';
+
+const legacyPottyQuickActionLabelKeys = {
+  pee_inside: 'quick-log.trackers.potty-inside',
+  pee_outside: 'quick-log.trackers.potty-outside',
+  poop: 'quick-log.trackers.potty-poop',
+} as const satisfies Record<LegacyPottyQuickAction, I18nKey>;
+
+function isLegacyPottyQuickAction(value: unknown): value is LegacyPottyQuickAction {
+  return value === 'pee_inside' || value === 'pee_outside' || value === 'poop';
+}
 
 const legacyPottyEventPayloadSchema = jsonObjectSchema.refine(
   (payload) =>

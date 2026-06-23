@@ -116,6 +116,7 @@ describe('Today Quick Log state integration', () => {
       />,
     );
 
+    expect(screen.getByText(i18n.t('today.states.unavailable.status'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.unavailable.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.unavailable.body'))).toBeTruthy();
     fireEvent.press(screen.getByRole('button', {
@@ -228,7 +229,7 @@ describe('Today Quick Log state integration', () => {
     await waitFor(() => {
       expect(screen.getByText(i18n.t('quick-log.failed.persistent-banner'))).toBeTruthy();
     });
-    expect(screen.queryByLabelText(i18n.t('quick-log.failed.persistent-banner'))).toBeNull();
+    expect(screen.getByLabelText(i18n.t('quick-log.failed.persistent-banner'))).toBeTruthy();
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.failed.primary'),

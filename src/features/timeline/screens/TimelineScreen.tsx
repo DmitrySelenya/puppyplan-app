@@ -11,6 +11,7 @@ import { AppText } from '@/design/primitives/AppText';
 import { AppIcon } from '@/design/primitives/AppIcon';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { EmptyState } from '@/design/primitives/EmptyState';
 import { IconButton } from '@/design/primitives/IconButton';
 import { ListGroup } from '@/design/primitives/ListGroup';
 import { Screen } from '@/design/primitives/Screen';
@@ -169,15 +170,45 @@ export function TimelineScreen({
           <AppText>{t('errors.load-failed')}</AppText>
         </Card>
       ) : (
-        <Card>
-          <AppText tone="secondary">
-            {selectedFilter === 'all'
-              ? t('timeline.empty')
-              : t('timeline.empty-filter')}
-          </AppText>
-        </Card>
+        <TimelineEmptyState
+          clearFilter={() => setSelectedFilter('all')}
+          filtered={selectedFilter !== 'all'}
+          t={t}
+        />
       )}
     </Screen>
+  );
+}
+
+function TimelineEmptyState({
+  clearFilter,
+  filtered,
+  t,
+}: Readonly<{
+  clearFilter: () => void;
+  filtered: boolean;
+  t: AppTranslate;
+}>) {
+  if (filtered) {
+    return (
+      <EmptyState
+        body={t('timeline.empty-filter')}
+        icon={<AppIcon name="search" size={36} />}
+        primaryAction={{
+          label: t('timeline.empty-filter-clear'),
+          onPress: clearFilter,
+        }}
+        title={t('timeline.empty-filter-title')}
+      />
+    );
+  }
+
+  return (
+    <Card>
+      <AppText tone="secondary">
+        {t('timeline.empty')}
+      </AppText>
+    </Card>
   );
 }
 
@@ -210,6 +241,7 @@ function TimelineFilterChips({
               accessibilityRole="tab"
               accessibilityState={{ selected }}
               key={option.value}
+              minTarget="thumb"
               onPress={() => setSelectedFilter(option.value)}
               style={[styles.chip, selected ? styles.chipSelected : null]}>
               <AppText
@@ -274,7 +306,10 @@ function TimelineQuickLogEventRow({
   const deleteRequest = createQuickLogDeleteRequest(event);
 
   return (
-    <View style={styles.eventRow}>
+    <View
+      accessibilityLabel={getTimelineEventAccessibilityLabel(event)}
+      accessible
+      style={styles.eventRow}>
       <View style={styles.eventTimeColumn}>
         <AppText
           maxFontSizeMultiplier={1.4}
@@ -511,6 +546,14 @@ function TimelineQuickLogEventRow({
       </Stack>
     </View>
   );
+}
+
+function getTimelineEventAccessibilityLabel(event: QuickLogEventView): string {
+  return [
+    event.title,
+    event.actorLabel,
+    event.statusLabel,
+  ].join(', ');
 }
 
 type TimelineDayBucket = Readonly<{

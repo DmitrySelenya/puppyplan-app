@@ -49,7 +49,11 @@
         "onboarding": "Bienvenida, perfil, pista de edad, selección de trackers y plan.",
         "profile": "Estados guardado y edición para la ruta de perfil del cachorro.",
         "quick-trackers": "Conteo de trackers elegidos, límite y filas listas para reordenar.",
+        "more-settings": "Hub Más, entrada de perfil, ajustes de trackers, nota de notificaciones, privacidad, eliminación de cuenta y marcador Plus.",
+        "quick-log-sheet": "Hoja de Quick Log, subtipos, aviso de duplicado, pendiente local, reintento fallido y estados de acceso.",
         "quick-log-details": "Ruta de detalles de Quick Log con estados sintéticos de guardado lento y error.",
+        "health-v2": "Lista de salud, vacío, edición, detalle, revisión, eliminación y entrada de peso.",
+        "timeline-v2": "Timeline predeterminado, filtrado, vacío, pendiente, error y confirmación de borrado.",
         "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
         "guidance": "Estados de guía inicial: leído, probado y omitido.",
         "today-deferrals": "Espacios sintéticos de invitación familiar y recordatorios para revisión.",
@@ -58,8 +62,10 @@
       "today": {
         "day-one": "Hoy · día uno",
         "day-two-morning": "Hoy · mañana del día dos",
+        "day-seven": "Hoy · día siete",
         "after-invite": "Hoy · espacio tras invitación",
         "missed-reminder": "Hoy · espacio de recordatorio pendiente",
+        "state-fixtures": "Hoy · carga, offline y pendiente",
         "synthetic-note": "Estos estados no escriben recordatorios, invitaciones ni actividad del hogar."
       }
     }
@@ -271,7 +277,15 @@
     },
     "first-log": {
       "hero-after-first": "Primer evento guardado. A partir de aquí, un ritmo tranquilo.",
+      "body-after-first": "Hoy ahora muestra el evento guardado, el siguiente paso y la misma acción de registro rápido.",
+      "eyebrow": "Primer Today",
+      "today-title": "Tu primer evento",
+      "event-title": "Pis afuera · 9:42",
+      "event-meta": "Guardado ahora",
       "celebration-snackbar": "Hecho. Puedes seguir adelante."
+    },
+    "preview": {
+      "name-value": "Cachorro"
     },
     "account-wall": {
       "title": "Guarda tu progreso",
@@ -474,30 +488,37 @@
     },
     "states": {
       "loading": {
+        "status": "Cargando",
         "title": "Actualizando Hoy",
         "body": "Los eventos guardados de rutina se están cargando para este cachorro."
       },
       "empty": {
+        "status": "Vacío",
         "title": "Nada registrado hoy",
         "body": "Hoy se llenará después del primer evento de rutina."
       },
       "error": {
+        "status": "Vista guardada",
         "title": "No se pudo actualizar Hoy",
         "body": "Mostrando la vista guardada que ya está en este dispositivo."
       },
       "offline-read": {
+        "status": "Sin conexión",
         "title": "Vista sin conexión",
         "body": "Los eventos guardados son visibles. Los cambios nuevos se sincronizarán cuando vuelva la conexión."
       },
       "pending-write": {
+        "status": "Sincronizando",
         "title": "Sincronización en curso",
         "body": "Uno o más eventos locales de cuidado esperan sincronizarse."
       },
       "permission-denied": {
+        "status": "Solo lectura",
         "title": "Acceso de solo lectura",
         "body": "Hoy se puede leer, pero registrar rutinas requiere acceso de cuidador."
       },
       "unavailable": {
+        "status": "Falta configurar",
         "title": "Configura un perfil de cachorro",
         "body": "Crea o elige un perfil activo antes de que Hoy pueda guiar el cuidado."
       }
@@ -688,10 +709,10 @@
     "filter-chips": [
       "Todo",
       "Baño",
-      "Alimento",
-      "Dormir",
+      "Alimentación",
+      "Sueño",
+      "Paseo",
       "Zoomies",
-      "Entrenamiento",
       "Salud"
     ],
     "range-default": "Hoy",
@@ -703,7 +724,9 @@
     ],
     "range-custom-title": "Elige un rango",
     "empty": "Aún no hay eventos.",
+    "empty-filter-title": "No hay nada aquí",
     "empty-filter": "No hay eventos en este rango.",
+    "empty-filter-clear": "Borrar filtros",
     "unavailable": {
       "title": "Timeline necesita un cachorro activo",
       "body": "Los eventos aparecerán aquí cuando haya un hogar y un perfil de cachorro activos."
@@ -1109,9 +1132,14 @@
       "current-section": "Mayo de 2026",
       "previous-section": "Abril de 2026",
       "dhpp-title": "Vacuna DHPP",
-      "dhpp-meta": "Plantilla · 12 semanas",
-      "deworming-title": "Tratamiento de parásitos",
-      "deworming-meta": "Confirmado · Hecho el 12 de mayo · Sin clínica indicada",
+      "dhpp-meta": "12 de mayo · Confirmado por ti",
+      "weight-title": "Control de peso · 4,2 kg",
+      "weight-meta": "10 de mayo",
+      "parasite-review-title": "Tratamiento de parásitos",
+      "parasite-review-meta": "Plantilla",
+      "parasite-review-subline": "Vale la pena revisarlo con tu veterinario",
+      "dhpp-template-title": "DHPP, 12 semanas",
+      "dhpp-template-meta": "Sugerido",
       "vet-visit-title": "Visita al veterinario",
       "vet-visit-meta": "Hecho · 28 de abril · Agregado por ti"
     },
@@ -1119,13 +1147,13 @@
     "refresh": "Refrescar",
     "pills": {
       "template": "Plantilla",
-      "needs-vet-review": "Pregúntale a tu veterinario",
+      "needs-vet-review": "Necesita revisión veterinaria",
       "confirmed": "Confirmado",
       "completed": "Hecho"
     },
     "template-row-subline": "Plantilla, no una receta",
     "confirmed-meta-template": "Hecho {date} · {provider}",
-    "confirmed-meta-no-provider": "Hecho {date} · No hay ninguna clínica en la lista",
+    "confirmed-meta-no-provider": "Hecho {date}",
     "sync-error-row": "Cambios sin sincronizar. Reintenta",
     "record-types": {
       "vaccination": "Vacunación",
@@ -1144,6 +1172,7 @@
       "field-name": "Nombre",
       "field-date": "Fecha",
       "field-status": "Estado",
+      "default-date": "Hoy",
       "status-segments": [
         "Plantilla",
         "Confirmado",
@@ -1152,6 +1181,7 @@
       "field-clinic": "Clínica o veterinario (opcional)",
       "field-note": "Nota (opcional)",
       "urgent-toggle": "Marcar como urgente",
+      "urgent-off": "Desactivado",
       "urgent-hint": "Usa esto si ya hablaste con tu veterinario.",
       "note-hint": "Las notas no se utilizan en análisis",
       "privacy-hint": "Las notas solo son visibles para ti y los familiares invitados.",
@@ -1187,12 +1217,32 @@
     "status-transitions": {
       "stages": [
         "Plantilla",
-        "Pregúntale a tu veterinario",
+        "Necesita revisión veterinaria",
         "Confirmado",
         "Hecho"
       ],
+      "now-template": "Ahora: {currentLabel} · Siguiente: {nextLabel}",
+      "complete-label": "Completo",
       "hint": "Puedes cambiar esto manualmente en cualquier momento.",
-      "a11y-template": "Etapa {current} de 4: {currentLabel}. Disponible: plantilla, pregunta a tu veterinario, confirmado, listo."
+      "a11y-template": "Etapa {current} de 4: {currentLabel}. Disponible: plantilla, necesita revisión veterinaria, confirmado, hecho."
+    },
+    "detail": {
+      "subtitle": "Vacunación · 12 semanas",
+      "date-label": "Fecha",
+      "date-value": "12 de mayo de 2026",
+      "status-label": "Estado",
+      "clinic-label": "Clínica",
+      "clinic-value": "Clínica de ejemplo",
+      "note-label": "Nota",
+      "note-value": "Nota leve después de la visita, resuelta en 24 horas.",
+      "stage-section": "Etapa",
+      "history-date": "12 de mayo de 2026"
+    },
+    "weight-entry": {
+      "title": "Entrada de peso",
+      "value": "4,2 kg",
+      "body": "El peso se guarda como una entrada para que los cuidadores revisen el crecimiento sin convertir Salud en consejo médico.",
+      "action": "Abrir entrada de peso"
     },
     "vet-prep": {
       "title": "Preparándose para la visita",
@@ -1480,6 +1530,12 @@
       "puppyplan-plus": "PuppyPlan Plus",
       "deferred": "Diferido"
     },
+    "about": {
+      "version": "Versión 1.0.0"
+    },
+    "plus": {
+      "subtitle": "Funciones extra para la etapa de cachorro"
+    },
     "puppy-summary": {
       "age-weeks": "{count} semanas",
       "no-age": "Edad sin configurar"
@@ -1517,6 +1573,7 @@
       "screen-title": "Rastreadores rápidos",
       "screen-title-template": "Rastreadores rápidos ({n} de 5 seleccionados)",
       "hint": "Elige hasta 5 rastreadores para Hoy y Registro rápido.",
+      "history-hint": "Si desactivas un rastreador, su historial se conserva; puedes volver a activarlo cuando quieras.",
       "selected-count": "{count} de {max} seleccionados",
       "more-options": "Más opciones",
       "toggle-on": "Activado",
@@ -1545,7 +1602,7 @@
       "section-push": "Push al dispositivo",
       "row-push-reminders": "Recordatorios",
       "row-push-sitter": "Lista de verificación terminada por el cuidador",
-      "push-hint": "En versión beta, la notificación se envía solo para estos eventos. No se presiona la actividad familiar.",
+      "push-hint": "Por ahora, las notificaciones push solo se envían para estos eventos. La actividad familiar no se envía.",
       "section-quiet-hours": "Horas tranquilas",
       "quiet-hours-example": "10:00 pm – 7:00 am",
       "section-tz": "Huso horario",
@@ -1562,6 +1619,7 @@
       "section-your-data": "Tus datos",
       "row-export": "Exporta tus datos",
       "section-account": "Cuenta",
+      "section-account-removal": "Eliminación de cuenta",
       "row-delete": "Eliminar cuenta",
       "export-sheet": "Recopilaremos tus registros y te enviaremos un enlace a tu correo electrónico dentro de las 24 horas.",
       "delete-sheet": {
@@ -1581,7 +1639,7 @@
       "row-privacy-policy": "política de privacidad",
       "row-terms": "Condiciones de uso",
       "section-about": "Acerca de",
-      "row-version": "Versión 1.0.0 (beta)",
+      "row-version": "Versión 1.0.0",
       "row-health-disclaimer": "Aviso legal de salud",
       "health-disclaimer-sheet": "PuppyPlan te ayuda a mantener registros y recordatorios. No es consejo médico. Para cualquier duda sobre la salud de tu cachorro, consulta con tu veterinario."
     }

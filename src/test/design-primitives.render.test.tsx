@@ -698,14 +698,14 @@ describe('design primitives', () => {
     render(
       <ListRow
         leading={<AppIcon name="docText" />}
-        meta="Confirmed · Done May 12 · No clinic listed"
+        meta="Confirmed · Done May 12"
         title="Parasite treatment"
         variant="health"
       />,
     );
 
     const title = screen.getByText('Parasite treatment');
-    const meta = screen.getByText('Confirmed · Done May 12 · No clinic listed');
+    const meta = screen.getByText('Confirmed · Done May 12');
 
     expect(title.props.numberOfLines).toBeUndefined();
     expect(meta.props.numberOfLines).toBe(2);

@@ -288,6 +288,9 @@ export function QuickTrackersSettingsScreen({
           {t('more.quick-trackers.max-reached-hint')}
         </AppText>
       ) : null}
+      <AppText style={styles.footerHint} tone="tertiary" variant="footnote">
+        {t('more.quick-trackers.history-hint')}
+      </AppText>
     </Screen>
   );
 }

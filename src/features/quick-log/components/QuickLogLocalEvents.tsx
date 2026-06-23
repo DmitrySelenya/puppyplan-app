@@ -41,9 +41,16 @@ export function QuickLogLocalEvents({
     <Stack gap="sm">
       {events.map((event) => {
         const failed = event.state === 'failed_retryable' || event.state === 'failed_permanent';
+        const accessibilityStatus = failed
+          ? t('quick-log.failed.generic')
+          : t('quick-log.pending.label');
 
         return (
-          <Card key={event.clientEventId}>
+          <Card
+            accessibilityLabel={`${event.trackerName}. ${accessibilityStatus}`}
+            accessibilityLiveRegion="polite"
+            accessibilityRole={failed ? 'alert' : undefined}
+            key={event.clientEventId}>
             <Stack gap="md">
               <Stack
                 align="center"

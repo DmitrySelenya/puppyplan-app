@@ -418,6 +418,44 @@ describe('QuickLogShell', () => {
     expect(mutation.deleteLocal).toHaveBeenCalledWith(clientEventId);
   });
 
+  it('labels pending and failed local rows for assistive technology', () => {
+    const mutation = createMutationPort();
+
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        localEvents={[
+          {
+            clientEventId: 'evt_00000000-0000-4000-8000-000000000503',
+            eventType: 'feeding',
+            householdId: careContext.householdId,
+            puppyId: careContext.puppyId,
+            state: 'sending',
+            todayDate: careContext.todayDate,
+            trackerName: i18n.t('quick-log.trackers.feeding'),
+          },
+          {
+            clientEventId: 'evt_00000000-0000-4000-8000-000000000504',
+            eventType: 'walk',
+            householdId: careContext.householdId,
+            puppyId: careContext.puppyId,
+            state: 'failed_retryable',
+            todayDate: careContext.todayDate,
+            trackerName: i18n.t('quick-log.trackers.walk'),
+          },
+        ]}
+        mutation={mutation}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    expect(screen.getByLabelText(`${i18n.t('quick-log.trackers.feeding')}. ${i18n.t('quick-log.pending.label')}`)).toBeTruthy();
+    const failedRow = screen.getByLabelText(`${i18n.t('quick-log.trackers.walk')}. ${i18n.t('quick-log.failed.generic')}`);
+
+    expect(failedRow.props.accessibilityLiveRegion).toBe('polite');
+    expect(failedRow.props.accessibilityRole).toBe('alert');
+  });
+
   it('keeps controller state stable when callers toggle the snackbar override seam', () => {
     const mutation = createMutationPort();
     const snackbar = createSnackbarPort();

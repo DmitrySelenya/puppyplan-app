@@ -6,8 +6,11 @@ import { AccessibilityInfo } from 'react-native';
 
 import {
   DesignGalleryScreen,
+  SyntheticHealthShell,
   SyntheticQuickLogDetailsShell,
+  SyntheticQuickLogSheetShell,
   SyntheticOnboardingShell,
+  SyntheticMoreSettingsShell,
   SyntheticPuppyProfileSettingsShell,
   SyntheticQuickTrackersSettingsShell,
   SyntheticTodayShell,
@@ -75,10 +78,21 @@ describe('development-only design gallery', () => {
     expect(screen.getAllByText(i18n.t('onboarding.welcome.title')).length).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('more.puppy-profile.screen-title')).length).toBeGreaterThan(0);
     expect(
-      screen.getAllByText(i18n.t('more.quick-trackers.screen-title-template', { count: 5, max: 5 })).length,
+      screen.getAllByText(i18n.t('more.quick-trackers.screen-title-template', { n: 5 })).length,
     ).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('dev.gallery.states.more-settings'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('dev.gallery.states.quick-log-sheet'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('dev.gallery.states.health-v2'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('tabs.today')).length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('dev.gallery.today.synthetic-note'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.today.day-seven'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.today.state-fixtures'))).toBeTruthy();
   });
 
   it('renders route-shell preview states without production actions', () => {
@@ -87,15 +101,31 @@ describe('development-only design gallery', () => {
         <SyntheticOnboardingShell />
         <SyntheticPuppyProfileSettingsShell />
         <SyntheticQuickTrackersSettingsShell />
+        <SyntheticMoreSettingsShell />
+        <SyntheticQuickLogSheetShell />
+        <SyntheticHealthShell />
         <SyntheticTodayShell />
         <SyntheticQuickLogDetailsShell />
       </>,
     );
 
-    expect(screen.getAllByText(i18n.t('dev.gallery.shell-preview')).length).toBe(5);
-    expect(screen.getByText(i18n.t('onboarding.tracker-picker.counter', { n: 5 }))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('dev.gallery.shell-preview')).length).toBeGreaterThanOrEqual(7);
+    expect(screen.getAllByText(i18n.t('onboarding.tracker-picker.counter', { n: 5 })).length)
+      .toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('more.puppy-profile.hint'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.quick-trackers.max-reached-hint'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.about.version'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.section-account-removal'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.states.quick-log-sheet'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.potty-subtype.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.duplicate-warning.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.failed.pill'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.rows.parasite-review-title'))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('health.pills.needs-vet-review')).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('health.weight-entry.title'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('today.deferred.synthetic-badge')).length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('today.deferred.family-invite'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.deferred.reminders'))).toBeTruthy();
