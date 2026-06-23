@@ -13,7 +13,7 @@ import {
 } from '@/contracts/supabase';
 
 export const QUICK_LOG_QUEUE_DATABASE_NAME = 'quick-log-queue.db';
-export const QUICK_LOG_QUEUE_SCHEMA_VERSION = 2;
+export const QUICK_LOG_QUEUE_SCHEMA_VERSION = 3;
 export const QUICK_LOG_QUEUE_TABLE_NAME = 'queue_item';
 
 export const quickLogQueueRetryableErrorCategories = [

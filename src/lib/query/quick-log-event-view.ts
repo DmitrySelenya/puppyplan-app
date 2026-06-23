@@ -9,7 +9,7 @@ import type {
   QuickLogRecoverySurface,
   QuickLogSourceSurface,
 } from '@/contracts/analytics';
-import { eventPayloadSchemas, type HouseholdMembershipRole } from '@/contracts/supabase';
+import { eventPayloadSchemas, jsonObjectSchema, type HouseholdMembershipRole } from '@/contracts/supabase';
 import type { AppTranslate, I18nKey } from '@/lib/i18n';
 
 import type { QuickLogCachedEventRow } from './quick-log';
@@ -124,19 +124,17 @@ export function getQuickLogTrackerIdForEventRow(
   if (row.event_type === 'potty') {
     const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
 
-    if (!payloadResult.success) {
+    if (payloadResult.success) {
+      return 'potty';
+    }
+
+    const legacyPayloadResult = legacyPottyEventPayloadSchema.safeParse(row.payload);
+
+    if (!legacyPayloadResult.success) {
       return null;
     }
 
-    if (payloadResult.data.quick_action === 'pee_outside') {
-      return 'potty_pee_outside';
-    }
-
-    if (payloadResult.data.quick_action === 'pee_inside') {
-      return 'potty_pee_inside';
-    }
-
-    return 'potty_poop';
+    return 'potty';
   }
 
   if (row.event_type === 'sleep') {
@@ -146,7 +144,13 @@ export function getQuickLogTrackerIdForEventRow(
       return null;
     }
 
-    return 'sleep_nap';
+    return 'sleep';
+  }
+
+  if (row.event_type === 'walk') {
+    const payloadResult = eventPayloadSchemas.walk.safeParse(row.payload);
+
+    return payloadResult.success ? 'walk' : null;
   }
 
   if (row.event_type === 'zoomies') {
@@ -155,16 +159,10 @@ export function getQuickLogTrackerIdForEventRow(
     return payloadResult.success ? 'zoomies' : null;
   }
 
-  if (row.event_type === 'training') {
-    const payloadResult = eventPayloadSchemas.training.safeParse(row.payload);
-
-    return payloadResult.success ? 'training' : null;
-  }
-
   if (row.event_type === 'feeding') {
     const payloadResult = eventPayloadSchemas.feeding.safeParse(row.payload);
 
-    return payloadResult.success ? 'feeding_meal' : null;
+    return payloadResult.success ? 'feeding' : null;
   }
 
   return null;
@@ -258,11 +256,16 @@ function formatEventTime(occurredAt: string, locale?: string): string {
 }
 
 const trackerLabelKeys = {
-  feeding_meal: 'quick-log.trackers.feeding',
-  potty_pee_inside: 'quick-log.trackers.potty-inside',
-  potty_pee_outside: 'quick-log.trackers.potty-outside',
-  potty_poop: 'quick-log.trackers.potty-poop',
-  sleep_nap: 'quick-log.trackers.sleep',
-  training: 'quick-log.trackers.training',
+  feeding: 'quick-log.trackers.feeding',
+  potty: 'quick-log.trackers.potty',
+  sleep: 'quick-log.trackers.sleep',
+  walk: 'quick-log.trackers.walk',
   zoomies: 'quick-log.trackers.zoomies',
 } as const satisfies Record<QuickLogTrackerId, I18nKey>;
+
+const legacyPottyEventPayloadSchema = jsonObjectSchema.refine(
+  (payload) =>
+    payload.quick_action === 'pee_outside'
+    || payload.quick_action === 'pee_inside'
+    || payload.quick_action === 'poop',
+);

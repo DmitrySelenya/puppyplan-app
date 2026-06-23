@@ -52,11 +52,13 @@ Sharing RLS tests must assert forbidden fields and forbidden base-table access, 
 
 On the 8 GB M1 MacBook Air, do not run a local Supabase stack. Local Expo development points at the hosted non-production Supabase dev project via `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Remote migration dry-runs and lint use `SUPABASE_DB_URL`.
 
-The full Supabase gate runs in GitHub Actions:
+The default local schema/RLS gate is no-Docker and static:
 
-- `npm run supabase:test` for remote pgTAP;
-- `npm run db:types` for generated DB types; use `SUPABASE_PROJECT_REF` plus Supabase CLI auth locally, or download the GitHub `database-types` artifact;
-- `npm run supabase:ci:remote` as the full remote Supabase schema gate.
+- `npm run supabase:guardrails` for static SQL/RLS/typegen guardrails plus generated database type drift.
+- Contract and migration work must update `supabase/tests/*.sql` coverage text, but local verification does not execute Docker-backed pgTAP.
+- `npm run db:types` uses `SUPABASE_PROJECT_REF` plus Supabase CLI auth for hosted-project type generation. Do not use DB-URL typegen modes locally when they require Docker.
+
+Remote Supabase wrappers (`npm run supabase:lint`, `npm run db:push:remote:dry-run`, `npm run supabase:ci:remote`) are explicit-approval checks, not mandatory local gates. `npm run supabase:test` is a disabled legacy command because the Supabase CLI pgTAP path requires Docker; it must not be used as required evidence unless a separately approved non-Docker runner replaces it.
 
 ## E2E
 

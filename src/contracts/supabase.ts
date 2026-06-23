@@ -16,6 +16,7 @@ export const eventTypes = [
   'potty',
   'feeding',
   'sleep',
+  'walk',
   'zoomies',
   'training',
   'health_record_reference',
@@ -120,13 +121,11 @@ export const contentLocaleSchema = z.enum(contentLocales);
 export const quickLogQueueStateSchema = z.enum(quickLogQueueStates);
 export const healthRecordSourceSchema = z.enum(['template', 'manual', 'confirmed']);
 export const puppyQuickTrackerIds = [
-  'potty_pee_outside',
-  'potty_pee_inside',
-  'potty_poop',
-  'feeding_meal',
-  'sleep_nap',
+  'potty',
+  'feeding',
+  'sleep',
+  'walk',
   'zoomies',
-  'training',
 ] as const;
 export const puppyQuickTrackerIdSchema = z.enum(puppyQuickTrackerIds);
 export const puppyQuickTrackerIdsSchema = z.array(puppyQuickTrackerIdSchema)
@@ -144,7 +143,7 @@ export const puppyQuickTrackerIdsSchema = z.array(puppyQuickTrackerIdSchema)
   });
 
 export const pottyEventPayloadSchema = z.object({
-  quick_action: z.enum(['pee_outside', 'pee_inside', 'poop']),
+  subtype: z.enum(['outside', 'inside', 'poop']),
 }).strict();
 
 export const feedingEventPayloadSchema = z.object({
@@ -153,6 +152,10 @@ export const feedingEventPayloadSchema = z.object({
 
 export const sleepEventPayloadSchema = z.object({
   sleep_kind: z.enum(['nap', 'overnight']),
+  duration_minutes: z.number().int().min(1).max(1440).optional(),
+}).strict();
+
+export const walkEventPayloadSchema = z.object({
   duration_minutes: z.number().int().min(1).max(1440).optional(),
 }).strict();
 
@@ -173,6 +176,7 @@ export const eventPayloadSchemas = {
   potty: pottyEventPayloadSchema,
   feeding: feedingEventPayloadSchema,
   sleep: sleepEventPayloadSchema,
+  walk: walkEventPayloadSchema,
   zoomies: zoomiesEventPayloadSchema,
   training: trainingEventPayloadSchema,
   health_record_reference: healthRecordReferenceEventPayloadSchema,

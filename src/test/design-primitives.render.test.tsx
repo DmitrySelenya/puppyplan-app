@@ -14,6 +14,7 @@ import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
 import { EmptyState } from '@/design/primitives/EmptyState';
 import { FAB } from '@/design/primitives/FAB';
+import { DesignFontGate, designFontFamilies } from '@/design/fonts';
 import { IconButton } from '@/design/primitives/IconButton';
 import { ListGroup } from '@/design/primitives/ListGroup';
 import { ListRow } from '@/design/primitives/ListRow';
@@ -166,6 +167,78 @@ describe('design primitives', () => {
     expect(label.fontWeight).toBe(String(tokens.typography.scale.caption.fontWeight));
   });
 
+  it('maps V2 AppText families and numeric text to the loaded design fonts', () => {
+    render(
+      <>
+        <AppText variant="display">Display copy</AppText>
+        <AppText variant="headline">Headline copy</AppText>
+        <AppText variant="body">Body copy</AppText>
+        <AppText variant="bodyEmph">Body emphasis</AppText>
+        <AppText numeric variant="code">12:30</AppText>
+      </>,
+    );
+
+    const display = StyleSheet.flatten(screen.getByText('Display copy').props.style);
+    const headline = StyleSheet.flatten(screen.getByText('Headline copy').props.style);
+    const body = StyleSheet.flatten(screen.getByText('Body copy').props.style);
+    const bodyEmph = StyleSheet.flatten(screen.getByText('Body emphasis').props.style);
+    const code = StyleSheet.flatten(screen.getByText('12:30').props.style);
+
+    expect(display.fontFamily).toBe(designFontFamilies.display.semibold);
+    expect(display.fontWeight).toBe('600');
+    expect(headline.fontFamily).toBe(designFontFamilies.display.semibold);
+    expect(body.fontFamily).toBe(designFontFamilies.text.regular);
+    expect(bodyEmph.fontFamily).toBe(designFontFamilies.text.bold);
+    expect(code.fontFamily).toBe(tokens.typography.fontFamily.mono[0]);
+    expect(code.fontVariant).toEqual(['tabular-nums']);
+  });
+
+  it('gates the app tree until design fonts are deterministically ready', () => {
+    const loading = render(
+      <DesignFontGate useDesignFontsForTest={() => ({ error: null, loaded: false })}>
+        <AppText>Loaded app</AppText>
+      </DesignFontGate>,
+    );
+
+    expect(loading.queryByText('Loaded app')).toBeNull();
+    loading.unmount();
+
+    render(
+      <DesignFontGate useDesignFontsForTest={() => ({ error: null, loaded: true })}>
+        <AppText>Loaded app</AppText>
+      </DesignFontGate>,
+    );
+
+    expect(screen.getByText('Loaded app')).toBeTruthy();
+  });
+
+  it('reports design font load failures while rendering the fallback app tree', async () => {
+    const fontError = new Error('Design font load failed');
+    const observability = {
+      captureException: jest.fn(),
+    };
+
+    render(
+      <DesignFontGate
+        observability={observability}
+        useDesignFontsForTest={() => ({ error: fontError, loaded: true })}>
+        <AppText>Loaded app</AppText>
+      </DesignFontGate>,
+    );
+
+    expect(screen.getByText('Loaded app')).toBeTruthy();
+    await waitFor(() => {
+      expect(observability.captureException).toHaveBeenCalledWith(fontError, {
+        area: 'design',
+        operation: 'load_fonts',
+        tags: {
+          font_family_display: 'Lora',
+          font_family_text: 'Nunito',
+        },
+      });
+    });
+  });
+
   it('renders Screen content inside the scaffold surface', () => {
     const { UNSAFE_getByType } = render(
       <Screen>
@@ -205,6 +278,7 @@ describe('design primitives', () => {
     expect(MIN_TOUCH_TARGET_BY_PLATFORM.ios).toBe(tokens.layout.tapTargetMin);
     expect(MIN_TOUCH_TARGET_BY_PLATFORM.android).toBe(48);
     expect(THUMB_TOUCH_TARGET).toBe(tokens.layout.tapTargetThumbZone);
+    expect(tokens.layout.bottomInsetFab).toBe(120);
     expect(DEFAULT_HIT_SLOP).toEqual({ bottom: 10, left: 10, right: 10, top: 10 });
     expect(getHitSlopForVisualSize(tokens.icon.specs.size)).toEqual(DEFAULT_HIT_SLOP);
     expect(motionPresets.tap.durationMs).toBe(tokens.motion.duration.fast);
@@ -916,6 +990,32 @@ describe('design primitives', () => {
     expect(onRowPress).not.toHaveBeenCalled();
     expect(onTrackerPress).not.toHaveBeenCalled();
     expect(onSegmentChange).not.toHaveBeenCalled();
+  });
+
+  it('exposes ListRow radio and checkbox selection semantics without changing default rows', () => {
+    render(
+      <>
+        <ListRow
+          onPress={jest.fn()}
+          selected
+          selectionRole="radio"
+          title="Selected tracker"
+        />
+        <ListRow
+          onPress={jest.fn()}
+          selected={false}
+          selectionRole="checkbox"
+          title="Optional scope"
+        />
+      </>,
+    );
+
+    expect(screen.getByRole('radio', { name: 'Selected tracker' }).props.accessibilityState).toMatchObject({
+      selected: true,
+    });
+    expect(screen.getByRole('checkbox', { name: 'Optional scope' }).props.accessibilityState).toMatchObject({
+      selected: false,
+    });
   });
 
   it('keeps card variants isolated and applies elevation from interactivity', () => {

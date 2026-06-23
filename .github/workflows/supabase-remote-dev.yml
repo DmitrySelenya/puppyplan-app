@@ -27,7 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      SUPABASE_CLI_DOCKER_ALLOWED: '1'
+      SUPABASE_PROJECT_REF: olymqppxsadsxfrcyskh
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_URL: ${{ secrets.PUPPYPLAN_DEV_SUPABASE_DB_URL }}
     steps:
       - name: Check out repository
@@ -48,6 +49,10 @@ jobs:
         run: |
           if [ -z "${SUPABASE_DB_URL}" ]; then
             echo "::error::Set the PUPPYPLAN_DEV_SUPABASE_DB_URL repository secret for the non-production dev database."
+            exit 1
+          fi
+          if [ -z "${SUPABASE_ACCESS_TOKEN}" ]; then
+            echo "::error::Set the SUPABASE_ACCESS_TOKEN repository secret for hosted-project type generation."
             exit 1
           fi
 

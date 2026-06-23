@@ -23,11 +23,11 @@ const careContext: QuickLogCareContext = {
   householdRole: 'owner',
   puppyId: '00000000-0000-4000-8000-000000000502',
   selectedTrackerIds: [
-    'potty_pee_outside',
-    'potty_pee_inside',
-    'potty_poop',
-    'feeding_meal',
-    'sleep_nap',
+    'potty',
+    'feeding',
+    'sleep',
+    'walk',
+    'zoomies',
   ],
   todayDate: '2026-05-27',
 };
@@ -148,7 +148,7 @@ describe('QuickLogShell', () => {
     expect(screen.queryByText(i18n.t('common.close'))).toBeNull();
   });
 
-  it('maps pee inside to the pee-pad glyph and pee outside to the droplet', () => {
+  it('maps canonical tracker ids to their glyphs', () => {
     renderWithQuickLogFeedback(
       <QuickLogShell
         careContext={careContext}
@@ -157,15 +157,21 @@ describe('QuickLogShell', () => {
       />,
     );
 
-    expect(screen.getByTestId('quick-log-tracker-icon-pottyInside', {
-      includeHiddenElements: true,
-    })).toBeTruthy();
     expect(screen.getByTestId('quick-log-tracker-icon-water', {
       includeHiddenElements: true,
     })).toBeTruthy();
-    expect(screen.queryAllByTestId('quick-log-tracker-icon-pottyInside', {
+    expect(screen.getByTestId('quick-log-tracker-icon-bowl', {
       includeHiddenElements: true,
-    })).toHaveLength(1);
+    })).toBeTruthy();
+    expect(screen.getByTestId('quick-log-tracker-icon-moon', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByTestId('quick-log-tracker-icon-calendar', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByTestId('quick-log-tracker-icon-spark', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
   });
 
   it('wires the sheet dismiss affordance to the route close handler', () => {
@@ -192,7 +198,7 @@ describe('QuickLogShell', () => {
       <QuickLogShell
         careContext={{
           ...careContext,
-          selectedTrackerIds: ['training', 'feeding_meal'],
+          selectedTrackerIds: ['walk', 'feeding'],
         }}
         mutation={createMutationPort()}
         snackbar={createSnackbarPort()}
@@ -202,10 +208,10 @@ describe('QuickLogShell', () => {
     const trackerTiles = screen.getAllByTestId('quick-log-tracker-tile');
 
     expect(trackerTiles).toHaveLength(2);
-    expect(trackerTiles[0].props.accessibilityLabel).toBe(i18n.t('quick-log.trackers.training'));
+    expect(trackerTiles[0].props.accessibilityLabel).toBe(i18n.t('quick-log.trackers.walk'));
     expect(trackerTiles[1].props.accessibilityLabel).toBe(i18n.t('quick-log.trackers.feeding'));
     expect(screen.queryByRole('button', {
-      name: i18n.t('quick-log.trackers.potty-outside'),
+      name: i18n.t('quick-log.trackers.potty'),
     })).toBeNull();
   });
 
@@ -225,7 +231,7 @@ describe('QuickLogShell', () => {
       MAX_VISIBLE_QUICK_LOG_TRACKERS,
     );
     expect(screen.getByRole('button', {
-      name: i18n.t('quick-log.trackers.potty-outside'),
+      name: i18n.t('quick-log.trackers.potty'),
     })).toBeTruthy();
   });
 
@@ -251,7 +257,7 @@ describe('QuickLogShell', () => {
         now={() => new Date('2026-05-27T08:30:00.000Z')}
         recentEvent={{
           occurredAtMs: Date.parse('2026-05-27T08:29:30.000Z'),
-          trackerId: 'feeding_meal',
+          trackerId: 'feeding',
         }}
         snackbar={createSnackbarPort()}
       />,
@@ -272,6 +278,36 @@ describe('QuickLogShell', () => {
     expect(mutation.mutate).toHaveBeenCalledTimes(1);
   });
 
+  it('requires an explicit potty subtype before mutating a potty Quick Log event', () => {
+    const mutation = createMutationPort();
+
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={mutation}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.potty'),
+    }));
+
+    expect(screen.getByText(i18n.t('quick-log.potty-subtype.title'))).toBeTruthy();
+    expect(mutation.mutate).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.potty-inside'),
+    }));
+
+    expect(mutation.mutate).toHaveBeenCalledWith(expect.objectContaining({
+      variables: expect.objectContaining({
+        pottySubtype: 'inside',
+        trackerId: 'potty',
+      }),
+    }));
+  });
+
   it('cancels an active duplicate warning from the scrim instead of closing the sheet', () => {
     const closeSheet = jest.fn();
     const mutation = createMutationPort();
@@ -284,7 +320,7 @@ describe('QuickLogShell', () => {
         now={() => new Date('2026-05-27T08:30:00.000Z')}
         recentEvent={{
           occurredAtMs: Date.parse('2026-05-27T08:29:30.000Z'),
-          trackerId: 'feeding_meal',
+          trackerId: 'feeding',
         }}
         snackbar={createSnackbarPort()}
       />,
@@ -319,7 +355,7 @@ describe('QuickLogShell', () => {
         now={() => new Date('2026-05-27T08:30:00.000Z')}
         recentEvent={{
           occurredAtMs: Date.parse('2026-05-27T08:29:30.000Z'),
-          trackerId: 'feeding_meal',
+          trackerId: 'feeding',
         }}
         snackbar={createSnackbarPort()}
       />,
@@ -392,7 +428,7 @@ describe('QuickLogShell', () => {
         now={() => new Date('2026-05-27T08:30:00.000Z')}
         recentEvent={{
           occurredAtMs: Date.parse('2026-05-27T08:29:30.000Z'),
-          trackerId: 'feeding_meal',
+          trackerId: 'feeding',
         }}
         snackbar={snackbarOverride}
       />
@@ -471,7 +507,7 @@ describe('QuickLogShell', () => {
           eventType: 'feeding',
           requestId: request.requestId,
           state: failureState,
-          trackerId: 'feeding_meal',
+          trackerId: 'feeding',
           type: 'failed',
         }]}
       />,
@@ -543,7 +579,7 @@ describe('QuickLogShell', () => {
           clientEventId: 'evt_00000000-0000-4000-8000-000000000504',
           eventType: 'feeding',
           requestId: request.requestId,
-          trackerId: 'feeding_meal',
+          trackerId: 'feeding',
           type: 'started',
         }]}
       />,

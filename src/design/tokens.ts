@@ -59,8 +59,8 @@ export const tokens = {
       "warningTint": "#F6ECD8",
       "danger": "#9A3B2E",
       "dangerTint": "#F4DDD8",
-      "info": "#3C5C7A",
-      "infoTint": "#E2E8EF"
+      "info": "#6E5862",
+      "infoTint": "#ECE4E6"
     },
     "stroke": {
       "default": "#E2DDD2",
@@ -292,6 +292,7 @@ export const tokens = {
     "tapGapMin": 8,
     "maxContentWidth": 560,
     "tabBarHeight": 49,
+    "bottomInsetFab": 120,
     "appBarCollapsed": 44,
     "appBarExpanded": 96
   },
@@ -338,6 +339,8 @@ export const tokens = {
   },
   "typography": {
     "fontFamily": {
+      "display": "Lora",
+      "text": "Nunito",
       "ios": "SF Pro Text",
       "android": "Roboto",
       "mono": [

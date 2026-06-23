@@ -2,6 +2,7 @@ import type { PropsWithChildren } from 'react';
 import type { StyleProp, TextProps, TextStyle } from 'react-native';
 import { StyleSheet, Text } from 'react-native';
 
+import { designFontFamilies } from '@/design/fonts';
 import { tokens } from '@/design/tokens';
 
 export type AppTextVariant =
@@ -31,6 +32,7 @@ export type AppTextTone =
 
 export type AppTextProps = PropsWithChildren<
   TextProps & {
+    numeric?: boolean;
     style?: StyleProp<TextStyle>;
     tone?: AppTextTone;
     variant?: AppTextVariant;
@@ -43,19 +45,21 @@ export function AppText({
   allowFontScaling = true,
   children,
   maxFontSizeMultiplier,
+  numeric = false,
   style,
   tone = 'primary',
   variant = 'body',
   ...props
 }: AppTextProps) {
   const multiplier = maxFontSizeMultiplier ?? APP_TEXT_MAX_FONT_SIZE_MULTIPLIER;
+  const numericStyle = numeric || variant === 'code' ? styles.numeric : null;
 
   return (
     <Text
       {...props}
       allowFontScaling={allowFontScaling}
       maxFontSizeMultiplier={multiplier}
-      style={[styles.base, toneStyles[tone], variantStyles[variant], style]}>
+      style={[styles.base, toneStyles[tone], variantStyles[variant], numericStyle, style]}>
       {children}
     </Text>
   );
@@ -75,6 +79,9 @@ function textStyleForToken(
 const styles = StyleSheet.create({
   base: {
     color: tokens.color.text.primary,
+  },
+  numeric: {
+    fontVariant: ['tabular-nums'],
   },
 });
 
@@ -103,19 +110,61 @@ const toneStyles = StyleSheet.create({
 });
 
 const variantStyles = StyleSheet.create({
-  body: textStyleForToken(tokens.typography.scale.body),
-  bodyEmph: textStyleForToken(tokens.typography.scale.bodyEmph),
-  callout: textStyleForToken(tokens.typography.scale.callout),
-  caption: textStyleForToken(tokens.typography.scale.caption),
-  code: textStyleForToken(tokens.typography.scale.code),
-  display: textStyleForToken(tokens.typography.scale.display),
-  footnote: textStyleForToken(tokens.typography.scale.footnote),
-  headline: textStyleForToken(tokens.typography.scale.headline),
+  body: {
+    ...textStyleForToken(tokens.typography.scale.body),
+    fontFamily: designFontFamilies.text.regular,
+  },
+  bodyEmph: {
+    ...textStyleForToken(tokens.typography.scale.bodyEmph),
+    fontFamily: designFontFamilies.text.bold,
+  },
+  callout: {
+    ...textStyleForToken(tokens.typography.scale.callout),
+    fontFamily: designFontFamilies.text.regular,
+  },
+  caption: {
+    ...textStyleForToken(tokens.typography.scale.caption),
+    fontFamily: designFontFamilies.text.regular,
+  },
+  code: {
+    ...textStyleForToken(tokens.typography.scale.code),
+    fontFamily: tokens.typography.fontFamily.mono[0],
+  },
+  display: {
+    ...textStyleForToken(tokens.typography.scale.display),
+    fontFamily: designFontFamilies.display.semibold,
+  },
+  footnote: {
+    ...textStyleForToken(tokens.typography.scale.footnote),
+    fontFamily: designFontFamilies.text.regular,
+  },
+  headline: {
+    ...textStyleForToken(tokens.typography.scale.headline),
+    fontFamily: designFontFamilies.display.semibold,
+  },
   // Compact control labels intentionally share the caption type token.
-  label: textStyleForToken(tokens.typography.scale.caption),
-  subheadline: textStyleForToken(tokens.typography.scale.subheadline),
-  title: textStyleForToken(tokens.typography.scale.title1),
-  title1: textStyleForToken(tokens.typography.scale.title1),
-  title2: textStyleForToken(tokens.typography.scale.title2),
-  title3: textStyleForToken(tokens.typography.scale.title3),
+  label: {
+    ...textStyleForToken(tokens.typography.scale.caption),
+    fontFamily: designFontFamilies.text.regular,
+  },
+  subheadline: {
+    ...textStyleForToken(tokens.typography.scale.subheadline),
+    fontFamily: designFontFamilies.text.regular,
+  },
+  title: {
+    ...textStyleForToken(tokens.typography.scale.title1),
+    fontFamily: designFontFamilies.display.semibold,
+  },
+  title1: {
+    ...textStyleForToken(tokens.typography.scale.title1),
+    fontFamily: designFontFamilies.display.semibold,
+  },
+  title2: {
+    ...textStyleForToken(tokens.typography.scale.title2),
+    fontFamily: designFontFamilies.display.semibold,
+  },
+  title3: {
+    ...textStyleForToken(tokens.typography.scale.title3),
+    fontFamily: designFontFamilies.display.semibold,
+  },
 });

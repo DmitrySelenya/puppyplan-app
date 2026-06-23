@@ -45,9 +45,9 @@ describe('Quick tracker settings screen', () => {
     expect(i18n.t('more.quick-trackers.hint')).not.toMatch(/drag|reorder-ready/i);
 
     // Real Toggle switches + leading tracker icon and reorder handle
-    expect(screen.getByTestId('tracker-toggle-feeding_meal').props.value).toBe(true);
+    expect(screen.getByTestId('tracker-toggle-feeding').props.value).toBe(true);
     expect(
-      screen.getByTestId('tracker-reorder-handle-feeding_meal', { includeHiddenElements: true }),
+      screen.getByTestId('tracker-reorder-handle-feeding', { includeHiddenElements: true }),
     ).toBeTruthy();
 
     const feedingRow = screen.getByRole('button', {
@@ -70,21 +70,21 @@ describe('Quick tracker settings screen', () => {
       nativeEvent: { actionName: 'moveUp' },
     });
 
-    // Reorder persists immediately (implicit save). Feeding (index 3) moves up
-    // one slot, swapping with potty_poop (index 2).
+    // Reorder persists immediately (implicit save). Feeding moves up one slot,
+    // swapping with potty.
     expect(saveSelectedTrackerIds).toHaveBeenLastCalledWith([
-      'potty_pee_outside',
-      'potty_pee_inside',
-      'feeding_meal',
-      'potty_poop',
-      'sleep_nap',
+      'feeding',
+      'potty',
+      'sleep',
+      'walk',
+      'zoomies',
     ]);
 
     const zoomiesRow = screen.getByRole('button', {
       name: i18n.t('quick-log.trackers.zoomies'),
     });
-    expect(zoomiesRow.props.accessibilityState).toMatchObject({ disabled: true, selected: false });
-    expect(screen.getByTestId('tracker-toggle-zoomies').props.value).toBe(false);
+    expect(zoomiesRow.props.accessibilityState).toMatchObject({ disabled: false, selected: true });
+    expect(screen.getByTestId('tracker-toggle-zoomies').props.value).toBe(true);
 
     // At cap, guidance is a quiet footer hint, not a raised alert card.
     expect(screen.getByText(i18n.t('more.quick-trackers.max-reached-hint'))).toBeTruthy();
@@ -98,26 +98,24 @@ describe('Quick tracker settings screen', () => {
     }));
 
     expect(saveSelectedTrackerIds).toHaveBeenLastCalledWith([
-      'potty_pee_outside',
-      'potty_pee_inside',
-      'feeding_meal',
-      'potty_poop',
+      'feeding',
+      'potty',
+      'walk',
+      'zoomies',
     ]);
     expect(screen.queryByText(i18n.t('more.quick-trackers.max-reached-hint'))).toBeNull();
     expect(screen.getByRole('button', {
       name: i18n.t('quick-log.trackers.zoomies'),
-    }).props.accessibilityState).toMatchObject({ disabled: false, selected: false });
+    }).props.accessibilityState).toMatchObject({ disabled: false, selected: true });
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.trackers.zoomies'),
     }));
 
     expect(saveSelectedTrackerIds).toHaveBeenLastCalledWith([
-      'potty_pee_outside',
-      'potty_pee_inside',
-      'feeding_meal',
-      'potty_poop',
-      'zoomies',
+      'feeding',
+      'potty',
+      'walk',
     ]);
 
     // No bottom Save CTA in the atlas implicit-save model.
@@ -131,7 +129,7 @@ describe('Quick tracker settings screen', () => {
       <AppProviders>
         <QuickTrackersSettingsScreen
           saveSelectedTrackerIds={saveSelectedTrackerIds}
-          selectedTrackerIds={['feeding_meal']}
+          selectedTrackerIds={['feeding']}
         />
       </AppProviders>,
     );
@@ -148,7 +146,7 @@ describe('Quick tracker settings screen', () => {
       accessibilityRole: 'alert',
     });
     expect(saveSelectedTrackerIds).not.toHaveBeenCalled();
-    expect(screen.getByTestId('tracker-toggle-feeding_meal').props.value).toBe(true);
+    expect(screen.getByTestId('tracker-toggle-feeding').props.value).toBe(true);
   });
 
   it('shows retry copy when selected tracker save fails', async () => {
@@ -172,7 +170,7 @@ describe('Quick tracker settings screen', () => {
     await waitFor(() => {
       expect(screen.getByText(i18n.t('errors.save-failed-connection'))).toBeTruthy();
     });
-    expect(screen.getByTestId('tracker-toggle-sleep_nap').props.value).toBe(true);
+    expect(screen.getByTestId('tracker-toggle-sleep').props.value).toBe(true);
     expect(screen.getByText(i18n.t('more.quick-trackers.selected-count', {
       count: 5,
       max: 5,
@@ -211,13 +209,13 @@ describe('Quick tracker settings screen', () => {
 
     expect(saveSelectedTrackerIds).toHaveBeenCalledTimes(1);
     expect(saveSelectedTrackerIds).toHaveBeenLastCalledWith([
-      'potty_pee_outside',
-      'potty_pee_inside',
-      'potty_poop',
-      'feeding_meal',
+      'potty',
+      'feeding',
+      'walk',
+      'zoomies',
     ]);
-    expect(screen.getByTestId('tracker-toggle-sleep_nap').props.value).toBe(false);
-    expect(screen.getByTestId('tracker-toggle-zoomies').props.value).toBe(true);
+    expect(screen.getByTestId('tracker-toggle-sleep').props.value).toBe(false);
+    expect(screen.getByTestId('tracker-toggle-zoomies').props.value).toBe(false);
 
     await act(async () => {
       firstSave.resolve();
@@ -228,11 +226,9 @@ describe('Quick tracker settings screen', () => {
       expect(saveSelectedTrackerIds).toHaveBeenCalledTimes(2);
     });
     expect(saveSelectedTrackerIds).toHaveBeenLastCalledWith([
-      'potty_pee_outside',
-      'potty_pee_inside',
-      'potty_poop',
-      'feeding_meal',
-      'zoomies',
+      'potty',
+      'feeding',
+      'walk',
     ]);
 
     await act(async () => {

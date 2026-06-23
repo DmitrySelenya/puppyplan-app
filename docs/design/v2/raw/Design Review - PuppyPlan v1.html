@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PuppyPlan v1 — экспертное дизайн-ревью</title>
+<style>
+  :root {
+    --ink: #1C1F1B; --ink-2: #4A4E48; --ink-3: #72756B;
+    --paper: #FBFAF7; --raised: #FFFFFF; --sunken: #F1ECE3;
+    --stroke: #E2DDD2; --teal: #0E7490; --teal-deep: #155E75;
+    --good: #3F7A57; --good-tint: #E6EFE8;
+    --warn: #8E5C18; --warn-tint: #F6ECD8;
+    --bad: #9A3B2E;  --bad-tint: #F4DDD8;
+    --info: #3C5C7A; --info-tint: #E2E8EF;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    color: var(--ink); line-height: 1.55; font-size: 16px;
+  }
+  .page { max-width: 860px; margin: 0 auto; padding: 56px 48px 96px; }
+  h1 { font-size: 34px; line-height: 1.2; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.3px; }
+  h2 { font-size: 23px; font-weight: 700; margin: 52px 0 14px; padding-top: 20px; border-top: 1px solid var(--stroke); letter-spacing: -0.2px; }
+  h2:first-of-type { border-top: 0; padding-top: 0; }
+  h3 { font-size: 17px; font-weight: 650; margin: 26px 0 8px; }
+  p { margin: 0 0 12px; text-wrap: pretty; }
+  ul { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 6px; text-wrap: pretty; }
+  .lede { font-size: 18px; color: var(--ink-2); max-width: 700px; }
+  .meta { color: var(--ink-3); font-size: 13px; margin-bottom: 36px; }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); margin-bottom: 10px; }
+  code, .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 0.86em; background: var(--sunken); padding: 1px 5px; border-radius: 4px; white-space: nowrap; }
+  .verdict {
+    background: var(--raised); border: 1px solid var(--stroke); border-radius: 12px;
+    padding: 22px 24px; margin: 28px 0;
+  }
+  .verdict p:last-child { margin-bottom: 0; }
+  .grade-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 2px; }
+  .grade {
+    background: var(--sunken); border-radius: 8px; padding: 10px 14px; flex: 1 1 150px;
+  }
+  .grade b { display: block; font-size: 22px; font-weight: 700; }
+  .grade span { font-size: 12.5px; color: var(--ink-3); }
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; border-radius: 6px; padding: 2px 8px; vertical-align: 2px; margin-right: 8px; white-space: nowrap; }
+  .p0 { background: var(--bad-tint); color: var(--bad); }
+  .p1 { background: var(--warn-tint); color: var(--warn); }
+  .p2 { background: var(--info-tint); color: var(--info); }
+  .ok { background: var(--good-tint); color: var(--good); }
+  .item {
+    background: var(--raised); border: 1px solid var(--stroke); border-radius: 12px;
+    padding: 18px 20px 16px; margin-bottom: 14px;
+  }
+  .item h4 { margin: 0 0 8px; font-size: 16.5px; font-weight: 650; }
+  .item p, .item ul { font-size: 15px; color: var(--ink-2); }
+  .item p:last-child, .item ul:last-child { margin-bottom: 0; }
+  .where { font-size: 12.5px; color: var(--ink-3); margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--stroke); }
+  .where b { color: var(--ink-2); font-weight: 600; }
+  .fix { background: var(--good-tint); border-radius: 8px; padding: 8px 12px; font-size: 14px; color: #2F5E41; margin-top: 10px; }
+  .fix::before { content: "Рекомендация · "; font-weight: 700; }
+  .goodlist li { margin-bottom: 10px; }
+  .goodlist b { font-weight: 650; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0 20px; }
+  th { text-align: left; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); font-weight: 650; padding: 8px 10px; border-bottom: 2px solid var(--stroke); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--stroke); vertical-align: top; }
+  .toc { columns: 2; gap: 32px; font-size: 14.5px; }
+  .toc a { color: var(--teal); text-decoration: none; }
+  .toc li { break-inside: avoid; }
+  .note { background: var(--info-tint); color: var(--info); border-radius: 8px; padding: 10px 14px; font-size: 13.5px; margin: 14px 0; }
+  @media print {
+    body { font-size: 12pt; }
+    .page { padding: 0; max-width: none; }
+    .item, .verdict { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker">Экспертное дизайн-ревью · мобильное приложение iOS</div>
+  <h1>PuppyPlan v1 — заключение по макету</h1>
+  <div class="meta">Объём ревью: 16 разделов канваса, ~45 артбордов 393×852, библиотека компонентов, <span class="mono">tokens.css</span>, исходники экранов (<span class="mono">screens/*.jsx</span>), контракты из <span class="mono">design-tokens.json</span>. Проверка велась и по живому рендеру, и по коду.</div>
+
+  <p class="lede">Это зрелый, дисциплинированный макет уровня сильной продуктовой команды. Система токенов, тон копирайтинга и проработка состояний — выше среднего по индустрии. Но между поверхностями расползлась терминология трекеров, FAB физически перекрывает интерактивные элементы на нескольких экранах, и примерно половина пунктов вашего же аудита (a11y, контракты) ещё не доехала до макета, хотя Read&nbsp;me создаёт впечатление «всё применено».</p>
+
+  <div class="verdict">
+    <b>Вердикт: крепкая 4 из 5.</b>
+    <p style="margin-top:6px;">До эталона App Store не хватает не «красоты», а герметичности: единый словарь, нулевые коллизии слоёв, закрытый a11y-долг. Всё это — дни работы, не недели.</p>
+    <div class="grade-row">
+      <div class="grade"><b>9/10</b><span>Состояния и edge-cases</span></div>
+      <div class="grade"><b>9/10</b><span>Тон и копирайтинг</span></div>
+      <div class="grade"><b>8/10</b><span>Визуальная система</span></div>
+      <div class="grade"><b>6/10</b><span>Консистентность словаря</span></div>
+      <div class="grade"><b>5/10</b><span>A11y-готовность</span></div>
+    </div>
+  </div>
+
+  <h2 id="toc">Содержание</h2>
+  <ul class="toc">
+    <li><a href="#good">1 · Что сделано отлично</a></li>
+    <li><a href="#p0">2 · Чинить обязательно (P0)</a></li>
+    <li><a href="#p1">3 · Чинить до передачи в разработку (P1)</a></li>
+    <li><a href="#p2">4 · Желательно улучшить (P2)</a></li>
+    <li><a href="#screens">5 · Заметки по конкретным экранам</a></li>
+    <li><a href="#next">6 · Что делать дальше</a></li>
+  </ul>
+
+  <!-- ============================================================ -->
+  <h2 id="good">1 · Что сделано отлично</h2>
+  <p>Начну с сильного — его много, и это не дежурные комплименты.</p>
+  <ul class="goodlist">
+    <li><b>Проработка состояний — лучшая часть макета.</b> Loading / empty-first-run / empty-filtered / error / offline-read / pending-write / permission-denied / revoked сведены в единый справочник (§16) с правилом «копия дословно из <span class="mono">states.*</span>». Offline и pending показаны прямо на Today и Timeline, failed-сохранение имеет inline-ретрай на самой строке (4.5) — это уровень, до которого большинство релизных приложений не дотягивает.</li>
+    <li><b>Тон голоса выдержан безупречно.</b> «Accidents happen — they don't reset the rhythm», «A gentle start to the day», нейтральный revoked-экран без поиска виноватых, запрет на стрики и shame-копию. Для продукта, чья аудитория — невыспавшиеся владельцы щенков, это прямое продуктовое преимущество, а не косметика.</li>
+    <li><b>Цветовая дисциплина.</b> Тёплая нейтральная база + сдержанный teal, коралл только на celebration (2.6), приглушённый clay-red только на действительно разрушительных действиях. Контраст tertiary-текста уже починен с запасом (4.7:1). Палитра не «кричит» — редкое качество.</li>
+    <li><b>Прозрачность шаринга — образцовая.</b> Trainer scope с явными «Includes / Not included» на каждой карточке (8.1–8.2), баннер «You can close access at any time», «Private notes are never included» в билдере карточек, ревокабельные ссылки с экспирацией. Это privacy-by-design, который видно в UI, а не только в политике.</li>
+    <li><b>Иерархия CTA после второго прохода — чистая.</b> Правило «1 primary + ≤1 tertiary на герое» соблюдено на Today, в duplicate-шите Cancel понижен до текстовой ссылки, missed-reminder сложен в «Done + ⋯» вместо пяти равновесных пилюль. Видно, что аудит-коммит 3 реально применён.</li>
+    <li><b>Токены и сетка.</b> 4pt-grid, честная шкала радиусов и теней, табличные цифры для числовых данных, типографика по iOS-шкале без экзотики. <span class="mono">tokens.css</span> читается как документация.</li>
+    <li><b>Sitter mode продуман как сценарий, а не экран.</b> Окно времени с автозавершением, чек-лист на стороне ситтера, статус у владельца, аккуратный exit-confirm — полный цикл с тремя состояниями входа (ready / pending / no-caregiver).</li>
+  </ul>
+
+  <!-- ============================================================ -->
+  <h2 id="p0">2 · Чинить обязательно <span class="tag p0">P0</span></h2>
+
+  <div class="item">
+    <span class="tag p0">P0</span><h4 style="display:inline;">Три разных словаря трекеров на трёх поверхностях</h4>
+    <p style="margin-top:10px;">Это самая серьёзная проблема макета — она ломает ментальную модель пользователя:</p>
+    <table>
+      <tr><th>Поверхность</th><th>Словарь</th></tr>
+      <tr><td>Quick Log (4.1)</td><td>Pee outside · Pee inside · Poop · Feeding · Sleep</td></tr>
+      <tr><td>Настройки трекеров (14.3)</td><td>Feeding · Potty · Sleep · Walk · Weight (+ Play, Training, Biting)</td></tr>
+      <tr><td>Фильтры Timeline (5.x)</td><td>All · Potty · <b>Food</b> · Sleep · <b>Zoomies</b></td></tr>
+    </table>
+    <p>«Potty» — это один трекер или зонтик над тремя? Куда делся Walk из Quick Log, если он включён в 14.3? Почему в фильтрах «Food», а везде «Feeding»? Почему Zoomies фильтруется, но не логируется? На каждый из этих вопросов сейчас нет ответа в макете.</p>
+    <div class="fix">Зафиксировать каноническую таксономию в DESIGN.md (предлагаю: tracker = верхний уровень «Potty / Feeding / Sleep / Walk / Weight…», у Potty — подтипы outside/inside/poop, выбираемые внутри тайла или на форме деталей). Один словарь — везде: Quick Log, настройки, фильтры, Timeline, шаринг-скоупы.</div>
+    <div class="where"><b>Где:</b> quicklog.jsx (QL_TRACKERS), settings.jsx (14.3), timeline.jsx (чипы фильтров), onboarding.jsx (2.4)</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p0">P0</span><h4 style="display:inline;">FAB перекрывает интерактивные элементы</h4>
+    <p style="margin-top:10px;">FAB позиционирован абсолютно (<span class="mono">right:16, bottom:91</span>) и в нескольких местах физически лежит на других контролах:</p>
+    <ul>
+      <li><b>12.1 Reminders:</b> FAB закрывает кнопку «Mark done» карточки «Not logged today» — две цели тапа в одной точке. Прямой провал юзабилити.</li>
+      <li><b>4.2 и 2.6:</b> снекбар растянут <span class="mono">left:16 → right:16</span>, а его действие «Undo» — справа, ровно под FAB. Undo — критичное действие именно в момент, когда FAB поверх него.</li>
+      <li><b>5.1 Timeline:</b> последняя строка дня уходит под таб-бар, FAB наезжает на её правый край — нет нижнего content-inset.</li>
+    </ul>
+    <div class="fix">(1) Снекбару — отступ справа под FAB или правило «пока виден снекбар, FAB скрыт/смещён вверх» (как делает Material, и как ведёт себя iOS при HUD). (2) Всем скролл-спискам — документированный нижний inset: 49 + 34 + 56 + 16 ≈ 156pt. (3) Решить, на каких экранах FAB вообще есть — см. следующий пункт.</div>
+    <div class="where"><b>Где:</b> components.jsx (FAB, Snackbar), quicklog.jsx:88, onboarding.jsx (2.6), misc-экраны со списками</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p0">P0</span><h4 style="display:inline;">Долг собственного аудита не закрыт, а Read&nbsp;me читается как «всё применено»</h4>
+    <p style="margin-top:10px;">Проверил по коду: из <span class="mono">AUDIT_FIXES.md</span> применены коммиты 3 (CTA) и частично 1 (токены, канвас). Не применены:</p>
+    <ul>
+      <li><b>Весь коммит 4 (a11y):</b> <span class="mono">NavbarAction</span> не существует, «Cancel/Save/Done», back-шевроны, «Edit trackers», чипы контекста и фильтров — по-прежнему <span class="mono">&lt;span&gt;</span> без роли, фокуса и 44pt-площади. Тап-цель навбар-действий ~30pt.</li>
+      <li><b>1.1:</b> окно дубликата всё ещё «12-min» в <span class="mono">design-tokens.json</span> и в подписи артборда 4.4 (контракт требует 60 секунд). При этом копия шита говорит «4 minutes ago» — при 60-секундном окне этот пример вообще не должен триггерить предупреждение.</li>
+      <li><b>2.1:</b> ключ пилюли остался <span class="mono">needs-review</span>, а строки/токены ждут <span class="mono">needs-vet-review</span> — биндинг строк к компоненту не сойдётся.</li>
+    </ul>
+    <div class="fix">Либо доделать коммиты 1.1, 2.1, 4.x, либо честно перенести их в «Still pending» в Read me. Сейчас ревьюер (и разработчик) введён в заблуждение.</div>
+    <div class="where"><b>Где:</b> components.jsx:58, sharing.jsx:6–8, quicklog.jsx:48, design-tokens.json:191,276, PuppyPlan.html:182</div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="p1">3 · Чинить до передачи в разработку <span class="tag p1">P1</span></h2>
+
+  <div class="item">
+    <span class="tag p1">P1</span><h4 style="display:inline;">Онбординг 2.2 · error: ошибка не соответствует состоянию формы</h4>
+    <p style="margin-top:10px;">Сегмент стоит на «Age», в поле «8 weeks», а ошибка под полем — «That date is in the future — please double-check». Ошибка про дату рождения показана в режиме возраста. На вид мелочь, но это reference-экран ошибки формы — его будут копировать.</p>
+    <div class="fix">Показать error-вариант с активным сегментом «Or date of birth» и заполненным date-полем. Бонус: добавить и error возраста (например, пустое значение).</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p1">P1</span><h4 style="display:inline;">Онбординг 2.5–2.6: смешение хрома онбординга и приложения</h4>
+    <p style="margin-top:10px;">На «Plan reveal» одновременно видны «Step 5 of 5» (хром визарда), таб-бар и FAB (хром приложения). Пользователь ещё в онбординге или уже в приложении? Это размывает момент «handoff» — один из самых важных в первом запуске.</p>
+    <div class="fix">Либо 2.5 — последний шаг визарда без таб-бара, и тогда 2.6 — уже чистый Today; либо убрать степпер и оформить 2.5/2.6 как Today в первом запуске. Сейчас — гибрид.</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p1">P1</span><h4 style="display:inline;">2.6 · двойной фидбек на одно действие</h4>
+    <p style="margin-top:10px;">Первый лог подтверждается одновременно celebration-картой «First event saved. From here, a calm rhythm.» и снекбаром «Done. You can keep going.». Два конкурирующих подтверждения + строка со статусом «Saving» = три сигнала об одном событии.</p>
+    <div class="fix">Оставить celebration-карту (она и есть подтверждение), снекбар убрать. Снекбар — для логов из Quick Log в обычном режиме.</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p1">P1</span><h4 style="display:inline;">Paywall: два разных паттерна выбора плана</h4>
+    <p style="margin-top:10px;">Yearly выделен рамкой + бейджем, Monthly — пустым радио-кружком. Выглядит так, будто Yearly «выбран», а Monthly «можно выбрать», но это два разных визуальных языка для одного контрола. Копия «Extended features for the first 90 days» тоже неоднозначна: Plus работает только 90 дней? Это про щенячий период?</p>
+    <div class="fix">Один паттерн на обе опции (радио у обеих или selected-рамка у обеих). Копию уточнить: если речь о позиционировании «для первых 90 дней жизни с щенком» — сказать это; если про триал — это другой блок.</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p1">P1</span><h4 style="display:inline;">«End sitter mode» — красная destructive-кнопка на недеструктивном действии</h4>
+    <p style="margin-top:10px;">Ваш же контракт: <span class="mono">danger-color-only = user-marked urgent</span>, «no bright red». Завершение sitter mode ничего не удаляет — Caregiver A остаётся caregiver'ом, данные сохраняются (это написано прямо в тексте шита). Красная заливка здесь учит пользователя, что красный ≠ опасно.</p>
+    <div class="fix">Primary (teal) кнопка «End sitter mode» + tertiary «Cancel». Красный filled оставить ровно двум местам: Delete account (14.6) и Delete entry (11.x).</div>
+    <div class="where"><b>Где:</b> sitter.jsx (7.4)</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p1">P1</span><h4 style="display:inline;">7.3 · прогресс-бар чек-листа в warning-цвете</h4>
+    <p style="margin-top:10px;">Полоса «3 of 6 · today» залита янтарно-коричневым. 3 из 6 в середине дня — нормальный ход вещей, а не предупреждение; семантический цвет потрачен на нейтральную метрику. Та же янтарная вертикальная полоса на всей карточке усиливает тревожный тон.</p>
+    <div class="fix">Прогресс — primary/teal (или нейтральный), warning приберечь для «просрочено и не отмечено». Карточке хватит обычного stroke.</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p1">P1</span><h4 style="display:inline;">Таб-бар: активная иконка «Today» — заполненный круг</h4>
+    <p style="margin-top:10px;">В активном состоянии Today-таб рендерится сплошным диском — читается как заглушка, а не глиф. Рядом Health (сердце) и More (⋯) — полноценные иконки, контраст в качестве бросается в глаза на каждом экране.</p>
+    <div class="fix">Дать Today узнаваемый глиф в двух начертаниях (outline / fill): солнце, «сегодня»-календарь или циферблат. Заодно проверить пары outline/fill для всех трёх табов.</div>
+    <div class="where"><b>Где:</b> icons.jsx, components.jsx (TabBar)</div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="p2">4 · Желательно улучшить <span class="tag p2">P2</span></h2>
+
+  <div class="item">
+    <span class="tag p2">P2</span><h4 style="display:inline;">Mock-данные не сходятся между артбордами</h4>
+    <ul style="margin-top:10px;">
+      <li>Day 1, Day 2 и Day 7 — все «Thursday · May 14». Дни разные, дата одна.</li>
+      <li>Day 7: «9 weeks» при дате May 14, но профиль говорит «Mar 19, 2026 ≈ 8 weeks» на ту же дату.</li>
+      <li>Duplicate-шит: «Caregiver A logged a feeding 4 minutes ago» — не попадает в любое из обсуждаемых окон дубликата (60 сек).</li>
+    </ul>
+    <p>Для скринсета это нестрашно, но reference-макет читают буквально — разработчики перенесут несостыковки в фикстуры и тесты.</p>
+    <div class="fix">Один «канонический день» (например, Thu May 14 = day 1, Fri May 15 = day 2, Wed May 20 = day 7) и пересчитанные подписи.</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p2">P2</span><h4 style="display:inline;">Health: «Ask your vet» как значение поля Status</h4>
+    <p style="margin-top:10px;">В детали записи строка «Status: Ask your vet» — призыв к действию на месте значения статуса. В пилюле это работает, в паре «ключ–значение» — спотыкает. Также степпер STAGE (Template → Ask your vet → Confirmed → Done) с подчёркиваниями читается как табы, а не как индикатор текущей стадии: в 11.4 подчёркнуты три первых сегмента, и непонятно, какой из них «текущий».</p>
+    <div class="fix">Значение статуса — существительное («Needs vet review»), CTA — отдельно. Степпер заменить на явный progress-индикатор с одной активной точкой.</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p2">P2</span><h4 style="display:inline;">14.6 Delete confirm: показано только «лёгкое» состояние</h4>
+    <p style="margin-top:10px;">Поле уже заполнено словом DELETE, кнопка активна. Не показано исходное состояние: пустое поле + disabled-кнопка. Именно его соберут первым, и именно оно защищает от случайного удаления.</p>
+    <div class="fix">Добавить второй вариант артборда (или сделать дефолтным пустое поле + disabled Delete).</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p2">P2</span><h4 style="display:inline;">Микро-копия: три занозы</h4>
+    <ul style="margin-top:10px;">
+      <li><b>«DANGER ZONE»</b> (14.5) — жаргон GitHub в приложении про щенков с заботливым тоном. «Account removal» / «Delete account» секцией без милитари-заголовка.</li>
+      <li><b>«In beta, push is sent only for these events»</b> (14.4) — слово «beta» в пользовательском UI; лучше «For now, …».</li>
+      <li><b>«No clinic listed»</b> (11.1) — шумовой филлер в подзаголовке строки; пустое значение лучше просто не показывать.</li>
+    </ul>
+  </div>
+
+  <div class="item">
+    <span class="tag p2">P2</span><h4 style="display:inline;">Sitter-чеклист: зачёркивание выполненных пунктов</h4>
+    <p style="margin-top:10px;">Strikethrough на «Walk 13:00 — Caregiver A» читается как «отменено/удалено». Чекбокс уже сообщает «сделано» — зачёркивание избыточно и конфликтует со спокойным тоном.</p>
+    <div class="fix">Выполненные: чек + приглушённый цвет текста, без зачёркивания.</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p2">P2</span><h4 style="display:inline;">Иллюстрации-заглушки в эмоциональных точках</h4>
+    <p style="margin-top:10px;">Welcome (2.1) и герой Guidance (13.1) — штриховые плейсхолдеры/одинокая луна на градиенте. Это честно для v1, но именно эти два экрана несут эмоцию продукта; они же — первое и самое частое касание.</p>
+    <div class="fix">Заказать 4–6 иллюстраций одной серии (welcome, guidance-топики, empty-Today, celebration) до разработки — они зададут финальную температуру бренда. Стиль: тёплый, рукотворный, без стоковых собак.</div>
+  </div>
+
+  <div class="item">
+    <span class="tag p2">P2</span><h4 style="display:inline;">Достижимость Timeline</h4>
+    <p style="margin-top:10px;">Events открывается только текстовой ссылкой «Today ↔ Events» в навбаре. Для одной из трёх ключевых поверхностей (лог — главная ценность для семьи) это слабая точка входа, особенно для caregiver-ролей, которые приходят «посмотреть, что было».</p>
+    <div class="fix">Рассмотреть 4-й таб «Timeline» (Today · Timeline · Health · More) — место в таб-баре есть. Если нет — хотя бы карточку-вход с Today («See full timeline»).</div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="screens">5 · Короткие заметки по экранам</h2>
+  <table>
+    <tr><th style="width:32%;">Экран</th><th>Заметка</th></tr>
+    <tr><td>2.4 Tracker picker</td><td><span class="tag ok">OK</span>Лимит «5 of 5» с объяснением, выбранность = чек + рамка + цвет (не только цвет). Хорошо.</td></tr>
+    <tr><td>3.1 Day 1</td><td><span class="tag ok">OK</span>«WHAT TO DO NOW» из трёх мягких шагов + баннер «first day is about observing» — отличный анти-overwhelm. Уточнить, куда ведут шевроны (в Guidance-топики?).</td></tr>
+    <tr><td>3.2 Day 2</td><td><span class="tag ok">OK</span>Missed-reminder сложен в «Done + ⋯» — правка аудита применена корректно; подпись «Snooze · Skip · Edit · Stop in the menu» — удачная.</td></tr>
+    <tr><td>4.1 Quick Log</td><td>Сетка 3×N со «хвостом» из 2 тайлов во втором ряду — приемлемо; «Edit trackers» мал (15px, ~30pt цель) — поднять до 44pt (см. P0 a11y).</td></tr>
+    <tr><td>4.4 Duplicate</td><td><span class="tag ok">OK</span>Паттерн «предупреди, но не блокируй» + понижение Cancel — правильно. Окно (60 сек) и пример «4 minutes ago» рассинхронизированы (см. P0).</td></tr>
+    <tr><td>6.2 Invite</td><td><span class="tag ok">OK</span>Выбор роли с явным «What the caregiver will see» — образцово. Радио-строкам нужны a11y-роли (аудит 4.4 не применён).</td></tr>
+    <tr><td>9.2 Card preview</td><td>Подпись «This is everything the recipient will see» — золото. Гигантская буква-аватар «L» на месте фото выглядит сыро — нужен фото-плейсхолдер.</td></tr>
+    <tr><td>9.3 Share sheet</td><td><span class="tag ok">OK</span>Развилка «revocable link vs snapshot» с честным объяснением последствий — лучший экран раздела.</td></tr>
+    <tr><td>11.6 Health empty</td><td><span class="tag ok">OK</span>Add entry + Browse templates — правильная пара. Единственный empty c двумя CTA, и здесь это оправдано.</td></tr>
+    <tr><td>12.4 Push</td><td><span class="tag ok">OK</span>Лок-скрин с тремя actions (Done / Snooze 10 / Skip) — ровно то, что нужно сонному владельцу в 7:30.</td></tr>
+    <tr><td>14.3 Quick trackers</td><td>Drag-handles есть, но недоступно объяснение, что выключение/включение делает с историей данных. Одна строка под списком сняла бы тревогу.</td></tr>
+    <tr><td>16 States</td><td><span class="tag ok">OK</span>Сам факт существования этого листа — признак зрелой системы. Сохранить его как контрактный документ для QA.</td></tr>
+  </table>
+
+  <div class="note">Отдельно про артефакты: при DOM-скриншотах заголовки («Invite sent», «What happened?») выглядят наложенными на текст ниже — я проверил живую геометрию, в реальном рендере наложений нет. Это особенность снэпшот-инструментов, не баг макета.</div>
+
+  <!-- ============================================================ -->
+  <h2 id="next">6 · Что делать дальше — порядок работ</h2>
+  <table>
+    <tr><th style="width:8%;">№</th><th>Действие</th><th style="width:18%;">Усилие</th></tr>
+    <tr><td>1</td><td>Канонизировать словарь трекеров и прокатить по 4 поверхностям (Quick Log, 14.3, фильтры, онбординг)</td><td>0,5–1 день</td></tr>
+    <tr><td>2</td><td>Политика FAB (на каких экранах живёт) + правило снекбар/FAB + нижние инсеты списков</td><td>0,5 дня</td></tr>
+    <tr><td>3</td><td>Закрыть аудит-коммиты 1.1, 2.1, 4.x (a11y) или явно перенести в Pending в Read me</td><td>1–2 дня</td></tr>
+    <tr><td>4</td><td>P1-пакет: онбординг-хром, error 2.2, paywall-селекция, sitter-exit, иконка Today, прогресс 7.3</td><td>1 день</td></tr>
+    <tr><td>5</td><td>P2-пакет: мок-данные, копия, delete-confirm disabled, заметки из §5</td><td>0,5 дня</td></tr>
+    <tr><td>6</td><td>Иллюстрации (бриф сейчас — они на критическом пути эмоции продукта)</td><td>внешний трек</td></tr>
+  </table>
+  <p style="color:var(--ink-3); font-size:14px; margin-top:24px;">После пунктов 1–3 макет можно отдавать в разработку с чистой совестью; 4–6 — параллельно. Dynamic Type и dark mode остаются осознанно за скоупом v1 — это нормально, но решение стоит зафиксировать в DESIGN.md, чтобы оно не выглядело забытым.</p>
+
+</div>
+</body>
+</html>

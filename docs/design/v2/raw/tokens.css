@@ -1,0 +1,444 @@
+/* PuppyPlan design tokens — light mode, phone only.
+   WARM REFRESH (Clay · Sage · Honey) — softer, friendlier, more emotional.
+   Source palette: foundation_library_warm_light_v2. */
+
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Surfaces — warm cream */
+  --pp-surface-base:    #F6EFE3;
+  --pp-surface-raised:  #FFFCF6;
+  --pp-surface-sunken:  #ECE3D4;
+  --pp-surface-overlay: rgba(255, 252, 246, 0.96);
+  --pp-surface-scrim:   rgba(40, 30, 22, 0.34);
+
+  /* Text — warm charcoal */
+  --pp-text-primary:    #2C2824;
+  --pp-text-secondary:  #6B6256;
+  --pp-text-tertiary:   #877B68; /* ~4.5:1 on surface/base — nudged a touch darker than #8A7E6C for contrast */
+  --pp-text-disabled:   #A99E8C;
+  --pp-text-on-primary: #FFF7EF;
+  --pp-text-on-accent:  #2C2824;
+  --pp-text-link:       #B26A3C;
+
+  /* Primary — Clay (was Calm Teal) */
+  --pp-primary-50:  #FBF2EA;
+  --pp-primary-100: #F4DCC6;
+  --pp-primary-200: #ECC09C;
+  --pp-primary-300: #E0A271;
+  --pp-primary-400: #D08851;
+  --pp-primary-500: #C77F4F;
+  --pp-primary-600: #B26A3C; /* fill */
+  --pp-primary-700: #8C5028;
+  --pp-primary-800: #5E3318;
+
+  /* Accent — Honey, celebration ONLY (was Ember Coral) */
+  --pp-accent-100: #FBEFD9;
+  --pp-accent-300: #F2D196;
+  --pp-accent-500: #E3A53C;
+  --pp-accent-700: #B07A1E;
+
+  /* Support — Sage (wellbeing / calm) */
+  --pp-sage-100: #E8EEDD;
+  --pp-sage-300: #BCD0A0;
+  --pp-sage-500: #84A06A;
+  --pp-sage-700: #5E7A3E;
+
+  /* Status (muted, warm) */
+  --pp-success:      #5C7A45;
+  --pp-success-tint: #E7EEDB;
+  --pp-warning:      #A87A2A;
+  --pp-warning-tint: #F7EAD2;
+  --pp-danger:       #A24A3C;
+  --pp-danger-tint:  #F4E4E0;
+  --pp-info:         #6E5862;
+  --pp-info-tint:    #ECE4E6;
+
+  /* Stroke — warm sand */
+  --pp-stroke:        #E4D9C8;
+  --pp-stroke-strong: #C9BBA6;
+  --pp-stroke-hair:   rgba(228, 217, 200, 0.6);
+  --pp-focus-ring:    #C77F4F;
+
+  /* Pill colors (fill / text) — warm remap */
+  --pp-pill-template-fill:  #EFE6D7;  --pp-pill-template-text:  #6B6256;
+  --pp-pill-needs-vet-review-fill: #F7EAD2;  --pp-pill-needs-vet-review-text: #7E5A18;
+  --pp-pill-confirmed-fill: #E7EEDB;  --pp-pill-confirmed-text: #44602E;
+  --pp-pill-completed-fill: #E4E9ED;  --pp-pill-completed-text: #41525E;
+  --pp-pill-pending-fill:   #EFE6D7;  --pp-pill-pending-text:   #6B6256;
+  --pp-pill-failed-fill:    #F3E2DE;  --pp-pill-failed-text:    #7E3328;
+  --pp-pill-urgent-fill:    #F7EAD2;  --pp-pill-urgent-text:    #7E5A18;
+
+  /* Spacing — 4pt grid */
+  --pp-s-1: 4px;  --pp-s-2: 8px;  --pp-s-3: 12px; --pp-s-4: 16px;
+  --pp-s-5: 20px; --pp-s-6: 24px; --pp-s-8: 32px; --pp-s-10: 40px;
+  --pp-s-14: 56px;
+
+  /* Radius — rounder, softer */
+  --pp-r-sm: 10px;
+  --pp-r-md: 14px;
+  --pp-r-lg: 20px;
+  --pp-r-xl: 28px;
+  --pp-r-full: 999px;
+
+  /* Layout — FAB policy (review pass 3, P0):
+     · FAB lives ONLY on log surfaces: Today, Timeline, Health.
+     · FAB is hidden while a snackbar is visible. */
+  --pp-bottom-inset-fab: 120px;
+
+  /* Elevation — soft warm shadows */
+  --pp-elev-0: 0 0 0 1px var(--pp-stroke);
+  --pp-elev-1: 0 2px 10px rgba(70, 50, 30, 0.07), 0 0 0 1px var(--pp-stroke);
+  --pp-elev-2: 0 -4px 16px rgba(70, 50, 30, 0.10);
+  --pp-elev-3: 0 10px 28px rgba(70, 50, 30, 0.14);
+
+  /* Type — Quicksand (display) + Nunito (text), friendly rounded */
+  --pp-font:         "Nunito", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --pp-font-display: "Quicksand", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --pp-font-mono: "SF Mono", "Roboto Mono", ui-monospace, Menlo, monospace;
+}
+
+/* Reset for app surfaces */
+.pp-app, .pp-app * {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pp-app {
+  font-family: var(--pp-font);
+  color: var(--pp-text-primary);
+  background: var(--pp-surface-base);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Type scale — Quicksand for titles/headings, Nunito for reading copy */
+.pp-display     { font-family: var(--pp-font-display); font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: 0; }
+.pp-title-1     { font-family: var(--pp-font-display); font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: 0; }
+.pp-title-2     { font-family: var(--pp-font-display); font-size: 22px; line-height: 28px; font-weight: 700; letter-spacing: 0; }
+.pp-title-3     { font-family: var(--pp-font-display); font-size: 20px; line-height: 25px; font-weight: 600; letter-spacing: 0; }
+.pp-headline    { font-family: var(--pp-font-display); font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: 0; }
+.pp-body        { font-size: 17px; line-height: 24px; font-weight: 400; letter-spacing: 0; }
+.pp-body-emph   { font-size: 17px; line-height: 24px; font-weight: 700; letter-spacing: 0; }
+.pp-callout     { font-size: 16px; line-height: 22px; font-weight: 400; letter-spacing: 0; }
+.pp-subheadline { font-size: 15px; line-height: 20px; font-weight: 500; }
+.pp-footnote    { font-size: 13px; line-height: 18px; font-weight: 400; }
+.pp-caption     { font-size: 12px; line-height: 16px; font-weight: 600; }
+.pp-mono        { font-family: var(--pp-font-mono); font-feature-settings: "tnum" 1; }
+
+/* Phone canvas — 393×852, light status bar */
+.pp-phone {
+  width: 393px;
+  height: 852px;
+  background: var(--pp-surface-base);
+  position: relative;
+  overflow: hidden;
+  font-family: var(--pp-font);
+  color: var(--pp-text-primary);
+}
+
+/* iOS status bar (compact) */
+.pp-status-bar {
+  height: 47px;
+  padding: 14px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--pp-font-display);
+  color: var(--pp-text-primary);
+  z-index: 5;
+}
+.pp-status-bar .pp-sb-right { display: flex; gap: 6px; align-items: center; opacity: 0.9; }
+
+/* Large-title nav bar */
+.pp-navbar {
+  padding: 8px 16px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+}
+.pp-navbar .pp-nav-title { font-family: var(--pp-font-display); font-size: 17px; font-weight: 700; }
+.pp-navbar .pp-nav-btn { font-size: 17px; font-weight: 600; color: var(--pp-text-link); }
+.pp-large-title {
+  font-family: var(--pp-font-display);
+  padding: 4px 16px 8px;
+  font-size: 34px;
+  line-height: 41px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* Tab bar */
+.pp-tabbar {
+  height: 49px;
+  border-top: 1px solid var(--pp-stroke);
+  background: rgba(255, 252, 246, 0.92);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: stretch;
+  padding: 0 8px 0;
+}
+.pp-tabbar-safe { height: 34px; background: rgba(255, 252, 246, 0.92); }
+.pp-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--pp-text-tertiary);
+  padding-top: 6px;
+}
+.pp-tab.is-active { color: var(--pp-primary-700); }
+
+/* Card */
+.pp-card {
+  background: var(--pp-surface-raised);
+  border-radius: var(--pp-r-md);
+  border: 1px solid var(--pp-stroke);
+  padding: 16px;
+}
+
+/* Buttons */
+.pp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  min-height: 44px;
+  border-radius: var(--pp-r-full);
+  font-family: var(--pp-font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0;
+  border: 0;
+  cursor: pointer;
+  user-select: none;
+}
+.pp-btn-primary {
+  background: var(--pp-primary-600);
+  color: var(--pp-text-on-primary);
+  box-shadow: 0 6px 16px rgba(140, 80, 40, 0.20);
+}
+.pp-btn-primary:active { background: var(--pp-primary-700); }
+.pp-btn-secondary {
+  background: var(--pp-surface-sunken);
+  color: var(--pp-text-primary);
+}
+.pp-btn-ghost {
+  background: transparent;
+  color: var(--pp-text-link);
+  padding: 12px 12px;
+}
+.pp-btn-destructive {
+  background: transparent;
+  color: var(--pp-danger);
+}
+.pp-btn-destructive-filled {
+  background: var(--pp-danger);
+  color: #FFF7EF;
+}
+.pp-btn-destructive-filled:active { background: #7E3328; }
+.pp-btn-block { width: 100%; }
+.pp-btn[disabled] { opacity: 0.5; pointer-events: none; box-shadow: none; }
+
+/* Pills */
+.pp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: var(--pp-r-full);
+  font-family: var(--pp-font-display);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pp-pill svg { width: 14px; height: 14px; flex: 0 0 14px; }
+
+/* List */
+.pp-list { background: var(--pp-surface-raised); border-radius: var(--pp-r-md); border: 1px solid var(--pp-stroke); overflow: hidden; }
+.pp-list-row {
+  min-height: 56px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--pp-stroke);
+}
+.pp-list-row:first-child { border-top: 0; }
+
+/* Inputs */
+.pp-field {
+  background: var(--pp-surface-raised);
+  border: 1.5px solid var(--pp-stroke);
+  border-radius: var(--pp-r-md);
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 17px;
+  color: var(--pp-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pp-field.is-focused {
+  border-color: var(--pp-primary-500);
+  box-shadow: 0 0 0 3px rgba(199, 127, 79, 0.22);
+}
+.pp-field.is-error {
+  border-color: var(--pp-danger);
+}
+
+/* Tracker tile */
+.pp-tile {
+  background: var(--pp-surface-raised);
+  border: 1.5px solid var(--pp-stroke);
+  border-radius: var(--pp-r-lg);
+  height: 96px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  cursor: pointer;
+}
+.pp-tile.is-selected {
+  border-color: var(--pp-primary-600);
+  box-shadow: 0 0 0 1px var(--pp-primary-600) inset;
+}
+.pp-tile .pp-tile-label { font-family: var(--pp-font-display); font-size: 14px; font-weight: 700; }
+
+/* Snackbar */
+.pp-snack {
+  background: #2C2824;
+  color: #FFF7EF;
+  border-radius: var(--pp-r-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  box-shadow: 0 8px 24px rgba(40, 28, 16, 0.22);
+}
+.pp-snack .pp-snack-action,
+.pp-snack .pp-snack-secondary {
+  background: none; border: 0; cursor: pointer;
+  font-family: inherit;
+  padding: 12px 8px; margin: -12px -8px;
+}
+.pp-snack .pp-snack-action {
+  color: var(--pp-primary-300);
+  font-weight: 700;
+  font-size: 15px;
+  margin-left: auto;
+}
+.pp-snack .pp-snack-secondary {
+  color: rgba(255, 247, 239, 0.7);
+  font-size: 14px;
+}
+
+/* Sheets */
+.pp-sheet {
+  background: var(--pp-surface-raised);
+  border-radius: var(--pp-r-lg) var(--pp-r-lg) 0 0;
+  padding: 0 16px 16px;
+  box-shadow: var(--pp-elev-2);
+}
+.pp-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--pp-stroke-strong);
+  margin: 8px auto 12px;
+}
+
+/* Divider */
+.pp-divider { height: 1px; background: var(--pp-stroke-hair); }
+
+/* Activity strip */
+.pp-strip {
+  border: 1px solid var(--pp-stroke);
+  background: var(--pp-surface-raised);
+  border-radius: var(--pp-r-md);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--pp-text-secondary);
+}
+
+/* Skeleton */
+.pp-skel { background: var(--pp-surface-sunken); border-radius: 8px; }
+
+/* Tabular numerals utility */
+.pp-tabular-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+/* Filter / context chip */
+.pp-chip {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--pp-font-display);
+  border: 0; background: none; cursor: pointer;
+}
+.pp-chip::after {
+  content: '';
+  position: absolute; left: 0; right: 0; top: 50%;
+  height: 44px; transform: translateY(-50%);
+}
+
+/* Token-callout annotation in component library */
+.pp-anno {
+  font-family: var(--pp-font-mono);
+  font-size: 10px;
+  color: var(--pp-text-tertiary);
+  letter-spacing: 0;
+}
+
+/* Focus ring */
+.pp-focus {
+  box-shadow: 0 0 0 2px var(--pp-surface-base), 0 0 0 4px var(--pp-focus-ring);
+}
+.pp-interactive { outline: none; }
+.pp-interactive:focus-visible {
+  box-shadow: 0 0 0 2px var(--pp-surface-base), 0 0 0 4px var(--pp-focus-ring);
+  border-radius: 6px;
+  position: relative;
+  z-index: 1;
+}
+.pp-list-row.pp-interactive:focus-visible { border-radius: 0; }
+.pp-segment-option.pp-interactive:focus-visible {
+  box-shadow: 0 0 0 2px var(--pp-surface-base), 0 0 0 4px var(--pp-focus-ring);
+}
+
+/* Scrim wrapper for sheet variants */
+.pp-scrim {
+  background: linear-gradient(180deg, rgba(40,30,22,0) 0%, rgba(40,30,22,0.34) 60%);
+}
+
+/* Avatar */
+.pp-avatar {
+  width: 32px; height: 32px; border-radius: 999px;
+  background: var(--pp-primary-200);
+  color: var(--pp-primary-800);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--pp-font-display);
+  font-weight: 700; font-size: 13px;
+  flex: 0 0 auto;
+}
+.pp-avatar-lg { width: 40px; height: 40px; font-size: 15px; }
+.pp-avatar-xl { width: 56px; height: 56px; font-size: 20px; }
+
+/* No body scroll bleed inside artboards */
+.pp-phone, .pp-phone * { scrollbar-width: none; }
+.pp-phone *::-webkit-scrollbar { display: none; }

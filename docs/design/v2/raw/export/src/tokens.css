@@ -1,0 +1,403 @@
+/* PuppyPlan design tokens — light mode, phone only.
+   Mirror of design-tokens.json. Source of truth: DESIGN.md §1.2–1.8. */
+
+:root {
+  /* Surfaces */
+  --pp-surface-base:    #FBFAF7;
+  --pp-surface-raised:  #FFFFFF;
+  --pp-surface-sunken:  #F1ECE3;
+  --pp-surface-overlay: rgba(255, 255, 255, 0.96);
+  --pp-surface-scrim:   rgba(26, 26, 24, 0.32);
+
+  /* Text */
+  --pp-text-primary:    #1C1F1B;
+  --pp-text-secondary:  #4A4E48;
+  --pp-text-tertiary:   #72756B; /* 4.71:1 on surface/base · 4.91:1 on raised · was #76796F (4.42:1) — fixed in review pass */
+  --pp-text-disabled:   #A6A89F;
+  --pp-text-on-primary: #FFFFFF;
+  --pp-text-on-accent:  #1C1F1B;
+  --pp-text-link:       #0E7490;
+
+  /* Primary — Calm Teal */
+  --pp-primary-50:  #ECFEFF;
+  --pp-primary-100: #CFFAFE;
+  --pp-primary-200: #A5F3FC;
+  --pp-primary-300: #67E8F9;
+  --pp-primary-400: #22D3EE;
+  --pp-primary-500: #0891B2;
+  --pp-primary-600: #0E7490;
+  --pp-primary-700: #155E75;
+  --pp-primary-800: #164E63;
+
+  /* Accent — Ember Coral, celebration ONLY */
+  --pp-accent-100: #FBEBE0;
+  --pp-accent-300: #F4B89A;
+  --pp-accent-500: #E07A4F;
+  --pp-accent-700: #A14B26;
+
+  /* Status (muted) */
+  --pp-success:      #3F7A57;
+  --pp-success-tint: #E6EFE8;
+  --pp-warning:      #A06A1F;
+  --pp-warning-tint: #F6ECD8;
+  --pp-danger:       #9A3B2E;
+  --pp-danger-tint:  #F4DDD8;
+  --pp-info:         #3C5C7A;
+  --pp-info-tint:    #E2E8EF;
+
+  /* Stroke */
+  --pp-stroke:        #E2DDD2;
+  --pp-stroke-strong: #C9C3B5;
+  --pp-stroke-hair:   rgba(226, 221, 210, 0.6);
+  --pp-focus-ring:    #0E7490;
+
+  /* Pill colors (fill / text) */
+  --pp-pill-template-fill:  #F1ECE3;  --pp-pill-template-text:  #4A4E48;
+  --pp-pill-review-fill:    #F6ECD8;  --pp-pill-review-text:    #7A4F12;
+  --pp-pill-confirmed-fill: #E6EFE8;  --pp-pill-confirmed-text: #2F5E41;
+  --pp-pill-completed-fill: #EAF3F3;  --pp-pill-completed-text: #175255;
+  --pp-pill-pending-fill:   #F1ECE3;  --pp-pill-pending-text:   #4A4E48;
+  --pp-pill-failed-fill:    #F4DDD8;  --pp-pill-failed-text:    #7A2A20;
+  --pp-pill-urgent-fill:    #F4DDD8;  --pp-pill-urgent-text:    #7A2A20;
+
+  /* Spacing — 4pt grid */
+  --pp-s-1: 4px;  --pp-s-2: 8px;  --pp-s-3: 12px; --pp-s-4: 16px;
+  --pp-s-5: 20px; --pp-s-6: 24px; --pp-s-8: 32px; --pp-s-10: 40px;
+  --pp-s-14: 56px;
+
+  /* Radius */
+  --pp-r-sm: 8px;
+  --pp-r-md: 12px;
+  --pp-r-lg: 16px;
+  --pp-r-full: 999px;
+
+  /* Elevation */
+  --pp-elev-0: 0 0 0 1px var(--pp-stroke);
+  --pp-elev-1: 0 2px 8px rgba(28, 31, 27, 0.06), 0 0 0 1px var(--pp-stroke);
+  --pp-elev-2: 0 -4px 16px rgba(28, 31, 27, 0.10);
+  --pp-elev-3: 0 8px 24px rgba(28, 31, 27, 0.14);
+
+  /* Type — SF Pro Text/Display via system-ui */
+  --pp-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Roboto", sans-serif;
+  --pp-font-mono: "SF Mono", "Roboto Mono", ui-monospace, Menlo, monospace;
+}
+
+/* Reset for app surfaces */
+.pp-app, .pp-app * {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pp-app {
+  font-family: var(--pp-font);
+  color: var(--pp-text-primary);
+  background: var(--pp-surface-base);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Type scale — letter-spacing 0 per design-tokens.json typography.rules */
+.pp-display     { font-size: 34px; line-height: 41px; font-weight: 600; letter-spacing: 0; }
+.pp-title-1     { font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: 0; }
+.pp-title-2     { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: 0; }
+.pp-title-3     { font-size: 20px; line-height: 25px; font-weight: 600; letter-spacing: 0; }
+.pp-headline    { font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: 0; }
+.pp-body        { font-size: 17px; line-height: 24px; font-weight: 400; letter-spacing: 0; }
+.pp-body-emph   { font-size: 17px; line-height: 24px; font-weight: 600; letter-spacing: 0; }
+.pp-callout     { font-size: 16px; line-height: 22px; font-weight: 400; letter-spacing: 0; }
+.pp-subheadline { font-size: 15px; line-height: 20px; font-weight: 400; }
+.pp-footnote    { font-size: 13px; line-height: 18px; font-weight: 400; }
+.pp-caption     { font-size: 12px; line-height: 16px; font-weight: 400; }
+.pp-mono        { font-family: var(--pp-font-mono); font-feature-settings: "tnum" 1; }
+
+/* Phone canvas — 393×852, light status bar */
+.pp-phone {
+  width: 393px;
+  height: 852px;
+  background: var(--pp-surface-base);
+  position: relative;
+  overflow: hidden;
+  font-family: var(--pp-font);
+  color: var(--pp-text-primary);
+}
+
+/* iOS status bar (compact) */
+.pp-status-bar {
+  height: 47px;
+  padding: 14px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--pp-text-primary);
+  z-index: 5;
+}
+.pp-status-bar .pp-sb-right { display: flex; gap: 6px; align-items: center; opacity: 0.9; }
+
+/* Large-title nav bar */
+.pp-navbar {
+  padding: 8px 16px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+}
+.pp-navbar .pp-nav-title { font-size: 17px; font-weight: 600; }
+.pp-navbar .pp-nav-btn { font-size: 17px; color: var(--pp-text-link); }
+.pp-large-title {
+  padding: 4px 16px 8px;
+  font-size: 34px;
+  line-height: 41px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* Tab bar */
+.pp-tabbar {
+  height: 49px;
+  border-top: 1px solid var(--pp-stroke);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: stretch;
+  padding: 0 8px 0;
+}
+.pp-tabbar-safe { height: 34px; background: rgba(255, 255, 255, 0.92); }
+.pp-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--pp-text-tertiary);
+  padding-top: 6px;
+}
+.pp-tab.is-active { color: var(--pp-primary-700); }
+
+/* Card */
+.pp-card {
+  background: var(--pp-surface-raised);
+  border-radius: var(--pp-r-md);
+  border: 1px solid var(--pp-stroke);
+  padding: 16px;
+}
+
+/* Buttons */
+.pp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  min-height: 44px;
+  border-radius: var(--pp-r-sm);
+  font-family: var(--pp-font);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0;
+  border: 0;
+  cursor: pointer;
+  user-select: none;
+}
+.pp-btn-primary {
+  background: var(--pp-primary-600);
+  color: var(--pp-text-on-primary);
+}
+.pp-btn-primary:active { background: var(--pp-primary-700); }
+.pp-btn-secondary {
+  background: var(--pp-surface-sunken);
+  color: var(--pp-text-primary);
+}
+.pp-btn-ghost {
+  background: transparent;
+  color: var(--pp-text-link);
+  padding: 12px 12px;
+}
+.pp-btn-destructive {
+  background: transparent;
+  color: var(--pp-danger);
+}
+.pp-btn-destructive-filled {
+  background: var(--pp-danger);
+  color: #fff;
+}
+.pp-btn-destructive-filled:active { background: #7E2E23; }
+.pp-btn-block { width: 100%; }
+.pp-btn[disabled] { opacity: 0.5; pointer-events: none; }
+
+/* Pills */
+.pp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--pp-r-sm);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pp-pill svg { width: 14px; height: 14px; flex: 0 0 14px; }
+
+/* List */
+.pp-list { background: var(--pp-surface-raised); border-radius: var(--pp-r-md); border: 1px solid var(--pp-stroke); overflow: hidden; }
+.pp-list-row {
+  min-height: 56px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--pp-stroke);
+}
+.pp-list-row:first-child { border-top: 0; }
+
+/* Inputs */
+.pp-field {
+  background: var(--pp-surface-raised);
+  border: 1px solid var(--pp-stroke);
+  border-radius: var(--pp-r-sm);
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 17px;
+  color: var(--pp-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pp-field.is-focused {
+  border-color: var(--pp-primary-500);
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.18);
+}
+.pp-field.is-error {
+  border-color: var(--pp-danger);
+}
+
+/* Tracker tile */
+.pp-tile {
+  background: var(--pp-surface-raised);
+  border: 1px solid var(--pp-stroke);
+  border-radius: var(--pp-r-sm);
+  height: 96px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  cursor: pointer;
+}
+.pp-tile.is-selected {
+  border-color: var(--pp-primary-600);
+  box-shadow: 0 0 0 1px var(--pp-primary-600) inset;
+}
+.pp-tile .pp-tile-label { font-size: 14px; font-weight: 600; }
+
+/* Snackbar */
+.pp-snack {
+  background: #1C1F1B;
+  color: #FFF;
+  border-radius: var(--pp-r-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+.pp-snack .pp-snack-action {
+  color: var(--pp-primary-300);
+  font-weight: 600;
+  margin-left: auto;
+}
+
+/* Sheets */
+.pp-sheet {
+  background: var(--pp-surface-raised);
+  border-radius: var(--pp-r-lg) var(--pp-r-lg) 0 0;
+  padding: 0 16px 16px;
+  box-shadow: var(--pp-elev-2);
+}
+.pp-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--pp-stroke-strong);
+  margin: 8px auto 12px;
+}
+
+/* Divider */
+.pp-divider { height: 1px; background: var(--pp-stroke-hair); }
+
+/* Activity strip */
+.pp-strip {
+  border: 1px solid var(--pp-stroke);
+  background: var(--pp-surface-raised);
+  border-radius: var(--pp-r-md);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--pp-text-secondary);
+}
+
+/* Skeleton */
+.pp-skel { background: var(--pp-surface-sunken); border-radius: 8px; }
+
+/* Tabular numerals utility for inline numeric values (review pass: token rule §1.3) */
+.pp-tabular-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+/* Token-callout annotation in component library */
+.pp-anno {
+  font-family: var(--pp-font-mono);
+  font-size: 10px;
+  color: var(--pp-text-tertiary);
+  letter-spacing: 0;
+}
+
+/* Focus ring (visual demo + live :focus-visible for interactive primitives) */
+.pp-focus {
+  box-shadow: 0 0 0 2px #FBFAF7, 0 0 0 4px var(--pp-focus-ring);
+}
+
+/* Live focus-visible for interactive primitives that aren't <button>/<a>. */
+.pp-interactive { outline: none; }
+.pp-interactive:focus-visible {
+  box-shadow: 0 0 0 2px var(--pp-surface-base), 0 0 0 4px var(--pp-focus-ring);
+  border-radius: 6px;
+  position: relative;
+  z-index: 1;
+}
+.pp-list-row.pp-interactive:focus-visible { border-radius: 0; }
+
+/* Segment — focus on the option, not the container */
+.pp-segment-option.pp-interactive:focus-visible {
+  box-shadow: 0 0 0 2px var(--pp-surface-base), 0 0 0 4px var(--pp-focus-ring);
+}
+
+/* Scrim wrapper for sheet variants */
+.pp-scrim {
+  background: linear-gradient(180deg, rgba(26,26,24,0) 0%, rgba(26,26,24,0.32) 60%);
+}
+
+/* Avatar */
+.pp-avatar {
+  width: 32px; height: 32px; border-radius: 999px;
+  background: var(--pp-primary-200);
+  color: var(--pp-primary-800);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 13px;
+  flex: 0 0 auto;
+}
+.pp-avatar-lg { width: 40px; height: 40px; font-size: 15px; }
+.pp-avatar-xl { width: 56px; height: 56px; font-size: 20px; }
+
+/* No body scroll bleed inside artboards */
+.pp-phone, .pp-phone * { scrollbar-width: none; }
+.pp-phone *::-webkit-scrollbar { display: none; }

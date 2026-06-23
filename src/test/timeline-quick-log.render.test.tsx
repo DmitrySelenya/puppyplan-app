@@ -155,7 +155,7 @@ describe('Timeline Quick Log state integration', () => {
 
     expect(screen.getAllByText(i18n.t('timeline.title')).length).toBeGreaterThan(0);
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+      expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
     });
     expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
     expect(screen.getByText(i18n.t('timeline.filter-chips.0'))).toBeTruthy();

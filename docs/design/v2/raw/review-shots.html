@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Review shots — internal</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #f0eee9; }
+    #root { display: flex; gap: 10px; padding: 4px; align-items: flex-start; flex-wrap: nowrap; width: max-content; }
+    .shot { flex: 0 0 auto; width: 248px; height: 537px; }
+    .shot-inner { transform: scale(0.63); transform-origin: top left; }
+    .shot-label { font: 10px/1.2 monospace; color: #555; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="screens/onboarding.jsx"></script>
+  <script type="text/babel" src="screens/today.jsx"></script>
+  <script type="text/babel" src="screens/quicklog.jsx"></script>
+  <script type="text/babel" src="screens/timeline.jsx"></script>
+  <script type="text/babel" src="screens/sharing.jsx"></script>
+  <script type="text/babel" src="screens/health.jsx"></script>
+  <script type="text/babel" src="screens/more.jsx"></script>
+  <script type="text/babel" src="screens/library.jsx"></script>
+  <script type="text/babel" src="screens/states.jsx"></script>
+  <script type="text/babel" src="screens/profile.jsx"></script>
+  <script type="text/babel" src="screens/sitter.jsx"></script>
+  <script type="text/babel" src="screens/cards.jsx"></script>
+  <script type="text/babel" src="screens/guidance.jsx"></script>
+  <script type="text/babel" src="screens/settings.jsx"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const GROUPS = {
+      onboarding: () => [
+        ['2.1 Welcome', <ScreenOnbWelcome />],
+        ['2.2 Profile default', <ScreenOnbProfile state="default" />],
+        ['2.2 Profile error', <ScreenOnbProfile state="error" />],
+        ['2.4 Trackers', <ScreenOnbTrackers />],
+        ['2.5 Plan reveal', <ScreenOnbPlanReveal />],
+        ['2.6 First log', <ScreenOnbFirstLogPending />],
+      ],
+      today: () => [
+        ['3.1 Day 1', <ScreenTodayDay1 />],
+        ['3.2 Day 2', <ScreenTodayDay2 />],
+        ['3.3 Day 7', <ScreenTodayDay7 />],
+        ['3.4 Activity', <ScreenTodayWithActivity />],
+        ['3.6 Offline', <ScreenTodayOffline />],
+        ['3.5 Loading', <ScreenTodayLoading />],
+      ],
+      quicklog: () => [
+        ['4.1 Default', <ScreenQLDefault />],
+        ['4.2 Pending', <ScreenQLPending />],
+        ['4.4 Duplicate', <ScreenQLDuplicate />],
+        ['4.5 Failed', <ScreenQLFailed />],
+        ['4.6 Details', <ScreenQLDetails />],
+      ],
+      timeline: () => [
+        ['5.1 Synced', <ScreenTimeline />],
+        ['5.2 Pending', <ScreenTimeline state="pending" />],
+        ['5.3 Failed', <ScreenTimeline state="failed" />],
+        ['5.4 Filtered', <ScreenTimelineFiltered />],
+        ['5.5 Empty', <ScreenTimelineEmpty />],
+      ],
+      sharing: () => [
+        ['6.1 Family list', <ScreenFamilyList />],
+        ['6.2 Invite', <ScreenFamilyInvite />],
+        ['6.3 Sent', <ScreenFamilyInviteSent />],
+        ['8.1 Trainer scope', <ScreenTrainerScope />],
+        ['8.2 Preview', <ScreenTrainerPreview />],
+        ['8.3 Accepted', <ScreenTrainerAccepted />],
+      ],
+      sitter: () => [
+        ['7.1 Ready', <ScreenSitterEnable />],
+        ['7.1 Pending', <ScreenSitterEnable state="pending-invite" />],
+        ['7.1 No caregiver', <ScreenSitterEnable state="no-caregiver" />],
+        ['7.2 Checklist', <ScreenSitterChecklist />],
+        ['7.3 Owner status', <ScreenSitterOwnerStatus />],
+        ['7.4 Exit', <ScreenSitterExit />],
+      ],
+      cards: () => [
+        ['9.1 Builder', <ScreenCardBuilder />],
+        ['9.1 Empty', <ScreenCardBuilder state="empty" />],
+        ['9.1 Health on', <ScreenCardBuilder state="health-on" />],
+        ['9.2 Preview', <ScreenCardPreview />],
+        ['9.3 Share sheet', <ScreenCardShareSheet />],
+        ['9.4 List', <ScreenCardsList />],
+      ],
+      health: () => [
+        ['11.1 List', <ScreenHealthList />],
+        ['11.2 Edit empty', <ScreenHealthEdit />],
+        ['11.3 Edit filled', <ScreenHealthEdit filled />],
+        ['11.4 Confirmed', <ScreenHealthDetail pill="confirmed" />],
+        ['11.5 Review', <ScreenHealthDetail pill="review" />],
+        ['11.6 Empty', <ScreenHealthEmpty />],
+      ],
+      more: () => [
+        ['14.1 More', <ScreenMore />],
+        ['14.2 Profile', <ScreenProfile />],
+        ['14.2 Editing', <ScreenProfileEditing />],
+        ['14.2 Breed', <ScreenProfileBreedPicker />],
+        ['14.3 Trackers', <ScreenQuickTrackers />],
+        ['14.6 Delete', <ScreenDeleteConfirm />],
+      ],
+      misc: () => [
+        ['12.1 Reminders', <ScreenReminders />],
+        ['12.4 Push', <ScreenReminderPush />],
+        ['13.1 Guidance', <ScreenGuidanceDetail topic="first-night" />],
+        ['15.1 Paywall', <ScreenPaywall />],
+        ['10.1 Revoked', <ScreenRevokedExpired />],
+        ['14.4 Notifications', <ScreenNotifications />],
+        ['14.5 Privacy', <ScreenPrivacy />],
+      ],
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    window.renderGroup = (name, start = 0, count = 99) => {
+      const items = (GROUPS[name] ? GROUPS[name]() : []).slice(start, start + count);
+      root.render(
+        <React.Fragment>
+          {items.map(([label, node], i) => (
+            <div className="shot" key={name + i}>
+              <div className="shot-label">{label}</div>
+              <div className="shot-inner">{node}</div>
+            </div>
+          ))}
+        </React.Fragment>
+      );
+    };
+    window.renderGroup('today');
+  </script>
+</body>
+</html>

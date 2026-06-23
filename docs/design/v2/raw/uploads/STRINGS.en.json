@@ -1,0 +1,1158 @@
+{
+  "$meta": {
+    "version": "1.0.0-v1",
+    "language": "en",
+    "source": "DESIGN.md",
+    "lastUpdated": "2026-05-18",
+    "translatedFrom": "STRINGS.ru.json",
+    "note": "All strings are translated from STRINGS.ru.json, which is the source of truth alongside DESIGN.md. If there's a conflict, DESIGN.md wins.",
+    "placeholderSyntax": "Simple {name} syntax. See _comment fields for the list of variables per key."
+  },
+
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "cancel-action": "Cancel",
+    "done": "Done",
+    "back": "Back",
+    "close": "Close",
+    "edit": "Edit",
+    "delete": "Delete",
+    "retry": "Try again",
+    "continue": "Continue",
+    "start": "Start",
+    "skip": "Skip",
+    "snooze": "Snooze",
+    "stop": "Stop",
+    "got-it": "Got it",
+    "not-now": "Not now",
+    "open-settings": "Open settings",
+    "show-more": "Show more",
+    "share": "Share",
+    "send": "Send",
+    "copy-link": "Copy link",
+    "resend": "Send again",
+    "revoke": "Revoke",
+    "leave-as-is": "Keep",
+    "i-have-account": "I already have an account",
+    "add-record": "Add an entry",
+    "open-timeline": "Open timeline",
+    "loading": "Loading"
+  },
+
+  "states": {
+    "loading": {
+      "label": "Loading"
+    },
+    "empty-first-run": {
+      "title": "Your events will appear here",
+      "body": "Add your first event — patterns get clearer once there's data.",
+      "action": "Add an entry"
+    },
+    "empty-filtered": {
+      "title": "Nothing here",
+      "body": "Try a different range or clear the filters.",
+      "action": "Clear filters"
+    },
+    "error-server": {
+      "title": "Couldn't load",
+      "body": "Check your connection and give it another try.",
+      "action": "Try again"
+    },
+    "offline-read": {
+      "title": "You're offline",
+      "body": "Showing data from {time}. Your changes will be saved locally.",
+      "_comment": "{time} — the last successful sync time",
+      "banner": "Showing your last saved data.",
+      "chip": "Offline. Showing local data.",
+      "synced-toast": "Synced"
+    },
+    "pending-write": {
+      "title": "Saving…",
+      "pill": "Saving",
+      "tooltip": "Your change is syncing"
+    },
+    "permission-denied": {
+      "title": "Permission needed",
+      "body": "To make this work, allow access to {resource} in settings.",
+      "_comment": "{resource} — e.g. \"notifications\" / \"the camera\" / \"photos\"",
+      "action": "Open settings",
+      "how-to-enable": "How to enable"
+    },
+    "revoked-or-expired": {
+      "title": "This access is no longer available",
+      "body": "Contact the owner if you need new access.",
+      "body-long": "Contact the owner if you need up-to-date information.",
+      "action": "Got it",
+      "_comment": "Canonical wording from §3.3.6 — one phrasing for both revoked and expired. Don't use \"revoked\", \"expired\", \"deleted\", \"closed by owner\"."
+    }
+  },
+
+  "voice": {
+    "forbidden": [
+      "you missed",
+      "you forgot",
+      "alarm",
+      "urgent!",
+      "Stop!",
+      "Warning!",
+      "Error!",
+      "Oops!",
+      "don't forget!",
+      "EMERGENCY",
+      "WARNING",
+      "ALERT",
+      "Hooray!",
+      "Good job, the little one made it!",
+      "Great growth! Keep it up!",
+      "Share your data with your favorite doctor!",
+      "Something went wrong",
+      "are you sure",
+      "duplicate",
+      "error",
+      "problem",
+      "again",
+      "task",
+      "need to",
+      "must",
+      "you're awesome",
+      "great work",
+      "Mom",
+      "Dad",
+      "failed",
+      "HTTP 500",
+      "Data lost",
+      "warning!",
+      "alert",
+      "streak broken",
+      "you failed",
+      "you haven't logged"
+    ],
+    "approved-tone-phrases": [
+      "routines build over time",
+      "it happens",
+      "next chance",
+      "you can",
+      "give it a try",
+      "usually",
+      "things are clearer now",
+      "patterns are showing up",
+      "That happens sometimes.",
+      "Looks like a duplicate from the last 60 seconds."
+    ],
+    "approved-examples": [
+      "Event saved",
+      "Looks like a duplicate from the last 60 seconds. Save anyway?",
+      "Vaccination is on the template schedule. Your vet will confirm.",
+      "Couldn't save. Your event is kept locally — we'll try again later.",
+      "Weight: 4.2 kg, 0.3 kg more than last week",
+      "Vet has access to your data through June 17",
+      "Potty outside — logged at 9:42",
+      "This link is no longer active"
+    ]
+  },
+
+  "tabs": {
+    "today": "Today",
+    "today-hint": "Open the Today screen",
+    "health": "Health",
+    "more": "More",
+    "quick-log-fab-label": "Quick Log",
+    "quick-log-fab-hint": "Opens a list of things you can log"
+  },
+
+  "onboarding": {
+    "welcome": {
+      "title": "The first days with a puppy can be messy.",
+      "subtitle": "Start with one clear plan.",
+      "cta": "Get started",
+      "secondary": "I already have an account",
+      "a11y-title": "The first days with a puppy can be messy. Heading."
+    },
+    "puppy-profile": {
+      "title": "What's your puppy's name?",
+      "helper": "You can change this later.",
+      "name-field-label": "Name",
+      "name-field-hint": "Puppy's name, required to continue",
+      "age-toggle-age": "Age",
+      "age-toggle-date": "Or date of birth",
+      "cta": "Continue",
+      "error-future-date": "That date is in the future — please double-check",
+      "a11y-toggle": "Age entry method. Selected: age in weeks.",
+      "a11y-stepper": "Age 8 weeks. Swipe up to increase."
+    },
+    "age-hint": {
+      "6-8-weeks": "At 8 weeks, puppies often sleep 18–20 hours a day.",
+      "9-12-weeks": "Around 10 weeks the bladder is small — short intervals are normal.",
+      "13-16-weeks": "By 14 weeks many puppies are ready for longer walks.",
+      "fallback": "Every puppy is different. We'll set a calm pace."
+    },
+    "tracker-picker": {
+      "title": "What to track",
+      "helper": "Up to 5 actions. You can change them later.",
+      "counter": "{n} of 5 selected",
+      "_comment": "{n} — integer 0..5",
+      "limit-snackbar": "Up to 5. Remove one to add a new tracker.",
+      "zero-state-cta": "Skip for now",
+      "cta": "Continue",
+      "tile-feeding-a11y": "Feeding. Selected. Double tap to remove."
+    },
+    "plan-reveal": {
+      "title": "Your plan for today",
+      "subtitle": "You can start with the first item.",
+      "hero": "Log your first event — it takes about five seconds.",
+      "starter-card-1": "Watch the feeding pattern",
+      "starter-card-2": "Short potty breaks every 1–2 hours",
+      "starter-card-3": "A quiet spot for sleep",
+      "cta": "Start your first log"
+    },
+    "first-log": {
+      "hero-after-first": "First event saved. From here, a calm rhythm.",
+      "celebration-snackbar": "Done. You can keep going."
+    },
+    "account-wall": {
+      "title": "Save your progress",
+      "body": "This lets you share with family and see your data on other devices.",
+      "apple": "Continue with Apple",
+      "google": "Continue with Google",
+      "email": "Email",
+      "secondary": "Not now"
+    },
+    "notifications-prompt": {
+      "title": "Want quiet reminders?",
+      "body": "We'll only send what you choose. No noise.",
+      "primary": "Turn on",
+      "secondary": "Not now"
+    }
+  },
+
+  "today": {
+    "section-now": "Now",
+    "section-next": "Next",
+    "section-yesterday-recap": "What we learned yesterday",
+    "section-now-do": "What to do now",
+    "section-weekly": "Weekly rhythm",
+    "weekly-lead": "Over 7 days:",
+    "weekly-insight-prefix": "Clearer now: ",
+    "weekly-cta": "See details",
+    "hero": {
+      "day1": "Log your first event — it takes about five seconds.",
+      "day1-cta": "Start",
+      "day2-morning-title": "Morning potty break",
+      "day2-morning-body": "Puppy A slept 6 hours — bladder is full.",
+      "day2-morning-cta": "Log potty break",
+      "potty-time": "Looks like it's time for a break.",
+      "potty-time-meta": "Last break was {duration} ago.",
+      "_comment-potty-time-meta": "{duration} — e.g. \"1 hr 40 min\"",
+      "potty-time-primary": "Log it",
+      "potty-time-tertiary": "Later"
+    },
+    "starter-guidance": {
+      "first-day": "The first day is about observing, not results.",
+      "potty-frequency": "Short potty breaks every 1–2 hours",
+      "sleep-spot": "A quiet spot for sleep",
+      "feeding-pattern": "Watch the feeding pattern"
+    },
+    "recap-day2": {
+      "_comment": "{walks}, {feedings} — numbers",
+      "template": "{walks} walks outside, {feedings} feedings. A gentle rhythm for day two.",
+      "example": "3 walks outside, 2 feedings. A gentle rhythm for day two."
+    },
+    "accident-recovery": {
+      "title": "It happens.",
+      "body": "Next chance is after sleep or a meal.",
+      "body-repeat": "A few episodes have come up. A short break every hour today might help.",
+      "cta": "Plan a break"
+    },
+    "after-feeding": {
+      "title": "Feeding on the usual rhythm",
+      "body": "About {grams} g · {time}",
+      "body-no-grams": "Roughly the usual portion",
+      "_comment-body": "{grams} — integer grams; {time} — HH:MM",
+      "primary": "Usual portion",
+      "tertiary": "Change"
+    },
+    "activity-strip": {
+      "single": "{actorName} {verbForm} {puppyName} · {timeAgo}",
+      "_comment-single": "verbForm examples: \"fed\", \"logged a potty break\", \"got back from a walk\". English verbs don't change by actor gender, so {verbForm} stays simple. {timeAgo} — e.g. \"42 min ago\"",
+      "example-feeding": "Caregiver A fed Puppy A · 42 min ago",
+      "example-potty": "Caregiver A logged a potty break — 4 min ago",
+      "example-walk": "Dmitry got back from a walk — 1 hr ago",
+      "example-reminder": "Caregiver A added a reminder — just now",
+      "example-note": "Dmitry left a note — 30 min ago",
+      "example-health": "Dmitry logged a vet visit — 2 hr ago",
+      "example-sitter": "Caregiver A (sitter): {puppyName} has been fed — 6 min ago",
+      "multiple": "{actorName} and you · {n} events in the last hour",
+      "example-multiple": "Caregiver A and you · 3 events in the last hour",
+      "topbar-members": "With you: {names}.",
+      "topbar-example": "With you: Caregiver A, you."
+    },
+    "missed-reminder-card": {
+      "title": "Reminder: feeding at {time}",
+      "body": "If this already happened, mark it as done.",
+      "actions": ["Done", "Snooze", "Skip", "Edit", "Stop reminding"],
+      "snooze-options": ["15 min", "30 min", "1 hour"],
+      "done-snackbar": "Logged"
+    },
+    "sleep-banner": {
+      "active": "{puppyName} is sleeping · {mmss}",
+      "stop": "Stop",
+      "stop-snackbar": "Sleep logged: {minutes} minutes."
+    },
+    "empty": {
+      "title": "Quiet today.",
+      "body": "Start with whatever you've noticed just now.",
+      "cta": "Open Quick Log"
+    },
+    "error-banner": "Couldn't refresh. Showing the last saved view.",
+    "weekly-example": {
+      "walks-line": "{n} walks outside",
+      "feedings-line": "{n} feedings",
+      "sleep-line": "Sleep — average {hours} hr / day",
+      "insight-example": "Clearer now: Puppy A usually asks to go out 40–60 minutes after a meal."
+    }
+  },
+
+  "quick-log": {
+    "sheet": {
+      "title": "What happened?",
+      "edit-trackers": "Edit trackers",
+      "edit-screen-title": "Your quick trackers",
+      "edit-helper": "Up to 5. Drag to reorder."
+    },
+    "trackers": {
+      "potty-outside": "Pee outside",
+      "potty-inside": "Pee inside",
+      "potty-poop": "Poop",
+      "feeding": "Feeding",
+      "sleep": "Sleep",
+      "zoomies": "Zoomies",
+      "training": "Training",
+      "weight": "Weight",
+      "walk": "Walk",
+      "play": "Play",
+      "biting": "Biting"
+    },
+    "potty": {
+      "screen-title": "Potty",
+      "details-header": "Add details (optional)",
+      "context-label": "Context",
+      "note-label": "Note",
+      "photo-label": "Photo",
+      "context-options": ["After sleep", "After eating", "Walk", "Play", "Not sure"]
+    },
+    "feeding": {
+      "title": "Fed",
+      "suggestion": "Usual portion — about {grams} g",
+      "primary": "Usual portion",
+      "secondary": "Enter manually",
+      "tertiary": "Just now — no grams",
+      "manual-unit": "portion"
+    },
+    "sleep": {
+      "title": "Sleep",
+      "start-now": "Start now",
+      "already-slept": "Already slept",
+      "how-long": "About how long?",
+      "duration-chips": ["15 min", "30", "1 hr", "2 hr"]
+    },
+    "zoomies": {
+      "title": "Zoomies",
+      "log-now": "Log it now",
+      "details-header": "Details (optional):",
+      "context-label": "Context",
+      "context-default": "After sleep",
+      "duration-label": "Duration",
+      "duration-options": ["<5", "5–15", "15+"],
+      "note-label": "Note"
+    },
+    "snackbar": {
+      "saved-template": "Logged · {trackerName}",
+      "saved-example": "Logged · Pee outside",
+      "undo": "Undo",
+      "undo-confirmed": "Undone",
+      "add-details": "Add details",
+      "a11y": "Logged: pee outside. Available actions: undo, add details."
+    },
+    "pending": {
+      "label": "Saving"
+    },
+    "failed": {
+      "snackbar": "Couldn't save. Try again?",
+      "primary": "Try again",
+      "tertiary": "Discard",
+      "pill": "Not saved",
+      "persistent-banner": "A few events didn't save. Check your connection.",
+      "too-many-attempts": "A lot of attempts in a row. We'll try again later automatically.",
+      "generic": "Couldn't save. Check your connection."
+    },
+    "duplicate-warning": {
+      "title": "Looks like this is already logged",
+      "body-template": "{actorName} logged a {eventType} {n} minutes ago.",
+      "body-example": "Caregiver A logged a feeding 4 minutes ago.",
+      "more-matches": "{n} more event in the last 12 minutes",
+      "primary": "This is a different event — add it",
+      "primary-alt": "Add anyway",
+      "secondary": "Cancel",
+      "question": "Add anyway?"
+    }
+  },
+
+  "timeline": {
+    "title": "Events",
+    "section-today": "Today · {weekday}",
+    "section-yesterday": "Yesterday · {weekday}",
+    "filter-chips": ["All", "Potty", "Food", "Sleep", "Zoomies", "Training", "Health"],
+    "range-default": "Today",
+    "range-options": ["Today", "3 days", "Week", "Custom"],
+    "range-custom-title": "Pick a range",
+    "empty-filter": "No events in this range.",
+    "actor-you": "Logged by: You",
+    "actor-template": "Logged by: {name}",
+    "pills": {
+      "pending": "Saving",
+      "failed": "Not saved",
+      "local-only": "Only on this device"
+    },
+    "time": {
+      "just-now": "just now",
+      "minutes-ago": "{n} min ago",
+      "yesterday-time": "yesterday {time}"
+    },
+    "edit-snackbar": "Updated",
+    "delete-confirm": {
+      "title": "Delete this entry?",
+      "body": "You can undo within 5 seconds.",
+      "primary": "Delete",
+      "secondary": "Cancel"
+    },
+    "delete-snackbar": "Entry deleted.",
+    "swipe-actions": ["Edit", "Delete"],
+    "overflow-actions": ["Edit", "Delete"],
+    "pending-overflow-actions": ["Cancel sending", "Delete"]
+  },
+
+  "sharing": {
+    "common": {
+      "contract-header-shows": "This access includes:",
+      "contract-header-excludes": "Not included:",
+      "disclosure-can-close": "You can close access at any time.",
+      "expiry-label": "Link expiry",
+      "expiry-options": ["24 hours", "7 days", "14 days"],
+      "trainer-expiry-options": ["7 days", "30 days", "90 days", "No expiry (not recommended)"],
+      "no-expiry-warning": "Setting an expiry is better. A link without one stays open until you close it yourself.",
+      "until-date": "Expires {date}",
+      "active-until": "Active through {date}",
+      "expires-in-days": "Expires in {n} days",
+      "access-closed-at": "Access closed {date}",
+      "expires-soon": "Expires in {n} days."
+    },
+    "family": {
+      "today-prompt": {
+        "title": "Share the care with family",
+        "body": "Invite one person — they'll be able to log feedings and walks.",
+        "primary": "Invite",
+        "secondary": "Not now"
+      },
+      "invite": {
+        "screen-title": "Invite",
+        "section-who": "Who you're inviting",
+        "email-placeholder": "Email or contact name",
+        "section-role": "Role",
+        "role-caregiver": "Caregiver",
+        "role-caregiver-desc": "Caregiver — can log events and add notes",
+        "role-viewer": "Viewer",
+        "role-viewer-desc": "Viewer — view only",
+        "section-what-caregiver-sees": "What the caregiver will see",
+        "caregiver-preview-bullets": [
+          "Today and {puppyName}'s timeline",
+          "Can log feedings, walks, potty breaks",
+          "Can create reminders"
+        ],
+        "caregiver-excluded": "Won't see: subscription billing, private notes",
+        "viewer-preview-bullets": [
+          "Today and {puppyName}'s timeline",
+          "View only — no edits"
+        ],
+        "viewer-excluded": "Won't see: subscription billing, private notes",
+        "cta": "Send invite",
+        "secondary": "Share a link",
+        "error-invalid-email": "Doesn't look like an email. Please check the address.",
+        "sending": "Sending…"
+      },
+      "invite-sent": {
+        "title": "Invite sent",
+        "copy-link": "Copy link",
+        "resend": "Send again",
+        "revoke": "Revoke invite",
+        "resent-toast": "Link sent again",
+        "expired-strip": "Link has expired",
+        "send-new": "Send a new one",
+        "revoked-neutral": "Invite revoked. You can send a new one.",
+        "revoke-confirm": {
+          "title": "Revoke this invite?",
+          "body": "The link will stop working. You can do this any time.",
+          "destructive": "Revoke",
+          "cancel": "Keep"
+        }
+      },
+      "accepted": {
+        "header": "{ownerName} is inviting you to help care for {puppyName}",
+        "role-caregiver": "Your role: Caregiver",
+        "role-viewer": "Your role: Viewer",
+        "what-included": "What you'll have access to",
+        "what-excluded": "What you won't see",
+        "caregiver-included-bullets": [
+          "Today and {puppyName}'s timeline",
+          "Log feedings, walks, potty breaks",
+          "Create reminders"
+        ],
+        "caregiver-excluded-bullets": [
+          "Subscription billing",
+          "Owner's private notes"
+        ],
+        "disclosure": "{ownerName} can close your access at any time.",
+        "accept": "Accept",
+        "decline": "Decline",
+        "decline-confirm-title": "Decline this invite?",
+        "already-member": "You're already in {puppyName}'s household.",
+        "already-member-cta": "Open",
+        "load-error": "Couldn't load the invite. Check your connection.",
+        "neutral-unavailable": "This invite is no longer available. Ask {ownerName} to send a new one."
+      },
+      "shared-today-viewer": {
+        "read-only-hint": "View only",
+        "read-only-inline-toast": "View only. Ask the owner for caregiver access.",
+        "blocked": "Access to {puppyName} is closed. If this seems wrong, reach out to the owner.",
+        "empty": "Today's events will show up here.",
+        "offline-banner": "No connection. Your changes will be saved locally."
+      },
+      "manage": {
+        "screen-title": "Family and access",
+        "section-members": "Members",
+        "section-invites": "Invites",
+        "active-ago": "Active {timeAgo}",
+        "pending-until": "Active through {date}",
+        "invite-cta": "Invite",
+        "badge-owner": "Owner",
+        "badge-caregiver": "Caregiver",
+        "badge-viewer": "Viewer",
+        "badge-pending": "Pending",
+        "badge-expired": "Expired",
+        "badge-revoked": "Revoked",
+        "member-overflow": ["Change role", "Close access"],
+        "pending-overflow": ["Copy link", "Send again", "Revoke"],
+        "revoke-confirm": {
+          "title": "Close access for {name}?",
+          "body": "{name} will no longer see {puppyName}'s data. You can reverse this by sending a new invite.",
+          "destructive": "Close access",
+          "cancel": "Cancel"
+        },
+        "revoked-toast": "Access for {name} is closed."
+      }
+    },
+
+    "sitter": {
+      "screen-title": "Sitter mode",
+      "subtitle": "Hand off to a sitter for a window of time",
+      "subtitle-body": "{name} will see a checklist and get reminders.",
+      "section-who": "Who",
+      "section-period": "Window",
+      "period-start": "Start",
+      "period-end": "End",
+      "section-checklist": "Checklist",
+      "checklist-feeding": "Feedings (3/day)",
+      "checklist-walks": "Walks (3/day)",
+      "checklist-potty": "Potty — log breaks",
+      "checklist-meds": "Medication",
+      "checklist-training": "Training",
+      "section-what-sitter-sees": "What the sitter will see",
+      "sitter-preview-bullets": [
+        "Today and the timeline",
+        "Checklist and reminders on their device"
+      ],
+      "sitter-excluded": "Won't see: subscription, personal settings, other shared scopes (trainer, cards)",
+      "disclosure": "You can end sitter mode at any time.",
+      "enable-cta": "Turn on sitter mode",
+      "exit-cta": "End sitter mode",
+      "no-caregiver": "First invite a caregiver. Sitter mode extends an existing caregiver.",
+      "no-caregiver-cta": "Invite a caregiver",
+      "pending-hint": "Waiting for {name} to accept the invite.",
+      "checklist-view": {
+        "role-chip": "sitter",
+        "deadline-strip": "Sitter mode through {date}, {time}",
+        "section-now": "Now",
+        "section-remaining": "Still today",
+        "section-done": "Done",
+        "empty": "Nothing on today's list. You can still log events through the timeline.",
+        "completion-inline": "Done. {ownerName} has been notified.",
+        "exit-neutral": "Sitter mode finished. Thank you!",
+        "offline": "No connection. Your check-offs are saved and will send later."
+      },
+      "owner-status-card": {
+        "title": "Sitter mode is on",
+        "subtitle": "{name} • through {date}, {time}",
+        "last-action": "Latest: {actorName} {verbForm} {puppyName} — {timeAgo}",
+        "progress": "Today: {done} of {total} done",
+        "open-details": "Open details",
+        "empty-yet": "Nothing logged yet. {name} will start soon.",
+        "all-done": "Everything for today is done.",
+        "expired-summary": "Sitter mode finished. {done} of {total} items completed."
+      },
+      "exit-confirm": {
+        "title": "End sitter mode?",
+        "body": "{name} will stay on as a caregiver and can still log events, but without the checklist and without sending you completion updates.",
+        "destructive": "End sitter mode",
+        "cancel": "Cancel"
+      },
+      "auto-expired-toast": "Sitter mode has ended.",
+      "exit-error-toast": "Couldn't end sitter mode. Please try again."
+    },
+
+    "trainer": {
+      "today-prompt": {
+        "title": "Share progress with your trainer",
+        "body": "The trainer will see only what you choose — no full household access.",
+        "primary": "Set up access",
+        "secondary": "Not now"
+      },
+      "more-row": "Share with a trainer",
+      "more-active-row": "Trainer: access is active",
+      "scope-selector": {
+        "screen-title": "Trainer access",
+        "intro": "Choose what the trainer will see. Each item can be turned on and off separately.",
+        "scopes": {
+          "puppy-profile": {
+            "title": "Puppy profile",
+            "included": "Includes: name, age, selected photo",
+            "excluded": "Not included: weight, microchip, owner contact"
+          },
+          "routine-summary": {
+            "title": "Daily routine summary",
+            "included": "Includes: feeding / walk / potty counts for the week, general time ranges",
+            "excluded": "Not included: exact times, notes"
+          },
+          "timeline-range": {
+            "title": "Timeline for a range",
+            "included": "Includes: events of the selected types on the selected days",
+            "excluded": "Not included: free-text notes you didn't mark as shareable",
+            "cta": "Choose range and types"
+          },
+          "training-notes": {
+            "title": "Training notes",
+            "included": "Includes: training session topic and duration, notes you marked as shareable",
+            "excluded": "Not included: private notes"
+          },
+          "health-summary": {
+            "title": "Health — brief summary",
+            "included": "Includes: entry name, status, date",
+            "excluded": "Not included: notes, vet contact, photos",
+            "default-off-disclosure": "This item is off by default.",
+            "one-time-disclosure": "The trainer will see dates and statuses only — no notes, no contacts. You can change this later."
+          }
+        },
+        "all-off-helper": "Turn on at least one item to continue.",
+        "timeline-error": "Pick a range and at least one event type",
+        "cta": "Continue"
+      },
+      "preview": {
+        "screen-title": "Check what the trainer will see",
+        "header-includes": "This access includes:",
+        "header-excludes": "Not included:",
+        "common-excluded-bullets": [
+          "Exact event times",
+          "Health",
+          "Owner and vet contacts",
+          "Private notes"
+        ],
+        "expiry-label": "Expiry",
+        "disclosure": "You can close access at any time.",
+        "email-label": "Send to",
+        "primary": "Send invite",
+        "secondary": "Copy link"
+      },
+      "manage": {
+        "screen-title": "Trainer access",
+        "status-active": "Active",
+        "section-what-sees": "What the trainer sees",
+        "actions": [
+          "Edit what the trainer sees",
+          "Extend the expiry",
+          "Close access"
+        ],
+        "revoke-confirm": {
+          "title": "Close trainer access?",
+          "body": "The link will stop working right away. You can send a new invite if needed.",
+          "destructive": "Close access",
+          "cancel": "Cancel"
+        },
+        "expired-neutral": "Access expired {date}. You can send a new invite.",
+        "revoked-neutral": "Access closed {date}."
+      },
+      "accepted-view": {
+        "header-puppy-meta": "{puppyName}",
+        "header-from": "{age} • access from {ownerName}",
+        "scope-summary": "This access includes: profile, routine summary, training notes. Active through {date}.",
+        "summary-section-title": "Routine summary (last 7 days)",
+        "summary-feedings": "Feedings: {n} ({perDay}/day)",
+        "summary-walks": "Walks: {n} (≈{perDay}/day)",
+        "summary-potty": "Potty: {n} breaks",
+        "notes-section-title": "Training notes",
+        "note-row-template": "{date} • \"{topic}\" • {duration} min",
+        "footer": "View only. Only the owner can close access.",
+        "empty-per-scope": "No data for this range yet"
+      }
+    },
+
+    "card-builder": {
+      "screen-title": "{puppyName}'s card",
+      "section-title": "What to include on the card",
+      "fields": [
+        "Name and age",
+        "Photo",
+        "Breed",
+        "Weight",
+        "Date of birth",
+        "Microchip (chip number)",
+        "Vaccinations — most recent entries",
+        "Owner contact"
+      ],
+      "footer-note": "Private notes are not included.",
+      "preview-cta": "Preview",
+      "empty-helper": "Pick at least one field.",
+      "photo-prompt": "Choose a photo for the card",
+      "health-disclosure": "Only statuses and dates will be included. No notes, no clinic contacts."
+    },
+
+    "card-preview": {
+      "screen-title": "Preview",
+      "footer": "This is everything the recipient will see.",
+      "edit": "Edit",
+      "share": "Share"
+    },
+
+    "card-share-options": {
+      "title": "How to share",
+      "option-link-title": "Link you can close",
+      "option-link-body": "The recipient opens it online. You can close access at any time. An expiry is required.",
+      "option-snapshot-title": "Image / file",
+      "option-snapshot-body": "A snapshot of the card that can't be revoked after sending.",
+      "cancel": "Cancel",
+      "link-copied-toast": "Link copied"
+    },
+
+    "card-management": {
+      "screen-title": "Shared cards",
+      "section-active": "Active",
+      "section-history": "History",
+      "row-status-active": "Active through {date}",
+      "row-status-expiring": "Expires in {n} days",
+      "row-status-revoked": "Access closed {date}",
+      "overflow": ["Copy link", "Extend expiry", "Close access"],
+      "revoke-confirm": {
+        "title": "Close access to this card?",
+        "body": "The link will stop working right away. Snapshots and files you've already sent will stay with the recipient.",
+        "destructive": "Close access",
+        "cancel": "Cancel"
+      },
+      "public-link-disclosure": "Anyone with the link sees the fields you picked. An expiry and the ability to close access are required."
+    },
+
+    "revoked-or-expired-screen": {
+      "title": "This access is no longer available",
+      "body": "Contact the owner if you need new access.",
+      "body-long": "Contact the owner if you need up-to-date information.",
+      "cta": "Got it",
+      "_comment": "§3.3.6 — one neutral phrasing. Never differentiate revoked vs expired."
+    }
+  },
+
+  "health": {
+    "tab-title": "Health",
+    "footer-hint": "This is a record of entries, not medical advice.",
+    "segments": ["All", "Vaccinations", "Treatments", "Visits"],
+    "filter-chips": ["Templates", "Confirmed", "Done"],
+    "error-card": "Couldn't load entries. Try refreshing.",
+    "refresh": "Refresh",
+    "pills": {
+      "template": "Template",
+      "needs-vet-review": "Ask your vet",
+      "confirmed": "Confirmed",
+      "completed": "Done"
+    },
+    "template-row-subline": "Template, not a prescription",
+    "confirmed-meta-template": "Done {date} · {provider}",
+    "confirmed-meta-no-provider": "Done {date} · No clinic listed",
+    "sync-error-row": "Changes not synced. Try again",
+    "record-types": {
+      "vaccination": "Vaccination",
+      "deworming": "Parasite treatment",
+      "prophylaxis": "Preventive care",
+      "vet-visit": "Vet visit"
+    },
+    "add-record": {
+      "sheet-title": "New entry",
+      "close": "Close",
+      "hint-after-list": "You can add this later from a template.",
+      "form-cancel": "Cancel",
+      "form-save": "Save",
+      "section-main": "Main",
+      "section-extra": "More",
+      "field-name": "Name",
+      "field-date": "Date",
+      "field-status": "Status",
+      "status-segments": ["Template", "Confirmed", "Done"],
+      "field-clinic": "Clinic or vet (optional)",
+      "field-note": "Note (optional)",
+      "urgent-toggle": "Mark as urgent",
+      "urgent-hint": "Use this if you've already spoken to your vet",
+      "note-hint": "Notes aren't used in analytics",
+      "privacy-hint": "Notes are visible only to you and invited family members.",
+      "save-toast": "Entry saved",
+      "offline-banner": "We'll save this as soon as you're back online",
+      "error-date": "Please check the date"
+    },
+    "edit-record": {
+      "screen-title": "Entry",
+      "edit-action": "Edit",
+      "section-details": "Details",
+      "clinic-empty": "Clinic: —",
+      "section-history": "History",
+      "history-line": "Edited by you · {date}",
+      "delete-action": "Delete entry",
+      "delete-confirm": {
+        "title": "Delete this entry?",
+        "body": "The entry will disappear from your log. You can undo within 5 seconds.",
+        "cancel": "Cancel",
+        "destructive": "Delete"
+      },
+      "delete-undo-toast": "Entry deleted. Undo"
+    },
+    "template-suggestion": {
+      "section-title": "Suggested entries",
+      "footnote": "These are standard templates. Your vet always has the final word",
+      "header-example": "Template: DHPP, 12 weeks",
+      "subline-template": "Template, not a prescription.",
+      "subline-vet": "Worth discussing with your vet.",
+      "hide": "Hide",
+      "add": "Add"
+    },
+    "status-transitions": {
+      "stages": ["Template", "Ask your vet", "Confirmed", "Done"],
+      "hint": "You can change this manually any time",
+      "a11y-template": "Stage {current} of 4: {currentLabel}. Available: template, ask your vet, confirmed, done."
+    },
+    "vet-prep": {
+      "title": "Getting ready for the visit",
+      "subtitle": "Visit on {date}, {time}",
+      "checklist": [
+        "Bring previous vaccination records",
+        "List of questions for the vet",
+        "Your puppy's favorite treat",
+        "Leash and carrier"
+      ],
+      "add-item": "Add item",
+      "hint": "This is a personal checklist, not instructions from your vet"
+    },
+    "empty": {
+      "title": "No entries yet",
+      "body": "Add a first vaccination, treatment, or visit to see the history in one place.",
+      "primary": "Add entry",
+      "secondary": "Browse templates"
+    },
+    "share-preview": {
+      "title": "What the recipient will see",
+      "scope-label": "Scope: health_summary",
+      "visible-header": "Visible:",
+      "visible-bullets": [
+        "Entry type (vaccination / treatment / visit)",
+        "Status (template / confirmed / done)",
+        "Date"
+      ],
+      "hidden-header": "Not shared:",
+      "hidden-bullets": [
+        "Clinic and vet name",
+        "Notes",
+        "Photos"
+      ],
+      "toggle-include-clinic": "Include clinic and notes",
+      "toggle-hint": "Share these only when you need to",
+      "primary": "Send"
+    },
+    "a11y": {
+      "record-row": "DHPP vaccine, status confirmed, done May 12, confirmed by you"
+    }
+  },
+
+  "reminders": {
+    "screen-title": "Reminders",
+    "segments": ["Active", "Off"],
+    "sections": {
+      "feeding": "Feeding",
+      "health": "Health",
+      "sitter": "Trusted sitter",
+      "missed-today": "Not logged today"
+    },
+    "footer-quiet-hours": "Quiet hours — in Notification settings.",
+    "empty": "Your reminders will show up here",
+    "form": {
+      "cancel": "Cancel",
+      "title-new": "New reminder",
+      "save": "Save",
+      "field-name": "Name",
+      "field-category": "Category",
+      "category-options": [
+        "Feeding",
+        "Potty",
+        "Sleep",
+        "Health",
+        "Sitter",
+        "Other"
+      ],
+      "category-health-hint": "Used for reminders to discuss an entry with your vet",
+      "field-time": "Time",
+      "field-repeat": "Repeat",
+      "repeat-options": ["Every day", "Weekdays", "Custom schedule"],
+      "field-tz": "Time zone",
+      "tz-auto-example": "Europe/Berlin (auto)",
+      "toggle-quiet": "Respect quiet hours",
+      "toggle-sound": "Sound",
+      "hint": "This reminder runs locally on this device. Turn on push in Settings to get it even when the app is closed.",
+      "error-no-days": "Pick at least one day",
+      "permission-banner": "Notifications are off. The reminder will be saved, but it won't make a sound"
+    },
+    "quiet-hours": {
+      "title": "Quiet hours",
+      "range-example": "10:00 pm to 7:00 am",
+      "toggle-per-puppy": "Apply only to this puppy",
+      "hint": "During quiet hours reminders stay silent and show up on screen in the morning.",
+      "save": "Save",
+      "error-min-window": "The quiet window should be at least 30 minutes"
+    },
+    "push-notification": {
+      "title-feeding": "Feeding",
+      "title-walk": "Walk / potty",
+      "title-sleep": "Sleep",
+      "title-health": "Health: worth discussing with your vet",
+      "title-sitter": "Sitter: evening checklist",
+      "example-title": "Feeding: 7:30 am",
+      "example-body": "A gentle start to {puppyName}'s day.",
+      "actions": ["Done", "Snooze 10 min", "Skip"]
+    },
+    "card": {
+      "example-title": "Feeding · 7:30 am",
+      "example-body": "A gentle start to the day",
+      "actions": ["Done", "Snooze", "Skip", "Edit", "Stop"],
+      "done-summary": "Done at {time}",
+      "snoozed-summary": "Snoozed until {time}",
+      "skipped-summary": "Skipped",
+      "stop-confirm": "Turn this reminder off?"
+    },
+    "sitter-card": {
+      "title-example": "Evening checklist · 7:00 pm",
+      "subtitle-template": "{n} items · sitter: {name}",
+      "actions": ["Open checklist", "Snooze"],
+      "completed-summary": "Done · {time} · {name}"
+    },
+    "permission-denied": {
+      "title": "Notifications are off",
+      "body": "Reminders work inside the app, but won't make a sound while the screen is closed.",
+      "how-to-enable": "How to enable",
+      "tone-fallback": "Reminders are still created and visible in the app"
+    },
+    "missed": {
+      "section": "Not logged today",
+      "row-template": "Feeding {time} · not logged",
+      "actions": ["Mark done", "Skip"],
+      "repeating-hint": "You can move the time or turn the reminder off"
+    }
+  },
+
+  "guidance": {
+    "eyebrow-template": "Tip of the day · {current} of {total}",
+    "actions": ["Read", "Tried it", "Skip"],
+    "read-summary": "Read: {title}",
+    "practiced-summary": "Tried: {title}",
+    "skip-timeline-event": "Tip skipped",
+    "escalation-pattern": "If {sign}, reach out to your vet clinic",
+    "topics": {
+      "first-night": {
+        "eyebrow": "Tip of the day · 1 of 14",
+        "title": "First night at home",
+        "body": "Put the bed near yours. Quiet whimpering is normal. Soft voice, dim lights. In the morning, a short potty break",
+        "escalation": "If your puppy is breathing rapidly and can't settle — reach out to your vet clinic"
+      },
+      "potty-rhythm": {
+        "title": "Potty rhythm",
+        "body": "A small puppy asks to go roughly every 1–2 hours and after eating, sleeping, or playing. Praise calmly the moment they go outside",
+        "escalation": "If there's no urination at all for a full day — call your clinic"
+      },
+      "biting": {
+        "title": "Mouthing during play",
+        "body": "Puppies explore the world with their mouth. If teeth touch your hand, say a soft \"ow\" and pause for 10 seconds. Then offer a toy",
+        "escalation": "If your puppy repeatedly breaks an adult's skin to the point of pain — talk to a behavior specialist"
+      },
+      "crate": {
+        "title": "The crate as a quiet spot",
+        "body": "The crate isn't a punishment — it's a den. Leave treats inside, keep the door open during the day. Sleep in the crate starts with short 10-minute stretches",
+        "escalation": "If your puppy panics in the crate for more than 15 minutes — stop the training and talk to a specialist"
+      }
+    }
+  },
+
+  "more": {
+    "screen-title": "More",
+    "sections": {
+      "puppy": "Puppy",
+      "sharing": "Sharing",
+      "records": "Records and notifications",
+      "privacy": "Privacy",
+      "support": "Support",
+      "subscription": "Subscription"
+    },
+    "rows": {
+      "puppy-profile": "Puppy profile",
+      "quick-trackers": "Quick trackers",
+      "family": "Family",
+      "trainer-sitter": "Trainer / sitter",
+      "timeline": "Timeline",
+      "reminders": "Reminders",
+      "notifications": "Notifications",
+      "data-account": "Data and account",
+      "help": "Help",
+      "about": "About",
+      "puppyplan-plus": "PuppyPlan Plus"
+    },
+    "puppy-profile": {
+      "screen-title": "Puppy profile",
+      "save": "Save",
+      "change-photo": "Change photo",
+      "field-name": "Name",
+      "field-birth": "Date of birth / approx.",
+      "field-breed": "Breed / mix / unknown",
+      "field-gender": "Sex",
+      "field-weight": "Weight (optional)",
+      "field-note": "Note",
+      "hint": "This information is used only inside the app and in shared links you create.",
+      "photo-permission-denied": "Photo access is off. You can use one of the built-in avatars",
+      "avatar-actions": [
+        "Take a photo",
+        "Pick from your library",
+        "Use an illustration"
+      ]
+    },
+    "quick-trackers": {
+      "screen-title-template": "Quick trackers ({n} of 5 selected)",
+      "hint": "Pick up to 5 trackers for the Today screen. Drag to reorder.",
+      "max-reached-hint": "Turn off one of the selected first",
+      "items": ["Feeding", "Potty", "Sleep", "Walk", "Weight", "Play", "Biting"]
+    },
+    "notifications": {
+      "screen-title": "Notifications",
+      "section-local": "Local reminders",
+      "row-all-reminders": "All reminders",
+      "local-hint": "These run on this device.",
+      "section-push": "Push to your device",
+      "row-push-reminders": "Reminders",
+      "row-push-sitter": "Sitter finished checklist",
+      "push-hint": "In beta, push is sent only for these events. Family activity isn't pushed.",
+      "section-quiet-hours": "Quiet hours",
+      "quiet-hours-example": "10:00 pm – 7:00 am",
+      "section-tz": "Time zone",
+      "tz-example": "Europe/Berlin (auto)"
+    },
+    "privacy": {
+      "screen-title": "Data and account",
+      "section-consents": "Consents",
+      "row-analytics": "Usage analytics",
+      "analytics-hint": "Helps us improve the app. Not tied to your notification permission.",
+      "section-errors": "Error collection",
+      "row-error-reports": "Error reports",
+      "errors-hint": "Personal data is removed before sending.",
+      "section-your-data": "Your data",
+      "row-export": "Export your data",
+      "section-account": "Account",
+      "row-delete": "Delete account",
+      "export-sheet": "We'll gather your records and send a link to your email within 24 hours",
+      "delete-sheet": {
+        "title": "Delete account",
+        "body": "This will delete your profile, your puppy's records, and the links you've shared. This cannot be undone",
+        "confirm-input-prompt": "type the word \"DELETE\"",
+        "confirm-input-word": "DELETE"
+      },
+      "delete-toast": "Deletion request received. We'll send a confirmation to your email"
+    },
+    "help": {
+      "screen-title": "Help",
+      "section-contact": "Contact",
+      "row-support": "Contact support",
+      "support-email": "support@puppyplan.app",
+      "section-docs": "Documents",
+      "row-privacy-policy": "Privacy Policy",
+      "row-terms": "Terms of Use",
+      "section-about": "About",
+      "row-version": "Version 1.0.0 (beta)",
+      "row-health-disclaimer": "Health disclaimer",
+      "health-disclaimer-sheet": "PuppyPlan helps you keep records and reminders. It is not medical advice. For any health questions about your puppy, please consult your veterinarian"
+    }
+  },
+
+  "paywall": {
+    "title": "PuppyPlan Plus",
+    "subtitle": "Extended features for the first 90 days.",
+    "features": [
+      "Unlimited shared links",
+      "Extended health export",
+      "Multiple puppies in one account"
+    ],
+    "plan-monthly": "Monthly · €8.99",
+    "plan-yearly": "Yearly · €49.99 (save 53%)",
+    "primary": "Subscribe",
+    "secondary": "Restore purchases",
+    "legal": "Auto-renews. You can cancel in the App Store.",
+    "free-vs-plus": {
+      "free": [
+        "Today + Timeline",
+        "1 shared access",
+        "Basic export",
+        "1 puppy"
+      ],
+      "plus": [
+        "Everything in Free",
+        "Unlimited shared access",
+        "Extended health export",
+        "Multiple puppies"
+      ],
+      "header-free": "Free",
+      "header-plus": "Plus"
+    },
+    "states": {
+      "offline": "We'll load the plans once you're back online",
+      "error": "Couldn't load the plans. Try refreshing",
+      "active-until": "Subscription active through {date}. Managed in the App Store"
+    },
+    "a11y-price-example": "Yearly, 49 euros 99 cents, save 53 percent"
+  },
+
+  "permission-denied-patterns": {
+    "notifications-body": "You can keep going without them. Reminders are visible inside the app",
+    "camera-body": "You can keep going without it. Use photos from your library or illustrations",
+    "photos-body": "You can keep going without them. Use the built-in avatars",
+    "title-template": "Access to {resource} is off",
+    "_comment": "{resource} — e.g. \"notifications\" / \"the camera\" / \"photos\". English doesn't need grammatical case changes."
+  },
+
+  "errors": {
+    "save-failed": "Couldn't save",
+    "save-failed-local": "Couldn't save. Your entry is kept locally — we'll try again later.",
+    "save-failed-connection": "Couldn't save. Check your connection.",
+    "load-failed": "Couldn't load",
+    "tariffs-load-failed": "Couldn't load the plans. Try refreshing",
+    "session-revoked": "Access to {puppyName} is closed. If this seems wrong, reach out to the owner.",
+    "duplicate-soft": "Looks like a duplicate from the last 60 seconds. Save anyway?",
+    "too-many-attempts": "A lot of attempts in a row. We'll try again later automatically.",
+    "exit-sitter-failed": "Couldn't end sitter mode. Please try again.",
+    "invite-load": "Couldn't load the invite. Check your connection.",
+    "min-quiet-window": "The quiet window should be at least 30 minutes"
+  }
+}

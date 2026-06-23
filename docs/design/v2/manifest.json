@@ -1,0 +1,562 @@
+{
+  "schema": "puppyplan.design-manifest.v1",
+  "linearIssue": "PUP-26..PUP-32",
+  "status": "current-for-v2-intake",
+  "source": {
+    "currentVisualSource": "raw/PuppyPlan.html",
+    "currentVisualSourceReason": "The V2 package is the approved redesign refinement package for the redesign intake.",
+    "renderRequiresNetwork": true,
+    "ciGateEligible": false,
+    "ciGateBlockers": [
+      "Vendor React, ReactDOM, and Babel into docs/design/v2/raw/_vendor/ before CI use.",
+      "Keep Linux Chrome/Chromium discovery supported on the target runner before CI use."
+    ],
+    "networkDependencies": [
+      "https://unpkg.com/react@18.3.1/umd/react.development.js",
+      "https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js",
+      "https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+    ],
+    "tokenIntent": {
+      "canonical": [
+        "raw/tokens.css",
+        "raw/puppy-tokens-patch.css"
+      ],
+      "fallback": "raw/export/src/tokens.css",
+      "notes": "The inner tokens.css plus puppy-tokens-patch.css carry the V2 Lora/Nunito and warm mauve intent. export/src/tokens.css is a system-font portability fallback."
+    },
+    "rawFiles": [
+      "raw/.design-canvas.state.json",
+      "raw/PuppyPlan - Standalone.html",
+      "raw/PuppyPlan-print.html",
+      "raw/PuppyPlan.html",
+      "raw/PuppyPlan.standalone.src.html",
+      "raw/CHANGELOG-pass3.md",
+      "raw/components.jsx",
+      "raw/design-canvas-print.jsx",
+      "raw/design-canvas.jsx",
+      "raw/icons.jsx",
+      "raw/ios-frame.jsx",
+      "raw/screens/cards.jsx",
+      "raw/screens/guidance.jsx",
+      "raw/screens/health.jsx",
+      "raw/screens/library.jsx",
+      "raw/screens/more.jsx",
+      "raw/screens/onboarding.jsx",
+      "raw/screens/profile.jsx",
+      "raw/screens/quicklog.jsx",
+      "raw/screens/settings.jsx",
+      "raw/screens/sharing.jsx",
+      "raw/screens/sitter.jsx",
+      "raw/screens/states.jsx",
+      "raw/screens/timeline.jsx",
+      "raw/screens/today.jsx",
+      "raw/tokens.css",
+      "raw/export/src/tokens.css",
+      "raw/foundation_library_warm_light_v2.html",
+      "raw/puppy-tokens-patch.css"
+    ]
+  },
+  "counts": {
+    "expectedSections": 10,
+    "expectedArtboards": 14,
+    "expectedPhoneScreens": 10,
+    "sections": 10,
+    "artboards": 14,
+    "phoneScreens": 10,
+    "referenceArtboards": 4,
+    "reconciliation": "Matches the delivered V2 screenshot package: 14 PNG atlas references at 924x540."
+  },
+  "defaults": {
+    "phoneArtboard": {
+      "width": 924,
+      "height": 540,
+      "unit": "px"
+    },
+    "implementationTarget": "Expo native mobile app using src/design primitives, not copied web JSX."
+  },
+  "sections": [
+    {
+      "id": "foundation",
+      "title": "Foundation",
+      "sourceFile": "raw/screens/library.jsx",
+      "priorityTags": [
+        "reference",
+        "foundation"
+      ],
+      "artboards": [
+        {
+          "id": "v2.foundation.01",
+          "slug": "foundation__readme",
+          "label": "Readme and foundation overview",
+          "title": "Readme and foundation overview",
+          "sectionId": "foundation",
+          "sectionTitle": "Foundation",
+          "route": "/_dev/components",
+          "screenIntent": "Foundation: package readme and first component/tokens strip",
+          "stateType": "reference",
+          "priorityTags": [
+            "reference",
+            "foundation"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/library.jsx",
+            "raw/tokens.css",
+            "raw/puppy-tokens-patch.css"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/01-readme-foundation.png",
+          "knownIssues": []
+        },
+        {
+          "id": "v2.foundation.02",
+          "slug": "foundation__mid",
+          "label": "Foundation middle",
+          "title": "Foundation middle",
+          "sectionId": "foundation",
+          "sectionTitle": "Foundation",
+          "route": "/_dev/components",
+          "screenIntent": "Foundation: middle component and token strip",
+          "stateType": "reference",
+          "priorityTags": [
+            "reference",
+            "foundation"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/library.jsx"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/02-foundation-mid.png",
+          "knownIssues": []
+        },
+        {
+          "id": "v2.foundation.03",
+          "slug": "foundation__bottom",
+          "label": "Foundation bottom",
+          "title": "Foundation bottom",
+          "sectionId": "foundation",
+          "sectionTitle": "Foundation",
+          "route": "/_dev/components",
+          "screenIntent": "Foundation: lower component and state strip",
+          "stateType": "reference",
+          "priorityTags": [
+            "reference",
+            "foundation"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/library.jsx"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/03-foundation-bottom.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "onboarding",
+      "title": "Onboarding",
+      "sourceFile": "raw/screens/onboarding.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "v2.onboarding.01",
+          "slug": "onboarding__flow",
+          "label": "Onboarding flow",
+          "title": "Onboarding flow",
+          "sectionId": "onboarding",
+          "sectionTitle": "Onboarding",
+          "route": "/onboarding",
+          "screenIntent": "Onboarding: profile, tracker picker, and first-log flow",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/onboarding.jsx"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/04-onboarding.png",
+          "knownIssues": []
+        },
+        {
+          "id": "v2.onboarding.02",
+          "slug": "onboarding__welcome_new",
+          "label": "Welcome new",
+          "title": "Welcome new",
+          "sectionId": "onboarding",
+          "sectionTitle": "Onboarding",
+          "route": "/onboarding",
+          "screenIntent": "Onboarding: refreshed welcome screen",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/onboarding.jsx"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/welcome-new.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "quicklog",
+      "title": "Quick Log",
+      "sourceFile": "raw/screens/quicklog.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "v2.quicklog.01",
+          "slug": "quicklog__sheet",
+          "label": "Quick Log sheet",
+          "title": "Quick Log sheet",
+          "sectionId": "quicklog",
+          "sectionTitle": "Quick Log",
+          "route": "/quick-log",
+          "screenIntent": "Quick Log: selected trackers, potty subtype, feedback, and details",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/quicklog.jsx"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/05-quicklog.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "family",
+      "title": "Family and sharing",
+      "sourceFile": "raw/screens/sharing.jsx",
+      "priorityTags": [
+        "deferred"
+      ],
+      "artboards": [
+        {
+          "id": "v2.family.01",
+          "slug": "family__sharing",
+          "label": "Family sharing",
+          "title": "Family sharing",
+          "sectionId": "family",
+          "sectionTitle": "Family and sharing",
+          "route": "/family/invite",
+          "screenIntent": "Family sharing and invite surfaces",
+          "stateType": "default",
+          "priorityTags": [
+            "deferred"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/sharing.jsx",
+            "raw/screens/sitter.jsx"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/06-family.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "health",
+      "title": "Health",
+      "sourceFile": "raw/screens/health.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "v2.health.01",
+          "slug": "health__records",
+          "label": "Health records",
+          "title": "Health records",
+          "sectionId": "health",
+          "sectionTitle": "Health",
+          "route": "/health",
+          "screenIntent": "Health: record list, weight check, and neutral medical states",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/health.jsx"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/07-health.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "states",
+      "title": "States",
+      "sourceFile": "raw/screens/states.jsx",
+      "priorityTags": [
+        "reference"
+      ],
+      "artboards": [
+        {
+          "id": "v2.states.01",
+          "slug": "states__matrix",
+          "label": "State matrix",
+          "title": "State matrix",
+          "sectionId": "states",
+          "sectionTitle": "States",
+          "route": null,
+          "screenIntent": "Reference state matrix for loading, empty, error, pending, and offline states",
+          "stateType": "reference",
+          "priorityTags": [
+            "reference"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/states.jsx"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/08-states.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "font-checks",
+      "title": "Font and color checks",
+      "sourceFile": "raw/foundation_library_warm_light_v2.html",
+      "priorityTags": [
+        "foundation"
+      ],
+      "artboards": [
+        {
+          "id": "v2.checks.lora",
+          "slug": "checks__lora",
+          "label": "Lora check",
+          "title": "Lora check",
+          "sectionId": "font-checks",
+          "sectionTitle": "Font and color checks",
+          "route": null,
+          "screenIntent": "Foundation: Lora display type check",
+          "stateType": "reference",
+          "priorityTags": [
+            "foundation"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/foundation_library_warm_light_v2.html",
+            "raw/puppy-tokens-patch.css"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/lora-check.png",
+          "knownIssues": []
+        },
+        {
+          "id": "v2.checks.warm",
+          "slug": "checks__warm",
+          "label": "Warm color check",
+          "title": "Warm color check",
+          "sectionId": "font-checks",
+          "sectionTitle": "Font and color checks",
+          "route": null,
+          "screenIntent": "Foundation: warm mauve and token check",
+          "stateType": "reference",
+          "priorityTags": [
+            "foundation"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/foundation_library_warm_light_v2.html",
+            "raw/puppy-tokens-patch.css"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/warm-check.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "title": "Profile",
+      "sourceFile": "raw/screens/profile.jsx",
+      "priorityTags": [
+        "mvp"
+      ],
+      "artboards": [
+        {
+          "id": "v2.profile.01",
+          "slug": "profile__new",
+          "label": "Profile new",
+          "title": "Profile new",
+          "sectionId": "profile",
+          "sectionTitle": "Profile",
+          "route": "/settings/profile",
+          "screenIntent": "Puppy profile refreshed form and saved state",
+          "stateType": "default",
+          "priorityTags": [
+            "mvp"
+          ],
+          "kind": "phone-screen",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan.html",
+            "raw/screens/profile.jsx"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/profile-new.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "overview",
+      "title": "Standalone overview",
+      "sourceFile": "raw/PuppyPlan - Standalone.html",
+      "priorityTags": [
+        "reference"
+      ],
+      "artboards": [
+        {
+          "id": "v2.overview.01",
+          "slug": "overview__standalone",
+          "label": "Standalone overview",
+          "title": "Standalone overview",
+          "sectionId": "overview",
+          "sectionTitle": "Standalone overview",
+          "route": null,
+          "screenIntent": "Whole-package overview reference",
+          "stateType": "reference",
+          "priorityTags": [
+            "reference"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan - Standalone.html"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/standalone-overview.png",
+          "knownIssues": []
+        }
+      ]
+    },
+    {
+      "id": "print",
+      "title": "Print reference",
+      "sourceFile": "raw/PuppyPlan-print.html",
+      "priorityTags": [
+        "reference"
+      ],
+      "artboards": [
+        {
+          "id": "v2.print.01",
+          "slug": "print__top",
+          "label": "Print top",
+          "title": "Print top",
+          "sectionId": "print",
+          "sectionTitle": "Print reference",
+          "route": null,
+          "screenIntent": "Print export reference",
+          "stateType": "reference",
+          "priorityTags": [
+            "reference"
+          ],
+          "kind": "reference-artboard",
+          "dimensions": {
+            "width": 924,
+            "height": 540,
+            "unit": "px"
+          },
+          "sourceFiles": [
+            "raw/PuppyPlan-print.html"
+          ],
+          "component": null,
+          "screenshotPath": "screenshots/print-top.png",
+          "knownIssues": []
+        }
+      ]
+    }
+  ]
+}

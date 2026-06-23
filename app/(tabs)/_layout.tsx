@@ -1,9 +1,10 @@
-import { router, Tabs } from 'expo-router';
+import { router, Tabs, usePathname } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { primaryTabs, quickLogAction } from '@/contracts/navigation';
 import { AppIcon } from '@/design/primitives/AppIcon';
 import { FAB } from '@/design/primitives/FAB';
+import { useSnackbarActive } from '@/design/primitives/Snackbar';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 
@@ -11,6 +12,9 @@ const [todayTab, healthTab, moreTab] = primaryTabs;
 
 export default function TabLayout() {
   const { t } = useAppTranslation();
+  const pathname = usePathname();
+  const snackbarActive = useSnackbarActive();
+  const showQuickLogFab = !snackbarActive && isFabLogSurfacePath(pathname);
 
   return (
     <View style={styles.container}>
@@ -52,14 +56,23 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-      <FAB
-        accessibilityLabel={t(quickLogAction.labelKey)}
-        accessibilityHint={t(quickLogAction.accessibilityHintKey)}
-        onPress={() => router.push(quickLogAction.href)}
-        style={styles.quickLog}
-      />
+      {showQuickLogFab ? (
+        <FAB
+          accessibilityLabel={t(quickLogAction.labelKey)}
+          accessibilityHint={t(quickLogAction.accessibilityHintKey)}
+          onPress={() => router.push(quickLogAction.href)}
+          style={styles.quickLog}
+        />
+      ) : null}
     </View>
   );
+}
+
+function isFabLogSurfacePath(pathname: string) {
+  return pathname === '/' ||
+    pathname.startsWith('/today') ||
+    pathname.startsWith('/health') ||
+    pathname.startsWith('/timeline');
 }
 
 const styles = StyleSheet.create({

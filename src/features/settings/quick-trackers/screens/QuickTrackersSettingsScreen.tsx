@@ -30,12 +30,10 @@ import {
 type QuickTrackersAccessState = 'loading' | 'empty' | 'error' | 'owner' | 'nonOwner';
 
 const trackerIconNames: Record<QuickLogTrackerId, AppIconName> = {
-  feeding_meal: 'bowl',
-  potty_pee_inside: 'pottyInside',
-  potty_pee_outside: 'paw',
-  potty_poop: 'poop',
-  sleep_nap: 'moon',
-  training: 'trainingPaw',
+  feeding: 'bowl',
+  potty: 'paw',
+  sleep: 'moon',
+  walk: 'calendar',
   zoomies: 'spark',
 };
 

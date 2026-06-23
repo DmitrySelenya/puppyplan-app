@@ -79,7 +79,7 @@ function renderController(input: {
         ? null
         : {
           occurredAtMs: input.lastLoggedAtMs,
-          trackerId: 'feeding_meal',
+          trackerId: 'feeding',
         },
       recentEvents: input.recentEvents,
     }), {
@@ -108,7 +108,7 @@ describe('useQuickLogSheetController', () => {
     expect(result.current.status).toBe('unavailable');
     expect(result.current.unavailableReason).toBe('permission-denied');
 
-    const returnValue = result.current.logTracker('feeding_meal');
+    const returnValue = result.current.logTracker({ trackerId: 'feeding' });
 
     expect(returnValue).toBeUndefined();
     expect(mutation.mutate).not.toHaveBeenCalled();
@@ -123,7 +123,7 @@ describe('useQuickLogSheetController', () => {
 
     const { closeSheet, result, snackbar } = renderController({ mutation });
 
-    const returnValue = result.current.logTracker('feeding_meal');
+    const returnValue = result.current.logTracker({ trackerId: 'feeding' });
 
     expect(returnValue).toBeUndefined();
     expect(mutation.mutate).toHaveBeenCalledWith(expect.objectContaining({
@@ -133,7 +133,7 @@ describe('useQuickLogSheetController', () => {
         occurredAt: now.toISOString(),
         puppyId,
         todayDate: '2026-05-27',
-        trackerId: 'feeding_meal',
+        trackerId: 'feeding',
       }),
     }));
     expect(snackbar.showSnackbar).toHaveBeenCalledWith(expect.objectContaining({
@@ -151,7 +151,7 @@ describe('useQuickLogSheetController', () => {
       openDetails,
     });
 
-    result.current.logTracker('feeding_meal');
+    result.current.logTracker({ trackerId: 'feeding' });
 
     const message = snackbar.showSnackbar.mock.calls[0]?.[0];
 
@@ -168,7 +168,7 @@ describe('useQuickLogSheetController', () => {
       householdId,
       puppyId,
       todayDate: '2026-05-27',
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     });
   });
 
@@ -181,7 +181,7 @@ describe('useQuickLogSheetController', () => {
       snackbar,
     } = renderController({ analytics });
 
-    result.current.logTracker('feeding_meal');
+    result.current.logTracker({ trackerId: 'feeding' });
 
     const requestId = requireRequestId(hook.current.lastRequestId);
 
@@ -191,7 +191,7 @@ describe('useQuickLogSheetController', () => {
         eventType: 'feeding',
         requestId,
         state: 'failed_retryable',
-        trackerId: 'feeding_meal',
+        trackerId: 'feeding',
         type: 'failed',
       }],
     });
@@ -225,7 +225,7 @@ describe('useQuickLogSheetController', () => {
   it('records pending undo intent and applies it when mutation context arrives', () => {
     const { mutation, result } = renderController();
 
-    result.current.logTracker('feeding_meal');
+    result.current.logTracker({ trackerId: 'feeding' });
 
     const requestId = requireRequestId(result.current.lastRequestId);
 
@@ -238,7 +238,7 @@ describe('useQuickLogSheetController', () => {
         clientEventId,
         eventType: 'feeding',
         requestId,
-        trackerId: 'feeding_meal',
+        trackerId: 'feeding',
         type: 'started',
       }],
     });
@@ -256,7 +256,7 @@ describe('useQuickLogSheetController', () => {
     const analytics = createAnalyticsPort();
     const { mutation, result, snackbar } = renderController({ analytics });
 
-    result.current.logTracker('feeding_meal');
+    result.current.logTracker({ trackerId: 'feeding' });
 
     const requestId = requireRequestId(result.current.lastRequestId);
     const message = snackbar.showSnackbar.mock.calls[0]?.[0];
@@ -269,7 +269,7 @@ describe('useQuickLogSheetController', () => {
         clientEventId,
         eventType: 'feeding',
         requestId,
-        trackerId: 'feeding_meal',
+        trackerId: 'feeding',
         type: 'started',
       }],
     });
@@ -295,11 +295,11 @@ describe('useQuickLogSheetController', () => {
     });
 
     act(() => {
-      result.current.logTracker('feeding_meal');
+      result.current.logTracker({ trackerId: 'feeding' });
     });
 
     expect(result.current.duplicateWarning).toEqual(expect.objectContaining({
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     }));
     expect(mutation.mutate).not.toHaveBeenCalled();
     expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
@@ -331,25 +331,25 @@ describe('useQuickLogSheetController', () => {
       recentEvents: [
         {
           occurredAtMs: now.getTime() - 30_000,
-          trackerId: 'feeding_meal',
+          trackerId: 'feeding',
         },
         {
           occurredAtMs: now.getTime() - 2_000,
-          trackerId: 'feeding_meal',
+          trackerId: 'feeding',
         },
         {
           occurredAtMs: now.getTime() - 1_000,
-          trackerId: 'sleep_nap',
+          trackerId: 'sleep',
         },
       ],
     });
 
     act(() => {
-      result.current.logTracker('feeding_meal');
+      result.current.logTracker({ trackerId: 'feeding' });
     });
 
     expect(result.current.duplicateWarning).toEqual(expect.objectContaining({
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     }));
     expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
       name: 'duplicate_warning_seen',
@@ -358,6 +358,68 @@ describe('useQuickLogSheetController', () => {
         time_since_previous_bucket: 'under_3s',
       },
     });
+  });
+
+  it('AC-2: shows duplicate warning for repeated outside potty but not inside accidents', () => {
+    const outsideAnalytics = createAnalyticsPort();
+    const outside = renderController({
+      analytics: outsideAnalytics,
+      recentEvents: [
+        {
+          occurredAtMs: now.getTime() - 30_000,
+          payload: {
+            subtype: 'outside',
+          },
+          trackerId: 'potty',
+        } as QuickLogRecentEvent,
+      ],
+    });
+
+    act(() => {
+      outside.result.current.logTracker({
+        pottySubtype: 'outside',
+        trackerId: 'potty',
+      });
+    });
+
+    expect(outside.result.current.duplicateWarning).toEqual(expect.objectContaining({
+      trackerId: 'potty',
+    }));
+    expect(outside.mutation.mutate).not.toHaveBeenCalled();
+    expect(outsideAnalytics.trackQuickLogEvent).toHaveBeenCalledWith({
+      name: 'duplicate_warning_seen',
+      properties: {
+        event_type: 'potty',
+        time_since_previous_bucket: 'under_60s',
+      },
+    });
+
+    const inside = renderController({
+      recentEvents: [
+        {
+          occurredAtMs: now.getTime() - 30_000,
+          payload: {
+            subtype: 'inside',
+          },
+          trackerId: 'potty',
+        } as QuickLogRecentEvent,
+      ],
+    });
+
+    act(() => {
+      inside.result.current.logTracker({
+        pottySubtype: 'inside',
+        trackerId: 'potty',
+      });
+    });
+
+    expect(inside.result.current.duplicateWarning).toBeNull();
+    expect(inside.mutation.mutate).toHaveBeenCalledWith(expect.objectContaining({
+      variables: expect.objectContaining({
+        pottySubtype: 'inside',
+        trackerId: 'potty',
+      }),
+    }));
   });
 
   it('tracks undo through stable analytics categories', () => {

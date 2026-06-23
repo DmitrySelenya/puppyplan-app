@@ -17,6 +17,8 @@ import {
   type QuickLogDetailDraft,
   type QuickLogEventInsert,
   type QuickLogEventType,
+  type QuickLogNonPottyTrackerId,
+  type QuickLogPottySubtype,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
 import {
@@ -57,15 +59,24 @@ export type QuickLogCachedEventRow = EventLogRecord & {
   }>;
 };
 
-export type QuickLogMutationVariables = Readonly<{
+type QuickLogMutationVariablesBase = Readonly<{
   clientEventId?: string;
   householdId: string;
-  puppyId: string;
-  trackerId: QuickLogTrackerId;
   occurredAt: string;
+  puppyId: string;
   recoverySurface?: QuickLogRecoverySurface;
   todayDate: string;
 }>;
+
+export type QuickLogMutationVariables =
+  | (QuickLogMutationVariablesBase & Readonly<{
+    pottySubtype: QuickLogPottySubtype;
+    trackerId: 'potty';
+  }>)
+  | (QuickLogMutationVariablesBase & Readonly<{
+    pottySubtype?: never;
+    trackerId: QuickLogNonPottyTrackerId;
+  }>);
 
 export type QuickLogMutationContext = Readonly<{
   clientEventId: string;
@@ -233,6 +244,7 @@ export function createQuickLogMutationOptions(
         created_by: actorId,
         tracker_id: variables.trackerId,
         occurred_at: variables.occurredAt,
+        ...(variables.trackerId === 'potty' ? { subtype: variables.pottySubtype } : {}),
       });
       const timestamp = now();
       const invalidationKeys = getQuickLogInvalidationKeys({

@@ -109,7 +109,7 @@ describe('Timeline filters and actions', () => {
     );
 
     fireEvent.press(screen.getByRole('tab', {
-      name: i18n.t('timeline.filter-chips.2'),
+      name: i18n.t('quick-log.trackers.feeding'),
     }));
 
     await waitFor(() => {
@@ -122,6 +122,31 @@ describe('Timeline filters and actions', () => {
       });
     });
     expect(screen.getByText(i18n.t('timeline.empty-filter'))).toBeTruthy();
+  });
+
+  it('derives Quick Log filter chips from the canonical tracker vocabulary', () => {
+    renderWithQuery(
+      <TimelineScreen
+        careContext={careContext}
+        onClose={onClose}
+      />,
+    );
+
+    for (const trackerKey of [
+      'quick-log.trackers.potty',
+      'quick-log.trackers.feeding',
+      'quick-log.trackers.sleep',
+      'quick-log.trackers.walk',
+      'quick-log.trackers.zoomies',
+    ] as const) {
+      expect(screen.getByRole('tab', {
+        name: i18n.t(trackerKey),
+      })).toBeTruthy();
+    }
+
+    expect(screen.queryByRole('tab', {
+      name: i18n.t('quick-log.trackers.training'),
+    })).toBeNull();
   });
 
   it('keeps pending local rows visible when a matching filtered Timeline query refetches', async () => {
@@ -149,11 +174,11 @@ describe('Timeline filters and actions', () => {
     });
 
     fireEvent.press(screen.getByRole('tab', {
-      name: i18n.t('timeline.filter-chips.2'),
+      name: i18n.t('quick-log.trackers.feeding'),
     }));
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+      expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
     });
     expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
     expect(screen.queryByText(i18n.t('timeline.empty-filter'))).toBeNull();
@@ -213,7 +238,9 @@ describe('Timeline filters and actions', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+      expect(screen.getByRole('button', {
+        name: i18n.t('timeline.more-actions'),
+      })).toBeTruthy();
     });
     expect(screen.queryByText(i18n.t('timeline.pills.synced'))).toBeNull();
 
@@ -261,7 +288,7 @@ describe('Timeline filters and actions', () => {
       householdId,
       puppyId,
       todayDate,
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     });
 
     fireEvent(overflowButton, 'accessibilityAction', {
@@ -274,7 +301,7 @@ describe('Timeline filters and actions', () => {
       householdId,
       puppyId,
       todayDate,
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     });
   });
 
@@ -283,12 +310,7 @@ describe('Timeline filters and actions', () => {
       onDelete: jest.fn(),
       onEdit: jest.fn(),
     };
-    mockListEvents.mockResolvedValue([createRow({
-      event_type: 'potty',
-      payload: {
-        quick_action: 'pee_outside',
-      },
-    })]);
+    mockListEvents.mockResolvedValue([createRow()]);
 
     renderWithQuery(
       <TimelineScreen
@@ -299,7 +321,9 @@ describe('Timeline filters and actions', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('quick-log.trackers.potty-outside'))).toBeTruthy();
+      expect(screen.getByRole('button', {
+        name: i18n.t('timeline.more-actions'),
+      })).toBeTruthy();
     });
 
     fireEvent.press(screen.getByRole('button', {
@@ -318,7 +342,7 @@ describe('Timeline filters and actions', () => {
 
     expect(actions.onDelete).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000004605',
-      eventType: 'potty',
+      eventType: 'feeding',
       householdId,
       puppyId,
       status: 'synced',

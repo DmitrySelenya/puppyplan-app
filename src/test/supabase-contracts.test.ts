@@ -9,6 +9,8 @@ import {
   eventTypes,
   householdMembershipRoles,
   minimalQuickLogQueueItemSchema,
+  puppyQuickTrackerIds,
+  puppyQuickTrackerIdsSchema,
   puppyProfileSchema,
   shareScopeRecordSchema,
   shareScopes,
@@ -33,6 +35,7 @@ describe('Supabase contract vocabulary', () => {
       'potty',
       'feeding',
       'sleep',
+      'walk',
       'zoomies',
       'training',
       'health_record_reference',
@@ -58,7 +61,7 @@ describe('event log contracts', () => {
     occurred_at: '2026-05-17T08:32:00.000Z',
     payload_version: 1,
     payload: {
-      quick_action: 'pee_outside',
+      subtype: 'outside',
     },
   } satisfies EventLogInsert;
 
@@ -104,12 +107,69 @@ describe('event log contracts', () => {
     ).toBe(false);
   });
 
-  it('rejects payload fields outside the event-specific contract', () => {
+  it('AC-4: accepts canonical potty and walk payloads and rejects legacy quick_action', () => {
+    expect(
+      eventLogInsertSchema.safeParse({
+        ...validEvent,
+        payload: {
+          subtype: 'inside',
+        },
+      }).success,
+    ).toBe(true);
+
+    expect(
+      eventLogInsertSchema.safeParse({
+        ...validEvent,
+        payload: {
+          subtype: 'poop',
+        },
+      }).success,
+    ).toBe(true);
+
+    expect(
+      eventLogInsertSchema.safeParse({
+        ...validEvent,
+        event_type: 'walk',
+        payload: {},
+      }).success,
+    ).toBe(true);
+
+    expect(
+      eventLogInsertSchema.safeParse({
+        ...validEvent,
+        event_type: 'walk',
+        payload: {
+          duration_minutes: 22,
+        },
+      }).success,
+    ).toBe(true);
+
     expect(
       eventLogInsertSchema.safeParse({
         ...validEvent,
         payload: {
           quick_action: 'pee_outside',
+        },
+      }).success,
+    ).toBe(false);
+
+    expect(
+      eventLogInsertSchema.safeParse({
+        ...validEvent,
+        event_type: 'walk',
+        payload: {
+          duration_minutes: 0,
+        },
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects payload fields outside the event-specific contract', () => {
+    expect(
+      eventLogInsertSchema.safeParse({
+        ...validEvent,
+        payload: {
+          subtype: 'outside',
           notes: 'free text must not cross the Quick Log trust boundary',
         },
       }).success,
@@ -168,6 +228,23 @@ describe('Quick Log queue contract boundary', () => {
 });
 
 describe('profile, token, and share refinements', () => {
+  it('AC-1: keeps puppy selected quick tracker ids canonical and Health-only weight excluded', () => {
+    expect(puppyQuickTrackerIds).toEqual(['potty', 'feeding', 'sleep', 'walk', 'zoomies']);
+    expect(puppyQuickTrackerIdsSchema.safeParse(defaultQuickLogTrackerIds).success).toBe(true);
+
+    for (const rejectedTrackerId of [
+      'weight',
+      'training',
+      'potty_pee_outside',
+      'potty_pee_inside',
+      'potty_poop',
+      'feeding_meal',
+      'sleep_nap',
+    ]) {
+      expect(puppyQuickTrackerIdsSchema.safeParse([rejectedTrackerId]).success).toBe(false);
+    }
+  });
+
   it('requires puppy profiles to include either birth date or age estimate', () => {
     const profile = {
       id: uuidA,
@@ -196,7 +273,7 @@ describe('profile, token, and share refinements', () => {
       name: 'Puppy',
       birth_date: null,
       age_weeks_estimate: 12,
-      quick_tracker_ids: ['training', 'feeding_meal'],
+      quick_tracker_ids: ['feeding', 'walk'],
       created_at: '2026-05-17T08:35:00.000Z',
       updated_at: '2026-05-17T08:35:00.000Z',
       deleted_at: null,
@@ -205,7 +282,7 @@ describe('profile, token, and share refinements', () => {
     expect(puppyProfileSchema.safeParse(profile).success).toBe(true);
     expect(puppyProfileSchema.safeParse({
       ...profile,
-      quick_tracker_ids: ['feeding_meal', 'feeding_meal'],
+      quick_tracker_ids: ['feeding', 'feeding'],
     }).success).toBe(false);
     expect(puppyProfileSchema.safeParse({
       ...profile,
@@ -215,7 +292,7 @@ describe('profile, token, and share refinements', () => {
       ...profile,
       quick_tracker_ids: [
         ...defaultQuickLogTrackerIds,
-        'training',
+        'weight',
       ],
     }).success).toBe(false);
   });
@@ -228,7 +305,7 @@ describe('profile, token, and share refinements', () => {
       name: 'Puppy',
       birth_date: null,
       age_weeks_estimate: 12,
-      quick_tracker_ids: ['training', 'feeding_meal'],
+      quick_tracker_ids: ['feeding', 'walk'],
       created_at: '2026-05-17T08:35:00.000Z',
       updated_at: '2026-05-17T08:35:00.000Z',
       deleted_at: null,

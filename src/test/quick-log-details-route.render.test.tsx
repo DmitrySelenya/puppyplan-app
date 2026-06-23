@@ -41,7 +41,7 @@ describe('QuickLogDetailsRoute', () => {
     mockRouterCanGoBack.mockReturnValue(true);
     mockRouterReplace.mockClear();
     mockUseLocalSearchParams.mockReturnValue({
-      trackerId: 'sleep_nap',
+      trackerId: 'sleep',
     });
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
@@ -49,7 +49,7 @@ describe('QuickLogDetailsRoute', () => {
         householdId: '00000000-0000-4000-8000-000000007902',
         householdRole: 'owner',
         puppyId: '00000000-0000-4000-8000-000000007903',
-        selectedTrackerIds: ['feeding_meal'],
+        selectedTrackerIds: ['feeding'],
         todayDate: '2026-06-09',
         userId: '00000000-0000-4000-8000-000000007904',
       },
@@ -105,7 +105,7 @@ describe('QuickLogDetailsRoute', () => {
       householdId: '00000000-0000-4000-8000-000000007902',
       puppyId: '00000000-0000-4000-8000-000000007903',
       todayDate: '2026-06-09',
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     });
     mockUseQuickLogMutationPort.mockReturnValue({
       mutation,
@@ -132,7 +132,7 @@ describe('QuickLogDetailsRoute', () => {
       clientEventId: 'evt_00000000-0000-4000-8000-000000007901',
       draft: {
         amount: 'water',
-        trackerId: 'feeding_meal',
+        trackerId: 'feeding',
       },
       eventType: 'feeding',
       householdId: '00000000-0000-4000-8000-000000007902',
@@ -157,7 +157,7 @@ describe('QuickLogDetailsRoute', () => {
         householdId: '00000000-0000-4000-8000-000000007902',
         householdRole: 'viewer',
         puppyId: '00000000-0000-4000-8000-000000007903',
-        selectedTrackerIds: ['feeding_meal'],
+        selectedTrackerIds: ['feeding'],
         todayDate: '2026-06-09',
         userId: '00000000-0000-4000-8000-000000007904',
       },
@@ -170,7 +170,7 @@ describe('QuickLogDetailsRoute', () => {
       householdId: '00000000-0000-4000-8000-000000007902',
       puppyId: '00000000-0000-4000-8000-000000007903',
       todayDate: '2026-06-09',
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
     });
     mockUseQuickLogMutationPort.mockReturnValue({
       mutation,
@@ -216,7 +216,7 @@ describe('QuickLogDetailsRoute', () => {
       householdId: '00000000-0000-4000-8000-000000007902',
       puppyId: '00000000-0000-4000-8000-000000007903',
       todayDate: '2026-06-09',
-      trackerId: 'feeding_meal',
+      trackerId: 'feeding',
       [field]: value,
     });
     mockUseQuickLogMutationPort.mockReturnValue({

@@ -32,7 +32,7 @@ describe('Supabase puppy repository boundary', () => {
           household_id: householdId,
           id: puppyId,
           name: 'Puppy',
-          quick_tracker_ids: ['feeding_meal', 'training'],
+          quick_tracker_ids: ['feeding', 'walk'],
           updated_at: '2026-06-08T08:00:00.000Z',
         },
         error: null,
@@ -45,7 +45,7 @@ describe('Supabase puppy repository boundary', () => {
     await expect(repository.selectActivePuppy({ userId })).resolves.toMatchObject({
       household_role: 'caregiver',
       id: puppyId,
-      quick_tracker_ids: ['feeding_meal', 'training'],
+      quick_tracker_ids: ['feeding', 'walk'],
     });
     expect(client.selectActiveMembership).toHaveBeenCalledWith(userId);
     expect(client.selectActivePuppy).toHaveBeenCalledWith(householdId);

@@ -164,7 +164,7 @@ export function SyntheticQuickLogDetailsShell() {
           titleKey="quick-log.details.title"
         />
         <QuickLogDetailsScreen
-          initialTrackerId="sleep_nap"
+          initialTrackerId="sleep"
           status="saving"
         />
         <QuickLogDetailsScreen
