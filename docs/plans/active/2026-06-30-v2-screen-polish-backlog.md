@@ -37,6 +37,16 @@ as "up to 5".
 **Acceptance:** No occurrence of "Add buttons" / "five" in any user-facing `health.pet-hub.*`
 string; `check-i18n.mjs` green; any snapshot/render test referencing the old copy updated.
 
+**Item 1 evidence (2026-07-01):** RED
+`npm run test:unit -- --runTestsByPath src/test/i18n.test.ts` failed on
+`health.pet-hub.quick-trackers-meta = "Adjust the five Add buttons"`; GREEN updated EN/RU/ES Pet hub
+copy to the existing user-facing "pick up to 5" language and added a locale-wide guard against the
+implementation leak. `node scripts/checks/check-i18n.mjs` passed; `npm run check` passed
+(67 Jest suites / 498 tests, node/scaffold gates green; existing `screen-header.render.test.tsx`
+`act(...)` warning only). JS-over-Metro screenshots captured locally:
+`output/v2-screen-polish-screenshots/item1-pet-before.png` and
+`output/v2-screen-polish-screenshots/item1-pet-after.png`.
+
 ## P1 — Item 2: Pet ↔ More duplication (Puppy profile, Quick trackers)
 
 **What's wrong:** "Puppy profile" and "Quick trackers" appear as entry points on BOTH the Pet hub

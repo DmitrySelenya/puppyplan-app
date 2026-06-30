@@ -1142,8 +1142,8 @@
       "weight-label": "Weight",
       "add-weight": "Add weight",
       "quick-trackers-title": "Quick trackers",
-      "quick-trackers-meta": "Adjust the five Add buttons",
-      "quick-trackers-a11y": "Quick trackers. Adjust the five Add buttons."
+      "quick-trackers-meta": "Pick up to 5 for Today and Quick Log",
+      "quick-trackers-a11y": "Quick trackers. Pick up to 5 for Today and Quick Log."
     },
     "segments": ["All", "Vaccinations", "Treatments", "Visits"],
     "filter-chips": ["Templates", "Confirmed", "Done"],

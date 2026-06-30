@@ -1190,8 +1190,8 @@
       "weight-label": "Peso",
       "add-weight": "Agregar peso",
       "quick-trackers-title": "Rastreadores rápidos",
-      "quick-trackers-meta": "Ajusta los cinco botones de Add",
-      "quick-trackers-a11y": "Rastreadores rápidos. Ajusta los cinco botones de Add."
+      "quick-trackers-meta": "Elige hasta 5 para Hoy y Registro rápido",
+      "quick-trackers-a11y": "Rastreadores rápidos. Elige hasta 5 para Hoy y Registro rápido."
     },
     "segments": [
       "Todo",

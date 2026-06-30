@@ -144,6 +144,25 @@ describe('i18n scaffold resources', () => {
     }
   });
 
+  it('keeps Pet hub quick tracker copy user-facing instead of implementation-facing', () => {
+    const implementationLeakPattern = /add buttons|five|botones de Add|cinco|кнопок Add|пять/iu;
+
+    for (const locale of supportedLocales) {
+      const petHubEntries = userFacingStringEntries(locale)
+        .filter(([key]) => key.startsWith('health.pet-hub.'));
+
+      for (const [key, value] of petHubEntries) {
+        expect({
+          key,
+          locale,
+          value,
+        }).not.toEqual(expect.objectContaining({
+          value: expect.stringMatching(implementationLeakPattern),
+        }));
+      }
+    }
+  });
+
   it('tracks every count-bearing string in the startup locales', async () => {
     const englishCountKeys = userFacingStringEntries('en')
       .filter(([, value]) => value.includes('{n}'))
