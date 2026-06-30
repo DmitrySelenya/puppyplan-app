@@ -94,6 +94,16 @@ describe('CapsuleTabBar', () => {
     expect(screen.getByRole('button', { name: i18n.t('tabs.add-close') })).toBeTruthy();
   });
 
+  it('removes the three-tab capsule while the chooser is open', () => {
+    renderBar();
+
+    expect(screen.getByTestId('nav-capsule')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+
+    expect(screen.queryByTestId('nav-capsule')).toBeNull();
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
+  });
+
   it('navigates to a tab route via the navigation prop on press', () => {
     renderBar();
 

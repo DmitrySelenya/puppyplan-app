@@ -312,7 +312,9 @@ Task 1 evidence (2026-06-30): initial RED at `src/design/primitives/CapsuleTabBa
 Task 2 evidence (2026-06-30): RED `npm run test:unit -- --runTestsByPath src/test/capsule-tab-bar.render.test.tsx` failed because `nav-chooser` was absent after pressing Add; GREEN passed 4/4 after adding the minimal chooser root; `npm run typecheck` passed.
 
 ### Task 3: Capsule hides on open (T4)
-- [ ] Add T4, run/fail/pass (the `{!open && <capsule/>}` from Task 1 already satisfies it — T4 locks it so it can't regress). Commit `test(nav): lock capsule-hide while chooser open`.
+- [x] Add T4, run/fail/pass (the `{!open && <capsule/>}` from Task 1 already satisfies it — T4 locks it so it can't regress). Commit `test(nav): lock capsule-hide while chooser open`.
+
+Task 3 evidence (2026-06-30): added T4 to `src/test/capsule-tab-bar.render.test.tsx`; because Task 1 already implemented the hide condition, RED was verified mutation-style by temporarily forcing the capsule to stay mounted while open, which failed on `nav-capsule` still being present; after restoring `!open`, the capsule suite passed 5/5 and production diff was empty.
 
 ### Task 4: Scrim + drag-handle + two slabs (T5, T6)
 **Files:** Modify `CapsuleTabBar.tsx` (the `Chooser`), `CapsuleTabBar.test.tsx`.
