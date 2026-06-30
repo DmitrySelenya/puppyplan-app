@@ -82,8 +82,8 @@ export const tokens = {
         "text": "#2F5E41"
       },
       "completed": {
-        "fill": "#EAF3F3",
-        "text": "#175255"
+        "fill": "#E8E2D7",
+        "text": "#4A4E48"
       },
       "pending": {
         "fill": "#F1ECE3",

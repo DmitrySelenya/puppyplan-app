@@ -52,6 +52,17 @@ describe('generated design tokens', () => {
     ).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('keeps the completed health pill out of the retired Calm Teal palette', () => {
+    const completed = tokens.color.pill.completed;
+    const retiredCalmTeal = new Set(['#175255', '#EAF3F3']);
+
+    expect(retiredCalmTeal.has(completed.fill)).toBe(false);
+    expect(retiredCalmTeal.has(completed.text)).toBe(false);
+    expect(completed.fill).not.toBe(tokens.color.pill.confirmed.fill);
+    expect(completed.text).not.toBe(tokens.color.pill.confirmed.text);
+    expect(contrastRatio(completed.text, completed.fill)).toBeGreaterThanOrEqual(4.5);
+  });
+
   it('keeps every typography style at zero letter spacing', () => {
     expect(Object.values(tokens.typography.scale).every((style) => style.letterSpacing === 0)).toBe(true);
   });

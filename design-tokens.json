@@ -5,8 +5,8 @@
     "version": "1.1.0-v2",
     "scope": "light-mode, phone-only",
     "source": "DESIGN.md",
-    "lastUpdated": "2026-06-30",
-    "v2Sync": "primary→Terracotta Clay (§2.3), text/link (§2.2), focus-ring (§2.6), tabs→diary/pet/more. Surfaces/elevation kept per DESIGN.md §2.1 (repo values are higher-contrast than the Open Design cream mockups)."
+    "lastUpdated": "2026-07-01",
+    "v2Sync": "primary→Terracotta Clay (§2.3), text/link (§2.2), focus-ring (§2.6), tabs→diary/pet/more, completed pill→warm neutral (§2.7). Surfaces/elevation kept per DESIGN.md §2.1 (repo values are higher-contrast than the Open Design cream mockups)."
   },
 
   "color": {
@@ -76,7 +76,7 @@
       "template":          { "fill": { "$value": "#F1ECE3", "$type": "color" }, "text": { "$value": "#4A4E48", "$type": "color" } },
       "needs-vet-review":  { "fill": { "$value": "#F6ECD8", "$type": "color" }, "text": { "$value": "#7A4F12", "$type": "color", "$description": "5.3:1" } },
       "confirmed":         { "fill": { "$value": "#E6EFE8", "$type": "color" }, "text": { "$value": "#2F5E41", "$type": "color", "$description": "6.2:1" } },
-      "completed":         { "fill": { "$value": "#EAF3F3", "$type": "color" }, "text": { "$value": "#175255", "$type": "color", "$description": "7.4:1" } },
+      "completed":         { "fill": { "$value": "#E8E2D7", "$type": "color" }, "text": { "$value": "#4A4E48", "$type": "color", "$description": "6.58:1" } },
       "pending":           { "fill": { "$value": "#F1ECE3", "$type": "color" }, "text": { "$value": "#4A4E48", "$type": "color" } },
       "failed":            { "fill": { "$value": "#F4DDD8", "$type": "color" }, "text": { "$value": "#7A2A20", "$type": "color", "$description": "6.5:1" } },
       "urgent":            { "fill": { "$value": "#F4DDD8", "$type": "color" }, "text": { "$value": "#7A2A20", "$type": "color", "$description": "User-marked only" } }

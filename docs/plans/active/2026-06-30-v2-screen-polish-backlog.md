@@ -105,6 +105,14 @@ or a desaturated success that harmonizes with terracotta. Keep it visually disti
 **Acceptance:** No teal (`#175255`/`#EAF3F3`) remains in `color.pill.*`; contrast checked;
 tokens regenerated and drift-check green.
 
+**Item 4 evidence (2026-07-01):** RED
+`npm run test:unit -- --runTestsByPath src/test/design-tokens.test.ts` failed on
+`tokens.color.pill.completed.fill = "#EAF3F3"`. GREEN retuned `color.pill.completed` to warm neutral
+`fill #E8E2D7 / text #4A4E48` (contrast 6.58:1), updated `DESIGN.md` §2.7, regenerated
+`src/design/tokens.ts` via `npm run tokens:generate`, and `npm run tokens:check` passed. JS-over-Metro
+screenshots captured locally: `output/v2-screen-polish-screenshots/item4-pet-before.png` and
+`output/v2-screen-polish-screenshots/item4-pet-after.png`.
+
 ## P1 — Item 5: Screen-title hierarchy is inconsistent
 
 **What's wrong:** "Diary" renders as a large Lora display title, but "Pet" and "More" render

@@ -287,7 +287,7 @@ button text clears WCAG AA. Calm Teal is retired from primary/focus usage for V2
 | `pill/template` | `#F1ECE3` | `#4A4E48` | `icon/template` (dashed circle) |
 | `pill/needs_vet_review` | `#F6ECD8` | `#7A4F12` (контраст 5.3:1) | `icon/clock.review` |
 | `pill/confirmed` | `#E6EFE8` | `#2F5E41` (контраст 6.2:1) | `icon/check.shield` |
-| `pill/completed` | `#EAF3F3` | `#175255` (контраст 7.4:1) | `icon/check.circle` |
+| `pill/completed` | `#E8E2D7` | `#4A4E48` (контраст 6.58:1) | `icon/check.circle` |
 | `pill/pending` | `#F1ECE3` | `#4A4E48` | `icon/dots` |
 | `pill/failed` | `#F4DDD8` | `#7A2A20` (контраст 6.5:1) | `icon/exclaim.triangle` |
 | `pill/urgent` | `#F4DDD8` | `#7A2A20` | `icon/flag.solid` — ставит пользователь |
