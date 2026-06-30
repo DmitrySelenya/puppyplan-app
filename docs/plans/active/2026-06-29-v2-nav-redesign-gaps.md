@@ -105,11 +105,11 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Template suggestion ("Template timing · dose not verified") (§4.1.5)
 - [x] ➕ **Pet tab landing/hub** — native anatomy slice implemented: profile hub + health below +
       actionable Quick Trackers entry. Stage 4 native screenshot comparison remains open.
-- [ ] 🚫 **Multi-pet switcher** — out of scope. `multi-pet/foster` is Deferred in
+- [x] 🚫 **Multi-pet switcher** — out of scope. `multi-pet/foster` is Deferred in
       `puppyplan-prd-v2.md` (§1 "Нет полноценного multi-pet/foster workflow") and
       `docs/architecture/01-principles-and-scope.md` (Deferred list). MVP = single current pet.
-- [ ] 🚫 Standalone Health tab anatomy (§4.1.1) — out-of-batch (folded into Pet)
-- [ ] 🚫 Health charts / milestone surfaces — explicitly out-of-batch
+- [x] 🚫 Standalone Health tab anatomy (§4.1.1) — out-of-batch (folded into Pet)
+- [x] 🚫 Health charts / milestone surfaces — explicitly out-of-batch
 - [ ] 🟡 Add Record full flow (§4.1.3) — native route now opens from Pet, shows record-type
       chooser and empty form anatomy; save/persistence/loading/error/offline states remain open.
 - [ ] 🟡 Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
@@ -120,7 +120,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Vet visit prep card (§4.1.7) — native reference-card anatomy implemented inside Pet
       Health: visit subtitle, four checklist rows, Add item affordance, and non-instruction disclaimer.
       Stage 4 native screenshot comparison and real checklist editing remain open.
-- [ ] ❌ Medication card + "Request a Refill" (old board only)
+- [x] 🚫 Medication card + "Request a Refill" — out of this wave. `docs/design/v1/specs/05-pet-health.md`
+      explicitly defers medication/refill, and §5.3 limits Pet/Health depth to lightweight + minimal CRUD.
 
 ### Sharing (lives under More) — DESIGN.md §3.1–3.3 — **fully in freeze** ✅
 - [x] ✅ Family list / owner view (§3.1.1 → 6.1)
@@ -215,8 +216,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       Runtime scheduler / OS permission handoff and Stage 4 screenshot comparison remain open.
 
 ### Cross-cutting
-- [ ] ❌ **Apply new TabBar (Diary/Pet/More + Add) to every migrated screen** — all carried-over
-      screens still show old nav; legacy FAB must be removed per screen as it migrates
+- [x] ✅ **Apply new TabBar (Diary/Pet/More + Add) to every migrated screen** — the tab shell now
+      delegates bottom chrome to `CapsuleTabBar`; legacy Today/Health aliases are hidden with `href:null`;
+      V1 FAB tab-layout assertions are retired; no default full-width tab bar or absolute bottom-right
+      FAB remains under `app/(tabs)`. See §36.
 - [ ] 🟡 **Global screen states** (Loading / Empty / Offline read banner / Pending write / Permission
       denied / Revoked) re-applied per new screen (§4.5) — primitives (StatusPill, Form states) exist;
       coverage per-screen is the work
@@ -1924,7 +1927,54 @@ Implementation notes:
 - No Stage 4 screenshot is required for the deferred guidance UI; Stage 4 for the remaining allowed
   contextual tip slot stays covered under the Diary route screenshot backlog.
 
+### 36. Cross-Cutting V2 TabBar + Pet Deferred-Scope Reconciliation
+
+Stage-0 lock:
+- Navigation spec: `docs/design/v1/specs/01-navigation-add.md`.
+- Pet/Health spec: `docs/design/v1/specs/05-pet-health.md`.
+- Source canon: `DESIGN.md` V2 redesign override and `puppyplan-prd-v2.md` MVP/deferred scope.
+
+Acceptance:
+- AC-XCUT-NAV-1: the Expo tabs layout delegates bottom navigation chrome to `CapsuleTabBar`.
+- AC-XCUT-NAV-2: visible primary tabs remain exactly Diary, Pet, More; legacy Today/Health routes are
+  registered only as hidden redirect aliases through `href:null`.
+- AC-XCUT-NAV-3: the V1 tab-layout tests no longer assert a persistent bottom-right Quick Log FAB;
+  Add-open behavior is covered by the `CapsuleTabBar` anatomy tests instead.
+- AC-XCUT-NAV-4: no default full-width tab bar or absolute bottom-right FAB remains under
+  `app/(tabs)`.
+- AC-XCUT-PET-1: multi-pet/foster, standalone Health tab, health charts/milestones, and
+  medication/refill remain closed as explicit out-of-wave scope, not native implementation work.
+
+Evidence:
+- `app/(tabs)/_layout.tsx` passes `tabBar={(props) => <CapsuleTabBar {...props} />}` to Expo Router.
+- `src/test/tab-layout.render.test.tsx` asserts visible routes equal `primaryTabs`, hidden legacy
+  routes are `today/index` and `health/index` with `href:null`, canonical icons are book/paw/more,
+  active tint is `tokens.color.primary[700]`, and bottom chrome is delegated to `CapsuleTabBar`.
+- `src/test/capsule-tab-bar.render.test.tsx` asserts T1-T7 anatomy, Add outside the tablist,
+  detached capsule, capsule removal while chooser is open, scrim + two slabs, slab routing, reduced
+  motion, haptics, and stable in-place Add morph.
+- `rg "<FAB|isFabLogSurfacePath|tabBarStyle" app/(tabs) src/test/tab-layout.render.test.tsx`
+  returns no V1 tab-shell implementation or stale tab-layout assertions.
+- `rg "medication/refill|Medication card|multi-pet|standalone Health|charts" docs/design/v1/specs/05-pet-health.md docs/plans/active/2026-06-29-v2-nav-redesign-gaps.md puppyplan-prd-v2.md docs/architecture/01-principles-and-scope.md`
+  confirms these Pet/Health depth items are deferred/out-of-wave.
+
+Verification:
+- `npm run test:unit -- --runTestsByPath src/test/tab-layout.render.test.tsx src/test/capsule-tab-bar.render.test.tsx src/test/legacy-tab-route-redirects.test.tsx src/test/navigation-contract.test.ts`
+  — PASS: 4 suites, 28 tests.
+
+Notes:
+- The remaining `FAB` primitive usage in `src/features/onboarding/screens/OnboardingScreen.tsx` is not
+  a migrated tab-shell FAB. It belongs to the onboarding first-log preview, whose spec allows the V2
+  separate Add/FAB action while the wizard itself stays outside the tab shell.
+- This reconciliation does not close Stage 4 screenshot backlogs for individual screens; it only closes
+  the stale cross-cutting "old nav still applied" matrix row and the explicitly deferred Pet/Health
+  depth rows.
+
 ## Changelog
+- 2026-07-01: Reconciled the cross-cutting V2 TabBar row and Pet deferred-scope rows with current
+  code/spec evidence: `app/(tabs)` now delegates to `CapsuleTabBar`, Today/Health aliases are hidden,
+  V1 FAB tab-layout assertions are retired, the focused nav suites pass 28/28, and multi-pet,
+  standalone Health, charts/milestones, and medication/refill are closed as explicit out-of-wave scope.
 - 2026-07-01: Reconciled Guidance §4.3 with the locked V2 nav wave: active Diary no longer emits or
   renders `guidanceCard` / read-practiced-skip states, while guidance content/contracts remain only
   as deferred reference. Targeted RED/GREEN suites, typecheck, scaffold checks, diff whitespace, and

@@ -375,18 +375,26 @@ Task 6 regression evidence (2026-07-01): pre-Task-7 screenshot review found one 
 
 ### Task 7: Retire the V1 FAB test assertions
 **Files:** Modify `src/test/tab-layout.render.test.tsx`.
-- [ ] The suite still asserts the V1 "persistent FAB bottom-right" (`positions Quick Log above the tab bar`, `keeps Quick Log as a persistent FAB`, `limits the Quick Log FAB…`). These describe the deleted pattern. Replace them with a single test that `TabLayout` delegates chrome to `CapsuleTabBar` (e.g. mock `CapsuleTabBar` and assert it is rendered inside `<Tabs tabBar>`), keeping the "renders only the primary tab screens" + "legacy routes hidden" + icon/active-tint tests (those still hold). Do NOT delete coverage — move the Quick-Log-open behavior assertions into `CapsuleTabBar.test.tsx` (T3/T5/T6 already cover it). Run `npx jest src/test/tab-layout.render.test.tsx src/design/primitives/CapsuleTabBar.test.tsx` → PASS. Commit `test(nav): retire V1 FAB assertions, delegate to CapsuleTabBar`.
+- [x] The suite still asserts the V1 "persistent FAB bottom-right" (`positions Quick Log above the tab bar`, `keeps Quick Log as a persistent FAB`, `limits the Quick Log FAB…`). These describe the deleted pattern. Replace them with a single test that `TabLayout` delegates chrome to `CapsuleTabBar` (e.g. mock `CapsuleTabBar` and assert it is rendered inside `<Tabs tabBar>`), keeping the "renders only the primary tab screens" + "legacy routes hidden" + icon/active-tint tests (those still hold). Do NOT delete coverage — move the Quick-Log-open behavior assertions into `CapsuleTabBar.test.tsx` (T3/T5/T6 already cover it). Run `npx jest src/test/tab-layout.render.test.tsx src/design/primitives/CapsuleTabBar.test.tsx` → PASS. Commit `test(nav): retire V1 FAB assertions, delegate to CapsuleTabBar`.
+
+Task 7 evidence (2026-07-01): reconciled as already implemented by the earlier capsule slices and
+re-verified from current HEAD. `src/test/tab-layout.render.test.tsx` has no V1 persistent-FAB
+assertions and instead mocks `CapsuleTabBar`, asserts the `TabLayout` renders it through `<Tabs
+tabBar>`, keeps the visible primary-tab/hidden legacy-route/icon/tint coverage, and leaves Add-open
+behavior to `src/test/capsule-tab-bar.render.test.tsx` T3/T5/T6. Focused verification
+`npm run test:unit -- --runTestsByPath src/test/tab-layout.render.test.tsx src/test/capsule-tab-bar.render.test.tsx src/test/legacy-tab-route-redirects.test.tsx src/test/navigation-contract.test.ts`
+passed 4 suites / 28 tests.
 
 ---
 
 ## Definition of done
 
-- [ ] T1–T7 + reduced-motion test green; `tab-layout.render.test.tsx` updated and green.
-- [ ] `npm run check` green (lint + typecheck + test + scaffold + tokens + i18n + privacy + text-hygiene).
+- [x] T1–T7 + reduced-motion test green; `tab-layout.render.test.tsx` updated and green.
+- [x] `npm run check` green (lint + typecheck + test + scaffold + tokens + i18n + privacy + text-hygiene).
 - [ ] No hardcoded colors/spacing/radii/durations; all from tokens.
 - [ ] No user-facing string literals; all typed i18n keys.
 - [x] Manual sim verification screenshots for all five states captured locally in `output/v2-nav-capsule-screenshots/` for review before Task 7.
-- [ ] No default full-width tab bar and no absolute bottom-right FAB anywhere in `app/(tabs)`.
+- [x] No default full-width tab bar and no absolute bottom-right FAB anywhere in `app/(tabs)`.
 
 ## Out of scope (separate follow-up plans)
 
