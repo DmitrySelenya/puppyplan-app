@@ -139,19 +139,53 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
 }
 
 function Chooser({
-  onClose: _onClose,
-  onQuickLog: _onQuickLog,
-  onSchedule: _onSchedule,
+  onClose,
+  onQuickLog,
+  onSchedule,
 }: {
   onClose: () => void;
   onQuickLog: () => void;
   onSchedule: () => void;
 }) {
+  const { t } = useAppTranslation();
+
   return (
     <View
       pointerEvents="box-none"
-      testID="nav-chooser"
-    />
+      style={styles.chooser}
+      testID="nav-chooser">
+      <Touchable
+        accessible={false}
+        accessibilityLabel={t('tabs.add-close')}
+        accessibilityRole="button"
+        minTarget="none"
+        onPress={onClose}
+        style={styles.scrim}
+        testID="nav-scrim"
+      />
+      <View style={styles.sheet}>
+        <View
+          style={styles.dragHandle}
+          testID="nav-drag-handle"
+        />
+        <Touchable
+          accessibilityLabel={t('nav.quick-log-slab')}
+          accessibilityRole="button"
+          minTarget="thumb"
+          onPress={onQuickLog}
+          style={styles.slab}>
+          <AppText variant="headline">{t('nav.quick-log-slab')}</AppText>
+        </Touchable>
+        <Touchable
+          accessibilityLabel={t('nav.schedule-slab')}
+          accessibilityRole="button"
+          minTarget="thumb"
+          onPress={onSchedule}
+          style={styles.slab}>
+          <AppText variant="headline">{t('nav.schedule-slab')}</AppText>
+        </Touchable>
+      </View>
+    </View>
   );
 }
 
@@ -178,6 +212,16 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space[1],
     ...elevationStyle(2),
   },
+  chooser: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  dragHandle: {
+    alignSelf: 'center',
+    backgroundColor: tokens.color.stroke.strong,
+    borderRadius: tokens.radius.full,
+    height: tokens.component.bottomSheet.dragHandle.height,
+    width: tokens.component.bottomSheet.dragHandle.width,
+  },
   root: {
     alignItems: 'center',
     bottom: tokens.space[0],
@@ -188,6 +232,29 @@ const styles = StyleSheet.create({
     pointerEvents: 'box-none',
     position: 'absolute',
     right: tokens.space[0],
+  },
+  scrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: tokens.color.surface.scrim,
+  },
+  sheet: {
+    backgroundColor: tokens.color.surface.raised,
+    borderTopLeftRadius: tokens.component.bottomSheet.radiusTop,
+    borderTopRightRadius: tokens.component.bottomSheet.radiusTop,
+    bottom: tokens.space[0],
+    gap: tokens.space[3],
+    left: tokens.space[0],
+    padding: tokens.space[4],
+    position: 'absolute',
+    right: tokens.space[0],
+    ...elevationStyle(2),
+  },
+  slab: {
+    alignItems: 'center',
+    backgroundColor: tokens.color.surface.base,
+    borderRadius: tokens.radius.lg,
+    justifyContent: 'center',
+    minHeight: tokens.layout.tapTargetThumbZone + tokens.space[2],
   },
   tab: {
     alignItems: 'center',

@@ -318,7 +318,7 @@ Task 3 evidence (2026-06-30): added T4 to `src/test/capsule-tab-bar.render.test.
 
 ### Task 4: Scrim + drag-handle + two slabs (T5, T6)
 **Files:** Modify `CapsuleTabBar.tsx` (the `Chooser`), `CapsuleTabBar.test.tsx`.
-- [ ] **Step 1** — Add T5, T6. **Step 2** — run, watch fail. **Step 3** — implement `Chooser`:
+- [x] **Step 1** — Add T5, T6. **Step 2** — run, watch fail. **Step 3** — implement `Chooser`:
 ```tsx
 function Chooser({ onClose, onQuickLog, onSchedule }: {
   onClose: () => void; onQuickLog: () => void; onSchedule: () => void;
@@ -344,7 +344,9 @@ function Chooser({ onClose, onQuickLog, onSchedule }: {
 }
 ```
 Style `sheet` (bottom-anchored, `backgroundColor: tokens.color.surface.raised`, `borderTopLeftRadius/Right: tokens.component.bottomSheet.radiusTop`, elevation `2`, padding `tokens.space[4]`, `gap: tokens.space[3]`), `dragHandle` (`width: tokens.component.bottomSheet.dragHandle.width`, height `…height`, `borderRadius: tokens.radius.full`, `backgroundColor: tokens.color.stroke.strong`, `alignSelf:'center'`), `slab` (full-width, `minHeight` ≥ 64, `borderRadius: tokens.radius.lg`, `backgroundColor: tokens.color.surface.base`, centered).
-- [ ] **Step 4** — run, watch pass (T5, T6). **Step 5** — commit `feat(nav): two-slab Quick Log / Schedule chooser with scrim and handle`.
+- [x] **Step 4** — run, watch pass (T5, T6). **Step 5** — commit `feat(nav): two-slab Quick Log / Schedule chooser with scrim and handle`.
+
+Task 4 evidence (2026-06-30): RED `npm run test:unit -- --runTestsByPath src/test/capsule-tab-bar.render.test.tsx` failed on missing `nav-scrim` and missing Quick Log slab; GREEN passed 7/7 after adding scrim, drag handle, Quick Log/Schedule slabs, scrim close, and slab routing. Scrim is a non-accessible press target (`accessible={false}`) so the Add/Close button remains the single accessibility close control while the test can still press the scrim by testID.
 
 ### Task 5: Reanimated motion + reduced-motion fallback
 **Files:** Modify `CapsuleTabBar.tsx`; add `CapsuleTabBar.test.tsx` reduced-motion test.

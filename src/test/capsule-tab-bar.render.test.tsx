@@ -2,7 +2,7 @@ import * as React from 'react';
 import { StyleSheet } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import { primaryTabs } from '@/contracts/navigation';
+import { primaryTabs, quickLogAction, scheduleAction } from '@/contracts/navigation';
 import { tokens } from '@/design/tokens';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -102,6 +102,37 @@ describe('CapsuleTabBar', () => {
 
     expect(screen.queryByTestId('nav-capsule')).toBeNull();
     expect(screen.queryAllByRole('tab')).toHaveLength(0);
+  });
+
+  it('shows a scrim, a drag handle, and two slabs; scrim tap closes', () => {
+    renderBar();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+
+    expect(screen.getByTestId('nav-scrim')).toBeTruthy();
+    expect(screen.getByTestId('nav-drag-handle')).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('nav.quick-log-slab') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('nav.schedule-slab') })).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('nav-scrim'));
+
+    expect(screen.queryByTestId('nav-chooser')).toBeNull();
+    expect(screen.getByTestId('nav-capsule')).toBeTruthy();
+  });
+
+  it('routes Quick Log and Schedule slabs to their destinations', () => {
+    renderBar();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('nav.quick-log-slab') }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith(quickLogAction.href);
+    expect(screen.queryByTestId('nav-chooser')).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('nav.schedule-slab') }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith(scheduleAction.href);
   });
 
   it('navigates to a tab route via the navigation prop on press', () => {
