@@ -1653,6 +1653,11 @@
     "primary": "Choose plan",
     "secondary": "Restore purchases",
     "legal": "Auto-renews. You can cancel in the App Store.",
+    "trial-status": "{count} days left",
+    "trial-note": "Full access now. First paywall stays skippable.",
+    "soft-lock-banner-title": "Subscribe to add new entries",
+    "soft-lock-banner-body": "Diary, Pet, export, privacy, and existing trainer links stay available in read-only mode.",
+    "export-action": "Export my data",
     "soft-lock-title": "After the full-access period",
     "soft-lock-note": "Viewing, export, privacy controls, restore purchases, sign out, and existing trainer links stay available.",
     "free-vs-plus": {

@@ -435,6 +435,8 @@ describe('More settings entries', () => {
 
     expect(screen.getByText(i18n.t('paywall.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('paywall.subtitle'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.trial-status', { count: 30 }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.trial-note'))).toBeTruthy();
     expect(screen.getByText(i18n.t('paywall.features.0'))).toBeTruthy();
     expect(screen.getByText(i18n.t('paywall.features.1'))).toBeTruthy();
     expect(screen.getByText(i18n.t('paywall.features.2'))).toBeTruthy();
@@ -447,5 +449,19 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('paywall.legal'))).toBeTruthy();
     expect(screen.getByText(i18n.t('paywall.soft-lock-note'))).toBeTruthy();
     expect(screen.queryByText(/RevenueCat/i)).toBeNull();
+  });
+
+  it('renders the day-30 soft-lock paywall state with export still reachable', () => {
+    render(
+      <AppProviders>
+        <PuppyPlanPlusScreen accessState="softLocked" trialDaysRemaining={0} />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('paywall.soft-lock-banner-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.soft-lock-banner-body'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('paywall.export-action') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('paywall.secondary') })).toBeTruthy();
+    expect(screen.queryByText(/RevenueCat|hard paywall/i)).toBeNull();
   });
 });

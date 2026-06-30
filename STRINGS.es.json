@@ -1751,6 +1751,11 @@
     "primary": "Elegir plan",
     "secondary": "Restaurar compras",
     "legal": "Renovación automática. Puedes cancelar en la App Store.",
+    "trial-status": "Quedan {count} días",
+    "trial-note": "Acceso completo ahora. El primer paywall se puede cerrar.",
+    "soft-lock-banner-title": "Suscríbete para añadir entradas",
+    "soft-lock-banner-body": "Diario, mascota, exportación, privacidad y enlaces existentes de trainer siguen disponibles en solo lectura.",
+    "export-action": "Exportar mis datos",
     "soft-lock-title": "Después del periodo de acceso completo",
     "soft-lock-note": "La lectura, exportación, privacidad, restaurar compras, cerrar sesión y enlaces existentes de trainer siguen disponibles.",
     "free-vs-plus": {

@@ -290,12 +290,12 @@ chosen model is a **time-gated trial → soft-lock**, collapsing monetization to
   past the ~90-day puppy window.
 
 ### 6.4 Design surfaces this implies (➕ — much smaller than feature-freemium)
-- [ ] ➕ **Paywall screen** (fills the flagged `NoOpEntitlementProvider` shell): 3 plan cards
+- [x] ➕ **Paywall screen** (fills the flagged `NoOpEntitlementProvider` shell): 3 plan cards
       (annual preselected + monthly + lifetime), value bullets, trust row + **Restore Purchases**,
       real-reviews slot (ship empty — no fake social proof). Two entries: skippable early version +
       day-30 gate version.
-- [ ] ➕ **Trial status indicator** — subtle "X days left" (gentle, non-nagging).
-- [ ] ➕ **Soft-lock state** — read-only banner ("Subscribe to add new entries"), export still
+- [x] ➕ **Trial status indicator** — subtle "X days left" (gentle, non-nagging).
+- [x] ➕ **Soft-lock state** — read-only banner ("Subscribe to add new entries"), export still
       reachable; applied app-wide via the single entitlement check.
 - [ ] (no new screen) **Trainer link** stays live regardless of subscription.
 
@@ -1344,6 +1344,9 @@ GREEN / regression evidence:
 - `npm run typecheck` — PASS.
 - `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n budgets, scaffold guardrails,
   tokens, privacy scan, and text hygiene.
+- `npm run check` — PASS: 67 Jest suites / 492 tests, node tests 118/118, scaffold, tokens,
+  privacy scan, and text hygiene all green. Existing non-failing reduced-motion `act(...)` warning
+  in `src/test/screen-header.render.test.tsx` is unrelated to this slice.
 
 Implementation notes:
 - `src/features/onboarding/screens/OnboardingScreen.tsx` now renders the profile chrome, disabled
@@ -1651,6 +1654,10 @@ Acceptance:
 - AC-MORE-PLUS-4: live IAP, product loading, restore, purchase, entitlement enforcement, and
   RevenueCat/provider wiring remain absent in this shell slice.
 - AC-MORE-PLUS-5: route/navigation contract, shell i18n, and scaffold guardrails include `/paywall`.
+- AC-MORE-PLUS-6: the skippable early paywall shell renders a subtle trial-days-left status and
+  non-nagging note.
+- AC-MORE-PLUS-7: the day-30 soft-lock shell renders a read-only write-gate banner while export and
+  Restore purchases remain visible actions.
 
 RED evidence:
 - `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts`
@@ -1666,6 +1673,16 @@ GREEN / regression evidence:
 - `npm run test:unit -- --runTestsByPath src/test/i18n.test.ts src/test/app-shell.render.test.tsx`
   — PASS: 2 suites, 16 tests.
 - `npm run test:scaffold` — PASS.
+- 2026-06-30 follow-up RED: `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx`
+  failed as expected before implementation because `paywall.trial-status`,
+  `paywall.soft-lock-banner-title`, and the export action were absent from the paywall route.
+- 2026-06-30 follow-up GREEN:
+  `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx`
+  — PASS: 1 suite, 13 tests.
+- `npm run typecheck` — PASS.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n budgets, scaffold guardrails,
+  tokens, privacy scan, and text hygiene.
 
 Implementation notes:
 - Added `src/features/more/screens/PuppyPlanPlusScreen.tsx`.
@@ -1673,6 +1690,9 @@ Implementation notes:
 - Updated `MoreScreen` with `openPlus`, active PuppyPlan Plus row, and route wiring from
   `app/(tabs)/more/index.tsx`.
 - Updated navigation contracts and scaffold guardrails to include `/paywall`.
+- Added feature-flag-ready trial and soft-lock shell states to `PuppyPlanPlusScreen`: the default
+  shell shows the trial-days-left status; `accessState="softLocked"` shows the read-only banner and
+  export action without introducing live entitlement/provider wiring.
 - Stage 4 remains open: `/paywall` still needs native screenshot comparison against the locked
   paywall anatomy. Loading/offline/error/pending purchase, real restore, active subscription, and
   soft-lock enforcement states remain deferred.
@@ -1810,6 +1830,10 @@ Implementation notes:
   `/settings/sitter-mode`, with caregiver row, time window rows, checklist anatomy, included/excluded
   visibility preview, disclosure, and enable CTA. Live sitter data/mutations, owner active status,
   completion push, auto-expire, exit confirm, and Stage 4 screenshots remain open.
+- 2026-06-30: Added PuppyPlan Plus trial/soft-lock shell states: default `/paywall` now shows a
+  subtle trial-days-left status and note; synthetic `accessState="softLocked"` renders the read-only
+  write-gate banner with export and Restore purchases still reachable. Live entitlement enforcement,
+  purchase/restore, and Stage 4 screenshots remain open.
 - 2026-06-30: Added the Manage Household shell: More Family now opens `/settings/household`, with
   owner/caregiver rows, pending invite row, role/status badges, overflow affordances, privacy-safe
   invite labeling, and Invite CTA. Live member queries, role changes, removal, invite actions,

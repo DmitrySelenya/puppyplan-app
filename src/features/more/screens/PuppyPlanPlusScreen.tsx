@@ -12,12 +12,16 @@ import {
   ScreenHeader,
   SectionHeader,
   Stack,
+  StatusPill,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 
 export type PuppyPlanPlusScreenProps = Readonly<{
+  accessState?: 'trial' | 'softLocked';
   onClose?: () => void;
+  onExport?: () => void;
+  trialDaysRemaining?: number;
 }>;
 
 const featureKeys = [
@@ -27,7 +31,10 @@ const featureKeys = [
 ] as const;
 
 export function PuppyPlanPlusScreen({
+  accessState = 'trial',
   onClose,
+  onExport = () => undefined,
+  trialDaysRemaining = 30,
 }: PuppyPlanPlusScreenProps) {
   const { t } = useAppTranslation();
 
@@ -50,9 +57,49 @@ export function PuppyPlanPlusScreen({
             <AppText tone="secondary" variant="body">
               {t('paywall.subtitle')}
             </AppText>
+            <Stack align="center" direction="horizontal" gap="sm" wrap>
+              <StatusPill
+                accessibilityLabel={t('paywall.trial-status', {
+                  count: trialDaysRemaining,
+                })}
+                icon={<AppIcon name="calendar" size={14} />}
+                label={t('paywall.trial-status', {
+                  count: trialDaysRemaining,
+                })}
+                tone={accessState === 'softLocked' ? 'needsVetReview' : 'confirmed'}
+              />
+              <AppText style={styles.trialNote} tone="secondary" variant="footnote">
+                {t('paywall.trial-note')}
+              </AppText>
+            </Stack>
           </Stack>
         </Stack>
       </Card>
+
+      {accessState === 'softLocked' ? (
+        <Card
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
+          style={styles.softLockBanner}
+          testID="paywall-soft-lock-banner">
+          <Stack gap="sm">
+            <Stack align="center" direction="horizontal" gap="sm">
+              <AppIcon color={tokens.color.status.info} name="lock" size={20} />
+              <Stack gap="xs" style={styles.softLockCopy}>
+                <AppText variant="headline">{t('paywall.soft-lock-banner-title')}</AppText>
+                <AppText tone="secondary" variant="body">
+                  {t('paywall.soft-lock-banner-body')}
+                </AppText>
+              </Stack>
+            </Stack>
+            <Button
+              label={t('paywall.export-action')}
+              onPress={onExport}
+              variant="secondary"
+            />
+          </Stack>
+        </Card>
+      ) : null}
 
       <PaywallSection title={t('paywall.sections.features')}>
         {featureKeys.map((key) => (
@@ -141,5 +188,17 @@ const styles = StyleSheet.create({
   softLockCard: {
     backgroundColor: tokens.color.status.infoTint,
     borderColor: tokens.color.status.info,
+  },
+  softLockBanner: {
+    backgroundColor: tokens.color.status.infoTint,
+    borderColor: tokens.color.status.info,
+  },
+  softLockCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  trialNote: {
+    flex: 1,
+    minWidth: 0,
   },
 });
