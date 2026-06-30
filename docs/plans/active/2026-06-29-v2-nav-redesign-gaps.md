@@ -131,7 +131,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Trainer accepted read-only view (§3.3.5 → 8.3)
 - [x] ✅ Revoked / expired share (§3.3.6 → 10.1)
 - [ ] 🟡 Trusted Sitter mode — enable / checklist / completion / auto-expire (§3.2) — partial (role + "sitter: Anya" present)
-- [ ] ❌ Accept-invite flow, caregiver-side (§3.1.4)
+- [x] ✅ Accept-invite flow, caregiver-side (§3.1.4) — `/invite/[token]` native shell
+      implemented: inviter/puppy context, caregiver role, included/excluded preview, disclosure,
+      Accept/Decline actions, and token-safe rendering. Live token lookup/accept/decline remain open.
 - [ ] ❌ Manage household (§3.1.6)
 - [x] ➕ **Shareable Puppy Cards** (§3.4) — **decision: IN scope this wave, MINIMAL only**: a static /
       signed-link card + preview + expiry (PRD-allowed). Rich builder / multi-template editor → roadmap,
@@ -1666,7 +1668,56 @@ Implementation notes:
   paywall anatomy. Loading/offline/error/pending purchase, real restore, active subscription, and
   soft-lock enforcement states remain deferred.
 
+### 31. Accept Invite Caregiver-Side Shell Slice (§3.1.4)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/07-1-accept-invite.md`.
+- Source: `DESIGN.md` §3.1.4 plus Open Design V2 sharing boards.
+- Route: `/invite/[token]`.
+
+Acceptance:
+- AC-SHARE-ACCEPT-1: `/invite/[token]` renders a native caregiver-side accept shell instead of the
+  generic revoked/expired placeholder.
+- AC-SHARE-ACCEPT-2: the shell shows who invited the viewer, which puppy it concerns, the caregiver
+  role, included permissions, excluded/private areas, owner revocation disclosure, Accept, and Decline.
+- AC-SHARE-ACCEPT-3: included/excluded states are non-color-only and use design-owned icons, not raw
+  glyph strings or local Pressables/Text.
+- AC-SHARE-ACCEPT-4: raw invite tokens are never rendered in visible copy.
+- AC-SHARE-ACCEPT-5: public token routes remain tracked in navigation contracts without becoming
+  primary tabs or production modal routes.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/app-shell.render.test.tsx src/test/navigation-contract.test.ts`
+  failed as expected before implementation because `InviteAcceptScreen` did not exist and
+  `/invite/[token]` / `/share/[token]` were absent from `plannedRouteFiles`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/app-shell.render.test.tsx src/test/navigation-contract.test.ts`
+  — PASS: 2 suites, 18 tests.
+- `npm run typecheck` — PASS.
+- `npm run test:unit -- --runTestsByPath src/test/i18n.test.ts src/test/app-shell.render.test.tsx`
+  — PASS: 2 suites, 17 tests.
+- `npm run test:scaffold` — PASS.
+- `npm run check` — PASS: 67 Jest suites / 489 tests, node checks 118/118, scaffold,
+  tokens, privacy scan, and text hygiene all green. Existing non-failing reduced-motion `act(...)`
+  warning in `src/test/screen-header.render.test.tsx` is unrelated to this slice.
+- `git diff --check` — PASS.
+
+Implementation notes:
+- Added `src/features/linking/screens/InviteAcceptScreen.tsx`.
+- Updated `app/invite/[token].tsx` to render the accept shell through a thin Expo Router wrapper.
+- Updated navigation contracts to track `/invite/[token]` and `/share/[token]` as existing public
+  token routes.
+- Stage 4 remains open: `/invite/[token]` still needs native screenshot comparison against the
+  locked accept-invite anatomy. Live token lookup, loading/error/already-member/expired states, accept
+  RPC, decline confirmation, and post-accept redirect remain deferred.
+
 ## Changelog
+- 2026-06-30: Added the caregiver-side Accept Invite shell: `/invite/[token]` now renders
+  inviter/puppy context, caregiver role, included/excluded preview, disclosure, and Accept/Decline
+  actions without exposing raw invite tokens; public token routes are tracked in navigation
+  contracts. Live token lookup, accept/decline RPCs, already-member/expired states, post-accept
+  redirect, and Stage 4 screenshots remain open.
 - 2026-06-29: Initial coverage/gap analysis from board `uXjVL0aEXPU=` (source) vs `uXjVHA5hn48=`
   (freeze) cross-referenced against DESIGN.md.
 - 2026-06-29: Resolved §5 decisions (Events→Diary, Health lightweight+CRUD, Onboarding now,

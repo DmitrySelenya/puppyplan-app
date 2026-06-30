@@ -103,6 +103,16 @@ describe('navigation contract', () => {
           implementationStage: 'existing',
         }),
         expect.objectContaining({
+          route: '/invite/[token]',
+          file: 'app/invite/[token].tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/share/[token]',
+          file: 'app/share/[token].tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
           route: '/settings/puppy-profile',
           file: 'app/(modals)/settings/puppy-profile/index.tsx',
           implementationStage: 'existing',

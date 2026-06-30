@@ -7,6 +7,7 @@ import { AppProviders } from '@/lib/providers/AppProviders';
 import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
 import { AccessUnavailableScreen } from '@/features/linking/screens/AccessUnavailableScreen';
+import { InviteAcceptScreen } from '@/features/linking/screens/InviteAcceptScreen';
 import { HealthScreen } from '@/features/health/screens/HealthScreen';
 import { MoreScreen } from '@/features/more/screens/MoreScreen';
 import { QuickLogShell } from '@/features/quick-log/screens/QuickLogShell';
@@ -164,5 +165,36 @@ describe('app shell screens', () => {
     expect(screen.getByText(i18n.t('states.revoked-or-expired.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('states.revoked-or-expired.body-long'))).toBeTruthy();
     expect(screen.queryByText(/\[[^\]]*token[^\]]*\]/i)).toBeNull();
+  });
+
+  it('renders caregiver-side accept invite anatomy without exposing the token', () => {
+    renderWithProviders(
+      <InviteAcceptScreen
+        inviteToken="raw-invite-token-for-test"
+        ownerName="Owner"
+        puppyName="Puppy"
+      />,
+    );
+
+    expect(screen.getByText(i18n.t('sharing.family.accepted.header', {
+      ownerName: 'Owner',
+      puppyName: 'Puppy',
+    }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.role-caregiver'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.what-included'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.caregiver-included-bullets.0', {
+      puppyName: 'Puppy',
+    }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.caregiver-included-bullets.1'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.caregiver-included-bullets.2'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.what-excluded'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.caregiver-excluded-bullets.0'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.caregiver-excluded-bullets.1'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.disclosure', {
+      ownerName: 'Owner',
+    }))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('sharing.family.accepted.accept') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('sharing.family.accepted.decline') })).toBeTruthy();
+    expect(screen.queryByText(/raw-invite-token-for-test/i)).toBeNull();
   });
 });
