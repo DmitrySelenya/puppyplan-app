@@ -22,6 +22,7 @@ type PuppySettingsAccessState = 'loading' | 'owner' | 'nonOwner' | 'empty' | 'er
 
 export type MoreScreenProps = Readonly<{
   canManagePuppySettings?: boolean;
+  openHelp?: () => void;
   openNotifications?: () => void;
   openPuppyProfile?: () => void;
   openQuickTrackers?: () => void;
@@ -44,6 +45,7 @@ export function ConnectedMoreScreen(props: Omit<MoreScreenProps, 'canManagePuppy
 
 export function MoreScreen({
   canManagePuppySettings = true,
+  openHelp,
   openNotifications,
   openPuppyProfile,
   openQuickTrackers,
@@ -101,7 +103,13 @@ export function MoreScreen({
         />
       </SettingsSection>
       <SettingsSection title={t('more.sections.support')}>
-        <DeferredListRow icon="infoCircle" title={t('more.rows.help')} />
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="infoCircle" />}
+          onPress={openHelp}
+          title={t('more.rows.help')}
+          variant="settings"
+        />
         <DeferredListRow
           icon="infoCircle"
           subtitle={t('more.about.version')}

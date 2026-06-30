@@ -58,6 +58,7 @@ export const settingsRoutes = [
   '/settings/puppy-profile',
   '/settings/quick-trackers',
   '/settings/notifications',
+  '/settings/help',
 ] as const;
 
 export const modalRoutes = [
@@ -122,6 +123,11 @@ export const plannedRouteFiles = [
   {
     route: '/settings/notifications',
     file: 'app/(modals)/settings/notifications/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/settings/help',
+    file: 'app/(modals)/settings/help/index.tsx',
     implementationStage: 'existing',
   },
   {
@@ -337,6 +343,20 @@ export const shellI18nKeys = [
   'more.plus.subtitle',
   'more.quick-trackers.selected-count',
   'more.notifications.push-hint',
+  'more.help.screen-title',
+  'more.help.intro-title',
+  'more.help.intro-body',
+  'more.help.sections.topics',
+  'more.help.sections.diagnostics',
+  'more.help.topic-quick-log',
+  'more.help.topic-sharing',
+  'more.help.topic-privacy',
+  'more.help.version-row',
+  'more.help.support-code-row',
+  'more.help.support-code-value',
+  'more.help.contact-row',
+  'more.help.contact-hint',
+  'more.help.privacy-note',
   'more.privacy.section-account-removal',
   'quick-log.sheet.title',
   'quick-log.sheet.dismiss',

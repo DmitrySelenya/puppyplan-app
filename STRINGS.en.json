@@ -1604,6 +1604,21 @@
     },
     "help": {
       "screen-title": "Help",
+      "intro-title": "How can we help?",
+      "intro-body": "Pick a topic or prepare a short support note. Keep private puppy details out unless support asks for them.",
+      "sections": {
+        "topics": "Help topics",
+        "diagnostics": "Support details"
+      },
+      "topic-quick-log": "Quick Log and routines",
+      "topic-sharing": "Family and sharing",
+      "topic-privacy": "Data and privacy",
+      "version-row": "App version",
+      "support-code-row": "Support code",
+      "support-code-value": "Local build",
+      "contact-row": "Prepare support note",
+      "contact-hint": "No message is sent from this preview.",
+      "privacy-note": "Do not include names, notes, emails, providers, photos, or tokens in a support note.",
       "section-contact": "Contact",
       "row-support": "Contact support",
       "support-email": "support@puppyplan.app",

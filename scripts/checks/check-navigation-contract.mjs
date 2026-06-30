@@ -30,7 +30,7 @@ assert.equal(modalRoutes.includes(quickLogAction.href), true, 'Quick Log must be
 
 assert.deepEqual(
   settingsRoutes,
-  ['/settings/puppy-profile', '/settings/quick-trackers', '/settings/notifications'],
+  ['/settings/puppy-profile', '/settings/quick-trackers', '/settings/notifications', '/settings/help'],
   'Editable settings routes must be locked to the /settings namespace',
 );
 
@@ -88,6 +88,7 @@ const routeFiles = [
   'app/(tabs)/more/index.tsx',
   'app/(sheets)/quick-log/index.tsx',
   'app/(modals)/settings/notifications/index.tsx',
+  'app/(modals)/settings/help/index.tsx',
   'app/invite/[token].tsx',
   'app/share/[token].tsx',
 ];

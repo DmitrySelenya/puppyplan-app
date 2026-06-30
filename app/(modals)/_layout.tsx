@@ -10,6 +10,7 @@ export default function ModalLayout() {
       <Stack.Screen name="settings/puppy-profile/index" />
       <Stack.Screen name="settings/quick-trackers/index" />
       <Stack.Screen name="settings/notifications/index" />
+      <Stack.Screen name="settings/help/index" />
     </Stack>
   );
 }

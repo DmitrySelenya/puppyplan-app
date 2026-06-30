@@ -49,6 +49,7 @@ describe('navigation contract', () => {
       '/settings/puppy-profile',
       '/settings/quick-trackers',
       '/settings/notifications',
+      '/settings/help',
     ]);
     expect(modalRoutes).toEqual(expect.arrayContaining(settingsRoutes));
     expect(settingsRoutes.every((route) => route.startsWith('/settings/'))).toBe(true);
@@ -109,6 +110,11 @@ describe('navigation contract', () => {
         expect.objectContaining({
           route: '/settings/notifications',
           file: 'app/(modals)/settings/notifications/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/settings/help',
+          file: 'app/(modals)/settings/help/index.tsx',
           implementationStage: 'existing',
         }),
         expect.objectContaining({

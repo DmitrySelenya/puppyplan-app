@@ -1703,6 +1703,21 @@
     },
     "help": {
       "screen-title": "Ayuda",
+      "intro-title": "¿Cómo podemos ayudar?",
+      "intro-body": "Elige un tema o prepara una nota breve para soporte. No añadas datos privados del cachorro salvo que soporte los pida.",
+      "sections": {
+        "topics": "Temas de ayuda",
+        "diagnostics": "Detalles de soporte"
+      },
+      "topic-quick-log": "Quick Log y rutinas",
+      "topic-sharing": "Familia y acceso compartido",
+      "topic-privacy": "Datos y privacidad",
+      "version-row": "Versión de la app",
+      "support-code-row": "Código de soporte",
+      "support-code-value": "Compilación local",
+      "contact-row": "Preparar nota para soporte",
+      "contact-hint": "No se envía ningún mensaje desde esta vista previa.",
+      "privacy-note": "No incluyas nombres, notas, emails, proveedores, fotos ni tokens en una nota de soporte.",
       "section-contact": "Contacto",
       "row-support": "Contactar con soporte",
       "support-email": "support@puppyplan.app",

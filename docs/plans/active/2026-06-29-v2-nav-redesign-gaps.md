@@ -170,7 +170,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Notification preferences (§4.4.4) — `/settings/notifications` native anatomy slice
       implemented: local reminders, push reminders/sitter completion, quiet hours, timezone rows,
       and More hub navigation. Persistence / OS permission handoff and Stage 4 screenshots remain open.
-- [ ] ❌ App support / help (§4.4.6)
+- [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
+      topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
+      Real ticket/email handoff and Stage 4 screenshots remain open.
 - [ ] 🟡 Full PuppyPlan Plus screen (features list + Restore purchases) — old board has it; freeze has shell only
 
 ### Onboarding / intake — DESIGN.md §2.1
@@ -1570,6 +1572,52 @@ Implementation notes:
 - Stage 4 remains open: `/settings/notifications` still needs a native screenshot comparison against
   the locked More notification preferences anatomy.
 
+### 29. More Support / Help Anatomy Slice (§4.4.6)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/06-4-more-support-help.md`.
+- Source: `DESIGN.md` §4.4.6 plus the Open Design V2 More/support board.
+- Route: `/settings/help` from the More hub Help row.
+
+Acceptance:
+- AC-MORE-4.4.6-1: More Help row is an active chevron row and opens the settings help route.
+- AC-MORE-4.4.6-2: support/help screen renders modal header, intro card, topic shortcuts, diagnostics
+  rows, contact row, and a privacy-safe support note.
+- AC-MORE-4.4.6-3: support/help copy uses typed EN/RU/ES i18n keys and does not expose a hardcoded
+  support email or private sample data.
+- AC-MORE-4.4.6-4: route/navigation contract, shell i18n, and scaffold guardrails include
+  `/settings/help`.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts`
+  failed as expected before implementation because Help was not an active button route,
+  `HelpSupportScreen` had no anatomy, and the navigation contract did not include `/settings/help`.
+- The same suite caught one setup mismatch after GREEN implementation: a test expecting active Help
+  had omitted the `openHelp` action, so the row correctly rendered as non-interactive in that scenario.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts`
+  — PASS: 2 suites, 18 tests.
+- `npm run typecheck` — PASS.
+- `npm run test:unit -- --runTestsByPath src/test/i18n.test.ts src/test/app-shell.render.test.tsx`
+  — PASS: 2 suites, 16 tests.
+- `npm run test:scaffold` — PASS.
+- `git diff --check` — PASS.
+- `npm run check` — PASS: lint, typecheck, 67 Jest suites / 486 tests, node checks, scaffold
+  guardrails, token drift, privacy scan, and text hygiene. Note: the existing reduced-motion
+  `act(...)` console warning in `screen-header.render.test.tsx` remains non-failing and unrelated to
+  this slice.
+
+Implementation notes:
+- Added `src/features/more/screens/HelpSupportScreen.tsx`.
+- Added route file `app/(modals)/settings/help/index.tsx` and modal stack registration.
+- Updated `MoreScreen` with `openHelp`, active Help row, and route wiring from
+  `app/(tabs)/more/index.tsx`.
+- Updated navigation contracts and scaffold guardrails to include `/settings/help`.
+- Stage 4 remains open: `/settings/help` still needs a native screenshot comparison against the
+  locked More support/help anatomy. Real support ticket creation, email composer handoff, and
+  diagnostics upload remain deferred.
+
 ## Changelog
 - 2026-06-29: Initial coverage/gap analysis from board `uXjVL0aEXPU=` (source) vs `uXjVHA5hn48=`
   (freeze) cross-referenced against DESIGN.md.
@@ -1726,3 +1774,7 @@ Implementation notes:
   `/settings/notifications`, the screen renders local reminders, push reminders/sitter completion,
   quiet hours, and timezone sections with design primitives, navigation/scaffold contracts were updated,
   and full `npm run check` passed. Persistence, OS permission handoff, and Stage 4 screenshots remain open.
+- 2026-06-30: Added the More Support / Help anatomy slice: More now opens `/settings/help`, the
+  screen renders topic shortcuts, diagnostics rows, contact affordance, and a privacy-safe support
+  note with EN/RU/ES typed copy; navigation/scaffold contracts were updated, and full `npm run check`
+  passed. Real support ticket/email handoff, diagnostics upload, and Stage 4 screenshots remain open.

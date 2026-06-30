@@ -11,6 +11,9 @@ export default function MoreRoute() {
       openQuickTrackers={() => {
         router.push('/settings/quick-trackers');
       }}
+      openHelp={() => {
+        router.push('/settings/help');
+      }}
       openNotifications={() => {
         router.push('/settings/notifications');
       }}

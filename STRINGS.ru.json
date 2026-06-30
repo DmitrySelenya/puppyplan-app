@@ -1600,6 +1600,21 @@
     },
     "help": {
       "screen-title": "Помощь",
+      "intro-title": "Как помочь?",
+      "intro-body": "Выберите тему или подготовьте короткое обращение. Не добавляйте личные данные щенка, если поддержка не попросит.",
+      "sections": {
+        "topics": "Темы помощи",
+        "diagnostics": "Данные для поддержки"
+      },
+      "topic-quick-log": "Quick Log и рутины",
+      "topic-sharing": "Семья и доступы",
+      "topic-privacy": "Данные и приватность",
+      "version-row": "Версия приложения",
+      "support-code-row": "Код поддержки",
+      "support-code-value": "Локальная сборка",
+      "contact-row": "Подготовить обращение",
+      "contact-hint": "Из этого превью сообщение не отправляется.",
+      "privacy-note": "Не добавляйте имена, заметки, email, провайдеров, фото или токены в обращение.",
       "section-contact": "Связь",
       "row-support": "Написать в поддержку",
       "support-email": "support@puppyplan.app",

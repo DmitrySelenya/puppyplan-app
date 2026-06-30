@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react-nativ
 
 import type { PuppyProfile } from '@/contracts/supabase';
 import { tokens } from '@/design/tokens';
+import { HelpSupportScreen } from '@/features/more/screens/HelpSupportScreen';
 import { ConnectedMoreScreen, MoreScreen } from '@/features/more/screens/MoreScreen';
 import { NotificationPreferencesScreen } from '@/features/more/screens/NotificationPreferencesScreen';
 import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
@@ -79,6 +80,7 @@ describe('More settings entries', () => {
             canManagePuppySettings
             openPuppyProfile={jest.fn()}
             openQuickTrackers={jest.fn()}
+            openHelp={jest.fn()}
             openTimeline={jest.fn()}
             puppy={puppy}
           />
@@ -107,15 +109,15 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('more.rows.data-account'))).toBeTruthy();
 
     expect(screen.getByText(i18n.t('more.sections.support'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('more.rows.help'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.rows.help') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.rows.about'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.about.version'))).toBeTruthy();
     expect(screen.queryByText(/beta/i)).toBeNull();
     expect(screen.getByText(i18n.t('more.rows.puppyplan-plus'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
 
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(7);
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(7);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(6);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(6);
 
     const scrollView = result.UNSAFE_getByType(ScrollView);
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
@@ -129,12 +131,14 @@ describe('More settings entries', () => {
     const openPuppyProfile = jest.fn();
     const openQuickTrackers = jest.fn();
     const openNotifications = jest.fn();
+    const openHelp = jest.fn();
 
     render(
       <AppProviders>
         <AuthProvider dependencies={authDependencies}>
           <MoreScreen
             canManagePuppySettings
+            openHelp={openHelp}
             openNotifications={openNotifications}
             openPuppyProfile={openPuppyProfile}
             openQuickTrackers={openQuickTrackers}
@@ -153,10 +157,14 @@ describe('More settings entries', () => {
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.rows.notifications'),
     }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.rows.help'),
+    }));
 
     expect(openPuppyProfile).toHaveBeenCalledTimes(1);
     expect(openQuickTrackers).toHaveBeenCalledTimes(1);
     expect(openNotifications).toHaveBeenCalledTimes(1);
+    expect(openHelp).toHaveBeenCalledTimes(1);
   });
 
   it('opens profile settings from the puppy summary card', () => {
@@ -308,5 +316,27 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', {
       name: i18n.t('more.notifications.tz-example'),
     })).toBeTruthy();
+  });
+
+  it('renders the support help anatomy without requesting private data', () => {
+    render(
+      <AppProviders>
+        <HelpSupportScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('more.help.screen-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.help.intro-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.help.intro-body'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.help.sections.topics'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.help.topic-quick-log') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.help.topic-sharing') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.help.topic-privacy') })).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.help.sections.diagnostics'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.help.version-row'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.help.support-code-row'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.help.contact-row') })).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.help.privacy-note'))).toBeTruthy();
+    expect(screen.queryByText(/support@example/i)).toBeNull();
   });
 });
