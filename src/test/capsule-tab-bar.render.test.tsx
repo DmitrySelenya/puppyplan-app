@@ -128,6 +128,27 @@ describe('CapsuleTabBar', () => {
     expect(screen.getByRole('button', { name: i18n.t('tabs.add-close') })).toBeTruthy();
   });
 
+  it('keeps the morphed close control visually above the chooser layer', () => {
+    renderBar();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+
+    const chooserStyle = StyleSheet.flatten(screen.getByTestId('nav-chooser').props.style);
+    const addStyle = StyleSheet.flatten(screen.getByTestId('nav-add').props.style);
+
+    expect(addStyle.zIndex).toBeGreaterThan(chooserStyle.zIndex);
+  });
+
+  it('morphs the original plus glyph instead of rotating a close glyph back into a plus', () => {
+    const rendered = renderBar();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+
+    const tree = JSON.stringify(rendered.toJSON());
+    expect(tree).toContain('M12 5v14M5 12h14');
+    expect(tree).not.toContain('M6 6l12 12M18 6L6 18');
+  });
+
   it('removes the three-tab capsule while the chooser is open', () => {
     renderBar();
 

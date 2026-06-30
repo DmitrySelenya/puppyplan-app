@@ -33,6 +33,10 @@ const TAB_ICON = {
 } as const satisfies Record<(typeof primaryTabs)[number]['routeName'], AppIconName>;
 
 const emphasizedEasing = easingFromCubicBezierToken(tokens.motion.easing.emphasized);
+const navLayer = {
+  chooser: tokens.elevation[1].androidElevation,
+  add: tokens.elevation[1].androidElevation + tokens.elevation[2].androidElevation,
+} as const;
 
 type CapsuleTabBarRoute = {
   key: string;
@@ -152,7 +156,7 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
         <Animated.View style={addGlyphStyle}>
           <AppIcon
             color={tokens.color.text.onPrimary}
-            name={open ? 'close' : 'plus'}
+            name="plus"
             size={tokens.component.tabBar.icon + tokens.space[1]}
           />
         </Animated.View>
@@ -278,6 +282,7 @@ const styles = StyleSheet.create({
     height: tokens.component.fab.size,
     justifyContent: 'center',
     width: tokens.component.fab.size,
+    zIndex: navLayer.add,
     ...elevationStyle(2),
   },
   capsule: {
@@ -292,6 +297,7 @@ const styles = StyleSheet.create({
   },
   chooser: {
     ...StyleSheet.absoluteFillObject,
+    zIndex: navLayer.chooser,
   },
   dragHandle: {
     alignSelf: 'center',

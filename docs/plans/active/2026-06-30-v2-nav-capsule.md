@@ -367,7 +367,9 @@ it('still opens and closes the chooser under reduced motion', () => {
 Task 5 evidence (2026-06-30): RED capsule suite failed on `useReducedMotion` not being called and no haptics for Add/tab press; GREEN added Reanimated shared `progress`, animated Add glyph/scrim/sheet styles, reduced-motion no-transform branch, token-derived emphasized easing, `haptic('tapConfirm')` for Add and `haptic('selection')` for tab changes. `src/test/capsule-tab-bar.render.test.tsx` uses a local Reanimated mock and mocked `useReducedMotion` to keep Jest deterministic; targeted `capsule-tab-bar`, `tab-layout`, and `navigation-contract` tests passed 22/22; `npm run typecheck` passed. The Reanimated-heavy `CapsuleTabBar` remains imported directly by `app/(tabs)/_layout.tsx` and intentionally is not exported from the broad `src/design/primitives/index.ts` barrel, so unrelated screen tests that import the barrel do not initialize Worklets.
 
 ### Task 6: Manual native verification (simulator)
-- [ ] Run on iOS sim (see "Running the app" in the kickoff). Verify against the spec's States Covered: resting capsule, each active tab, Add-open (capsule gone, `×`, scrim, two slabs + handle), scrim-tap close. Compare to Open Design boards `Split navigation` and `Add chooser overlay`. Capture a screenshot of each state into the PR description. No code change unless a state is wrong.
+- [x] Run on iOS sim (see "Running the app" in the kickoff). Verify against the spec's States Covered: resting capsule, each active tab, Add-open (capsule gone, `×`, scrim, two slabs + handle), scrim-tap close. Compare to Open Design boards `Split navigation` and `Add chooser overlay`. Capture a screenshot of each state into the PR description. No code change unless a state is wrong.
+
+Task 6 evidence (2026-06-30): launched the already-installed `com.dmitry-selenya.puppyplan-app` on `Grith iPhone SE 3 iOS 26.3` via JS-over-Metro, then captured synthetic screenshots in `output/v2-nav-capsule-screenshots/`: `01-diary-resting.jpg`, `02-pet-resting.jpg`, `03-more-resting.jpg`, `04-add-open.jpg`, `05-after-scrim-close.jpg`. Runtime snapshots confirmed Add-open exposes `Quick Log`, `Schedule`, and `Close`, with the tab capsule removed from the target tree. Manual visual review found two spec defects: the sheet visually covered the morphed Add/Close control, and the rendered glyph stayed visually `+` because a `close` glyph was also rotated. RED tests were added to `src/test/capsule-tab-bar.render.test.tsx` for both defects; GREEN fixed token-derived nav layering and changed the morph to rotate the original plus glyph into `×`. Updated `04-add-open.jpg` now shows the visible `×` above the chooser sheet; scrim tap returns to the resting More state.
 
 ### Task 7: Retire the V1 FAB test assertions
 **Files:** Modify `src/test/tab-layout.render.test.tsx`.
@@ -381,7 +383,7 @@ Task 5 evidence (2026-06-30): RED capsule suite failed on `useReducedMotion` not
 - [ ] `npm run check` green (lint + typecheck + test + scaffold + tokens + i18n + privacy + text-hygiene).
 - [ ] No hardcoded colors/spacing/radii/durations; all from tokens.
 - [ ] No user-facing string literals; all typed i18n keys.
-- [ ] Manual sim verification screenshots for all five states attached to the PR.
+- [x] Manual sim verification screenshots for all five states captured locally in `output/v2-nav-capsule-screenshots/` for review before Task 7.
 - [ ] No default full-width tab bar and no absolute bottom-right FAB anywhere in `app/(tabs)`.
 
 ## Out of scope (separate follow-up plans)
