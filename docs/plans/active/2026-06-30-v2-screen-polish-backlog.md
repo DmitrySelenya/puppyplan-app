@@ -135,3 +135,46 @@ Item 6 (verify) → Items 2 & 3 (need a design/IA decision + spec update first).
 These are all JS/token/i18n changes — verifiable via JS-over-Metro on the installed binary. The
 native iOS build is currently blocked by an expo-sqlite × Xcode 26.2 / Swift 6.2.3 incompatibility
 (see `chore(deps): align expo packages…` commit). It does not block this backlog.
+
+---
+
+## Kickoff prompt for Codex
+
+> Use this AFTER the nav-capsule plan is done, green, and its screenshots are approved.
+
+```
+Work through docs/plans/active/2026-06-30-v2-screen-polish-backlog.md on branch
+`redesign-v2-nav-codex-wip`. The nav-capsule plan should already be merged into this branch.
+
+Orient first (do not assume): run `git status` and `git log --oneline -10`. Your working tree
+must be clean and on the latest branch HEAD before you start. If leftover uncommitted changes
+remain from any earlier interrupted run, they are stale — discard them (`git restore .`) rather
+than committing on top, which would revert newer fixes. If unsure, ask.
+
+Read first: AGENTS.md, docs/agents/design-fidelity-pipeline.md, DESIGN.md §2 (the color canon),
+and the backlog itself.
+
+Do the items in the suggested order: 1 (copy) → 4 (token) → 5 (header) → 6 (verify) → then
+2 and 3. One commit per item.
+
+Rules (non-negotiable):
+- Items 2 and 3 require a DESIGN/IA decision and a spec-card update BEFORE code. Do not guess:
+  propose the decision, get it confirmed, write it into the relevant docs/design/v1/specs card,
+  THEN implement. STOP and ask if the decision isn't obvious from the spec.
+- Item 4 is a TOKEN change: edit design-tokens.json, run `npm run tokens:generate` and
+  `npm run tokens:check`. Never hand-edit src/design/tokens.ts. Verify contrast ≥ 4.5:1.
+- User-facing strings: edit STRINGS.en.json + every sibling locale, then `node scripts/checks/check-i18n.mjs`.
+- Tokens only / primitives only / typed i18n keys only — no hardcoded values, no string literals in JSX.
+- Never weaken a check to make it pass: no eslint-disable / ts-ignore / @ts-expect-error / any,
+  no deleting or skipping tests, no editing tsconfig/jest/lint config. If a fix legitimately
+  changes a test's expectation (e.g. item 3 changes the number of "Deferred" rows), UPDATE the
+  test to assert the new correct behavior — explain why in the commit.
+- Do NOT touch ios/ or android/ native files. Do not push — pushing/PRs are the human's call.
+- Run `npm run check` before each commit.
+
+Run the app via JS-over-Metro (native build is blocked by expo-sqlite × Xcode 26.2 / Swift 6.2.3):
+`npx expo start`, launch the already-installed PuppyPlan.app in the booted simulator, sign in with
+"Use debug account". The Supabase Dev project (olymqppxsadsxfrcyskh) must be awake.
+
+For each item, post a before/after simulator screenshot when you finish it.
+```
