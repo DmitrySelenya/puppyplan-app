@@ -167,11 +167,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       blocked. OS settings deeplink and real permission state wiring remain open.
 
 ### Guidance cards — DESIGN.md §4.3
-- [ ] ❓ Guidance card anatomy + states (Read/Practiced/Skip) + topics (§4.3) — old board has the
-      "Watch the feeding pattern / quiet spot for sleep" cards; not found re-skinned in freeze.
-      **Verify against `2026-06-27-diary-pet-nav-design-brief.md`:** training *library* is Deferred
-      (PRD §1, arch Deferred list), but "Starter Guidance" is canon in DESIGN Part 4 / §4.3 — distinct
-      things. If the brief defers Guidance for this wave → mark 🚫; else keep ❌ gap.
+- [x] 🚫 Guidance card anatomy + states (Read/Practiced/Skip) + topics (§4.3) — deferred for this
+      V2 nav-redesign wave by `2026-06-27-diary-pet-nav-design-brief.md` and
+      `docs/design/v1/specs/08-deferred-reference.md`. Active Diary now emits no `guidanceCard` and
+      ignores legacy guidance card payloads; only the lightweight contextual tip slot remains allowed.
 
 ### More tab — DESIGN.md §4.4
 - [x] ✅ More tab anatomy (Family / Trainer-sitter / Data and account / Settings / About v1.0.0 / Privacy / Terms)
@@ -1877,7 +1876,59 @@ Implementation notes:
   copy-link, revoke/extend, card history, loading/error/offline states, and public web projection
   remain deferred.
 
+### 35. Guidance Active-UI Deferral Reconciliation (§4.3)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/08-deferred-reference.md`.
+- Source: `docs/plans/active/2026-06-27-diary-pet-nav-design-brief.md` §0.6 / §11, plus
+  `docs/design/v1/specs/03-diary-route.md` contextual tip slot.
+- Allowed active surface: at most one lightweight Diary contextual tip. No Guidance tab, no broad
+  training library, and no read/practiced/skip card states in this wave.
+
+Acceptance:
+- AC-GUIDANCE-DEF-1: `buildTodayPlan` emits `guidanceCard: null` for active V2 Diary plans.
+- AC-GUIDANCE-DEF-2: `TodayPlanCards` does not render `today-guidance-card`, even if a legacy plan
+  payload contains a `guidanceCard`.
+- AC-GUIDANCE-DEF-3: active Diary render tests assert absence of Read / Tried it / Skip guidance
+  actions.
+- AC-GUIDANCE-DEF-4: local starter guidance content/contracts may remain as deferred reference
+  material, but no production Diary UI consumes them in this wave.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/today-prioritization.test.ts src/test/today-core.render.test.tsx`
+  failed as expected before implementation because `buildTodayPlan` emitted a `guidanceCard` and
+  Diary rendered `today-guidance-card`.
+- Follow-up RED with `src/test/guidance.render.test.tsx` also failed because direct legacy
+  `TodayPlanCards` input still rendered the active read/practiced/skip card.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/today-prioritization.test.ts src/test/today-core.render.test.tsx src/test/guidance.render.test.tsx`
+  — PASS: 3 suites, 23 tests.
+- `npm run typecheck` — PASS.
+- `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n budgets, scaffold guardrails,
+  tokens, privacy scan, and text hygiene.
+- `git diff --check` — PASS.
+- `npm run check` — PASS: 67 Jest suites / 495 tests, node checks 118/118, scaffold, tokens,
+  privacy scan, and text hygiene all green. Existing non-failing reduced-motion `act(...)` warning
+  in `src/test/screen-header.render.test.tsx` is unrelated to this slice.
+- Changed-file raw style scan found no `hex` / `rgb` / raw color literals or numeric padding/margin
+  literals in the touched Today/Diary files after tokenizing the existing info banner spacing.
+
+Implementation notes:
+- `buildTodayPlan` now always returns `guidanceCard: null`; the nullable schema remains for legacy
+  shape compatibility and future approved guidance work.
+- `TodayPlanCards` ignores `plan.guidanceCard`, and the old interactive `StarterGuidanceCard` /
+  `GuidanceTopicDetail` active UI was removed from `TodayCards.tsx`.
+- `src/test/guidance.render.test.tsx` now locks the deferral behavior instead of locking the old
+  read/practiced/skip interactions.
+- No Stage 4 screenshot is required for the deferred guidance UI; Stage 4 for the remaining allowed
+  contextual tip slot stays covered under the Diary route screenshot backlog.
+
 ## Changelog
+- 2026-07-01: Reconciled Guidance §4.3 with the locked V2 nav wave: active Diary no longer emits or
+  renders `guidanceCard` / read-practiced-skip states, while guidance content/contracts remain only
+  as deferred reference. Targeted RED/GREEN suites, typecheck, scaffold checks, diff whitespace, and
+  raw-style scan passed; Diary contextual-tip Stage 4 remains part of the Diary screenshot backlog.
 - 2026-06-30: Added the Shareable Puppy Card shell: More now opens `/sharing/puppy-card`, the route
   renders builder fields, health disclosure, 3:4 preview, share CTA, public-link disclosure, and an
   active-card row with privacy-safe sample data; route/i18n/scaffold contracts were updated. Live

@@ -107,7 +107,7 @@ describe('Today core card rendering', () => {
     testQueryClients.length = 0;
   });
 
-  it('renders one hero, capped daily cards, and one guidance card from the active care context', async () => {
+  it('renders one hero and capped daily cards without the deferred Guidance card', async () => {
     const { queryClient, toJSON } = renderWithQuery(
       <TodayScreen
         careContext={careContext}
@@ -136,9 +136,11 @@ describe('Today core card rendering', () => {
 
     expect(screen.getAllByTestId('today-hero-card')).toHaveLength(1);
     expect(screen.getAllByTestId('today-daily-card').length).toBeLessThanOrEqual(5);
-    expect(screen.getAllByTestId('today-guidance-card')).toHaveLength(1);
+    expect(screen.queryByTestId('today-guidance-card')).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('guidance.action-labels.read'),
+    })).toBeNull();
     expect(screen.getByText(i18n.t('today.hero.day-2-morning.title'))).toBeTruthy();
-    expect(screen.getAllByText(i18n.t('guidance.potty-rhythm.title')).length).toBeGreaterThan(0);
     expect(JSON.stringify(toJSON())).toContain(i18n.t('today.hero.day-2-morning.title'));
   });
 

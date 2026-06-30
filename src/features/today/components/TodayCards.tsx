@@ -1,13 +1,5 @@
-import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
-import {
-  STARTER_GUIDANCE_CONTENT,
-  applyGuidanceAction,
-  type GuidanceCompletionState,
-  type StarterGuidanceTopic,
-  type StarterGuidanceTopicId,
-} from '@/contracts/guidance';
 import type {
   TodayDailyCardVariant,
   TodayDeferredProductionFeature,
@@ -72,9 +64,6 @@ export function TodayPlanCards({
         variant: card.variant,
       }))}
       firstDayMode={plan.hero.variant === 'first_day'} />
-      {plan.guidanceCard === null ? null : (
-        <StarterGuidanceCard topicId={plan.guidanceCard.topicId} />
-      )}
       {plan.deferredProductionFeatures.length > 0 ? (
         <TodayDeferredFeatureNote features={plan.deferredProductionFeatures} />
       ) : null}
@@ -244,119 +233,6 @@ export function TodayStatusCard({
   );
 }
 
-export function StarterGuidanceCard({
-  topicId,
-}: Readonly<{
-  topicId: StarterGuidanceTopicId;
-}>) {
-  const { t } = useAppTranslation();
-  const [state, setState] = useState<GuidanceCompletionState | null>(null);
-  const topic = guidanceTopicById[topicId];
-
-  if (topic === undefined) {
-    return null;
-  }
-
-  if (state === 'skip') {
-    return (
-      <Card testID="today-guidance-skipped">
-        <AppText tone="secondary">{t('guidance.status.skipped')}</AppText>
-      </Card>
-    );
-  }
-
-  const copy = guidanceTopicCopy[topic.id];
-
-  return (
-    <Card testID="today-guidance-card">
-      <Stack gap="md">
-        <StatusPill
-          accessibilityLabel={t('guidance.eyebrow-template', {
-            current: topic.dayNumber,
-            total: STARTER_GUIDANCE_CONTENT.topics.length,
-          })}
-          icon={<AppText accessibilityElementsHidden>i</AppText>}
-          label={t('guidance.eyebrow-template', {
-            current: topic.dayNumber,
-            total: STARTER_GUIDANCE_CONTENT.topics.length,
-          })}
-          tone="template"
-        />
-        <Stack gap="xs">
-          <AppText variant="headline">{t(copy.titleKey)}</AppText>
-          <AppText tone="secondary">{t(copy.bodyKey)}</AppText>
-        </Stack>
-        <Stack
-          direction="horizontal"
-          gap="sm"
-          wrap>
-          <Button
-            label={t('guidance.action-labels.read')}
-            onPress={() => {
-              setState(applyGuidanceAction({
-                action: 'read',
-                topicId: topic.id,
-              }).state);
-            }}
-            variant={state === 'read' ? 'secondary' : 'tertiary'}
-          />
-          <Button
-            label={t('guidance.action-labels.practiced')}
-            onPress={() => {
-              setState(applyGuidanceAction({
-                action: 'practiced',
-                topicId: topic.id,
-              }).state);
-            }}
-            variant={state === 'practiced' ? 'secondary' : 'tertiary'}
-          />
-          <Button
-            label={t('guidance.action-labels.skip')}
-            onPress={() => {
-              setState(applyGuidanceAction({
-                action: 'skip',
-                topicId: topic.id,
-              }).state);
-            }}
-            variant="tertiary"
-          />
-        </Stack>
-        {state === 'read' || state === 'practiced' ? (
-          <GuidanceTopicDetail
-            state={state}
-            topic={topic}
-          />
-        ) : null}
-      </Stack>
-    </Card>
-  );
-}
-
-export function GuidanceTopicDetail({
-  state,
-  topic,
-}: Readonly<{
-  state: Exclude<GuidanceCompletionState, 'skip'>;
-  topic: StarterGuidanceTopic;
-}>) {
-  const { t } = useAppTranslation();
-  const copy = guidanceTopicCopy[topic.id];
-  const statusKey = state === 'read'
-    ? 'guidance.status.read'
-    : 'guidance.status.practiced';
-
-  return (
-    <Card
-      testID="today-guidance-detail"
-      variant="mutedTemplate">
-      <Stack gap="sm">
-        <AppText variant="bodyEmph">{t(statusKey)}</AppText>
-        <AppText tone="secondary">{t(copy.escalationKey)}</AppText>
-      </Stack>
-    </Card>
-  );
-}
-
 function TodayDeferredFeatureNote({
   features,
 }: Readonly<{
@@ -403,10 +279,6 @@ export function SyntheticTodayPreview({
     </Card>
   );
 }
-
-const guidanceTopicById = Object.fromEntries(
-  STARTER_GUIDANCE_CONTENT.topics.map((topic) => [topic.id, topic]),
-) as Partial<Record<StarterGuidanceTopicId, StarterGuidanceTopic>>;
 
 const todayHeroCopy = {
   accident_recovery: {
@@ -581,79 +453,6 @@ const todayDeferredCopy = {
   reminders: 'today.deferred.reminders',
 } as const satisfies Record<TodayDeferredProductionFeature, I18nKey>;
 
-const guidanceTopicCopy = {
-  alone_time: {
-    bodyKey: 'guidance.alone-time.body',
-    escalationKey: 'guidance.alone-time.escalation',
-    titleKey: 'guidance.alone-time.title',
-  },
-  biting_play: {
-    bodyKey: 'guidance.biting-play.body',
-    escalationKey: 'guidance.biting-play.escalation',
-    titleKey: 'guidance.biting-play.title',
-  },
-  calm_greetings: {
-    bodyKey: 'guidance.calm-greetings.body',
-    escalationKey: 'guidance.calm-greetings.escalation',
-    titleKey: 'guidance.calm-greetings.title',
-  },
-  chew_swap: {
-    bodyKey: 'guidance.chew-swap.body',
-    escalationKey: 'guidance.chew-swap.escalation',
-    titleKey: 'guidance.chew-swap.title',
-  },
-  crate_settling: {
-    bodyKey: 'guidance.crate-settling.body',
-    escalationKey: 'guidance.crate-settling.escalation',
-    titleKey: 'guidance.crate-settling.title',
-  },
-  feeding_rhythm: {
-    bodyKey: 'guidance.feeding-rhythm.body',
-    escalationKey: 'guidance.feeding-rhythm.escalation',
-    titleKey: 'guidance.feeding-rhythm.title',
-  },
-  first_night: {
-    bodyKey: 'guidance.first-night.body',
-    escalationKey: 'guidance.first-night.escalation',
-    titleKey: 'guidance.first-night.title',
-  },
-  handling: {
-    bodyKey: 'guidance.handling.body',
-    escalationKey: 'guidance.handling.escalation',
-    titleKey: 'guidance.handling.title',
-  },
-  leash_intro: {
-    bodyKey: 'guidance.leash-intro.body',
-    escalationKey: 'guidance.leash-intro.escalation',
-    titleKey: 'guidance.leash-intro.title',
-  },
-  potty_rhythm: {
-    bodyKey: 'guidance.potty-rhythm.body',
-    escalationKey: 'guidance.potty-rhythm.escalation',
-    titleKey: 'guidance.potty-rhythm.title',
-  },
-  quiet_sleep: {
-    bodyKey: 'guidance.quiet-sleep.body',
-    escalationKey: 'guidance.quiet-sleep.escalation',
-    titleKey: 'guidance.quiet-sleep.title',
-  },
-  socialization_window: {
-    bodyKey: 'guidance.socialization-window.body',
-    escalationKey: 'guidance.socialization-window.escalation',
-    titleKey: 'guidance.socialization-window.title',
-  },
-  vet_visit_prep: {
-    bodyKey: 'guidance.vet-visit-prep.body',
-    escalationKey: 'guidance.vet-visit-prep.escalation',
-    titleKey: 'guidance.vet-visit-prep.title',
-  },
-  weekly_rhythm: {
-    bodyKey: 'guidance.weekly-rhythm.body',
-    escalationKey: 'guidance.weekly-rhythm.escalation',
-    titleKey: 'guidance.weekly-rhythm.title',
-  },
-} as const satisfies Record<StarterGuidanceTopicId, CopyPair & Readonly<{ escalationKey: I18nKey }>>;
-
 const styles = StyleSheet.create({
   cardTitle: {
     flexShrink: 1,
@@ -663,10 +462,10 @@ const styles = StyleSheet.create({
   },
   infoBanner: {
     backgroundColor: tokens.color.status.infoTint,
-    borderColor: 'transparent',
-    marginBottom: 72,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: tokens.color.status.infoTint,
+    marginBottom: tokens.layout.tabBarHeight + tokens.space[6],
+    paddingHorizontal: tokens.space[3],
+    paddingVertical: tokens.space[2],
   },
   infoText: {
     color: tokens.color.status.info,

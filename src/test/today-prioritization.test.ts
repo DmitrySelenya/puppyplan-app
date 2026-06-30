@@ -131,7 +131,7 @@ describe('Today prioritization contract', () => {
     expect(reminderPlan.deferredProductionFeatures).toContain('reminders');
   });
 
-  it('adds one guidance card per day when an eligible topic exists', () => {
+  it('does not emit starter guidance cards in the active V2 Diary wave', () => {
     const plan = buildTodayPlan(createInput({
       dayNumber: 5,
       lastEvents: [{
@@ -141,10 +141,6 @@ describe('Today prioritization contract', () => {
       }],
     }));
 
-    expect(plan.guidanceCard).toMatchObject({
-      contentVersion: expect.stringMatching(/^local-/),
-      dayNumber: 5,
-      slot: 'guidance',
-    });
+    expect(plan.guidanceCard).toBeNull();
   });
 });
