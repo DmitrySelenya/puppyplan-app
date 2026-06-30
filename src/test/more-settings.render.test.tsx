@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react-nativ
 import type { PuppyProfile } from '@/contracts/supabase';
 import { tokens } from '@/design/tokens';
 import { HelpSupportScreen } from '@/features/more/screens/HelpSupportScreen';
+import { HouseholdAccessScreen } from '@/features/more/screens/HouseholdAccessScreen';
 import { ConnectedMoreScreen, MoreScreen } from '@/features/more/screens/MoreScreen';
 import { NotificationPreferencesScreen } from '@/features/more/screens/NotificationPreferencesScreen';
 import { PuppyPlanPlusScreen } from '@/features/more/screens/PuppyPlanPlusScreen';
@@ -79,6 +80,7 @@ describe('More settings entries', () => {
         <AuthProvider dependencies={authDependencies}>
           <MoreScreen
             canManagePuppySettings
+            openHousehold={jest.fn()}
             openPuppyProfile={jest.fn()}
             openQuickTrackers={jest.fn()}
             openHelp={jest.fn()}
@@ -99,7 +101,7 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('more.quick-trackers.selected-count', { count: 5, max: 5 }))).toBeTruthy();
 
     expect(screen.getByText(i18n.t('more.sections.sharing'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('more.rows.family'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.rows.family') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.rows.trainer-sitter'))).toBeTruthy();
 
     expect(screen.getByText(i18n.t('more.sections.records'))).toBeTruthy();
@@ -118,8 +120,8 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', { name: i18n.t('more.rows.puppyplan-plus') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
 
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(5);
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(5);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(4);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(4);
 
     const scrollView = result.UNSAFE_getByType(ScrollView);
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
@@ -129,7 +131,8 @@ describe('More settings entries', () => {
     );
   });
 
-  it('opens profile, quick tracker, and notification settings from the More hub', () => {
+  it('opens profile, quick tracker, household, notification, help, and Plus settings from the More hub', () => {
+    const openHousehold = jest.fn();
     const openPuppyProfile = jest.fn();
     const openQuickTrackers = jest.fn();
     const openNotifications = jest.fn();
@@ -141,6 +144,7 @@ describe('More settings entries', () => {
         <AuthProvider dependencies={authDependencies}>
           <MoreScreen
             canManagePuppySettings
+            openHousehold={openHousehold}
             openHelp={openHelp}
             openNotifications={openNotifications}
             openPlus={openPlus}
@@ -159,6 +163,9 @@ describe('More settings entries', () => {
       name: i18n.t('more.rows.quick-trackers'),
     }));
     fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.rows.family'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.rows.notifications'),
     }));
     fireEvent.press(screen.getByRole('button', {
@@ -170,6 +177,7 @@ describe('More settings entries', () => {
 
     expect(openPuppyProfile).toHaveBeenCalledTimes(1);
     expect(openQuickTrackers).toHaveBeenCalledTimes(1);
+    expect(openHousehold).toHaveBeenCalledTimes(1);
     expect(openNotifications).toHaveBeenCalledTimes(1);
     expect(openHelp).toHaveBeenCalledTimes(1);
     expect(openPlus).toHaveBeenCalledTimes(1);
@@ -346,6 +354,38 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', { name: i18n.t('more.help.contact-row') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.help.privacy-note'))).toBeTruthy();
     expect(screen.queryByText(/support@example/i)).toBeNull();
+  });
+
+  it('renders the Manage household shell anatomy without private invite data', () => {
+    render(
+      <AppProviders>
+        <HouseholdAccessScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('sharing.family.manage.screen-title'))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.title')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(i18n.t('sharing.family.manage.section-members'))).toBeTruthy();
+    expect(screen.getAllByText('Owner').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(i18n.t('sharing.family.manage.badge-owner')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Caregiver').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(i18n.t('sharing.family.manage.badge-caregiver')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(i18n.t('sharing.family.manage.active-ago', {
+      timeAgo: '8 min ago',
+    }))).toBeTruthy();
+    expect(screen.getAllByRole('button', {
+      name: i18n.t('today.history.item-actions'),
+    }).length).toBeGreaterThanOrEqual(2);
+
+    expect(screen.getByText(i18n.t('sharing.family.manage.section-invites'))).toBeTruthy();
+    expect(screen.getAllByText('Pending caregiver').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(i18n.t('sharing.family.manage.badge-pending'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.manage.pending-until', {
+      date: '24 May',
+    }))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.body')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('button', { name: i18n.t('sharing.family.manage.invite-cta') })).toBeTruthy();
+    expect(screen.queryByText(/@/)).toBeNull();
   });
 
   it('renders the PuppyPlan Plus shell anatomy without live billing', () => {

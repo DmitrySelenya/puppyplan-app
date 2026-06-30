@@ -134,7 +134,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Accept-invite flow, caregiver-side (§3.1.4) — `/invite/[token]` native shell
       implemented: inviter/puppy context, caregiver role, included/excluded preview, disclosure,
       Accept/Decline actions, and token-safe rendering. Live token lookup/accept/decline remain open.
-- [ ] ❌ Manage household (§3.1.6)
+- [x] ✅ Manage household (§3.1.6) — `/settings/household` native shell implemented:
+      More Family row opens owner household preview with members, pending invite, non-color-only
+      status badges, overflow affordances, privacy-safe invite label, and Invite CTA. Live member
+      query, role changes, removal, resend/revoke, confirm sheets, and Stage 4 screenshots remain open.
 - [x] ➕ **Shareable Puppy Cards** (§3.4) — **decision: IN scope this wave, MINIMAL only**: a static /
       signed-link card + preview + expiry (PRD-allowed). Rich builder / multi-template editor → roadmap,
       not this wave. Net-new (absent on both boards). Doubles as a growth/virality surface.
@@ -1712,7 +1715,56 @@ Implementation notes:
   locked accept-invite anatomy. Live token lookup, loading/error/already-member/expired states, accept
   RPC, decline confirmation, and post-accept redirect remain deferred.
 
+### 32. Manage Household Shell Slice (§3.1.6)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/07-2-manage-household.md`.
+- Source: `DESIGN.md` §3.1.6 plus `docs/design/v1/specs/07-sharing-access-cards.md`.
+- Route: `/settings/household` from the More Family row.
+
+Acceptance:
+- AC-SHARE-HOUSEHOLD-1: More Family row is an active chevron row and opens the household settings
+  route.
+- AC-SHARE-HOUSEHOLD-2: the route renders a native Manage household shell with modal header, members
+  section, invitations section, owner row, caregiver row, pending invite row, Invite CTA, and empty
+  owner-alone guidance.
+- AC-SHARE-HOUSEHOLD-3: member/invite states are non-color-only through visible role/status badges
+  and icon affordances.
+- AC-SHARE-HOUSEHOLD-4: pending invite preview does not render raw email addresses or invite tokens.
+- AC-SHARE-HOUSEHOLD-5: route/navigation contract, shell i18n, and scaffold guardrails include
+  `/settings/household`.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts`
+  failed as expected before implementation because `HouseholdAccessScreen` did not exist and
+  `/settings/household` was absent from `settingsRoutes` / `plannedRouteFiles`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts src/test/i18n.test.ts`
+  — PASS: 3 suites, 30 tests.
+- `npm run typecheck` — PASS.
+- `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n budgets, scaffold guardrails,
+  tokens, privacy scan, and text hygiene.
+- `git diff --check` — PASS.
+- `npm run check` — PASS: 67 Jest suites / 490 tests, node checks 118/118, scaffold, tokens,
+  privacy scan, and text hygiene all green. Existing non-failing reduced-motion `act(...)` warning
+  in `src/test/screen-header.render.test.tsx` is unrelated to this slice.
+
+Implementation notes:
+- Added `src/features/more/screens/HouseholdAccessScreen.tsx`.
+- Added route file `app/(modals)/settings/household/index.tsx` and modal stack registration.
+- Updated `MoreScreen` with `openHousehold`, active Family row, and route wiring from
+  `app/(tabs)/more/index.tsx`.
+- Updated navigation contracts and scaffold guardrails to include `/settings/household`.
+- Stage 4 remains open: `/settings/household` still needs native screenshot comparison against the
+  locked Manage household anatomy. Live member/invite queries, role changes, access removal,
+  resend/revoke actions, and confirm sheets remain deferred.
+
 ## Changelog
+- 2026-06-30: Added the Manage Household shell: More Family now opens `/settings/household`, with
+  owner/caregiver rows, pending invite row, role/status badges, overflow affordances, privacy-safe
+  invite labeling, and Invite CTA. Live member queries, role changes, removal, invite actions,
+  confirm sheets, and Stage 4 screenshots remain open.
 - 2026-06-30: Added the caregiver-side Accept Invite shell: `/invite/[token]` now renders
   inviter/puppy context, caregiver role, included/excluded preview, disclosure, and Accept/Decline
   actions without exposing raw invite tokens; public token routes are tracked in navigation

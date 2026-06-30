@@ -31,7 +31,13 @@ assert.equal(modalRoutes.includes('/paywall'), true, 'PuppyPlan Plus must be a m
 
 assert.deepEqual(
   settingsRoutes,
-  ['/settings/puppy-profile', '/settings/quick-trackers', '/settings/notifications', '/settings/help'],
+  [
+    '/settings/puppy-profile',
+    '/settings/quick-trackers',
+    '/settings/household',
+    '/settings/notifications',
+    '/settings/help',
+  ],
   'Editable settings routes must be locked to the /settings namespace',
 );
 

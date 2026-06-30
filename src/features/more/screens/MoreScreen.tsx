@@ -22,6 +22,7 @@ type PuppySettingsAccessState = 'loading' | 'owner' | 'nonOwner' | 'empty' | 'er
 
 export type MoreScreenProps = Readonly<{
   canManagePuppySettings?: boolean;
+  openHousehold?: () => void;
   openHelp?: () => void;
   openNotifications?: () => void;
   openPlus?: () => void;
@@ -46,6 +47,7 @@ export function ConnectedMoreScreen(props: Omit<MoreScreenProps, 'canManagePuppy
 
 export function MoreScreen({
   canManagePuppySettings = true,
+  openHousehold,
   openHelp,
   openNotifications,
   openPlus,
@@ -76,7 +78,13 @@ export function MoreScreen({
         state={settingsState}
       />
       <SettingsSection title={t('more.sections.sharing')}>
-        <DeferredListRow icon="personCluster" title={t('more.rows.family')} />
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="personCluster" />}
+          onPress={openHousehold}
+          title={t('more.rows.family')}
+          variant="settings"
+        />
         <DeferredListRow icon="lock" title={t('more.rows.trainer-sitter')} />
       </SettingsSection>
       <SettingsSection title={t('more.sections.records')}>

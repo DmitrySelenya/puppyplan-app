@@ -48,6 +48,7 @@ describe('navigation contract', () => {
     expect(settingsRoutes).toEqual([
       '/settings/puppy-profile',
       '/settings/quick-trackers',
+      '/settings/household',
       '/settings/notifications',
       '/settings/help',
     ]);
@@ -120,6 +121,11 @@ describe('navigation contract', () => {
         expect.objectContaining({
           route: '/settings/quick-trackers',
           file: 'app/(modals)/settings/quick-trackers/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/settings/household',
+          file: 'app/(modals)/settings/household/index.tsx',
           implementationStage: 'existing',
         }),
         expect.objectContaining({

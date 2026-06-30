@@ -57,6 +57,7 @@ export const scheduleAction = {
 export const settingsRoutes = [
   '/settings/puppy-profile',
   '/settings/quick-trackers',
+  '/settings/household',
   '/settings/notifications',
   '/settings/help',
 ] as const;
@@ -129,6 +130,11 @@ export const plannedRouteFiles = [
   {
     route: '/settings/quick-trackers',
     file: 'app/(modals)/settings/quick-trackers/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/settings/household',
+    file: 'app/(modals)/settings/household/index.tsx',
     implementationStage: 'existing',
   },
   {
@@ -403,6 +409,18 @@ export const shellI18nKeys = [
   'sharing.family.accepted.accept',
   'sharing.family.accepted.decline',
   'sharing.family.accepted.neutral-unavailable',
+  'sharing.common.disclosure-can-close',
+  'sharing.family.today-prompt.title',
+  'sharing.family.today-prompt.body',
+  'sharing.family.manage.screen-title',
+  'sharing.family.manage.section-members',
+  'sharing.family.manage.section-invites',
+  'sharing.family.manage.active-ago',
+  'sharing.family.manage.pending-until',
+  'sharing.family.manage.invite-cta',
+  'sharing.family.manage.badge-owner',
+  'sharing.family.manage.badge-caregiver',
+  'sharing.family.manage.badge-pending',
   'more.privacy.section-account-removal',
   'quick-log.sheet.title',
   'quick-log.sheet.dismiss',
