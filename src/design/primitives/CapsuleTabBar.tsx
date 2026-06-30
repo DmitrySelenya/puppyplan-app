@@ -9,6 +9,16 @@ import {
   scheduleAction,
 } from '@/contracts/navigation';
 import type { AppIconName } from '@/design/primitives/AppIcon';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
+
+import * as haptics from '@/design/haptics';
+import * as motion from '@/design/motion';
 import { AppIcon } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Touchable } from '@/design/primitives/Touchable';
@@ -21,6 +31,8 @@ const TAB_ICON = {
   'pet/index': 'paw',
   'more/index': 'more',
 } as const satisfies Record<(typeof primaryTabs)[number]['routeName'], AppIconName>;
+
+const emphasizedEasing = easingFromCubicBezierToken(tokens.motion.easing.emphasized);
 
 type CapsuleTabBarRoute = {
   key: string;
@@ -49,6 +61,26 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
   const insets = useSafeAreaInsets();
   const [open, setOpen] = React.useState(false);
   const focusedRouteName = state.routes[state.index]?.name;
+  const reducedMotion = motion.useReducedMotion();
+  const progress = useSharedValue(open ? 1 : 0);
+  const addGlyphStyle = useAnimatedStyle(() => ({
+    opacity: reducedMotion ? 1 : Math.max(progress.value, 1 - progress.value),
+    transform: reducedMotion ? [] : [{ rotate: `${progress.value * 45}deg` }],
+  }));
+
+  React.useEffect(() => {
+    progress.value = withTiming(open ? 1 : 0, {
+      duration: reducedMotion
+        ? tokens.motion.duration.fast
+        : tokens.motion.duration.base,
+      easing: emphasizedEasing,
+    });
+  }, [open, progress, reducedMotion]);
+
+  const toggleAdd = () => {
+    void haptics.haptic('tapConfirm');
+    setOpen((value) => !value);
+  };
 
   return (
     <View
@@ -85,6 +117,9 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
                       });
 
                   if (event?.defaultPrevented !== true) {
+                    if (!selected) {
+                      void haptics.haptic('selection');
+                    }
                     navigation.navigate(tab.routeName);
                   }
                 }}
@@ -111,14 +146,16 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
         accessibilityLabel={open ? t('tabs.add-close') : t('tabs.add')}
         accessibilityRole="button"
         minTarget="thumb"
-        onPress={() => setOpen((value) => !value)}
+        onPress={toggleAdd}
         style={styles.add}
         testID="nav-add">
-        <AppIcon
-          color={tokens.color.text.onPrimary}
-          name={open ? 'close' : 'plus'}
-          size={tokens.component.tabBar.icon + tokens.space[1]}
-        />
+        <Animated.View style={addGlyphStyle}>
+          <AppIcon
+            color={tokens.color.text.onPrimary}
+            name={open ? 'close' : 'plus'}
+            size={tokens.component.tabBar.icon + tokens.space[1]}
+          />
+        </Animated.View>
       </Touchable>
 
       {open ? (
@@ -132,6 +169,8 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
             setOpen(false);
             router.push(scheduleAction.href);
           }}
+          progress={progress}
+          reducedMotion={reducedMotion}
         />
       ) : null}
     </View>
@@ -142,28 +181,48 @@ function Chooser({
   onClose,
   onQuickLog,
   onSchedule,
+  progress,
+  reducedMotion,
 }: {
   onClose: () => void;
   onQuickLog: () => void;
   onSchedule: () => void;
+  progress: SharedValue<number>;
+  reducedMotion: boolean;
 }) {
   const { t } = useAppTranslation();
+  const scrimStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+  }));
+  const sheetStyle = useAnimatedStyle(() => ({
+    opacity: reducedMotion ? progress.value : 1,
+    transform: reducedMotion
+      ? []
+      : [
+          {
+            translateY:
+              (1 - progress.value) * tokens.component.bottomSheet.minHeight,
+          },
+        ],
+  }));
 
   return (
     <View
       pointerEvents="box-none"
       style={styles.chooser}
       testID="nav-chooser">
-      <Touchable
-        accessible={false}
-        accessibilityLabel={t('tabs.add-close')}
-        accessibilityRole="button"
-        minTarget="none"
-        onPress={onClose}
-        style={styles.scrim}
-        testID="nav-scrim"
-      />
-      <View style={styles.sheet}>
+      <Animated.View style={[styles.scrimLayer, scrimStyle]}>
+        <Touchable
+          accessible={false}
+          accessibilityLabel={t('tabs.add-close')}
+          accessibilityRole="button"
+          minTarget="none"
+          onPress={onClose}
+          style={styles.scrim}
+          testID="nav-scrim"
+        />
+      </Animated.View>
+      <Animated.View style={[styles.sheet, sheetStyle]}>
         <View
           style={styles.dragHandle}
           testID="nav-drag-handle"
@@ -184,8 +243,27 @@ function Chooser({
           style={styles.slab}>
           <AppText variant="headline">{t('nav.schedule-slab')}</AppText>
         </Touchable>
-      </View>
+      </Animated.View>
     </View>
+  );
+}
+
+function easingFromCubicBezierToken(value: string) {
+  const match = value.match(
+    /^cubic-bezier\(([-\d.]+), ([-\d.]+), ([-\d.]+), ([-\d.]+)\)$/,
+  );
+
+  if (match === null) {
+    return Easing.linear;
+  }
+
+  const [, x1, y1, x2, y2] = match;
+
+  return Easing.bezier(
+    Number(x1),
+    Number(y1),
+    Number(x2),
+    Number(y2),
   );
 }
 
@@ -236,6 +314,9 @@ const styles = StyleSheet.create({
   scrim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: tokens.color.surface.scrim,
+  },
+  scrimLayer: {
+    ...StyleSheet.absoluteFillObject,
   },
   sheet: {
     backgroundColor: tokens.color.surface.raised,

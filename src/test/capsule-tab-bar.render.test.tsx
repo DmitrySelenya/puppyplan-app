@@ -3,6 +3,8 @@ import { StyleSheet } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { primaryTabs, quickLogAction, scheduleAction } from '@/contracts/navigation';
+import * as haptics from '@/design/haptics';
+import * as motion from '@/design/motion';
 import { tokens } from '@/design/tokens';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -14,6 +16,33 @@ import {
 
 const mockNavigate = jest.fn();
 const mockRouterPush = jest.fn();
+
+jest.mock('react-native-reanimated', () => {
+  const ReactNative = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return {
+    __esModule: true,
+    default: {
+      View: ReactNative.View,
+    },
+    Easing: {
+      bezier: () => 'bezier',
+      linear: 'linear',
+    },
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useSharedValue: (value: number) => ({ value }),
+    withTiming: (value: number) => value,
+  };
+});
+
+jest.mock('@/design/motion', () => {
+  const actual = jest.requireActual<typeof import('@/design/motion')>('@/design/motion');
+
+  return {
+    ...actual,
+    useReducedMotion: jest.fn(() => false),
+  };
+});
 
 jest.mock('expo-router', () => ({
   router: { push: (href: string) => mockRouterPush(href) },
@@ -49,7 +78,12 @@ describe('CapsuleTabBar', () => {
   beforeEach(async () => {
     mockNavigate.mockClear();
     mockRouterPush.mockClear();
+    jest.mocked(motion.useReducedMotion).mockReturnValue(false);
     await i18n.changeLanguage('en');
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('renders exactly three tabs in one tablist and Add outside it', () => {
@@ -133,6 +167,31 @@ describe('CapsuleTabBar', () => {
     fireEvent.press(screen.getByRole('button', { name: i18n.t('nav.schedule-slab') }));
 
     expect(mockRouterPush).toHaveBeenCalledWith(scheduleAction.href);
+  });
+
+  it('still opens and closes the chooser under reduced motion', () => {
+    const reducedMotion = jest.mocked(motion.useReducedMotion).mockReturnValue(true);
+
+    renderBar();
+
+    expect(reducedMotion).toHaveBeenCalled();
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+    expect(screen.getByTestId('nav-chooser')).toBeTruthy();
+    fireEvent.press(screen.getByTestId('nav-scrim'));
+    expect(screen.queryByTestId('nav-chooser')).toBeNull();
+  });
+
+  it('fires haptics for Add open and tab selection', () => {
+    const haptic = jest.spyOn(haptics, 'haptic').mockResolvedValue(undefined);
+
+    renderBar();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add-close') }));
+    fireEvent.press(screen.getByRole('tab', { name: i18n.t(primaryTabs[1].labelKey) }));
+
+    expect(haptic).toHaveBeenCalledWith('tapConfirm');
+    expect(haptic).toHaveBeenCalledWith('selection');
   });
 
   it('navigates to a tab route via the navigation prop on press', () => {

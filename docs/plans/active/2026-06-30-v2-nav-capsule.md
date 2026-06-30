@@ -350,7 +350,7 @@ Task 4 evidence (2026-06-30): RED `npm run test:unit -- --runTestsByPath src/tes
 
 ### Task 5: Reanimated motion + reduced-motion fallback
 **Files:** Modify `CapsuleTabBar.tsx`; add `CapsuleTabBar.test.tsx` reduced-motion test.
-- [ ] **Step 1 — Test:** with reduced motion enabled (mock `@/design/motion`'s reduced-motion hook to return `true`), the chooser still opens and closes (cross-fade path), and no error is thrown:
+- [x] **Step 1 — Test:** with reduced motion enabled (mock `@/design/motion`'s reduced-motion hook to return `true`), the chooser still opens and closes (cross-fade path), and no error is thrown:
 ```tsx
 it('still opens and closes the chooser under reduced motion', () => {
   // mock the project's reduced-motion hook to true at top of file
@@ -361,8 +361,10 @@ it('still opens and closes the chooser under reduced motion', () => {
   expect(screen.queryByTestId('nav-chooser')).toBeNull();
 });
 ```
-- [ ] **Step 2** — run/fail. **Step 3** — Drive open/close with a Reanimated shared value `progress` (0→1), `useAnimatedStyle` for: capsule opacity+translateY out, sheet translateY in, scrim opacity, Add glyph rotation/cross-fade. Read `@/design/motion` for the existing reduced-motion hook + duration/easing tokens; under reduced motion use opacity cross-fade only (no translate/rotate). Keep the conditional `{!open && capsule}` mount so T4 stays valid; layer the animation on the mounted/unmounting nodes (Reanimated `entering`/`exiting`). **Step 4** — run/pass. Re-run T1–T7 to confirm no regression. **Step 5** — commit `feat(nav): animate capsule/Add/chooser with reduced-motion fallback`.
-- [ ] **Step 6 — Haptic:** fire a light haptic from `@/design/haptics` on Add open and a selection haptic on tab change (per `tokens.haptic`). Manual check only.
+- [x] **Step 2** — run/fail. **Step 3** — Drive open/close with a Reanimated shared value `progress` (0→1), `useAnimatedStyle` for: capsule opacity+translateY out, sheet translateY in, scrim opacity, Add glyph rotation/cross-fade. Read `@/design/motion` for the existing reduced-motion hook + duration/easing tokens; under reduced motion use opacity cross-fade only (no translate/rotate). Keep the conditional `{!open && capsule}` mount so T4 stays valid; layer the animation on the mounted/unmounting nodes (Reanimated `entering`/`exiting`). **Step 4** — run/pass. Re-run T1–T7 to confirm no regression. **Step 5** — commit `feat(nav): animate capsule/Add/chooser with reduced-motion fallback`.
+- [x] **Step 6 — Haptic:** fire a light haptic from `@/design/haptics` on Add open and a selection haptic on tab change (per `tokens.haptic`). Manual check only.
+
+Task 5 evidence (2026-06-30): RED capsule suite failed on `useReducedMotion` not being called and no haptics for Add/tab press; GREEN added Reanimated shared `progress`, animated Add glyph/scrim/sheet styles, reduced-motion no-transform branch, token-derived emphasized easing, `haptic('tapConfirm')` for Add and `haptic('selection')` for tab changes. `src/test/capsule-tab-bar.render.test.tsx` uses a local Reanimated mock and mocked `useReducedMotion` to keep Jest deterministic; targeted `capsule-tab-bar`, `tab-layout`, and `navigation-contract` tests passed 22/22; `npm run typecheck` passed. The Reanimated-heavy `CapsuleTabBar` remains imported directly by `app/(tabs)/_layout.tsx` and intentionally is not exported from the broad `src/design/primitives/index.ts` barrel, so unrelated screen tests that import the barrel do not initialize Worklets.
 
 ### Task 6: Manual native verification (simulator)
 - [ ] Run on iOS sim (see "Running the app" in the kickoff). Verify against the spec's States Covered: resting capsule, each active tab, Add-open (capsule gone, `×`, scrim, two slabs + handle), scrim-tap close. Compare to Open Design boards `Split navigation` and `Add chooser overlay`. Capture a screenshot of each state into the PR description. No code change unless a state is wrong.
