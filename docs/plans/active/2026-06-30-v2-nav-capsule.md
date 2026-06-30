@@ -222,11 +222,11 @@ Task 0 evidence (2026-06-30): RED `npm run test:unit -- --runTestsByPath src/tes
 
 ### Task 1: Capsule skeleton — three tabs + Add, wired into the layout (T1, T2, T7)
 
-**Files:** Create `src/design/primitives/CapsuleTabBar.tsx`, `src/design/primitives/CapsuleTabBar.test.tsx`; Modify `src/design/primitives/index.ts`, `app/(tabs)/_layout.tsx`.
+**Files:** Create `src/design/primitives/CapsuleTabBar.tsx`, `src/test/capsule-tab-bar.render.test.tsx`; Modify `src/design/primitives/index.ts`, `app/(tabs)/_layout.tsx`.
 
-- [ ] **Step 1 — Write failing tests T1, T2, T7** (and the shared harness) into `CapsuleTabBar.test.tsx` exactly as listed above.
-- [ ] **Step 2 — Run, watch fail.** `npx jest src/design/primitives/CapsuleTabBar.test.tsx` → FAIL (module not found).
-- [ ] **Step 3 — Implement the resting capsule.** Create `CapsuleTabBar.tsx`. Real skeleton (fill animation in Task 5):
+- [x] **Step 1 — Write failing tests T1, T2, T7** (and the shared harness) into `CapsuleTabBar.test.tsx` exactly as listed above.
+- [x] **Step 2 — Run, watch fail.** `npx jest src/design/primitives/CapsuleTabBar.test.tsx` → FAIL (module not found).
+- [x] **Step 3 — Implement the resting capsule.** Create `CapsuleTabBar.tsx`. Real skeleton (fill animation in Task 5):
 ```tsx
 import * as React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -300,9 +300,11 @@ export function CapsuleTabBar({ state, navigation }: BottomTabBarProps) {
 }
 ```
 Add a `Chooser` sub-component in the same file (Task 4 fills it; Task 1 may stub it returning `null` so T1/T2/T7 pass without the overlay). Add `styles` via `StyleSheet.create` using ONLY tokens: capsule `backgroundColor: tokens.color.surface.raised`, `borderRadius: tokens.radius.full`, `flexDirection: 'row'`, `alignSelf: 'center'`, elevation via the project's `elevationStyle`/`elevation.2`; add `backgroundColor: tokens.color.primary[600]`, `borderRadius: tokens.radius.full`, width/height 56 for `.add`; `.root` is `position:'absolute', left:0, right:0, bottom:0, alignItems:'center'` with `flexDirection:'row', justifyContent:'center', gap: tokens.space[5]` so the Add sits ~20pt right of the capsule.
-- [ ] **Step 4 — Wire into the layout.** In `app/(tabs)/_layout.tsx`: add `tabBar={(props) => <CapsuleTabBar {...props} />}` to `<Tabs>`, delete the `<FAB>` block, the `quickLog` style, `isFabLogSurfacePath`, `useSnackbarActive`, and `tabBarStyle`. Keep `headerShown:false` and the three `Tabs.Screen` + the two `href:null` legacy screens. Export `CapsuleTabBar` from `index.ts`.
-- [ ] **Step 5 — Run, watch pass.** `npx jest src/design/primitives/CapsuleTabBar.test.tsx` → T1/T2/T7 PASS.
-- [ ] **Step 6 — Commit.** `git commit -m "feat(nav): floating capsule tab bar with detached Add"`
+- [x] **Step 4 — Wire into the layout.** In `app/(tabs)/_layout.tsx`: add `tabBar={(props) => <CapsuleTabBar {...props} />}` to `<Tabs>`, delete the `<FAB>` block, the `quickLog` style, `isFabLogSurfacePath`, `useSnackbarActive`, and `tabBarStyle`. Keep `headerShown:false` and the three `Tabs.Screen` + the two `href:null` legacy screens. Export `CapsuleTabBar` from `index.ts`.
+- [x] **Step 5 — Run, watch pass.** `npx jest src/design/primitives/CapsuleTabBar.test.tsx` → T1/T2/T7 PASS.
+- [x] **Step 6 — Commit.** `git commit -m "feat(nav): floating capsule tab bar with detached Add"`
+
+Task 1 evidence (2026-06-30): initial RED at `src/design/primitives/CapsuleTabBar.test.tsx` produced Jest `No tests found`, so the same T1/T2/T7 anatomy tests were moved to the repo's active Jest surface `src/test/capsule-tab-bar.render.test.tsx`; RED then failed on missing `@/design/primitives/CapsuleTabBar`; GREEN targeted tests passed (`capsule-tab-bar`, `tab-layout`, `navigation-contract`, 16/16) and `npm run typecheck` passed. The V1 FAB assertions from Task 7 were retired early in `tab-layout.render.test.tsx` because deleting the FAB in this task otherwise made the required pre-commit gate fail against a known-stale V1 contract.
 
 ### Task 2: Add morph + label flip (T3)
 - [ ] **Step 1** — Un-skip / add T3 to the test file. **Step 2** — run, watch fail (chooser/`nav-chooser` absent). **Step 3** — give `Chooser` a real root `View testID="nav-chooser"` (still minimal). The `+`→`×` glyph swap and label flip are already wired via `open` in Task 1; T3 should pass once `nav-chooser` renders. **Step 4** — run, watch pass. **Step 5** — commit `feat(nav): add-open morphs Add into close and reveals chooser`.

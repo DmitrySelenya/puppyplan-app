@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
 import * as React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { View } from 'react-native';
+import { render, screen, waitFor } from '@testing-library/react-native';
 
-import { primaryTabs, quickLogAction } from '@/contracts/navigation';
-import { useSnackbar } from '@/design/primitives/Snackbar';
+import { primaryTabs } from '@/contracts/navigation';
 import { tokens } from '@/design/tokens';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -32,38 +31,36 @@ type TabScreenOptions = {
   tabBarInactiveTintColor?: string;
 };
 
-const mockRouterPush = jest.fn();
+const mockCapsuleTabBar = jest.fn();
 const mockTabScreens: ScreenRegistration[] = [];
 let mockScreenOptions: TabScreenOptions | undefined;
-let mockPathname = '/diary';
 const mockReact = React;
 const mockView = View;
 
-function ActiveSnackbarProbe() {
-  const snackbar = useSnackbar();
-
-  React.useEffect(() => {
-    snackbar.showSnackbar({
-      accessibilityLabel: 'Saved.',
-      id: 'tab-layout-fab-policy',
-      message: 'Saved',
-      tone: 'success',
-    });
-  }, [snackbar]);
-
-  return null;
-}
+jest.mock('@/design/primitives/CapsuleTabBar', () => ({
+  CapsuleTabBar: (props: unknown) => {
+    mockCapsuleTabBar(props);
+    return mockReact.createElement(mockView, { testID: 'capsule-tab-bar' });
+  },
+}));
 
 jest.mock('expo-router', () => {
   function MockTabs({
     children,
     screenOptions,
+    tabBar,
   }: {
     children: ReactNode;
     screenOptions?: TabScreenOptions;
+    tabBar?: (props: unknown) => ReactNode;
   }) {
     mockScreenOptions = screenOptions;
-    return mockReact.createElement(mockView, { testID: 'tabs' }, children);
+    return mockReact.createElement(
+      mockView,
+      { testID: 'tabs' },
+      children,
+      tabBar?.({}),
+    );
   }
 
   function MockTabsScreen(props: ScreenRegistration) {
@@ -74,11 +71,7 @@ jest.mock('expo-router', () => {
   MockTabs.Screen = MockTabsScreen;
 
   return {
-    router: {
-      push: (href: string) => mockRouterPush(href),
-    },
     Tabs: MockTabs,
-    usePathname: () => mockPathname,
   };
 });
 
@@ -93,10 +86,9 @@ function visibleTabScreens() {
 
 describe('TabLayout', () => {
   beforeEach(async () => {
-    mockRouterPush.mockClear();
+    mockCapsuleTabBar.mockClear();
     mockTabScreens.length = 0;
     mockScreenOptions = undefined;
-    mockPathname = '/diary';
     await i18n.changeLanguage('en');
   });
 
@@ -196,33 +188,8 @@ describe('TabLayout', () => {
     }
   });
 
-  it('keeps Quick Log as a persistent FAB that opens the modal route', async () => {
+  it('delegates bottom navigation chrome to CapsuleTabBar', async () => {
     render(
-      <AppProviders>
-        <TabLayout />
-      </AppProviders>,
-    );
-
-    const quickLogButton = await waitFor(() => {
-      return screen.getByRole('button', {
-        name: i18n.t(quickLogAction.labelKey),
-      });
-    });
-
-    expect(quickLogButton.props.accessibilityHint).toBe(
-      i18n.t(quickLogAction.accessibilityHintKey),
-    );
-
-    fireEvent.press(quickLogButton);
-
-    expect(mockRouterPush).toHaveBeenCalledTimes(1);
-    expect(mockRouterPush).toHaveBeenCalledWith(quickLogAction.href);
-  });
-
-  it('limits the Quick Log FAB to Diary and Pet log surfaces and hides it while snackbar is active', async () => {
-    mockPathname = '/more';
-
-    const more = render(
       <AppProviders>
         <TabLayout />
       </AppProviders>,
@@ -231,65 +198,7 @@ describe('TabLayout', () => {
     await waitFor(() => {
       expect(visibleTabScreens().length).toBe(primaryTabs.length);
     });
-    expect(screen.queryByRole('button', {
-      name: i18n.t(quickLogAction.labelKey),
-    })).toBeNull();
-    more.unmount();
-
-    mockPathname = '/pet';
-    render(
-      <AppProviders>
-        <TabLayout />
-      </AppProviders>,
-    );
-
-    expect(await screen.findByRole('button', {
-      name: i18n.t(quickLogAction.labelKey),
-    })).toBeTruthy();
-  });
-
-  it('hides the Quick Log FAB while a snackbar is active', async () => {
-    mockPathname = '/diary';
-
-    render(
-      <AppProviders>
-        <TabLayout />
-        <ActiveSnackbarProbe />
-      </AppProviders>,
-    );
-
-    expect(await screen.findByText('Saved')).toBeTruthy();
-    expect(screen.queryByRole('button', {
-      name: i18n.t(quickLogAction.labelKey),
-    })).toBeNull();
-  });
-
-  it('positions Quick Log above the tab bar without covering tab hit areas on compact phones', async () => {
-    render(
-      <AppProviders>
-        <TabLayout />
-      </AppProviders>,
-    );
-
-    const quickLogButton = await waitFor(() => {
-      return screen.getByRole('button', {
-        name: i18n.t(quickLogAction.labelKey),
-      });
-    });
-
-    const styleProp = quickLogButton.props.style;
-    const flattenedStyle = StyleSheet.flatten(
-      typeof styleProp === 'function' ? styleProp({ pressed: false }) : styleProp,
-    );
-
-    expect(flattenedStyle.position).toBe('absolute');
-    expect(flattenedStyle.right).toBe(tokens.space[4]);
-    expect(flattenedStyle.left).toBeUndefined();
-    expect(flattenedStyle.marginLeft).toBeUndefined();
-    expect(flattenedStyle.bottom).toBeGreaterThanOrEqual(
-      tokens.layout.tabBarHeight +
-        tokens.component.fab.size / 2 +
-        tokens.layout.tapGapMin,
-    );
+    expect(screen.getByTestId('capsule-tab-bar')).toBeTruthy();
+    expect(mockCapsuleTabBar).toHaveBeenCalledTimes(1);
   });
 });

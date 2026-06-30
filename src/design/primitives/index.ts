@@ -9,6 +9,7 @@ export { AppIcon, type AppIconName, type AppIconProps } from '@/design/primitive
 export { Avatar, type AvatarProps, type AvatarSize } from '@/design/primitives/Avatar';
 export { Button, type ButtonProps, type ButtonVariant } from '@/design/primitives/Button';
 export { Card, type CardProps, type CardVariant } from '@/design/primitives/Card';
+export { CapsuleTabBar } from '@/design/primitives/CapsuleTabBar';
 export { EmptyState, type EmptyStateProps } from '@/design/primitives/EmptyState';
 export { FAB } from '@/design/primitives/FAB';
 export {

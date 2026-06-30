@@ -125,6 +125,11 @@ export const plannedRouteFiles = [
     implementationStage: 'existing',
   },
   {
+    route: '/quick-log/schedule',
+    file: 'app/(sheets)/quick-log/schedule/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
     route: '/pet/health-record-edit',
     file: 'app/(modals)/pet/health-record-edit/index.tsx',
     implementationStage: 'existing',
