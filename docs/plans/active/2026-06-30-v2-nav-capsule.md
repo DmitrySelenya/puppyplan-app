@@ -383,6 +383,28 @@ Pet empty-state, dev-copy leaks ("Adjust the five Add buttons", "Deferred" rows)
 > Paste this to start the implementation session.
 
 ```
+You are RESUMING the PuppyPlan V2 redesign on branch `redesign-v2-nav-codex-wip`.
+You stopped mid-task last time when you hit usage limits, leaving uncommitted changes in
+your working tree. Before writing ANY code, orient yourself — DO NOT just continue:
+
+  1. Run `git status` and `git log --oneline -8`. The branch HEAD already contains your
+     earlier mid-flight work, checkpointed as commit 501d670 ("checkpoint: V2 nav redesign
+     WIP"), PLUS newer refinements committed on top of it:
+       - c0bcbad  Terracotta Clay design tokens
+       - d068fb1  legacy tabs hidden via href:null (app/(tabs)/_layout.tsx) + test
+       - a11cb41  tightened nav spec + this capsule plan
+       - b112c5a  expo packages aligned to SDK 55 expected versions
+       - ceb0973  screen-polish backlog
+  2. If your working tree still has leftover uncommitted changes from the interrupted run,
+     DO NOT commit or push them on top. They are STALE — older than the commits above — and
+     committing them would REVERT those fixes (tokens, app/(tabs)/_layout.tsx, package.json).
+     The committed branch is the source of truth. Inspect with `git status` / `git diff`;
+     your slice is already captured by 501d670. Discard the stale working-tree changes
+     (`git restore .`) so you start from a clean tree at HEAD. Only preserve a change if a
+     diff proves it is genuinely new work not present in any commit above — if unsure, ask.
+  3. Do not push. Pushing/PRs are the human's call (Release Guardrail).
+  4. Only once your working tree is clean and matches HEAD do you start the plan below.
+
 Implement docs/plans/active/2026-06-30-v2-nav-capsule.md task-by-task, TDD.
 
 Read first, in order:
@@ -405,12 +427,20 @@ Rules (non-negotiable):
 
 STOP after Task 5 and post the simulator screenshots for review before continuing to Task 7.
 
-Running the app (the native build currently fails on an expo-sqlite pod mismatch; resync first):
-  cd ios && pod install && cd ..        # resync pods to node_modules
-  npx expo run:ios                       # full build + launch
-If the native build is still blocked, use the JS-over-Metro path: `npx expo start`, then
-launch the already-installed PuppyPlan.app in the booted simulator; it loads current JS.
-Sign in with "Use debug account" (the Supabase Dev project must be un-paused).
+Running the app — IMPORTANT, the from-scratch native build is currently BLOCKED, do not burn
+limits on it:
+  - expo-sqlite does not compile under this machine's Xcode 26.2 / Swift 6.2.3 (missing
+    session-extension symbols + an UnsafePointer.baseAddress source mismatch). `pod install`
+    and `expo install --fix` were already done and did NOT fix it — it's an upstream issue.
+  - Use the JS-over-Metro path instead (this whole plan is JS/Reanimated, no new native modules):
+      npx expo start
+    then launch the already-installed PuppyPlan.app in the booted iOS simulator — it loads the
+    current JS bundle from Metro. Sign in with "Use debug account".
+  - The Supabase Dev project (olymqppxsadsxfrcyskh) must be un-paused/awake for sign-in to work.
+  - If you add a NEW native module at any point, the native build must be fixed first — STOP and
+    flag it rather than trying to work around the sqlite failure.
+
+After this plan, the next work is docs/plans/active/2026-06-30-v2-screen-polish-backlog.md.
 ```
 
 ---
