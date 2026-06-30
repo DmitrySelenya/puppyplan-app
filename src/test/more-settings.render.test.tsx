@@ -8,6 +8,7 @@ import { HouseholdAccessScreen } from '@/features/more/screens/HouseholdAccessSc
 import { ConnectedMoreScreen, MoreScreen } from '@/features/more/screens/MoreScreen';
 import { NotificationPreferencesScreen } from '@/features/more/screens/NotificationPreferencesScreen';
 import { PuppyPlanPlusScreen } from '@/features/more/screens/PuppyPlanPlusScreen';
+import { SitterModeScreen } from '@/features/more/screens/SitterModeScreen';
 import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -85,6 +86,7 @@ describe('More settings entries', () => {
             openQuickTrackers={jest.fn()}
             openHelp={jest.fn()}
             openPlus={jest.fn()}
+            openSitterMode={jest.fn()}
             openTimeline={jest.fn()}
             puppy={puppy}
           />
@@ -102,7 +104,7 @@ describe('More settings entries', () => {
 
     expect(screen.getByText(i18n.t('more.sections.sharing'))).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('more.rows.family') })).toBeTruthy();
-    expect(screen.getByText(i18n.t('more.rows.trainer-sitter'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.rows.trainer-sitter') })).toBeTruthy();
 
     expect(screen.getByText(i18n.t('more.sections.records'))).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('more.rows.timeline') })).toBeTruthy();
@@ -120,8 +122,8 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', { name: i18n.t('more.rows.puppyplan-plus') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
 
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(4);
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(4);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(3);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(3);
 
     const scrollView = result.UNSAFE_getByType(ScrollView);
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
@@ -131,10 +133,11 @@ describe('More settings entries', () => {
     );
   });
 
-  it('opens profile, quick tracker, household, notification, help, and Plus settings from the More hub', () => {
+  it('opens profile, quick tracker, household, sitter mode, notification, help, and Plus settings from the More hub', () => {
     const openHousehold = jest.fn();
     const openPuppyProfile = jest.fn();
     const openQuickTrackers = jest.fn();
+    const openSitterMode = jest.fn();
     const openNotifications = jest.fn();
     const openHelp = jest.fn();
     const openPlus = jest.fn();
@@ -150,6 +153,7 @@ describe('More settings entries', () => {
             openPlus={openPlus}
             openPuppyProfile={openPuppyProfile}
             openQuickTrackers={openQuickTrackers}
+            openSitterMode={openSitterMode}
             openTimeline={jest.fn()}
           />
         </AuthProvider>
@@ -166,6 +170,9 @@ describe('More settings entries', () => {
       name: i18n.t('more.rows.family'),
     }));
     fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.rows.trainer-sitter'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.rows.notifications'),
     }));
     fireEvent.press(screen.getByRole('button', {
@@ -178,6 +185,7 @@ describe('More settings entries', () => {
     expect(openPuppyProfile).toHaveBeenCalledTimes(1);
     expect(openQuickTrackers).toHaveBeenCalledTimes(1);
     expect(openHousehold).toHaveBeenCalledTimes(1);
+    expect(openSitterMode).toHaveBeenCalledTimes(1);
     expect(openNotifications).toHaveBeenCalledTimes(1);
     expect(openHelp).toHaveBeenCalledTimes(1);
     expect(openPlus).toHaveBeenCalledTimes(1);
@@ -386,6 +394,36 @@ describe('More settings entries', () => {
     expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.body')).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('button', { name: i18n.t('sharing.family.manage.invite-cta') })).toBeTruthy();
     expect(screen.queryByText(/@/)).toBeNull();
+  });
+
+  it('renders the Trusted Sitter mode owner shell anatomy', () => {
+    render(
+      <AppProviders>
+        <SitterModeScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('sharing.sitter.screen-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.subtitle'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.subtitle-body', {
+      name: 'Caregiver',
+    }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.section-who'))).toBeTruthy();
+    expect(screen.getAllByText('Caregiver').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(i18n.t('sharing.family.manage.badge-caregiver')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(i18n.t('sharing.sitter.section-period'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.period-start'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.period-end'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.section-checklist'))).toBeTruthy();
+    expect(screen.getAllByTestId('sitter-mode-checklist-row')).toHaveLength(5);
+    expect(screen.getByText(i18n.t('sharing.sitter.checklist-feeding'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.checklist-training'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.section-what-sitter-sees'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.sitter-preview-bullets.0'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.sitter-excluded'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.disclosure'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('sharing.sitter.enable-cta') })).toBeTruthy();
+    expect(screen.queryByText(/@|token/i)).toBeNull();
   });
 
   it('renders the PuppyPlan Plus shell anatomy without live billing', () => {

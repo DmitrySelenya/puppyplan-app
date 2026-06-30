@@ -130,7 +130,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Trainer preview — included / excluded (§3.3.3 → 8.2)
 - [x] ✅ Trainer accepted read-only view (§3.3.5 → 8.3)
 - [x] ✅ Revoked / expired share (§3.3.6 → 10.1)
-- [ ] 🟡 Trusted Sitter mode — enable / checklist / completion / auto-expire (§3.2) — partial (role + "sitter: Anya" present)
+- [x] ✅ Trusted Sitter mode owner setup shell (§3.2) — More Trainer/Sitter now opens
+      `/settings/sitter-mode`, with caregiver row, time window, checklist, visibility preview, and
+      enable CTA. Live enable mutation, active status, completion push, auto-expire, exit confirm,
+      and Stage 4 screenshots remain open.
 - [x] ✅ Accept-invite flow, caregiver-side (§3.1.4) — `/invite/[token]` native shell
       implemented: inviter/puppy context, caregiver role, included/excluded preview, disclosure,
       Accept/Decline actions, and token-safe rendering. Live token lookup/accept/decline remain open.
@@ -1050,6 +1053,9 @@ GREEN / regression evidence:
 - `npm run typecheck` — PASS.
 - `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n budgets, scaffold guardrails,
   tokens, privacy scan, and text hygiene.
+- `npm run check` — PASS: 67 Jest suites / 491 tests, node tests 118/118, scaffold, tokens,
+  privacy scan, and text hygiene all green. Existing non-failing reduced-motion `act(...)` warning
+  in `src/test/screen-header.render.test.tsx` is unrelated to this slice.
 
 Implementation notes:
 - `HealthStageStrip` now renders `health-stage-step` cards with `AppIcon`, visible labels, tone fills,
@@ -1760,7 +1766,50 @@ Implementation notes:
   locked Manage household anatomy. Live member/invite queries, role changes, access removal,
   resend/revoke actions, and confirm sheets remain deferred.
 
+### 33. Trusted Sitter Mode Owner Shell Slice (§3.2)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/07-sharing-access-cards.md`.
+- Source: `DESIGN.md` §3.2.1 Enable Sitter Mode.
+- Route: `/settings/sitter-mode` from the More Trainer / sitter row.
+
+Acceptance:
+- AC-SITTER-MODE-1: More Trainer / sitter row is active and opens the sitter mode settings route.
+- AC-SITTER-MODE-2: the route renders a native owner-side sitter setup shell with title, hero copy,
+  caregiver row, time window rows, five checklist rows, visibility preview, disclosure, and enable CTA.
+- AC-SITTER-MODE-3: checklist selection and visibility states are non-color-only through visible icons.
+- AC-SITTER-MODE-4: the shell uses existing design primitives, typed EN/RU/ES i18n keys, and no raw
+  email, invite token, provider, or private contact data.
+- AC-SITTER-MODE-5: route/navigation contract, shell i18n, and scaffold guardrails include
+  `/settings/sitter-mode`.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts`
+  failed as expected before implementation because `SitterModeScreen` did not exist and
+  `/settings/sitter-mode` was absent from `settingsRoutes` / `plannedRouteFiles`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts`
+  — PASS: 2 suites, 22 tests.
+- `npm run typecheck` — PASS.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n budgets, scaffold guardrails,
+  tokens, privacy scan, and text hygiene.
+
+Implementation notes:
+- Added `src/features/more/screens/SitterModeScreen.tsx`.
+- Added route file `app/(modals)/settings/sitter-mode/index.tsx` and modal stack registration.
+- Updated `MoreScreen` with `openSitterMode` and route wiring from `app/(tabs)/more/index.tsx`.
+- Updated navigation contracts and scaffold guardrails to include `/settings/sitter-mode`.
+- Stage 4 remains open: `/settings/sitter-mode` still needs native screenshot comparison against
+  the locked Trusted Sitter anatomy. Real caregiver selection, date/time picker, checklist editing,
+  enable mutation, active owner status, completion push, auto-expire, and exit confirm remain deferred.
+
 ## Changelog
+- 2026-06-30: Added the Trusted Sitter mode owner setup shell: More Trainer / sitter now opens
+  `/settings/sitter-mode`, with caregiver row, time window rows, checklist anatomy, included/excluded
+  visibility preview, disclosure, and enable CTA. Live sitter data/mutations, owner active status,
+  completion push, auto-expire, exit confirm, and Stage 4 screenshots remain open.
 - 2026-06-30: Added the Manage Household shell: More Family now opens `/settings/household`, with
   owner/caregiver rows, pending invite row, role/status badges, overflow affordances, privacy-safe
   invite labeling, and Invite CTA. Live member queries, role changes, removal, invite actions,

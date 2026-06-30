@@ -14,6 +14,9 @@ export default function MoreRoute() {
       openHousehold={() => {
         router.push('/settings/household');
       }}
+      openSitterMode={() => {
+        router.push('/settings/sitter-mode');
+      }}
       openHelp={() => {
         router.push('/settings/help');
       }}

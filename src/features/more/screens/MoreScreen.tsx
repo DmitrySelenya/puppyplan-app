@@ -28,6 +28,7 @@ export type MoreScreenProps = Readonly<{
   openPlus?: () => void;
   openPuppyProfile?: () => void;
   openQuickTrackers?: () => void;
+  openSitterMode?: () => void;
   openTimeline: () => void;
   puppy?: PuppyProfile | null;
   puppySettingsState?: PuppySettingsAccessState;
@@ -53,6 +54,7 @@ export function MoreScreen({
   openPlus,
   openPuppyProfile,
   openQuickTrackers,
+  openSitterMode,
   openTimeline,
   puppy = null,
   puppySettingsState,
@@ -85,7 +87,13 @@ export function MoreScreen({
           title={t('more.rows.family')}
           variant="settings"
         />
-        <DeferredListRow icon="lock" title={t('more.rows.trainer-sitter')} />
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="personCluster" />}
+          onPress={openSitterMode}
+          title={t('more.rows.trainer-sitter')}
+          variant="settings"
+        />
       </SettingsSection>
       <SettingsSection title={t('more.sections.records')}>
         <ListRow

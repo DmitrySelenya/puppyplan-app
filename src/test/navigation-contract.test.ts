@@ -49,6 +49,7 @@ describe('navigation contract', () => {
       '/settings/puppy-profile',
       '/settings/quick-trackers',
       '/settings/household',
+      '/settings/sitter-mode',
       '/settings/notifications',
       '/settings/help',
     ]);
@@ -126,6 +127,11 @@ describe('navigation contract', () => {
         expect.objectContaining({
           route: '/settings/household',
           file: 'app/(modals)/settings/household/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/settings/sitter-mode',
+          file: 'app/(modals)/settings/sitter-mode/index.tsx',
           implementationStage: 'existing',
         }),
         expect.objectContaining({
