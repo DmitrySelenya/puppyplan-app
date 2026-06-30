@@ -55,6 +55,10 @@ export default function TabLayout() {
             tabBarAccessibilityLabel: t(moreTab.accessibilityLabelKey),
           }}
         />
+        {/* Legacy redirect routes (today→diary, health→pet): keep them navigable for old
+            links, but hide from the tab bar so only the three primary tabs render. */}
+        <Tabs.Screen name="today/index" options={{ href: null }} />
+        <Tabs.Screen name="health/index" options={{ href: null }} />
       </Tabs>
       {showQuickLogFab ? (
         <FAB

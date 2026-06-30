@@ -20,6 +20,7 @@ type TabBarIconArgs = {
 type ScreenRegistration = {
   name: string;
   options?: {
+    href?: string | null;
     tabBarAccessibilityLabel?: string;
     tabBarIcon?: (args: TabBarIconArgs) => ReactNode;
     title?: string;
@@ -81,6 +82,15 @@ jest.mock('expo-router', () => {
   };
 });
 
+// Legacy redirect routes (today/index, health/index) are registered with
+// `href: null` so they stay navigable for old links but never render as tabs.
+// Assertions about the tab bar run against the visible set only.
+const hiddenLegacyRoutes = ['today/index', 'health/index'];
+
+function visibleTabScreens() {
+  return mockTabScreens.filter((tabScreen) => tabScreen.options?.href !== null);
+}
+
 describe('TabLayout', () => {
   beforeEach(async () => {
     mockRouterPush.mockClear();
@@ -98,12 +108,20 @@ describe('TabLayout', () => {
     );
 
     await waitFor(() => {
-      expect(mockTabScreens.map((screen) => screen.name)).toEqual(
+      expect(visibleTabScreens().map((screen) => screen.name)).toEqual(
         primaryTabs.map((tab) => tab.routeName),
       );
     });
-    expect(mockTabScreens.map((screen) => screen.options?.title)).toEqual(
+    expect(visibleTabScreens().map((screen) => screen.options?.title)).toEqual(
       primaryTabs.map((tab) => i18n.t(tab.labelKey)),
+    );
+
+    // Legacy redirect routes must be registered but hidden from the tab bar.
+    const hidden = mockTabScreens.filter(
+      (tabScreen) => tabScreen.options?.href === null,
+    );
+    expect(hidden.map((tabScreen) => tabScreen.name).sort()).toEqual(
+      [...hiddenLegacyRoutes].sort(),
     );
   });
 
@@ -115,11 +133,11 @@ describe('TabLayout', () => {
     );
 
     await waitFor(() => {
-      expect(mockTabScreens.length).toBe(primaryTabs.length);
+      expect(visibleTabScreens().length).toBe(primaryTabs.length);
     });
 
     const iconNameByRoute = Object.fromEntries(
-      mockTabScreens.map((tabScreen) => {
+      visibleTabScreens().map((tabScreen) => {
         const icon = tabScreen.options?.tabBarIcon?.({
           color: tokens.color.text.secondary,
           focused: false,
@@ -148,7 +166,7 @@ describe('TabLayout', () => {
     );
 
     await waitFor(() => {
-      expect(mockTabScreens.length).toBe(primaryTabs.length);
+      expect(visibleTabScreens().length).toBe(primaryTabs.length);
     });
 
     expect(mockScreenOptions?.tabBarActiveTintColor).toBe(tokens.color.primary[700]);
@@ -156,7 +174,7 @@ describe('TabLayout', () => {
       tokens.color.text.secondary,
     );
 
-    for (const tabScreen of mockTabScreens) {
+    for (const tabScreen of visibleTabScreens()) {
       const renderIcon = tabScreen.options?.tabBarIcon;
       expect(renderIcon).toBeDefined();
 
@@ -211,7 +229,7 @@ describe('TabLayout', () => {
     );
 
     await waitFor(() => {
-      expect(mockTabScreens.length).toBe(primaryTabs.length);
+      expect(visibleTabScreens().length).toBe(primaryTabs.length);
     });
     expect(screen.queryByRole('button', {
       name: i18n.t(quickLogAction.labelKey),
