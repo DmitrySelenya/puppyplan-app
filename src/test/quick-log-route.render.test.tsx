@@ -320,6 +320,58 @@ describe('QuickLogRoute', () => {
     expect(mutation.mutate).not.toHaveBeenCalled();
   });
 
+  it('renders pending mutation events as inline Quick Log rows before cached rows refresh', () => {
+    const mutation = createMutationPort();
+    const clientEventId = 'evt_00000000-0000-4000-8000-000000003901';
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: '00000000-0000-4000-8000-000000003001',
+        householdRole: 'owner',
+        puppyId: '00000000-0000-4000-8000-000000003002',
+        selectedTrackerIds: ['walk', 'feeding'],
+        todayDate: '2026-06-09',
+        userId: '00000000-0000-4000-8000-000000003003',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [{
+        clientEventId,
+        eventType: 'feeding',
+        requestId: 'quick-log:2026-06-09:pending-route',
+        trackerId: 'feeding',
+        type: 'started',
+      }],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    expect(screen.getByTestId('quick-log-local-event-pending-card')).toBeTruthy();
+    expect(screen.getByLabelText(`${i18n.t('quick-log.trackers.feeding')}. ${i18n.t('quick-log.pending.label')}`)).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.snackbar.undo'),
+    }));
+
+    expect(mutation.undo).toHaveBeenCalledWith({
+      clientEventId,
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000003001',
+      puppyId: '00000000-0000-4000-8000-000000003002',
+      todayDate: '2026-06-09',
+    });
+  });
+
   it('blocks viewer care contexts before an optimistic Quick Log write can be queued', () => {
     const mutation = createMutationPort();
     mockUseActiveCareContext.mockReturnValue({

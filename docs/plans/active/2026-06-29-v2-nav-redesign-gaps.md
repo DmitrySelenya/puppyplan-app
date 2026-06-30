@@ -84,9 +84,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Snackbar / Undo (§2.3.8) — native route anatomy implemented: after-tap success
       snackbar, polite live region, Undo/Add details actions, and `saveSuccess` feedback contract.
       Stage 4 native screenshot comparison remains open for the full Quick Log route.
-- [ ] 🟡 Pending / failed / retry (§2.3.9) — failed-save inline row anatomy implemented
-      with retry/discard; snackbar replacement uses error feedback. Pending route coverage and
-      Stage 4 still open.
+- [x] ✅ Pending / failed / retry (§2.3.9) — failed-save inline row anatomy implemented
+      with retry/discard; snackbar replacement uses error feedback; pending mutation events now
+      render inline before cached rows refresh. Stage 4 still open.
 - [x] ✅ Duplicate warning (§2.3.10) — native route anatomy implemented: warning tint,
       warning glyph, localized save-anyway/cancel actions, and no mutation before explicit confirm.
       Stage 4 native screenshot comparison remains open for the full Quick Log route.
@@ -1970,7 +1970,55 @@ Notes:
   the stale cross-cutting "old nav still applied" matrix row and the explicitly deferred Pet/Health
   depth rows.
 
+### 37. Quick Log Pending Route Coverage (§2.3.9)
+
+Stage-0 lock:
+- Source spec card: `docs/design/v1/specs/04-quick-log-routines-reminders.md`.
+- Source canon: `DESIGN.md` §2.3.9 Pending/failed/retry.
+- Route/component: `/quick-log`, `QuickLogShell`, `QuickLogLocalEvents`.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR were not context-isolated.
+
+Acceptance:
+- AC-QL-2.3.9-PENDING-1: when the route receives a `started` Quick Log mutation event before
+  `useQuickLogCachedRows` refreshes, the sheet renders an inline pending row for the affected tracker.
+- AC-QL-2.3.9-PENDING-2: the pending row uses the existing localized pending label and
+  `quick-log-local-event-pending-card` anatomy hook.
+- AC-QL-2.3.9-PENDING-3: the inline pending Undo action calls the mutation undo port with the active
+  care context (`clientEventId`, `eventType`, `householdId`, `puppyId`, `todayDate`).
+- AC-QL-2.3.9-PENDING-4: mutation-event rows merge with cached local rows by `clientEventId` so the
+  route does not duplicate the same pending/failed event.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/quick-log-route.render.test.tsx`
+  failed as expected before implementation: `Unable to find an element with testID:
+  quick-log-local-event-pending-card`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/quick-log-route.render.test.tsx`
+  — PASS: 1 suite, 8 tests.
+- `npm run test:unit -- --runTestsByPath src/test/quick-log-route.render.test.tsx src/test/quick-log-sheet.render.test.tsx src/test/quick-log-local-events.render.test.tsx`
+  — PASS: 3 suites, 27 tests.
+- `npm run typecheck` — PASS.
+- `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n budgets, scaffold
+  guardrails, token drift check, privacy scan, and text hygiene.
+- `npm run check` — PASS: lint, typecheck, 67 Jest suites / 497 tests, node tests, scaffold
+  checks, tokens, privacy scan, and text hygiene. Output still includes the existing React
+  `act(...)` warning in `screen-header.render.test.tsx`; no failures.
+
+Implementation notes:
+- `src/features/quick-log/screens/QuickLogShell.tsx` now maps `started` mutation events to
+  pending `QuickLogLocalEventView` rows using the active care context and existing tracker i18n keys.
+- The same mapping keeps failed mutation events on the failed-row path if cache rows have not refreshed.
+- Cached local rows and mutation-event rows are merged by `clientEventId`, with the latest mutation event
+  overriding a stale cached row for the same event.
+- Stage 4 remains open: `/quick-log` pending/failed states still need native screenshot comparison
+  against the locked Quick Log state artboards before the full route can be marked done.
+
 ## Changelog
+- 2026-07-01: Closed Quick Log §2.3.9 pending route coverage: `started` mutation events now render
+  inline pending rows before cached rows refresh, reuse existing pending-row anatomy/i18n, and wire
+  Undo through the active care context. RED/GREEN route tests and adjacent Quick Log render suites pass;
+  Stage 4 screenshot comparison remains open.
 - 2026-07-01: Reconciled the cross-cutting V2 TabBar row and Pet deferred-scope rows with current
   code/spec evidence: `app/(tabs)` now delegates to `CapsuleTabBar`, Today/Health aliases are hidden,
   V1 FAB tab-layout assertions are retired, the focused nav suites pass 28/28, and multi-pet,

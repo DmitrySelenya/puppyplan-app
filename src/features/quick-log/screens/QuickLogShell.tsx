@@ -114,6 +114,55 @@ export function createQuickLogRecentEvents(
   }).sort((left, right) => right.occurredAtMs - left.occurredAtMs);
 }
 
+function createQuickLogMutationLocalEventViews(
+  mutationEvents: readonly QuickLogMutationEvent[],
+  input: Readonly<{
+    careContext: QuickLogCareContext | null;
+    t: AppTranslate;
+  }>,
+): readonly QuickLogLocalEventView[] {
+  if (input.careContext === null || mutationEvents.length === 0) {
+    return [];
+  }
+
+  const eventsByClientEventId = new Map<string, QuickLogLocalEventView>();
+
+  for (const event of mutationEvents) {
+    eventsByClientEventId.set(event.clientEventId, {
+      clientEventId: event.clientEventId,
+      eventType: event.eventType,
+      householdId: input.careContext.householdId,
+      puppyId: input.careContext.puppyId,
+      state: event.type === 'failed' ? event.state : 'pending_local',
+      todayDate: input.careContext.todayDate,
+      trackerName: input.t(getQuickLogTrackerLabelKey(event.trackerId)),
+    });
+  }
+
+  return [...eventsByClientEventId.values()];
+}
+
+function mergeQuickLogLocalEventViews(
+  localEvents: readonly QuickLogLocalEventView[],
+  mutationLocalEvents: readonly QuickLogLocalEventView[],
+): readonly QuickLogLocalEventView[] {
+  if (mutationLocalEvents.length === 0) {
+    return localEvents;
+  }
+
+  const eventsByClientEventId = new Map<string, QuickLogLocalEventView>();
+
+  for (const event of localEvents) {
+    eventsByClientEventId.set(event.clientEventId, event);
+  }
+
+  for (const event of mutationLocalEvents) {
+    eventsByClientEventId.set(event.clientEventId, event);
+  }
+
+  return [...eventsByClientEventId.values()];
+}
+
 function createRecentEventPayload(
   row: QuickLogCachedEventRow,
   trackerId: QuickLogTrackerId,
@@ -208,6 +257,17 @@ function QuickLogShellContent({
   const selectedTrackerIds = readyCareContext?.selectedTrackerIds?.length
     ? readyCareContext.selectedTrackerIds
     : defaultQuickLogTrackerIds;
+  const mutationLocalEvents = useMemo(
+    () => createQuickLogMutationLocalEventViews(mutationEvents, {
+      careContext: readyCareContext,
+      t,
+    }),
+    [mutationEvents, readyCareContext, t],
+  );
+  const visibleLocalEvents = useMemo(
+    () => mergeQuickLogLocalEventViews(localEvents, mutationLocalEvents),
+    [localEvents, mutationLocalEvents],
+  );
 
   if (isViewOnly) {
     return (
@@ -333,7 +393,7 @@ function QuickLogShellContent({
               ))}
             </Stack>
             <QuickLogLocalEvents
-              events={localEvents}
+              events={visibleLocalEvents}
               onDelete={controller.deleteLocal}
               onRetry={controller.retry}
               onUndo={controller.undoLocal}
