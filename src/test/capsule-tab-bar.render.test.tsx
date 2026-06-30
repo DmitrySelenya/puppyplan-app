@@ -139,6 +139,20 @@ describe('CapsuleTabBar', () => {
     expect(addStyle.zIndex).toBeGreaterThan(chooserStyle.zIndex);
   });
 
+  it('keeps a non-accessible capsule slot mounted so the morphed Add stays in place', () => {
+    renderBar();
+
+    expect(screen.getByTestId('nav-capsule-slot')).toBeTruthy();
+    expect(screen.getByTestId('nav-add-slot')).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+
+    expect(screen.getByTestId('nav-capsule-slot')).toBeTruthy();
+    expect(screen.getByTestId('nav-add-slot')).toBeTruthy();
+    expect(screen.queryByTestId('nav-capsule')).toBeNull();
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
+  });
+
   it('morphs the original plus glyph instead of rotating a close glyph back into a plus', () => {
     const rendered = renderBar();
 

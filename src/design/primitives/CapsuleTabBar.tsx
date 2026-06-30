@@ -32,6 +32,11 @@ const TAB_ICON = {
   'more/index': 'more',
 } as const satisfies Record<(typeof primaryTabs)[number]['routeName'], AppIconName>;
 
+const primaryTabCount = primaryTabs.length;
+const capsuleSlotMinWidth =
+  (tokens.layout.tapTargetThumbZone * primaryTabCount) +
+  (tokens.space[1] * (primaryTabCount - 1)) +
+  (tokens.space[2] * 2);
 const emphasizedEasing = easingFromCubicBezierToken(tokens.motion.easing.emphasized);
 const navLayer = {
   chooser: tokens.elevation[1].androidElevation,
@@ -90,77 +95,86 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
     <View
       pointerEvents="box-none"
       style={[styles.root, { paddingBottom: insets.bottom + tokens.space[2] }]}>
-      {!open ? (
-        <View
-          accessible
-          accessibilityRole="tablist"
-          style={styles.capsule}
-          testID="nav-capsule">
-          {primaryTabs.map((tab) => {
-            const selected = tab.routeName === focusedRouteName;
-            const tone = selected ? 'link' : 'secondary';
-            const color = selected
-              ? tokens.color.primary[700]
-              : tokens.color.text.secondary;
+      <View
+        pointerEvents={open ? 'none' : 'auto'}
+        style={styles.capsuleSlot}
+        testID="nav-capsule-slot">
+        {!open ? (
+          <View
+            accessible
+            accessibilityRole="tablist"
+            style={styles.capsule}
+            testID="nav-capsule">
+            {primaryTabs.map((tab) => {
+              const selected = tab.routeName === focusedRouteName;
+              const tone = selected ? 'link' : 'secondary';
+              const color = selected
+                ? tokens.color.primary[700]
+                : tokens.color.text.secondary;
 
-            return (
-              <Touchable
-                accessibilityLabel={t(tab.labelKey)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected }}
-                key={tab.routeName}
-                minTarget="thumb"
-                onPress={() => {
-                  const route = state.routes.find((item) => item.name === tab.routeName);
-                  const event = route === undefined
-                    ? undefined
-                    : navigation.emit?.({
-                        canPreventDefault: true,
-                        target: route.key,
-                        type: 'tabPress',
-                      });
+              return (
+                <Touchable
+                  accessibilityLabel={t(tab.labelKey)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected }}
+                  key={tab.routeName}
+                  minTarget="thumb"
+                  onPress={() => {
+                    const route = state.routes.find((item) => item.name === tab.routeName);
+                    const event = route === undefined
+                      ? undefined
+                      : navigation.emit?.({
+                          canPreventDefault: true,
+                          target: route.key,
+                          type: 'tabPress',
+                        });
 
-                  if (event?.defaultPrevented !== true) {
-                    if (!selected) {
-                      void haptics.haptic('selection');
+                    if (event?.defaultPrevented !== true) {
+                      if (!selected) {
+                        void haptics.haptic('selection');
+                      }
+                      navigation.navigate(tab.routeName);
                     }
-                    navigation.navigate(tab.routeName);
-                  }
-                }}
-                style={styles.tab}>
-                <AppIcon
-                  color={color}
-                  filled={selected}
-                  name={TAB_ICON[tab.routeName]}
-                  size={tokens.component.tabBar.icon}
-                />
-                <AppText
-                  style={selected ? styles.activeLabel : undefined}
-                  tone={tone}
-                  variant="caption">
-                  {t(tab.labelKey)}
-                </AppText>
-              </Touchable>
-            );
-          })}
-        </View>
-      ) : null}
+                  }}
+                  style={styles.tab}>
+                  <AppIcon
+                    color={color}
+                    filled={selected}
+                    name={TAB_ICON[tab.routeName]}
+                    size={tokens.component.tabBar.icon}
+                  />
+                  <AppText
+                    style={selected ? styles.activeLabel : undefined}
+                    tone={tone}
+                    variant="caption">
+                    {t(tab.labelKey)}
+                  </AppText>
+                </Touchable>
+              );
+            })}
+          </View>
+        ) : null}
+      </View>
 
-      <Touchable
-        accessibilityLabel={open ? t('tabs.add-close') : t('tabs.add')}
-        accessibilityRole="button"
-        minTarget="thumb"
-        onPress={toggleAdd}
-        style={styles.add}
-        testID="nav-add">
-        <Animated.View style={addGlyphStyle}>
-          <AppIcon
-            color={tokens.color.text.onPrimary}
-            name="plus"
-            size={tokens.component.tabBar.icon + tokens.space[1]}
-          />
-        </Animated.View>
-      </Touchable>
+      <View
+        style={styles.addSlot}
+        testID="nav-add-slot">
+        <Touchable
+          accessibilityLabel={open ? t('tabs.add-close') : t('tabs.add')}
+          accessibilityRole="button"
+          minTarget="thumb"
+          onPress={toggleAdd}
+          style={styles.add}
+          testID="nav-add">
+          <Animated.View style={addGlyphStyle}>
+            <AppIcon
+              color={tokens.color.text.onPrimary}
+              name="plus"
+              size={tokens.component.tabBar.icon + tokens.space[1]}
+            />
+          </Animated.View>
+        </Touchable>
+      </View>
 
       {open ? (
         <Chooser
@@ -285,6 +299,11 @@ const styles = StyleSheet.create({
     zIndex: navLayer.add,
     ...elevationStyle(2),
   },
+  addSlot: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: navLayer.add,
+  },
   capsule: {
     alignSelf: 'center',
     backgroundColor: tokens.color.surface.raised,
@@ -294,6 +313,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space[2],
     paddingVertical: tokens.space[1],
     ...elevationStyle(2),
+  },
+  capsuleSlot: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: capsuleSlotMinWidth,
   },
   chooser: {
     ...StyleSheet.absoluteFillObject,
