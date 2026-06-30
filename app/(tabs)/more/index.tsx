@@ -17,6 +17,9 @@ export default function MoreRoute() {
       openNotifications={() => {
         router.push('/settings/notifications');
       }}
+      openPlus={() => {
+        router.push('/paywall');
+      }}
       openTimeline={() => {
         router.push('/timeline');
       }}

@@ -24,6 +24,7 @@ export type MoreScreenProps = Readonly<{
   canManagePuppySettings?: boolean;
   openHelp?: () => void;
   openNotifications?: () => void;
+  openPlus?: () => void;
   openPuppyProfile?: () => void;
   openQuickTrackers?: () => void;
   openTimeline: () => void;
@@ -47,6 +48,7 @@ export function MoreScreen({
   canManagePuppySettings = true,
   openHelp,
   openNotifications,
+  openPlus,
   openPuppyProfile,
   openQuickTrackers,
   openTimeline,
@@ -117,10 +119,13 @@ export function MoreScreen({
         />
       </SettingsSection>
       <ListGroup>
-        <DeferredListRow
-          icon="paw"
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="paw" />}
+          onPress={openPlus}
           subtitle={t('more.plus.subtitle')}
           title={t('more.rows.puppyplan-plus')}
+          variant="settings"
         />
       </ListGroup>
       <SignOutButton />

@@ -6,6 +6,7 @@ import { tokens } from '@/design/tokens';
 import { HelpSupportScreen } from '@/features/more/screens/HelpSupportScreen';
 import { ConnectedMoreScreen, MoreScreen } from '@/features/more/screens/MoreScreen';
 import { NotificationPreferencesScreen } from '@/features/more/screens/NotificationPreferencesScreen';
+import { PuppyPlanPlusScreen } from '@/features/more/screens/PuppyPlanPlusScreen';
 import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -81,6 +82,7 @@ describe('More settings entries', () => {
             openPuppyProfile={jest.fn()}
             openQuickTrackers={jest.fn()}
             openHelp={jest.fn()}
+            openPlus={jest.fn()}
             openTimeline={jest.fn()}
             puppy={puppy}
           />
@@ -113,11 +115,11 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('more.rows.about'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.about.version'))).toBeTruthy();
     expect(screen.queryByText(/beta/i)).toBeNull();
-    expect(screen.getByText(i18n.t('more.rows.puppyplan-plus'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.rows.puppyplan-plus') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
 
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(6);
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(6);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(5);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(5);
 
     const scrollView = result.UNSAFE_getByType(ScrollView);
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
@@ -132,6 +134,7 @@ describe('More settings entries', () => {
     const openQuickTrackers = jest.fn();
     const openNotifications = jest.fn();
     const openHelp = jest.fn();
+    const openPlus = jest.fn();
 
     render(
       <AppProviders>
@@ -140,6 +143,7 @@ describe('More settings entries', () => {
             canManagePuppySettings
             openHelp={openHelp}
             openNotifications={openNotifications}
+            openPlus={openPlus}
             openPuppyProfile={openPuppyProfile}
             openQuickTrackers={openQuickTrackers}
             openTimeline={jest.fn()}
@@ -160,11 +164,15 @@ describe('More settings entries', () => {
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.rows.help'),
     }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.rows.puppyplan-plus'),
+    }));
 
     expect(openPuppyProfile).toHaveBeenCalledTimes(1);
     expect(openQuickTrackers).toHaveBeenCalledTimes(1);
     expect(openNotifications).toHaveBeenCalledTimes(1);
     expect(openHelp).toHaveBeenCalledTimes(1);
+    expect(openPlus).toHaveBeenCalledTimes(1);
   });
 
   it('opens profile settings from the puppy summary card', () => {
@@ -338,5 +346,28 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', { name: i18n.t('more.help.contact-row') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.help.privacy-note'))).toBeTruthy();
     expect(screen.queryByText(/support@example/i)).toBeNull();
+  });
+
+  it('renders the PuppyPlan Plus shell anatomy without live billing', () => {
+    render(
+      <AppProviders>
+        <PuppyPlanPlusScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('paywall.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.subtitle'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.features.0'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.features.1'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.features.2'))).toBeTruthy();
+    expect(screen.getByRole('radio', { name: i18n.t('paywall.plan-yearly-a11y') })).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.plan-yearly'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.plan-monthly'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.plan-lifetime'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('paywall.primary') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('paywall.secondary') })).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.legal'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.soft-lock-note'))).toBeTruthy();
+    expect(screen.queryByText(/RevenueCat/i)).toBeNull();
   });
 });

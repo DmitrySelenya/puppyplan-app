@@ -1733,6 +1733,10 @@
   "paywall": {
     "title": "PuppyPlan Plus",
     "subtitle": "Acceso completo durante los primeros 90 días con tu cachorro.",
+    "sections": {
+      "features": "Incluido",
+      "plans": "Planes"
+    },
     "features": [
       "Diario, mascota, rutinas y acceso compartido",
       "Sigue añadiendo después de los 30 días",
@@ -1740,9 +1744,13 @@
     ],
     "plan-monthly": "Mensual · 8,99 $",
     "plan-yearly": "Anual · 39,99 $",
+    "plan-yearly-a11y": "Plan anual, 39 dólares 99 céntimos al año, seleccionado",
+    "plan-lifetime": "Pase puppyhood de por vida · 79-99 $ una vez",
     "primary": "Elegir plan",
     "secondary": "Restaurar compras",
     "legal": "Renovación automática. Puedes cancelar en la App Store.",
+    "soft-lock-title": "Después del periodo de acceso completo",
+    "soft-lock-note": "La lectura, exportación, privacidad, restaurar compras, cerrar sesión y enlaces existentes de trainer siguen disponibles.",
     "free-vs-plus": {
       "free": [
         "Días 0-30: acceso completo",

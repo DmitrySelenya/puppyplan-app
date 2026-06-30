@@ -173,7 +173,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
       topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
       Real ticket/email handoff and Stage 4 screenshots remain open.
-- [ ] 🟡 Full PuppyPlan Plus screen (features list + Restore purchases) — old board has it; freeze has shell only
+- [x] ✅ Full PuppyPlan Plus screen (features list + Restore purchases) — `/paywall` native shell
+      implemented: feature list, annual/monthly/lifetime plan rows, primary CTA, Restore purchases,
+      and soft-lock note. Live IAP/restore/purchase states and Stage 4 screenshots remain open.
 
 ### Onboarding / intake — DESIGN.md §2.1
 - [ ] 🟡 First-run variants — present in freeze (partial)
@@ -1603,6 +1605,11 @@ GREEN / regression evidence:
   — PASS: 2 suites, 16 tests.
 - `npm run test:scaffold` — PASS.
 - `git diff --check` — PASS.
+- `npm run check` — PASS: lint, typecheck, 67 Jest suites / 488 tests, node checks, scaffold
+  guardrails, token drift, privacy scan, and text hygiene. Note: the existing reduced-motion
+  `act(...)` console warning in `screen-header.render.test.tsx` remains non-failing and unrelated to
+  this slice.
+- `git diff --check` — PASS.
 - `npm run check` — PASS: lint, typecheck, 67 Jest suites / 486 tests, node checks, scaffold
   guardrails, token drift, privacy scan, and text hygiene. Note: the existing reduced-motion
   `act(...)` console warning in `screen-header.render.test.tsx` remains non-failing and unrelated to
@@ -1617,6 +1624,47 @@ Implementation notes:
 - Stage 4 remains open: `/settings/help` still needs a native screenshot comparison against the
   locked More support/help anatomy. Real support ticket creation, email composer handoff, and
   diagnostics upload remain deferred.
+
+### 30. PuppyPlan Plus Paywall Shell Slice (§4.4.7)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/06-5-puppyplan-plus-paywall.md`.
+- Source: `DESIGN.md` §4.4.7 plus Open Design V2 More/paywall board.
+- Route: `/paywall` from the More hub PuppyPlan Plus row.
+
+Acceptance:
+- AC-MORE-PLUS-1: More PuppyPlan Plus row is an active chevron row and opens the paywall modal shell.
+- AC-MORE-PLUS-2: paywall screen renders modal header, subtitle, three feature rows, annual/monthly/
+  lifetime plan rows, primary CTA, Restore purchases, legal copy, and soft-lock information.
+- AC-MORE-PLUS-3: annual plan selection is structural with radio/selected state, not color-only.
+- AC-MORE-PLUS-4: live IAP, product loading, restore, purchase, entitlement enforcement, and
+  RevenueCat/provider wiring remain absent in this shell slice.
+- AC-MORE-PLUS-5: route/navigation contract, shell i18n, and scaffold guardrails include `/paywall`.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts`
+  failed as expected before implementation because `PuppyPlanPlusScreen` was missing and `/paywall`
+  was absent from modal route and planned route contracts.
+- The same suite caught two anatomy/test-contract issues during GREEN: duplicate title copy in the
+  shell and a test expecting the selected plan as a button instead of a radio row.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts`
+  — PASS: 2 suites, 20 tests.
+- `npm run typecheck` — PASS.
+- `npm run test:unit -- --runTestsByPath src/test/i18n.test.ts src/test/app-shell.render.test.tsx`
+  — PASS: 2 suites, 16 tests.
+- `npm run test:scaffold` — PASS.
+
+Implementation notes:
+- Added `src/features/more/screens/PuppyPlanPlusScreen.tsx`.
+- Added route file `app/(modals)/paywall/index.tsx` and modal stack registration.
+- Updated `MoreScreen` with `openPlus`, active PuppyPlan Plus row, and route wiring from
+  `app/(tabs)/more/index.tsx`.
+- Updated navigation contracts and scaffold guardrails to include `/paywall`.
+- Stage 4 remains open: `/paywall` still needs native screenshot comparison against the locked
+  paywall anatomy. Loading/offline/error/pending purchase, real restore, active subscription, and
+  soft-lock enforcement states remain deferred.
 
 ## Changelog
 - 2026-06-29: Initial coverage/gap analysis from board `uXjVL0aEXPU=` (source) vs `uXjVHA5hn48=`
@@ -1778,3 +1826,7 @@ Implementation notes:
   screen renders topic shortcuts, diagnostics rows, contact affordance, and a privacy-safe support
   note with EN/RU/ES typed copy; navigation/scaffold contracts were updated, and full `npm run check`
   passed. Real support ticket/email handoff, diagnostics upload, and Stage 4 screenshots remain open.
+- 2026-06-30: Added the PuppyPlan Plus paywall shell slice: More now opens `/paywall`, the screen
+  renders feature rows, annual/monthly/lifetime plan rows, Choose plan, Restore purchases, legal copy,
+  and soft-lock availability note with EN/RU/ES typed copy; navigation/scaffold contracts were updated,
+  and full `npm run check` passed. Live IAP/restore/entitlement enforcement and Stage 4 screenshots remain open.

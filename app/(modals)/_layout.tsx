@@ -11,6 +11,7 @@ export default function ModalLayout() {
       <Stack.Screen name="settings/quick-trackers/index" />
       <Stack.Screen name="settings/notifications/index" />
       <Stack.Screen name="settings/help/index" />
+      <Stack.Screen name="paywall/index" />
     </Stack>
   );
 }

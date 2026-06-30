@@ -27,6 +27,7 @@ assert.equal(
 );
 
 assert.equal(modalRoutes.includes(quickLogAction.href), true, 'Quick Log must be a modal route');
+assert.equal(modalRoutes.includes('/paywall'), true, 'PuppyPlan Plus must be a modal paywall shell');
 
 assert.deepEqual(
   settingsRoutes,
@@ -87,6 +88,7 @@ const routeFiles = [
   'app/(tabs)/health/index.tsx',
   'app/(tabs)/more/index.tsx',
   'app/(sheets)/quick-log/index.tsx',
+  'app/(modals)/paywall/index.tsx',
   'app/(modals)/settings/notifications/index.tsx',
   'app/(modals)/settings/help/index.tsx',
   'app/invite/[token].tsx',

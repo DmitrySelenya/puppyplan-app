@@ -60,6 +60,11 @@ describe('navigation contract', () => {
     expect(atlasRouteAliases['/more/puppy-profile']).toBe('/settings/puppy-profile');
   });
 
+  it('keeps the PuppyPlan Plus paywall as a modal shell, not a settings route', () => {
+    expect(modalRoutes).toContain('/paywall');
+    expect(settingsRoutes).not.toContain('/paywall');
+  });
+
   it('keeps legacy Today, Health, and Timeline paths as migration aliases, not primary tabs', () => {
     expect(atlasRouteAliases['/today']).toBe('/diary');
     expect(atlasRouteAliases['/health']).toBe('/pet');
@@ -115,6 +120,11 @@ describe('navigation contract', () => {
         expect.objectContaining({
           route: '/settings/help',
           file: 'app/(modals)/settings/help/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/paywall',
+          file: 'app/(modals)/paywall/index.tsx',
           implementationStage: 'existing',
         }),
         expect.objectContaining({
