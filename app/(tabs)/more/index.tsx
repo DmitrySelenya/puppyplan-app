@@ -17,6 +17,9 @@ export default function MoreRoute() {
       openSitterMode={() => {
         router.push('/settings/sitter-mode');
       }}
+      openShareableCards={() => {
+        router.push('/sharing/puppy-card');
+      }}
       openHelp={() => {
         router.push('/settings/help');
       }}

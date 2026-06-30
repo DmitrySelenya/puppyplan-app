@@ -1080,6 +1080,7 @@
     "card-preview": {
       "screen-title": "Предпросмотр",
       "footer": "Это всё, что увидит получатель.",
+      "a11y": "{title}. {footer}",
       "edit": "Изменить",
       "share": "Поделиться"
     },
@@ -1101,6 +1102,12 @@
       "row-status-active": "Действует до {date}",
       "row-status-expiring": "Истекает через {n} дней",
       "row-status-revoked": "Доступ закрыт {date}",
+      "sample-puppy-name": "Щенок",
+      "sample-breed-age": "Лабрадор · 4 месяца",
+      "sample-vaccine-1": "DHPP — 12 апреля",
+      "sample-vaccine-2": "Бешенство — 5 мая",
+      "sample-active-date": "24 мая",
+      "sample-recipient": "визита к ветеринару",
       "overflow": ["Скопировать ссылку", "Продлить срок", "Закрыть доступ"],
       "revoke-confirm": {
         "title": "Закрыть доступ к карточке?",
@@ -1505,6 +1512,7 @@
       "data-account": "Данные и аккаунт",
       "help": "Помощь",
       "about": "О приложении",
+      "shareable-cards": "Поделённые карточки",
       "puppyplan-plus": "PuppyPlan Plus",
       "deferred": "Позже"
     },

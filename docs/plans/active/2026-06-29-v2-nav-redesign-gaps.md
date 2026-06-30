@@ -142,8 +142,11 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       status badges, overflow affordances, privacy-safe invite label, and Invite CTA. Live member
       query, role changes, removal, resend/revoke, confirm sheets, and Stage 4 screenshots remain open.
 - [x] ➕ **Shareable Puppy Cards** (§3.4) — **decision: IN scope this wave, MINIMAL only**: a static /
-      signed-link card + preview + expiry (PRD-allowed). Rich builder / multi-template editor → roadmap,
-      not this wave. Net-new (absent on both boards). Doubles as a growth/virality surface.
+      signed-link card + preview + expiry (PRD-allowed). Native shell implemented at
+      `/sharing/puppy-card`: More entry, builder fields, health disclosure, 3:4 preview, share CTA,
+      public-link disclosure, and active-card list. Rich builder / multi-template editor → roadmap,
+      not this wave. Live signed-link creation, expiry editing, revoke actions, and Stage 4 screenshots
+      remain open.
 
 ### Reminders / Routines — DESIGN.md §4.2
 - [x] ✅ Reminders/Routines hub + lifecycle (Mark done / Back-date / Skip / Pause / Delete; "Diary entries stay")
@@ -1825,7 +1828,60 @@ Implementation notes:
   the locked Trusted Sitter anatomy. Real caregiver selection, date/time picker, checklist editing,
   enable mutation, active owner status, completion push, auto-expire, and exit confirm remain deferred.
 
+### 34. Shareable Puppy Card Shell Slice (§3.4)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/07-sharing-access-cards.md`.
+- Source: `DESIGN.md` §3.4 plus `cards/*` atlas references in the V2 sharing boards.
+- Route: `/sharing/puppy-card` from the More sharing section.
+- Allowed deviation: rich builder, multi-template editor, live signed-link creation, expiry editing,
+  and revoke flows are roadmap/deferred; this slice is the minimal static/signed-link shell.
+
+Acceptance:
+- AC-SHARE-CARD-1: More exposes an active Shared cards row that opens `/sharing/puppy-card`.
+- AC-SHARE-CARD-2: the route renders a native shell with modal header, builder field list, health
+  disclosure, 3:4 preview, share CTA, public-link disclosure, and active shared-card row.
+- AC-SHARE-CARD-3: preview aspect ratio is structurally locked to 3:4.
+- AC-SHARE-CARD-4: the shell uses design primitives, typed EN/RU/ES i18n keys, and tokenized styles.
+- AC-SHARE-CARD-5: the shell renders no raw email, provider name, invite/share token, or private
+  contact data.
+- AC-SHARE-CARD-6: route/navigation contract, shell i18n, and scaffold guardrails include
+  `/sharing/puppy-card`.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts`
+  failed as expected before implementation because `ShareablePuppyCardScreen` was missing and
+  `/sharing/puppy-card` was absent from the planned route contract.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts`
+  — PASS: 2 suites, 24 tests.
+- `npm run typecheck` — PASS.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n budgets, scaffold guardrails,
+  tokens, privacy scan, and text hygiene.
+- `git diff --check` — PASS.
+- `npm run check` — PASS: 67 Jest suites / 495 tests, node checks 118/118, scaffold, tokens,
+  privacy scan, and text hygiene all green. Existing non-failing reduced-motion `act(...)` warning
+  in `src/test/screen-header.render.test.tsx` is unrelated to this slice.
+- Changed-file raw color scan found no `hex` / `rgb` / raw `backgroundColor` / raw `color` literals.
+
+Implementation notes:
+- Added `src/features/more/screens/ShareablePuppyCardScreen.tsx`.
+- Added route file `app/(modals)/sharing/puppy-card/index.tsx` and modal stack registration.
+- Updated `MoreScreen` with `openShareableCards` and route wiring from `app/(tabs)/more/index.tsx`.
+- Updated navigation contracts and shell i18n allowlist to include `/sharing/puppy-card` and the
+  card preview keys.
+- Stage 4 remains open: `/sharing/puppy-card` still needs native screenshot comparison against the
+  locked Shareable Puppy Card anatomy. Live signed-link creation, real share sheet, expiry editing,
+  copy-link, revoke/extend, card history, loading/error/offline states, and public web projection
+  remain deferred.
+
 ## Changelog
+- 2026-06-30: Added the Shareable Puppy Card shell: More now opens `/sharing/puppy-card`, the route
+  renders builder fields, health disclosure, 3:4 preview, share CTA, public-link disclosure, and an
+  active-card row with privacy-safe sample data; route/i18n/scaffold contracts were updated. Live
+  signed-link creation, real share sheet, revoke/extend/history states, and Stage 4 screenshots remain open.
 - 2026-06-30: Added the Trusted Sitter mode owner setup shell: More Trainer / sitter now opens
   `/settings/sitter-mode`, with caregiver row, time window rows, checklist anatomy, included/excluded
   visibility preview, disclosure, and enable CTA. Live sitter data/mutations, owner active status,

@@ -1084,6 +1084,7 @@
     "card-preview": {
       "screen-title": "Preview",
       "footer": "This is everything the recipient will see.",
+      "a11y": "{title}. {footer}",
       "edit": "Edit",
       "share": "Share"
     },
@@ -1105,6 +1106,12 @@
       "row-status-active": "Active through {date}",
       "row-status-expiring": "Expires in {n} days",
       "row-status-revoked": "Access closed {date}",
+      "sample-puppy-name": "Puppy",
+      "sample-breed-age": "Labrador · 4 months",
+      "sample-vaccine-1": "DHPP — 12 April",
+      "sample-vaccine-2": "Rabies — 5 May",
+      "sample-active-date": "24 May",
+      "sample-recipient": "vet visit",
       "overflow": ["Copy link", "Extend expiry", "Close access"],
       "revoke-confirm": {
         "title": "Close access to this card?",
@@ -1509,6 +1516,7 @@
       "data-account": "Data and account",
       "help": "Help",
       "about": "About",
+      "shareable-cards": "Shared cards",
       "puppyplan-plus": "PuppyPlan Plus",
       "deferred": "Deferred"
     },

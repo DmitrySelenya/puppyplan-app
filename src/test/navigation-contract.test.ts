@@ -150,6 +150,11 @@ describe('navigation contract', () => {
           implementationStage: 'existing',
         }),
         expect.objectContaining({
+          route: '/sharing/puppy-card',
+          file: 'app/(modals)/sharing/puppy-card/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
           route: '/pet/health-record-edit',
           file: 'app/(modals)/pet/health-record-edit/index.tsx',
           implementationStage: 'existing',

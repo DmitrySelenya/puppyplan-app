@@ -1132,6 +1132,7 @@
     "card-preview": {
       "screen-title": "Avance",
       "footer": "Esto es todo lo que verá el destinatario.",
+      "a11y": "{title}. {footer}",
       "edit": "Editar",
       "share": "Compartir"
     },
@@ -1151,6 +1152,12 @@
       "row-status-active": "Activo a través de {date}",
       "row-status-expiring": "Vence en {n} días",
       "row-status-revoked": "Acceso cerrado {date}",
+      "sample-puppy-name": "Cachorro",
+      "sample-breed-age": "Labrador · 4 meses",
+      "sample-vaccine-1": "DHPP — 12 de abril",
+      "sample-vaccine-2": "Rabia — 5 de mayo",
+      "sample-active-date": "24 de mayo",
+      "sample-recipient": "visita al veterinario",
       "overflow": [
         "Copiar enlace",
         "Extender el vencimiento",
@@ -1600,6 +1607,7 @@
       "data-account": "Datos y cuenta",
       "help": "Ayuda",
       "about": "Acerca de",
+      "shareable-cards": "Tarjetas compartidas",
       "puppyplan-plus": "PuppyPlan Plus",
       "deferred": "Diferido"
     },

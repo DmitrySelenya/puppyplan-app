@@ -8,6 +8,7 @@ import { HouseholdAccessScreen } from '@/features/more/screens/HouseholdAccessSc
 import { ConnectedMoreScreen, MoreScreen } from '@/features/more/screens/MoreScreen';
 import { NotificationPreferencesScreen } from '@/features/more/screens/NotificationPreferencesScreen';
 import { PuppyPlanPlusScreen } from '@/features/more/screens/PuppyPlanPlusScreen';
+import { ShareablePuppyCardScreen } from '@/features/more/screens/ShareablePuppyCardScreen';
 import { SitterModeScreen } from '@/features/more/screens/SitterModeScreen';
 import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
@@ -138,6 +139,7 @@ describe('More settings entries', () => {
     const openPuppyProfile = jest.fn();
     const openQuickTrackers = jest.fn();
     const openSitterMode = jest.fn();
+    const openShareableCards = jest.fn();
     const openNotifications = jest.fn();
     const openHelp = jest.fn();
     const openPlus = jest.fn();
@@ -153,6 +155,7 @@ describe('More settings entries', () => {
             openPlus={openPlus}
             openPuppyProfile={openPuppyProfile}
             openQuickTrackers={openQuickTrackers}
+            openShareableCards={openShareableCards}
             openSitterMode={openSitterMode}
             openTimeline={jest.fn()}
           />
@@ -173,6 +176,9 @@ describe('More settings entries', () => {
       name: i18n.t('more.rows.trainer-sitter'),
     }));
     fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.rows.shareable-cards'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.rows.notifications'),
     }));
     fireEvent.press(screen.getByRole('button', {
@@ -186,6 +192,7 @@ describe('More settings entries', () => {
     expect(openQuickTrackers).toHaveBeenCalledTimes(1);
     expect(openHousehold).toHaveBeenCalledTimes(1);
     expect(openSitterMode).toHaveBeenCalledTimes(1);
+    expect(openShareableCards).toHaveBeenCalledTimes(1);
     expect(openNotifications).toHaveBeenCalledTimes(1);
     expect(openHelp).toHaveBeenCalledTimes(1);
     expect(openPlus).toHaveBeenCalledTimes(1);
@@ -463,5 +470,37 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', { name: i18n.t('paywall.export-action') })).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('paywall.secondary') })).toBeTruthy();
     expect(screen.queryByText(/RevenueCat|hard paywall/i)).toBeNull();
+  });
+
+  it('renders the minimal Shareable Puppy Card shell without private data', () => {
+    render(
+      <AppProviders>
+        <ShareablePuppyCardScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('sharing.card-builder.screen-title', {
+      puppyName: 'Puppy',
+    }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.card-builder.section-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.card-builder.fields.0'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.card-builder.fields.2'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.card-builder.footer-note'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.card-builder.health-disclosure'))).toBeTruthy();
+
+    const preview = screen.getByTestId('shareable-card-preview');
+    const previewStyle = StyleSheet.flatten(preview.props.style);
+    expect(previewStyle.aspectRatio).toBeCloseTo(3 / 4);
+    expect(preview.props.accessibilityLabel).toContain(i18n.t('sharing.card-preview.footer'));
+
+    expect(screen.getByRole('button', {
+      name: i18n.t('sharing.card-preview.share'),
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.card-management.public-link-disclosure'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.card-management.section-active'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.card-management.row-status-active', {
+      date: '24 May',
+    }))).toBeTruthy();
+    expect(screen.queryByText(/@|token|provider name/i)).toBeNull();
   });
 });
