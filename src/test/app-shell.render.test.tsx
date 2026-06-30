@@ -65,18 +65,19 @@ describe('app shell screens', () => {
     reduceMotionProbe.mockRestore();
   });
 
-  it('renders the Today shell with localized empty-state copy', () => {
+  it('renders the Diary shell with localized empty-state copy', () => {
     renderWithProviders(<TodayScreen openTimeline={noop} />);
 
-    expect(screen.getByText(i18n.t('tabs.today'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('tabs.diary'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.unavailable.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.unavailable.body'))).toBeTruthy();
   });
 
-  it('renders the Health shell as an honest empty deferred state by default', () => {
-    const result = renderWithProviders(<HealthScreen />);
+  it('renders the Pet shell as an honest empty state with an Add Record route action', () => {
+    const openAddRecord = jest.fn();
+    const result = renderWithProviders(<HealthScreen onOpenAddRecord={openAddRecord} />);
 
-    expect(screen.getByText(i18n.t('tabs.health'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('tabs.pet'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.segments.0'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.segments.1'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.filter-chips.0'))).toBeTruthy();
@@ -84,9 +85,12 @@ describe('app shell screens', () => {
     expect(screen.queryByText(i18n.t('health.rows.dhpp-title'))).toBeNull();
     expect(screen.queryByText(i18n.t('health.rows.parasite-review-title'))).toBeNull();
     expect(screen.queryByText(i18n.t('health.rows.vet-visit-title'))).toBeNull();
-    expect(screen.getByRole('button', {
+    const addRecordButton = screen.getByRole('button', {
       name: i18n.t('health.empty.primary'),
-    }).props.accessibilityState.disabled).toBe(true);
+    });
+    expect(addRecordButton.props.accessibilityState.disabled).toBe(false);
+    fireEvent.press(addRecordButton);
+    expect(openAddRecord).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', {
       name: i18n.t('health.empty.secondary'),
     }).props.accessibilityState.disabled).toBe(true);
@@ -99,7 +103,7 @@ describe('app shell screens', () => {
     expect(contentStyle.paddingBottom).toBeGreaterThanOrEqual(tokens.layout.bottomInsetFab);
   });
 
-  it('renders the Health review mixed-list fixture only when explicitly requested', () => {
+  it('renders the Pet review mixed-list fixture only when explicitly requested', () => {
     renderWithProviders(<HealthScreen reviewState="mixed-list" />);
 
     expect(screen.getByText(i18n.t('health.rows.dhpp-title'))).toBeTruthy();

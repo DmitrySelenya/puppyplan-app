@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
+import { Avatar } from '@/design/primitives/Avatar';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
 import { EmptyState } from '@/design/primitives/EmptyState';
@@ -14,15 +15,20 @@ import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill, type StatusPillTone } from '@/design/primitives/StatusPill';
 import { TextField } from '@/design/primitives/TextField';
+import { Touchable } from '@/design/primitives/Touchable';
 import { Toggle } from '@/design/primitives/Toggle';
 import { tokens } from '@/design/tokens';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
 
 export type HealthScreenProps = Readonly<{
+  onOpenAddRecord?: () => void;
+  onOpenQuickTrackers?: () => void;
   reviewState?: 'empty' | 'mixed-list';
 }>;
 
 export function HealthScreen({
+  onOpenAddRecord = () => undefined,
+  onOpenQuickTrackers = () => undefined,
   reviewState = 'empty',
 }: HealthScreenProps = {}) {
   const { t } = useAppTranslation();
@@ -34,11 +40,12 @@ export function HealthScreen({
   const previousRows = visibleRows.filter((row) => row.section === 'previous');
   // PUP-25 owns durable health records and the create/edit flow. Until then,
   // production Health stays honest-empty and the mixed rows require reviewState.
-  const onAddHealthEntry = () => {};
+  const onAddHealthEntry = onOpenAddRecord;
 
   return (
     <Screen contentStyle={styles.content}>
-      <AppText variant="title">{t('tabs.health')}</AppText>
+      <AppText variant="title">{t('tabs.pet')}</AppText>
+      <PetProfileHub onOpenQuickTrackers={onOpenQuickTrackers} />
       <SegmentedControl
         accessibilityLabel={t('health.tab-title')}
         onValueChange={(value) => {
@@ -82,13 +89,13 @@ export function HealthScreen({
             rows={previousRows}
             titleKey="health.rows.previous-section"
           />
+          <HealthVetPrepCard />
         </Stack>
       ) : (
         <EmptyState
           body={t('health.empty.body')}
           icon={<AppIcon name="stethoscope" size={36} />}
           primaryAction={{
-            disabled: true,
             label: t('health.empty.primary'),
             onPress: onAddHealthEntry,
           }}
@@ -102,6 +109,172 @@ export function HealthScreen({
       )}
       <AppText tone="secondary" variant="footnote">{t('health.footer-hint')}</AppText>
     </Screen>
+  );
+}
+
+function HealthVetPrepCard() {
+  const { t } = useAppTranslation();
+  const subtitle = t('health.vet-prep.subtitle', {
+    date: t('health.vet-prep.sample-date'),
+    time: t('health.vet-prep.sample-time'),
+  });
+
+  return (
+    <Card
+      accessibilityLabel={[
+        t('health.vet-prep.title'),
+        subtitle,
+        t('health.vet-prep.hint'),
+      ].join('. ')}
+      testID="health-vet-prep-card">
+      <Stack gap="md">
+        <Stack direction="horizontal" gap="md">
+          <View style={styles.vetPrepIconFrame}>
+            <AppIcon
+              color={tokens.color.primary[700]}
+              name="stethoscope"
+              size={24}
+            />
+          </View>
+          <Stack gap="xs" style={styles.detailTitleCopy}>
+            <AppText variant="headline">{t('health.vet-prep.title')}</AppText>
+            <AppText tone="secondary" variant="callout">{subtitle}</AppText>
+          </Stack>
+        </Stack>
+        <Stack gap="xs">
+          {healthVetPrepChecklistKeys.map((key) => (
+            <View
+              key={key}
+              style={styles.vetPrepChecklistRow}
+              testID="health-vet-prep-checklist-row">
+              <View style={styles.vetPrepCheckbox} />
+              <AppText style={styles.vetPrepChecklistCopy} variant="body">
+                {t(key)}
+              </AppText>
+            </View>
+          ))}
+        </Stack>
+        <Button
+          label={t('health.vet-prep.add-item')}
+          onPress={() => undefined}
+          variant="tertiary"
+        />
+        <AppText tone="tertiary" variant="footnote">{t('health.vet-prep.hint')}</AppText>
+      </Stack>
+    </Card>
+  );
+}
+
+function PetProfileHub({
+  onOpenQuickTrackers,
+}: Readonly<{
+  onOpenQuickTrackers: () => void;
+}>) {
+  const { t } = useAppTranslation();
+  const profileTitle = t('more.puppy-profile.screen-title');
+  const ageValue = t('more.puppy-summary.no-age');
+  const missingValue = t('more.puppy-profile.missing-value');
+
+  return (
+    <Card
+      accessibilityLabel={t('health.pet-hub.a11y', {
+        age: ageValue,
+        breed: missingValue,
+        title: profileTitle,
+        weight: missingValue,
+      })}
+      testID="pet-profile-hub-card">
+      <Stack gap="md">
+        <Stack align="center" direction="horizontal" gap="md" wrap>
+          <Avatar
+            initials="PP"
+            label={profileTitle}
+            size="lg"
+            testID="pet-profile-hub-avatar"
+            tone="accent"
+          />
+          <Stack gap="xs" style={styles.petHubTitleCopy}>
+            <AppText variant="title2">{profileTitle}</AppText>
+          </Stack>
+          <Button
+            label={t('health.pet-hub.edit-profile')}
+            onPress={() => undefined}
+            variant="tertiary"
+          />
+        </Stack>
+
+        <View style={styles.petHubFacts}>
+          <PetHubFact
+            icon="calendar"
+            label={t('health.pet-hub.age-label')}
+            value={ageValue}
+          />
+          <PetHubFact
+            icon="paw"
+            label={t('health.pet-hub.breed-label')}
+            value={missingValue}
+          />
+          <PetHubFact
+            icon="weight"
+            label={t('health.pet-hub.weight-label')}
+            value={missingValue}
+          />
+        </View>
+
+        <Stack direction="horizontal" gap="sm" wrap>
+          <Button
+            label={t('health.pet-hub.add-weight')}
+            leading={<AppIcon name="weight" size={18} />}
+            onPress={() => undefined}
+            variant="secondary"
+          />
+          <Touchable
+            accessibilityLabel={t('health.pet-hub.quick-trackers-a11y')}
+            accessibilityRole="button"
+            onPress={onOpenQuickTrackers}
+            pressedStyle={styles.petHubTrackerEntryPressed}
+            style={styles.petHubTrackerEntry}
+            testID="pet-profile-hub-trackers-entry">
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name="sliders"
+              size={20}
+            />
+            <Stack gap="xs" style={styles.petHubTrackerCopy}>
+              <AppText variant="headline">{t('health.pet-hub.quick-trackers-title')}</AppText>
+              <AppText tone="secondary" variant="footnote">
+                {t('health.pet-hub.quick-trackers-meta')}
+              </AppText>
+            </Stack>
+            <AppIcon
+              color={tokens.color.text.tertiary}
+              name="chevronRight"
+              size={18}
+            />
+          </Touchable>
+        </Stack>
+      </Stack>
+    </Card>
+  );
+}
+
+function PetHubFact({
+  icon,
+  label,
+  value,
+}: Readonly<{
+  icon: AppIconName;
+  label: string;
+  value: string;
+}>) {
+  return (
+    <View style={styles.petHubFact}>
+      <AppIcon color={tokens.color.text.secondary} name={icon} size={16} />
+      <Stack gap="xs" style={styles.petHubFactCopy}>
+        <AppText tone="tertiary" variant="footnote">{label}</AppText>
+        <AppText variant="body">{value}</AppText>
+      </Stack>
+    </View>
   );
 }
 
@@ -230,7 +403,94 @@ const healthReviewRows = [
   },
 ] as const satisfies readonly HealthRow[];
 
+type HealthRecordType = 'vaccination' | 'deworming' | 'prophylaxis' | 'vet-visit';
+
+const healthRecordTypeOptions = [
+  {
+    icon: 'vaccine',
+    key: 'vaccination',
+    labelKey: 'health.record-types.vaccination',
+  },
+  {
+    icon: 'stethoscope',
+    key: 'deworming',
+    labelKey: 'health.record-types.deworming',
+  },
+  {
+    icon: 'docText',
+    key: 'prophylaxis',
+    labelKey: 'health.record-types.prophylaxis',
+  },
+  {
+    icon: 'stethoscope',
+    key: 'vet-visit',
+    labelKey: 'health.record-types.vet-visit',
+  },
+] as const satisfies readonly {
+  icon: AppIconName;
+  key: HealthRecordType;
+  labelKey: I18nKey;
+}[];
+
 type HealthRecordStatus = 'confirmed' | 'needsVetReview';
+
+export function HealthRecordEditRouteScreen({
+  onClose,
+}: Readonly<{
+  onClose: () => void;
+}>) {
+  const { t } = useAppTranslation();
+  const [selectedType, setSelectedType] = useState<HealthRecordType | null>(null);
+
+  if (selectedType) {
+    return (
+      <Screen contentStyle={styles.content}>
+        <HealthRecordEditPreview />
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen contentStyle={styles.content}>
+      <Card accessibilityLabel={t('health.add-record.sheet-title')}>
+        <Stack gap="md">
+          <Stack align="center" direction="horizontal" justify="space-between">
+            <AppText accessibilityRole="header" variant="headline">
+              {t('health.add-record.sheet-title')}
+            </AppText>
+            <Button
+              label={t('health.add-record.close')}
+              onPress={onClose}
+              variant="tertiary"
+            />
+          </Stack>
+          <ListGroup>
+            {healthRecordTypeOptions.map((option) => (
+              <ListRow
+                accessory="chevron"
+                key={option.key}
+                leading={(
+                  <AppIcon
+                    color={tokens.color.text.secondary}
+                    name={option.icon}
+                  />
+                )}
+                onPress={() => {
+                  setSelectedType(option.key);
+                }}
+                title={t(option.labelKey)}
+                variant="health"
+              />
+            ))}
+          </ListGroup>
+          <AppText tone="secondary" variant="footnote">
+            {t('health.add-record.hint-after-list')}
+          </AppText>
+        </Stack>
+      </Card>
+    </Screen>
+  );
+}
 
 export function HealthRecordEditPreview({
   filled = false,
@@ -390,6 +650,20 @@ export function HealthRecordDetailPreview({
             </Stack>
           </Stack>
         </Card>
+        {deletePending ? (
+          <Card accessibilityLiveRegion="polite" variant="mutedTemplate">
+            <Stack align="center" direction="horizontal" gap="sm">
+              <AppIcon
+                color={tokens.color.status.warning}
+                name="warningTriangle"
+                size={18}
+              />
+              <AppText variant="callout">
+                {t('health.edit-record.delete-undo-toast')}
+              </AppText>
+            </Stack>
+          </Card>
+        ) : null}
       </Stack>
     </Card>
   );
@@ -464,26 +738,50 @@ function HealthStageStrip({
       accessible
       style={styles.stageStrip}
       testID="health-stage-strip">
-      <Stack direction="horizontal" gap="sm">
-        {healthStageIndexes.map((stageIndex) => {
+      <View style={styles.stageSteps}>
+        {healthStageDefinitions.map((stage, stageIndex) => {
           const active = stageIndex === current;
           const past = stageIndex < current;
+          const stageTone = tokens.color.pill[stage.tone];
 
           return (
             <View
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
               key={stageIndex}
+              accessible={false}
               style={[
-                styles.stageSegment,
-                active ? styles.stageSegmentActive : null,
+                styles.stageStep,
                 past ? styles.stageSegmentPast : null,
+                {
+                  backgroundColor: active
+                    ? stageTone.fill
+                    : tokens.color.surface.raised,
+                  borderColor: stageTone.fill,
+                },
               ]}
-              testID="health-stage-segment"
-            />
+              testID="health-stage-step">
+              <View style={[
+                styles.stageStepIconFrame,
+                {
+                  backgroundColor: active
+                    ? tokens.color.surface.raised
+                    : stageTone.fill,
+                },
+              ]}>
+                <AppIcon
+                  color={stageTone.text}
+                  name={stage.icon}
+                  size={15}
+                />
+              </View>
+              <AppText
+                style={[styles.stageStepLabel, { color: stageTone.text }]}
+                variant="footnote">
+                {t(stage.labelKey)}
+              </AppText>
+            </View>
           );
         })}
-      </Stack>
+      </View>
       <AppText tone="secondary" variant="footnote">
         {t('health.status-transitions.now-template', {
           currentLabel,
@@ -500,13 +798,44 @@ const healthDetailStatusKey = {
   needsVetReview: 'health.pills.needs-vet-review',
 } as const satisfies Record<HealthRecordStatus, I18nKey>;
 
-const healthStageIndexes = [0, 1, 2, 3] as const;
 const healthStageKeys = [
   'health.status-transitions.stages.0',
   'health.status-transitions.stages.1',
   'health.status-transitions.stages.2',
   'health.status-transitions.stages.3',
 ] as const satisfies readonly I18nKey[];
+const healthVetPrepChecklistKeys = [
+  'health.vet-prep.checklist.0',
+  'health.vet-prep.checklist.1',
+  'health.vet-prep.checklist.2',
+  'health.vet-prep.checklist.3',
+] as const satisfies readonly I18nKey[];
+const healthStageDefinitions = [
+  {
+    icon: 'docText',
+    labelKey: 'health.status-transitions.stages.0',
+    tone: 'template',
+  },
+  {
+    icon: 'stethoscope',
+    labelKey: 'health.status-transitions.stages.1',
+    tone: 'needsVetReview',
+  },
+  {
+    icon: 'vaccine',
+    labelKey: 'health.status-transitions.stages.2',
+    tone: 'confirmed',
+  },
+  {
+    icon: 'spark',
+    labelKey: 'health.status-transitions.stages.3',
+    tone: 'completed',
+  },
+] as const satisfies readonly {
+  icon: AppIconName;
+  labelKey: I18nKey;
+  tone: StatusPillTone;
+}[];
 
 const styles = StyleSheet.create({
   content: {
@@ -527,22 +856,102 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
   },
+  petHubFact: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: tokens.space[2],
+    minWidth: 136,
+  },
+  petHubFactCopy: {
+    flex: 1,
+  },
+  petHubFacts: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: tokens.space[3],
+  },
+  petHubTitleCopy: {
+    flex: 1,
+    minWidth: 150,
+  },
+  petHubTrackerCopy: {
+    flex: 1,
+  },
+  petHubTrackerEntry: {
+    alignItems: 'center',
+    backgroundColor: tokens.color.surface.sunken,
+    borderColor: tokens.color.stroke.default,
+    borderRadius: tokens.radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    flex: 1,
+    flexDirection: 'row',
+    gap: tokens.space[3],
+    minHeight: 56,
+    minWidth: 220,
+    paddingHorizontal: tokens.space[3],
+    paddingVertical: tokens.space[2],
+  },
+  petHubTrackerEntryPressed: {
+    backgroundColor: tokens.color.surface.base,
+  },
   sectionTitle: {
     textTransform: 'uppercase',
   },
-  stageSegment: {
-    backgroundColor: tokens.color.surface.sunken,
-    borderRadius: tokens.radius.full,
+  stageStep: {
+    alignItems: 'center',
+    borderRadius: tokens.radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
     flex: 1,
-    height: 6,
+    gap: tokens.space[1],
+    justifyContent: 'center',
+    minHeight: 58,
+    minWidth: 72,
+    paddingHorizontal: tokens.space[2],
+    paddingVertical: tokens.space[2],
   },
-  stageSegmentActive: {
-    backgroundColor: tokens.color.primary[600],
+  stageStepIconFrame: {
+    alignItems: 'center',
+    borderRadius: tokens.radius.full,
+    height: 26,
+    justifyContent: 'center',
+    width: 26,
+  },
+  stageStepLabel: {
+    textAlign: 'center',
   },
   stageSegmentPast: {
-    backgroundColor: tokens.color.primary[200],
+    opacity: 0.78,
   },
   stageStrip: {
     gap: tokens.space[2],
+  },
+  stageSteps: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: tokens.space[2],
+  },
+  vetPrepCheckbox: {
+    borderColor: tokens.color.stroke.strong,
+    borderRadius: tokens.radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 18,
+    width: 18,
+  },
+  vetPrepChecklistCopy: {
+    flex: 1,
+  },
+  vetPrepChecklistRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: tokens.space[3],
+    minHeight: 36,
+  },
+  vetPrepIconFrame: {
+    alignItems: 'center',
+    backgroundColor: tokens.color.primary[50],
+    borderRadius: tokens.radius.md,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
   },
 });

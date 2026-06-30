@@ -36,7 +36,7 @@
 
 - New dependencies without explicit user approval.
 - Schema changes, production Supabase writes, release actions, EAS/TestFlight, git remote mutation, or generated native project edits.
-- Custom-rendered primary tab bar.
+- ~~Custom-rendered primary tab bar.~~ (Superseded 2026-06-27 — a custom split tab bar is now allowed; see `2026-06-27-diary-pet-nav-design-brief.md` and the Veto Rules note in `docs/architecture/06-design-system-and-ui-contracts.md`.)
 - Parallel `/more/*` edit routes duplicating the locked `/settings/*` namespace.
 - Medical diagnosis, dosing, alarmist health copy, or fake production health/sharing data.
 

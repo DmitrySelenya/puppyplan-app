@@ -9,6 +9,7 @@ export type AppIconName =
   | 'book'
   | 'bowl'
   | 'calendar'
+  | 'check'
   | 'chevronRight'
   | 'close'
   | 'docText'
@@ -32,6 +33,7 @@ export type AppIconName =
   | 'trash'
   | 'trainingPaw'
   | 'vaccine'
+  | 'warningTriangle'
   | 'weight'
   | 'water';
 
@@ -63,6 +65,7 @@ const iconShapes: Record<AppIconName, React.JSX.Element> = {
       <Path d="M9 6V4M15 6V4" />
     </>
   ),
+  check: <Path d="M5 12.5l4.2 4.2L19 7" />,
   chevronRight: <Path d="M9 6l6 6-6 6" />,
   close: <Path d="M6 6l12 12M18 6L6 18" />,
   docText: (
@@ -181,6 +184,12 @@ const iconShapes: Record<AppIconName, React.JSX.Element> = {
       <Path d="M6 14l4 4M5 19l3-3M12 8l4 4" />
     </>
   ),
+  warningTriangle: (
+    <>
+      <Path d="M12 4l9 16H3L12 4z" />
+      <Path d="M12 9v4M12 16h.01" />
+    </>
+  ),
   weight: (
     <>
       <Path d="M6 8h12l2 12H4L6 8z" />
@@ -195,7 +204,21 @@ const iconShapes: Record<AppIconName, React.JSX.Element> = {
 // a solid tinted glyph for the focused tab). Only the nav icons are provided;
 // other names fall back to their stroked glyph.
 const filledIconShapes: Partial<Record<AppIconName, React.JSX.Element>> = {
+  book: (
+    <>
+      <Path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4V4z" />
+      <Path d="M20 4h-3a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h4V4z" />
+    </>
+  ),
   today: <Circle cx={12} cy={12} r={8.5} />,
+  paw: (
+    <>
+      <Circle cx={7.5} cy={9} r={2.1} />
+      <Circle cx={12} cy={7} r={2.1} />
+      <Circle cx={16.5} cy={9} r={2.1} />
+      <Path d="M7 17c0-2.4 2.2-4.5 5-4.5s5 2.1 5 4.5c0 1.5-1 2.5-2.3 2.5-.9 0-1.6-.4-2.7-.4s-1.8.4-2.7.4C8 19.5 7 18.5 7 17z" />
+    </>
+  ),
   heart: (
     <Path d="M3.5 9.5C3.5 6.7 5.6 4.5 8.4 4.5c1.9 0 3 1 3.6 2 .6-1 1.7-2 3.6-2 2.8 0 4.9 2.2 4.9 5 0 4.7-8.5 9.5-8.5 9.5S3.5 14.2 3.5 9.5z" />
   ),

@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from 'react';
@@ -15,6 +16,7 @@ import { decorativeViewProps } from '@/design/a11y';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { elevationStyle } from '@/design/primitives/elevationStyle';
+import { haptic, type DesignHapticEvent } from '@/design/haptics';
 import { tokens } from '@/design/tokens';
 
 export type SnackbarTone = 'success' | 'error' | 'warning' | 'info';
@@ -29,6 +31,7 @@ export type SnackbarMessage = Readonly<{
   accessibilityLabel: string;
   clientEventId?: string;
   durationMs?: number;
+  hapticEvent?: DesignHapticEvent;
   id: string;
   message: string;
   primaryAction?: SnackbarAction;
@@ -49,22 +52,34 @@ export const SNACKBAR_BOTTOM_OFFSET_WITH_FAB = tokens.layout.bottomInsetFab;
 
 export function SnackbarProvider({ children }: PropsWithChildren) {
   const [message, setMessage] = useState<SnackbarMessage | null>(null);
+  const messageRef = useRef<SnackbarMessage | null>(null);
 
   const showSnackbar = useCallback((nextMessage: SnackbarMessage) => {
+    messageRef.current = nextMessage;
+    triggerSnackbarHaptic(nextMessage);
     setMessage(nextMessage);
   }, []);
 
   const replaceSnackbar = useCallback((nextMessage: SnackbarMessage) => {
-    setMessage((currentMessage) => {
-      if (!currentMessage || currentMessage.id === nextMessage.id) {
-        return nextMessage;
-      }
+    const currentMessage = messageRef.current;
 
-      return currentMessage;
-    });
+    if (currentMessage && currentMessage.id !== nextMessage.id) {
+      return;
+    }
+
+    messageRef.current = nextMessage;
+    triggerSnackbarHaptic(nextMessage);
+    setMessage(nextMessage);
   }, []);
 
   const dismissSnackbar = useCallback((id?: string) => {
+    const currentMessage = messageRef.current;
+
+    if (!currentMessage || (id !== undefined && currentMessage.id !== id)) {
+      return;
+    }
+
+    messageRef.current = null;
     setMessage((currentMessage) => {
       if (!currentMessage || (id !== undefined && currentMessage.id !== id)) {
         return currentMessage;
@@ -86,6 +101,9 @@ export function SnackbarProvider({ children }: PropsWithChildren) {
     }
 
     const timeout = setTimeout(() => {
+      if (messageRef.current?.id === message.id) {
+        messageRef.current = null;
+      }
       setMessage((currentMessage) =>
         currentMessage?.id === message.id ? null : currentMessage);
     }, message.durationMs ?? SNACKBAR_DEFAULT_DURATION_MS);
@@ -103,6 +121,12 @@ export function SnackbarProvider({ children }: PropsWithChildren) {
       </SnackbarActivityContext.Provider>
     </SnackbarContext.Provider>
   );
+}
+
+function triggerSnackbarHaptic(message: SnackbarMessage): void {
+  if (message.hapticEvent) {
+    void haptic(message.hapticEvent);
+  }
 }
 
 export function useSnackbar(): SnackbarController {

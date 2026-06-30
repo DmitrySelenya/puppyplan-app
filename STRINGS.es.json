@@ -64,7 +64,7 @@
         "day-two-morning": "Hoy · mañana del día dos",
         "day-seven": "Hoy · día siete",
         "after-invite": "Hoy · espacio tras invitación",
-        "missed-reminder": "Hoy · espacio de recordatorio pendiente",
+        "missed-reminder": "Diary · espacio de rutina pendiente",
         "state-fixtures": "Hoy · carga, offline y pendiente",
         "synthetic-note": "Estos estados no escriben recordatorios, invitaciones ni actividad del hogar."
       }
@@ -75,7 +75,7 @@
     "subtitle": "Los datos de tu cachorro son privados para tu hogar.",
     "email": {
       "label": "Correo",
-      "placeholder": "you@example.com",
+      "placeholder": "you@example.test",
       "cta": "Enviar código"
     },
     "code": {
@@ -216,9 +216,10 @@
     ]
   },
   "tabs": {
-    "today": "Hoy",
-    "today-hint": "Abre la pantalla Hoy",
-    "health": "Salud",
+    "diary": "Diario",
+    "diary-hint": "Abre la pantalla Diario",
+    "pet": "Mascota",
+    "pet-hint": "Abre la pantalla Mascota",
     "more": "Más",
     "quick-log-fab-label": "Registro rápido",
     "quick-log-fab-hint": "Abre una lista de cosas que puedes registrar"
@@ -234,12 +235,18 @@
     "puppy-profile": {
       "title": "¿Cómo se llama tu cachorro?",
       "helper": "Puedes cambiar esto más tarde.",
+      "step-label": "Paso 2 de 5",
+      "back-a11y": "Atrás",
       "name-field-label": "Nombre",
       "name-field-hint": "Nombre del cachorro, requerido para continuar",
       "birth-date-placeholder": "AAAA-MM-DD",
+      "age-section-label": "Edad",
       "age-toggle-age": "Edad",
       "age-toggle-date": "Fecha de nacimiento",
       "age-weeks-field-label": "Edad en semanas",
+      "age-weeks-value": "{count} semanas",
+      "age-decrement-a11y": "Disminuir edad",
+      "age-increment-a11y": "Aumentar edad",
       "cta": "Continuar",
       "error-required": "Agrega un nombre y edad o fecha de nacimiento para continuar.",
       "error-name-required": "Agrega un nombre para continuar.",
@@ -247,7 +254,7 @@
       "error-birth-date-required": "Ingresa la fecha con formato AAAA-MM-DD.",
       "error-future-date": "Esa fecha es en el futuro; verifíquela dos veces",
       "a11y-toggle": "Método de entrada de edad. Seleccionado: edad en semanas.",
-      "a11y-stepper": "Edad 8 semanas. Desliza hacia arriba para aumentar."
+      "a11y-stepper": "Edad {count} semanas. Desliza hacia arriba para aumentar."
     },
     "age-hint": {
       "6-8-weeks": "A las 8 semanas, los cachorros suelen dormir entre 18 y 20 horas al día.",
@@ -256,38 +263,49 @@
       "fallback": "Cada cachorro es diferente. Mantendremos un ritmo tranquilo."
     },
     "tracker-picker": {
+      "back-a11y": "Atrás",
       "title": "Qué rastrear",
       "helper": "Hasta 5 acciones. Puedes cambiarlos más tarde.",
+      "step-label": "Paso 3 de 5",
       "counter": "{n} de 5 seleccionados",
       "_comment": "{n}: entero 0..5",
       "limit-snackbar": "Hasta 5. Elimina uno para agregar un nuevo rastreador.",
       "min-required-snackbar": "Mantén al menos un rastreador seleccionado.",
-      "zero-state-cta": "Saltar por ahora",
+      "zero-state-cta": "Saltar selección",
       "cta": "Continuar",
-      "tile-feeding-a11y": "Alimentación. Seleccionado. Toca dos veces para eliminar."
+      "tile-selected-a11y": "{label}. Seleccionado. Toca dos veces para eliminar.",
+      "tile-unselected-a11y": "{label}. No seleccionado. Toca dos veces para agregar."
     },
     "plan-reveal": {
       "title": "Tu plan para hoy",
       "subtitle": "Puedes comenzar con el primer elemento.",
+      "summary": "{name} · {age} · tú",
+      "summary-a11y": "{name}, {age}, tú",
+      "avatar-label": "Tú",
+      "birth-date-summary": "Fecha de nacimiento indicada",
       "hero": "Registra tu primer evento; tardará unos cinco segundos.",
+      "hero-a11y": "Primer elemento. {hero}",
       "starter-card-1": "Observa el patrón de alimentación",
       "starter-card-2": "Descansos breves para ir al baño cada 1 o 2 horas",
       "starter-card-3": "Un lugar tranquilo para dormir.",
+      "starter-card-a11y": "Acción inicial. {action}",
       "cta": "Empieza tu primer registro"
     },
     "first-log": {
       "hero-after-first": "Primer evento guardado. A partir de aquí, un ritmo tranquilo.",
-      "body-after-first": "Hoy ahora muestra el evento guardado, el siguiente paso y la misma acción de registro rápido.",
+      "body-after-first": "Diario ahora muestra el evento guardado, el siguiente paso y la misma acción de registro rápido.",
       "eyebrow": "Primer Today",
       "today-title": "Tu primer evento",
       "event-title": "Pis afuera · 9:42",
       "event-meta": "Guardado ahora",
-      "celebration-snackbar": "Hecho. Puedes seguir adelante."
+      "celebration-snackbar": "Hecho. Puedes seguir adelante.",
+      "celebration-snackbar-a11y": "Primer evento guardado. Puedes seguir adelante."
     },
     "preview": {
       "name-value": "Cachorro"
     },
     "account-wall": {
+      "sheet-a11y": "Opciones para guardar el progreso",
       "title": "Guarda tu progreso",
       "body": "Esto te permite compartir con tu familia y ver tus datos en otros dispositivos.",
       "apple": "Continuar con Apple",
@@ -296,6 +314,7 @@
       "secondary": "Ahora no"
     },
     "notifications-prompt": {
+      "sheet-a11y": "Solicitud de recordatorios silenciosos",
       "title": "¿Quieres recordatorios silenciosos?",
       "body": "Sólo enviaremos lo que elijas. Sin ruido.",
       "primary": "Encender",
@@ -311,6 +330,15 @@
     "weekly-lead": "Más de 7 días:",
     "weekly-insight-prefix": "Más claro ahora:",
     "weekly-cta": "Ver detalles",
+    "week-strip": {
+      "label": "Semana del diario",
+      "day-label": "{weekday}, {date}. {state}",
+      "_comment-day-label": "{weekday} — día completo de la semana; {date} — fecha corta; {state} — una de las etiquetas state-* siguientes.",
+      "state-default": "Día del diario",
+      "state-selected": "Día seleccionado",
+      "state-today": "Hoy",
+      "state-selected-today": "Día seleccionado, hoy"
+    },
     "hero": {
       "day1": "Registra tu primer evento; tardará unos cinco segundos.",
       "day1-cta": "Comenzar",
@@ -322,7 +350,7 @@
       "_comment-potty-time-meta": "{duration} — p.ej. \"1 hora 40 minutos\"",
       "potty-time-primary": "Regístrelo",
       "potty-time-tertiary": "Más tarde",
-      "eyebrow": "Hoy",
+      "eyebrow": "Diario",
       "first-day": {
         "eyebrow": "Inicio",
         "title": "Registra tu primer evento: toma unos cinco segundos.",
@@ -340,8 +368,8 @@
         "primary": "Planificar la salida"
       },
       "missed-reminder": {
-        "title": "Vista previa del recordatorio",
-        "body": "Esta tarjeta sintética muestra dónde aparecerá un recordatorio pendiente cuando se lance recordatorios.",
+        "title": "Vista previa de rutina pendiente",
+        "body": "Esta tarjeta sintética muestra dónde aparecerá una rutina aún sin marcar cuando se lancen los recordatorios.",
         "primary": "Solo vista previa"
       },
       "day-7-weekly-rhythm": {
@@ -351,7 +379,7 @@
       },
       "steady-day": {
         "title": "Mantén visible el ritmo",
-        "body": "Hoy se mantiene tranquilo cuando los registros están al día y no destaca ningún patrón urgente."
+        "body": "El diario se mantiene tranquilo cuando los registros están al día y no destaca ningún patrón urgente."
       }
     },
     "starter-guidance": {
@@ -434,6 +462,12 @@
         "body": "Usa Quick Log cuando ocurra algo y los eventos recientes quedarán visibles aquí."
       }
     },
+    "history": {
+      "section-title": "Historial del diario",
+      "open-action": "Revisar historial",
+      "delete-action": "Eliminar registro",
+      "item-actions": "Acciones del registro del diario"
+    },
     "daily-cards": {
       "first-day-banner": "El primer día se trata de observar, no de resultados.",
       "starter-section-title": "Qué hacer ahora",
@@ -455,15 +489,15 @@
       },
       "feeding-pattern": {
         "title": "Patrón de comida visto",
-        "body": "Hoy mantendrá las comidas arriba mientras se forma el patrón."
+        "body": "El diario mantiene las comidas arriba mientras se forma el patrón."
       },
       "after-invite": {
         "title": "Espacio de actividad del cuidador",
-        "body": "Una vista previa sintética de cómo aparecerá nueva actividad del hogar en Hoy."
+        "body": "Una vista previa sintética de cómo aparecerá nueva actividad del hogar en el diario."
       },
       "quick-log-prompt": {
         "title": "Registra lo que acaba de pasar",
-        "body": "Un evento reciente mantiene el resto de Hoy con contexto."
+        "body": "Un evento reciente mantiene el resto del diario con contexto."
       },
       "sleep-rhythm": {
         "title": "Ritmo de sueño",
@@ -475,7 +509,7 @@
       },
       "timeline-review": {
         "title": "El cuidado reciente está guardado",
-        "body": "Timeline conserva el registro duradero cuando la tarjeta de Hoy se mantiene breve."
+        "body": "El historial del diario conserva el registro duradero cuando la tarjeta del día se mantiene breve."
       },
       "health-calm-check": {
         "title": "Revisión tranquila de salud",
@@ -487,6 +521,16 @@
       }
     },
     "states": {
+      "all-done": {
+        "status": "Listo",
+        "title": "Todo está cubierto para este día del diario",
+        "body": "Las rutinas están completas. Aún puedes añadir nuevos eventos desde Registro rápido."
+      },
+      "cold-start": {
+        "status": "Inicio",
+        "title": "Empieza este diario con la primera rutina",
+        "body": "Usa Añadir para Registro rápido o Programar, así el primer día tiene un punto claro de inicio."
+      },
       "loading": {
         "status": "Cargando",
         "title": "Actualizando Hoy",
@@ -496,6 +540,11 @@
         "status": "Vacío",
         "title": "Nada registrado hoy",
         "body": "Hoy se llenará después del primer evento de rutina."
+      },
+      "empty-history": {
+        "status": "Día tranquilo",
+        "title": "No hay entradas en este día del diario",
+        "body": "El historial del diario sigue disponible aunque este día no tenga registros nuevos."
       },
       "error": {
         "status": "Vista guardada",
@@ -1117,6 +1166,17 @@
   "health": {
     "tab-title": "Salud",
     "footer-hint": "Este es un registro de entradas, no un consejo médico.",
+    "pet-hub": {
+      "a11y": "{title}. Edad: {age}. Raza: {breed}. Peso: {weight}.",
+      "edit-profile": "Editar perfil",
+      "age-label": "Edad",
+      "breed-label": "Raza",
+      "weight-label": "Peso",
+      "add-weight": "Agregar peso",
+      "quick-trackers-title": "Rastreadores rápidos",
+      "quick-trackers-meta": "Ajusta los cinco botones de Add",
+      "quick-trackers-a11y": "Rastreadores rápidos. Ajusta los cinco botones de Add."
+    },
     "segments": [
       "Todo",
       "Vacunas",
@@ -1247,6 +1307,8 @@
     "vet-prep": {
       "title": "Preparándose para la visita",
       "subtitle": "Visita en {date}, {time}",
+      "sample-date": "18 de mayo",
+      "sample-time": "10:00",
       "checklist": [
         "Traer cartilla de vacunación previa",
         "Lista de preguntas para el veterinario",
@@ -1369,9 +1431,11 @@
     "sitter-card": {
       "title-example": "Lista de verificación nocturna · 7:00 pm",
       "subtitle-template": "{n} elementos · cuidador: {name}",
+      "progress-a11y-template": "{completed} de {total} elementos de la lista completados",
       "actions": [
         "Abrir lista",
-        "Posponer"
+        "Marcar todo hecho",
+        "Saltar"
       ],
       "completed-summary": "Hecho · {time} · {name}"
     },
@@ -1646,31 +1710,31 @@
   },
   "paywall": {
     "title": "PuppyPlan Plus",
-    "subtitle": "Funciones ampliadas durante los primeros 90 días.",
+    "subtitle": "Acceso completo durante los primeros 90 días con tu cachorro.",
     "features": [
-      "Enlaces compartidos ilimitados",
-      "Exportación sanitaria ampliada",
-      "Varios cachorros en una cuenta"
+      "Diario, mascota, rutinas y acceso compartido",
+      "Sigue añadiendo después de los 30 días",
+      "Exportación y privacidad siempre disponibles"
     ],
-    "plan-monthly": "Mensual · 8,99 €",
-    "plan-yearly": "Anual · 49,99 € (ahorra 53%)",
-    "primary": "Suscribirse",
+    "plan-monthly": "Mensual · 8,99 $",
+    "plan-yearly": "Anual · 39,99 $",
+    "primary": "Elegir plan",
     "secondary": "Restaurar compras",
     "legal": "Renovación automática. Puedes cancelar en la App Store.",
     "free-vs-plus": {
       "free": [
-        "Hoy + Cronología",
-        "1 acceso compartido",
-        "Exportación básica",
-        "1 cachorro"
+        "Días 0-30: acceso completo",
+        "Sin tarjeta por adelantado",
+        "Solo lectura tras la prueba",
+        "Exportación siempre disponible"
       ],
       "plus": [
-        "Todo lo de Free",
-        "Acceso compartido ilimitado",
-        "Exportación sanitaria ampliada",
-        "Varios cachorros"
+        "Todo lo de la prueba",
+        "Sigue añadiendo entradas",
+        "Crea rutinas y accesos",
+        "Restaura cuando quieras"
       ],
-      "header-free": "Gratis",
+      "header-free": "Prueba",
       "header-plus": "Más"
     },
     "states": {
@@ -1678,7 +1742,7 @@
       "error": "No se pudieron cargar los planes. Intenta actualizar.",
       "active-until": "Suscripción activa hasta {date}. Gestionada en la App Store."
     },
-    "a11y-price-example": "Anualmente, 49 euros 99 céntimos, ahorra un 53 por ciento"
+    "a11y-price-example": "Anual, 39 dólares 99 céntimos al año"
   },
   "permission-denied-patterns": {
     "notifications-body": "Puedes seguir adelante sin ellos. Los recordatorios son visibles dentro de la aplicación.",

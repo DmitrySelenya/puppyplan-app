@@ -137,6 +137,7 @@ describe('useQuickLogSheetController', () => {
       }),
     }));
     expect(snackbar.showSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      hapticEvent: 'saveSuccess',
       id: expect.stringMatching(/^quick-log:/),
       messageKey: 'quick-log.snackbar.saved-template',
       tone: 'success',
@@ -157,7 +158,11 @@ describe('useQuickLogSheetController', () => {
 
     expect(message).toEqual(expect.objectContaining({
       clientEventId,
+      hapticEvent: 'saveSuccess',
       secondaryActionKey: 'quick-log.snackbar.add-details',
+    }));
+    expect(message).not.toEqual(expect.objectContaining({
+      hapticEvent: 'celebration',
     }));
 
     message?.onSecondaryAction?.();
@@ -198,6 +203,7 @@ describe('useQuickLogSheetController', () => {
 
     expect(snackbar.replaceSnackbar).toHaveBeenCalledWith(expect.objectContaining({
       clientEventId,
+      hapticEvent: 'error',
       id: requestId,
       messageKey: 'quick-log.failed.snackbar',
       primaryActionKey: 'quick-log.failed.primary',

@@ -1,13 +1,13 @@
 import type { AuthStatus } from '@/contracts/auth';
 
-export type AuthLanding = '/sign-in' | '/today';
+export type AuthLanding = '/diary' | '/sign-in';
 
 const publicSignedOutSegments = new Set(['invite', 'share', 'sign-in']);
 
 export function resolveAuthLanding(status: AuthStatus): AuthLanding | null {
   switch (status) {
     case 'signedIn':
-      return '/today';
+      return '/diary';
     case 'signedOut':
       return '/sign-in';
     case 'loading':
@@ -27,7 +27,7 @@ export function resolveAuthRouteRedirect(
   const [firstSegment] = segments;
 
   if (status === 'signedIn') {
-    return firstSegment === 'sign-in' ? '/today' : null;
+    return firstSegment === 'sign-in' ? '/diary' : null;
   }
 
   return firstSegment && publicSignedOutSegments.has(firstSegment) ? null : '/sign-in';

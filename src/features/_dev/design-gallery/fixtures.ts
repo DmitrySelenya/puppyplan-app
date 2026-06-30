@@ -55,7 +55,7 @@ export const gallerySections = [
   },
   {
     id: 'health-v2',
-    titleKey: 'tabs.health',
+    titleKey: 'tabs.pet',
     stateKey: 'dev.gallery.states.health-v2',
   },
   {
@@ -65,7 +65,7 @@ export const gallerySections = [
   },
   {
     id: 'today-core',
-    titleKey: 'tabs.today',
+    titleKey: 'tabs.diary',
     stateKey: 'dev.gallery.states.today-core',
   },
   {

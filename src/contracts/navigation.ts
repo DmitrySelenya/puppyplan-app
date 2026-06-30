@@ -2,18 +2,18 @@ import type { I18nKey } from '@/lib/i18n';
 
 export const primaryTabs = [
   {
-    id: 'today',
-    routeName: 'today/index',
-    href: '/today',
-    labelKey: 'tabs.today',
-    accessibilityLabelKey: 'tabs.today',
+    id: 'diary',
+    routeName: 'diary/index',
+    href: '/diary',
+    labelKey: 'tabs.diary',
+    accessibilityLabelKey: 'tabs.diary-hint',
   },
   {
-    id: 'health',
-    routeName: 'health/index',
-    href: '/health',
-    labelKey: 'tabs.health',
-    accessibilityLabelKey: 'tabs.health',
+    id: 'pet',
+    routeName: 'pet/index',
+    href: '/pet',
+    labelKey: 'tabs.pet',
+    accessibilityLabelKey: 'tabs.pet-hint',
   },
   {
     id: 'more',
@@ -42,17 +42,20 @@ export const quickLogAction = {
   accessibilityHintKey: I18nKey;
 };
 
-export const settingsRoutes = ['/settings/puppy-profile', '/settings/quick-trackers'] as const;
+export const settingsRoutes = [
+  '/settings/puppy-profile',
+  '/settings/quick-trackers',
+  '/settings/notifications',
+] as const;
 
 export const modalRoutes = [
   quickLogAction.href,
   '/quick-log/details',
-  '/timeline',
   '/reminders/edit',
   '/family/invite',
   '/sharing/trainer-preview',
   '/sharing/scope-selector',
-  '/health/record-edit',
+  '/pet/health-record-edit',
   ...settingsRoutes,
 ] as const;
 
@@ -61,10 +64,33 @@ export const developmentOnlyRoutes = ['/_dev/components'] as const;
 export const deepLinkPlaceholders = ['/invite/[token]', '/share/[token]'] as const;
 
 export const atlasRouteAliases = {
+  '/today': '/diary',
+  '/health': '/pet',
+  '/timeline': '/diary',
   '/more/puppy-profile': '/settings/puppy-profile',
-} as const satisfies Record<string, (typeof settingsRoutes)[number]>;
+} as const satisfies Record<string, string>;
 
 export const plannedRouteFiles = [
+  {
+    route: '/diary',
+    file: 'app/(tabs)/diary/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/pet',
+    file: 'app/(tabs)/pet/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/today',
+    file: 'app/(tabs)/today/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/health',
+    file: 'app/(tabs)/health/index.tsx',
+    implementationStage: 'existing',
+  },
   {
     route: '/onboarding',
     file: 'app/onboarding/index.tsx',
@@ -78,6 +104,21 @@ export const plannedRouteFiles = [
   {
     route: '/settings/quick-trackers',
     file: 'app/(modals)/settings/quick-trackers/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/settings/notifications',
+    file: 'app/(modals)/settings/notifications/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/pet/health-record-edit',
+    file: 'app/(modals)/pet/health-record-edit/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/reminders/edit',
+    file: 'app/(modals)/reminders/edit/index.tsx',
     implementationStage: 'existing',
   },
   {
@@ -96,8 +137,10 @@ export const shellI18nKeys = [
   'common.close',
   'common.loading',
   'errors.load-failed',
-  'tabs.today',
-  'tabs.health',
+  'tabs.diary',
+  'tabs.diary-hint',
+  'tabs.pet',
+  'tabs.pet-hint',
   'tabs.more',
   'tabs.quick-log-fab-label',
   'tabs.quick-log-fab-hint',
@@ -110,6 +153,16 @@ export const shellI18nKeys = [
   'today.quick-log.section-title',
   'today.quick-log.empty.title',
   'today.quick-log.empty.body',
+  'today.history.section-title',
+  'today.history.open-action',
+  'today.history.delete-action',
+  'today.history.item-actions',
+  'today.week-strip.label',
+  'today.week-strip.day-label',
+  'today.week-strip.state-default',
+  'today.week-strip.state-selected',
+  'today.week-strip.state-today',
+  'today.week-strip.state-selected-today',
   'onboarding.first-log.body-after-first',
   'onboarding.first-log.eyebrow',
   'onboarding.first-log.event-title',
@@ -128,6 +181,15 @@ export const shellI18nKeys = [
   'quick-log.failed.tertiary',
   'quick-log.snackbar.undo',
   'health.tab-title',
+  'health.pet-hub.a11y',
+  'health.pet-hub.edit-profile',
+  'health.pet-hub.age-label',
+  'health.pet-hub.breed-label',
+  'health.pet-hub.weight-label',
+  'health.pet-hub.add-weight',
+  'health.pet-hub.quick-trackers-title',
+  'health.pet-hub.quick-trackers-meta',
+  'health.pet-hub.quick-trackers-a11y',
   'health.segments.0',
   'health.segments.1',
   'health.segments.2',
@@ -152,14 +214,26 @@ export const shellI18nKeys = [
   'health.rows.dhpp-template-meta',
   'health.rows.vet-visit-title',
   'health.rows.vet-visit-meta',
+  'health.vet-prep.title',
+  'health.vet-prep.subtitle',
+  'health.vet-prep.sample-date',
+  'health.vet-prep.sample-time',
+  'health.vet-prep.checklist.0',
+  'health.vet-prep.checklist.1',
+  'health.vet-prep.checklist.2',
+  'health.vet-prep.checklist.3',
+  'health.vet-prep.add-item',
+  'health.vet-prep.hint',
   'health.pills.template',
   'health.pills.needs-vet-review',
   'health.pills.confirmed',
   'health.pills.completed',
   'health.template-row-subline',
   'health.add-record.sheet-title',
+  'health.add-record.close',
   'health.add-record.form-cancel',
   'health.add-record.form-save',
+  'health.add-record.hint-after-list',
   'health.add-record.section-main',
   'health.add-record.section-extra',
   'health.add-record.field-name',
@@ -176,6 +250,10 @@ export const shellI18nKeys = [
   'health.add-record.urgent-hint',
   'health.add-record.note-hint',
   'health.add-record.privacy-hint',
+  'health.record-types.vaccination',
+  'health.record-types.deworming',
+  'health.record-types.prophylaxis',
+  'health.record-types.vet-visit',
   'health.edit-record.screen-title',
   'health.edit-record.section-details',
   'health.edit-record.section-history',
@@ -185,6 +263,7 @@ export const shellI18nKeys = [
   'health.edit-record.delete-confirm.body',
   'health.edit-record.delete-confirm.cancel',
   'health.edit-record.delete-confirm.destructive',
+  'health.edit-record.delete-undo-toast',
   'health.detail.subtitle',
   'health.detail.date-label',
   'health.detail.date-value',
@@ -208,6 +287,9 @@ export const shellI18nKeys = [
   'health.weight-entry.body',
   'health.weight-entry.action',
   'health.footer-hint',
+  'more.puppy-summary.no-age',
+  'more.puppy-profile.screen-title',
+  'more.puppy-profile.missing-value',
   'more.screen-title',
   'more.sections.puppy',
   'more.sections.sharing',

@@ -29,7 +29,10 @@ import { tokens } from '@/design/tokens';
 import { useAppTranslation, type I18nKey } from '@/lib/i18n';
 
 export type TodayStatusState =
+  | 'all-done'
+  | 'cold-start'
   | 'empty'
+  | 'empty-history'
   | 'error'
   | 'loading'
   | 'offline-read'
@@ -169,11 +172,13 @@ export function TodayDailyCardList({
       ) : null}
       {otherCards.map((card) => {
         const copy = todayDailyCardCopy[card.variant];
+        const isContextualTip = card.variant === 'feeding_pattern';
 
         return (
           <Card
             key={card.variant}
-            testID="today-daily-card">
+            testID={isContextualTip ? 'diary-contextual-tip-card' : 'today-daily-card'}
+            variant={isContextualTip ? 'mutedTemplate' : undefined}>
             <Stack gap="sm">
               <Stack
                 align="center"
@@ -493,10 +498,25 @@ const todayDailyCardCopy = {
 } as const satisfies Record<TodayDailyCardVariant, CopyPair>;
 
 const todayStatusCopy = {
+  'all-done': {
+    bodyKey: 'today.states.all-done.body',
+    statusKey: 'today.states.all-done.status',
+    titleKey: 'today.states.all-done.title',
+  },
+  'cold-start': {
+    bodyKey: 'today.states.cold-start.body',
+    statusKey: 'today.states.cold-start.status',
+    titleKey: 'today.states.cold-start.title',
+  },
   empty: {
     bodyKey: 'today.states.empty.body',
     statusKey: 'today.states.empty.status',
     titleKey: 'today.states.empty.title',
+  },
+  'empty-history': {
+    bodyKey: 'today.states.empty-history.body',
+    statusKey: 'today.states.empty-history.status',
+    titleKey: 'today.states.empty-history.title',
   },
   error: {
     bodyKey: 'today.states.error.body',
@@ -531,7 +551,10 @@ const todayStatusCopy = {
 } as const satisfies Record<TodayStatusState, StatusCopy>;
 
 const todayStatusIcon = {
+  'all-done': 'spark',
+  'cold-start': 'plus',
   empty: 'docText',
+  'empty-history': 'book',
   error: 'infoCircle',
   loading: 'spark',
   'offline-read': 'lock',
@@ -541,7 +564,10 @@ const todayStatusIcon = {
 } as const satisfies Record<TodayStatusState, Parameters<typeof AppIcon>[0]['name']>;
 
 const todayStatusTone = {
+  'all-done': 'completed',
+  'cold-start': 'template',
   empty: 'template',
+  'empty-history': 'template',
   error: 'failed',
   loading: 'pending',
   'offline-read': 'template',

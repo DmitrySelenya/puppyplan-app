@@ -31,8 +31,8 @@ function getValue(source, key) {
 }
 
 assert.deepEqual(
-  extractStaticTranslationKeys("t('tabs.today'); t(\"tabs.health\"); t(`tabs.more`);"),
-  ['tabs.today', 'tabs.health', 'tabs.more'],
+  extractStaticTranslationKeys("t('tabs.diary'); t(\"tabs.pet\"); t(`tabs.more`);"),
+  ['tabs.diary', 'tabs.pet', 'tabs.more'],
   'shell i18n extractor must cover single quotes, double quotes, and static template literals',
 );
 assert.throws(

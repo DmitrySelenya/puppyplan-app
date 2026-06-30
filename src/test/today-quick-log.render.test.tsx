@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
@@ -9,6 +9,7 @@ import { createPuppyPlanQueryClient } from '@/lib/query/client';
 import { queryKeys } from '@/lib/query/keys';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { TodayScreen } from '@/features/today/screens/TodayScreen';
+import { tokens } from '@/design/tokens';
 
 const mockListEvents = jest.fn();
 
@@ -253,10 +254,11 @@ describe('Today Quick Log state integration', () => {
     });
   });
 
-  it('renders synced rows with a non-color-only status and no local-only actions', async () => {
+  it('renders synced Diary history facts with edit and delete actions but no visible status pill', async () => {
     mockListEvents.mockResolvedValue([createRow()]);
     const actions = {
       onDelete: jest.fn(),
+      onEdit: jest.fn(),
       onRetry: jest.fn(),
       onUndo: jest.fn(),
     };
@@ -277,7 +279,43 @@ describe('Today Quick Log state integration', () => {
     await waitFor(() => {
       expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
     });
-    expect(screen.getByText(i18n.t('timeline.pills.synced'))).toBeTruthy();
+    expect(
+      StyleSheet.flatten(screen.getByTestId('diary-history-logged-fact').props.style)
+        .backgroundColor,
+    ).toBe(tokens.color.surface.sunken);
+    const itemActions = screen.getByRole('button', {
+      name: i18n.t('today.history.item-actions'),
+    });
+    const itemActionStyleProp = itemActions.props.style;
+    const itemActionStyle = StyleSheet.flatten(
+      typeof itemActionStyleProp === 'function'
+        ? itemActionStyleProp({ pressed: false })
+        : itemActionStyleProp,
+    );
+
+    expect(itemActionStyle.minHeight).toBeGreaterThanOrEqual(44);
+    expect(itemActionStyle.minWidth).toBeGreaterThanOrEqual(44);
+    fireEvent.press(itemActions);
+    expect(actions.onEdit).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
+      eventType: 'feeding',
+      householdId,
+      puppyId,
+      todayDate,
+      trackerId: 'feeding',
+    });
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('today.history.delete-action'),
+    }));
+    expect(actions.onDelete).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
+      eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'synced',
+      todayDate,
+    });
+    expect(screen.queryByText(i18n.t('timeline.pills.synced'))).toBeNull();
     expect(screen.queryByText('OK')).toBeNull();
     expect(JSON.stringify(toJSON())).not.toContain('"OK"');
     expect(screen.queryByRole('button', {

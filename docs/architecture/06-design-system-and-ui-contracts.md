@@ -58,7 +58,7 @@ Required extended components:
 
 ## Veto Rules
 
-- No custom-rendered TabBar in MVP. Use Expo Router/native tab behavior and keep the design wrapper limited to labels, icons, tokens, and a11y metadata.
+- ~~No custom-rendered TabBar in MVP.~~ **Lifted 2026-06-27** (see `docs/plans/active/2026-06-27-diary-pet-nav-design-brief.md`): a custom-rendered `tabBar` IS permitted for the Oura-style split nav (floating tab capsule + a separate "+" circle). Keep routing, state, safe-area, and a11y native underneath (custom render of the bar only); the design wrapper still owns labels, icons, tokens, and a11y metadata.
 - No coral for warnings or sharing risk states.
 - No bright red.
 - No two equal primary CTAs in one hero/screen.

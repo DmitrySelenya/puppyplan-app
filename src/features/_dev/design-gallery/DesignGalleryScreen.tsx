@@ -12,6 +12,7 @@ import {
   SegmentedControl,
   SectionHeader,
   SheetSurface,
+  SnackbarProvider,
   Stack,
   StatusPill,
   TextField,
@@ -23,7 +24,11 @@ import {
   HealthScreen,
   HealthWeightEntryPreview,
 } from '@/features/health/screens/HealthScreen';
-import { OnboardingFirstLogPreview } from '@/features/onboarding/screens/OnboardingScreen';
+import {
+  OnboardingAccountPromptPreview,
+  OnboardingFirstLogPreview,
+  OnboardingNotificationsPromptPreview,
+} from '@/features/onboarding/screens/OnboardingScreen';
 import { QuickLogLocalEvents } from '@/features/quick-log/components/QuickLogLocalEvents';
 import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
 import {
@@ -70,7 +75,11 @@ export function DesignGalleryScreen() {
         ))}
 
         <SyntheticOnboardingShell />
-        <OnboardingFirstLogPreview />
+        <SnackbarProvider>
+          <OnboardingFirstLogPreview />
+        </SnackbarProvider>
+        <OnboardingAccountPromptPreview />
+        <OnboardingNotificationsPromptPreview />
         <SyntheticPuppyProfileSettingsShell />
         <SyntheticQuickTrackersSettingsShell />
         <SyntheticMoreSettingsShell />
@@ -436,7 +445,7 @@ export function SyntheticHealthShell() {
       <Stack gap="md">
         <GalleryShellHeader
           bodyKey="dev.gallery.states.health-v2"
-          titleKey="tabs.health"
+          titleKey="tabs.pet"
         />
         <HealthScreen reviewState="mixed-list" />
         <HealthScreen />
@@ -510,7 +519,7 @@ export function SyntheticTimelineShell() {
               t('timeline.actor-you'),
               t('timeline.pills.failed'),
             ].join(', ')}
-            leading={<AppIcon name="today" size={22} />}
+            leading={<AppIcon name="paw" size={22} />}
             meta="20:10"
             subtitle={t('timeline.actor-you')}
             title={t('quick-log.trackers.walk')}
@@ -620,7 +629,7 @@ export function SyntheticTodayShell() {
       <Stack gap="md">
         <GalleryShellHeader
           bodyKey="dev.gallery.states.today-core"
-          titleKey="tabs.today"
+          titleKey="tabs.diary"
         />
         <AppText tone="secondary">{t('dev.gallery.today.synthetic-note')}</AppText>
         {syntheticTodayPlans.map((fixture) => (

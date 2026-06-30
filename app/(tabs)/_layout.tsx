@@ -8,7 +8,7 @@ import { useSnackbarActive } from '@/design/primitives/Snackbar';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 
-const [todayTab, healthTab, moreTab] = primaryTabs;
+const [diaryTab, petTab, moreTab] = primaryTabs;
 
 export default function TabLayout() {
   const { t } = useAppTranslation();
@@ -26,23 +26,23 @@ export default function TabLayout() {
           tabBarStyle: styles.tabBar,
         }}>
         <Tabs.Screen
-          name="today/index"
+          name="diary/index"
           options={{
             tabBarIcon: ({ color, focused, size }) => (
-              <AppIcon color={color} filled={focused} name="today" size={size} />
+              <AppIcon color={color} filled={focused} name="book" size={size} />
             ),
-            title: t(todayTab.labelKey),
-            tabBarAccessibilityLabel: t(todayTab.accessibilityLabelKey),
+            title: t(diaryTab.labelKey),
+            tabBarAccessibilityLabel: t(diaryTab.accessibilityLabelKey),
           }}
         />
         <Tabs.Screen
-          name="health/index"
+          name="pet/index"
           options={{
             tabBarIcon: ({ color, focused, size }) => (
-              <AppIcon color={color} filled={focused} name="heart" size={size} />
+              <AppIcon color={color} filled={focused} name="paw" size={size} />
             ),
-            title: t(healthTab.labelKey),
-            tabBarAccessibilityLabel: t(healthTab.accessibilityLabelKey),
+            title: t(petTab.labelKey),
+            tabBarAccessibilityLabel: t(petTab.accessibilityLabelKey),
           }}
         />
         <Tabs.Screen
@@ -70,9 +70,8 @@ export default function TabLayout() {
 
 function isFabLogSurfacePath(pathname: string) {
   return pathname === '/' ||
-    pathname.startsWith('/today') ||
-    pathname.startsWith('/health') ||
-    pathname.startsWith('/timeline');
+    pathname.startsWith('/diary') ||
+    pathname.startsWith('/pet');
 }
 
 const styles = StyleSheet.create({

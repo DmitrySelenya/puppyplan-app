@@ -1,8 +1,9 @@
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { QuickLogFeedbackProvider } from '@/features/quick-log/QuickLogFeedbackProvider';
 import type { QuickLogMutationPort } from '@/features/quick-log/useQuickLogSheetController';
+import { tokens } from '@/design/tokens';
 import { i18n } from '@/lib/i18n';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -118,7 +119,7 @@ describe('QuickLogRoute', () => {
     expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
-  it('closes the unavailable Quick Log route through Today fallback when no previous route exists', () => {
+  it('closes the unavailable Quick Log route through Diary fallback when no previous route exists', () => {
     mockRouterCanGoBack.mockReturnValue(false);
 
     render(
@@ -134,7 +135,7 @@ describe('QuickLogRoute', () => {
     }));
 
     expect(mockRouterBack).not.toHaveBeenCalled();
-    expect(mockRouterReplace).toHaveBeenCalledWith('/today');
+    expect(mockRouterReplace).toHaveBeenCalledWith('/diary');
   });
 
   it('opens with active selected trackers and sends the selected tracker through the route mutation', () => {
@@ -225,12 +226,24 @@ describe('QuickLogRoute', () => {
       name: i18n.t('quick-log.trackers.feeding'),
     }));
 
+    const warningCardStyle = StyleSheet.flatten(screen.getByTestId('quick-log-duplicate-warning-card').props.style);
+    const warningIconStyle = StyleSheet.flatten(screen.getByTestId('quick-log-duplicate-warning-icon').props.style);
+
+    expect(warningCardStyle.backgroundColor).toBe(tokens.color.status.warningTint);
+    expect(warningIconStyle.backgroundColor).toBe(tokens.color.surface.raised);
     expect(screen.getByText(i18n.t('quick-log.duplicate-warning.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.duplicate-warning.question'))).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.duplicate-warning.primary-alt'),
+    })).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.duplicate-warning.secondary'),
+    })).toBeTruthy();
     expect(mutation.mutate).not.toHaveBeenCalled();
     expect(mockRouterBack).not.toHaveBeenCalled();
   });
 
-  it('closes the active Quick Log route through Today fallback after logging when no previous route exists', () => {
+  it('closes the active Quick Log route through Diary fallback after logging when no previous route exists', () => {
     const mutation = createMutationPort();
     mockRouterCanGoBack.mockReturnValue(false);
     mockUseActiveCareContext.mockReturnValue({
@@ -266,7 +279,7 @@ describe('QuickLogRoute', () => {
 
     expect(mutation.mutate).toHaveBeenCalledTimes(1);
     expect(mockRouterBack).not.toHaveBeenCalled();
-    expect(mockRouterReplace).toHaveBeenCalledWith('/today');
+    expect(mockRouterReplace).toHaveBeenCalledWith('/diary');
   });
 
   it('opens the Quick Trackers settings route from the active sheet edit-trackers action', () => {

@@ -265,7 +265,7 @@ function TimelineHeader({ onClose }: Readonly<{ onClose: () => void }>) {
     <Stack gap="sm">
       <Stack align="center" direction="horizontal" justify="space-between">
         <Button
-          label={t('tabs.today')}
+          label={t('tabs.diary')}
           labelMaxFontSizeMultiplier={1.4}
           labelVariant="callout"
           onPress={onClose}

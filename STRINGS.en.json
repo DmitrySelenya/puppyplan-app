@@ -65,7 +65,7 @@
         "day-two-morning": "Today · day two morning",
         "day-seven": "Today · day seven",
         "after-invite": "Today · after invite slot",
-        "missed-reminder": "Today · missed reminder slot",
+        "missed-reminder": "Diary · past routine slot",
         "state-fixtures": "Today · loading, offline, and pending",
         "synthetic-note": "These states do not write reminders, invites, or household activity."
       }
@@ -77,7 +77,7 @@
     "subtitle": "We keep your puppy's data private to your household.",
     "email": {
       "label": "Email",
-      "placeholder": "you@example.com",
+      "placeholder": "you@example.test",
       "cta": "Send code"
     },
     "code": {
@@ -221,9 +221,10 @@
   },
 
   "tabs": {
-    "today": "Today",
-    "today-hint": "Open the Today screen",
-    "health": "Health",
+    "diary": "Diary",
+    "diary-hint": "Open the Diary screen",
+    "pet": "Pet",
+    "pet-hint": "Open the Pet screen",
     "more": "More",
     "quick-log-fab-label": "Quick Log",
     "quick-log-fab-hint": "Opens a list of things you can log"
@@ -240,12 +241,18 @@
     "puppy-profile": {
       "title": "What's your puppy's name?",
       "helper": "You can change this later.",
+      "step-label": "Step 2 of 5",
+      "back-a11y": "Back",
       "name-field-label": "Name",
       "name-field-hint": "Puppy's name, required to continue",
       "birth-date-placeholder": "YYYY-MM-DD",
+      "age-section-label": "Age",
       "age-toggle-age": "Age",
       "age-toggle-date": "Birth date",
       "age-weeks-field-label": "Age in weeks",
+      "age-weeks-value": "{count} weeks",
+      "age-decrement-a11y": "Decrease age",
+      "age-increment-a11y": "Increase age",
       "cta": "Continue",
       "error-required": "Add a name and age or date of birth to continue.",
       "error-name-required": "Add a name to continue.",
@@ -253,7 +260,7 @@
       "error-birth-date-required": "Enter a birth date in YYYY-MM-DD format.",
       "error-future-date": "That date is in the future — please double-check",
       "a11y-toggle": "Age entry method. Selected: age in weeks.",
-      "a11y-stepper": "Age 8 weeks. Swipe up to increase."
+      "a11y-stepper": "Age {count} weeks. Swipe up to increase."
     },
     "age-hint": {
       "6-8-weeks": "At 8 weeks, puppies often sleep 18–20 hours a day.",
@@ -262,38 +269,49 @@
       "fallback": "Every puppy is different. We'll set a calm pace."
     },
     "tracker-picker": {
+      "back-a11y": "Back",
       "title": "What to track",
       "helper": "Up to 5 actions. You can change them later.",
+      "step-label": "Step 3 of 5",
       "counter": "{n} of 5 selected",
       "_comment": "{n} — integer 0..5",
       "limit-snackbar": "Up to 5. Remove one to add a new tracker.",
       "min-required-snackbar": "Keep at least one tracker selected.",
-      "zero-state-cta": "Skip for now",
+      "zero-state-cta": "Skip selection",
       "cta": "Continue",
-      "tile-feeding-a11y": "Feeding. Selected. Double tap to remove."
+      "tile-selected-a11y": "{label}. Selected. Double tap to remove.",
+      "tile-unselected-a11y": "{label}. Not selected. Double tap to add."
     },
     "plan-reveal": {
       "title": "Your plan for today",
       "subtitle": "You can start with the first item.",
+      "summary": "{name} · {age} · You",
+      "summary-a11y": "{name}, {age}, you",
+      "avatar-label": "You",
+      "birth-date-summary": "Birth date set",
       "hero": "Log your first event — it takes about five seconds.",
+      "hero-a11y": "First item. {hero}",
       "starter-card-1": "Watch the feeding pattern",
       "starter-card-2": "Short potty breaks every 1–2 hours",
       "starter-card-3": "A quiet spot for sleep",
+      "starter-card-a11y": "Starter action. {action}",
       "cta": "Start your first log"
     },
     "first-log": {
       "hero-after-first": "First event saved. From here, a calm rhythm.",
-      "body-after-first": "Today now shows the saved event, the next step, and the same Quick Log action.",
+      "body-after-first": "Diary now shows the saved event, the next step, and the same Quick Log action.",
       "eyebrow": "First Today",
       "today-title": "Your first event",
       "event-title": "Pee outside · 9:42",
       "event-meta": "Saved just now",
-      "celebration-snackbar": "Done. You can keep going."
+      "celebration-snackbar": "Done. You can keep going.",
+      "celebration-snackbar-a11y": "First event saved. You can keep going."
     },
     "preview": {
       "name-value": "Puppy"
     },
     "account-wall": {
+      "sheet-a11y": "Save progress options",
       "title": "Save your progress",
       "body": "This lets you share with family and see your data on other devices.",
       "apple": "Continue with Apple",
@@ -302,6 +320,7 @@
       "secondary": "Not now"
     },
     "notifications-prompt": {
+      "sheet-a11y": "Quiet reminders prompt",
       "title": "Want quiet reminders?",
       "body": "We'll only send what you choose. No noise.",
       "primary": "Turn on",
@@ -318,6 +337,15 @@
     "weekly-lead": "Over 7 days:",
     "weekly-insight-prefix": "Clearer now: ",
     "weekly-cta": "See details",
+    "week-strip": {
+      "label": "Diary week",
+      "day-label": "{weekday}, {date}. {state}",
+      "_comment-day-label": "{weekday} — long weekday, e.g. Wednesday; {date} — short date, e.g. Jun 10; {state} — one of the state-* labels below.",
+      "state-default": "Diary day",
+      "state-selected": "Selected day",
+      "state-today": "Today",
+      "state-selected-today": "Selected day, today"
+    },
     "hero": {
       "day1": "Log your first event — it takes about five seconds.",
       "day1-cta": "Start",
@@ -329,7 +357,7 @@
       "_comment-potty-time-meta": "{duration} — e.g. \"1 hr 40 min\"",
       "potty-time-primary": "Log it",
       "potty-time-tertiary": "Later",
-      "eyebrow": "Today",
+      "eyebrow": "Diary",
       "first-day": {
         "eyebrow": "Start",
         "title": "Log your first event — it takes about five seconds.",
@@ -347,8 +375,8 @@
         "primary": "Plan the next break"
       },
       "missed-reminder": {
-        "title": "Reminder slot preview",
-        "body": "This synthetic card shows where a missed reminder will sit after reminders ship.",
+        "title": "Past routine slot preview",
+        "body": "This synthetic card shows where a past unchecked routine will sit after reminders ship.",
         "primary": "Preview only"
       },
       "day-7-weekly-rhythm": {
@@ -358,7 +386,7 @@
       },
       "steady-day": {
         "title": "Keep the rhythm visible",
-        "body": "Today stays quiet when logs are current and no urgent care pattern stands out."
+        "body": "Diary stays quiet when logs are current and no urgent care pattern stands out."
       }
     },
     "starter-guidance": {
@@ -431,6 +459,12 @@
         "body": "Use Quick Log when something happens, and the latest events will stay visible here."
       }
     },
+    "history": {
+      "section-title": "Diary history",
+      "open-action": "Review history",
+      "delete-action": "Delete entry",
+      "item-actions": "Diary item actions"
+    },
     "daily-cards": {
       "first-day-banner": "The first day is about observing, not results.",
       "starter-section-title": "What to do now",
@@ -452,15 +486,15 @@
       },
       "feeding-pattern": {
         "title": "Feeding pattern noticed",
-        "body": "Today will keep meals near the top while the pattern is forming."
+        "body": "Diary keeps meals near the top while the pattern is forming."
       },
       "after-invite": {
         "title": "Caregiver activity slot",
-        "body": "A synthetic preview of how new household activity will appear in Today."
+        "body": "A synthetic preview of how new household activity will appear in Diary."
       },
       "quick-log-prompt": {
         "title": "Log what just happened",
-        "body": "A single recent event keeps the rest of Today grounded."
+        "body": "A single recent event keeps the rest of Diary grounded."
       },
       "sleep-rhythm": {
         "title": "Sleep rhythm",
@@ -468,11 +502,11 @@
       },
       "potty-rhythm": {
         "title": "Potty rhythm",
-        "body": "Recent potty logs help Today keep outside breaks timely."
+        "body": "Recent potty logs keep outside breaks timely in Diary."
       },
       "timeline-review": {
         "title": "Recent care is saved",
-        "body": "Timeline keeps the durable record when the Today card stays brief."
+        "body": "Diary history keeps the durable record when the day card stays brief."
       },
       "health-calm-check": {
         "title": "Calm health check",
@@ -484,6 +518,16 @@
       }
     },
     "states": {
+      "all-done": {
+        "status": "Done",
+        "title": "Everything for this Diary day is handled",
+        "body": "Routine slots are complete. New events can still be added from Quick Log."
+      },
+      "cold-start": {
+        "status": "Start",
+        "title": "Start this Diary with the first routine",
+        "body": "Use Add for Quick Log or Schedule so the first day has a clear place to begin."
+      },
       "loading": {
         "status": "Loading",
         "title": "Refreshing Today",
@@ -493,6 +537,11 @@
         "status": "Empty",
         "title": "Nothing logged today",
         "body": "Today will fill in after the first routine event."
+      },
+      "empty-history": {
+        "status": "Quiet day",
+        "title": "No entries on this Diary day",
+        "body": "Diary history stays available while this day has no new logs."
       },
       "error": {
         "status": "Saved view",
@@ -1068,6 +1117,17 @@
   "health": {
     "tab-title": "Health",
     "footer-hint": "This is a record of entries, not medical advice.",
+    "pet-hub": {
+      "a11y": "{title}. Age: {age}. Breed: {breed}. Weight: {weight}.",
+      "edit-profile": "Edit profile",
+      "age-label": "Age",
+      "breed-label": "Breed",
+      "weight-label": "Weight",
+      "add-weight": "Add weight",
+      "quick-trackers-title": "Quick trackers",
+      "quick-trackers-meta": "Adjust the five Add buttons",
+      "quick-trackers-a11y": "Quick trackers. Adjust the five Add buttons."
+    },
     "segments": ["All", "Vaccinations", "Treatments", "Visits"],
     "filter-chips": ["Templates", "Confirmed", "Done"],
     "rows": {
@@ -1180,6 +1240,8 @@
     "vet-prep": {
       "title": "Getting ready for the visit",
       "subtitle": "Visit on {date}, {time}",
+      "sample-date": "May 18",
+      "sample-time": "10:00 AM",
       "checklist": [
         "Bring previous vaccination records",
         "List of questions for the vet",
@@ -1286,7 +1348,8 @@
     "sitter-card": {
       "title-example": "Evening checklist · 7:00 pm",
       "subtitle-template": "{n} items · sitter: {name}",
-      "actions": ["Open checklist", "Snooze"],
+      "progress-a11y-template": "{completed} of {total} checklist items complete",
+      "actions": ["Open checklist", "Mark all done", "Skip"],
       "completed-summary": "Done · {time} · {name}"
     },
     "permission-denied": {
@@ -1548,31 +1611,31 @@
 
   "paywall": {
     "title": "PuppyPlan Plus",
-    "subtitle": "Extended features for the first 90 days.",
+    "subtitle": "Full access for the first 90 days with your puppy.",
     "features": [
-      "Unlimited shared links",
-      "Extended health export",
-      "Multiple puppies in one account"
+      "Full Diary, Pet, routines, and sharing",
+      "Keep adding after your 30-day access period",
+      "Export and privacy controls always stay available"
     ],
-    "plan-monthly": "Monthly · €8.99",
-    "plan-yearly": "Yearly · €49.99 (save 53%)",
-    "primary": "Subscribe",
+    "plan-monthly": "Monthly · $8.99",
+    "plan-yearly": "Annual · $39.99",
+    "primary": "Choose plan",
     "secondary": "Restore purchases",
     "legal": "Auto-renews. You can cancel in the App Store.",
     "free-vs-plus": {
       "free": [
-        "Today + Timeline",
-        "1 shared access",
-        "Basic export",
-        "1 puppy"
+        "Days 0-30: full access",
+        "No card up front",
+        "Read-only after trial",
+        "Export always available"
       ],
       "plus": [
-        "Everything in Free",
-        "Unlimited shared access",
-        "Extended health export",
-        "Multiple puppies"
+        "Everything in trial",
+        "Keep adding entries",
+        "Create routines and shares",
+        "Restore anytime"
       ],
-      "header-free": "Free",
+      "header-free": "Trial",
       "header-plus": "Plus"
     },
     "states": {
@@ -1580,7 +1643,7 @@
       "error": "Couldn't load the plans. Try refreshing",
       "active-until": "Subscription active through {date}. Managed in the App Store"
     },
-    "a11y-price-example": "Yearly, 49 euros 99 cents, save 53 percent"
+    "a11y-price-example": "Annual, 39 dollars 99 cents per year"
   },
 
   "permission-denied-patterns": {

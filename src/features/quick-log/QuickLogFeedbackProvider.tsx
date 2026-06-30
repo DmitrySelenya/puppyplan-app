@@ -181,6 +181,7 @@ export function createQuickLogFeedbackController({
       snackbar.replaceSnackbar({
         accessibilityLabelKey: 'quick-log.failed.generic',
         clientEventId: event.clientEventId,
+        hapticEvent: 'error',
         id: event.requestId,
         messageKey: 'quick-log.failed.snackbar',
         onPrimaryAction: () => {
@@ -270,6 +271,7 @@ function createTranslatedSnackbarPort(
       resolveOptions(message.accessibilityOptions, message.accessibilityOptionKeys),
     ),
     clientEventId: message.clientEventId,
+    hapticEvent: message.hapticEvent,
     id: message.id,
     message: t(
       message.messageKey,

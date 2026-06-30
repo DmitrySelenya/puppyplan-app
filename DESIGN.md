@@ -7,9 +7,11 @@
 > Статус: hand-off спецификация для дизайн-инструментов (Cloud Design / Figma Make / V0) и для агентского implementation в Expo SDK 55.
 > Scope v1: **light mode only, phone only** (iPhone 375×812 / 393×873 / 430×932). Dark mode и tablet/landscape — out-of-scope, см. §6.
 > Контракт: AI-агенты не могут менять hierarchy, primary actions, naming или screen states без обновления PRD И этого документа.
-> Источник истины при расхождениях: **Часть 1 (Foundation)**. §0.1 и §5.3.1 master prompt подгоняются под §1.2/§1.9/§1.4.
+> Источник истины для старого v1-документа при внутренних расхождениях: **Часть 1 (Foundation)**. Для V2 redesign ниже действует override от 2026-06-28.
 
 ---
+
+> **2026-06-28 V2 redesign override:** для всех новых дизайн- и implementation-задач `docs/plans/active/2026-06-27-diary-pet-nav-design-brief.md` supersedes this v1 document wherever it conflicts. Canonical IA is `Diary | Pet | More` plus a separate Add/Quick Log action; old Today is absorbed into Diary, standalone Timeline is absorbed into Diary history, and Health is folded into Pet. Clay tokens, Lora/Nunito, split nav, no-shame routine cards, and native time pickers replace the old Calm Teal/system-font language. Old Today/Health/Timeline sections below are historical references until rewritten into V2 spec cards.
 
 ## 0. Как пользоваться этим документом
 
@@ -38,22 +40,22 @@
 **Product frame.** PuppyPlan — native mobile app для взрослых владельцев щенка в первые 90 дней. Приложение отвечает на три вопроса: что уже произошло, что сделать дальше, кто может безопасно видеть данные. Это не лендинг, не training library, не veterinary app, не mental-health app, не AI coach, не social feed и не gamified tracker.
 
 **Non-negotiable IA.**
-- Top-level navigation: только `Today`, `Health`, `More`.
-- `Quick Log` — persistent bottom action / FAB, не вкладка.
-- `Timeline` открывается из `Today` и `More`, но не становится отдельной вкладкой.
-- `Today` содержит ровно один hero card с одним next-best-action.
+- Top-level navigation: только `Diary`, `Pet`, `More`.
+- `Quick Log` / Add — separate persistent bottom action / FAB, не вкладка.
+- Standalone `Timeline` removed: history lives inside `Diary`.
+- `Diary` is the home tab: planned routines and logged facts in time order, with calm scroll-into-past history.
 - `Quick Log` показывает максимум 5 visible trackers.
-- `Health` выглядит как спокойное ведение записей, не как diagnosis / treatment UI.
+- `Pet` folds profile, current weight, and Health records into one calm record surface; Health remains non-diagnostic and non-treatment UI.
 - `Family Sharing` и `Trainer Sharing` всегда показывают, кто что видит, что может делать, когда доступ истекает и как его отозвать.
 
 **Visual contract.** (значения совпадают с §1.2; при любом расхождении побеждает §1.2)
-- Style: `soft native utility`, `warm clinical trust`, `paper-like calm`.
-- Background `surface/base`: `#FBFAF7` (Warm Off-white); surface/raised: `#FFFFFF`; surface/sunken: `#F1ECE3`.
-- Text: primary `#1C1F1B` (Charcoal), secondary `#4A4E48`, tertiary `#72756A`; border `stroke/default` `#E2DDD2`.
-- Primary brand: Calm Teal `primary/500` `#0891B2`; filled-button teal затемнён до contrast-safe `primary/600` `#0E7490`.
-- Accent: Ember Coral `accent/500` `#E07A4F` — ТОЛЬКО для celebration (первая запись, milestone, vaccination confirmed). Никаких amber-accent для CTA.
+- Style: `calm native utility`, `warm companion`, `paper-like clay`.
+- Background `surface/base`: `#F6EFE3`; surface/raised: `#FFFCF6`; surface/sunken: `#ECE3D4`.
+- Text: primary `#2C2824`, secondary `#6B6256`, tertiary `#8A7E6C` for large/decorative text only; border `stroke/default` `#D9CDBA`.
+- Primary brand: Clay `#C77F4F` / `#B26A3C`; no teal in new work.
+- Accent: Honey `#E3A53C` — rare celebration only. Sage supports done/success. Mauve carries calm informational tips.
 - `status/danger` Clay Red `#9A3B2E` (muted) — только для user-marked urgent. Bright red (`#DC2626` и т.п.) запрещён.
-- Native system fonts only; Dynamic Type ready; touch targets 44×44pt minimum; Quick Log buttons 56–64pt high.
+- Lora display + Nunito body; Dynamic Type ready; touch targets 44×44pt minimum; Quick Log buttons 56–64pt high.
 - Functional outline icons only. No emoji icons for controls.
 
 **Required states.** Каждый ключевой экран обязан иметь `loading`, `empty`, `error`, `offline-read`, `pending-write`, `permission-denied`, `revoked/expired share`. Offline-read copy: «Показаны последние сохранённые данные». Failed Quick Log показывает retry/delete рядом с affected event. Pending Quick Log показывает pending state с undo/delete до server confirmation.
@@ -65,13 +67,13 @@
 ```text
 Design native iOS/Android Expo app screens for PuppyPlan (v1 — light mode, phone only).
 Style: calm utility + warm companion, native-first, accessible.
-Background #FBFAF7 (warm off-white), surface #FFFFFF, sunken #F1ECE3. Text primary #1C1F1B (charcoal), secondary #4A4E48. Stroke #E2DDD2.
-Primary brand Calm Teal #0891B2; filled-button teal #0E7490. Coral #E07A4F only for celebration. Muted Clay Red #9A3B2E only for user-marked urgent.
-Use 3 tabs only: Today, Health, More. Quick Log is a persistent bottom action/FAB.
+Background #F6EFE3, raised surface #FFFCF6, sunken #ECE3D4. Text primary #2C2824, secondary #6B6256. Stroke #D9CDBA.
+Primary brand Clay #C77F4F / #B26A3C. Honey #E3A53C only for rare celebration. No teal in new work. Muted Clay Red #9A3B2E only for user-marked urgent.
+Use 3 tabs only: Diary, Pet, More. Quick Log/Add is a persistent bottom action/FAB.
 Do not create a landing page, mascot-heavy UI, AI gradients, bokeh/orbs, dense dashboard, nested cards, emoji functional icons, extra tabs, AI coach, social feed, streaks, medical diagnosis, or treatment language.
-Today has exactly one hero card with one primary CTA (one tertiary/text-link allowed alongside), visible household activity strip, max 5 daily cards, and thumb-zone Quick Log.
+Diary is the home tab: planned routines and logged facts in time order, visible household context, calm history inside Diary, and thumb-zone Quick Log/Add.
 All sharing screens must show who sees what, until when, and how to revoke.
-All health screens must feel trustworthy, not urgent or diagnostic.
+Pet health records must feel trustworthy, not urgent or diagnostic.
 ```
 
 ---
@@ -88,7 +90,7 @@ PuppyPlan — это **спокойный компаньон** для первы
 4. **Звучать медицински-нейтрально.** Health никогда не пугает по своей инициативе. Urgent помечает только сам пользователь.
 5. **Не стыдить.** Никаких streaks первые 14 дней, никаких «вы пропустили», никаких красных failure-стейтов. Формулировки — «рутина формируется», «бывает», «следующий шанс».
 
-Эстетика — **calm utility + warm companion**: тёплый off-white фон, charcoal-текст, calm teal как primary, muted amber только для celebration. Native system font. Без AI-purple-gradients, без bokeh, без mascot-screens, без emoji-as-icons.
+Эстетика — **calm utility + warm companion**: тёплый off-white фон, charcoal-текст, Terracotta Clay как primary, muted amber только для редких celebration-моментов. Lora display + Nunito body for V2 screens; historical pre-V2 examples may still mention native system font until rewritten into spec cards. Без AI-purple-gradients, без bokeh, без mascot-screens, без emoji-as-icons.
 
 ---
 
@@ -127,32 +129,31 @@ Use-context критичен для решений:
 +--------------------------------------+
 ```
 
-3 primary tabs, persistent Quick Log FAB.
+3 primary tabs, persistent Quick Log/Add FAB.
 
 ### Route map (из PRD §5)
 
 **Primary tabs:**
-- `/today` — главный hub: hero card, daily cards, household activity strip, starter guidance card.
-- `/health` — журнал записей: vaccination / deworming / vet visits, шаблоны и подтверждённые.
-- `/more` — всё остальное: timeline, family sharing, trainer sharing, reminders, quick trackers settings, puppy profile, notification preferences, privacy/export/delete, app support, paywall shell (feature-flagged).
+- `/diary` — главный hub: planned routines + logged facts in time order, household context, scroll-into-past history.
+- `/pet` — puppy profile, current weight, and calm health records.
+- `/more` — всё остальное: family sharing, trainer/sitter access, routines/reminders, quick trackers settings, notification preferences, privacy/export/delete, app support, paywall shell (feature-flagged).
 
 **Modal / sheet routes:**
 - `/quick-log` — bottom sheet с tracker grid.
 - `/quick-log/details` — optional details форма.
-- `/timeline` — фильтруемый список events (открывается из Today и More).
-- `/reminders/edit` — create/edit reminder.
+- `/routine/edit` и `/reminders/edit` — create/edit routine or reminder.
 - `/family/invite` — invite caregiver flow.
 - `/sharing/trainer-preview` — permission preview перед отправкой.
 - `/sharing/scope-selector` — выбор скоупов для trainer share.
-- `/health/record-edit` — create/edit health record.
+- `/pet/health-record-edit` — create/edit health record.
 - `/settings/quick-trackers` — изменить набор из 5 quick trackers.
 
 ### Where things live (rules)
 
-- **Timeline** доступен из Today (вход внизу care actions) и из More.
-- **Starter Guidance Cards** живут внутри Today, не отдельной library.
-- **Family / Trainer Sharing** живут в More + contextual prompts (Today промпт показывается один раз на 3-й день).
-- **Reminders** можно создать из Today (после log), Health (для медицинских) и More.
+- **Diary history** lives inside Diary; standalone Timeline is not a primary route.
+- **Starter tips** живут внутри Diary as lightweight contextual help, not a separate library.
+- **Family / Trainer Sharing** живут в More + contextual prompts.
+- **Reminders/routines** можно создать из Add/Diary context, Pet health context, and More.
 - Не добавлять отдельный `Train` tab, пока контент не оправдает.
 - Не прятать sharing/privacy за unrelated settings.
 
@@ -221,26 +222,28 @@ loading → empty → error → offline-read → pending-write → permission-de
 | `text/secondary` | `#4A4E48` | 8.6:1 |
 | `text/tertiary` | `#72756A` | 4.50:1 |
 | `text/disabled` | `#A6A89F` | 2.6:1 (decorative only) |
-| `text/on-primary` | `#FFFFFF` | 5.1:1 на `primary/600` |
+| `text/on-primary` | `#FFFFFF` | 4.8:1 на `primary/600` |
 | `text/on-accent` | `#1C1F1B` | 9.2:1 на `accent/300` |
-| `text/link` | `#0E7490` | 5.0:1 |
+| `text/link` | `#9B4F2D` | 5.1:1 |
 
-#### 2.3 Primary — Calm Teal
+#### 2.3 Primary — Terracotta Clay
 
-Спокойный сине-зелёный, нейтрально-мужской и нейтрально-женский, не «ai-tech».
+**2026-06-29 V2 override:** primary actions use the terracotta Clay ramp, not Calm Teal.
+The design freeze uses `#c96442`; the production-safe filled stop is slightly darker so white
+button text clears WCAG AA. Calm Teal is retired from primary/focus usage for V2 screens.
 
 | Token | HEX | Использование |
 |---|---|---|
-| `primary/50` | `#ECFEFF` | Tinted backgrounds, selected rows |
-| `primary/100` | `#CFFAFE` | Hover/pressed tint |
-| `primary/200` | `#A5F3FC` | Disabled fill |
-| `primary/300` | `#67E8F9` | Illustrative |
-| `primary/400` | `#22D3EE` | Secondary brand |
-| `primary/500` | `#0891B2` (Calm Teal) | Default brand, focus ring |
-| `primary/600` | `#0E7490` | Primary button fill, contrast-safe with white text |
-| `primary/700` | `#155E75` | Pressed state |
-| `primary/800` | `#164E63` | Headings on tinted bg |
-| `primary/900` | `#083344` | Dark mode accent text |
+| `primary/50` | `#FBF2EA` | Tinted backgrounds, selected rows |
+| `primary/100` | `#F6E2D4` | Hover/pressed tint |
+| `primary/200` | `#EDC1A8` | Disabled fill / illustrative wash |
+| `primary/300` | `#E09A72` | Warm illustration, not default CTA |
+| `primary/400` | `#D57B52` | Freeze-canvas accent close to `#c96442` |
+| `primary/500` | `#C96442` (Terracotta) | Default brand, selected nav/day, focus ring when not on warm fill |
+| `primary/600` | `#A94F2F` | Primary button fill; white text contrast ≈ 4.8:1 |
+| `primary/700` | `#8E4128` | Pressed state / text on `primary/50` |
+| `primary/800` | `#733421` | Headings on tinted bg |
+| `primary/900` | `#4C2117` | Future dark-mode warm accent text |
 
 #### 2.4 Accent — Ember Coral (celebration only)
 
@@ -273,7 +276,7 @@ loading → empty → error → offline-read → pending-write → permission-de
 | `stroke/default` | `#E2DDD2` |
 | `stroke/strong` | `#C9C3B5` |
 | `divider/hairline` | `#E2DDD2` @ 60% |
-| `focus/ring` | `#0E7490` 2pt outline + 2pt offset |
+| `focus/ring` | `#A94F2F` 2pt outline + 2pt offset |
 
 #### 2.7 Health-status pill colors
 
@@ -592,7 +595,7 @@ Easing tokens:
 | PromptCard | PromptCard | §2.x or §3.x | Contextual nudge card |
 | ChecklistRow | ChecklistRow | §3.2.x / §4.x | Variant of List Item with checkbox |
 | Checklist | Checklist | §4.x | Group of ChecklistRows |
-| TimelineStrip | TimelineStrip | §4.x | Strip on Today linking to /timeline |
+| DiaryHistoryStrip | DiaryHistoryStrip | §2.x | Context strip inside Diary; no standalone Timeline route |
 | PlanCard | PlanCard | §4.4.7 | Paywall plan card (feature-flagged) |
 | AvatarPicker | AvatarPicker | §4.x | Variant of Form Field for avatar selection |
 | ReorderableList | ReorderableList | §4.4.3 | Drag-to-reorder list (Quick Trackers settings) |
@@ -681,7 +684,7 @@ Do / Don't примеры:
 - `bg/elevated` ≡ `surface/raised` — pure white (`#FFFFFF`)
 - `text/primary` — charcoal (`#1C1F1B`)
 - `text/secondary` — warm grey (`#4A4E48`)
-- `accent/primary` ≡ `primary/600` — contrast-safe Calm Teal (`#0E7490`)
+- `accent/primary` ≡ `primary/600` — contrast-safe Terracotta Clay (`#A94F2F`)
 - `accent/celebration` ≡ `accent/500` — Ember Coral (`#E07A4F`) — только для подтверждений, не для achievements
 - `state/pending` — soft slate
 - `state/error` — Clay Red (`#9A3B2E`) — без bright red alarm
@@ -1508,12 +1511,12 @@ Threshold: 60 секунд — source of truth, синхронизировано
 
 Эта секция описывает все экраны, связанные с расшариванием доступа к данным щенка. Ведущий принцип — **sharing clarity**: на любом экране invite, preview, accepted или revoked пользователь должен за 2 секунды ответить на три вопроса — *кто*, *что видит*, *как долго*.
 
-Все экраны используют общие токены (синхронизированы с Частью 1): warm off-white фон `#FBFAF7`, charcoal `#1C1F1B`, calm teal `#0891B2` для brand/focus и `#0E7490` для filled primary actions, Ember Coral `#E07A4F` только для celebration, radius 8–12pt, native system font.
+Все экраны используют общие токены (синхронизированы с Частью 1): warm off-white фон `#FBFAF7`, charcoal `#1C1F1B`, Terracotta Clay `#C96442` для brand/focus и `#A94F2F` для filled primary actions, Ember Coral `#E07A4F` только для celebration, radius 8–12pt, native system font.
 
 **Общие компоненты** (синонимы каноничных имён из §1.9): `RoleChip`, `ScopeToggleRow`, `ScopeStripe` (цветная вертикальная полоска 3pt слева от карточки скоупа), `IncludedExcludedPreview`, `MemberRow`, `AttributionStrip`, `InviteStatusBadge`, `ExpiryPicker`, `EmptyState` (вариант `neutral`), `PrimaryButton` (ранее `PrimaryCTA`), `Button variant=destructive` (ранее `DangerInlineButton`), `SheetHeader`.
 
 **Цветовая раскраска скоупов** (используется в `ScopeStripe` и иконках):
-- `routine_summary` — teal `#0891B2`
+- `routine_summary` — terracotta `#C96442`
 - `selected_timeline_range` — slate `#3C5C7A`
 - `training_notes` — warm brown `#8B6B4A`
 - `health_summary` — muted coral `#C77B6B` (сигнал чувствительности)
@@ -2397,7 +2400,7 @@ Overflow: «Скопировать ссылку», «Продлить срок»
 - `bg/card` ≡ `surface/raised` (`#FFFFFF`)
 - `text/primary` (`#1C1F1B`)
 - `text/secondary` (`#4A4E48`)
-- `accent/primary` (`#0E7490`)
+- `accent/primary` (`#A94F2F`)
 - `accent/celebration` (`#E07A4F`)
 - Health-status pill tokens — см. §1.2.7 (Часть 1). Часть 4 НЕ переопределяет pill-токены; `pill/confirmed` = fill `#E6EFE8` / text `#2F5E41` (не `#3F7A57` — это `status/success` для других контекстов). Прежняя локальная таблица в этой секции удалена; используйте §1.2.7 как источник истины.
 - `divider` (`#E2DDD2`)
@@ -2618,11 +2621,11 @@ Shared library: `ListRow`, `StatusPill`, `SectionHeader`, `EmptyState`, `Offline
 
 **Копия.**
 - Подписи: «Шаблон», «К ветеринару», «Подтверждено», «Готово».
-- Hint под timeline: «Можно изменить вручную в любое время».
+- Hint under status strip: «Можно изменить вручную в любое время».
 
 **Accessibility.** VoiceOver объявляет всю последовательность: «Этап 3 из 4: подтверждено. Доступны: шаблон, к ветеринару, подтверждено, готово». Не полагаемся на цвет: каждый этап имеет иконку и подпись.
 
-**Компоненты.** `TimelineStrip`, `BottomSheet`.
+**Компоненты.** `StatusStrip`, `BottomSheet`.
 
 #### 4.1.7 Vet Visit Prep Card
 
@@ -2767,7 +2770,7 @@ Shared library: `ListRow`, `StatusPill`, `SectionHeader`, `EmptyState`, `Offline
 | "Тихие часы"                                             |
 | s/16                                                     |
 | Range slider: с 22:00 до 07:00                           |
-| (две дуги, calm teal track, charcoal handles)            |
+| (две дуги, terracotta track, charcoal handles)           |
 | s/16                                                     |
 | Toggle: "Применять только к этому щенку"                 |
 | s/12                                                     |
@@ -3132,42 +3135,49 @@ Shared library: `ListRow`, `StatusPill`, `SectionHeader`, `EmptyState`, `Offline
 +----------------------------------------------------------+
 | Title 22pt: "PuppyPlan Plus"                             |
 | Subtitle 15pt secondary:                                 |
-| "Расширенные функции для первых 90 дней."                |
+| "Full access for the first 90 days with your puppy."      |
 | s/24                                                     |
 | Feature list (rows 44pt):                                |
-|  [icon] Безлимит общих ссылок                            |
-|  [icon] Расширенный экспорт здоровья                     |
-|  [icon] Несколько щенков в одном аккаунте                |
+|  [icon] Full Diary, Pet, routines, and sharing            |
+|  [icon] Keep adding after the 30-day full-access period   |
+|  [icon] Export and privacy controls always stay available |
 | s/16                                                     |
 | Plans:                                                   |
-|  [Card] "Месяц · 8,99 €"                                 |
-|  [Card] "Год · 49,99 € (сэкономьте 53%)"                 |
+|  [Card selected] "Annual · $39.99/year · $3.33/mo"       |
+|  [Card] "Monthly · $8.99/month"                          |
+|  [Card] "Lifetime puppyhood pass · $79-99 once"          |
 | s/16                                                     |
-| [PrimaryButton: "Подписаться"]                           |
+| [PrimaryButton: "Choose plan"]                           |
 | [GhostButton:  "Восстановить покупки"]                   |
 | s/8                                                      |
-| Legal 11pt: "Автопродление, отменить можно в App Store." |
+| Legal 11pt: platform billing terms + restore purchases    |
 +----------------------------------------------------------+
 ```
 
-**Free vs Premium блок.**
+**Free vs Plus block — time-gated soft-lock model.**
 
-| Бесплатно | Plus |
+| State | Access |
 |---|---|
-| Today + Timeline | Всё из «Бесплатно» |
-| 1 общий доступ | Безлимит общих доступов |
-| Базовый экспорт | Расширенный экспорт здоровья |
-| 1 щенок | Несколько щенков |
+| Days 0-30 trial | Full app access, no card up front, first paywall is skippable |
+| Trial expired, no subscription | Read-only viewing stays available; export own data, delete account/data, privacy/account settings, revoke existing shares, restore/manage subscription, notification opt-out, sign-out, and trainer share viewing stay available |
+| Active Plus | Full app access: create/edit logs, routines, reminders, and new shares/invites |
+
+This replaces the old feature-tiered freemium matrix. Do not gate by second pet, reminder count,
+history window, trainer depth, export tier, or caregiver seats in this V2 wave. MVP remains single-pet.
+Live IAP enforcement is deferred until beta retention is confirmed; this wave ships only the flagged
+paywall and entitlement/soft-lock design surfaces.
 
 **Состояния.**
 - loading: skeleton на planы.
 - offline: «Загрузим тарифы, когда появится сеть». CTA disabled.
 - error: «Не удалось загрузить тарифы. Попробуйте обновить».
 - pending: после tap «Подписаться» — spinner в кнопке.
+- skippable early paywall: close button visible; do not block first value.
+- day-30 soft-lock: read-only banner «Subscribe to add new entries»; export and revoke remain reachable.
 - cancellation state: row в Subscription «Подписка активна до 18 июня 2026. Управление в App Store».
 
 **Accessibility.**
-- VoiceOver объявляет цену и период полностью: «Год, 49 евро 99 центов, экономия 53 процента».
+- VoiceOver объявляет цену и период полностью: «Annual, 39 dollars 99 cents per year, 3 dollars 33 cents per month».
 - «Восстановить покупки» — отдельная кнопка, не спрятана.
 
 **Компоненты.** `PlanCard`, `PrimaryButton`, `GhostButton`, `Toast`.
@@ -3265,12 +3275,12 @@ Shared library: `ListRow`, `StatusPill`, `SectionHeader`, `EmptyState`, `Offline
 ### 5.2 Generation order
 
 1. **Design tokens + component inventory.** Cloud Design / Figma: создать `design-tokens.json`, styles и базовые компоненты из Части 1. Без этого нельзя генерировать экраны.
-2. **Today states.** First day, day 2 morning, accident recovery, after family invite, missed reminder, day 7 rhythm, offline-read, pending-write.
+2. **Diary states.** First app screen after onboarding, populated day, scroll-into-past history, cold start, empty-with-history, all-done, selected-day-not-today, offline-read, pending-write.
 3. **Quick Log bottom sheet states.** Default trackers, after tap with `Undo / Add details`, duplicate warning, pending event, failed retry.
 4. **Onboarding.** Welcome, puppy setup, age hint, quick tracker selection, plan reveal, first-log prompt, account request only when needed.
-5. **Health.** Health list, template row, confirmed row, edit record form, review-with-vet state.
+5. **Pet.** Profile, current weight, Health block, single-weight-point, no-vet-visit, health edit entry.
 6. **Sharing.** Family invite, trainer preview, scope selector, expired/revoked share. Критично: каждый экран явно говорит, кто что видит.
-7. **More.** Timeline entry, sharing, reminders, quick trackers, puppy profile, notifications, privacy/export/delete, support.
+7. **More.** Sharing, routines/reminders with paused rows, quick trackers, notifications, privacy/export/delete, support.
 8. **Accessibility + state variants.** Dynamic Type XXL/XXXL, loading, empty, error, offline-read, pending-write, permission-denied, revoked/expired states для всех ключевых экранов.
 
 ### 5.3 Prompt-шаблоны
@@ -3283,33 +3293,34 @@ with a puppy. Aesthetic: calm utility + warm companion. Target user: tired,
 anxious first-time owner, one-handed phone use, often in low light.
 
 DO:
-- Use SF Pro system font, semibold for headings, regular for body
-- Background surface/base: warm off-white #FBFAF7; surface/raised #FFFFFF; surface/sunken #F1ECE3
-- Text primary: charcoal #1C1F1B; secondary #4A4E48; tertiary #72756A
-- Stroke/default: #E2DDD2 (1px hairline на cards)
-- Primary brand: Calm Teal #0891B2 (focus ring, brand)
-- Primary filled action: contrast-safe teal #0E7490
-- Celebration only: Ember Coral #E07A4F
+- Use Lora 600 for display/headings and Nunito for body
+- Background surface/base: Clay cream #F6EFE3; surface/raised #FFFCF6; surface/sunken #ECE3D4
+- Text primary: warm charcoal #2C2824; secondary #6B6256; tertiary #8A7E6C for large/decorative text only
+- Stroke/default: warm sand #D9CDBA
+- Primary brand: Clay #C77F4F / #B26A3C
+- Primary filled action: contrast-safe Clay #B26A3C
+- Celebration only: Honey #E3A53C
 - Status danger (user-marked urgent only): muted Clay Red #9A3B2E
-- Radius 8pt for buttons, 12pt for cards, 16pt for sheets
+- Radius 999pt for pills/buttons, 18pt for cards, 24pt for sheets
 - 44x44pt minimum touch targets, 56pt+ in thumb zone
-- One primary CTA per hero (one tertiary/text-link is allowed alongside)
-- Native iOS patterns: large title nav bar, bottom sheet with grabber 36x4pt,
-  tab bar 49pt height + safe-area inset
+- Diary is the home tab; Pet folds profile + weight + Health; More holds sharing/settings/routines
+- Split nav: floating 3-tab capsule (`Diary`, `Pet`, `More`) plus separate Add button
+- Native iOS/Android patterns: large title nav bar, bottom sheet with grabber 36x4pt,
+  native time picker controls, safe-area-aware split nav
 - Localized copy as specified by typed EN/RU/ES keys
 
 DON'T:
 - No purple/AI gradients
 - No bokeh, no orbs, no glow
 - No emojis as icons (use SF Symbols on iOS / Material Symbols Outlined on Android)
-- No bright red — muted Clay Red #9A3B2E only for user-marked urgent
+- No teal, no bright red — muted Clay Red #9A3B2E only for user-marked urgent
 - No two primary buttons side-by-side in hero
 - No streak counters, no shame copy
 - No mascot illustrations
 - No dark-mode or tablet/landscape variants (out-of-scope in v1)
 
 SCREEN SPEC:
-[Paste relevant subsection from DESIGN.md, e.g. §2.2.1 Today Layout]
+[Paste relevant subsection from the 2026-06-27 Diary/Pet/Nav redesign brief]
 
 OUTPUT:
 - iPhone 15 Pro frame (393x852)
@@ -3326,8 +3337,8 @@ that a dog trainer sees when an owner shared progress with them.
 
 Constraints:
 - Warm off-white background #FBFAF7
-- Calm teal accent #0891B2, with #0E7490 for filled buttons
-- Native-feeling typography (system font stack)
+- Terracotta Clay accent #C96442, with #A94F2F for filled buttons
+- Native-feeling typography using Lora display + Nunito body tokens
 - Mobile-first, breakpoint at 768px
 - Show scope contract at top: "Этот доступ включает: профиль, сводка по режиму,
   заметки по тренировкам. Действует до 16 июня."

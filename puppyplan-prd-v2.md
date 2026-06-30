@@ -1174,33 +1174,38 @@ Before public launch in EU/EEA:
 
 Pricing - эксперимент, а не beta requirement.
 
-| Plan | Included | Hypothesis |
+**2026-06-29 V2 monetization decision:** replace feature-tiered freemium with a time-gated
+trial -> write soft-lock. This keeps the MVP simple for a solo-dev team: one entitlement check,
+not a per-feature matrix.
+
+| State | Access | Hypothesis |
 |---|---|---:|
-| Free | 1 puppy, Today, manual logs, 3 reminders, 7-day timeline, 1 caregiver invite during beta including trusted-sitter mode | $0 |
-| Premium Monthly | Unlimited reminders, shared household up to 4 caregivers, full timeline, advanced health records, Phase 1 PDF export, premium cards | EUR 8.99-9.99 |
-| Premium Annual | Same as monthly, annual default in paywall | EUR 49.99-54.99 |
+| Days 0-30 full-access trial | Full app access for the single MVP pet: Diary, Quick Log, routines/reminders, sharing, Pet/health records, history, and shareable cards. No card up front. | $0 |
+| Trial expired, no active subscription | Read-only viewing remains available. Export own data, delete own data/account, privacy/account settings, revoke existing shares, restore/manage subscription, notification opt-out, sign-out, and trainer share viewing remain allowed. Writes are gated. | soft-lock |
+| Plus Monthly | Full write access after trial expiry. | USD 8.99/mo |
+| Plus Annual | Full write access after trial expiry; default selected plan. | USD 39.99/yr |
+| Lifetime puppyhood pass | One-time full write access for the puppyhood period. | USD 79-99 |
 
 Closed beta:
 - no first-screen hard paywall;
 - entitlement interface can exist;
 - paywall surface is feature flagged and off by default;
-- do not block Quick Log, basic Today, or one caregiver invite.
+- live paid enforcement stays off until beta retention is confirmed;
+- do not block Quick Log, Diary, Pet, reminders, sharing, export, privacy, delete, revoke, or sign-out in beta.
 
 Public launch:
 - live RevenueCat purchase/restore/cancellation;
 - visible restore purchase;
-- clear free vs premium feature list;
+- clear trial / expired read-only / Plus state explanation;
 - paywall after value moment, not before first useful experience.
 
 ### Premium Value Anchors
 
 Сильные:
-- unlimited reminders;
-- family sharing beyond beta limits;
-- long timeline/history;
-- PDF vet export in Phase 1;
-- advanced health attachments;
-- premium milestone templates.
+- keep adding logs, routines, reminders, and new shares after the 30-day full-access period;
+- preserve read-only access and export so the app never holds a user's own data hostage;
+- keep trainer/share links live regardless of owner subscription, preserving trust and referral loops;
+- annual plan default with monthly anchor and a one-time puppyhood-pass option.
 
 Слабые для MVP:
 - AI coach;

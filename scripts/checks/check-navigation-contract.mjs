@@ -16,8 +16,8 @@ const {
 
 assert.deepEqual(
   primaryTabs.map((tab) => tab.id),
-  ['today', 'health', 'more'],
-  'Primary tabs must be exactly Today, Health, More',
+  ['diary', 'pet', 'more'],
+  'Primary tabs must be exactly Diary, Pet, More',
 );
 
 assert.equal(
@@ -30,7 +30,7 @@ assert.equal(modalRoutes.includes(quickLogAction.href), true, 'Quick Log must be
 
 assert.deepEqual(
   settingsRoutes,
-  ['/settings/puppy-profile', '/settings/quick-trackers'],
+  ['/settings/puppy-profile', '/settings/quick-trackers', '/settings/notifications'],
   'Editable settings routes must be locked to the /settings namespace',
 );
 
@@ -81,10 +81,13 @@ for (const devRoute of developmentOnlyRoutes) {
 const routeFiles = [
   'app/_layout.tsx',
   'app/(tabs)/_layout.tsx',
+  'app/(tabs)/diary/index.tsx',
+  'app/(tabs)/pet/index.tsx',
   'app/(tabs)/today/index.tsx',
   'app/(tabs)/health/index.tsx',
   'app/(tabs)/more/index.tsx',
   'app/(sheets)/quick-log/index.tsx',
+  'app/(modals)/settings/notifications/index.tsx',
   'app/invite/[token].tsx',
   'app/share/[token].tsx',
 ];

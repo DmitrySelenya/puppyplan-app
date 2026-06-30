@@ -262,7 +262,7 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
     expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
-  it('closes through Today fallback when no previous route exists', () => {
+  it('closes through Diary fallback when no previous route exists', () => {
     mockRouterCanGoBack.mockReturnValue(false);
     mockUseQuickLogMutationPort.mockReturnValue({
       mutation: undefined,
@@ -279,6 +279,6 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
     capturedOnClose?.();
 
     expect(mockRouterBack).not.toHaveBeenCalled();
-    expect(mockRouterReplace).toHaveBeenCalledWith('/today');
+    expect(mockRouterReplace).toHaveBeenCalledWith('/diary');
   });
 });

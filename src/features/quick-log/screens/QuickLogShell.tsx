@@ -442,9 +442,27 @@ function DuplicateWarning({
     <Card
       accessibilityLabel={t('quick-log.duplicate-warning.title')}
       accessibilityLiveRegion="polite"
-      accessibilityRole="alert">
+      accessibilityRole="alert"
+      style={styles.duplicateWarningCard}
+      testID="quick-log-duplicate-warning-card">
       <Stack gap="md">
-        <AppText variant="headline">{t('quick-log.duplicate-warning.title')}</AppText>
+        <Stack align="center" direction="horizontal" gap="sm">
+          <View
+            style={styles.duplicateWarningIcon}
+            testID="quick-log-duplicate-warning-icon">
+            <AppIcon
+              color={tokens.color.status.warning}
+              name="warningTriangle"
+              size={22}
+              testID="quick-log-duplicate-warning-icon-warningTriangle"
+            />
+          </View>
+          <AppText
+            style={styles.duplicateWarningTitle}
+            variant="headline">
+            {t('quick-log.duplicate-warning.title')}
+          </AppText>
+        </Stack>
         <AppText tone="secondary">{t('quick-log.duplicate-warning.question')}</AppText>
         <Stack direction="horizontal" gap="sm" wrap>
           <Button
@@ -471,6 +489,22 @@ const unavailableMutation: QuickLogMutationPort = {
 };
 
 const styles = StyleSheet.create({
+  duplicateWarningCard: {
+    backgroundColor: tokens.color.status.warningTint,
+    borderColor: tokens.color.status.warning,
+  },
+  duplicateWarningIcon: {
+    alignItems: 'center',
+    backgroundColor: tokens.color.surface.raised,
+    borderRadius: tokens.radius.sm,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  duplicateWarningTitle: {
+    flex: 1,
+    minWidth: 0,
+  },
   editTrackersButton: {
     alignSelf: 'flex-start',
   },

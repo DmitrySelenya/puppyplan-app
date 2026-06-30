@@ -73,12 +73,22 @@ describe('development-only design gallery', () => {
   it('renders synthetic gallery sections with typed i18n strings', () => {
     render(<DesignGalleryScreen />);
 
-    expect(screen.getByText(i18n.t('dev.gallery.title'))).toBeTruthy();
-    expect(screen.getAllByText(i18n.t('dev.gallery.synthetic-badge')).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(i18n.t('onboarding.welcome.title')).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(i18n.t('more.puppy-profile.screen-title')).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.title'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('dev.gallery.synthetic-badge'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('onboarding.welcome.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.puppy-profile.screen-title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
     expect(
-      screen.getAllByText(i18n.t('more.quick-trackers.screen-title-template', { n: 5 })).length,
+      screen.getAllByText(i18n.t('more.quick-trackers.screen-title-template', { n: 5 }), {
+        includeHiddenElements: true,
+      }).length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('dev.gallery.states.more-settings'), {
       includeHiddenElements: true,
@@ -89,10 +99,18 @@ describe('development-only design gallery', () => {
     expect(screen.getAllByText(i18n.t('dev.gallery.states.health-v2'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(i18n.t('tabs.today')).length).toBeGreaterThan(0);
-    expect(screen.getByText(i18n.t('dev.gallery.today.synthetic-note'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('dev.gallery.today.day-seven'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('dev.gallery.today.state-fixtures'))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('tabs.diary'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.today.synthetic-note'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.today.day-seven'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.today.state-fixtures'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
   });
 
   it('renders route-shell preview states without production actions', () => {

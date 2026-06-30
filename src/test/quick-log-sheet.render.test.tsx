@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 
 import { MAX_VISIBLE_QUICK_LOG_TRACKERS } from '@/contracts/quick-log';
 import { SnackbarProvider } from '@/design/primitives/Snackbar';
+import { tokens } from '@/design/tokens';
 import {
   QuickLogFeedbackProvider,
   QuickLogMutationFeedbackObserver,
@@ -554,6 +555,60 @@ describe('QuickLogShell', () => {
     await waitFor(() => {
       expect(screen.getByText(i18n.t('quick-log.failed.snackbar'))).toBeTruthy();
     });
+  });
+
+  it('renders the after-tap success snackbar anatomy with Undo and Add details', () => {
+    const mutation = createMutationPort();
+    const openDetails = jest.fn();
+
+    function RouteHarness() {
+      const [sheetVisible, setSheetVisible] = useState(true);
+
+      return (
+        <SnackbarProvider>
+          <QuickLogFeedbackProvider>
+            {sheetVisible ? (
+              <QuickLogShell
+                careContext={careContext}
+                closeSheet={() => {
+                  setSheetVisible(false);
+                }}
+                mutation={mutation}
+                openDetails={openDetails}
+              />
+            ) : null}
+          </QuickLogFeedbackProvider>
+        </SnackbarProvider>
+      );
+    }
+
+    render(<RouteHarness />);
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.feeding'),
+    }));
+
+    const savedCopy = i18n.t('quick-log.snackbar.saved-template', {
+      trackerName: i18n.t('quick-log.trackers.feeding'),
+    });
+    const status = screen.getByTestId('snackbar-status');
+
+    expect(screen.queryByText(i18n.t('quick-log.sheet.title'))).toBeNull();
+    expect(screen.getByText(savedCopy)).toBeTruthy();
+    expect(screen.getByTestId('snackbar-host')).toBeTruthy();
+    expect(status.props.accessibilityLiveRegion).toBe('polite');
+    expect(status.props.accessibilityLabel).toBe(i18n.t('quick-log.snackbar.a11y-with-details', {
+      trackerName: i18n.t('quick-log.trackers.feeding'),
+    }));
+    expect(StyleSheet.flatten(screen.getByTestId('snackbar-surface').props.style).backgroundColor).toBe(
+      tokens.color.status.successTint,
+    );
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.snackbar.undo'),
+    })).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.snackbar.add-details'),
+    })).toBeTruthy();
   });
 
   it('applies pending snackbar Undo after the mutation started event reaches the provider', async () => {

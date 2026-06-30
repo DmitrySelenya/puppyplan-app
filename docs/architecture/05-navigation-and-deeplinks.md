@@ -7,10 +7,12 @@ Use file-based routing. `app/` contains only route shells and layouts.
 Primary tabs:
 
 ```text
-Today | Health | More
+Diary | Pet | More
 ```
 
-Quick Log is a persistent FAB overlay, not a tab. It is hidden only on onboarding, Quick Log itself, and full-screen flows where it would cover the primary CTA.
+Quick Log/Add is a persistent action overlay, not a tab. The redesign target uses a split bottom nav: a floating 3-tab capsule plus a separate Add button. It is hidden only on onboarding, Quick Log itself, and full-screen flows where it would cover the primary CTA.
+
+Navigation source of truth: the 2026-06-27 Diary/Pet/Nav redesign brief supersedes old `Today | Health | More` wording. Existing route files, navigation tests, or contracts that still say `today` or `health` are legacy migration targets until the implementation batch updates routes, i18n keys, and tests together.
 
 ## Route Groups
 
@@ -24,18 +26,18 @@ app/
   (auth)/
   (onboarding)/
   (tabs)/
-    today/
-    health/
+    diary/
+    pet/
     more/
   (modals)/
     quick-log/
     quick-log/details/
-    timeline/
+    routine/edit/
     reminders/edit/
     family/invite/
     sharing/trainer-preview/
     sharing/scope-selector/
-    health/record-edit/
+    pet/health-record-edit/
     settings/puppy-profile/
     settings/quick-trackers/
   invite/[token].tsx
@@ -44,7 +46,7 @@ app/
 
 ## Settings Namespace
 
-More is the user-facing entry point for settings and care-context management, but editable settings screens use a single production namespace under `/settings/*`.
+More is the user-facing entry point for settings and care-context management, but editable settings screens use a single production namespace under `/settings/*`. Pet is the user-facing entry point for profile, current weight, and health records; it replaces the old standalone Health tab.
 
 Locked routes:
 
@@ -52,6 +54,8 @@ Locked routes:
 - `/settings/quick-trackers`
 
 Design atlas labels that use `/more/puppy-profile` map to `/settings/puppy-profile`. Do not create parallel `/more/*` and `/settings/*` edit trees for the same setting.
+
+Standalone Timeline is removed in the redesign target. History is reached through Diary scroll/search; do not add a primary tab or modal route for Timeline in new work.
 
 The development-only native design gallery uses `/_dev/components`. It must not appear in primary tabs, More rows, production modal stacks, analytics funnels, or deep-link allowlists.
 

@@ -842,7 +842,7 @@ describe('design primitives', () => {
         <AppIcon name="vaccine" testID="icon-vaccine" />
         <AppIcon name="weight" testID="icon-weight" />
         <AppIcon name="pottyInside" testID="icon-potty-inside" />
-        <AppIcon name="today" filled testID="icon-today-filled" />
+        <AppIcon name="book" filled testID="icon-book-filled" />
       </>,
     );
 
@@ -875,11 +875,11 @@ describe('design primitives', () => {
     expect(pottyInside.props.fill).toBe('none');
     expect(pottyInside.props.accessibilityElementsHidden).toBe(true);
 
-    const todayFilled = screen.getByTestId('icon-today-filled', { includeHiddenElements: true });
+    const bookFilled = screen.getByTestId('icon-book-filled', { includeHiddenElements: true });
 
-    expect(todayFilled.props.fill).toBe(tokens.color.text.primary);
-    expect(todayFilled.props.stroke).toBe('none');
-    expect(todayFilled.props.accessibilityElementsHidden).toBe(true);
+    expect(bookFilled.props.fill).toBe(tokens.color.text.primary);
+    expect(bookFilled.props.stroke).toBe('none');
+    expect(bookFilled.props.accessibilityElementsHidden).toBe(true);
   });
 
   it('renders Stack layout spacing through the design boundary', () => {
@@ -1217,6 +1217,39 @@ describe('design primitives', () => {
     await user.press(screen.getByRole('button', { name: 'Undo' }));
 
     expect(onUndo).toHaveBeenCalledTimes(1);
+  });
+
+  it('triggers the snackbar haptic feedback contract when a message is shown', async () => {
+    const hapticAdapter = jest.fn();
+    let snackbar: SnackbarController | null = null;
+
+    configureDesignHaptics(hapticAdapter);
+
+    render(
+      <SnackbarProvider>
+        <SnackbarControllerProbe onReady={(controller) => {
+          snackbar = controller;
+        }} />
+      </SnackbarProvider>,
+    );
+
+    const messageWithHaptic = {
+      accessibilityLabel: 'Logged: feeding.',
+      hapticEvent: 'saveSuccess',
+      id: 'quick-log:evt_00000000-0000-4000-8000-000000000301',
+      message: 'Logged · Feeding',
+      tone: 'success',
+    } satisfies Parameters<SnackbarController['showSnackbar']>[0] & {
+      hapticEvent: 'saveSuccess';
+    };
+
+    act(() => {
+      snackbar?.showSnackbar(messageWithHaptic);
+    });
+
+    await waitFor(() => {
+      expect(hapticAdapter).toHaveBeenCalledWith('success', tokens.haptic.success);
+    });
   });
 
   it('replaces snackbar messages by id instead of stacking stale status', () => {

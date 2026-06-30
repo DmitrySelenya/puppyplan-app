@@ -10,9 +10,14 @@ import {
 } from '@/contracts/navigation';
 
 describe('navigation contract', () => {
-  it('keeps Today, Health, and More as the only primary tabs', () => {
-    expect(primaryTabs.map((tab) => tab.id)).toEqual(['today', 'health', 'more']);
-    expect(primaryTabs.map((tab) => tab.href)).toEqual(['/today', '/health', '/more']);
+  it('keeps Diary, Pet, and More as the only V2 primary tabs', () => {
+    expect(primaryTabs.map((tab) => tab.id)).toEqual(['diary', 'pet', 'more']);
+    expect(primaryTabs.map((tab) => tab.href)).toEqual(['/diary', '/pet', '/more']);
+    expect(primaryTabs.map((tab) => tab.routeName)).toEqual([
+      'diary/index',
+      'pet/index',
+      'more/index',
+    ]);
     expect(new Set(primaryTabs.map((tab) => tab.id)).size).toBe(primaryTabs.length);
   });
 
@@ -34,7 +39,11 @@ describe('navigation contract', () => {
   });
 
   it('keeps editable settings under the /settings namespace', () => {
-    expect(settingsRoutes).toEqual(['/settings/puppy-profile', '/settings/quick-trackers']);
+    expect(settingsRoutes).toEqual([
+      '/settings/puppy-profile',
+      '/settings/quick-trackers',
+      '/settings/notifications',
+    ]);
     expect(modalRoutes).toEqual(expect.arrayContaining(settingsRoutes));
     expect(settingsRoutes.every((route) => route.startsWith('/settings/'))).toBe(true);
     expect(modalRoutes).not.toContain('/more/puppy-profile');
@@ -44,9 +53,38 @@ describe('navigation contract', () => {
     expect(atlasRouteAliases['/more/puppy-profile']).toBe('/settings/puppy-profile');
   });
 
+  it('keeps legacy Today, Health, and Timeline paths as migration aliases, not primary tabs', () => {
+    expect(atlasRouteAliases['/today']).toBe('/diary');
+    expect(atlasRouteAliases['/health']).toBe('/pet');
+    expect(atlasRouteAliases['/timeline']).toBe('/diary');
+    expect(primaryTabs.map((tab) => tab.href)).toEqual(
+      expect.not.arrayContaining(['/today', '/health', '/timeline']),
+    );
+  });
+
   it('tracks planned route files without making them primary navigation', () => {
     expect(plannedRouteFiles).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          route: '/diary',
+          file: 'app/(tabs)/diary/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/pet',
+          file: 'app/(tabs)/pet/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/today',
+          file: 'app/(tabs)/today/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/health',
+          file: 'app/(tabs)/health/index.tsx',
+          implementationStage: 'existing',
+        }),
         expect.objectContaining({
           route: '/onboarding',
           file: 'app/onboarding/index.tsx',
@@ -60,6 +98,21 @@ describe('navigation contract', () => {
         expect.objectContaining({
           route: '/settings/quick-trackers',
           file: 'app/(modals)/settings/quick-trackers/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/settings/notifications',
+          file: 'app/(modals)/settings/notifications/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/pet/health-record-edit',
+          file: 'app/(modals)/pet/health-record-edit/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/reminders/edit',
+          file: 'app/(modals)/reminders/edit/index.tsx',
           implementationStage: 'existing',
         }),
         expect.objectContaining({

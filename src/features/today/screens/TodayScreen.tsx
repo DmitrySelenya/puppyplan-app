@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
 import {
@@ -10,18 +10,26 @@ import {
   eventPayloadSchemas,
   type EventType,
 } from '@/contracts/supabase';
+import { AppIcon } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { IconButton } from '@/design/primitives/IconButton';
 import { PuppyHeader } from '@/design/primitives/PuppyHeader';
 import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
+import { Touchable } from '@/design/primitives/Touchable';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
-import { getLocalCalendarDate } from '@/lib/i18n/format-date';
+import {
+  calendarDateToUtc,
+  getLocalCalendarDate,
+  shiftCalendarDate,
+} from '@/lib/i18n/format-date';
 import {
   createQuickLogDeleteRequest,
+  createQuickLogEditRequest,
   createQuickLogEventView,
   createQuickLogUndoRequest,
   type QuickLogEventActionHandlers,
@@ -37,7 +45,12 @@ import {
   type TodayStatusState,
 } from '../components/TodayCards';
 
-export type TodayScreenStateOverride = 'offline-read';
+export type TodayScreenStateOverride =
+  | 'all-done'
+  | 'cold-start'
+  | 'empty-history'
+  | 'offline-read'
+  | 'pending-write';
 
 export type TodayScreenProps = Readonly<{
   actions?: QuickLogEventActionHandlers;
@@ -118,6 +131,11 @@ export function TodayScreen({
     screenState,
     timelineStatus: timelineRows.status,
   });
+  const showTodayPlan = todayPlan !== null
+    && screenState !== 'cold-start'
+    && screenState !== 'empty-history'
+    && screenState !== 'pending-write'
+    && !(timelineRows.status === 'loading' && rows.length === 0);
   const showQuickLogSection = eventViews.length > 0
     || timelineRows.status === 'error'
     || hasPendingLocalRows(rows)
@@ -127,15 +145,19 @@ export function TodayScreen({
     <Screen contentStyle={styles.content}>
       <PuppyHeader ageLabel={puppyAgeLabel} name={puppyName} />
       <TodayTitle todayDate={careContext.todayDate} />
+      <DiaryWeekStrip
+        selectedDate={todayPlanSourceInput?.todayDate ?? careContext.todayDate}
+        todayDate={careContext.todayDate}
+      />
       {todayStatus === null || (todayStatus === 'empty' && todayPlan !== null)
         ? null
         : <TodayStatusCard state={todayStatus} />}
-      {todayPlan === null || (timelineRows.status === 'loading' && rows.length === 0) ? null : (
+      {showTodayPlan ? (
         <TodayPlanCards
           onHeroPrimaryAction={openQuickLog}
           plan={todayPlan}
         />
-      )}
+      ) : null}
       {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
       {shouldShowQuickLogFailedBanner(rows) ? (
         <Card
@@ -156,10 +178,10 @@ export function TodayScreen({
           <AppText
             style={styles.sectionTitle}
             variant="headline">
-            {t('today.quick-log.section-title')}
+            {t('today.history.section-title')}
           </AppText>
           <Button
-            label={t('today.quick-log.timeline-entry')}
+            label={t('today.history.open-action')}
             labelMaxFontSizeMultiplier={2}
             labelVariant="label"
             onPress={openTimeline}
@@ -196,6 +218,161 @@ export function TodayScreen({
   );
 }
 
+function DiaryWeekStrip({
+  selectedDate,
+  todayDate,
+}: Readonly<{
+  selectedDate: string;
+  todayDate: string;
+}>) {
+  const { locale, t } = useAppTranslation();
+  const days = useMemo(() => createDiaryWeekDays({
+    locale,
+    selectedDate,
+    t,
+    todayDate,
+  }), [locale, selectedDate, t, todayDate]);
+
+  return (
+    <View
+      accessibilityLabel={t('today.week-strip.label')}
+      accessible
+      style={styles.weekStrip}
+      testID="today-week-strip">
+      {days.map((day) => (
+        <Touchable
+          accessibilityLabel={day.accessibilityLabel}
+          accessibilityRole="button"
+          accessibilityState={{ selected: day.isSelected }}
+          key={day.date}
+          onPress={() => undefined}
+          pressedStyle={styles.weekDayPressed}
+          style={[
+            styles.weekDay,
+            day.isToday ? styles.weekDayToday : null,
+            day.isSelected ? styles.weekDaySelected : null,
+          ]}
+          testID="today-week-day">
+          <AppText
+            maxFontSizeMultiplier={2}
+            style={day.isSelected ? styles.weekDayTextSelected : styles.weekDayText}
+            variant="caption">
+            {day.shortWeekday}
+          </AppText>
+          <AppText
+            maxFontSizeMultiplier={2}
+            numeric
+            style={[
+              styles.weekDayNumber,
+              day.isSelected ? styles.weekDayTextSelected : styles.weekDayText,
+            ]}
+            variant="bodyEmph">
+            {day.dayNumber}
+          </AppText>
+          {day.isToday ? (
+            <View
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={[
+                styles.weekDayTodayMarker,
+                day.isSelected ? styles.weekDayTodayMarkerSelected : null,
+              ]}
+            />
+          ) : null}
+        </Touchable>
+      ))}
+    </View>
+  );
+}
+
+function createDiaryWeekDays(input: Readonly<{
+  locale: string;
+  selectedDate: string;
+  t: ReturnType<typeof useAppTranslation>['t'];
+  todayDate: string;
+}>): readonly {
+  accessibilityLabel: string;
+  date: string;
+  dayNumber: string;
+  isSelected: boolean;
+  isToday: boolean;
+  shortWeekday: string;
+}[] {
+  return [-3, -2, -1, 0, 1, 2, 3].map((offset) => {
+    const date = shiftCalendarDate(input.todayDate, offset);
+    const utcDate = calendarDateToUtc(date);
+    const isSelected = date === input.selectedDate;
+    const isToday = date === input.todayDate;
+    const stateLabel = getDiaryWeekDayStateLabel({
+      isSelected,
+      isToday,
+      t: input.t,
+    });
+    const weekday = formatDiaryWeekday(utcDate, input.locale, 'long');
+    const shortWeekday = formatDiaryWeekday(utcDate, input.locale, 'short');
+    const shortDate = utcDate === null
+      ? date
+      : new Intl.DateTimeFormat(input.locale, {
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'UTC',
+      }).format(utcDate);
+
+    return {
+      accessibilityLabel: input.t('today.week-strip.day-label', {
+        date: shortDate,
+        state: stateLabel,
+        weekday,
+      }),
+      date,
+      dayNumber: utcDate === null
+        ? date.slice(-2)
+        : new Intl.DateTimeFormat(input.locale, {
+          day: 'numeric',
+          timeZone: 'UTC',
+        }).format(utcDate),
+      isSelected,
+      isToday,
+      shortWeekday,
+    };
+  });
+}
+
+function getDiaryWeekDayStateLabel(input: Readonly<{
+  isSelected: boolean;
+  isToday: boolean;
+  t: ReturnType<typeof useAppTranslation>['t'];
+}>): string {
+  if (input.isSelected && input.isToday) {
+    return input.t('today.week-strip.state-selected-today');
+  }
+
+  if (input.isSelected) {
+    return input.t('today.week-strip.state-selected');
+  }
+
+  if (input.isToday) {
+    return input.t('today.week-strip.state-today');
+  }
+
+  return input.t('today.week-strip.state-default');
+}
+
+function formatDiaryWeekday(
+  date: Date | null,
+  locale: string,
+  weekday: 'long' | 'short',
+): string {
+  if (date === null) {
+    return '';
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: 'UTC',
+    weekday,
+  }).format(date);
+}
+
 export function createTodayPlanInputFromPuppy(input: Readonly<{
   now?: Date;
   puppyCreatedAt: string;
@@ -214,8 +391,24 @@ function getTodayStatusState(input: Readonly<{
   screenState?: TodayScreenStateOverride;
   timelineStatus: 'error' | 'loading' | 'ready' | 'unavailable';
 }>): TodayStatusState | null {
+  if (input.screenState === 'all-done') {
+    return 'all-done';
+  }
+
+  if (input.screenState === 'cold-start') {
+    return 'cold-start';
+  }
+
+  if (input.screenState === 'empty-history') {
+    return 'empty-history';
+  }
+
   if (input.screenState === 'offline-read') {
     return 'offline-read';
+  }
+
+  if (input.screenState === 'pending-write') {
+    return 'pending-write';
   }
 
   if (input.careContext.householdRole === 'viewer') {
@@ -417,11 +610,15 @@ function TodayQuickLogEventRow({
 }>) {
   const { t } = useAppTranslation();
   const onDelete = actions.onDelete;
+  const onEdit = actions.onEdit;
   const onRetry = actions.onRetry;
   const onUndo = actions.onUndo;
+  const editRequest = event.status === 'synced' ? createQuickLogEditRequest(event) : null;
 
   return (
-    <Card>
+    <Card
+      testID="diary-history-logged-fact"
+      variant="mutedTemplate">
       <Stack gap="md">
         <Stack
           align="center"
@@ -443,19 +640,36 @@ function TodayQuickLogEventRow({
               })}
             </AppText>
           </Stack>
-          <StatusPill
-            accessibilityLabel={event.statusLabel}
-            icon={
-              <AppText
-                accessibilityElementsHidden
-                maxFontSizeMultiplier={2}>
-                {statusIcon(event.status)}
-              </AppText>
-            }
-            label={event.statusLabel}
-            style={styles.statusPill}
-            tone={statusTone(event.status)}
-          />
+          {editRequest !== null && onEdit !== undefined ? (
+            <IconButton
+              accessibilityLabel={t('today.history.item-actions')}
+              icon={
+                <AppIcon
+                  color={tokens.color.text.secondary}
+                  name="more"
+                  size={22}
+                />
+              }
+              onPress={() => {
+                onEdit(editRequest);
+              }}
+              style={styles.eventActionsButton}
+            />
+          ) : event.status === 'synced' ? null : (
+            <StatusPill
+              accessibilityLabel={event.statusLabel}
+              icon={
+                <AppText
+                  accessibilityElementsHidden
+                  maxFontSizeMultiplier={2}>
+                  {statusIcon(event.status)}
+                </AppText>
+              }
+              label={event.statusLabel}
+              style={styles.statusPill}
+              tone={statusTone(event.status)}
+            />
+          )}
         </Stack>
         {event.status === 'failed' && (onRetry !== undefined || onDelete !== undefined) ? (
           <Stack direction="horizontal" gap="sm" wrap>
@@ -501,6 +715,17 @@ function TodayQuickLogEventRow({
             ) : null}
           </Stack>
         ) : null}
+        {event.status === 'synced' && onDelete !== undefined ? (
+          <Stack direction="horizontal" gap="sm" wrap>
+            <Button
+              label={t('today.history.delete-action')}
+              onPress={() => {
+                onDelete(createQuickLogDeleteRequest(event));
+              }}
+              variant="destructive"
+            />
+          </Stack>
+        ) : null}
       </Stack>
     </Card>
   );
@@ -539,6 +764,10 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
   },
+  eventActionsButton: {
+    minHeight: 44,
+    minWidth: 44,
+  },
   largeTitle: {
     fontWeight: '700',
   },
@@ -551,6 +780,50 @@ const styles = StyleSheet.create({
   timelineEntry: {
     alignSelf: 'flex-start',
   },
+  weekDay: {
+    alignItems: 'center',
+    borderColor: 'transparent',
+    borderRadius: tokens.radius.full,
+    borderWidth: 1,
+    flex: 1,
+    gap: tokens.space[1],
+    paddingHorizontal: tokens.space[1],
+    paddingVertical: tokens.space[2],
+  },
+  weekDayNumber: {
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  weekDayPressed: {
+    opacity: 0.72,
+  },
+  weekDaySelected: {
+    backgroundColor: tokens.color.primary[700],
+    borderColor: tokens.color.primary[700],
+  },
+  weekDayText: {
+    color: tokens.color.text.secondary,
+  },
+  weekDayTextSelected: {
+    color: tokens.color.text.onPrimary,
+  },
+  weekDayToday: {
+    borderColor: tokens.color.primary[600],
+  },
+  weekDayTodayMarker: {
+    backgroundColor: tokens.color.primary[600],
+    borderRadius: tokens.radius.full,
+    height: 4,
+    width: 16,
+  },
+  weekDayTodayMarkerSelected: {
+    backgroundColor: tokens.color.text.onPrimary,
+  },
+  weekStrip: {
+    flexDirection: 'row',
+    gap: tokens.space[1],
+    marginTop: -tokens.space[1],
+  },
 });
 
 function TodayTitle({ todayDate }: Readonly<{ todayDate?: string }>) {
@@ -558,7 +831,7 @@ function TodayTitle({ todayDate }: Readonly<{ todayDate?: string }>) {
 
   return (
     <Stack gap="xs">
-      <AppText style={styles.largeTitle} variant="display">{t('tabs.today')}</AppText>
+      <AppText style={styles.largeTitle} variant="display">{t('tabs.diary')}</AppText>
       <AppText tone="tertiary" variant="callout">
         {formatTodayDate(todayDate, locale)}
       </AppText>

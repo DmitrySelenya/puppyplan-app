@@ -8,7 +8,7 @@ The beta optimizes for:
 
 - first useful value in under 45 seconds;
 - Quick Log in 1-2 taps;
-- Today as one clear next action;
+- Diary as a calm home for the next routine, recent facts, and past history;
 - family coordination without duplicate care;
 - safe scoped sharing with trainer/viewer;
 - trustworthy health recordkeeping, not advice.
@@ -18,12 +18,12 @@ The beta optimizes for:
 Must ship:
 
 - onboarding with deferred account where possible;
-- Today, Quick Log, Timeline;
+- Diary, Quick Log, routine/reminder setup, and Diary history;
 - Family invite for one caregiver;
 - Trusted Sitter Mode over caregiver membership;
 - trainer scoped sharing and permission preview;
 - local reminders and trusted-sitter completion push;
-- Health Basics and starter guidance cards;
+- Pet profile, current weight, Health Basics, and lightweight starter tips;
 - privacy-safe analytics;
 - accessibility gates.
 
@@ -41,8 +41,8 @@ Deferred:
 
 ## Non-Negotiables
 
-- `Today | Health | More` are the only primary tabs.
-- Quick Log is a persistent FAB/action, not a tab.
+- `Diary | Pet | More` are the only primary tabs.
+- Quick Log/Add is a persistent FAB/action, not a tab.
 - Supabase Postgres is durable source of truth.
 - Realtime is an enhancement, not a correctness dependency.
 - RLS and Edge Functions enforce access; UI guards are convenience only.

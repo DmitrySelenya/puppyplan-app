@@ -34,7 +34,7 @@ type TabScreenOptions = {
 const mockRouterPush = jest.fn();
 const mockTabScreens: ScreenRegistration[] = [];
 let mockScreenOptions: TabScreenOptions | undefined;
-let mockPathname = '/today';
+let mockPathname = '/diary';
 const mockReact = React;
 const mockView = View;
 
@@ -86,7 +86,7 @@ describe('TabLayout', () => {
     mockRouterPush.mockClear();
     mockTabScreens.length = 0;
     mockScreenOptions = undefined;
-    mockPathname = '/today';
+    mockPathname = '/diary';
     await i18n.changeLanguage('en');
   });
 
@@ -105,6 +105,39 @@ describe('TabLayout', () => {
     expect(mockTabScreens.map((screen) => screen.options?.title)).toEqual(
       primaryTabs.map((tab) => i18n.t(tab.labelKey)),
     );
+  });
+
+  it('maps V2 primary tabs to the canonical Diary, Pet, and More icons', async () => {
+    render(
+      <AppProviders>
+        <TabLayout />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(mockTabScreens.length).toBe(primaryTabs.length);
+    });
+
+    const iconNameByRoute = Object.fromEntries(
+      mockTabScreens.map((tabScreen) => {
+        const icon = tabScreen.options?.tabBarIcon?.({
+          color: tokens.color.text.secondary,
+          focused: false,
+          size: 24,
+        });
+
+        return [
+          tabScreen.name,
+          React.isValidElement<{ name?: string }>(icon) ? icon.props.name : null,
+        ];
+      }),
+    );
+
+    expect(iconNameByRoute).toEqual({
+      'diary/index': 'book',
+      'pet/index': 'paw',
+      'more/index': 'more',
+    });
   });
 
   it('uses the primary/700 active tint and renders filled icons only for the focused tab', async () => {
@@ -168,7 +201,7 @@ describe('TabLayout', () => {
     expect(mockRouterPush).toHaveBeenCalledWith(quickLogAction.href);
   });
 
-  it('limits the Quick Log FAB to log surfaces and hides it while snackbar is active', async () => {
+  it('limits the Quick Log FAB to Diary and Pet log surfaces and hides it while snackbar is active', async () => {
     mockPathname = '/more';
 
     const more = render(
@@ -185,7 +218,7 @@ describe('TabLayout', () => {
     })).toBeNull();
     more.unmount();
 
-    mockPathname = '/health';
+    mockPathname = '/pet';
     render(
       <AppProviders>
         <TabLayout />
@@ -198,7 +231,7 @@ describe('TabLayout', () => {
   });
 
   it('hides the Quick Log FAB while a snackbar is active', async () => {
-    mockPathname = '/today';
+    mockPathname = '/diary';
 
     render(
       <AppProviders>

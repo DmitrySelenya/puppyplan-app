@@ -4,7 +4,7 @@ import type { QuickLogEventActionHandlers } from '@/lib/query/quick-log-event-vi
 import type { TodayScreenProps } from '@/features/today/screens/TodayScreen';
 import { AppProviders } from '@/lib/providers/AppProviders';
 
-import TodayRoute from '../../app/(tabs)/today';
+import DiaryRoute from '../../app/(tabs)/diary';
 
 const mockRouterPush = jest.fn();
 const mockUseActiveCareContext = jest.fn();
@@ -40,7 +40,7 @@ jest.mock('@/lib/query/quick-log', () => ({
   useQuickLogMutationPort: () => mockUseQuickLogMutationPort(),
 }));
 
-describe('TodayRoute Quick Log recovery wiring', () => {
+describe('DiaryRoute Quick Log recovery wiring', () => {
   beforeEach(() => {
     capturedActions = undefined;
     capturedProps = undefined;
@@ -86,7 +86,7 @@ describe('TodayRoute Quick Log recovery wiring', () => {
 
     render(
       <AppProviders>
-        <TodayRoute />
+        <DiaryRoute />
       </AppProviders>,
     );
 
@@ -124,7 +124,7 @@ describe('TodayRoute Quick Log recovery wiring', () => {
     });
   });
 
-  it('derives the production Today day number from the active puppy profile date', () => {
+  it('derives the production Diary day number from the active puppy profile date', () => {
     mockUseQuickLogMutationPort.mockReturnValue({
       mutation: undefined,
       mutationEvents: [],
@@ -133,7 +133,7 @@ describe('TodayRoute Quick Log recovery wiring', () => {
 
     render(
       <AppProviders>
-        <TodayRoute />
+        <DiaryRoute />
       </AppProviders>,
     );
 
@@ -142,7 +142,7 @@ describe('TodayRoute Quick Log recovery wiring', () => {
     });
   });
 
-  it('wires the Today hero primary action to the Quick Log modal', () => {
+  it('wires the Diary hero primary action to the Quick Log modal', () => {
     mockUseQuickLogMutationPort.mockReturnValue({
       mutation: undefined,
       mutationEvents: [],
@@ -151,7 +151,7 @@ describe('TodayRoute Quick Log recovery wiring', () => {
 
     render(
       <AppProviders>
-        <TodayRoute />
+        <DiaryRoute />
       </AppProviders>,
     );
 
@@ -189,7 +189,7 @@ describe('TodayRoute Quick Log recovery wiring', () => {
 
     render(
       <AppProviders>
-        <TodayRoute />
+        <DiaryRoute />
       </AppProviders>,
     );
 

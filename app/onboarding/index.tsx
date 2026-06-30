@@ -8,6 +8,9 @@ export default function OnboardingRoute() {
       openQuickLog={() => {
         router.replace('/quick-log');
       }}
+      openSignIn={() => {
+        router.replace('/sign-in');
+      }}
     />
   );
 }

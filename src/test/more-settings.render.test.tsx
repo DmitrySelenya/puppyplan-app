@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react-nativ
 import type { PuppyProfile } from '@/contracts/supabase';
 import { tokens } from '@/design/tokens';
 import { ConnectedMoreScreen, MoreScreen } from '@/features/more/screens/MoreScreen';
+import { NotificationPreferencesScreen } from '@/features/more/screens/NotificationPreferencesScreen';
 import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -114,7 +115,7 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
 
     expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(7);
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(8);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(7);
 
     const scrollView = result.UNSAFE_getByType(ScrollView);
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
@@ -124,15 +125,17 @@ describe('More settings entries', () => {
     );
   });
 
-  it('opens profile and quick tracker settings from the More hub', () => {
+  it('opens profile, quick tracker, and notification settings from the More hub', () => {
     const openPuppyProfile = jest.fn();
     const openQuickTrackers = jest.fn();
+    const openNotifications = jest.fn();
 
     render(
       <AppProviders>
         <AuthProvider dependencies={authDependencies}>
           <MoreScreen
             canManagePuppySettings
+            openNotifications={openNotifications}
             openPuppyProfile={openPuppyProfile}
             openQuickTrackers={openQuickTrackers}
             openTimeline={jest.fn()}
@@ -147,9 +150,13 @@ describe('More settings entries', () => {
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.rows.quick-trackers'),
     }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.rows.notifications'),
+    }));
 
     expect(openPuppyProfile).toHaveBeenCalledTimes(1);
     expect(openQuickTrackers).toHaveBeenCalledTimes(1);
+    expect(openNotifications).toHaveBeenCalledTimes(1);
   });
 
   it('opens profile settings from the puppy summary card', () => {
@@ -221,12 +228,13 @@ describe('More settings entries', () => {
     })).toBeNull();
   });
 
-  it('keeps notification and privacy placeholders aligned with V2 pass-3 copy without adding routes', () => {
+  it('keeps privacy placeholder aligned with V2 pass-3 copy while notifications has a route', () => {
     render(
       <AppProviders>
         <AuthProvider dependencies={authDependencies}>
           <MoreScreen
             canManagePuppySettings
+            openNotifications={jest.fn()}
             openPuppyProfile={jest.fn()}
             openQuickTrackers={jest.fn()}
             openTimeline={jest.fn()}
@@ -241,9 +249,9 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('more.privacy.section-account-removal'))).toBeTruthy();
     expect(screen.queryByText(/Danger zone/i)).toBeNull();
 
-    expect(screen.queryByRole('button', {
+    expect(screen.getByRole('button', {
       name: i18n.t('more.notifications.screen-title'),
-    })).toBeNull();
+    })).toBeTruthy();
     expect(screen.queryByRole('button', {
       name: i18n.t('more.privacy.screen-title'),
     })).toBeNull();
@@ -270,5 +278,35 @@ describe('More settings entries', () => {
 
     expect(screen.getByText(i18n.t('common.loading'))).toBeTruthy();
     expect(screen.queryByText(i18n.t('errors.owner-only-settings'))).toBeNull();
+  });
+
+  it('renders the notification preferences V2 anatomy from DESIGN 4.4.4', () => {
+    render(
+      <AppProviders>
+        <NotificationPreferencesScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('more.notifications.screen-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.notifications.section-local'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.notifications.row-all-reminders'))).toBeTruthy();
+    expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(true);
+    expect(screen.getByText(i18n.t('more.notifications.local-hint'))).toBeTruthy();
+
+    expect(screen.getByText(i18n.t('more.notifications.section-push'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.notifications.row-push-reminders'))).toBeTruthy();
+    expect(screen.getByTestId('notifications-push-reminders-toggle').props.value).toBe(true);
+    expect(screen.getByText(i18n.t('more.notifications.row-push-sitter'))).toBeTruthy();
+    expect(screen.getByTestId('notifications-push-sitter-toggle').props.value).toBe(true);
+    expect(screen.getByText(i18n.t('more.notifications.push-hint'))).toBeTruthy();
+
+    expect(screen.getByText(i18n.t('more.notifications.section-quiet-hours'))).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('more.notifications.quiet-hours-example'),
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.notifications.section-tz'))).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('more.notifications.tz-example'),
+    })).toBeTruthy();
   });
 });

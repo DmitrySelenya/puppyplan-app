@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { decorativeViewProps } from '@/design/a11y';
 import { haptic } from '@/design/haptics';
 import { pressedScaleStyle, useReducedMotion } from '@/design/motion';
+import { AppIcon } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Touchable } from '@/design/primitives/Touchable';
 import { tokens } from '@/design/tokens';
@@ -68,6 +69,18 @@ export function TrackerTile({
           {icon}
         </View>
       ) : null}
+      {selected ? (
+        <View
+          {...decorativeViewProps}
+          style={styles.selectedCheck}
+          testID="tracker-tile-checkmark">
+          <AppIcon
+            color={tokens.color.text.onPrimary}
+            name="check"
+            size={12}
+          />
+        </View>
+      ) : null}
       <AppText
         maxFontSizeMultiplier={2}
         numberOfLines={3}
@@ -112,9 +125,22 @@ const styles = StyleSheet.create({
     minHeight: tokens.component.trackerTile.min.height,
     minWidth: tokens.component.trackerTile.min.width,
     padding: tokens.space[3],
+    position: 'relative',
   },
   selected: {
     borderColor: tokens.color.primary[600],
+    borderWidth: 1.5,
+  },
+  selectedCheck: {
+    alignItems: 'center',
+    backgroundColor: tokens.color.primary[600],
+    borderRadius: tokens.radius.full,
+    height: 20,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: tokens.space[2],
+    top: tokens.space[2],
+    width: 20,
   },
 });
 

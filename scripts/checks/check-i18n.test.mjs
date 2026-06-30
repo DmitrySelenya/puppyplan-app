@@ -15,7 +15,7 @@ import {
 const baseLocales = {
   en: {
     tabs: {
-      today: 'Today',
+      diary: 'Diary',
     },
     quick: {
       action: 'Save {n}',
@@ -31,7 +31,7 @@ const baseLocales = {
   },
   ru: {
     tabs: {
-      today: 'Сегодня',
+      diary: 'Дневник',
     },
     quick: {
       action: 'Сохранить {n}',
@@ -48,7 +48,7 @@ const baseLocales = {
   },
   es: {
     tabs: {
-      today: 'Hoy',
+      diary: 'Diario',
     },
     quick: {
       action: 'Guardar {n}',
@@ -71,7 +71,7 @@ test('flattens every user-facing string leaf including arrays while excluding me
     'quick.actions.0',
     'quick.actions.1',
     'quick.duplicate',
-    'tabs.today',
+    'tabs.diary',
   ]);
 });
 
@@ -129,7 +129,7 @@ test('keeps placeholder parity and count-bearing key parity tied to the English 
 
 test('reports string-budget failures with locale, key, category, actual length, and limit', () => {
   const locales = structuredClone(baseLocales);
-  locales.es.tabs.today = 'Etiqueta demasiado larga';
+  locales.es.tabs.diary = 'Etiqueta demasiado larga';
 
   const issues = collectI18nIssues(locales, {
     budgetDefinitions: [
@@ -145,7 +145,7 @@ test('reports string-budget failures with locale, key, category, actual length, 
   assert.deepEqual(
     issues.map(formatI18nIssue),
     [
-      'i18n string budget: locale=es key=tabs.today category=tabs actual=24 limit=10',
+      'i18n string budget: locale=es key=tabs.diary category=tabs actual=24 limit=10',
     ],
   );
 });
@@ -246,8 +246,8 @@ test('compact budgets include current CTA and compact action surfaces', () => {
 
 test('extracts static typed translation keys and rejects dynamic template keys', () => {
   assert.deepEqual(
-    extractStaticTranslationKeys("t('tabs.today'); t(\"tabs.health\"); t(`tabs.more`);"),
-    ['tabs.today', 'tabs.health', 'tabs.more'],
+    extractStaticTranslationKeys("t('tabs.diary'); t(\"tabs.pet\"); t(`tabs.more`);"),
+    ['tabs.diary', 'tabs.pet', 'tabs.more'],
   );
 
   assert.throws(

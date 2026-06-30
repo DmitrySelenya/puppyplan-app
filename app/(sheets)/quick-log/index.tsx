@@ -28,7 +28,7 @@ export default function QuickLogRoute() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/today');
+      router.replace('/diary');
     }
   };
 
