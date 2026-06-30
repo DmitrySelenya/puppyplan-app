@@ -23,7 +23,7 @@ The phantom-tabs half of this was already fixed in commit `d068fb1` (legacy rout
 1. **No hardcoded design values.** Colors, spacing, radii, shadows, durations, easings come from `@/design/tokens` only. No hex literals, no magic numbers for spacing/radius. (Enforced by `scripts/checks/text-hygiene.mjs` + review.)
 2. **No raw RN primitives in feature/nav chrome.** Use `@/design/primitives` (`AppText`, `Touchable`, `AppIcon`, etc.) and `react-native-reanimated` `Animated.*`. No bare `Pressable`/`Text` with ad-hoc styling.
 3. **Every user-facing string is a typed i18n key.** No string literals in JSX. Add keys under `tabs.*` / `nav.*` and use `t(...)`.
-4. **Annotation ≠ content.** Never render internal/dev terms to users (no "Deferred", no "the five Add buttons", no raw route names). 
+4. **Annotation ≠ content.** Never render internal/dev terms to users (no "Deferred", no "the five Add buttons", no raw route names).
 5. **AA contrast.** Active-state must not rely on color alone (filled icon or pill + label). White-on-terracotta uses `primary/600` (`#A94F2F`).
 6. **Reduced motion.** Honor `prefers-reduced-motion` via `@/design/motion`: cross-fade instead of slide/rotate.
 7. **One commit per task**, message `feat(nav): <task>` or `test(nav): <task>`. Run the listed checks before each commit.
@@ -102,7 +102,7 @@ it('renders exactly three tabs in one tablist and Add outside it', () => {
 });
 ```
 
-- **T2 — No default full-width tab bar chrome.** The capsule is detached, not edge-to-edge. The capsule container carries `testID="nav-capsule"` and must not stretch full width (no `left:0/right:0` spanning; it is centered/insets-padded). 
+- **T2 — No default full-width tab bar chrome.** The capsule is detached, not edge-to-edge. The capsule container carries `testID="nav-capsule"` and must not stretch full width (no `left:0/right:0` spanning; it is centered/insets-padded).
 ```tsx
 it('renders a detached capsule, not a full-width bar', () => {
   renderBar();
@@ -188,7 +188,7 @@ it('navigates to a tab route via the navigation prop on press', () => {
 
 **Files:** Modify `src/contracts/navigation.ts`; Test `src/test/navigation-contract.test.ts`.
 
-- [ ] **Step 1 — Write the failing test.** In `navigation-contract.test.ts`, add:
+- [x] **Step 1 — Write the failing test.** In `navigation-contract.test.ts`, add:
 ```ts
 it('exposes a schedule chooser action distinct from quick log', () => {
   expect(scheduleAction.href).not.toBe(quickLogAction.href);
@@ -196,8 +196,8 @@ it('exposes a schedule chooser action distinct from quick log', () => {
 });
 ```
 (Import `scheduleAction` at the top.)
-- [ ] **Step 2 — Run it, watch it fail.** `npx jest src/test/navigation-contract.test.ts` → FAIL (`scheduleAction` undefined).
-- [ ] **Step 3 — Implement.** In `navigation.ts`, after `quickLogAction`, add:
+- [x] **Step 2 — Run it, watch it fail.** `npx jest src/test/navigation-contract.test.ts` → FAIL (`scheduleAction` undefined).
+- [x] **Step 3 — Implement.** In `navigation.ts`, after `quickLogAction`, add:
 ```ts
 export const scheduleAction = {
   id: 'schedule',
@@ -212,9 +212,11 @@ export const scheduleAction = {
 };
 ```
 Then add `scheduleAction.href` to the `modalRoutes` array.
-- [ ] **Step 4 — Run, watch it pass.** Same command → PASS.
-- [ ] **Step 5 — Add i18n keys** `nav.schedule-slab`, `nav.schedule-fab-hint`, `nav.quick-log-slab`, `tabs.add`, `tabs.add-close` to every locale file (mirror the existing `tabs.diary` shape). Run `node scripts/checks/check-i18n.mjs` → PASS.
-- [ ] **Step 6 — Commit.** `git add -A && git commit -m "feat(nav): add schedule chooser action to navigation contract"`
+- [x] **Step 4 — Run, watch it pass.** Same command → PASS.
+- [x] **Step 5 — Add i18n keys** `nav.schedule-slab`, `nav.schedule-fab-hint`, `nav.quick-log-slab`, `tabs.add`, `tabs.add-close` to every locale file (mirror the existing `tabs.diary` shape). Run `node scripts/checks/check-i18n.mjs` → PASS.
+- [x] **Step 6 — Commit.** `git add -A && git commit -m "feat(nav): add schedule chooser action to navigation contract"`
+
+Task 0 evidence (2026-06-30): RED `npm run test:unit -- --runTestsByPath src/test/navigation-contract.test.ts` failed on missing `scheduleAction.href`; GREEN targeted test passed 9/9; `node scripts/checks/check-i18n.mjs` passed; `npm run check` passed.
 
 > Note: `/quick-log/schedule` may not have a screen yet. If routing there 404s in the running app, add a minimal sheet route `app/(sheets)/quick-log/schedule/index.tsx` that renders a placeholder Screen with a localized title. Do this only if needed to avoid a dead link; it is not required for T0–T7 to pass.
 

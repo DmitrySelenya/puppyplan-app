@@ -226,8 +226,16 @@
     "pet": "Pet",
     "pet-hint": "Open the Pet screen",
     "more": "More",
+    "add": "Add",
+    "add-close": "Close",
     "quick-log-fab-label": "Quick Log",
     "quick-log-fab-hint": "Opens a list of things you can log"
+  },
+
+  "nav": {
+    "quick-log-slab": "Quick Log",
+    "schedule-slab": "Schedule",
+    "schedule-fab-hint": "Opens scheduling options"
   },
 
   "onboarding": {

@@ -6,6 +6,7 @@ import {
   plannedRouteFiles,
   primaryTabs,
   quickLogAction,
+  scheduleAction,
   settingsRoutes,
 } from '@/contracts/navigation';
 
@@ -31,6 +32,11 @@ describe('navigation contract', () => {
     );
     expect(primaryTabs.map((tab) => tab.href)).not.toContain(quickLogAction.href);
     expect(modalRoutes).toContain(quickLogAction.href);
+  });
+
+  it('exposes a schedule chooser action distinct from quick log', () => {
+    expect(scheduleAction.href).not.toBe(quickLogAction.href);
+    expect(modalRoutes).toContain(scheduleAction.href);
   });
 
   it('keeps invite and share token placeholders as route patterns only', () => {

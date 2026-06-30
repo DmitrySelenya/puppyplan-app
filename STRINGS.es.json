@@ -221,8 +221,15 @@
     "pet": "Mascota",
     "pet-hint": "Abre la pantalla Mascota",
     "more": "Más",
+    "add": "Agregar",
+    "add-close": "Cerrar",
     "quick-log-fab-label": "Registro rápido",
     "quick-log-fab-hint": "Abre una lista de cosas que puedes registrar"
+  },
+  "nav": {
+    "quick-log-slab": "Registro rápido",
+    "schedule-slab": "Programar",
+    "schedule-fab-hint": "Abre opciones de programación"
   },
   "onboarding": {
     "welcome": {

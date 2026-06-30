@@ -42,6 +42,18 @@ export const quickLogAction = {
   accessibilityHintKey: I18nKey;
 };
 
+export const scheduleAction = {
+  id: 'schedule',
+  href: '/quick-log/schedule',
+  labelKey: 'nav.schedule-slab',
+  accessibilityHintKey: 'nav.schedule-fab-hint',
+} as const satisfies {
+  id: string;
+  href: string;
+  labelKey: I18nKey;
+  accessibilityHintKey: I18nKey;
+};
+
 export const settingsRoutes = [
   '/settings/puppy-profile',
   '/settings/quick-trackers',
@@ -50,6 +62,7 @@ export const settingsRoutes = [
 
 export const modalRoutes = [
   quickLogAction.href,
+  scheduleAction.href,
   '/quick-log/details',
   '/reminders/edit',
   '/family/invite',
@@ -142,8 +155,13 @@ export const shellI18nKeys = [
   'tabs.pet',
   'tabs.pet-hint',
   'tabs.more',
+  'tabs.add',
+  'tabs.add-close',
   'tabs.quick-log-fab-label',
   'tabs.quick-log-fab-hint',
+  'nav.quick-log-slab',
+  'nav.schedule-slab',
+  'nav.schedule-fab-hint',
   'states.empty-first-run.title',
   'states.empty-first-run.body',
   'today.quick-log.unavailable.title',

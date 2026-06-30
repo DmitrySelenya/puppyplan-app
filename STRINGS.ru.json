@@ -222,8 +222,16 @@
     "pet": "Питомец",
     "pet-hint": "Открыть экран Питомец",
     "more": "Ещё",
+    "add": "Добавить",
+    "add-close": "Закрыть",
     "quick-log-fab-label": "Быстрая запись",
     "quick-log-fab-hint": "Откроет список действий для записи"
+  },
+
+  "nav": {
+    "quick-log-slab": "Быстрая запись",
+    "schedule-slab": "Запланировать",
+    "schedule-fab-hint": "Откроет варианты планирования"
   },
 
   "onboarding": {
