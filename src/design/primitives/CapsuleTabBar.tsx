@@ -147,7 +147,12 @@ function Chooser({
   onQuickLog: () => void;
   onSchedule: () => void;
 }) {
-  return null;
+  return (
+    <View
+      pointerEvents="box-none"
+      testID="nav-chooser"
+    />
+  );
 }
 
 const styles = StyleSheet.create({

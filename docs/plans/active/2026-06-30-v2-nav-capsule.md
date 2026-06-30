@@ -307,7 +307,9 @@ Add a `Chooser` sub-component in the same file (Task 4 fills it; Task 1 may stub
 Task 1 evidence (2026-06-30): initial RED at `src/design/primitives/CapsuleTabBar.test.tsx` produced Jest `No tests found`, so the same T1/T2/T7 anatomy tests were moved to the repo's active Jest surface `src/test/capsule-tab-bar.render.test.tsx`; RED then failed on missing `@/design/primitives/CapsuleTabBar`; GREEN targeted tests passed (`capsule-tab-bar`, `tab-layout`, `navigation-contract`, 16/16) and `npm run typecheck` passed. The V1 FAB assertions from Task 7 were retired early in `tab-layout.render.test.tsx` because deleting the FAB in this task otherwise made the required pre-commit gate fail against a known-stale V1 contract.
 
 ### Task 2: Add morph + label flip (T3)
-- [ ] **Step 1** — Un-skip / add T3 to the test file. **Step 2** — run, watch fail (chooser/`nav-chooser` absent). **Step 3** — give `Chooser` a real root `View testID="nav-chooser"` (still minimal). The `+`→`×` glyph swap and label flip are already wired via `open` in Task 1; T3 should pass once `nav-chooser` renders. **Step 4** — run, watch pass. **Step 5** — commit `feat(nav): add-open morphs Add into close and reveals chooser`.
+- [x] **Step 1** — Un-skip / add T3 to the test file. **Step 2** — run, watch fail (chooser/`nav-chooser` absent). **Step 3** — give `Chooser` a real root `View testID="nav-chooser"` (still minimal). The `+`→`×` glyph swap and label flip are already wired via `open` in Task 1; T3 should pass once `nav-chooser` renders. **Step 4** — run, watch pass. **Step 5** — commit `feat(nav): add-open morphs Add into close and reveals chooser`.
+
+Task 2 evidence (2026-06-30): RED `npm run test:unit -- --runTestsByPath src/test/capsule-tab-bar.render.test.tsx` failed because `nav-chooser` was absent after pressing Add; GREEN passed 4/4 after adding the minimal chooser root; `npm run typecheck` passed.
 
 ### Task 3: Capsule hides on open (T4)
 - [ ] Add T4, run/fail/pass (the `{!open && <capsule/>}` from Task 1 already satisfies it — T4 locks it so it can't regress). Commit `test(nav): lock capsule-hide while chooser open`.

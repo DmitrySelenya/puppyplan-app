@@ -83,6 +83,17 @@ describe('CapsuleTabBar', () => {
     expect(style.right).toBeUndefined();
   });
 
+  it('opens the chooser and morphs Add into a close control', () => {
+    renderBar();
+
+    expect(screen.queryByTestId('nav-chooser')).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+
+    expect(screen.getByTestId('nav-chooser')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: i18n.t('tabs.add') })).toBeNull();
+    expect(screen.getByRole('button', { name: i18n.t('tabs.add-close') })).toBeTruthy();
+  });
+
   it('navigates to a tab route via the navigation prop on press', () => {
     renderBar();
 
