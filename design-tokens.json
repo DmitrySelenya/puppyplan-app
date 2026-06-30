@@ -2,10 +2,11 @@
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "$description": "PuppyPlan design tokens — v1 (first draft, light mode + phone only). Source of truth: DESIGN.md §1.2–1.8. Any drift between this file and DESIGN.md should be resolved in favor of DESIGN.md §1.",
   "$metadata": {
-    "version": "1.0.0-v1",
+    "version": "1.1.0-v2",
     "scope": "light-mode, phone-only",
     "source": "DESIGN.md",
-    "lastUpdated": "2026-05-18"
+    "lastUpdated": "2026-06-30",
+    "v2Sync": "primary→Terracotta Clay (§2.3), text/link (§2.2), focus-ring (§2.6), tabs→diary/pet/more. Surfaces/elevation kept per DESIGN.md §2.1 (repo values are higher-contrast than the Open Design cream mockups)."
   },
 
   "color": {
@@ -26,21 +27,21 @@
       "disabled":    { "$value": "#A6A89F", "$type": "color", "$description": "Decorative only — 2.6:1 (fails WCAG AA for body text). DESIGN.md §1.2.2" },
       "on-primary":  { "$value": "#FFFFFF", "$type": "color", "$description": "White на primary/600. 5.1:1. DESIGN.md §1.2.2" },
       "on-accent":   { "$value": "#1C1F1B", "$type": "color", "$description": "Charcoal на accent/300. 9.2:1. DESIGN.md §1.2.2" },
-      "link":        { "$value": "#0E7490", "$type": "color", "$description": "Same as primary/600. 5.0:1. DESIGN.md §1.2.2" }
+      "link":        { "$value": "#9B4F2D", "$type": "color", "$description": "Terracotta link. 5.1:1 vs surface/base. DESIGN.md §2.2" }
     },
 
     "primary": {
-      "$description": "Calm Teal scale. Brand, focus, primary actions. DESIGN.md §1.2.3",
-      "50":  { "$value": "#ECFEFF", "$type": "color", "$description": "Tinted backgrounds, selected rows" },
-      "100": { "$value": "#CFFAFE", "$type": "color", "$description": "Hover/pressed tint" },
-      "200": { "$value": "#A5F3FC", "$type": "color", "$description": "Disabled fill" },
-      "300": { "$value": "#67E8F9", "$type": "color", "$description": "Illustrative" },
-      "400": { "$value": "#22D3EE", "$type": "color", "$description": "Secondary brand" },
-      "500": { "$value": "#0891B2", "$type": "color", "$description": "Calm Teal — default brand, focus ring" },
-      "600": { "$value": "#0E7490", "$type": "color", "$description": "Primary button fill (contrast-safe with white text)" },
-      "700": { "$value": "#155E75", "$type": "color", "$description": "Pressed state" },
-      "800": { "$value": "#164E63", "$type": "color", "$description": "Headings on tinted bg" },
-      "900": { "$value": "#083344", "$type": "color", "$description": "Reserved for v2 dark mode" }
+      "$description": "Terracotta Clay ramp. Brand, focus, primary actions. DESIGN.md §2.3 (2026-06-29 V2 override — supersedes the retired Calm Teal scale).",
+      "50":  { "$value": "#FBF2EA", "$type": "color", "$description": "Tinted backgrounds, selected rows" },
+      "100": { "$value": "#F6E2D4", "$type": "color", "$description": "Hover/pressed tint" },
+      "200": { "$value": "#EDC1A8", "$type": "color", "$description": "Disabled fill / illustrative wash" },
+      "300": { "$value": "#E09A72", "$type": "color", "$description": "Warm illustration, not default CTA" },
+      "400": { "$value": "#D57B52", "$type": "color", "$description": "Freeze-canvas accent close to #c96442" },
+      "500": { "$value": "#C96442", "$type": "color", "$description": "Terracotta — default brand, selected nav/day, focus ring when not on warm fill" },
+      "600": { "$value": "#A94F2F", "$type": "color", "$description": "Primary button fill; white text contrast ≈ 4.8:1" },
+      "700": { "$value": "#8E4128", "$type": "color", "$description": "Pressed state / text on primary/50" },
+      "800": { "$value": "#733421", "$type": "color", "$description": "Headings on tinted bg" },
+      "900": { "$value": "#4C2117", "$type": "color", "$description": "Future dark-mode warm accent text" }
     },
 
     "accent": {
@@ -67,7 +68,7 @@
       "default":           { "$value": "#E2DDD2", "$type": "color", "$description": "Card hairline, dividers. DESIGN.md §1.2.6" },
       "strong":            { "$value": "#C9C3B5", "$type": "color", "$description": "DESIGN.md §1.2.6" },
       "divider-hairline":  { "$value": "rgba(226,221,210,0.6)", "$type": "color", "$description": "stroke/default @ 60%. DESIGN.md §1.2.6" },
-      "focus-ring":        { "$value": "#0E7490", "$type": "color", "$description": "2pt outline + 2pt offset. DESIGN.md §1.2.6" }
+      "focus-ring":        { "$value": "#A94F2F", "$type": "color", "$description": "Terracotta. 2pt outline + 2pt offset. DESIGN.md §2.6" }
     },
 
     "pill": {
@@ -283,8 +284,8 @@
     "celebration-color-only":   "accent/* — celebration ONLY (first log, milestone, vaccination confirmed). Never default CTA.",
     "danger-color-only":        "status/danger — user-marked urgent ONLY. Never system-flagged.",
     "no-streaks-days":          14,
-    "tabs":                     ["today", "health", "more"],
-    "quick-log-position":       "persistent bottom action / FAB, NOT a tab",
+    "tabs":                     ["diary", "pet", "more"],
+    "quick-log-position":       "persistent central Add action opening a Quick Log / Schedule chooser, NOT a tab",
     "out-of-scope-v1":          ["dark-mode", "tablet", "landscape", "ipad"]
   }
 }

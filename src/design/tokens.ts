@@ -4,11 +4,11 @@
 export const tokens = {
   "business": {
     "noStreaksDays": 14,
-    "quickLogPosition": "persistent bottom action / FAB, NOT a tab",
+    "quickLogPosition": "persistent central Add action opening a Quick Log / Schedule chooser, NOT a tab",
     "quickLogTrackersMax": 5,
     "tabs": [
-      "today",
-      "health",
+      "diary",
+      "pet",
       "more"
     ],
     "timing": {
@@ -32,19 +32,19 @@ export const tokens = {
       "disabled": "#A6A89F",
       "onPrimary": "#FFFFFF",
       "onAccent": "#1C1F1B",
-      "link": "#0E7490"
+      "link": "#9B4F2D"
     },
     "primary": {
-      "50": "#ECFEFF",
-      "100": "#CFFAFE",
-      "200": "#A5F3FC",
-      "300": "#67E8F9",
-      "400": "#22D3EE",
-      "500": "#0891B2",
-      "600": "#0E7490",
-      "700": "#155E75",
-      "800": "#164E63",
-      "900": "#083344"
+      "50": "#FBF2EA",
+      "100": "#F6E2D4",
+      "200": "#EDC1A8",
+      "300": "#E09A72",
+      "400": "#D57B52",
+      "500": "#C96442",
+      "600": "#A94F2F",
+      "700": "#8E4128",
+      "800": "#733421",
+      "900": "#4C2117"
     },
     "accent": {
       "100": "#FBEBE0",
@@ -66,7 +66,7 @@ export const tokens = {
       "default": "#E2DDD2",
       "strong": "#C9C3B5",
       "dividerHairline": "rgba(226,221,210,0.6)",
-      "focusRing": "#0E7490"
+      "focusRing": "#A94F2F"
     },
     "pill": {
       "template": {
