@@ -69,6 +69,7 @@ export type TodayScreenProps = Readonly<{
 }>;
 
 const emptyActions: QuickLogEventActionHandlers = {};
+const DIARY_HISTORY_SECTION_GAP = 10;
 
 export function TodayScreen({
   actions = emptyActions,
@@ -174,7 +175,10 @@ export function TodayScreen({
         </Card>
       ) : null}
       {showQuickLogSection ? (
-      <Stack gap="sm">
+      <Stack
+        gap="sm"
+        style={styles.historySection}
+        testID="diary-history-section">
         <Stack
           align="flex-start"
           direction="horizontal"
@@ -812,6 +816,9 @@ const styles = StyleSheet.create({
   factCard: {
     flex: 1,
     minWidth: 0,
+  },
+  historySection: {
+    gap: DIARY_HISTORY_SECTION_GAP,
   },
   eventActionsButton: {
     minHeight: 44,

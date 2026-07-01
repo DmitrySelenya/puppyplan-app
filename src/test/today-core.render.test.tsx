@@ -483,6 +483,8 @@ describe('Today core card rendering', () => {
 
     const sectionTitle = screen.getByText(i18n.t('today.history.section-title'));
     const sectionTitleStyle = StyleSheet.flatten(sectionTitle.props.style);
+    const historySection = screen.getByTestId('diary-history-section');
+    const historySectionStyle = StyleSheet.flatten(historySection.props.style);
     const tree = JSON.stringify(toJSON());
     const titleIndex = tree.indexOf(i18n.t('tabs.diary'));
     const heroIndex = tree.indexOf(i18n.t('today.hero.day-7-weekly-rhythm.title'));
@@ -490,6 +492,7 @@ describe('Today core card rendering', () => {
     const historyIndex = tree.indexOf(i18n.t('today.history.open-action'));
 
     expect(sectionTitleStyle.fontSize).toBe(tokens.typography.scale.title3.fontSize);
+    expect(historySectionStyle.gap).toBe(10);
     expect(titleIndex).toBeGreaterThanOrEqual(0);
     expect(heroIndex).toBeGreaterThan(titleIndex);
     expect(sectionIndex).toBeGreaterThan(heroIndex);

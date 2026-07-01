@@ -208,6 +208,15 @@ constant is fine — do NOT invent a new Stack size unless it's added properly v
 
 **Acceptance:** Vertical rhythm between fact cards is 10; `npm run check` green.
 
+**Item 8 evidence (2026-07-02):** RED
+`npm run test:unit -- --runTestsByPath src/test/today-core.render.test.tsx` failed because the
+Diary history section gap was `8` from `Stack gap="sm"` instead of the locked 10pt deviation.
+GREEN added a local `DIARY_HISTORY_SECTION_GAP = 10` override on the history section Stack and
+kept the rest of the row layout unchanged. JS-over-Metro screenshots captured locally with private
+header values redacted:
+`output/v2-screen-polish-screenshots/item8-diary-before-redacted.png` and
+`output/v2-screen-polish-screenshots/item8-diary-after-redacted.png`.
+
 ## P1 — Item 9: Pending/failed status belongs INSIDE the FactCard caption
 
 **What's wrong:** Atlas `7-diary-states` shows a pending write as a FactCard with caption
