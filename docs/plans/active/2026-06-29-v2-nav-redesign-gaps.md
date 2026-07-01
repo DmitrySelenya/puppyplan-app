@@ -105,7 +105,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Lightweight Health in Pet — Vaccinations, Vet visits ("No visit recorded yet"), Add record affordance
 - [x] ✅ Template suggestion ("Template timing · dose not verified") (§4.1.5)
 - [x] ➕ **Pet tab landing/hub** — native anatomy slice implemented: profile hub + health below +
-      actionable Quick Trackers entry. Stage 4 native screenshot comparison remains open.
+      actionable Quick Trackers entry. Stage 4 SE native screenshot comparison PASS recorded
+      2026-07-02 for the production landing/empty-health state.
 - [x] 🚫 **Multi-pet switcher** — out of scope. `multi-pet/foster` is Deferred in
       `puppyplan-prd-v2.md` (§1 "Нет полноценного multi-pet/foster workflow") and
       `docs/architecture/01-principles-and-scope.md` (Deferred list). MVP = single current pet.
@@ -975,8 +976,14 @@ Implementation notes:
   a static visual row.
 - `app/(tabs)/pet/index.tsx` remains thin and only wires `onOpenQuickTrackers` to
   `router.push('/settings/quick-trackers')`.
-- Stage 4 remains open: `/pet` still needs native screenshot comparison against the locked Pet hub
-  board before the Pet route can be marked done.
+- Stage 4 PASS (2026-07-02): captured native SE screenshots from the installed PuppyPlan.app running
+  JS-over-Metro and compared against `docs/design/v1/specs/05-pet-health.md` plus this slice's locked
+  acceptance. Evidence: `output/v2-nav-gaps-stage4/pet-stage4-top.png` (profile hub / Quick Trackers
+  entry) and `output/v2-nav-gaps-stage4/pet-stage4-health-empty.png` (Health empty state after scroll).
+  The route shows the Pet title, neutral profile placeholder, age/breed/weight facts, Edit profile,
+  Add weight, accessible Quick Trackers entry, health filters/chips, empty Health state, Add entry,
+  disabled Browse templates, and non-diagnostic footer copy without bottom-chrome overlap. Mixed health
+  list, add-record modal, detail/delete, and vet-prep Stage 4 checks remain separate plan items.
 
 ## 16. Health Add Record route Stage-0 lock evidence
 
@@ -2182,6 +2189,12 @@ Implementation notes:
   profile hub before lightweight Health, includes avatar/profile facts/Edit/Add weight, and routes
   the Quick Trackers entry to `/settings/quick-trackers`; targeted Pet/i18n/navigation tests and
   full `npm run check` passed. Stage 4 screenshot comparison remains open.
+- 2026-07-02: Closed Stage 4 for `/pet` landing/hub production state: captured top and scrolled native
+  SE screenshots from the installed PuppyPlan.app over Metro, verifying the Pet title, neutral profile
+  placeholder, age/breed/weight facts, Edit profile, Add weight, Quick Trackers entry, health filters,
+  empty Health state, Add entry, disabled Browse templates, and non-diagnostic footer copy without
+  bottom-chrome overlap. Mixed health list, add-record modal, detail/delete, and vet-prep Stage 4
+  remain separate items.
 - 2026-06-30: Added the first Health Add Record route slice: empty Pet Health can open
   `/pet/health-record-edit`, the modal shows a native record-type chooser and then the health record
   form anatomy, shell i18n/typed-route contracts were updated, and targeted/typecheck/scaffold checks
