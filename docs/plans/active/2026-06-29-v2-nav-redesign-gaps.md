@@ -113,7 +113,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] 🚫 Standalone Health tab anatomy (§4.1.1) — out-of-batch (folded into Pet)
 - [x] 🚫 Health charts / milestone surfaces — explicitly out-of-batch
 - [ ] 🟡 Add Record full flow (§4.1.3) — native route now opens from Pet, shows record-type
-      chooser and empty form anatomy; save/persistence/loading/error/offline states remain open.
+      chooser and empty form anatomy. Stage 4 SE native screenshot comparison PASS recorded
+      2026-07-02 for chooser + empty form. Save/persistence/loading/error/offline states remain open.
 - [ ] 🟡 Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented; durable edit/delete, timed 5-second undo restore, and persistence remain open.
 - [x] ✅ Status transitions visualisation Template→Confirmed→Done (§4.1.6) — native detail
@@ -1044,8 +1045,15 @@ Implementation notes:
 - `app/(modals)/pet/health-record-edit/index.tsx` stays thin and wires Close to `router.back()`.
 - `HealthRecordEditRouteScreen` uses design primitives (`Screen`, `Card`, `Button`, `ListGroup`,
   `ListRow`, `AppIcon`, `SegmentedControl`, `TextField`, `Toggle`) and existing EN/RU/ES i18n keys.
-- Stage 4 remains open: `/pet/health-record-edit` still needs native screenshot comparison against the
-  locked Add Record form states before the Add Record flow can be marked done.
+- Stage 4 PASS (2026-07-02): captured native SE screenshots from the installed PuppyPlan.app running
+  JS-over-Metro and compared against `docs/design/v1/specs/05-pet-health.md` plus this slice's locked
+  acceptance. Evidence:
+  `output/v2-nav-gaps-stage4/health-record-edit-chooser-stage4-after-card-a11y.png`,
+  `output/v2-nav-gaps-stage4/health-record-edit-form-stage4-top-after-card-a11y.png`, and
+  `output/v2-nav-gaps-stage4/health-record-edit-form-stage4-bottom-after-card-a11y.png`.
+  Runtime snapshot also exposes the four type chooser targets and the empty-form fields, confirming
+  the chooser can be operated through native accessibility. Save/persistence/loading/error/offline
+  states remain open.
 
 ## 17. Health detail status/delete anatomy Stage-0 lock evidence
 
@@ -2199,6 +2207,12 @@ Implementation notes:
   `/pet/health-record-edit`, the modal shows a native record-type chooser and then the health record
   form anatomy, shell i18n/typed-route contracts were updated, and targeted/typecheck/scaffold checks
   plus full `npm run check` passed. Save/persistence/loading/error/offline/edit/delete remain open.
+- 2026-07-02: Closed Stage 4 for `/pet/health-record-edit`: fixed the static `Card` accessibility
+  contract so labelled containers no longer collapse nested controls in native snapshots, then captured
+  native SE chooser and form screenshots over Metro. Chooser targets (`Vaccination`, `Parasite treatment`,
+  `Preventive care`, `Vet visit`, `Close`) are exposed to the runtime snapshot; form top/bottom evidence
+  covers Cancel/New entry/disabled Save, main fields, status control, note/privacy copy, and urgent toggle.
+  Save/persistence/loading/error/offline states remain open.
 - 2026-06-30: Added the Health detail status/delete anatomy slice: record detail now shows a
   non-color-only four-step status strip with one active filled state, and delete pending shows the
   localized undo-toast preview; targeted health tests, typecheck, scaffold checks, related route/i18n

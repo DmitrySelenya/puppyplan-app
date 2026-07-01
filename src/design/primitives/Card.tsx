@@ -72,7 +72,7 @@ export function Card({
       accessibilityLabel={accessibilityLabel}
       accessibilityLiveRegion={accessibilityLiveRegion}
       accessibilityRole={accessibilityRole}
-      accessible={Boolean(accessibilityLabel || accessibilityLiveRegion || accessibilityRole)}
+      accessible={Boolean(accessibilityLiveRegion || accessibilityRole)}
       style={rootStyle}
       testID={testID}>
       {children}

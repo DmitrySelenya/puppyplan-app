@@ -1064,6 +1064,17 @@ describe('design primitives', () => {
     expect(onMutedPress).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps labelled static Card containers from collapsing nested controls', () => {
+    render(
+      <Card accessibilityLabel="Form section" testID="labelled-static-card">
+        <Button label="Nested action" onPress={jest.fn()} />
+      </Card>,
+    );
+
+    expect(screen.getByTestId('labelled-static-card').props.accessible).not.toBe(true);
+    expect(screen.getByRole('button', { name: 'Nested action' })).toBeTruthy();
+  });
+
   it('renders IconButton with hitSlop, disabled state, and token targets', () => {
     const onPress = jest.fn();
 
