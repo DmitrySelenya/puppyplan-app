@@ -8,7 +8,6 @@ import { Touchable } from '@/design/primitives/Touchable';
 import { tokens } from '@/design/tokens';
 
 const ACTION_WIDTH = 72;
-const CARD_RADIUS = 18;
 
 export type SwipeToDeleteProps = {
   children: ReactNode;
@@ -65,7 +64,7 @@ const styles = StyleSheet.create({
   action: {
     alignItems: 'center',
     backgroundColor: tokens.color.status.danger,
-    borderRadius: CARD_RADIUS,
+    borderRadius: tokens.radius.card,
     justifyContent: 'center',
     marginLeft: tokens.space[3],
     width: ACTION_WIDTH,

@@ -9,8 +9,6 @@ import { Touchable } from '@/design/primitives/Touchable';
 import { elevationStyle } from '@/design/primitives/elevationStyle';
 import { tokens } from '@/design/tokens';
 
-const CARD_RADIUS = 18;
-
 export type RoutineCardState = 'done' | 'upcoming' | 'past';
 
 export type RoutineCardProps = {
@@ -97,7 +95,7 @@ export function RoutineCard({
 const styles = StyleSheet.create({
   card: {
     alignItems: 'center',
-    borderRadius: CARD_RADIUS,
+    borderRadius: tokens.radius.card,
     flex: 1,
     flexDirection: 'row',
     gap: 9,

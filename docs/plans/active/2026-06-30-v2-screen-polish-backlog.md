@@ -298,6 +298,22 @@ One commit, low risk:
 **Acceptance:** No duplicated radius literals; tokens drift-check green; U+202F test passes;
 gallery renders SwipeToDelete; `npm run check` green.
 
+**Item 12 evidence (2026-07-02):** RED
+`npm run test:unit -- --runTestsByPath src/test/design-tokens.test.ts src/test/diary-primitives.render.test.tsx src/test/dev-gallery.render.test.tsx`
+failed because `radius.card/chip/hero` were missing, `TimeGutter` did not split a narrow no-break
+space time, and the dev gallery had no `gallery-swipe-delete` fixture. GREEN added
+`radius.card=18`, `radius.chip=13`, and `radius.hero=20` through `design-tokens.json` +
+`npm run tokens:generate`, replaced the duplicated radius literals, normalized U+00A0/U+202F in
+`TimeGutter`, and added a hidden `SwipeToDelete` fixture to the synthetic dev gallery. The U+202F
+test was corrected to use a JSX expression (`time={'7:15\u202fAM'}`), because quoted JSX
+attributes pass the backslash sequence literally. `npm run tokens:check`, the focused suite, and
+`npm run check` passed (529 Jest tests + node/scaffold gates green; existing
+`screen-header.render.test.tsx` `act(...)` warning only). JS-over-Metro screenshots captured
+locally with private live-header values redacted:
+`output/v2-screen-polish-screenshots/item12-before-redacted.png`,
+`output/v2-screen-polish-screenshots/item12-after-redacted.png`, and synthetic gallery evidence
+`output/v2-screen-polish-screenshots/item12-gallery-after.png`.
+
 ## Known-deferred (do NOT pick up from this backlog)
 
 - **Synced-fact delete is functionally broken** (RLS blocks the soft-delete UPDATE, error swallowed

@@ -51,6 +51,11 @@ describe('IconChip', () => {
       tokens.color.surface.base,
     );
   });
+
+  it('uses the Diary chip radius token', () => {
+    render(<IconChip accent="clay" icon="paw" testID="chip" />);
+    expect(flatten(screen.getByTestId('chip')).borderRadius).toBe(tokens.radius.chip);
+  });
 });
 
 describe('TimeGutter', () => {
@@ -63,6 +68,12 @@ describe('TimeGutter', () => {
   it('renders the clock in the display (Lora) family', () => {
     render(<TimeGutter time="1:00 pm" />);
     expect(flatten(screen.getByText('1:00')).fontFamily).toBe(designFontFamilies.display.semibold);
+  });
+
+  it('splits narrow no-break spaces from platform-formatted times', () => {
+    render(<TimeGutter time={'7:15\u202fAM'} />);
+    expect(screen.getByText('7:15')).toBeTruthy();
+    expect(screen.getByText('AM')).toBeTruthy();
   });
 });
 
@@ -129,6 +140,7 @@ describe('InfoHero', () => {
     render(<InfoHero message="Puppies around 9 weeks sleep 18-20 hours." testID="hero" />);
     expect(screen.getByText('Puppies around 9 weeks sleep 18-20 hours.')).toBeTruthy();
     expect(screen.getByTestId('hero').props.accessibilityRole).toBe('summary');
+    expect(flatten(screen.getByTestId('hero')).borderRadius).toBe(tokens.radius.hero);
   });
 });
 
@@ -159,6 +171,7 @@ describe('RoutineCard', () => {
       />,
     );
     expect(screen.getByRole('checkbox').props.accessibilityState.checked).toBe(true);
+    expect(flatten(screen.getByTestId('r-card')).borderRadius).toBe(tokens.radius.card);
     expect(flatten(screen.getByTestId('r-card')).backgroundColor).toBe(tokens.color.sage[100]);
   });
 
@@ -215,6 +228,7 @@ describe('FactCard', () => {
     expect(flatten(screen.getByTestId('f-card')).backgroundColor).toBe(
       tokens.color.surface.sunken,
     );
+    expect(flatten(screen.getByTestId('f-card')).borderRadius).toBe(tokens.radius.card);
     expect(screen.getByText('Play')).toBeTruthy();
     expect(screen.getByText('Logged · 10 min')).toBeTruthy();
   });
@@ -237,6 +251,7 @@ describe('SwipeToDelete', () => {
     const action = screen.getByTestId('swipe-delete', { includeHiddenElements: true });
     expect(action.props.accessibilityElementsHidden).toBe(true);
     expect(action.props.importantForAccessibility).toBe('no-hide-descendants');
+    expect(flatten(action).borderRadius).toBe(tokens.radius.card);
     expect(screen.queryByRole('button', { name: 'Delete entry' })).toBeNull();
 
     fireEvent.press(action);

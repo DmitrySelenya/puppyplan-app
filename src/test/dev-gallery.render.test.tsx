@@ -102,6 +102,9 @@ describe('development-only design gallery', () => {
     expect(screen.getAllByText(i18n.t('tabs.diary'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
+    expect(screen.getByTestId('gallery-swipe-delete', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
     expect(screen.getByText(i18n.t('dev.gallery.today.synthetic-note'), {
       includeHiddenElements: true,
     })).toBeTruthy();

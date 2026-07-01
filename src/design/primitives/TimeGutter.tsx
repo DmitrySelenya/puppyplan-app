@@ -13,7 +13,8 @@ export type TimeGutterProps = {
 
 /** Right-aligned time column that anchors a Diary event row. */
 export function TimeGutter({ time, testID }: TimeGutterProps) {
-  const [clock, meridiem] = time.split(' ');
+  const normalizedTime = time.trim().replaceAll('\u00a0', ' ').replaceAll('\u202f', ' ');
+  const [clock, meridiem] = normalizedTime.split(/\s+/, 2);
 
   return (
     <View style={styles.gutter} testID={testID}>

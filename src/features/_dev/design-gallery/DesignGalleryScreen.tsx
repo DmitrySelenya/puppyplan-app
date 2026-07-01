@@ -21,6 +21,7 @@ import {
   SnackbarProvider,
   Stack,
   StatusPill,
+  SwipeToDelete,
   TextField,
   TrackerTile,
   WeekStrip,
@@ -156,6 +157,23 @@ export function SyntheticDiaryClayShell() {
             time="11:00 am"
             title={t('quick-log.trackers.zoomies')}
           />
+          <SwipeToDelete
+            deleteLabel={t('today.history.delete-action')}
+            onDelete={noop}
+            testID="gallery-swipe-delete">
+            <FactCard
+              accent="sage"
+              accessibilityLabel={t('today.history.fact-a11y-label', {
+                caption: t('timeline.actor-you'),
+                time: '12:30 pm',
+                title: t('quick-log.trackers.potty'),
+              })}
+              caption={t('timeline.actor-you')}
+              icon="pottyInside"
+              time="12:30 pm"
+              title={t('quick-log.trackers.potty')}
+            />
+          </SwipeToDelete>
         </Stack>
         <Stack gap="xs">
           <AppText tone="secondary" variant="footnote">

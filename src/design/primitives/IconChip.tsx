@@ -18,7 +18,6 @@ export const eventAccentColors: Record<EventAccent, { bg: string; fg: string }> 
 };
 
 const CHIP_SIZE = 44;
-const CHIP_RADIUS = 13;
 const GLYPH_SIZE = 22;
 
 export type IconChipProps = {
@@ -45,7 +44,7 @@ export function IconChip({ accent = 'clay', icon, quiet = false, style, testID }
 const styles = StyleSheet.create({
   chip: {
     alignItems: 'center',
-    borderRadius: CHIP_RADIUS,
+    borderRadius: tokens.radius.chip,
     height: CHIP_SIZE,
     justifyContent: 'center',
     width: CHIP_SIZE,

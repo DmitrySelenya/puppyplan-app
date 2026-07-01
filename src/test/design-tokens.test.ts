@@ -35,7 +35,10 @@ describe('generated design tokens', () => {
     expect(tokens.space[4]).toBe(16);
     expect(tokens.space[10]).toBe(40);
     expect(tokens.layout.screenPaddingY).toBe(24);
+    expect(tokens.radius.card).toBe(18);
+    expect(tokens.radius.chip).toBe(13);
     expect(tokens.radius.full).toBe(999);
+    expect(tokens.radius.hero).toBe(20);
     expect(tokens.elevation[1].androidElevation).toBe(2);
     expect(tokens.elevation[2].androidElevation).toBe(6);
     expect(tokens.elevation[3].androidElevation).toBe(12);

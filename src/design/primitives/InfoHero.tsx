@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   hero: {
     alignItems: 'center',
     backgroundColor: tokens.color.status.infoTint,
-    borderRadius: 20,
+    borderRadius: tokens.radius.hero,
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: tokens.layout.screenPaddingPhone,

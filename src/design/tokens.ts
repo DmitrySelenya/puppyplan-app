@@ -329,6 +329,9 @@ export const tokens = {
     "sm": 8,
     "md": 12,
     "lg": 16,
+    "card": 18,
+    "chip": 13,
+    "hero": 20,
     "full": 999
   },
   "space": {

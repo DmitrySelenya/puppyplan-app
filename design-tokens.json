@@ -163,6 +163,9 @@
     "sm":   { "$value": "8pt",   "$type": "dimension", "$description": "Buttons, inputs, pills, tracker tile inner" },
     "md":   { "$value": "12pt",  "$type": "dimension", "$description": "Cards, list groups, snackbars" },
     "lg":   { "$value": "16pt",  "$type": "dimension", "$description": "Bottom sheets, modal sheets" },
+    "card": { "$value": "18pt",  "$type": "dimension", "$description": "Diary Clay cards and swipe actions" },
+    "chip": { "$value": "13pt",  "$type": "dimension", "$description": "Diary Clay icon chips" },
+    "hero": { "$value": "20pt",  "$type": "dimension", "$description": "Diary Clay info hero" },
     "full": { "$value": "999pt", "$type": "dimension", "$description": "Avatars, FAB" }
   },
 

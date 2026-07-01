@@ -7,8 +7,6 @@ import { IconChip, type EventAccent } from '@/design/primitives/IconChip';
 import { TimeGutter } from '@/design/primitives/TimeGutter';
 import { tokens } from '@/design/tokens';
 
-const CARD_RADIUS = 18;
-
 export type FactCardProps = {
   accent?: EventAccent;
   accessibilityActions?: readonly AccessibilityActionInfo[];
@@ -64,7 +62,7 @@ const styles = StyleSheet.create({
   card: {
     alignItems: 'center',
     backgroundColor: tokens.color.surface.sunken,
-    borderRadius: CARD_RADIUS,
+    borderRadius: tokens.radius.card,
     flex: 1,
     flexDirection: 'row',
     gap: 12,
