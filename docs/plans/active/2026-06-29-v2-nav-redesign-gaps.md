@@ -183,7 +183,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       and More hub navigation. Persistence / OS permission handoff and Stage 4 screenshots remain open.
 - [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
       topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
-      Real ticket/email handoff and Stage 4 screenshots remain open.
+      Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Real ticket/email handoff
+      and diagnostics upload remain open.
 - [x] ✅ Full PuppyPlan Plus screen (features list + Restore purchases) — `/paywall` native shell
       implemented: feature list, annual/monthly/lifetime plan rows, primary CTA, Restore purchases,
       and soft-lock note. Live IAP/restore/purchase states and Stage 4 screenshots remain open.
@@ -1651,9 +1652,13 @@ Implementation notes:
 - Updated `MoreScreen` with `openHelp`, active Help row, and route wiring from
   `app/(tabs)/more/index.tsx`.
 - Updated navigation contracts and scaffold guardrails to include `/settings/help`.
-- Stage 4 remains open: `/settings/help` still needs a native screenshot comparison against the
-  locked More support/help anatomy. Real support ticket creation, email composer handoff, and
-  diagnostics upload remain deferred.
+- Stage 4 PASS (2026-07-02): captured native SE screenshots from the installed PuppyPlan.app running
+  JS-over-Metro and compared against `docs/design/v1/specs/06-4-more-support-help.md`. Evidence:
+  `output/v2-nav-gaps-stage4/settings-help-stage4.png` (top) and
+  `output/v2-nav-gaps-stage4/settings-help-stage4-bottom.png` (bottom). The route shows modal back
+  header, intro card, three help topic chevron rows, diagnostics rows, contact row, and the visible
+  privacy-safe support note. Allowed deferred items remain real support ticket creation, email composer
+  handoff, and diagnostics upload.
 
 ### 30. PuppyPlan Plus Paywall Shell Slice (§4.4.7)
 
@@ -2218,6 +2223,11 @@ Implementation notes:
   screen renders topic shortcuts, diagnostics rows, contact affordance, and a privacy-safe support
   note with EN/RU/ES typed copy; navigation/scaffold contracts were updated, and full `npm run check`
   passed. Real support ticket/email handoff, diagnostics upload, and Stage 4 screenshots remain open.
+- 2026-07-02: Closed Stage 4 for `/settings/help`: captured top and bottom native screenshots on the
+  required SE simulator from the installed PuppyPlan.app over Metro, verified the modal header, intro
+  card, topic rows, diagnostics/contact rows, and visible privacy note against
+  `docs/design/v1/specs/06-4-more-support-help.md`. Real ticket/email handoff and diagnostics upload
+  remain deferred.
 - 2026-06-30: Added the PuppyPlan Plus paywall shell slice: More now opens `/paywall`, the screen
   renders feature rows, annual/monthly/lifetime plan rows, Choose plan, Restore purchases, legal copy,
   and soft-lock availability note with EN/RU/ES typed copy; navigation/scaffold contracts were updated,
