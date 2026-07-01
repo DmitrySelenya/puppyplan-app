@@ -19,6 +19,22 @@ describe('ScreenHeader primitive', () => {
     expect(titleStyle.fontWeight).toBe('600');
   });
 
+  it('reserves a wider center lane for compact modal titles with side controls', () => {
+    render(
+      <ScreenHeader
+        backLabel="Close"
+        onBack={jest.fn()}
+        title="PuppyPlan Plus"
+      />,
+    );
+
+    const title = screen.getByRole('header', { name: 'PuppyPlan Plus' });
+    const titleStyle = StyleSheet.flatten(title.props.style);
+
+    expect(title.props.numberOfLines).toBe(1);
+    expect(titleStyle.flex).toBe(3);
+  });
+
   it('renders a back control that fires onBack and exposes an accessible label', () => {
     const onBack = jest.fn();
 

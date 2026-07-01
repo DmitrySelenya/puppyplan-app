@@ -187,7 +187,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       and diagnostics upload remain open.
 - [x] ✅ Full PuppyPlan Plus screen (features list + Restore purchases) — `/paywall` native shell
       implemented: feature list, annual/monthly/lifetime plan rows, primary CTA, Restore purchases,
-      and soft-lock note. Live IAP/restore/purchase states and Stage 4 screenshots remain open.
+      and soft-lock note. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02 after the
+      compact modal header fix. Live IAP/restore/purchase states remain open.
 
 ### Onboarding / intake — DESIGN.md §2.1
 - [ ] 🟡 First-run variants — present in freeze (partial)
@@ -1714,9 +1715,14 @@ Implementation notes:
 - Added feature-flag-ready trial and soft-lock shell states to `PuppyPlanPlusScreen`: the default
   shell shows the trial-days-left status; `accessState="softLocked"` shows the read-only banner and
   export action without introducing live entitlement/provider wiring.
-- Stage 4 remains open: `/paywall` still needs native screenshot comparison against the locked
-  paywall anatomy. Loading/offline/error/pending purchase, real restore, active subscription, and
-  soft-lock enforcement states remain deferred.
+- Stage 4 PASS (2026-07-02): initial SE capture found the modal title truncated as `Puppy...` /
+  `PuppyPlan...`. Fixed the shared `ScreenHeader` title lane through RED/GREEN primitive coverage so
+  compact modal titles with side controls keep the full `PuppyPlan Plus` header visible. Evidence:
+  `output/v2-nav-gaps-stage4/paywall-stage4-top-after-header-flex3.png` (top) and
+  `output/v2-nav-gaps-stage4/paywall-stage4-bottom-after-header.png` (bottom). The route shows the
+  full modal title, intro/trial status, feature list, annual/monthly/lifetime plan rows, primary CTA,
+  Restore purchases, soft-lock info, and legal note. Loading/offline/error/pending purchase, real
+  restore, active subscription, and soft-lock enforcement states remain deferred.
 
 ### 31. Accept Invite Caregiver-Side Shell Slice (§3.1.4)
 
@@ -2232,3 +2238,8 @@ Implementation notes:
   renders feature rows, annual/monthly/lifetime plan rows, Choose plan, Restore purchases, legal copy,
   and soft-lock availability note with EN/RU/ES typed copy; navigation/scaffold contracts were updated,
   and full `npm run check` passed. Live IAP/restore/entitlement enforcement and Stage 4 screenshots remain open.
+- 2026-07-02: Closed Stage 4 for `/paywall`: SE screenshot review initially exposed a truncated
+  `PuppyPlan Plus` modal title; added RED/GREEN `ScreenHeader` primitive coverage and widened the
+  title lane, then recaptured top/bottom native screenshots showing the full header, feature rows,
+  plan rows, Choose plan, Restore purchases, soft-lock info, and legal note. Live IAP/restore/
+  entitlement enforcement remains deferred.

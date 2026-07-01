@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET,
   },
   title: {
-    flex: 1,
+    flex: 3,
     fontWeight: '600',
     textAlign: 'center',
   },
