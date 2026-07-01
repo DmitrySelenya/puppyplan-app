@@ -180,7 +180,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Quick Trackers settings (§4.4.3) — implemented as `/settings/quick-trackers`; see §14.
 - [x] ✅ Notification preferences (§4.4.4) — `/settings/notifications` native anatomy slice
       implemented: local reminders, push reminders/sitter completion, quiet hours, timezone rows,
-      and More hub navigation. Persistence / OS permission handoff and Stage 4 screenshots remain open.
+      and More hub navigation. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
+      Persistence / OS permission handoff remains open.
 - [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
       topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
       Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Real ticket/email handoff
@@ -1603,8 +1604,12 @@ Implementation notes:
 - Updated navigation contracts and scaffold guardrails to include `/settings/notifications`.
 - Updated local Expo typed routes so `router.push('/settings/notifications')` typechecks in this
   workspace.
-- Stage 4 remains open: `/settings/notifications` still needs a native screenshot comparison against
-  the locked More notification preferences anatomy.
+- Stage 4 PASS (2026-07-02): captured native SE screenshot from the installed PuppyPlan.app running
+  JS-over-Metro and compared against the locked More notification preferences anatomy in
+  `docs/design/v1/specs/06-more-privacy-paywall.md` plus this slice's acceptance. Evidence:
+  `output/v2-nav-gaps-stage4/settings-notifications-stage4.png`. The route shows the full modal
+  header, local reminders toggle, push reminders/sitter completion toggles, quiet-hours row, and
+  timezone row without clipping/overlap. Persistence and OS permission handoff remain deferred.
 
 ### 29. More Support / Help Anatomy Slice (§4.4.6)
 
@@ -2225,6 +2230,10 @@ Implementation notes:
   `/settings/notifications`, the screen renders local reminders, push reminders/sitter completion,
   quiet hours, and timezone sections with design primitives, navigation/scaffold contracts were updated,
   and full `npm run check` passed. Persistence, OS permission handoff, and Stage 4 screenshots remain open.
+- 2026-07-02: Closed Stage 4 for `/settings/notifications`: captured a native SE screenshot from the
+  installed PuppyPlan.app over Metro and verified the modal header, local reminders toggle, push
+  reminders/sitter completion toggles, quiet-hours row, and timezone row against the locked More
+  notification preferences anatomy. Persistence and OS permission handoff remain deferred.
 - 2026-06-30: Added the More Support / Help anatomy slice: More now opens `/settings/help`, the
   screen renders topic shortcuts, diagnostics rows, contact affordance, and a privacy-safe support
   note with EN/RU/ES typed copy; navigation/scaffold contracts were updated, and full `npm run check`
