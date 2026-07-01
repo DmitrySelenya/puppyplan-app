@@ -186,6 +186,15 @@ AppText (search `styles.sectionTitle`).
 **Acceptance:** Section title renders title3; existing anatomy tests updated if they assert the
 variant; `npm run check` green.
 
+**Item 7 evidence (2026-07-02):** RED
+`npm run test:unit -- --runTestsByPath src/test/today-core.render.test.tsx` failed because
+`today.history.section-title` rendered at the `headline` font size (17pt) instead of the locked
+`title3` token (20pt). GREEN changed only that AppText variant to `title3`; the DiaryHeader
+greeting and layout row were not changed. JS-over-Metro screenshots captured locally with private
+header values redacted:
+`output/v2-screen-polish-screenshots/item7-diary-before-redacted.png` and
+`output/v2-screen-polish-screenshots/item7-diary-after-redacted.png`.
+
 ## P1 — Item 8: Diary event-list gap is 8, locked deviation says 10
 
 **What's wrong:** The Stage-1 design lock recorded "list gap 10 (reference-exact literal)" as a

@@ -1,9 +1,10 @@
 import type { ReactElement } from 'react';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 
+import { tokens } from '@/design/tokens';
 import { i18n } from '@/lib/i18n';
 import { createPuppyPlanQueryClient } from '@/lib/query/client';
 import { queryKeys } from '@/lib/query/keys';
@@ -480,12 +481,15 @@ describe('Today core card rendering', () => {
       expect(screen.getByText(i18n.t('today.history.section-title'))).toBeTruthy();
     });
 
+    const sectionTitle = screen.getByText(i18n.t('today.history.section-title'));
+    const sectionTitleStyle = StyleSheet.flatten(sectionTitle.props.style);
     const tree = JSON.stringify(toJSON());
     const titleIndex = tree.indexOf(i18n.t('tabs.diary'));
     const heroIndex = tree.indexOf(i18n.t('today.hero.day-7-weekly-rhythm.title'));
     const sectionIndex = tree.indexOf(i18n.t('today.history.section-title'));
     const historyIndex = tree.indexOf(i18n.t('today.history.open-action'));
 
+    expect(sectionTitleStyle.fontSize).toBe(tokens.typography.scale.title3.fontSize);
     expect(titleIndex).toBeGreaterThanOrEqual(0);
     expect(heroIndex).toBeGreaterThan(titleIndex);
     expect(sectionIndex).toBeGreaterThan(heroIndex);

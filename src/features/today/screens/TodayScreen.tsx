@@ -183,7 +183,7 @@ export function TodayScreen({
           wrap>
           <AppText
             style={styles.sectionTitle}
-            variant="headline">
+            variant="title3">
             {t('today.history.section-title')}
           </AppText>
           <Button
@@ -830,4 +830,3 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
 });
-
