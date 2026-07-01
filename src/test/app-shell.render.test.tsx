@@ -78,7 +78,10 @@ describe('app shell screens', () => {
     const openAddRecord = jest.fn();
     const result = renderWithProviders(<HealthScreen onOpenAddRecord={openAddRecord} />);
 
-    expect(screen.getByText(i18n.t('tabs.pet'))).toBeTruthy();
+    const petTitle = screen.getByRole('header', { name: i18n.t('tabs.pet') });
+    const petTitleStyle = StyleSheet.flatten(petTitle.props.style);
+
+    expect(petTitleStyle.fontSize).toBe(tokens.typography.scale.title1.fontSize);
     expect(screen.getByText(i18n.t('health.segments.0'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.segments.1'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.filter-chips.0'))).toBeTruthy();
@@ -132,7 +135,10 @@ describe('app shell screens', () => {
       </AppProviders>,
     );
 
-    expect(screen.getByText(i18n.t('more.screen-title'))).toBeTruthy();
+    const moreTitle = screen.getByRole('header', { name: i18n.t('more.screen-title') });
+    const moreTitleStyle = StyleSheet.flatten(moreTitle.props.style);
+
+    expect(moreTitleStyle.fontSize).toBe(tokens.typography.scale.title1.fontSize);
     expect(screen.getByText(i18n.t('more.rows.timeline'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.sections.support'))).toBeTruthy();
     expect(screen.getByText(i18n.t('auth.sign-out.cta'))).toBeTruthy();

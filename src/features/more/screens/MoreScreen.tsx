@@ -9,6 +9,7 @@ import { Card } from '@/design/primitives/Card';
 import { ListGroup } from '@/design/primitives/ListGroup';
 import { ListRow } from '@/design/primitives/ListRow';
 import { Screen } from '@/design/primitives/Screen';
+import { ScreenHeader } from '@/design/primitives/ScreenHeader';
 import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { Stack } from '@/design/primitives/Stack';
 import { tokens } from '@/design/tokens';
@@ -66,7 +67,7 @@ export function MoreScreen({
 
   return (
     <Screen contentStyle={styles.content}>
-      <AppText variant="title">{t('more.screen-title')}</AppText>
+      <ScreenHeader title={t('more.screen-title')} />
       {puppy ? (
         <PuppySummaryCard
           locale={locale}

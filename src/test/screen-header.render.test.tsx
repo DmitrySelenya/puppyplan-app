@@ -15,7 +15,7 @@ describe('ScreenHeader primitive', () => {
 
     expect(title).toBeTruthy();
     expect(titleStyle.textAlign).toBe('center');
-    expect(titleStyle.fontSize).toBe(tokens.typography.scale.headline.fontSize);
+    expect(titleStyle.fontSize).toBe(tokens.typography.scale.title1.fontSize);
     expect(titleStyle.fontWeight).toBe('600');
   });
 

@@ -63,7 +63,7 @@ export function ScreenHeader({
         accessibilityRole="header"
         numberOfLines={1}
         style={styles.title}
-        variant="headline">
+        variant="title1">
         {title}
       </AppText>
       <View style={[styles.side, styles.trailingSide]}>

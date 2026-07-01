@@ -34,9 +34,12 @@ describe('Health V2 anatomy', () => {
       />,
     );
 
+    const screenTitle = screen.getByRole('header', { name: i18n.t('tabs.pet') });
+    const screenTitleStyle = StyleSheet.flatten(screenTitle.props.style);
     const hub = screen.getByTestId('pet-profile-hub-card');
     const hubStyle = StyleSheet.flatten(hub.props.style);
 
+    expect(screenTitleStyle.fontSize).toBe(tokens.typography.scale.title1.fontSize);
     expect(hub).toBeTruthy();
     expect(hubStyle.backgroundColor).toBe(tokens.color.surface.raised);
     expect(screen.getByTestId('pet-profile-hub-avatar')).toBeTruthy();

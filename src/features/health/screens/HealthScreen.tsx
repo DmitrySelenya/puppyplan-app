@@ -10,6 +10,7 @@ import { EmptyState } from '@/design/primitives/EmptyState';
 import { ListGroup } from '@/design/primitives/ListGroup';
 import { ListRow } from '@/design/primitives/ListRow';
 import { Screen } from '@/design/primitives/Screen';
+import { ScreenHeader } from '@/design/primitives/ScreenHeader';
 import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { Stack } from '@/design/primitives/Stack';
@@ -44,7 +45,7 @@ export function HealthScreen({
 
   return (
     <Screen contentStyle={styles.content}>
-      <AppText variant="title">{t('tabs.pet')}</AppText>
+      <ScreenHeader title={t('tabs.pet')} />
       <PetProfileHub onOpenQuickTrackers={onOpenQuickTrackers} />
       <SegmentedControl
         accessibilityLabel={t('health.tab-title')}

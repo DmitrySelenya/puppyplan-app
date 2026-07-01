@@ -136,6 +136,19 @@ defaults so screens don't each choose their own size.
 **Acceptance:** Pet, More, and More sub-screens share the same title typography token; Diary
 still renders the DiaryHeader greeting (no ScreenHeader); verified in the simulator.
 
+**Item 5 evidence (2026-07-02):** RED
+`npm run test:unit -- --runTestsByPath src/test/screen-header.render.test.tsx src/test/health.render.test.tsx src/test/app-shell.render.test.tsx`
+failed because `ScreenHeader` used `headline` (17pt) and Pet/More rendered plain title text with
+no accessibility header role. GREEN moved `ScreenHeader` to the shared `title1` token and routed
+the Pet and More hub titles through `ScreenHeader`; Diary was not touched and remains on
+`DiaryHeader`. Focused tests passed for ScreenHeader/Pet/More plus More sub-screens:
+`src/test/more-settings.render.test.tsx`, `src/test/puppy-profile-settings.render.test.tsx`,
+`src/test/quick-trackers-settings.render.test.tsx`. JS-over-Metro screenshots captured locally:
+`output/v2-screen-polish-screenshots/item5-pet-before.png`,
+`output/v2-screen-polish-screenshots/item5-pet-after.png`,
+`output/v2-screen-polish-screenshots/item5-more-before-redacted.png`, and
+`output/v2-screen-polish-screenshots/item5-more-after-redacted.png`.
+
 ## P2 — Item 6: Verify the Pet empty state isn't a near-empty void
 
 **What to check (verify-first, may be fine):** In the walkthrough, the Pet hub's health section
