@@ -92,7 +92,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       Stage 4 native screenshot comparison remains open for the full Quick Log route.
 - [x] ✅ **Tracker grid "Edit Trackers"** config (§2.3.2 / §4.4.3) — implemented as
       `/settings/quick-trackers`, reachable from Quick Log sheet and More, with implicit-save
-      toggle/reorder rows and owner-only guardrails. Stage 4 native screenshot comparison remains open.
+      toggle/reorder rows and owner-only guardrails. Stage 4 SE native screenshot comparison PASS
+      recorded 2026-07-02.
 
 ### Timeline / history — DESIGN.md §2.4
 - [x] ✅ **Decision: fold history into Diary** (no standalone Events tab). Filters (per-tracker)
@@ -905,8 +906,13 @@ Implementation notes:
   `docs/architecture/adr/0007-prd-schema-baseline.md`, and
   `supabase/migrations/20260623120000_canonical_quick_log_tracker_taxonomy.sql` prove that
   `training` is intentionally outside the current selected Quick Log tracker vocabulary.
-- Stage 4 remains open: `/settings/quick-trackers` still needs native screenshot comparison against
-  the locked board before the settings surface can be marked done.
+- Stage 4 PASS (2026-07-02): captured native SE screenshot from the installed PuppyPlan.app running
+  JS-over-Metro and compared against this slice's locked acceptance. Evidence:
+  `output/v2-nav-gaps-stage4/quick-trackers-stage4-top.png`. The route shows the full modal header,
+  max-5 guidance, selected count, selected tracker rows with reorder handles/icons/toggles, More
+  Options rows, history-preservation hint, and no bottom Save CTA. The live debug account had 3 of 5
+  trackers selected, so the max-reached hint was not visible; that state remains covered by the
+  render suite above.
 
 ## 15. Pet tab landing/hub Stage-0 lock evidence
 
@@ -2167,6 +2173,11 @@ Implementation notes:
   native route: Quick Log and More both open `/settings/quick-trackers`, atlas-style implicit-save
   rows are covered by render tests, and `training` remains deferred by the accepted canonical tracker
   taxonomy rather than added as an unapproved schema delta.
+- 2026-07-02: Closed Stage 4 for `/settings/quick-trackers`: captured a native SE screenshot from the
+  installed PuppyPlan.app over Metro and verified the modal header, max-5 guidance, selected count,
+  selected tracker rows with reorder handles/icons/toggles, More Options rows, history-preservation
+  hint, and absence of a bottom Save CTA against the locked acceptance. The live owner state showed
+  3 of 5 selected; max-reached hint remains covered by render tests.
 - 2026-06-30: Added and verified the Pet tab landing/hub native anatomy slice: `/pet` now shows a
   profile hub before lightweight Health, includes avatar/profile facts/Edit/Add weight, and routes
   the Quick Trackers entry to `/settings/quick-trackers`; targeted Pet/i18n/navigation tests and
