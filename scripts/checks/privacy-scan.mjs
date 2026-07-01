@@ -36,6 +36,7 @@ const SKIPPED_PATHS = [
   /^\.expo\//,
   /^coverage\//,
   /^docs\/design\/v1\/raw\//,
+  /^docs\/design\/v2\/reference\//,
   /^scripts\/checks\/privacy-scan\.mjs$/,
   /^scripts\/design\/lib\/policy\.mjs$/,
   /^scripts\/design\/lib\/policy\.test\.mjs$/,

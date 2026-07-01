@@ -4,22 +4,26 @@ import { StyleSheet, View } from 'react-native';
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
 import {
   buildTodayPlan,
+  type TodayPlan,
   type TodayPlanInput,
 } from '@/contracts/today';
 import {
   eventPayloadSchemas,
   type EventType,
 } from '@/contracts/supabase';
-import { AppIcon } from '@/design/primitives/AppIcon';
+import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { FactCard } from '@/design/primitives/FactCard';
 import { IconButton } from '@/design/primitives/IconButton';
-import { PuppyHeader } from '@/design/primitives/PuppyHeader';
+import { type EventAccent } from '@/design/primitives/IconChip';
+import { InfoHero } from '@/design/primitives/InfoHero';
 import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
-import { Touchable } from '@/design/primitives/Touchable';
+import { SwipeToDelete } from '@/design/primitives/SwipeToDelete';
+import { WeekStrip, type WeekStripDay } from '@/design/primitives/WeekStrip';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 import {
@@ -39,9 +43,10 @@ import {
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { useQuickLogTimelineRows } from '@/lib/query/useQuickLogTimelineRows';
 
+import { DiaryHeader } from '../components/DiaryHeader';
 import {
-  TodayPlanCards,
   TodayStatusCard,
+  todayHeroCopy,
   type TodayStatusState,
 } from '../components/TodayCards';
 
@@ -58,7 +63,6 @@ export type TodayScreenProps = Readonly<{
   openOnboarding?: () => void;
   openQuickLog?: () => void;
   openTimeline: () => void;
-  puppyAgeLabel?: string;
   puppyName?: string;
   screenState?: TodayScreenStateOverride;
   todayPlanInput?: Partial<TodayPlanInput>;
@@ -72,7 +76,6 @@ export function TodayScreen({
   openOnboarding,
   openQuickLog,
   openTimeline,
-  puppyAgeLabel,
   puppyName,
   screenState,
   todayPlanInput,
@@ -103,8 +106,7 @@ export function TodayScreen({
   if (careContext === null) {
     return (
       <Screen>
-        <PuppyHeader ageLabel={puppyAgeLabel} name={puppyName} />
-        <TodayTitle todayDate={undefined} />
+        <DiaryHeader puppyName={puppyName} />
         <TodayStatusCard state="unavailable" />
         <Button
           label={t('today.quick-log.setup-entry')}
@@ -115,15 +117,16 @@ export function TodayScreen({
     );
   }
 
-  const eventViews = rows.flatMap((row) => {
+  const eventRows = rows.flatMap((row) => {
     const event = createQuickLogEventView(row, {
       locale,
       t,
       todayDate: careContext.todayDate,
     });
 
-    return event === null ? [] : [event];
+    return event === null ? [] : [{ event, row }];
   });
+  const eventViews = eventRows.map((eventRow) => eventRow.event);
   const todayStatus = getTodayStatusState({
     careContext,
     eventViews,
@@ -143,8 +146,11 @@ export function TodayScreen({
 
   return (
     <Screen contentStyle={styles.content}>
-      <PuppyHeader ageLabel={puppyAgeLabel} name={puppyName} />
-      <TodayTitle todayDate={careContext.todayDate} />
+      <DiaryHeader
+        puppyName={puppyName}
+        timeOfDay={todayPlanInput?.timeOfDay}
+        todayDate={careContext.todayDate}
+      />
       <DiaryWeekStrip
         selectedDate={todayPlanSourceInput?.todayDate ?? careContext.todayDate}
         todayDate={careContext.todayDate}
@@ -152,10 +158,10 @@ export function TodayScreen({
       {todayStatus === null || (todayStatus === 'empty' && todayPlan !== null)
         ? null
         : <TodayStatusCard state={todayStatus} />}
-      {showTodayPlan ? (
-        <TodayPlanCards
-          onHeroPrimaryAction={openQuickLog}
-          plan={todayPlan}
+      {showTodayPlan && todayPlan !== null ? (
+        <DiaryInfoHero
+          hero={todayPlan.hero}
+          onPrimaryAction={openQuickLog}
         />
       ) : null}
       {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
@@ -190,11 +196,12 @@ export function TodayScreen({
           />
         </Stack>
         {eventViews.length > 0 ? (
-          eventViews.map((event) => (
-            <TodayQuickLogEventRow
+          eventRows.map(({ event, row }) => (
+            <DiaryFactRow
               actions={actions}
               event={event}
               key={event.clientEventId}
+              row={row}
             />
           ))
         ) : timelineRows.status === 'error' ? (
@@ -232,56 +239,55 @@ function DiaryWeekStrip({
     t,
     todayDate,
   }), [locale, selectedDate, t, todayDate]);
+  const weekDays = useMemo<WeekStripDay[]>(
+    () => days.map((day) => ({
+      accessibilityLabel: day.accessibilityLabel,
+      day: day.dayNumber,
+      dow: day.shortWeekday,
+      key: day.date,
+    })),
+    [days],
+  );
+  const selectedIndex = days.findIndex((day) => day.isSelected);
+  const todayIndex = days.findIndex((day) => day.isToday);
 
   return (
-    <View
+    <WeekStrip
       accessibilityLabel={t('today.week-strip.label')}
-      accessible
-      style={styles.weekStrip}
-      testID="today-week-strip">
-      {days.map((day) => (
-        <Touchable
-          accessibilityLabel={day.accessibilityLabel}
-          accessibilityRole="button"
-          accessibilityState={{ selected: day.isSelected }}
-          key={day.date}
-          onPress={() => undefined}
-          pressedStyle={styles.weekDayPressed}
-          style={[
-            styles.weekDay,
-            day.isToday ? styles.weekDayToday : null,
-            day.isSelected ? styles.weekDaySelected : null,
-          ]}
-          testID="today-week-day">
-          <AppText
-            maxFontSizeMultiplier={2}
-            style={day.isSelected ? styles.weekDayTextSelected : styles.weekDayText}
-            variant="caption">
-            {day.shortWeekday}
-          </AppText>
-          <AppText
-            maxFontSizeMultiplier={2}
-            numeric
-            style={[
-              styles.weekDayNumber,
-              day.isSelected ? styles.weekDayTextSelected : styles.weekDayText,
-            ]}
-            variant="bodyEmph">
-            {day.dayNumber}
-          </AppText>
-          {day.isToday ? (
-            <View
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={[
-                styles.weekDayTodayMarker,
-                day.isSelected ? styles.weekDayTodayMarkerSelected : null,
-              ]}
-            />
-          ) : null}
-        </Touchable>
-      ))}
-    </View>
+      days={weekDays}
+      selectedIndex={selectedIndex === -1 ? 0 : selectedIndex}
+      testID="today-week-strip"
+      todayIndex={todayIndex === -1 ? undefined : todayIndex}
+    />
+  );
+}
+
+/** Collapses the day's single priority signal (`plan.hero`) into one Clay guidance tip. */
+function DiaryInfoHero({
+  hero,
+  onPrimaryAction,
+}: Readonly<{
+  hero: TodayPlan['hero'];
+  onPrimaryAction?: () => void;
+}>) {
+  const { t } = useAppTranslation();
+  const copy = todayHeroCopy[hero.variant];
+  const body = hero.variant === 'first_day' ? '' : t(copy.bodyKey);
+  const message = body.trim() ? `${t(copy.titleKey)}\n${body}` : t(copy.titleKey);
+  const primaryKey = 'primaryKey' in copy ? copy.primaryKey : undefined;
+
+  return (
+    <Stack gap="sm">
+      <InfoHero message={message} testID="diary-info-hero" />
+      {primaryKey === undefined || onPrimaryAction === undefined ? null : (
+        <Button
+          label={t(primaryKey)}
+          onPress={onPrimaryAction}
+          style={styles.infoHeroAction}
+          variant="primary"
+        />
+      )}
+    </Stack>
   );
 }
 
@@ -601,12 +607,14 @@ function formatLocalHourMinute(occurredAt: string): string {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
-function TodayQuickLogEventRow({
+function DiaryFactRow({
   actions,
   event,
+  row,
 }: Readonly<{
   actions: QuickLogEventActionHandlers;
   event: QuickLogEventView;
+  row: QuickLogCachedEventRow;
 }>) {
   const { t } = useAppTranslation();
   const onDelete = actions.onDelete;
@@ -614,121 +622,162 @@ function TodayQuickLogEventRow({
   const onRetry = actions.onRetry;
   const onUndo = actions.onUndo;
   const editRequest = event.status === 'synced' ? createQuickLogEditRequest(event) : null;
+  const visual = getFactCardVisual(row);
+  const canSwipeDelete = event.status === 'synced' && onDelete !== undefined;
+  const deleteLabel = t('today.history.delete-action');
+  const factCard = (
+    <FactCard
+      accent={visual.accent}
+      accessibilityActions={canSwipeDelete ? [{ name: 'delete', label: deleteLabel }] : undefined}
+      accessibilityLabel={t('today.history.fact-a11y-label', {
+        caption: event.status === 'synced' ? event.actorLabel : event.statusLabel,
+        time: event.occurredAtLabel,
+        title: event.title,
+      })}
+      caption={event.status === 'synced' ? event.actorLabel : undefined}
+      icon={visual.icon}
+      onAccessibilityAction={canSwipeDelete ? (accessibilityEvent) => {
+        if (accessibilityEvent.nativeEvent.actionName === 'delete' && onDelete !== undefined) {
+          onDelete(createQuickLogDeleteRequest(event));
+        }
+      } : undefined}
+      testID="diary-history-logged-fact"
+      time={event.occurredAtLabel}
+      title={event.title}
+    />
+  );
 
   return (
-    <Card
-      testID="diary-history-logged-fact"
-      variant="mutedTemplate">
-      <Stack gap="md">
-        <Stack
-          align="center"
-          direction="horizontal"
-          gap="sm"
-          justify="space-between"
-          wrap>
-          <Stack
-            gap="xs"
-            style={styles.eventText}>
-            <AppText variant="bodyEmph">{event.title}</AppText>
-            <AppText
-              maxFontSizeMultiplier={2}
-              tone="secondary"
-              variant="footnote">
-              {t('timeline.row-meta-template', {
-                actor: event.actorLabel,
-                time: event.occurredAtLabel,
-              })}
-            </AppText>
-          </Stack>
-          {editRequest !== null && onEdit !== undefined ? (
-            <IconButton
-              accessibilityLabel={t('today.history.item-actions')}
-              icon={
-                <AppIcon
-                  color={tokens.color.text.secondary}
-                  name="more"
-                  size={22}
-                />
-              }
-              onPress={() => {
-                onEdit(editRequest);
+    <Stack gap="xs">
+      <Stack
+        align="center"
+        direction="horizontal"
+        gap="sm">
+        <View style={styles.factCard}>
+          {canSwipeDelete && onDelete !== undefined ? (
+            <SwipeToDelete
+              deleteLabel={deleteLabel}
+              onDelete={() => {
+                onDelete(createQuickLogDeleteRequest(event));
               }}
-              style={styles.eventActionsButton}
-            />
-          ) : event.status === 'synced' ? null : (
-            <StatusPill
-              accessibilityLabel={event.statusLabel}
-              icon={
-                <AppText
-                  accessibilityElementsHidden
-                  maxFontSizeMultiplier={2}>
-                  {statusIcon(event.status)}
-                </AppText>
-              }
-              label={event.statusLabel}
-              style={styles.statusPill}
-              tone={statusTone(event.status)}
-            />
-          )}
-        </Stack>
-        {event.status === 'failed' && (onRetry !== undefined || onDelete !== undefined) ? (
-          <Stack direction="horizontal" gap="sm" wrap>
-            {onRetry !== undefined ? (
-              <Button
-                label={t('quick-log.failed.primary')}
-                onPress={() => {
-                  onRetry(event.clientEventId, 'manual_retry', 'today');
-                }}
-                variant="secondary"
+              testID="diary-history-swipe-delete">
+              {factCard}
+            </SwipeToDelete>
+          ) : factCard}
+        </View>
+        {editRequest !== null && onEdit !== undefined ? (
+          <IconButton
+            accessibilityLabel={t('today.history.item-actions')}
+            icon={
+              <AppIcon
+                color={tokens.color.text.secondary}
+                name="more"
+                size={22}
               />
-            ) : null}
-            {onDelete !== undefined ? (
-              <Button
-                label={t('quick-log.failed.tertiary')}
-                onPress={() => {
-                  onDelete(createQuickLogDeleteRequest(event));
-                }}
-                variant="tertiary"
-              />
-            ) : null}
-          </Stack>
-        ) : null}
-        {event.status === 'pending' && (onUndo !== undefined || onDelete !== undefined) ? (
-          <Stack direction="horizontal" gap="sm" wrap>
-            {onUndo !== undefined ? (
-              <Button
-                label={t('quick-log.snackbar.undo')}
-                onPress={() => {
-                  onUndo(createQuickLogUndoRequest(event));
-                }}
-                variant="tertiary"
-              />
-            ) : null}
-            {onDelete !== undefined ? (
-              <Button
-                label={t('quick-log.failed.tertiary')}
-                onPress={() => {
-                  onDelete(createQuickLogDeleteRequest(event));
-                }}
-                variant="tertiary"
-              />
-            ) : null}
-          </Stack>
-        ) : null}
-        {event.status === 'synced' && onDelete !== undefined ? (
-          <Stack direction="horizontal" gap="sm" wrap>
+            }
+            onPress={() => {
+              onEdit(editRequest);
+            }}
+            style={styles.eventActionsButton}
+          />
+        ) : event.status === 'synced' ? null : (
+          <StatusPill
+            accessibilityLabel={event.statusLabel}
+            icon={
+              <AppText
+                accessibilityElementsHidden
+                maxFontSizeMultiplier={2}>
+                {statusIcon(event.status)}
+              </AppText>
+            }
+            label={event.statusLabel}
+            style={styles.statusPill}
+            tone={statusTone(event.status)}
+          />
+        )}
+      </Stack>
+      {event.status === 'failed' && (onRetry !== undefined || onDelete !== undefined) ? (
+        <Stack direction="horizontal" gap="sm" wrap>
+          {onRetry !== undefined ? (
             <Button
-              label={t('today.history.delete-action')}
+              label={t('quick-log.failed.primary')}
+              onPress={() => {
+                onRetry(event.clientEventId, 'manual_retry', 'today');
+              }}
+              variant="secondary"
+            />
+          ) : null}
+          {onDelete !== undefined ? (
+            <Button
+              label={t('quick-log.failed.tertiary')}
               onPress={() => {
                 onDelete(createQuickLogDeleteRequest(event));
               }}
-              variant="destructive"
+              variant="tertiary"
             />
-          </Stack>
-        ) : null}
-      </Stack>
-    </Card>
+          ) : null}
+        </Stack>
+      ) : null}
+      {event.status === 'pending' && (onUndo !== undefined || onDelete !== undefined) ? (
+        <Stack direction="horizontal" gap="sm" wrap>
+          {onUndo !== undefined ? (
+            <Button
+              label={t('quick-log.snackbar.undo')}
+              onPress={() => {
+                onUndo(createQuickLogUndoRequest(event));
+              }}
+              variant="tertiary"
+            />
+          ) : null}
+          {onDelete !== undefined ? (
+            <Button
+              label={t('quick-log.failed.tertiary')}
+              onPress={() => {
+                onDelete(createQuickLogDeleteRequest(event));
+              }}
+              variant="tertiary"
+            />
+          ) : null}
+        </Stack>
+      ) : null}
+    </Stack>
   );
+}
+
+function getFactCardVisual(
+  row: QuickLogCachedEventRow,
+): { accent: EventAccent; icon: AppIconName } {
+  if (row.event_type === 'feeding') {
+    return { accent: 'clay', icon: 'bowl' };
+  }
+
+  if (row.event_type === 'walk') {
+    return { accent: 'clay', icon: 'walk' };
+  }
+
+  if (row.event_type === 'sleep') {
+    return { accent: 'mauve', icon: 'moon' };
+  }
+
+  if (row.event_type === 'zoomies') {
+    return { accent: 'honey', icon: 'ball' };
+  }
+
+  if (row.event_type === 'potty') {
+    const quickAction = getTodayQuickAction(row);
+
+    if (quickAction === 'pee_outside') {
+      return { accent: 'honey', icon: 'water' };
+    }
+
+    if (quickAction === 'poop') {
+      return { accent: 'honey', icon: 'poop' };
+    }
+
+    return { accent: 'honey', icon: 'pottyInside' };
+  }
+
+  return { accent: 'honey', icon: 'paw' };
 }
 
 function statusIcon(status: QuickLogEventView['status']): string {
@@ -760,16 +809,16 @@ const styles = StyleSheet.create({
     paddingBottom: tokens.layout.bottomInsetFab,
     paddingTop: tokens.space[2],
   },
-  eventText: {
-    flexShrink: 1,
+  factCard: {
+    flex: 1,
     minWidth: 0,
   },
   eventActionsButton: {
     minHeight: 44,
     minWidth: 44,
   },
-  largeTitle: {
-    fontWeight: '700',
+  infoHeroAction: {
+    alignSelf: 'flex-start',
   },
   sectionTitle: {
     flexShrink: 1,
@@ -780,75 +829,5 @@ const styles = StyleSheet.create({
   timelineEntry: {
     alignSelf: 'flex-start',
   },
-  weekDay: {
-    alignItems: 'center',
-    borderColor: 'transparent',
-    borderRadius: tokens.radius.full,
-    borderWidth: 1,
-    flex: 1,
-    gap: tokens.space[1],
-    paddingHorizontal: tokens.space[1],
-    paddingVertical: tokens.space[2],
-  },
-  weekDayNumber: {
-    fontWeight: '700',
-    lineHeight: 22,
-  },
-  weekDayPressed: {
-    opacity: 0.72,
-  },
-  weekDaySelected: {
-    backgroundColor: tokens.color.primary[700],
-    borderColor: tokens.color.primary[700],
-  },
-  weekDayText: {
-    color: tokens.color.text.secondary,
-  },
-  weekDayTextSelected: {
-    color: tokens.color.text.onPrimary,
-  },
-  weekDayToday: {
-    borderColor: tokens.color.primary[600],
-  },
-  weekDayTodayMarker: {
-    backgroundColor: tokens.color.primary[600],
-    borderRadius: tokens.radius.full,
-    height: 4,
-    width: 16,
-  },
-  weekDayTodayMarkerSelected: {
-    backgroundColor: tokens.color.text.onPrimary,
-  },
-  weekStrip: {
-    flexDirection: 'row',
-    gap: tokens.space[1],
-    marginTop: -tokens.space[1],
-  },
 });
 
-function TodayTitle({ todayDate }: Readonly<{ todayDate?: string }>) {
-  const { locale, t } = useAppTranslation();
-
-  return (
-    <Stack gap="xs">
-      <AppText style={styles.largeTitle} variant="display">{t('tabs.diary')}</AppText>
-      <AppText tone="tertiary" variant="callout">
-        {formatTodayDate(todayDate, locale)}
-      </AppText>
-    </Stack>
-  );
-}
-
-function formatTodayDate(todayDate: string | undefined, locale: string): string {
-  const date = todayDate === undefined ? new Date() : new Date(`${todayDate}T12:00:00`);
-
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'long',
-    weekday: 'long',
-  }).format(date).replace(',', ' ·');
-}

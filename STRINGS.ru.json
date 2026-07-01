@@ -59,6 +59,7 @@
         "today-core": "Герой Today, дневные карточки, guidance и состояния данных.",
         "guidance": "Состояния starter guidance: прочитано, попробовано и пропущено.",
         "today-deferrals": "Синтетические слоты family invite и reminders для ревью.",
+        "diary-clay": "Clay-примитивы Diary: week strip, info hero, лента фактов и превью отложенной строки routine.",
         "global": "Loading, empty, error, offline, pending и permission states."
       },
       "today": {
@@ -69,6 +70,9 @@
         "missed-reminder": "Diary · слот неотмеченной рутины",
         "state-fixtures": "Today · loading, offline и pending",
         "synthetic-note": "Эти состояния не записывают reminders, invites или активность семьи."
+      },
+      "diary": {
+        "routine-note": "Строки routine — только превью Clay-анатомии, модель расписания ещё не подключена."
       }
     }
   },
@@ -230,7 +234,9 @@
 
   "nav": {
     "quick-log-slab": "Быстрая запись",
+    "quick-log-slab-subtitle": "Записать, что уже произошло",
     "schedule-slab": "Запланировать",
+    "schedule-slab-subtitle": "Рутина или разовое напоминание",
     "schedule-fab-hint": "Откроет варианты планирования"
   },
 
@@ -341,6 +347,14 @@
     "weekly-lead": "За 7 дней:",
     "weekly-insight-prefix": "Стало понятнее: ",
     "weekly-cta": "Посмотреть подробно",
+    "header": {
+      "greeting-morning": "Доброе утро, {name}",
+      "greeting-midday": "Добрый день, {name}",
+      "greeting-evening": "Добрый вечер, {name}",
+      "greeting-morning-no-name": "Доброе утро",
+      "greeting-midday-no-name": "Добрый день",
+      "greeting-evening-no-name": "Добрый вечер"
+    },
     "week-strip": {
       "label": "Неделя дневника",
       "day-label": "{weekday}, {date}. {state}",
@@ -464,10 +478,11 @@
       }
     },
     "history": {
-      "section-title": "История дневника",
+      "section-title": "Сегодня",
       "open-action": "Посмотреть историю",
       "delete-action": "Удалить запись",
-      "item-actions": "Действия записи дневника"
+      "item-actions": "Действия записи дневника",
+      "fact-a11y-label": "{title}, {time}, {caption}"
     },
     "daily-cards": {
       "first-day-banner": "В первый день важно наблюдать, а не добиваться результата.",

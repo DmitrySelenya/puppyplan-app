@@ -115,17 +115,26 @@ screenshots captured locally: `output/v2-screen-polish-screenshots/item4-pet-bef
 
 ## P1 — Item 5: Screen-title hierarchy is inconsistent
 
-**What's wrong:** "Diary" renders as a large Lora display title, but "Pet" and "More" render
-noticeably smaller. There's no single rule for the screen title.
+> **RE-SCOPED 2026-07-02 — read before implementing.** The Diary half of this item is STALE.
+> Diary was rebuilt to the Clay design lock (`docs/design/v2/specs/diary-v2.md`) and **no longer
+> renders a screen title at all** — it renders a `DiaryHeader` greeting ("Good morning, {name}"
+> in `title1` Lora + date + avatar), which is the locked, intentional anatomy. Do NOT add a
+> "Diary" `ScreenHeader` back and do NOT resize anything on the Diary route for this item.
+> This item now covers **Pet and More (and their sub-screens) only**: unify their `ScreenHeader`
+> title treatment on one typography token.
 
-**Location:** the `ScreenHeader` primitive (`src/design/primitives/ScreenHeader.tsx`) and each
-screen's usage (Diary, Pet/HealthScreen, More). Compare the `variant`/size each passes.
+**What's wrong:** "Pet" and "More" (and More sub-screens) size their screen titles inconsistently.
+There's no single rule for the screen title.
 
-**Target:** One consistent screen-title treatment across Diary/Pet/More (pick the Diary display
-size as canonical unless the spec says otherwise). Drive it from `ScreenHeader` defaults so screens
-don't each choose their own size.
+**Location:** the `ScreenHeader` primitive (`src/design/primitives/ScreenHeader.tsx`) and its
+usages (Pet/HealthScreen, More hub, More sub-screens). Compare the `variant`/size each passes.
+Diary is out of scope (see re-scope note).
 
-**Acceptance:** Diary, Pet, More share the same title typography token; verified in the simulator.
+**Target:** One consistent screen-title treatment across Pet/More, driven from `ScreenHeader`
+defaults so screens don't each choose their own size.
+
+**Acceptance:** Pet, More, and More sub-screens share the same title typography token; Diary
+still renders the DiaryHeader greeting (no ScreenHeader); verified in the simulator.
 
 ## P2 — Item 6: Verify the Pet empty state isn't a near-empty void
 
@@ -143,10 +152,143 @@ if needed.
 
 ---
 
+# Items 7–12: Diary Clay fidelity follow-ups (added 2026-07-02)
+
+> Source: fresh-eyes design review of the Diary Clay rebuild against the locked reference
+> `docs/design/v2/reference/diary-create.screens.jsx` + spec `docs/design/v2/specs/diary-v2.md`.
+> The Diary rebuild itself (DiaryHeader, WeekStrip, InfoHero, FactCard, accent map, swipe-to-delete)
+> passed Stage 4 on iPhone SE 3 + iPhone 16e and is NOT to be restructured — these are targeted
+> deltas found against the reference. Read `diary-v2.md` (the design lock) before touching any of them.
+
+## P1 — Item 7: Diary "Today" section title is one type step too small
+
+**What's wrong:** The reference (`ScreenDiaryDay`) renders the "Today" section title as
+`pp-title-3` (20pt Lora). The screen uses `variant="headline"` (17pt).
+
+**Location:** `src/features/today/screens/TodayScreen.tsx` — the `today.history.section-title`
+AppText (search `styles.sectionTitle`).
+
+**Target:** `variant="title3"`. Keep the layout row otherwise as-is.
+
+**Acceptance:** Section title renders title3; existing anatomy tests updated if they assert the
+variant; `npm run check` green.
+
+## P1 — Item 8: Diary event-list gap is 8, locked deviation says 10
+
+**What's wrong:** The Stage-1 design lock recorded "list gap 10 (reference-exact literal)" as a
+named deviation, but the screen composes the list with `Stack gap="sm"` = 8. Reference is 10.
+
+**Location:** `src/features/today/screens/TodayScreen.tsx` — the `<Stack gap="sm">` wrapping the
+Diary history section (section title row + fact rows).
+
+**Target:** 10pt between event rows (reference-exact literal is the recorded deviation; a local
+constant is fine — do NOT invent a new Stack size unless it's added properly via tokens).
+
+**Acceptance:** Vertical rhythm between fact cards is 10; `npm run check` green.
+
+## P1 — Item 9: Pending/failed status belongs INSIDE the FactCard caption
+
+**What's wrong:** Atlas `7-diary-states` shows a pending write as a FactCard with caption
+"Saving…" *inside* the card. The screen instead renders an external `StatusPill` to the right of
+the card, which narrows the card and breaks the even list grid.
+
+**Location:** `src/features/today/screens/TodayScreen.tsx` — `DiaryFactRow`: the
+`caption={event.status === 'synced' ? event.actorLabel : undefined}` ternary + the `StatusPill`
+branch in the horizontal Stack.
+
+**Target:** For pending/failed rows pass `caption={event.statusLabel}` into `FactCard` and drop
+the external StatusPill. KEEP: the a11y live-region announcement of the status, the retry/undo/
+delete action rows below the card, and the persistent failed banner. Non-color-only status must
+survive (the caption text itself satisfies this).
+
+**Acceptance:** Pending/failed facts render full-width FactCards with the status as caption;
+matches atlas `7-diary-states`; a11y status announcement still present; render tests updated to
+the new contract (legitimate spec change — cite this item); `npm run check` green.
+
+## P1 — Item 10: Diary empty states don't match atlas 6 / 6b / 6c
+
+**What's wrong:** `cold-start`, `empty-history`, and `all-done` render as the generic
+`TodayStatusCard` (pill + headline + body) — a pre-Clay template. The atlas shows:
+- `6-diary-cold-start` / `6b-diary-empty-history`: **centered** composition — `EmptyIllustration`
+  (96pt circle, `primary/50` bg, 46pt paw glyph in `primary/500`) + `title-3` heading + `callout`
+  secondary body (max-width ~280) + CTAs (cold start: primary "Quick Log" + secondary
+  "Add to schedule"; empty day: no CTAs, just copy).
+- `6c-diary-all-done`: a `sage/100` radius-22 celebration card (success pill + `title-3` +
+  `callout`) above the day's list — NOT a generic status card.
+
+**Location:** `src/features/today/screens/TodayScreen.tsx` (`getTodayStatusState` consumers),
+`src/features/today/components/TodayCards.tsx` (`TodayStatusCard`), new primitive(s) in
+`src/design/primitives/` (`EmptyIllustration`; possibly a celebration card variant).
+
+**Target:** Build `EmptyIllustration` as a primitive (with a render test, added to the dev
+gallery), re-render the three states per the atlas. Other `TodayStatusCard` states
+(loading/offline/error/permission) stay as-is for now. Reference anatomy:
+`docs/design/v2/reference/diary-create.screens.jsx` → `ScreenDiaryColdStart`, `ScreenDiaryEmpty`,
+`ScreenDiaryAllDone`.
+
+**Acceptance:** The three states match the atlas structurally (anatomy tests) and visually
+(simulator screenshot per state, synthetic data only); `npm run check` green.
+
+## P2 — Item 11: WeekStrip — rolling window vs calendar week + non-interactive "tabs"
+
+**What's wrong (two parts):**
+(a) The strip renders a rolling ±3-day window centered on today
+(`createDiaryWeekDays` in `TodayScreen.tsx` maps offsets `[-3..+3]`), so the visible days shift
+every day. The reference is a fixed locale calendar week (Mon–Sun) with today marked wherever it
+falls. Note: an earlier review recorded this as "Sun-first locale, OK" — that was a misread
+(2026-07-01 was a Wednesday, so `-3` happened to land on Sunday).
+(b) Days carry `accessibilityRole="tab"` but `onSelectDay` is never wired — VoiceOver promises
+interactivity that doesn't exist, and artboard `7b-selected-not-today` is unreachable.
+
+**Decision needed (design) before code:** either implement the fixed locale week + day selection
+(pairs naturally with Diary history scrolling / artboard 5), or explicitly record the rolling
+window as a named deviation in `diary-v2.md`. Do not silently keep the current hybrid.
+
+**Quick sub-fix allowed now:** while days are non-interactive, drop the `tab` role/selected state
+promise (keep the descriptive a11y labels).
+
+**Acceptance:** Decision recorded in `diary-v2.md`; implementation matches it; a11y roles don't
+promise unavailable interactions; tests updated; `npm run check` green.
+
+## P2 — Item 12: Small hardening batch (radii tokens, TimeGutter split, gallery)
+
+One commit, low risk:
+- **Radius literals duplicated:** `CARD_RADIUS = 18` is declared independently in `FactCard.tsx`,
+  `RoutineCard.tsx`, and `SwipeToDelete.tsx`; chip radius 13 in `IconChip.tsx`; hero radius 20 in
+  `InfoHero.tsx`. Add proper tokens via the pipeline (`design-tokens.json` →
+  `npm run tokens:generate`; e.g. `radius.card=18`, `radius.chip=13`, `radius.hero=20`) and
+  replace the literals. These were recorded named deviations pending exactly this reconciliation.
+- **`TimeGutter.tsx`** splits time on `time.split(' ')`; ICU 72+ emits U+202F (narrow no-break
+  space) before AM/PM in some environments. Split on `/\s/` instead. Add a unit-test case with a
+  U+202F time string.
+- **Dev gallery:** `SwipeToDelete` is the only Diary primitive missing from
+  `src/features/_dev/design-gallery/DesignGalleryScreen.tsx` — add it.
+
+**Acceptance:** No duplicated radius literals; tokens drift-check green; U+202F test passes;
+gallery renders SwipeToDelete; `npm run check` green.
+
+## Known-deferred (do NOT pick up from this backlog)
+
+- **Synced-fact delete is functionally broken** (RLS blocks the soft-delete UPDATE, error swallowed
+  by `.catch(() => undefined)` in `src/lib/query/quick-log.ts` `deleteSynced`). Root-caused and
+  tracked separately; requires a **migration** (owner approval) + removing the silent catch. The
+  swipe-to-delete UI is correct and stays. When it IS fixed, the reference contract requires a
+  **snackbar undo** after delete ("Delete: warning + snackbar undo") — implement then, not now.
+- **DiaryHeader recap line** ("Since yesterday: …") — primitive supports `recap`, no data source
+  yet. Needs a cross-day summary query; separate slice.
+- **"Review history" button + Diary history scroll-back** (atlas 5/5b: DayDivider groups, filter
+  bar) — the button next to "Today" is a transitional bridge to the old Timeline route; it goes
+  away only when history folds into Diary scroll. Larger slice, plan-owned (§2.4 of the gaps doc).
+- **RoutineCard rows in Diary** — blocked on the schedule/routine data model (gaps-doc decision).
+
+---
+
 ## Suggested order
 
-Nav-capsule plan → Item 1 (trivial copy) → Item 4 (token, isolated) → Item 5 (header) →
-Item 6 (verify) → Items 2 & 3 (need a design/IA decision + spec update first).
+Nav-capsule plan → Item 1 (trivial copy) → Item 4 (token, isolated) → Item 5 (header, as
+re-scoped) → Item 7 (one-liner) → Item 8 (gap) → Item 12 (hardening batch) → Item 9 (pending
+caption) → Item 6 (verify) → Item 10 (empty states) → Items 2 & 3 (need a design/IA decision +
+spec update first) → Item 11 (needs a design decision).
 
 ## Note on the native build
 
@@ -158,7 +300,11 @@ native iOS build is currently blocked by an expo-sqlite × Xcode 26.2 / Swift 6.
 
 ## Kickoff prompt for Codex
 
-> Use this AFTER the nav-capsule plan is done, green, and its screenshots are approved.
+> **SUPERSEDED 2026-07-02 — do not use.** This original kickoff told Codex to discard leftover
+> uncommitted changes; that instruction is now WRONG because the Diary Clay rebuild
+> (new `src/design/primitives/*` Diary primitives, `DiaryHeader`, `TodayScreen` rework, specs,
+> reference atlas) lives on this branch and must not be discarded. Use the
+> **"Continuation prompt (2026-07-02)"** below instead. Kept for history only.
 
 ```
 Work through docs/plans/active/2026-06-30-v2-screen-polish-backlog.md on branch
@@ -196,3 +342,21 @@ Run the app via JS-over-Metro (native build is blocked by expo-sqlite × Xcode 2
 
 For each item, post a before/after simulator screenshot when you finish it.
 ```
+
+---
+
+## Continuation prompt (2026-07-02) — current
+
+> Context for whoever resumes Codex: Codex stopped mid-backlog, about to start Item 5. Since
+> then, a parallel Claude session rebuilt the Diary route to the Clay design lock
+> (`docs/design/v2/specs/diary-v2.md`, reference atlas under `docs/design/v2/reference/`) —
+> this work is on the same branch. Item 5 was re-scoped (Diary excluded) and Items 7–12 were
+> added from a 2026-07-02 design review. The exact prompt text to paste into Codex lives with
+> the session owner; its non-negotiables are:
+> 1. **Never discard or revert uncommitted/committed Diary Clay work** (Diary primitives,
+>    `DiaryHeader`, `TodayScreen`, `diary-v2.md`, `docs/design/v2/reference/`). The earlier
+>    "discard leftovers" instruction is void.
+> 2. Re-read Item 5's re-scope note and the Items 7–12 block before coding.
+> 3. `docs/design/v2/specs/diary-v2.md` supersedes `today-v2.md` and, for the Diary route's
+>    visual anatomy, the older `docs/design/v1/specs/03-diary-route.md` lock.
+> 4. All other ground rules of this backlog stay in force.

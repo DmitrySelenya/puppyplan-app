@@ -1,4 +1,11 @@
 # Today V2 Design Lock
+
+> **⚠️ SUPERSEDED (2026-07-01) — do not build from this file.** Its anatomy (large-title
+> "Today" + hero card, `ScreenTodayDay1…`) came from the retired Open-Design export and is
+> the diverged design the V2 redesign is correcting. The canonical Diary lock is
+> `docs/design/v2/specs/diary-v2.md`, built against the Miro design-freeze
+> (`docs/design/v2/reference/`). Kept for history only.
+
 Route: `/today`
 Atlas: `docs/design/v2/screenshots/08-states.png` (`v2.states.01`), plus `docs/design/v2/screenshots/standalone-overview.png` (`v2.overview.01`)
 Device sizes: iPhone SE 3 compact simulator, portrait

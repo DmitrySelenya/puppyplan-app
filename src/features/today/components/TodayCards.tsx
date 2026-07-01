@@ -280,7 +280,7 @@ export function SyntheticTodayPreview({
   );
 }
 
-const todayHeroCopy = {
+export const todayHeroCopy = {
   accident_recovery: {
     bodyKey: 'today.hero.accident-recovery.body',
     eyebrowKey: 'today.hero.eyebrow',

@@ -69,7 +69,7 @@ describe('app shell screens', () => {
   it('renders the Diary shell with localized empty-state copy', () => {
     renderWithProviders(<TodayScreen openTimeline={noop} />);
 
-    expect(screen.getByText(i18n.t('tabs.diary'))).toBeTruthy();
+    expect(screen.getByTestId('diary-header')).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.unavailable.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.unavailable.body'))).toBeTruthy();
   });

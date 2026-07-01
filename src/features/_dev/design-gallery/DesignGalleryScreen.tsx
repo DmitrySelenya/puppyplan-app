@@ -4,10 +4,16 @@ import {
   AppText,
   Button,
   Card,
+  CheckCircle,
+  DayDivider,
   EmptyState,
   AppIcon,
+  FactCard,
+  IconChip,
+  InfoHero,
   ListGroup,
   ListRow,
+  RoutineCard,
   Screen,
   SegmentedControl,
   SectionHeader,
@@ -17,6 +23,8 @@ import {
   StatusPill,
   TextField,
   TrackerTile,
+  WeekStrip,
+  type WeekStripDay,
 } from '@/design/primitives';
 import {
   HealthRecordDetailPreview,
@@ -88,10 +96,133 @@ export function DesignGalleryScreen() {
         <SyntheticHealthShell />
         <SyntheticTimelineShell />
         <SyntheticTodayShell />
+        <SyntheticDiaryClayShell />
       </Stack>
     </Screen>
   );
 }
+
+export function SyntheticDiaryClayShell() {
+  const { t } = useAppTranslation();
+
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.diary-clay"
+          titleKey="tabs.diary"
+        />
+        <WeekStrip
+          accessibilityLabel={t('today.week-strip.label')}
+          days={diaryGalleryWeekDays}
+          selectedIndex={3}
+          todayIndex={3}
+        />
+        <InfoHero message={t('today.hero.steady-day.body')} />
+        <Stack gap="xs">
+          <FactCard
+            accent="clay"
+            accessibilityLabel={t('today.history.fact-a11y-label', {
+              caption: t('timeline.actor-you'),
+              time: '7:15 am',
+              title: t('quick-log.trackers.feeding'),
+            })}
+            caption={t('timeline.actor-you')}
+            icon="bowl"
+            time="7:15 am"
+            title={t('quick-log.trackers.feeding')}
+          />
+          <FactCard
+            accent="mauve"
+            accessibilityLabel={t('today.history.fact-a11y-label', {
+              caption: t('timeline.actor-you'),
+              time: '9:30 am',
+              title: t('quick-log.trackers.sleep'),
+            })}
+            caption={t('timeline.actor-you')}
+            icon="moon"
+            time="9:30 am"
+            title={t('quick-log.trackers.sleep')}
+          />
+          <FactCard
+            accent="honey"
+            accessibilityLabel={t('today.history.fact-a11y-label', {
+              caption: t('timeline.actor-you'),
+              time: '11:00 am',
+              title: t('quick-log.trackers.zoomies'),
+            })}
+            caption={t('timeline.actor-you')}
+            icon="ball"
+            time="11:00 am"
+            title={t('quick-log.trackers.zoomies')}
+          />
+        </Stack>
+        <Stack gap="xs">
+          <AppText tone="secondary" variant="footnote">
+            {t('dev.gallery.diary.routine-note')}
+          </AppText>
+          <RoutineCard
+            accent="clay"
+            accessibilityLabel={t('quick-log.trackers.walk')}
+            checkboxLabel={t('quick-log.trackers.walk')}
+            icon="walk"
+            onOverflow={noop}
+            onToggleDone={noop}
+            overflowLabel={t('today.history.item-actions')}
+            state="upcoming"
+            testID="gallery-routine-upcoming"
+            time="2:00 pm"
+            title={t('quick-log.trackers.walk')}
+          />
+          <RoutineCard
+            accent="clay"
+            accessibilityLabel={t('quick-log.trackers.feeding')}
+            checkboxLabel={t('quick-log.trackers.feeding')}
+            icon="bowl"
+            onOverflow={noop}
+            onToggleDone={noop}
+            overflowLabel={t('today.history.item-actions')}
+            state="done"
+            testID="gallery-routine-done"
+            time="7:15 am"
+            title={t('quick-log.trackers.feeding')}
+          />
+          <RoutineCard
+            accent="clay"
+            accessibilityLabel={t('quick-log.trackers.potty')}
+            checkboxLabel={t('quick-log.trackers.potty')}
+            icon="pottyInside"
+            onOverflow={noop}
+            onToggleDone={noop}
+            overflowLabel={t('today.history.item-actions')}
+            state="past"
+            testID="gallery-routine-past"
+            time="6:00 am"
+            title={t('quick-log.trackers.potty')}
+          />
+        </Stack>
+        <DayDivider label={t('dev.gallery.today.day-one')} />
+        <Stack align="center" direction="horizontal" gap="sm">
+          <CheckCircle accessibilityLabel={t('quick-log.trackers.feeding')} checked={false} />
+          <CheckCircle accessibilityLabel={t('quick-log.trackers.feeding')} checked />
+          <IconChip accent="sage" icon="check" />
+          <IconChip accent="honey" icon="spark" />
+          <IconChip accent="mauve" icon="moon" />
+        </Stack>
+      </Stack>
+    </Card>
+  );
+}
+
+const diaryGalleryWeekDays: WeekStripDay[] = [
+  { accessibilityLabel: 'Monday, Jun 8', day: 8, dow: 'Mon', key: '2026-06-08' },
+  { accessibilityLabel: 'Tuesday, Jun 9', day: 9, dow: 'Tue', key: '2026-06-09' },
+  { accessibilityLabel: 'Wednesday, Jun 10', day: 10, dow: 'Wed', key: '2026-06-10' },
+  { accessibilityLabel: 'Thursday, Jun 11', day: 11, dow: 'Thu', key: '2026-06-11' },
+  { accessibilityLabel: 'Friday, Jun 12, today, selected', day: 12, dow: 'Fri', key: '2026-06-12' },
+  { accessibilityLabel: 'Saturday, Jun 13', day: 13, dow: 'Sat', key: '2026-06-13' },
+  { accessibilityLabel: 'Sunday, Jun 14', day: 14, dow: 'Sun', key: '2026-06-14' },
+];
 
 export function SyntheticOnboardingShell() {
   const { t } = useAppTranslation();

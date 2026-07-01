@@ -5,7 +5,9 @@ import { decorativeViewProps } from '@/design/a11y';
 import { tokens } from '@/design/tokens';
 
 export type AppIconName =
+  | 'ball'
   | 'bell'
+  | 'bellSlash'
   | 'book'
   | 'bowl'
   | 'calendar'
@@ -33,6 +35,7 @@ export type AppIconName =
   | 'trash'
   | 'trainingPaw'
   | 'vaccine'
+  | 'walk'
   | 'warningTriangle'
   | 'weight'
   | 'water';
@@ -49,7 +52,21 @@ export type AppIconProps = {
 // Glyph geometry ported from the v1 design icon library
 // (docs/design/v1/raw/icons.jsx): linear 24x24, stroke 1.75, rounded.
 const iconShapes: Record<AppIconName, React.JSX.Element> = {
+  // Play ball: circle with two curved seams.
+  ball: (
+    <>
+      <Circle cx={12} cy={12} r={8} />
+      <Path d="M5 9c4.5 2.5 9.5 2.5 14 0M5 15c4.5-2.5 9.5-2.5 14 0M12 4c-2.2 4.5-2.2 11.5 0 16" />
+    </>
+  ),
   bell: <Path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2zM10 20a2 2 0 0 0 4 0" />,
+  // Bell with a diagonal "muted" slash across it.
+  bellSlash: (
+    <>
+      <Path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2zM10 20a2 2 0 0 0 4 0" />
+      <Path d="M4 4l16 16" />
+    </>
+  ),
   book: (
     <Path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4V4zM20 4h-3a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h4V4z" />
   ),
@@ -182,6 +199,13 @@ const iconShapes: Record<AppIconName, React.JSX.Element> = {
     <>
       <Path d="M15 4l5 5M17.5 6.5L8 16" />
       <Path d="M6 14l4 4M5 19l3-3M12 8l4 4" />
+    </>
+  ),
+  // Walk: two offset footprint pads (a step trail).
+  walk: (
+    <>
+      <Path d="M8 4c-1.4 0-2.3 1.6-2.3 4.1S6.6 12 8 12s2-1.4 2-3.9S9.4 4 8 4z" />
+      <Path d="M16 10c-1.4 0-2.3 1.6-2.3 4.1S14.6 18 16 18s2-1.4 2-3.9S17.4 10 16 10z" />
     </>
   ),
   warningTriangle: (

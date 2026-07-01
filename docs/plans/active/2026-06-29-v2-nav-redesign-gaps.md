@@ -690,6 +690,17 @@ Design-fidelity note:
 - Stage 4 remains open: the Diary route still needs per-state native screenshots against the locked
   boards before the Diary route can be marked done.
 
+**UPDATE 2026-07-02 — Diary route re-locked and rebuilt to the Clay reference (parallel Claude
+session on this branch).** `docs/design/v2/specs/diary-v2.md` (+ recovered atlas under
+`docs/design/v2/reference/`) now supersedes the visual-anatomy lock above (`03-diary-route.md`)
+and `today-v2.md`. Implemented and Stage-4-verified on iPhone SE 3 + iPhone 16e (populated state):
+DiaryHeader greeting (no screen title), WeekStrip, mauve InfoHero, FactCard rows with the
+clay/sage/honey/mauve accent map, swipe-to-delete with a VoiceOver-parity accessibility action
+(the earlier always-visible destructive `Delete entry` button was removed as a deviation from the
+2026-06-30 delete-action slice above). Remaining Diary deltas are itemized as **Items 7–12** in
+`2026-06-30-v2-screen-polish-backlog.md` — do not re-implement Diary from this section's older
+board lock, and do not revert the Clay rebuild.
+
 ## 11. Quick Log route Stage-0 lock evidence
 
 **2026-06-30 next implementation slice:** `/quick-log` route duplicate-warning anatomy.

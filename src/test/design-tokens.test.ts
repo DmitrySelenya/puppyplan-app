@@ -30,8 +30,8 @@ function contrastRatio(foreground: string, background: string) {
 
 describe('generated design tokens', () => {
   it('exports corrected color, spacing, radius, motion, and haptic values', () => {
-    expect(tokens.color.surface.base).toBe('#FBFAF7');
-    expect(tokens.color.text.tertiary).toBe('#72756A');
+    expect(tokens.color.surface.base).toBe('#F6EFE3');
+    expect(tokens.color.text.tertiary).toBe('#766C5A');
     expect(tokens.space[4]).toBe(16);
     expect(tokens.space[10]).toBe(40);
     expect(tokens.layout.screenPaddingY).toBe(24);

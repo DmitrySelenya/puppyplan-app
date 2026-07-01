@@ -107,7 +107,7 @@ describe('Today core card rendering', () => {
     testQueryClients.length = 0;
   });
 
-  it('renders one hero and capped daily cards without the deferred Guidance card', async () => {
+  it('renders one Clay info-hero tip for the day\'s single priority signal', async () => {
     const { queryClient, toJSON } = renderWithQuery(
       <TodayScreen
         careContext={careContext}
@@ -131,16 +131,15 @@ describe('Today core card rendering', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('today-hero-card')).toBeTruthy();
+      expect(screen.getByTestId('diary-info-hero')).toBeTruthy();
     });
 
-    expect(screen.getAllByTestId('today-hero-card')).toHaveLength(1);
-    expect(screen.getAllByTestId('today-daily-card').length).toBeLessThanOrEqual(5);
+    expect(screen.getAllByTestId('diary-info-hero')).toHaveLength(1);
+    expect(screen.queryByTestId('today-daily-card')).toBeNull();
     expect(screen.queryByTestId('today-guidance-card')).toBeNull();
     expect(screen.queryByRole('button', {
       name: i18n.t('guidance.action-labels.read'),
     })).toBeNull();
-    expect(screen.getByText(i18n.t('today.hero.day-2-morning.title'))).toBeTruthy();
     expect(JSON.stringify(toJSON())).toContain(i18n.t('today.hero.day-2-morning.title'));
   });
 
@@ -189,7 +188,6 @@ describe('Today core card rendering', () => {
       expect(screen.getByText(i18n.t('today.hero.first-day.title'))).toBeTruthy();
     });
     expect(screen.queryByText(i18n.t('today.states.empty.title'))).toBeNull();
-    expect(screen.getByText(i18n.t('today.daily-cards.first-day-banner'))).toBeTruthy();
   });
 
   it('renders a Diary week strip with selected day and today marker separated', async () => {
@@ -204,20 +202,20 @@ describe('Today core card rendering', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('tabs.diary'))).toBeTruthy();
+      expect(screen.getByTestId('diary-header')).toBeTruthy();
     });
 
     expect(screen.getByLabelText(i18n.t('today.week-strip.label'))).toBeTruthy();
-    expect(screen.getAllByTestId('today-week-day')).toHaveLength(7);
+    expect(screen.getAllByRole('tab')).toHaveLength(7);
 
-    const selectedDay = screen.getByRole('button', {
+    const selectedDay = screen.getByRole('tab', {
       name: i18n.t('today.week-strip.day-label', {
         date: 'Jun 10',
         state: i18n.t('today.week-strip.state-selected'),
         weekday: 'Wednesday',
       }),
     });
-    const todayMarker = screen.getByRole('button', {
+    const todayMarker = screen.getByRole('tab', {
       name: i18n.t('today.week-strip.day-label', {
         date: 'Jun 12',
         state: i18n.t('today.week-strip.state-today'),
@@ -412,15 +410,16 @@ describe('Today core card rendering', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('today.hero.missed-reminder.title'))).toBeTruthy();
+      expect(screen.getByTestId('diary-info-hero')).toBeTruthy();
     });
 
-    expect(screen.getByText(i18n.t('today.deferred.reminders'))).toBeTruthy();
+    const tree = JSON.stringify(toJSON());
+    expect(tree).toContain(i18n.t('today.hero.missed-reminder.title'));
     expect(screen.queryByText(i18n.t('today.states.error.status'))).toBeNull();
-    expect(JSON.stringify(toJSON()).toLowerCase()).not.toContain('missed');
+    expect(tree.toLowerCase()).not.toContain('missed');
   });
 
-  it('renders accident recovery as a Diary helper without the legacy Today eyebrow', async () => {
+  it('renders accident recovery as a Diary info-hero tip without the legacy Today title', async () => {
     mockListEvents.mockResolvedValue([
       createRow({
         event_type: 'potty',
@@ -430,7 +429,7 @@ describe('Today core card rendering', () => {
       }),
     ]);
 
-    renderWithQuery(
+    const { toJSON } = renderWithQuery(
       <TodayScreen
         careContext={careContext}
         openTimeline={openTimeline}
@@ -441,43 +440,15 @@ describe('Today core card rendering', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('today.hero.accident-recovery.title'))).toBeTruthy();
+      expect(screen.getByTestId('diary-info-hero')).toBeTruthy();
     });
 
-    expect(screen.getByText(i18n.t('today.hero.accident-recovery.body'))).toBeTruthy();
-    expect(screen.getAllByText(i18n.t('today.hero.eyebrow')).length).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByText('Today')).toBeNull();
-  });
-
-  it('renders the after-feeding pattern as a single soft Diary contextual tip', async () => {
-    mockListEvents.mockResolvedValue([
-      createRow({
-        event_type: 'feeding',
-        occurred_at: '2026-06-12T09:30:00.000Z',
-        payload: {
-          amount: 'meal',
-        },
-      }),
-    ]);
-
-    renderWithQuery(
-      <TodayScreen
-        careContext={careContext}
-        openTimeline={openTimeline}
-        todayPlanInput={{
-          dayNumber: 4,
-          suggestedDailyCards: ['timeline_review', 'potty_rhythm'],
-        }}
-      />,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(i18n.t('today.daily-cards.feeding-pattern.title'))).toBeTruthy();
-    });
-
-    const tips = screen.getAllByTestId('diary-contextual-tip-card');
-    expect(tips).toHaveLength(1);
-    expect(screen.getAllByText(i18n.t('today.daily-cards.feeding-pattern.title'))).toHaveLength(1);
+    const tree = JSON.stringify(toJSON());
+    expect(tree).toContain(i18n.t('today.hero.accident-recovery.title'));
+    expect(tree).toContain(i18n.t('today.hero.accident-recovery.body'));
+    // "Today" now appears once, as the Clay section title above the fact list —
+    // not as the legacy large-title screen heading (that title is now a greeting).
+    expect(screen.getAllByText('Today')).toHaveLength(1);
   });
 
   it('keeps the V2 Diary anatomy in top-to-bottom order with one embedded history entry button', async () => {

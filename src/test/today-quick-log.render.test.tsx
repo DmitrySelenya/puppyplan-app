@@ -9,6 +9,7 @@ import { createPuppyPlanQueryClient } from '@/lib/query/client';
 import { queryKeys } from '@/lib/query/keys';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { TodayScreen } from '@/features/today/screens/TodayScreen';
+import { IconChip } from '@/design/primitives/IconChip';
 import { tokens } from '@/design/tokens';
 
 const mockListEvents = jest.fn();
@@ -254,7 +255,7 @@ describe('Today Quick Log state integration', () => {
     });
   });
 
-  it('renders synced Diary history facts with edit and delete actions but no visible status pill', async () => {
+  it('renders synced Diary history facts with an edit action, no standalone delete button, and no visible status pill', async () => {
     mockListEvents.mockResolvedValue([createRow()]);
     const actions = {
       onDelete: jest.fn(),
@@ -280,7 +281,7 @@ describe('Today Quick Log state integration', () => {
       expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
     });
     expect(
-      StyleSheet.flatten(screen.getByTestId('diary-history-logged-fact').props.style)
+      StyleSheet.flatten(screen.getByTestId('diary-history-logged-fact-card').props.style)
         .backgroundColor,
     ).toBe(tokens.color.surface.sunken);
     const itemActions = screen.getByRole('button', {
@@ -304,17 +305,9 @@ describe('Today Quick Log state integration', () => {
       todayDate,
       trackerId: 'feeding',
     });
-    fireEvent.press(screen.getByRole('button', {
+    expect(screen.queryByRole('button', {
       name: i18n.t('today.history.delete-action'),
-    }));
-    expect(actions.onDelete).toHaveBeenCalledWith({
-      clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
-      eventType: 'feeding',
-      householdId,
-      puppyId,
-      status: 'synced',
-      todayDate,
-    });
+    })).toBeNull();
     expect(screen.queryByText(i18n.t('timeline.pills.synced'))).toBeNull();
     expect(screen.queryByText('OK')).toBeNull();
     expect(JSON.stringify(toJSON())).not.toContain('"OK"');
@@ -324,6 +317,44 @@ describe('Today Quick Log state integration', () => {
     expect(screen.queryByRole('button', {
       name: i18n.t('quick-log.failed.primary'),
     })).toBeNull();
+  });
+
+  it('deletes a synced Diary history fact via the accessibility action (VoiceOver/TalkBack parity)', async () => {
+    mockListEvents.mockResolvedValue([createRow()]);
+    const actions = {
+      onDelete: jest.fn(),
+    };
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={actions}
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [
+        createRow(),
+      ]);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
+
+    const factCard = screen.getByTestId('diary-history-logged-fact-card');
+    fireEvent(factCard, 'accessibilityAction', {
+      nativeEvent: { actionName: 'delete' },
+    });
+
+    expect(actions.onDelete).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
+      eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'synced',
+      todayDate,
+    });
   });
 
   it('omits pending and failed action buttons when handlers are not wired', async () => {
@@ -378,6 +409,46 @@ describe('Today Quick Log state integration', () => {
       name: i18n.t('quick-log.failed.tertiary'),
     })).toBeNull();
   });
+
+  const factCardAccentCases: readonly {
+    accent: 'clay' | 'honey' | 'mauve';
+    eventType: 'feeding' | 'potty' | 'sleep' | 'walk' | 'zoomies';
+    icon: string;
+    payload: Record<string, string>;
+  }[] = [
+    { accent: 'clay', eventType: 'feeding', icon: 'bowl', payload: { amount: 'meal' } },
+    { accent: 'clay', eventType: 'walk', icon: 'walk', payload: {} },
+    { accent: 'mauve', eventType: 'sleep', icon: 'moon', payload: { sleep_kind: 'nap' } },
+    { accent: 'honey', eventType: 'zoomies', icon: 'ball', payload: {} },
+    { accent: 'honey', eventType: 'potty', icon: 'water', payload: { subtype: 'outside' } },
+    { accent: 'honey', eventType: 'potty', icon: 'pottyInside', payload: { subtype: 'inside' } },
+  ];
+
+  it.each(factCardAccentCases)(
+    'wires the Clay accent map for a $eventType fact card ($icon/$accent)',
+    async ({ accent, eventType, icon, payload }) => {
+      mockListEvents.mockResolvedValue([
+        createRow({
+          event_type: eventType,
+          payload,
+        }),
+      ]);
+      renderWithQuery(
+        <TodayScreen
+          careContext={careContext}
+          openTimeline={openTimeline}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('diary-history-logged-fact')).toBeTruthy();
+      });
+
+      const chip = screen.UNSAFE_getByType(IconChip);
+      expect(chip.props.accent).toBe(accent);
+      expect(chip.props.icon).toBe(icon);
+    },
+  );
 
   it('fetches same-day durable rows when Today opens with an empty cache', async () => {
     mockListEvents.mockResolvedValue([createRow()]);

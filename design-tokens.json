@@ -1,85 +1,93 @@
 {
   "$schema": "https://design-tokens.github.io/community-group/format/",
-  "$description": "PuppyPlan design tokens — v1 (first draft, light mode + phone only). Source of truth: DESIGN.md §1.2–1.8. Any drift between this file and DESIGN.md should be resolved in favor of DESIGN.md §1.",
+  "$description": "PuppyPlan design tokens — light mode + phone only. For the V2 warm 'Clay' palette (colour, surface, text, accent, status, stroke, pill, elevation) THIS FILE is canonical, mirroring the Miro design-freeze (docs/design/v2/reference/tokens.reference.css + README). Inline colour hexes in DESIGN.md §1.2/§1.5 predate the Clay adoption and are superseded — see the override banner at DESIGN.md §1.2. Non-colour structure (typography scale, spacing, layout, motion, haptics, component contracts) still follows DESIGN.md §1.",
   "$metadata": {
     "version": "1.1.0-v2",
     "scope": "light-mode, phone-only",
     "source": "DESIGN.md",
     "lastUpdated": "2026-07-01",
-    "v2Sync": "primary→Terracotta Clay (§2.3), text/link (§2.2), focus-ring (§2.6), tabs→diary/pet/more, completed pill→warm neutral (§2.7). Surfaces/elevation kept per DESIGN.md §2.1 (repo values are higher-contrast than the Open Design cream mockups)."
+    "v2Sync": "Full Clay adoption from the Miro design-freeze (docs/design/v2/reference/tokens.reference.css + README). Surfaces→cream (base #F6EFE3 / raised #FFFCF6 / sunken #ECE3D4), text→warm espresso/taupe, primary→Clay ramp, accent→Honey (was Ember Coral), status/stroke/pill→Clay, elevation shadows→warm brown. This REVERSES the earlier §2.1 hold that kept higher-contrast surfaces; the warm cream is now canonical per user direction. `completed` pill kept as a distinct warm neutral (commit 610bf48). Sage ramp from Clay not yet added (success/success-tint carry the sage semantic); add if a screen needs the full ramp."
   },
 
   "color": {
     "$description": "Color tokens. Light mode only in v1. Dark fallback values exist in DESIGN.md §1.2.1 as v2 reference but are not rendered in v1.",
 
     "surface": {
-      "base":    { "$value": "#FBFAF7", "$type": "color", "$description": "Warm Off-white. Основной фон экрана. DESIGN.md §1.2.1" },
-      "raised":  { "$value": "#FFFFFF", "$type": "color", "$description": "Cards, list rows. DESIGN.md §1.2.1" },
-      "sunken":  { "$value": "#F1ECE3", "$type": "color", "$description": "Группированные секции, search bar. DESIGN.md §1.2.1" },
-      "overlay": { "$value": "rgba(255,255,255,0.96)", "$type": "color", "$description": "Sheets, popovers. DESIGN.md §1.2.1" },
-      "scrim":   { "$value": "rgba(26,26,24,0.32)", "$type": "color", "$description": "Modal backdrop. DESIGN.md §1.2.1" }
+      "base":    { "$value": "#F6EFE3", "$type": "color", "$description": "Clay cream. Основной фон экрана. Clay freeze (docs/design/v2/reference/tokens.reference.css); supersedes higher-contrast #FBFAF7 per V2 warm adoption." },
+      "raised":  { "$value": "#FFFCF6", "$type": "color", "$description": "Cards, list rows — warm white, not pure #FFFFFF. Clay freeze." },
+      "sunken":  { "$value": "#ECE3D4", "$type": "color", "$description": "Группированные секции, search bar. Clay freeze." },
+      "overlay": { "$value": "rgba(255,252,246,0.96)", "$type": "color", "$description": "Sheets, popovers — warm-white overlay. Clay freeze." },
+      "scrim":   { "$value": "rgba(40,30,22,0.34)", "$type": "color", "$description": "Modal backdrop — warm brown scrim. Clay freeze." }
     },
 
     "text": {
-      "primary":     { "$value": "#1C1F1B", "$type": "color", "$description": "Charcoal. Contrast 14.8:1 vs surface/base. DESIGN.md §1.2.2" },
-      "secondary":   { "$value": "#4A4E48", "$type": "color", "$description": "Contrast 8.6:1. DESIGN.md §1.2.2" },
-      "tertiary":    { "$value": "#72756A", "$type": "color", "$description": "Contrast 4.50:1 vs surface/base and 4.70:1 vs surface/raised. DESIGN.md §1.2.2" },
-      "disabled":    { "$value": "#A6A89F", "$type": "color", "$description": "Decorative only — 2.6:1 (fails WCAG AA for body text). DESIGN.md §1.2.2" },
-      "on-primary":  { "$value": "#FFFFFF", "$type": "color", "$description": "White на primary/600. 5.1:1. DESIGN.md §1.2.2" },
-      "on-accent":   { "$value": "#1C1F1B", "$type": "color", "$description": "Charcoal на accent/300. 9.2:1. DESIGN.md §1.2.2" },
-      "link":        { "$value": "#9B4F2D", "$type": "color", "$description": "Terracotta link. 5.1:1 vs surface/base. DESIGN.md §2.2" }
+      "primary":     { "$value": "#2C2824", "$type": "color", "$description": "Warm espresso. ~11.5:1 vs surface/base. Clay freeze (softer than pure charcoal #1C1F1B)." },
+      "secondary":   { "$value": "#6B6256", "$type": "color", "$description": "Warm taupe. ~5.4:1 vs surface/base. Clay freeze." },
+      "tertiary":    { "$value": "#766C5A", "$type": "color", "$description": "Muted warm taupe — captions/meta. Darkened from Clay #8A7E6C to meet WCAG AA (4.5:1) on surface base+raised; #8A7E6C measured only 3.48:1." },
+      "disabled":    { "$value": "#A99E8C", "$type": "color", "$description": "Decorative only — fails WCAG AA for body text. Clay freeze." },
+      "on-primary":  { "$value": "#FFF7EF", "$type": "color", "$description": "Warm white on primary/600. Clay freeze." },
+      "on-accent":   { "$value": "#2C2824", "$type": "color", "$description": "Espresso on accent/honey. Clay freeze." },
+      "link":        { "$value": "#B26A3C", "$type": "color", "$description": "Clay link = primary/600. Clay freeze." }
     },
 
     "primary": {
-      "$description": "Terracotta Clay ramp. Brand, focus, primary actions. DESIGN.md §2.3 (2026-06-29 V2 override — supersedes the retired Calm Teal scale).",
+      "$description": "Clay ramp. Brand, focus, primary actions. Clay freeze (docs/design/v2/reference/tokens.reference.css) — softer, warmer than the interim terracotta scale.",
       "50":  { "$value": "#FBF2EA", "$type": "color", "$description": "Tinted backgrounds, selected rows" },
-      "100": { "$value": "#F6E2D4", "$type": "color", "$description": "Hover/pressed tint" },
-      "200": { "$value": "#EDC1A8", "$type": "color", "$description": "Disabled fill / illustrative wash" },
-      "300": { "$value": "#E09A72", "$type": "color", "$description": "Warm illustration, not default CTA" },
-      "400": { "$value": "#D57B52", "$type": "color", "$description": "Freeze-canvas accent close to #c96442" },
-      "500": { "$value": "#C96442", "$type": "color", "$description": "Terracotta — default brand, selected nav/day, focus ring when not on warm fill" },
-      "600": { "$value": "#A94F2F", "$type": "color", "$description": "Primary button fill; white text contrast ≈ 4.8:1" },
-      "700": { "$value": "#8E4128", "$type": "color", "$description": "Pressed state / text on primary/50" },
-      "800": { "$value": "#733421", "$type": "color", "$description": "Headings on tinted bg" },
+      "100": { "$value": "#F4DCC6", "$type": "color", "$description": "Hover/pressed tint" },
+      "200": { "$value": "#ECC09C", "$type": "color", "$description": "Disabled fill / illustrative wash" },
+      "300": { "$value": "#E0A271", "$type": "color", "$description": "Warm illustration, not default CTA" },
+      "400": { "$value": "#D08851", "$type": "color", "$description": "Warm mid-clay" },
+      "500": { "$value": "#C77F4F", "$type": "color", "$description": "Clay — default brand, selected nav/day, focus ring" },
+      "600": { "$value": "#B26A3C", "$type": "color", "$description": "Primary button fill; warm-white text" },
+      "700": { "$value": "#8C5028", "$type": "color", "$description": "Pressed state / text on primary/50" },
+      "800": { "$value": "#5E3318", "$type": "color", "$description": "Headings on tinted bg" },
       "900": { "$value": "#4C2117", "$type": "color", "$description": "Future dark-mode warm accent text" }
     },
 
     "accent": {
-      "$description": "Ember Coral — CELEBRATION ONLY. Never default CTA, never urgent. DESIGN.md §1.2.4",
-      "100": { "$value": "#FBEBE0", "$type": "color", "$description": "Celebration card tint" },
-      "300": { "$value": "#F4B89A", "$type": "color", "$description": "Confetti, badge fill" },
-      "500": { "$value": "#E07A4F", "$type": "color", "$description": "Ember Coral — celebration icon" },
-      "700": { "$value": "#A14B26", "$type": "color", "$description": "Text on accent/100. 6.9:1" }
+      "$description": "Honey — warm highlight for logged facts and CELEBRATION. Never default CTA, never urgent. Clay freeze (docs/design/v2/reference/tokens.reference.css) — supersedes the interim Ember Coral.",
+      "100": { "$value": "#FBEFD9", "$type": "color", "$description": "Honey tint — fact/celebration card fill" },
+      "300": { "$value": "#F2D196", "$type": "color", "$description": "Confetti, badge fill" },
+      "500": { "$value": "#E3A53C", "$type": "color", "$description": "Honey — fact/celebration icon" },
+      "700": { "$value": "#B07A1E", "$type": "color", "$description": "Text on accent/100" }
+    },
+
+    "sage": {
+      "$description": "Sage green ramp — calm success/done affordances (Diary done-state cards, checkmarks, sage icon chips). Clay freeze (docs/design/v2/reference/tokens.reference.css).",
+      "100": { "$value": "#E8EEDD", "$type": "color", "$description": "Done-card fill, sage icon-chip background" },
+      "300": { "$value": "#BCD0A0", "$type": "color", "$description": "Illustrative wash" },
+      "500": { "$value": "#84A06A", "$type": "color", "$description": "Checkmark fill (done)" },
+      "700": { "$value": "#5E7A3E", "$type": "color", "$description": "Sage icon/text on sage/100" }
     },
 
     "status": {
       "$description": "Muted status colors. Danger is user-marked only. DESIGN.md §1.2.5",
-      "success":      { "$value": "#3F7A57", "$type": "color", "$description": "Sage. 5.0:1" },
-      "success-tint": { "$value": "#E6EFE8", "$type": "color", "$description": "Fill only" },
-      "warning":      { "$value": "#A06A1F", "$type": "color", "$description": "Amber Bark. 5.2:1" },
-      "warning-tint": { "$value": "#F6ECD8", "$type": "color", "$description": "Fill only" },
-      "danger":       { "$value": "#9A3B2E", "$type": "color", "$description": "Clay Red — USER-MARKED URGENT ONLY. 6.0:1. NEVER bright red." },
-      "danger-tint":  { "$value": "#F4DDD8", "$type": "color", "$description": "Fill only" },
+      "success":      { "$value": "#5C7A45", "$type": "color", "$description": "Sage green. Clay freeze." },
+      "success-tint": { "$value": "#E7EEDB", "$type": "color", "$description": "Fill only. Clay freeze." },
+      "warning":      { "$value": "#A87A2A", "$type": "color", "$description": "Amber. Clay freeze." },
+      "warning-tint": { "$value": "#F7EAD2", "$type": "color", "$description": "Fill only. Clay freeze." },
+      "danger":       { "$value": "#A24A3C", "$type": "color", "$description": "Clay Red — USER-MARKED URGENT ONLY. NEVER bright red. Clay freeze." },
+      "danger-tint":  { "$value": "#F4E4E0", "$type": "color", "$description": "Fill only. Clay freeze." },
       "info":         { "$value": "#6E5862", "$type": "color", "$description": "Warm mauve. 5.3:1 on info tint" },
       "info-tint":    { "$value": "#ECE4E6", "$type": "color", "$description": "Fill only" }
     },
 
     "stroke": {
-      "default":           { "$value": "#E2DDD2", "$type": "color", "$description": "Card hairline, dividers. DESIGN.md §1.2.6" },
-      "strong":            { "$value": "#C9C3B5", "$type": "color", "$description": "DESIGN.md §1.2.6" },
-      "divider-hairline":  { "$value": "rgba(226,221,210,0.6)", "$type": "color", "$description": "stroke/default @ 60%. DESIGN.md §1.2.6" },
-      "focus-ring":        { "$value": "#A94F2F", "$type": "color", "$description": "Terracotta. 2pt outline + 2pt offset. DESIGN.md §2.6" }
+      "default":           { "$value": "#E4D9C8", "$type": "color", "$description": "Card hairline, dividers — warm sand. Clay freeze." },
+      "strong":            { "$value": "#C9BBA6", "$type": "color", "$description": "Warm sand, stronger. Clay freeze." },
+      "divider-hairline":  { "$value": "rgba(228,217,200,0.6)", "$type": "color", "$description": "stroke/default @ 60%. Clay freeze." },
+      "focus-ring":        { "$value": "#C77F4F", "$type": "color", "$description": "Clay = primary/500. 2pt outline + 2pt offset. Clay freeze." }
     },
 
     "pill": {
       "$description": "Health-status pill colors. Pill = fill + text + icon (shape duplicates meaning, never color alone). DESIGN.md §1.2.7",
-      "template":          { "fill": { "$value": "#F1ECE3", "$type": "color" }, "text": { "$value": "#4A4E48", "$type": "color" } },
-      "needs-vet-review":  { "fill": { "$value": "#F6ECD8", "$type": "color" }, "text": { "$value": "#7A4F12", "$type": "color", "$description": "5.3:1" } },
-      "confirmed":         { "fill": { "$value": "#E6EFE8", "$type": "color" }, "text": { "$value": "#2F5E41", "$type": "color", "$description": "6.2:1" } },
-      "completed":         { "fill": { "$value": "#E8E2D7", "$type": "color" }, "text": { "$value": "#4A4E48", "$type": "color", "$description": "6.58:1" } },
-      "pending":           { "fill": { "$value": "#F1ECE3", "$type": "color" }, "text": { "$value": "#4A4E48", "$type": "color" } },
-      "failed":            { "fill": { "$value": "#F4DDD8", "$type": "color" }, "text": { "$value": "#7A2A20", "$type": "color", "$description": "6.5:1" } },
-      "urgent":            { "fill": { "$value": "#F4DDD8", "$type": "color" }, "text": { "$value": "#7A2A20", "$type": "color", "$description": "User-marked only" } }
+      "template":          { "fill": { "$value": "#EFE6D7", "$type": "color" }, "text": { "$value": "#6B6256", "$type": "color" } },
+      "needs-vet-review":  { "fill": { "$value": "#F7EAD2", "$type": "color" }, "text": { "$value": "#7E5A18", "$type": "color", "$description": "Clay freeze" } },
+      "confirmed":         { "fill": { "$value": "#E7EEDB", "$type": "color" }, "text": { "$value": "#44602E", "$type": "color", "$description": "Clay freeze" } },
+      "completed":         { "fill": { "$value": "#E8E2D7", "$type": "color" }, "text": { "$value": "#6B6256", "$type": "color", "$description": "Neutralized warm pill (commit 610bf48), text follows Clay secondary" } },
+      "pending":           { "fill": { "$value": "#EFE6D7", "$type": "color" }, "text": { "$value": "#6B6256", "$type": "color" } },
+      "failed":            { "fill": { "$value": "#F3E2DE", "$type": "color" }, "text": { "$value": "#7E3328", "$type": "color", "$description": "Clay freeze" } },
+      "urgent":            { "fill": { "$value": "#F7EAD2", "$type": "color" }, "text": { "$value": "#7E5A18", "$type": "color", "$description": "User-marked only. Clay freeze." } }
     }
   },
 
@@ -159,11 +167,11 @@
   },
 
   "elevation": {
-    "$description": "4 levels, neutral grey only. No colored shadows, no inner-shadow, no glow. DESIGN.md §1.5",
-    "0": { "$value": { "shadow": "none", "border": "1px solid #E2DDD2", "androidElevation": 0 }, "$type": "shadow", "$description": "Resting cards/rows — hairline only" },
-    "1": { "$value": { "x": 0, "y": 2, "blur": 8,  "color": "#1C1F1B", "opacity": 0.06, "androidElevation": 2 }, "$type": "shadow", "$description": "Interactive card hover/press" },
-    "2": { "$value": { "x": 0, "y": -4, "blur": 16, "color": "#1C1F1B", "opacity": 0.10, "androidElevation": 6 }, "$type": "shadow", "$description": "Bottom sheet (от низа)" },
-    "3": { "$value": { "x": 0, "y": 8, "blur": 24, "color": "#1C1F1B", "opacity": 0.14, "androidElevation": 12 }, "$type": "shadow", "$description": "Full-screen modal over scrim" }
+    "$description": "4 levels, warm-brown shadows (Clay freeze). No inner-shadow, no glow. Colour warmed from charcoal to #46321E per V2 warm adoption; geometry unchanged.",
+    "0": { "$value": { "shadow": "none", "border": "1px solid #E4D9C8", "androidElevation": 0 }, "$type": "shadow", "$description": "Resting cards/rows — warm hairline only" },
+    "1": { "$value": { "x": 0, "y": 2, "blur": 8,  "color": "#46321E", "opacity": 0.07, "androidElevation": 2 }, "$type": "shadow", "$description": "Interactive card hover/press — warm brown shadow" },
+    "2": { "$value": { "x": 0, "y": -4, "blur": 16, "color": "#46321E", "opacity": 0.10, "androidElevation": 6 }, "$type": "shadow", "$description": "Bottom sheet (от низа) — warm brown shadow" },
+    "3": { "$value": { "x": 0, "y": 8, "blur": 24, "color": "#46321E", "opacity": 0.14, "androidElevation": 12 }, "$type": "shadow", "$description": "Full-screen modal over scrim — warm brown shadow" }
   },
 
   "motion": {

@@ -103,6 +103,19 @@ describe('CapsuleTabBar', () => {
     expect(add.props.accessibilityRole).not.toBe('tab');
   });
 
+  it('marks the active tab with a structural tint pill, not color-only', () => {
+    renderBar(1);
+
+    const [diary, pet, more] = screen
+      .getAllByRole('tab')
+      .map((tab) => StyleSheet.flatten(tab.props.style));
+
+    expect(pet.backgroundColor).toBe(tokens.color.primary[50]);
+    expect(pet.borderRadius).toBe(tokens.radius.full);
+    expect(diary.backgroundColor).toBeUndefined();
+    expect(more.backgroundColor).toBeUndefined();
+  });
+
   it('renders a detached capsule, not a full-width bar', () => {
     renderBar();
 
@@ -187,6 +200,18 @@ describe('CapsuleTabBar', () => {
 
     expect(screen.queryByTestId('nav-chooser')).toBeNull();
     expect(screen.getByTestId('nav-capsule')).toBeTruthy();
+  });
+
+  it('renders each slab with a subtitle and a chevron, not title-only', () => {
+    renderBar();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+
+    expect(screen.getByText(i18n.t('nav.quick-log-slab-subtitle'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('nav.schedule-slab-subtitle'))).toBeTruthy();
+    expect(
+      screen.getAllByTestId('nav-slab-chevron', { includeHiddenElements: true }),
+    ).toHaveLength(2);
   });
 
   it('routes Quick Log and Schedule slabs to their destinations', () => {

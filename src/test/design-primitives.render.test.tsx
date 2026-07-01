@@ -1156,7 +1156,7 @@ describe('design primitives', () => {
     expect(baseStyle.width).toBeGreaterThanOrEqual(56);
     expect(baseStyle.height).toBe(tokens.component.fab.size);
     expect(baseStyle.elevation).toBe(tokens.elevation[2].androidElevation);
-    expect(baseStyle.shadowColor).toBe(tokens.color.text.primary);
+    expect(baseStyle.shadowColor).toBe(tokens.elevation[2].color);
     expect(baseStyle.shadowOffset).toEqual({
       height: tokens.elevation[2].y,
       width: tokens.elevation[2].x,

@@ -200,6 +200,9 @@ loading → empty → error → offline-read → pending-write → permission-de
 
 ### 2. Color Tokens
 
+> **⚠️ V2 Clay override (2026-07-01) — canonical colour lives in `design-tokens.json`.**
+> The V2 warm "Clay" palette adopted from the Miro design-freeze (`docs/design/v2/reference/tokens.reference.css` + `README.md`) is now the source of truth for **all colour** — surface, text, primary, accent, status, stroke, pill, and elevation shadow colour. The Light HEX values in the tables below (`#FBFAF7`, `#FFFFFF`, `#1C1F1B`, `#C96442`, Ember Coral `#E07A4F`, …) and the inline hexes in the screen specs **predate this adoption and are superseded** — read colour from `design-tokens.json` / `src/design/tokens.ts`, not from these tables. Headline changes: surfaces → cream (`#F6EFE3` / raised `#FFFCF6` / sunken `#ECE3D4`); text → warm espresso `#2C2824` / taupe `#6B6256`; primary → Clay (`#C77F4F` brand, `#B26A3C` fill); **accent → Honey `#E3A53C`** (replaces Ember Coral); elevation shadows → warm brown `#46321E`. This reverses the interim §2.1 hold that kept higher-contrast surfaces. Non-colour tokens (typography, spacing, layout, motion, haptics) below remain authoritative.
+
 Все токены проверены на контраст относительно `surface/base` (light) и `surface/base` (dark fallback). Цифра рядом — измеренный contrast ratio.
 
 #### 2.1 Surface scale

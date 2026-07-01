@@ -57,6 +57,7 @@
         "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
         "guidance": "Estados de guía inicial: leído, probado y omitido.",
         "today-deferrals": "Espacios sintéticos de invitación familiar y recordatorios para revisión.",
+        "diary-clay": "Primitivos Clay de Diary: week strip, info hero, lista de hechos y una vista previa de fila de rutina diferida.",
         "global": "Estados de carga, vacío, error, offline, pendiente y permisos."
       },
       "today": {
@@ -67,6 +68,9 @@
         "missed-reminder": "Diary · espacio de rutina pendiente",
         "state-fixtures": "Hoy · carga, offline y pendiente",
         "synthetic-note": "Estos estados no escriben recordatorios, invitaciones ni actividad del hogar."
+      },
+      "diary": {
+        "routine-note": "Las filas de rutina solo muestran la anatomía Clay: aún no hay un modelo de horario conectado."
       }
     }
   },
@@ -228,7 +232,9 @@
   },
   "nav": {
     "quick-log-slab": "Registro rápido",
+    "quick-log-slab-subtitle": "Registra lo que ya pasó",
     "schedule-slab": "Programar",
+    "schedule-slab-subtitle": "Una rutina o un recordatorio único",
     "schedule-fab-hint": "Abre opciones de programación"
   },
   "onboarding": {
@@ -337,6 +343,14 @@
     "weekly-lead": "Más de 7 días:",
     "weekly-insight-prefix": "Más claro ahora:",
     "weekly-cta": "Ver detalles",
+    "header": {
+      "greeting-morning": "Buenos días, {name}",
+      "greeting-midday": "Buenas tardes, {name}",
+      "greeting-evening": "Buenas noches, {name}",
+      "greeting-morning-no-name": "Buenos días",
+      "greeting-midday-no-name": "Buenas tardes",
+      "greeting-evening-no-name": "Buenas noches"
+    },
     "week-strip": {
       "label": "Semana del diario",
       "day-label": "{weekday}, {date}. {state}",
@@ -470,10 +484,11 @@
       }
     },
     "history": {
-      "section-title": "Historial del diario",
+      "section-title": "Hoy",
       "open-action": "Revisar historial",
       "delete-action": "Eliminar registro",
-      "item-actions": "Acciones del registro del diario"
+      "item-actions": "Acciones del registro del diario",
+      "fact-a11y-label": "{title}, {time}, {caption}"
     },
     "daily-cards": {
       "first-day-banner": "El primer día se trata de observar, no de resultados.",

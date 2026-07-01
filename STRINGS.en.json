@@ -58,6 +58,7 @@
         "today-core": "Today hero, daily cards, guidance, and data states.",
         "guidance": "Starter guidance read, tried, and skipped states.",
         "today-deferrals": "Synthetic-only family invite and reminder slots for review.",
+        "diary-clay": "Clay Diary primitives: week strip, info hero, fact list, and a deferred routine-row preview.",
         "global": "Loading, empty, error, offline, pending, and permission states."
       },
       "today": {
@@ -68,6 +69,9 @@
         "missed-reminder": "Diary · past routine slot",
         "state-fixtures": "Today · loading, offline, and pending",
         "synthetic-note": "These states do not write reminders, invites, or household activity."
+      },
+      "diary": {
+        "routine-note": "Routine rows preview the Clay anatomy only — no schedule data model is wired up yet."
       }
     }
   },
@@ -234,7 +238,9 @@
 
   "nav": {
     "quick-log-slab": "Quick Log",
+    "quick-log-slab-subtitle": "Log what already happened",
     "schedule-slab": "Schedule",
+    "schedule-slab-subtitle": "A routine or one-time reminder",
     "schedule-fab-hint": "Opens scheduling options"
   },
 
@@ -345,6 +351,14 @@
     "weekly-lead": "Over 7 days:",
     "weekly-insight-prefix": "Clearer now: ",
     "weekly-cta": "See details",
+    "header": {
+      "greeting-morning": "Good morning, {name}",
+      "greeting-midday": "Good afternoon, {name}",
+      "greeting-evening": "Good evening, {name}",
+      "greeting-morning-no-name": "Good morning",
+      "greeting-midday-no-name": "Good afternoon",
+      "greeting-evening-no-name": "Good evening"
+    },
     "week-strip": {
       "label": "Diary week",
       "day-label": "{weekday}, {date}. {state}",
@@ -468,10 +482,11 @@
       }
     },
     "history": {
-      "section-title": "Diary history",
+      "section-title": "Today",
       "open-action": "Review history",
       "delete-action": "Delete entry",
-      "item-actions": "Diary item actions"
+      "item-actions": "Diary item actions",
+      "fact-a11y-label": "{title}, {time}, {caption}"
     },
     "daily-cards": {
       "first-day-banner": "The first day is about observing, not results.",

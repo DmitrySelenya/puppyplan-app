@@ -136,7 +136,7 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
                       navigation.navigate(tab.routeName);
                     }
                   }}
-                  style={styles.tab}>
+                  style={selected ? [styles.tab, styles.activeTab] : styles.tab}>
                   <AppIcon
                     color={color}
                     filled={selected}
@@ -245,24 +245,69 @@ function Chooser({
           style={styles.dragHandle}
           testID="nav-drag-handle"
         />
-        <Touchable
-          accessibilityLabel={t('nav.quick-log-slab')}
-          accessibilityRole="button"
-          minTarget="thumb"
+        <Slab
+          accessibilityHint={t('nav.quick-log-slab-subtitle')}
+          icon="spark"
+          iconColor={tokens.color.accent[700]}
+          iconTint={tokens.color.accent[100]}
           onPress={onQuickLog}
-          style={styles.slab}>
-          <AppText variant="headline">{t('nav.quick-log-slab')}</AppText>
-        </Touchable>
-        <Touchable
-          accessibilityLabel={t('nav.schedule-slab')}
-          accessibilityRole="button"
-          minTarget="thumb"
+          subtitle={t('nav.quick-log-slab-subtitle')}
+          title={t('nav.quick-log-slab')}
+        />
+        <Slab
+          accessibilityHint={t('nav.schedule-slab-subtitle')}
+          icon="calendar"
+          iconColor={tokens.color.status.info}
+          iconTint={tokens.color.status.infoTint}
           onPress={onSchedule}
-          style={styles.slab}>
-          <AppText variant="headline">{t('nav.schedule-slab')}</AppText>
-        </Touchable>
+          subtitle={t('nav.schedule-slab-subtitle')}
+          title={t('nav.schedule-slab')}
+        />
       </Animated.View>
     </View>
+  );
+}
+
+function Slab({
+  accessibilityHint,
+  icon,
+  iconColor,
+  iconTint,
+  onPress,
+  subtitle,
+  title,
+}: {
+  accessibilityHint: string;
+  icon: AppIconName;
+  iconColor: string;
+  iconTint: string;
+  onPress: () => void;
+  subtitle: string;
+  title: string;
+}) {
+  return (
+    <Touchable
+      accessibilityHint={accessibilityHint}
+      accessibilityLabel={title}
+      accessibilityRole="button"
+      minTarget="thumb"
+      onPress={onPress}
+      style={styles.slab}>
+      <View style={[styles.slabIcon, { backgroundColor: iconTint }]}>
+        <AppIcon color={iconColor} name={icon} size={tokens.component.tabBar.icon} />
+      </View>
+      <View style={styles.slabCopy}>
+        <AppText variant="headline">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">
+          {subtitle}
+        </AppText>
+      </View>
+      <AppIcon
+        color={tokens.color.text.tertiary}
+        name="chevronRight"
+        testID="nav-slab-chevron"
+      />
+    </Touchable>
   );
 }
 
@@ -288,6 +333,9 @@ function easingFromCubicBezierToken(value: string) {
 const styles = StyleSheet.create({
   activeLabel: {
     color: tokens.color.primary[700],
+  },
+  activeTab: {
+    backgroundColor: tokens.color.primary[50],
   },
   add: {
     alignItems: 'center',
@@ -362,10 +410,26 @@ const styles = StyleSheet.create({
   },
   slab: {
     alignItems: 'center',
-    backgroundColor: tokens.color.surface.base,
+    backgroundColor: tokens.color.surface.raised,
     borderRadius: tokens.radius.lg,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: tokens.space[3],
     minHeight: tokens.layout.tapTargetThumbZone + tokens.space[2],
+    paddingHorizontal: tokens.layout.cardPadding,
+    paddingVertical: tokens.space[3],
+    ...elevationStyle(1),
+  },
+  slabCopy: {
+    flex: 1,
+    gap: tokens.space[1],
+    minWidth: 0,
+  },
+  slabIcon: {
+    alignItems: 'center',
+    borderRadius: tokens.radius.md,
+    height: tokens.layout.tapTargetThumbZone,
+    justifyContent: 'center',
+    width: tokens.layout.tapTargetThumbZone,
   },
   tab: {
     alignItems: 'center',
