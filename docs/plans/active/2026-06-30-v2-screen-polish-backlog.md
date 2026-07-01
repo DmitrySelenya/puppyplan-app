@@ -236,6 +236,17 @@ survive (the caption text itself satisfies this).
 matches atlas `7-diary-states`; a11y status announcement still present; render tests updated to
 the new contract (legitimate spec change — cite this item); `npm run check` green.
 
+**Item 9 evidence (2026-07-02):** RED
+`npm run test:unit -- --runTestsByPath src/test/today-quick-log.render.test.tsx` failed because
+pending/failed rows still rendered an external `StatusPill` with exact accessibility labels
+`Pending` / `Failed`. GREEN moved the pending/failed `event.statusLabel` into the `FactCard`
+caption and removed the external pill branch while keeping retry/delete/undo rows and the
+persistent failed banner. Focused render tests passed. JS-over-Metro screenshot captured locally
+with the live Diary header redacted:
+`output/v2-screen-polish-screenshots/item9-after-redacted.png`. The live debug account currently
+shows a synced row, so the pending/failed visual state is covered by render-test anatomy rather
+than a live simulator row.
+
 ## P1 — Item 10: Diary empty states don't match atlas 6 / 6b / 6c
 
 **What's wrong:** `cold-start`, `empty-history`, and `all-done` render as the generic

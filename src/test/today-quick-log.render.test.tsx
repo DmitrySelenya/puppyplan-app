@@ -160,6 +160,7 @@ describe('Today Quick Log state integration', () => {
       expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
     });
     expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
+    expect(screen.queryByLabelText(i18n.t('timeline.pills.pending'))).toBeNull();
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.snackbar.undo'),
@@ -214,6 +215,7 @@ describe('Today Quick Log state integration', () => {
     await waitFor(() => {
       expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
     });
+    expect(screen.queryByLabelText(i18n.t('timeline.pills.failed'))).toBeNull();
     expect(screen.queryByText(i18n.t('quick-log.failed.persistent-banner'))).toBeNull();
 
     act(() => {
@@ -380,6 +382,7 @@ describe('Today Quick Log state integration', () => {
     await waitFor(() => {
       expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
     });
+    expect(screen.queryByLabelText(i18n.t('timeline.pills.pending'))).toBeNull();
     expect(screen.queryByRole('button', {
       name: i18n.t('quick-log.snackbar.undo'),
     })).toBeNull();
@@ -402,6 +405,7 @@ describe('Today Quick Log state integration', () => {
     await waitFor(() => {
       expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
     });
+    expect(screen.queryByLabelText(i18n.t('timeline.pills.failed'))).toBeNull();
     expect(screen.queryByRole('button', {
       name: i18n.t('quick-log.failed.primary'),
     })).toBeNull();

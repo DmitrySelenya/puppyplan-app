@@ -21,7 +21,6 @@ import { type EventAccent } from '@/design/primitives/IconChip';
 import { InfoHero } from '@/design/primitives/InfoHero';
 import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
-import { StatusPill } from '@/design/primitives/StatusPill';
 import { SwipeToDelete } from '@/design/primitives/SwipeToDelete';
 import { WeekStrip, type WeekStripDay } from '@/design/primitives/WeekStrip';
 import { tokens } from '@/design/tokens';
@@ -638,7 +637,7 @@ function DiaryFactRow({
         time: event.occurredAtLabel,
         title: event.title,
       })}
-      caption={event.status === 'synced' ? event.actorLabel : undefined}
+      caption={event.status === 'synced' ? event.actorLabel : event.statusLabel}
       icon={visual.icon}
       onAccessibilityAction={canSwipeDelete ? (accessibilityEvent) => {
         if (accessibilityEvent.nativeEvent.actionName === 'delete' && onDelete !== undefined) {
@@ -684,21 +683,7 @@ function DiaryFactRow({
             }}
             style={styles.eventActionsButton}
           />
-        ) : event.status === 'synced' ? null : (
-          <StatusPill
-            accessibilityLabel={event.statusLabel}
-            icon={
-              <AppText
-                accessibilityElementsHidden
-                maxFontSizeMultiplier={2}>
-                {statusIcon(event.status)}
-              </AppText>
-            }
-            label={event.statusLabel}
-            style={styles.statusPill}
-            tone={statusTone(event.status)}
-          />
-        )}
+        ) : null}
       </Stack>
       {event.status === 'failed' && (onRetry !== undefined || onDelete !== undefined) ? (
         <Stack direction="horizontal" gap="sm" wrap>
@@ -784,30 +769,6 @@ function getFactCardVisual(
   return { accent: 'honey', icon: 'paw' };
 }
 
-function statusIcon(status: QuickLogEventView['status']): string {
-  if (status === 'failed') {
-    return '!';
-  }
-
-  if (status === 'pending') {
-    return '...';
-  }
-
-  return '\u2713';
-}
-
-function statusTone(status: QuickLogEventView['status']): 'confirmed' | 'failed' | 'pending' {
-  if (status === 'failed') {
-    return 'failed';
-  }
-
-  if (status === 'pending') {
-    return 'pending';
-  }
-
-  return 'confirmed';
-}
-
 const styles = StyleSheet.create({
   content: {
     paddingBottom: tokens.layout.bottomInsetFab,
@@ -829,9 +790,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     flexShrink: 1,
-  },
-  statusPill: {
-    alignSelf: 'flex-start',
   },
   timelineEntry: {
     alignSelf: 'flex-start',
