@@ -39,6 +39,9 @@ import {
   InviteAcceptStatePreview,
 } from '@/features/linking/screens/InviteAcceptScreen';
 import {
+  ShareablePuppyCardStatePreview,
+} from '@/features/more/screens/ShareablePuppyCardScreen';
+import {
   NotificationPreferencesStatePreview,
 } from '@/features/more/screens/NotificationPreferencesScreen';
 import {
@@ -80,6 +83,7 @@ export function DesignGalleryScreen() {
 
         <SyntheticPaywallStatesShell />
         <SyntheticInviteAcceptStatesShell />
+        <SyntheticShareablePuppyCardStatesShell />
         <SyntheticNotificationPreferencesShell />
         <SyntheticReminderEditShell />
 
@@ -684,6 +688,26 @@ export function SyntheticInviteAcceptStatesShell() {
         <InviteAcceptStatePreview state="load-error" />
         <InviteAcceptStatePreview state="expired" />
         <InviteAcceptStatePreview state="already-member" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticShareablePuppyCardStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.shareable-card-states"
+          titleKey="sharing.card-management.screen-title"
+        />
+        <ShareablePuppyCardStatePreview state="empty-builder" />
+        <ShareablePuppyCardStatePreview state="health-on" />
+        <ShareablePuppyCardStatePreview state="share-options" />
+        <ShareablePuppyCardStatePreview state="loading" />
+        <ShareablePuppyCardStatePreview state="pending-write" />
+        <ShareablePuppyCardStatePreview state="error" />
+        <ShareablePuppyCardStatePreview state="offline-read" />
       </Stack>
     </Card>
   );

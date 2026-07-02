@@ -58,6 +58,7 @@
         "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
         "paywall-states": "PuppyPlan Plus loading, pending purchase, error, offline, and active subscription states.",
         "invite-accept-states": "Accept invite loading, unavailable, retry, and already-member states.",
+        "shareable-card-states": "Shareable Puppy Card empty builder, health disclosure, share options, loading, pending, error, and offline states.",
         "timeline-v2": "Timeline default, filtered, empty, pending, failed, and delete-confirm states.",
         "today-core": "Today hero, daily cards, guidance, and data states.",
         "guidance": "Starter guidance read, tried, and skipped states.",
@@ -1160,7 +1161,44 @@
         "destructive": "Close access",
         "cancel": "Cancel"
       },
-      "public-link-disclosure": "Anyone with the link sees the fields you picked. An expiry and the ability to close access are required."
+      "public-link-disclosure": "Anyone with the link sees the fields you picked. An expiry and the ability to close access are required.",
+      "states": {
+        "empty-builder": {
+          "status": "Empty",
+          "title": "No fields selected yet",
+          "body": "Preview stays unavailable until at least one card field is selected."
+        },
+        "health-on": {
+          "status": "Health included",
+          "title": "Health details need a disclosure",
+          "body": "Only statuses and dates are included. Private notes and clinic contacts stay out."
+        },
+        "share-options": {
+          "status": "Share choices",
+          "title": "Choose link or snapshot",
+          "body": "Links can be closed later. Snapshots cannot be revoked after sending."
+        },
+        "loading": {
+          "status": "Loading",
+          "title": "Loading card settings",
+          "body": "Keeping the current card private while settings load."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving card changes",
+          "body": "The card stays visible with the last saved settings while changes sync."
+        },
+        "error": {
+          "status": "Needs review",
+          "title": "Card settings did not update",
+          "body": "Review the fields and save when ready."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Showing the last saved card",
+          "body": "Sharing changes can wait until the connection is back."
+        }
+      }
     },
 
     "revoked-or-expired-screen": {

@@ -15,6 +15,8 @@ Allowed deviations: boards marked carry-over need final Clay refresh before nati
 - Trainer: scope selector, preview included/excluded, accepted read-only view.
 - Revoked/expired: neutral closed-access state.
 - Shareable puppy cards: builder, empty disabled, health disclosure, preview 3:4, share sheet, shared cards list.
+- Shareable puppy card state templates: empty builder, health disclosure on, share options, loading,
+  pending write, error, and offline-read review cards.
 
 ## Tokens
 
@@ -23,14 +25,20 @@ Allowed deviations: boards marked carry-over need final Clay refresh before nati
 
 ## States Covered
 
-- default, pending, no-caregiver, active, exit confirm, accepted read-only, revoked/expired, card empty, health-on disclosure, active/expired cards.
+- default, pending, no-caregiver, active, exit confirm, accepted read-only, revoked/expired, card
+  empty, health-on disclosure, share options, active/expired cards, loading, error, offline-read.
 
 ## Accessibility
 
 - Every invite/preview states who sees what, for how long, and how to revoke.
 - Sitter checklist checkbox pattern must be distinguishable from Diary routine checkboxes by context and copy.
 - Revoked state does not reveal private reason details.
+- Shareable card state templates must not expose raw emails, provider names, invite/share tokens,
+  clinic contacts, or private notes.
 
 ## Notes / Deferred
 
 - Rich card builder and multi-template editor are roadmap, not this wave. This wave is minimal signed-link/static card only.
+- Shareable card state templates are synthetic handoff states. Live signed-link creation, real OS
+  share sheet invocation, expiry editing, revoke/extend mutation, and public web projection remain
+  deferred.

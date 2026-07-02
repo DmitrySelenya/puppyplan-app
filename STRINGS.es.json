@@ -57,6 +57,7 @@
         "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
         "paywall-states": "Estados de PuppyPlan Plus: carga, compra pendiente, error, offline y suscripción activa.",
         "invite-accept-states": "Estados de aceptar invitación: carga, no disponible, reintento y ya eres miembro.",
+        "shareable-card-states": "Estados de tarjeta compartible: selección vacía, salud incluida, opciones para compartir, carga, guardado, revisión y offline.",
         "timeline-v2": "Timeline predeterminado, filtrado, vacío, pendiente, error y confirmación de borrado.",
         "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
         "guidance": "Estados de guía inicial: leído, probado y omitido.",
@@ -1210,7 +1211,44 @@
         "destructive": "Cerrar acceso",
         "cancel": "Cancelar"
       },
-      "public-link-disclosure": "Cualquiera que tenga el enlace verá los campos que seleccionaste. Se requiere una caducidad y la capacidad de cerrar el acceso."
+      "public-link-disclosure": "Cualquiera que tenga el enlace verá los campos que seleccionaste. Se requiere una caducidad y la capacidad de cerrar el acceso.",
+      "states": {
+        "empty-builder": {
+          "status": "Vacío",
+          "title": "Aún no hay campos seleccionados",
+          "body": "La vista previa no está disponible hasta elegir al menos un campo."
+        },
+        "health-on": {
+          "status": "Salud incluida",
+          "title": "Los datos de salud necesitan aviso claro",
+          "body": "Sólo se incluyen estados y fechas. Las notas privadas y contactos de clínica quedan fuera."
+        },
+        "share-options": {
+          "status": "Opciones",
+          "title": "Elige enlace o captura",
+          "body": "Los enlaces pueden cerrarse después. Las capturas no se pueden retirar tras enviarlas."
+        },
+        "loading": {
+          "status": "Cargando",
+          "title": "Cargando ajustes de tarjeta",
+          "body": "La tarjeta actual sigue privada mientras se cargan los ajustes."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando cambios de tarjeta",
+          "body": "La tarjeta sigue visible con los últimos ajustes guardados mientras se sincronizan los cambios."
+        },
+        "error": {
+          "status": "Revisar",
+          "title": "Los ajustes de tarjeta no se actualizaron",
+          "body": "Revisa los campos y guarda cuando esté listo."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Mostrando la última tarjeta guardada",
+          "body": "Los cambios para compartir pueden esperar hasta que vuelva la conexión."
+        }
+      }
     },
     "revoked-or-expired-screen": {
       "title": "Este acceso ya no está disponible",

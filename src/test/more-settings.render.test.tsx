@@ -8,7 +8,10 @@ import { HouseholdAccessScreen } from '@/features/more/screens/HouseholdAccessSc
 import { ConnectedMoreScreen, MoreScreen } from '@/features/more/screens/MoreScreen';
 import { NotificationPreferencesScreen } from '@/features/more/screens/NotificationPreferencesScreen';
 import { PuppyPlanPlusScreen } from '@/features/more/screens/PuppyPlanPlusScreen';
-import { ShareablePuppyCardScreen } from '@/features/more/screens/ShareablePuppyCardScreen';
+import {
+  ShareablePuppyCardScreen,
+  ShareablePuppyCardStatePreview,
+} from '@/features/more/screens/ShareablePuppyCardScreen';
 import { SitterModeScreen } from '@/features/more/screens/SitterModeScreen';
 import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
@@ -554,5 +557,57 @@ describe('More settings entries', () => {
       date: '24 May',
     }))).toBeTruthy();
     expect(screen.queryByText(/@|token|provider name/i)).toBeNull();
+  });
+
+  it('renders Shareable Puppy Card state templates with locked accessibility semantics', () => {
+    render(
+      <AppProviders>
+        <ShareablePuppyCardStatePreview state="empty-builder" />
+        <ShareablePuppyCardStatePreview state="health-on" />
+        <ShareablePuppyCardStatePreview state="share-options" />
+        <ShareablePuppyCardStatePreview state="loading" />
+        <ShareablePuppyCardStatePreview state="pending-write" />
+        <ShareablePuppyCardStatePreview state="error" />
+        <ShareablePuppyCardStatePreview state="offline-read" />
+      </AppProviders>,
+    );
+
+    for (const state of [
+      'empty-builder',
+      'health-on',
+      'share-options',
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+    ] as const) {
+      expect(screen.getByTestId(`shareable-card-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`sharing.card-management.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`sharing.card-management.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('shareable-card-state-error').props.accessibilityRole)
+      .toBe('alert');
+    expect(screen.getByTestId('shareable-card-state-loading').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getByTestId('shareable-card-state-pending-write').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getByRole('button', {
+      name: i18n.t('sharing.card-builder.preview-cta'),
+    }).props.accessibilityState.disabled).toBe(true);
+    expect(screen.queryByText(/@|share token|invite token|provider name|supabase|production write/i))
+      .toBeNull();
+  });
+
+  it('renders a Shareable Puppy Card route review state without replacing the shell', () => {
+    render(
+      <AppProviders>
+        <ShareablePuppyCardScreen reviewState="pending-write" />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('sharing.card-management.screen-title'))).toBeTruthy();
+    expect(screen.getByTestId('shareable-card-state-pending-write')).toBeTruthy();
+    expect(screen.getByTestId('shareable-card-preview')).toBeTruthy();
   });
 });

@@ -8,6 +8,7 @@ import {
   DesignGalleryScreen,
   SyntheticHealthShell,
   SyntheticInviteAcceptStatesShell,
+  SyntheticShareablePuppyCardStatesShell,
   SyntheticPaywallStatesShell,
   SyntheticQuickLogDetailsShell,
   SyntheticQuickLogSheetShell,
@@ -139,6 +140,7 @@ describe('development-only design gallery', () => {
         <SyntheticNotificationPreferencesShell />
         <SyntheticPaywallStatesShell />
         <SyntheticInviteAcceptStatesShell />
+        <SyntheticShareablePuppyCardStatesShell />
         <SyntheticTodayShell />
         <SyntheticQuickLogDetailsShell />
       </>,
@@ -231,6 +233,30 @@ describe('development-only design gallery', () => {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('sharing.family.accepted.states.already-member.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.shareable-card-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.empty-builder.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.health-on.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.share-options.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.offline-read.title'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/supabase|production write|token/i)).toBeNull();

@@ -171,8 +171,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       signed-link card + preview + expiry (PRD-allowed). Native shell implemented at
       `/sharing/puppy-card`: More entry, builder fields, health disclosure, 3:4 preview, share CTA,
       public-link disclosure, and active-card list. Rich builder / multi-template editor → roadmap,
-      not this wave. Live signed-link creation, expiry editing, and revoke actions remain open; Stage 4
-      native SE screenshot comparison passed 2026-07-02.
+      not this wave. Deterministic empty-builder / health-on / share-options / loading /
+      pending-write / error / offline-read state templates now have dev-gallery coverage. Live
+      signed-link creation, OS share sheet, expiry editing, and revoke actions remain open; Stage 4
+      native SE screenshot comparison passed 2026-07-02 for the route shell and state templates.
 
 ### Reminders / Routines — DESIGN.md §4.2
 - [x] ✅ Reminders/Routines hub + lifecycle (Mark done / Back-date / Skip / Pause / Delete; "Diary entries stay")
@@ -270,6 +272,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       error, offline read, and active subscription plus dev-gallery coverage;
       Accept Invite now has RED/GREEN templates for loading, load error, expired, and
       already-member plus dev-gallery coverage;
+      Shareable Puppy Card now has RED/GREEN templates for empty builder, health disclosure,
+      share options, loading, pending write, error, and offline-read plus dev-gallery coverage;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -2376,6 +2380,59 @@ Implementation notes:
   revoke/extend, card history, loading/error/offline states, and public web projection remain
   deferred.
 
+### 34a. Shareable Puppy Card State Templates (§3.4 + §4.5)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/07-sharing-access-cards.md`.
+- Atlas refs: `cards/9-1-empty.png`, `cards/9-1-health.png`, `cards/9-3.png`,
+  `cards/9-4.png`, plus `states/states.png` for global loading / pending-write / error /
+  offline-read anatomy.
+- Route: `/sharing/puppy-card`; dev-gallery handoff shell under `/_dev/components`.
+- Device: primary SE simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) for Stage 4.
+- Allowed deviation: templates are synthetic review-only cards. Live signed-link creation, real OS
+  share sheet invocation, expiry editing, revoke/extend mutation, card history data, and public web
+  projection remain deferred.
+
+Acceptance:
+- AC-SHARE-CARD-STATES-1: the Shareable Puppy Card route can render deterministic review states for
+  empty builder, health disclosure on, share options, loading, pending write, error, and offline-read.
+- AC-SHARE-CARD-STATES-2: loading and pending write state templates expose polite live regions;
+  error exposes alert semantics; empty builder exposes a disabled preview action.
+- AC-SHARE-CARD-STATES-3: the state templates use design primitives, tokenized styles, and typed
+  EN/RU/ES i18n keys.
+- AC-SHARE-CARD-STATES-4: the dev-gallery includes all seven Shareable Puppy Card state templates
+  for native handoff.
+- AC-SHARE-CARD-STATES-5: templates do not expose raw email, provider/clinic names, invite/share
+  tokens, private notes, Supabase details, or production write language.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/dev-gallery.render.test.tsx`
+  failed as expected before implementation because `ShareablePuppyCardStatePreview`,
+  `SyntheticShareablePuppyCardStatesShell`, and route `reviewState` rendering were absent.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/dev-gallery.render.test.tsx`
+  — PASS: 2 suites, 22 tests.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n parity/budgets,
+  scaffold guardrails, tokens, privacy scan, and text hygiene.
+- `git diff --check` — PASS.
+- Changed-file raw color scan found no `hex` / `rgb` literals in the new screen/gallery code.
+
+Stage 4:
+- PASS recorded 2026-07-02 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro.
+  Native evidence:
+  `output/v2-nav-gaps-stage4/shareable-card-states-top-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/shareable-card-states-middle-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/shareable-card-states-bottom-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/shareable-card-states-offline-stage4.jpg`. Visual review covers the
+  dev-gallery shell, empty disabled preview action, health disclosure, link/snapshot share options,
+  loading, pending-write, error alert styling, and offline-read card. A first middle capture exposed
+  truncated helper copy in `ListRow`; the state anatomy was adjusted to wrap-friendly `Stack` /
+  `AppText` rows and re-captured before PASS.
+
 ### 35. Guidance Active-UI Deferral Reconciliation (§4.3)
 
 Stage-0 lock:
@@ -2874,3 +2931,9 @@ Implementation notes:
   offline-read, and active-subscription state templates with RED/GREEN render coverage,
   dev-gallery native handoff, EN/RU/ES copy, and primary SE Stage 4 screenshots. Live IAP,
   restore, product lookup, and entitlement enforcement remain deferred.
+- 2026-07-02: Added deterministic Shareable Puppy Card empty-builder, health-on, share-options,
+  loading, pending-write, error, and offline-read state templates with RED/GREEN render coverage,
+  dev-gallery native handoff, EN/RU/ES copy, and primary SE Stage 4 screenshots. First visual pass
+  exposed truncated helper copy in list rows; the state anatomy was corrected to wrapping rows before
+  recording Stage 4 PASS. Live signed-link creation, OS share sheet, expiry editing, revoke/extend,
+  and public web projection remain deferred.

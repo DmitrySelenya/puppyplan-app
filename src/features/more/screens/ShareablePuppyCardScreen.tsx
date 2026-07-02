@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import {
   AppIcon,
+  type AppIconName,
   AppText,
   Avatar,
   Button,
@@ -13,17 +14,94 @@ import {
   ScreenHeader,
   SectionHeader,
   Stack,
+  StatusPill,
+  type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
-import { useAppTranslation } from '@/lib/i18n';
+import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+
+export type ShareablePuppyCardReviewState =
+  | 'empty-builder'
+  | 'health-on'
+  | 'share-options'
+  | 'loading'
+  | 'pending-write'
+  | 'error'
+  | 'offline-read';
+
+type ShareablePuppyCardStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
+}>;
 
 export type ShareablePuppyCardScreenProps = Readonly<{
   onBack?: () => void;
   onShare?: () => void;
   puppyName?: string;
+  reviewState?: ShareablePuppyCardReviewState;
 }>;
 
 const SHAREABLE_CARD_PREVIEW_ASPECT_RATIO = 3 / 4;
+
+const shareableCardStateMeta: Record<ShareablePuppyCardReviewState, ShareablePuppyCardStateMeta> = {
+  'empty-builder': {
+    bodyKey: 'sharing.card-management.states.empty-builder.body',
+    icon: 'docText',
+    statusKey: 'sharing.card-management.states.empty-builder.status',
+    titleKey: 'sharing.card-management.states.empty-builder.title',
+    tone: 'template',
+  },
+  error: {
+    bodyKey: 'sharing.card-management.states.error.body',
+    icon: 'warningTriangle',
+    role: 'alert',
+    statusKey: 'sharing.card-management.states.error.status',
+    titleKey: 'sharing.card-management.states.error.title',
+    tone: 'failed',
+  },
+  'health-on': {
+    bodyKey: 'sharing.card-management.states.health-on.body',
+    icon: 'warningTriangle',
+    statusKey: 'sharing.card-management.states.health-on.status',
+    titleKey: 'sharing.card-management.states.health-on.title',
+    tone: 'pending',
+  },
+  loading: {
+    bodyKey: 'sharing.card-management.states.loading.body',
+    icon: 'calendar',
+    liveRegion: 'polite',
+    statusKey: 'sharing.card-management.states.loading.status',
+    titleKey: 'sharing.card-management.states.loading.title',
+    tone: 'pending',
+  },
+  'offline-read': {
+    bodyKey: 'sharing.card-management.states.offline-read.body',
+    icon: 'lock',
+    statusKey: 'sharing.card-management.states.offline-read.status',
+    titleKey: 'sharing.card-management.states.offline-read.title',
+    tone: 'template',
+  },
+  'pending-write': {
+    bodyKey: 'sharing.card-management.states.pending-write.body',
+    icon: 'docText',
+    liveRegion: 'polite',
+    statusKey: 'sharing.card-management.states.pending-write.status',
+    titleKey: 'sharing.card-management.states.pending-write.title',
+    tone: 'pending',
+  },
+  'share-options': {
+    bodyKey: 'sharing.card-management.states.share-options.body',
+    icon: 'docText',
+    statusKey: 'sharing.card-management.states.share-options.status',
+    titleKey: 'sharing.card-management.states.share-options.title',
+    tone: 'confirmed',
+  },
+};
 
 const builderFieldKeys = [
   'sharing.card-builder.fields.0',
@@ -35,10 +113,12 @@ export function ShareablePuppyCardScreen({
   onBack,
   onShare,
   puppyName,
+  reviewState,
 }: ShareablePuppyCardScreenProps) {
   const { t } = useAppTranslation();
   const resolvedPuppyName = puppyName ?? t('sharing.card-management.sample-puppy-name');
   const activeDate = t('sharing.card-management.sample-active-date');
+  const isPendingWrite = reviewState === 'pending-write';
 
   return (
     <Screen contentStyle={styles.content}>
@@ -67,6 +147,8 @@ export function ShareablePuppyCardScreen({
           </Stack>
         </Stack>
       </Card>
+
+      {reviewState ? <ShareablePuppyCardStatePreview state={reviewState} /> : null}
 
       <ShareableCardSection title={t('sharing.card-builder.section-title')}>
         {builderFieldKeys.map((key) => (
@@ -101,6 +183,7 @@ export function ShareablePuppyCardScreen({
       <Button
         label={t('sharing.card-preview.share')}
         leading={<AppIcon color={tokens.color.text.onPrimary} name="docText" size={18} />}
+        loading={isPendingWrite}
         onPress={onShare ?? (() => undefined)}
       />
 
@@ -122,6 +205,111 @@ export function ShareablePuppyCardScreen({
         />
       </ShareableCardSection>
     </Screen>
+  );
+}
+
+export function ShareablePuppyCardStatePreview({
+  state,
+}: Readonly<{
+  state: ShareablePuppyCardReviewState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = shareableCardStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`shareable-card-state-${state}`}
+      variant={state === 'offline-read' || state === 'empty-builder' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name={meta.icon}
+              size={14}
+            />
+          )}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="bodyEmph">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">{body}</AppText>
+        {state === 'empty-builder' ? (
+          <Button
+            disabled
+            label={t('sharing.card-builder.preview-cta')}
+            onPress={() => undefined}
+            variant="secondary"
+          />
+        ) : null}
+        {state === 'health-on' ? <ShareableCardHealthDisclosure /> : null}
+        {state === 'share-options' ? <ShareableCardShareOptions /> : null}
+      </Stack>
+    </Card>
+  );
+}
+
+function ShareableCardHealthDisclosure() {
+  const { t } = useAppTranslation();
+
+  return (
+    <Stack align="center" direction="horizontal" gap="sm">
+      <View style={styles.disclosureIcon}>
+        <AppIcon color={tokens.color.status.warning} name="warningTriangle" size={18} />
+      </View>
+      <Stack gap="xs" style={styles.disclosureCopy}>
+        <AppText variant="subheadline">{t('sharing.card-builder.fields.6')}</AppText>
+        <AppText tone="secondary" variant="footnote">
+          {t('sharing.card-builder.health-disclosure')}
+        </AppText>
+      </Stack>
+    </Stack>
+  );
+}
+
+function ShareableCardShareOptions() {
+  const { t } = useAppTranslation();
+
+  return (
+    <Stack gap="sm">
+      <ShareableCardShareOption
+        body={t('sharing.card-share-options.option-link-body')}
+        iconColor={tokens.color.primary[700]}
+        title={t('sharing.card-share-options.option-link-title')}
+      />
+      <ShareableCardShareOption
+        body={t('sharing.card-share-options.option-snapshot-body')}
+        iconColor={tokens.color.text.secondary}
+        title={t('sharing.card-share-options.option-snapshot-title')}
+      />
+    </Stack>
+  );
+}
+
+function ShareableCardShareOption({
+  body,
+  iconColor,
+  title,
+}: Readonly<{
+  body: string;
+  iconColor: string;
+  title: string;
+}>) {
+  return (
+    <Stack align="center" direction="horizontal" gap="sm" style={styles.shareOptionRow}>
+      <AppIcon color={iconColor} name="docText" size={20} />
+      <Stack gap="xs" style={styles.shareOptionCopy}>
+        <AppText variant="subheadline">{title}</AppText>
+        <AppText tone="secondary" variant="footnote">{body}</AppText>
+      </Stack>
+    </Stack>
   );
 }
 
@@ -244,5 +432,15 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     textTransform: 'uppercase',
+  },
+  shareOptionCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  shareOptionRow: {
+    borderColor: tokens.color.stroke.default,
+    borderRadius: tokens.radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: tokens.space[3],
   },
 });
