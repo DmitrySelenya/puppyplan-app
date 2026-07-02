@@ -209,8 +209,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       and disabled-until-name CTA behavior. Real platform DatePicker replacement and Stage 4 native
       screenshot comparison remain open.
 - [x] ✅ Age Hint (§2.1.3) — native profile-step inline hint implemented: info icon, status info tint,
-      localized age-range copy, and accessible "Hint. …" label before tracker selection. Stage 4 native
-      screenshot comparison remains open.
+      localized age-range copy, and accessible "Hint. …" label before tracker selection. Stage 4
+      native SE screenshot comparison passed 2026-07-02.
 - [ ] 🟡 Quick Tracker Selection (§2.1.4) — native tracker-step chrome/anatomy slice implemented:
       visible Step 3 chrome, helper copy, selected checkmark, selected/unselected a11y labels,
       zero-selected Skip Selection CTA, and skip-to-default save normalization. Stage 4 native
@@ -1370,7 +1370,12 @@ Implementation notes:
   design tokens (`tokens.color.status.infoTint`, `tokens.color.status.info`, `tokens.radius.md`).
 - The hint text reuses `getPuppyAgeHintKey(...)` and existing EN/RU/ES localized copy; no new user
   strings were required.
-- Stage 4 remains open: the full Puppy Setup profile step still needs native screenshot comparison.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`)
+  from the installed PuppyPlan.app over Metro. Native evidence:
+  `output/v2-nav-gaps-stage4/onboarding-age-hint-stage4.png`. Runtime snapshot evidence exposed the
+  Step 2 chrome, name field with privacy-safe synthetic input, age segmented control, 8-week stepper,
+  info hint copy, and enabled Continue action.
+- The full Puppy Setup profile step still needs native screenshot comparison.
   Visible back/step chrome, stepper/date-zone anatomy, and disabled-until-name CTA behavior are now
   tracked by §23.
 
@@ -2275,6 +2280,10 @@ Implementation notes:
   Metro, captured clean native SE evidence for the decorative warm illustration frame, locked H1,
   subtitle, primary Get started CTA, and secondary sign-in action, and verified the runtime snapshot
   no longer included stale Reminders modal targets.
+- 2026-07-02: Closed Stage 4 for the `/onboarding` Age Hint slice: captured native SE filled-profile
+  evidence over Metro showing Step 2 chrome, privacy-safe synthetic name input, Age/Birth date
+  segmented control, 8-week stepper, info-tinted age hint, and enabled Continue action without keyboard
+  overlay.
 - 2026-06-30: Added the Reminder edit route anatomy slice: `/reminders/edit` now renders the create/edit
   form, quiet-hours preview, and calm permission-denied state with design primitives and existing
   localized copy; RED/GREEN route/navigation tests, typecheck, and scaffold checks passed. Real
