@@ -275,6 +275,47 @@ RED evidence:
 GREEN / regression evidence:
 - `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` — PASS:
   1 suite, 25 tests.
+
+#### 4.4.4b Notification preferences durable push toggles
+
+Stage-0 lock:
+- Source: DESIGN.md §4.4.4, existing `public.notification_preference` schema/RLS, and the
+  implemented `/settings/notifications` push section.
+- Scope: durable read/upsert for the two existing push preference booleans only:
+  `reminder_push_enabled` and `trusted_sitter_completion_push_enabled`.
+- Out of scope: OS permission probing, local reminder scheduling, push token registration,
+  quiet-hours editing/persistence, timezone editing, diagnostics, migrations, and new native modules.
+
+Acceptance:
+- AC-NOTIF-PERSIST-1: the Supabase boundary can read the current user's household notification
+  preference row and parse it through the existing Zod contract.
+- AC-NOTIF-PERSIST-2: if no row exists yet, the query layer exposes the app defaults
+  (`reminder_push_enabled=true`, `trusted_sitter_completion_push_enabled=true`) without treating the
+  missing row as an error.
+- AC-NOTIF-PERSIST-3: changing either push toggle upserts the existing `notification_preference`
+  row identity (`user_id`, `household_id`) and invalidates the notification preferences query.
+- AC-NOTIF-PERSIST-4: the connected `/settings/notifications` route renders loading/error states from
+  query status and pending-write/error states from mutation status while keeping the existing OS
+  settings handoff behavior.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/notification-preferences-query.test.ts src/test/notification-preferences-repository.test.ts`
+  — FAIL before implementation: 2 suites failed, 8 tests failed on
+  `notification_preference_*_not_implemented` stubs.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern AC-NOTIF-PERSIST-4`
+  — FAIL before implementation: persisted reminder toggle expected `false`, received `true`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/notification-preferences-query.test.ts src/test/notification-preferences-repository.test.ts`
+  — PASS: 2 suites, 8 tests.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx`
+  — PASS: 1 suite, 27 tests.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts src/test/app-shell.render.test.tsx`
+  — PASS: 3 suites, 46 tests.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 74 suites / 592 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing `act(...)` warnings remain in
+  motion-related render tests.
 - [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
       topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
       Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Email handoff is now wired

@@ -36,6 +36,14 @@ export const queryKeys = {
     list: (householdId: string, puppyId: string) =>
       ['reminders', householdId, puppyId] as const,
   },
+  notifications: {
+    preferences: (userId: string, householdId: string) => [
+      'notifications',
+      'preferences',
+      uuidSchema.parse(userId),
+      uuidSchema.parse(householdId),
+    ] as const,
+  },
   health: {
     record: (puppyId: string, recordId: string) => [
       'health',

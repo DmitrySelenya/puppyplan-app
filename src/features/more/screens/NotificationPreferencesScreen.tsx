@@ -19,6 +19,13 @@ import {
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+import { useActiveCareContext } from '@/lib/query/active-care-context';
+import {
+  createNotificationPreferenceView,
+  type NotificationPreferenceView,
+  useNotificationPreferenceQuery,
+  useUpdateNotificationPreferenceMutation,
+} from '@/lib/query/notification-preferences';
 
 export type NotificationPreferencesReviewState =
   | 'loading'
@@ -74,12 +81,18 @@ const notificationPreferencesStateMeta: Record<
 };
 
 export type NotificationPreferencesScreenProps = Readonly<{
+  onChangeReminderPush?: (enabled: boolean) => Promise<void> | void;
+  onChangeSitterPush?: (enabled: boolean) => Promise<void> | void;
   onBack?: () => void;
+  preferences?: NotificationPreferenceView;
   reviewState?: NotificationPreferencesReviewState;
 }>;
 
 export function NotificationPreferencesScreen({
+  onChangeReminderPush,
+  onChangeSitterPush,
   onBack,
+  preferences,
   reviewState,
 }: NotificationPreferencesScreenProps) {
   const { t } = useAppTranslation();
@@ -88,9 +101,13 @@ export function NotificationPreferencesScreen({
   >();
   const visibleReviewState = reviewState ?? localReviewState;
 
-  const openNotificationSettings = async () => {
+  const updatePushPreference = async (
+    enabled: boolean,
+    onChange: ((value: boolean) => Promise<void> | void) | undefined,
+  ) => {
     setLocalReviewState(undefined);
     try {
+      await onChange?.(enabled);
       await Linking.openSettings();
     } catch {
       setLocalReviewState('error');
@@ -142,11 +159,11 @@ export function NotificationPreferencesScreen({
           trailing={(
             <Toggle
               accessibilityLabel={t('more.notifications.row-push-reminders')}
-              onValueChange={() => {
-                void openNotificationSettings();
+              onValueChange={(enabled) => {
+                void updatePushPreference(enabled, onChangeReminderPush);
               }}
               testID="notifications-push-reminders-toggle"
-              value
+              value={preferences?.reminderPushEnabled ?? true}
             />
           )}
           variant="settings"
@@ -157,11 +174,11 @@ export function NotificationPreferencesScreen({
           trailing={(
             <Toggle
               accessibilityLabel={t('more.notifications.row-push-sitter')}
-              onValueChange={() => {
-                void openNotificationSettings();
+              onValueChange={(enabled) => {
+                void updatePushPreference(enabled, onChangeSitterPush);
               }}
               testID="notifications-push-sitter-toggle"
-              value
+              value={preferences?.trustedSitterCompletionPushEnabled ?? true}
             />
           )}
           variant="settings"
@@ -196,6 +213,72 @@ export function NotificationPreferencesScreen({
         />
       </NotificationSection>
     </Screen>
+  );
+}
+
+export function ConnectedNotificationPreferencesScreen({
+  onBack,
+}: Readonly<{
+  onBack?: () => void;
+}>) {
+  const activeCare = useActiveCareContext();
+  const preferenceQuery = useNotificationPreferenceQuery(activeCare.careContext);
+  const updatePreferenceMutation = useUpdateNotificationPreferenceMutation();
+
+  if (activeCare.status === 'loading' || preferenceQuery.isLoading) {
+    return (
+      <NotificationPreferencesScreen
+        onBack={onBack}
+        reviewState="loading"
+      />
+    );
+  }
+
+  if (
+    activeCare.status === 'error'
+    || preferenceQuery.isError
+    || activeCare.careContext === null
+  ) {
+    return (
+      <NotificationPreferencesScreen
+        onBack={onBack}
+        reviewState="error"
+      />
+    );
+  }
+
+  const careContext = activeCare.careContext;
+  const preferences = createNotificationPreferenceView(preferenceQuery.data ?? null);
+  const reviewState = updatePreferenceMutation.isPending
+    ? 'pending-write'
+    : updatePreferenceMutation.isError
+      ? 'error'
+      : undefined;
+
+  return (
+    <NotificationPreferencesScreen
+      onBack={onBack}
+      onChangeReminderPush={async (enabled) => {
+        await updatePreferenceMutation.mutateAsync({
+          householdId: careContext.householdId,
+          reminderPushEnabled: enabled,
+          timezone: preferences.timezone,
+          trustedSitterCompletionPushEnabled: preferences.trustedSitterCompletionPushEnabled,
+          userId: careContext.userId,
+        });
+      }}
+      onChangeSitterPush={async (enabled) => {
+        await updatePreferenceMutation.mutateAsync({
+          householdId: careContext.householdId,
+          reminderPushEnabled: preferences.reminderPushEnabled,
+          timezone: preferences.timezone,
+          trustedSitterCompletionPushEnabled: enabled,
+          userId: careContext.userId,
+        });
+      }}
+      preferences={preferences}
+      reviewState={reviewState}
+    />
   );
 }
 
@@ -236,7 +319,6 @@ export function NotificationPreferencesStatePreview({
     </Card>
   );
 }
-
 function NotificationSection({
   children,
   title,

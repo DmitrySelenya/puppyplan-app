@@ -6,7 +6,10 @@ import { tokens } from '@/design/tokens';
 import { HelpSupportScreen } from '@/features/more/screens/HelpSupportScreen';
 import { HouseholdAccessScreen } from '@/features/more/screens/HouseholdAccessScreen';
 import { ConnectedMoreScreen, MoreScreen } from '@/features/more/screens/MoreScreen';
-import { NotificationPreferencesScreen } from '@/features/more/screens/NotificationPreferencesScreen';
+import {
+  ConnectedNotificationPreferencesScreen,
+  NotificationPreferencesScreen,
+} from '@/features/more/screens/NotificationPreferencesScreen';
 import { PuppyPlanPlusScreen } from '@/features/more/screens/PuppyPlanPlusScreen';
 import {
   ShareablePuppyCardScreen,
@@ -23,6 +26,8 @@ import { AppProviders } from '@/lib/providers/AppProviders';
 import ShareablePuppyCardRoute from '../../app/(modals)/sharing/puppy-card';
 
 const mockUseActiveCareContext = jest.fn();
+const mockUseNotificationPreferenceQuery = jest.fn();
+const mockUseUpdateNotificationPreferenceMutation = jest.fn();
 const mockRouterBack = jest.fn();
 
 jest.mock('expo-router', () => ({
@@ -34,6 +39,16 @@ jest.mock('expo-router', () => ({
 jest.mock('@/lib/query/active-care-context', () => ({
   useActiveCareContext: () => mockUseActiveCareContext(),
 }));
+
+jest.mock('@/lib/query/notification-preferences', () => {
+  const actual = jest.requireActual('@/lib/query/notification-preferences');
+
+  return {
+    ...actual,
+    useNotificationPreferenceQuery: () => mockUseNotificationPreferenceQuery(),
+    useUpdateNotificationPreferenceMutation: () => mockUseUpdateNotificationPreferenceMutation(),
+  };
+});
 
 const authDependencies: AuthProviderDependencies = {
   appState: { currentState: 'active', addEventListener: () => ({ remove: () => undefined }) },
@@ -92,6 +107,16 @@ describe('More settings entries', () => {
       },
       puppy: null,
       status: 'ready',
+    });
+    mockUseNotificationPreferenceQuery.mockReturnValue({
+      data: null,
+      isError: false,
+      isLoading: false,
+    });
+    mockUseUpdateNotificationPreferenceMutation.mockReturnValue({
+      isError: false,
+      isPending: false,
+      mutateAsync: jest.fn().mockResolvedValue(undefined),
     });
     reduceMotionProbe = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
@@ -412,6 +437,85 @@ describe('More settings entries', () => {
       expect(openSettingsSpy).toHaveBeenCalledTimes(1);
     });
     expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(true);
+  });
+
+  it('AC-NOTIF-PERSIST-4 renders persisted push toggles and writes changes before OS handoff', async () => {
+    const changeReminderPush = jest.fn().mockResolvedValue(undefined);
+    const changeSitterPush = jest.fn().mockResolvedValue(undefined);
+
+    render(
+      <AppProviders>
+        <NotificationPreferencesScreen
+          onChangeReminderPush={changeReminderPush}
+          onChangeSitterPush={changeSitterPush}
+          preferences={{
+            reminderPushEnabled: false,
+            row: null,
+            timezone: 'UTC',
+            trustedSitterCompletionPushEnabled: true,
+          }}
+        />
+      </AppProviders>,
+    );
+
+    expect(screen.getByTestId('notifications-push-reminders-toggle').props.value).toBe(false);
+    expect(screen.getByTestId('notifications-push-sitter-toggle').props.value).toBe(true);
+
+    fireEvent(screen.getByTestId('notifications-push-reminders-toggle'), 'valueChange', true);
+    fireEvent(screen.getByTestId('notifications-push-sitter-toggle'), 'valueChange', false);
+
+    await waitFor(() => {
+      expect(changeReminderPush).toHaveBeenCalledWith(true);
+      expect(changeSitterPush).toHaveBeenCalledWith(false);
+      expect(openSettingsSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('AC-NOTIF-PERSIST-4 connects notification preferences query and mutation state', async () => {
+    const mutateAsync = jest.fn().mockResolvedValue(undefined);
+    mockUseNotificationPreferenceQuery.mockReturnValue({
+      data: {
+        created_at: '2026-07-02T10:00:00.000Z',
+        household_id: '00000000-0000-4000-8000-000000002301',
+        id: '00000000-0000-4000-8000-000000002304',
+        quiet_hours: null,
+        reminder_push_enabled: false,
+        timezone: 'Europe/Warsaw',
+        trusted_sitter_completion_push_enabled: true,
+        updated_at: '2026-07-02T10:05:00.000Z',
+        user_id: '00000000-0000-4000-8000-000000002303',
+      },
+      isError: false,
+      isLoading: false,
+    });
+    mockUseUpdateNotificationPreferenceMutation.mockReturnValue({
+      isError: false,
+      isPending: true,
+      mutateAsync,
+    });
+
+    render(
+      <AppProviders>
+        <ConnectedNotificationPreferencesScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByTestId('notifications-state-pending-write')).toBeTruthy();
+    expect(screen.getByTestId('notifications-push-reminders-toggle').props.value).toBe(false);
+    expect(screen.getByTestId('notifications-push-sitter-toggle').props.value).toBe(true);
+
+    fireEvent(screen.getByTestId('notifications-push-reminders-toggle'), 'valueChange', true);
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledWith({
+        householdId: '00000000-0000-4000-8000-000000002301',
+        reminderPushEnabled: true,
+        timezone: 'Europe/Warsaw',
+        trustedSitterCompletionPushEnabled: true,
+        userId: '00000000-0000-4000-8000-000000002303',
+      });
+      expect(openSettingsSpy).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('renders notification preferences error state when OS settings handoff fails', async () => {
