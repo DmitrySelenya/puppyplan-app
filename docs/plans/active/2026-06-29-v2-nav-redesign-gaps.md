@@ -733,8 +733,27 @@ Design-fidelity note:
   - `npm run check` — PASS: lint, typecheck, 63 Jest suites / 456 tests, node tests,
     scaffold checks, tokens, privacy scan, and text hygiene. Output still includes the existing
     React `act(...)` warning in `screen-header.render.test.tsx`; no failures.
-- Stage 4 remains open: the Diary route still needs per-state native screenshots against the locked
-  boards before the Diary route can be marked done.
+- 2026-07-02 Stage 4 grouped-state follow-up: the development-only native component gallery now
+  exposes the Diary `loading`, `offline-read`, `pending-write`, and `error` state templates in one
+  deterministic shell preview, so the unreachable production-only states can be reviewed without
+  writing synthetic care data.
+- RED evidence:
+  `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx` failed as expected
+  while the gallery rendered loading/offline/pending but did not expose
+  `today.states.error.title`.
+- GREEN / regression evidence:
+  - `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx src/test/i18n.test.ts`
+    — PASS: 2 suites, 14 tests.
+  - `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n budgets,
+    scaffold guardrails, tokens, privacy scan, and text hygiene.
+- Stage 4 native SE evidence:
+  - `output/v2-nav-gaps-stage4/diary-state-templates-loading-offline-stage4.jpg` — heading plus
+    `Refreshing Today` and `Offline view` cards.
+  - `output/v2-nav-gaps-stage4/diary-state-templates-pending-error-stage4.jpg` — `Sync in progress`
+    and `Could not refresh Today` cards.
+  Captured 2026-07-02 from the installed PuppyPlan.app over Metro on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`). Broader Clay Diary production-route states remain
+  governed by `docs/design/v2/specs/diary-v2.md` and the screen-polish backlog.
 
 **UPDATE 2026-07-02 — Diary route re-locked and rebuilt to the Clay reference (parallel Claude
 session on this branch).** `docs/design/v2/specs/diary-v2.md` (+ recovered atlas under
@@ -2249,6 +2268,11 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Closed the Diary grouped-state template Stage 4 follow-up: added RED/GREEN coverage
+  for the development-only gallery error fixture, exposed `loading`, `offline-read`, `pending-write`,
+  and `error` in the deterministic Today/Diary shell preview, and captured native SE evidence at
+  `output/v2-nav-gaps-stage4/diary-state-templates-loading-offline-stage4.jpg` plus
+  `output/v2-nav-gaps-stage4/diary-state-templates-pending-error-stage4.jpg`.
 - 2026-07-02: Closed the no-new-screen trainer-link soft-lock contract: added
   `src/contracts/entitlements.ts` plus RED/GREEN coverage proving `active`/`trial` allow writes,
   `soft_locked` blocks new writes, owner data/privacy/restore/revoke actions remain available, and

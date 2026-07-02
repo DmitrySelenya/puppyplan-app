@@ -67,7 +67,7 @@
         "day-seven": "Today · day seven",
         "after-invite": "Today · after invite slot",
         "missed-reminder": "Diary · past routine slot",
-        "state-fixtures": "Today · loading, offline, and pending",
+        "state-fixtures": "Today · loading, offline, pending, and error",
         "synthetic-note": "These states do not write reminders, invites, or household activity."
       },
       "diary": {

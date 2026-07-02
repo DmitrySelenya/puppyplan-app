@@ -775,6 +775,7 @@ export function SyntheticTodayShell() {
     'loading',
     'offline-read',
     'pending-write',
+    'error',
   ] as const satisfies readonly TodayStatusState[];
 
   return (

@@ -68,7 +68,7 @@
         "day-seven": "Today · седьмой день",
         "after-invite": "Today · слот после приглашения",
         "missed-reminder": "Diary · слот неотмеченной рутины",
-        "state-fixtures": "Today · loading, offline и pending",
+        "state-fixtures": "Today · loading, offline, pending и error",
         "synthetic-note": "Эти состояния не записывают reminders, invites или активность семьи."
       },
       "diary": {

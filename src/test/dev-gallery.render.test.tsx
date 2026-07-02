@@ -117,6 +117,9 @@ describe('development-only design gallery', () => {
     expect(screen.getByText(i18n.t('dev.gallery.today.state-fixtures'), {
       includeHiddenElements: true,
     })).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.states.error.title'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
   });
 
   it('renders route-shell preview states without production actions', () => {

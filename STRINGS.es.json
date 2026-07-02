@@ -66,7 +66,7 @@
         "day-seven": "Hoy · día siete",
         "after-invite": "Hoy · espacio tras invitación",
         "missed-reminder": "Diary · espacio de rutina pendiente",
-        "state-fixtures": "Hoy · carga, offline y pendiente",
+        "state-fixtures": "Hoy · carga, offline, pendiente y error",
         "synthetic-note": "Estos estados no escriben recordatorios, invitaciones ni actividad del hogar."
       },
       "diary": {
