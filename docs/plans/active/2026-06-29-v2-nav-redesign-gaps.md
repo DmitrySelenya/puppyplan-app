@@ -266,8 +266,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       coverage per-screen is the work. Health Add Record now has RED/GREEN state templates for
       loading, pending write, error, offline read, and permission denied plus Stage 4 SE captures;
       Reminder Edit now has RED/GREEN state templates for loading, pending write, error, and
-      offline read plus dev-gallery coverage; Notification Preferences now has RED/GREEN state
-      templates for loading, pending write, error, and offline read plus dev-gallery coverage;
+      offline read plus compact dev-gallery and Stage 4 SE captures; Notification Preferences now
+      has RED/GREEN state templates for loading, pending write, error, and offline read plus
+      dev-gallery coverage;
       PuppyPlan Plus now has RED/GREEN templates for loading products, pending purchase, purchase
       error, offline read, and active subscription plus dev-gallery coverage;
       Accept Invite now has RED/GREEN templates for loading, load error, expired, and
@@ -1371,7 +1372,7 @@ preview, and calm push-permission-denied anatomy.
   `src/features/reminders/screens/ReminderEditScreen.tsx`.
 - Allowed deviation: this slice implements native structural anatomy only. Real reminder persistence,
   local notification scheduling, OS permission probing, Settings deeplink, quiet-hours range editing,
-  validation, and loading/error/offline states remain plan-owned follow-up work.
+  validation, and durable loading/error/offline data wiring remain plan-owned follow-up work.
 - TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
 
 Spec lock for this slice:
@@ -1428,22 +1429,25 @@ Implementation notes:
   expected because `reminder-edit-state-loading` did not exist.
 - State-template GREEN evidence:
   `npm run test:unit -- --runTestsByPath src/test/reminder-edit-route.render.test.tsx src/test/dev-gallery.render.test.tsx`
-  — PASS: 2 suites, 9 tests.
+  — PASS: 2 suites, 10 tests after adding the compact native-handoff preview contract.
 - Adjacent state/i18n evidence:
   `node scripts/checks/check-i18n.mjs` — PASS; `npm run typecheck` — PASS.
 - Full gate evidence:
-  `npm run check` — PASS: 70 Jest suites / 542 tests, 118 node tests, navigation/shell i18n,
-  i18n parity, scaffold guardrails, tokens, privacy scan, and text hygiene all green. Existing
-  non-failing reduced-motion `act(...)` warning in `src/test/screen-header.render.test.tsx` remains
-  unrelated to this slice.
-- State-template Stage 4 PASS (2026-07-02): launched the already installed PuppyPlan.app on
-  `Grith iPhone SE 3 iOS 26.3` over Metro, opened `/_dev/components`, and captured the reminder edit
-  state-template preview. Evidence:
-  `output/v2-nav-gaps-stage4/reminders-edit-state-templates-stage4.png`. The viewport capture shows
-  the native dev-gallery shell, `/reminders/edit` modal chrome, disabled Save, and the loading state
-  card. Runtime snapshot evidence also found `reminder-edit-state-pending-write`,
-  `reminder-edit-state-error`, and `reminder-edit-state-offline-read` with the expected localized
-  labels/body copy.
+  `npm run check` — PASS on 2026-07-02 after the compact handoff follow-up: 70 Jest suites /
+  548 tests, 118 node tests, navigation/shell i18n, i18n parity, scaffold guardrails, tokens,
+  privacy scan, and text hygiene all green. Existing non-failing reduced-motion `act(...)` warning
+  in `src/test/screen-header.render.test.tsx` remains unrelated to this slice.
+- State-template Stage 4 PASS follow-up (2026-07-02): launched the already installed PuppyPlan.app on
+  `Grith iPhone SE 3 iOS 26.3` over Metro, opened `/_dev/components`, and verified the compact
+  native-handoff shell. The first visual pass exposed that the dev-gallery shell was nesting four full
+  `/reminders/edit` modal screens, burying state cards behind nested scroll views. The shell now uses
+  exported compact `ReminderEditStatePreview` cards, matching the other state-template handoff shells.
+  Native evidence:
+  `output/v2-nav-gaps-stage4/reminder-edit-states-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/reminder-edit-states-offline-stage4.jpg`. Runtime snapshot evidence found
+  `reminder-edit-state-loading`, `reminder-edit-state-pending-write`, `reminder-edit-state-error`, and
+  `reminder-edit-state-offline-read`; the screenshot comparison shows loading/pending and error/offline
+  cards readable with no nested time-picker/form chrome.
 
 ## 20. Trusted sitter checklist reminder anatomy evidence
 
@@ -2848,6 +2852,10 @@ Implementation notes:
 - 2026-07-02: Added `/reminders/edit` state templates for loading, pending write, error, and offline
   read with typed EN/RU/ES copy, alert/live-region accessibility, busy Save feedback for pending write,
   dev-gallery preview coverage, and Stage 4 native evidence. Durable save/scheduling remains open.
+- 2026-07-02: Closed the compact Stage 4 handoff for `/reminders/edit` state templates: exported
+  `ReminderEditStatePreview`, changed the dev-gallery shell from nested full edit screens to compact
+  state cards, added RED/GREEN coverage that the handoff excludes the time picker form chrome, and
+  captured native SE loading/pending plus error/offline evidence over Metro.
 - 2026-06-30: Added the trusted-sitter checklist reminder anatomy slice inside `/reminders/edit`:
   source label, person icon slot, left accent rail, 1/3 progress bar, and localized Open checklist /
   Mark all done / Skip actions; RED/GREEN route coverage and related i18n/navigation suites passed.

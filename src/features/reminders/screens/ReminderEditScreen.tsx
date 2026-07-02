@@ -110,7 +110,7 @@ export function ReminderEditScreen({
             />
           </Stack>
 
-          {reviewState ? <ReminderEditStateCard state={reviewState} /> : null}
+          {reviewState ? <ReminderEditStatePreview state={reviewState} /> : null}
 
           <Stack gap="md">
             <TextField
@@ -194,7 +194,7 @@ export function ReminderEditScreen({
   );
 }
 
-function ReminderEditStateCard({
+export function ReminderEditStatePreview({
   state,
 }: Readonly<{
   state: ReminderEditReviewState;

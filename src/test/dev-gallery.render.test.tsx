@@ -187,6 +187,9 @@ describe('development-only design gallery', () => {
     expect(screen.getAllByText(i18n.t('reminders.form.states.offline-read.title'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
+    expect(screen.queryByTestId('reminder-edit-time-picker-row', {
+      includeHiddenElements: true,
+    })).toBeNull();
     expect(screen.getByText(i18n.t('dev.gallery.states.notification-preferences'), {
       includeHiddenElements: true,
     })).toBeTruthy();

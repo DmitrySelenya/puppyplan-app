@@ -54,7 +54,9 @@ import {
 } from '@/features/onboarding/screens/OnboardingScreen';
 import { QuickLogLocalEvents } from '@/features/quick-log/components/QuickLogLocalEvents';
 import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
-import { ReminderEditScreen } from '@/features/reminders/screens/ReminderEditScreen';
+import {
+  ReminderEditStatePreview,
+} from '@/features/reminders/screens/ReminderEditScreen';
 import {
   SyntheticTodayPreview,
   TodayStatusCard,
@@ -620,22 +622,10 @@ export function SyntheticReminderEditShell() {
           bodyKey="dev.gallery.states.reminder-edit"
           titleKey="reminders.form.title-new"
         />
-        <ReminderEditScreen
-          onClose={noop}
-          reviewState="loading"
-        />
-        <ReminderEditScreen
-          onClose={noop}
-          reviewState="pending-write"
-        />
-        <ReminderEditScreen
-          onClose={noop}
-          reviewState="error"
-        />
-        <ReminderEditScreen
-          onClose={noop}
-          reviewState="offline-read"
-        />
+        <ReminderEditStatePreview state="loading" />
+        <ReminderEditStatePreview state="pending-write" />
+        <ReminderEditStatePreview state="error" />
+        <ReminderEditStatePreview state="offline-read" />
       </Stack>
     </Card>
   );

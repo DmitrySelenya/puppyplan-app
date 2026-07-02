@@ -2,7 +2,10 @@ import { AccessibilityInfo } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { tokens } from '@/design/tokens';
-import { ReminderEditScreen } from '@/features/reminders/screens/ReminderEditScreen';
+import {
+  ReminderEditScreen,
+  ReminderEditStatePreview,
+} from '@/features/reminders/screens/ReminderEditScreen';
 import { i18n } from '@/lib/i18n';
 
 import ReminderEditRoute from '../../app/(modals)/reminders/edit';
@@ -174,5 +177,29 @@ describe('ReminderEditRoute', () => {
       name: i18n.t('reminders.form.save'),
     }).some((button) => button.props.accessibilityState.busy)).toBe(true);
     expect(screen.queryByText(/diagnosis|dosage|treatment plan|emergency/i)).toBeNull();
+  });
+
+  it('AC-REM-EDIT-STATES renders compact state previews for native handoff', () => {
+    render(
+      <>
+        <ReminderEditStatePreview state="loading" />
+        <ReminderEditStatePreview state="pending-write" />
+        <ReminderEditStatePreview state="error" />
+        <ReminderEditStatePreview state="offline-read" />
+      </>,
+    );
+
+    for (const state of [
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+    ] as const) {
+      expect(screen.getByTestId(`reminder-edit-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`reminders.form.states.${state}.title`))).toBeTruthy();
+    }
+
+    expect(screen.queryByLabelText(i18n.t('reminders.form.field-name'))).toBeNull();
+    expect(screen.queryByTestId('reminder-edit-time-picker-row')).toBeNull();
   });
 });
