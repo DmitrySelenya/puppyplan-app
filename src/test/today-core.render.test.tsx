@@ -7,7 +7,7 @@ import { I18nextProvider } from 'react-i18next';
 import { tokens } from '@/design/tokens';
 import { i18n } from '@/lib/i18n';
 import { createPuppyPlanQueryClient } from '@/lib/query/client';
-import { queryKeys } from '@/lib/query/keys';
+import { queryKeys, type TimelineFilters } from '@/lib/query/keys';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { TodayScreen } from '@/features/today/screens/TodayScreen';
 
@@ -42,6 +42,10 @@ function todayTimelineKey() {
     from: todayDate,
     to: todayDate,
   });
+}
+
+function diaryHistoryTimelineKey(filters: TimelineFilters = {}) {
+  return queryKeys.events.timeline(householdId, puppyId, filters);
 }
 
 function renderWithQuery(element: ReactElement) {
@@ -512,5 +516,74 @@ describe('Today core card rendering', () => {
     expect(screen.getAllByRole('button', {
       name: i18n.t('today.history.open-action'),
     })).toHaveLength(1);
+  });
+
+  it('opens filtered Diary history inline instead of routing to standalone Timeline', async () => {
+    const todayFeedingRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002601',
+      event_type: 'feeding',
+      id: '00000000-0000-4000-8000-000000002611',
+      occurred_at: '2026-06-12T08:00:00.000Z',
+      payload: {
+        amount: 'meal',
+      },
+    });
+    const yesterdayPottyRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002602',
+      event_type: 'potty',
+      id: '00000000-0000-4000-8000-000000002612',
+      occurred_at: '2026-06-11T07:15:00.000Z',
+      payload: {
+        subtype: 'outside',
+      },
+    });
+    mockListEvents.mockResolvedValue([todayFeedingRow]);
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [todayFeedingRow]);
+      queryClient.setQueryData(diaryHistoryTimelineKey(), [
+        todayFeedingRow,
+        yesterdayPottyRow,
+      ]);
+      queryClient.setQueryData(diaryHistoryTimelineKey({
+        eventTypes: ['feeding'],
+      }), [todayFeedingRow]);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {
+        name: i18n.t('today.history.open-action'),
+      })).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('today.history.open-action'),
+    }));
+
+    expect(openTimeline).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-history-filter-bar')).toBeTruthy();
+    });
+
+    expect(screen.getByRole('tab', { name: i18n.t('timeline.filter-chips.0') })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: i18n.t('timeline.filter-chips.2') })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: i18n.t('timeline.filter-chips.1') })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: i18n.t('timeline.filter-chips.3') })).toBeTruthy();
+    expect(screen.getByTestId('diary-history-day-2026-06-12')).toBeTruthy();
+    expect(screen.getByTestId('diary-history-day-2026-06-11')).toBeTruthy();
+    expect(screen.getAllByTestId('diary-history-logged-fact')).toHaveLength(2);
+
+    fireEvent.press(screen.getByRole('tab', { name: i18n.t('timeline.filter-chips.2') }));
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('diary-history-logged-fact')).toHaveLength(1);
+    });
+    expect(screen.queryByTestId('diary-history-day-2026-06-11')).toBeNull();
   });
 });

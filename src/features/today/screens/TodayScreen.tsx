@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
 import {
@@ -15,6 +15,7 @@ import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { DayDivider } from '@/design/primitives/DayDivider';
 import { EmptyIllustration } from '@/design/primitives/EmptyIllustration';
 import { FactCard } from '@/design/primitives/FactCard';
 import { IconButton } from '@/design/primitives/IconButton';
@@ -24,14 +25,17 @@ import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
 import { SwipeToDelete } from '@/design/primitives/SwipeToDelete';
+import { Touchable } from '@/design/primitives/Touchable';
 import { WeekStrip, type WeekStripDay } from '@/design/primitives/WeekStrip';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation, type I18nKey } from '@/lib/i18n';
 import {
   calendarDateToUtc,
+  formatLocalCalendarDate,
   getLocalCalendarDate,
   shiftCalendarDate,
 } from '@/lib/i18n/format-date';
+import type { TimelineFilters } from '@/lib/query/keys';
 import {
   createQuickLogDeleteRequest,
   createQuickLogEditRequest,
@@ -89,6 +93,43 @@ const diaryEmptyStateCopy: Record<'cold-start' | 'empty-history', {
     titleKey: 'today.states.empty-history.title',
   },
 };
+type DiaryHistoryFilterValue = 'all' | 'feeding' | 'potty' | 'sleep';
+type DiaryHistoryFilterSpec = Readonly<{
+  eventTypes: readonly EventType[] | undefined;
+  labelKey: I18nKey;
+  value: DiaryHistoryFilterValue;
+}>;
+type DiaryEventRow = Readonly<{
+  event: QuickLogEventView;
+  row: QuickLogCachedEventRow;
+}>;
+type DiaryHistoryDayGroup = Readonly<{
+  eventRows: readonly DiaryEventRow[];
+  key: string;
+  label: string;
+}>;
+const diaryHistoryFilterSpecs = [
+  {
+    eventTypes: undefined,
+    labelKey: 'timeline.filter-chips.0',
+    value: 'all',
+  },
+  {
+    eventTypes: ['feeding'],
+    labelKey: 'timeline.filter-chips.2',
+    value: 'feeding',
+  },
+  {
+    eventTypes: ['potty'],
+    labelKey: 'timeline.filter-chips.1',
+    value: 'potty',
+  },
+  {
+    eventTypes: ['sleep'],
+    labelKey: 'timeline.filter-chips.3',
+    value: 'sleep',
+  },
+] as const satisfies readonly DiaryHistoryFilterSpec[];
 
 export function TodayScreen({
   actions = emptyActions,
@@ -101,6 +142,13 @@ export function TodayScreen({
   todayPlanInput,
 }: TodayScreenProps) {
   const { locale, t } = useAppTranslation();
+  const [diaryHistoryOpen, setDiaryHistoryOpen] = useState(false);
+  const [selectedHistoryFilter, setSelectedHistoryFilter] =
+    useState<DiaryHistoryFilterValue>('all');
+  const historyFilters = useMemo(
+    () => createDiaryHistoryFilters(selectedHistoryFilter),
+    [selectedHistoryFilter],
+  );
   const timelineRows = useQuickLogTimelineRows(
     careContext,
     careContext === null
@@ -110,7 +158,13 @@ export function TodayScreen({
         to: careContext.todayDate,
       },
   );
+  const historyTimelineRows = useQuickLogTimelineRows(
+    diaryHistoryOpen ? careContext : null,
+    historyFilters,
+  );
   const rows = timelineRows.rows;
+  const visibleRows = diaryHistoryOpen ? historyTimelineRows.rows : rows;
+  const visibleTimelineStatus = diaryHistoryOpen ? historyTimelineRows.status : timelineRows.status;
   const todayPlanSourceInput = useMemo(() => careContext === null
     ? null
     : createTodayPlanInput({
@@ -137,7 +191,7 @@ export function TodayScreen({
     );
   }
 
-  const eventRows = rows.flatMap((row) => {
+  const todayEventRows = rows.flatMap((row) => {
     const event = createQuickLogEventView(row, {
       locale,
       t,
@@ -146,10 +200,20 @@ export function TodayScreen({
 
     return event === null ? [] : [{ event, row }];
   });
+  const eventRows = visibleRows.flatMap((row) => {
+    const event = createQuickLogEventView(row, {
+      locale,
+      t,
+      todayDate: careContext.todayDate,
+    });
+
+    return event === null ? [] : [{ event, row }];
+  });
+  const todayEventViews = todayEventRows.map((eventRow) => eventRow.event);
   const eventViews = eventRows.map((eventRow) => eventRow.event);
   const todayStatus = getTodayStatusState({
     careContext,
-    eventViews,
+    eventViews: todayEventViews,
     rows,
     screenState,
     timelineStatus: timelineRows.status,
@@ -160,7 +224,8 @@ export function TodayScreen({
     && screenState !== 'empty-history'
     && screenState !== 'pending-write'
     && !(timelineRows.status === 'loading' && rows.length === 0);
-  const showQuickLogSection = eventViews.length > 0
+  const showQuickLogSection = diaryHistoryOpen
+    || eventViews.length > 0
     || timelineRows.status === 'error'
     || hasPendingLocalRows(rows)
     || shouldShowQuickLogFailedBanner(rows);
@@ -221,12 +286,41 @@ export function TodayScreen({
             label={t('today.history.open-action')}
             labelMaxFontSizeMultiplier={2}
             labelVariant="label"
-            onPress={openTimeline}
+            onPress={() => {
+              setDiaryHistoryOpen(true);
+            }}
             style={styles.timelineEntry}
             variant="tertiary"
           />
         </Stack>
-        {eventViews.length > 0 ? (
+        {diaryHistoryOpen ? (
+          <>
+            <DiaryHistoryFilterBar
+              selectedFilter={selectedHistoryFilter}
+              setSelectedFilter={setSelectedHistoryFilter}
+            />
+            {eventViews.length > 0 ? (
+              <DiaryHistoryDayGroups
+                actions={actions}
+                eventRows={eventRows}
+                locale={locale}
+                t={t}
+                todayDate={careContext.todayDate}
+              />
+            ) : visibleTimelineStatus === 'error' ? (
+              <Card
+                accessibilityLabel={t('errors.load-failed')}
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert">
+                <AppText>{t('errors.load-failed')}</AppText>
+              </Card>
+            ) : (
+              <Card>
+                <AppText tone="secondary">{t('timeline.empty-filter')}</AppText>
+              </Card>
+            )}
+          </>
+        ) : eventViews.length > 0 ? (
           eventRows.map(({ event, row }) => (
             <DiaryFactRow
               actions={actions}
@@ -235,7 +329,7 @@ export function TodayScreen({
               row={row}
             />
           ))
-        ) : timelineRows.status === 'error' ? (
+        ) : visibleTimelineStatus === 'error' ? (
           <Card
             accessibilityLabel={t('errors.load-failed')}
             accessibilityLiveRegion="polite"
@@ -253,6 +347,88 @@ export function TodayScreen({
       </Stack>
       ) : null}
     </Screen>
+  );
+}
+
+function DiaryHistoryFilterBar({
+  selectedFilter,
+  setSelectedFilter,
+}: Readonly<{
+  selectedFilter: DiaryHistoryFilterValue;
+  setSelectedFilter: (value: DiaryHistoryFilterValue) => void;
+}>) {
+  const { t } = useAppTranslation();
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.historyFilterScroller}
+      testID="diary-history-filter-bar">
+      <Stack direction="horizontal" gap="sm">
+        {diaryHistoryFilterSpecs.map((option) => {
+          const selected = option.value === selectedFilter;
+          const label = t(option.labelKey);
+
+          return (
+            <Touchable
+              accessibilityLabel={label}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              key={option.value}
+              minTarget="thumb"
+              onPress={() => {
+                setSelectedFilter(option.value);
+              }}
+              style={[styles.historyFilterChip, selected ? styles.historyFilterChipSelected : null]}>
+              <AppText
+                maxFontSizeMultiplier={1.4}
+                style={selected ? styles.historyFilterLabelSelected : styles.historyFilterLabel}
+                variant="label">
+                {label}
+              </AppText>
+            </Touchable>
+          );
+        })}
+      </Stack>
+    </ScrollView>
+  );
+}
+
+function DiaryHistoryDayGroups({
+  actions,
+  eventRows,
+  locale,
+  t,
+  todayDate,
+}: Readonly<{
+  actions: QuickLogEventActionHandlers;
+  eventRows: readonly DiaryEventRow[];
+  locale: string;
+  t: ReturnType<typeof useAppTranslation>['t'];
+  todayDate: string;
+}>) {
+  const groups = groupDiaryHistoryRows(eventRows, todayDate, locale, t);
+
+  return (
+    <Stack gap="md">
+      {groups.map((group) => (
+        <Stack gap="sm" key={group.key}>
+          <DayDivider
+            label={group.label}
+            testID={`diary-history-day-${group.key}`}
+          />
+          {group.eventRows.map(({ event, row }) => (
+            <DiaryFactRow
+              actions={actions}
+              event={event}
+              key={event.clientEventId}
+              row={row}
+            />
+          ))}
+        </Stack>
+      ))}
+    </Stack>
   );
 }
 
@@ -760,6 +936,95 @@ function formatLocalHourMinute(occurredAt: string): string {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+function createDiaryHistoryFilters(selectedFilter: DiaryHistoryFilterValue): TimelineFilters {
+  const spec = diaryHistoryFilterSpecs.find((option) => option.value === selectedFilter);
+
+  if (spec?.eventTypes === undefined) {
+    return {};
+  }
+
+  return {
+    eventTypes: spec.eventTypes,
+  };
+}
+
+function groupDiaryHistoryRows(
+  eventRows: readonly DiaryEventRow[],
+  todayDate: string,
+  locale: string,
+  t: ReturnType<typeof useAppTranslation>['t'],
+): readonly DiaryHistoryDayGroup[] {
+  const order: string[] = [];
+  const rowsByDate = new Map<string, DiaryEventRow[]>();
+
+  for (const eventRow of eventRows) {
+    const occurredDate = formatLocalCalendarDate(eventRow.row.occurred_at);
+    const existingRows = rowsByDate.get(occurredDate);
+
+    if (existingRows === undefined) {
+      rowsByDate.set(occurredDate, [eventRow]);
+      order.push(occurredDate);
+    } else {
+      existingRows.push(eventRow);
+    }
+  }
+
+  return order.map((dateKey) => ({
+    eventRows: rowsByDate.get(dateKey) ?? [],
+    key: dateKey,
+    label: formatDiaryHistoryDayLabel(dateKey, todayDate, locale, t),
+  }));
+}
+
+function formatDiaryHistoryDayLabel(
+  calendarDate: string,
+  todayDate: string,
+  locale: string,
+  t: ReturnType<typeof useAppTranslation>['t'],
+): string {
+  const weekday = formatDiaryHistoryWeekday(calendarDate, locale);
+
+  if (calendarDate === todayDate) {
+    return t('timeline.section-today', { weekday });
+  }
+
+  if (calendarDate === shiftCalendarDate(todayDate, -1)) {
+    return t('timeline.section-yesterday', { weekday });
+  }
+
+  return t('timeline.section-date', {
+    date: formatDiaryHistoryDate(calendarDate, locale),
+    weekday,
+  });
+}
+
+function formatDiaryHistoryWeekday(calendarDate: string, locale: string): string {
+  const date = calendarDateToUtc(calendarDate);
+
+  if (date === null) {
+    return calendarDate;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: 'UTC',
+    weekday: 'long',
+  }).format(date);
+}
+
+function formatDiaryHistoryDate(calendarDate: string, locale: string): string {
+  const date = calendarDateToUtc(calendarDate);
+
+  if (date === null) {
+    return calendarDate;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(date);
+}
+
 function DiaryFactRow({
   actions,
   event,
@@ -967,8 +1232,33 @@ const styles = StyleSheet.create({
     gap: DIARY_HISTORY_SECTION_GAP,
   },
   eventActionsButton: {
-    minHeight: 44,
-    minWidth: 44,
+    minHeight: tokens.layout.tapTargetMin,
+    minWidth: tokens.layout.tapTargetMin,
+  },
+  historyFilterChip: {
+    alignItems: 'center',
+    backgroundColor: tokens.color.surface.raised,
+    borderColor: tokens.color.stroke.default,
+    borderRadius: tokens.radius.full,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    minHeight: tokens.layout.tapTargetMin,
+    paddingHorizontal: tokens.space[4],
+    paddingVertical: tokens.space[2],
+  },
+  historyFilterChipSelected: {
+    backgroundColor: tokens.color.primary[50],
+    borderColor: tokens.color.primary[300],
+  },
+  historyFilterLabel: {
+    color: tokens.color.text.secondary,
+  },
+  historyFilterLabelSelected: {
+    color: tokens.color.primary[700],
+  },
+  historyFilterScroller: {
+    marginHorizontal: -tokens.layout.screenPaddingPhone,
+    paddingHorizontal: tokens.layout.screenPaddingPhone,
   },
   infoHeroAction: {
     alignSelf: 'flex-start',

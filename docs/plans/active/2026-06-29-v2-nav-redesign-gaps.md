@@ -747,6 +747,41 @@ clay/sage/honey/mauve accent map, swipe-to-delete with a VoiceOver-parity access
 `2026-06-30-v2-screen-polish-backlog.md` — do not re-implement Diary from this section's older
 board lock, and do not revert the Clay rebuild.
 
+**2026-07-02 next implementation slice:** Diary history scroll-back is scoped to the locked
+`5b-diary-history` Clay board in `docs/design/v2/specs/diary-v2.md` and
+`docs/design/v2/reference/diary-create.screens.jsx`.
+
+- Source-of-truth board: `ScreenDiaryHistory` (`5b-diary-history`) with inline Diary history,
+  `All/Food/Potty/Sleep` chip filter anatomy, day dividers, and the explicit banner note
+  "Scrolled history state inside Diary. No Timeline route."
+- Implementation scope: the existing `Review history` affordance must expand read-only, filtered
+  history inside `TodayScreen`/Diary instead of calling the standalone Timeline route. The normal
+  day hero/status state must continue to be computed from today's filtered rows only.
+- Out of scope for this slice: synced delete/undo behavior changes, RLS-backed durable delete,
+  recap/day summaries, and replacing the legacy `/timeline` route itself.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/today-core.render.test.tsx` failed as expected
+  while `Review history` still called `openTimeline` and no `diary-history-filter-bar` existed.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/today-core.render.test.tsx`
+  — PASS: 1 suite, 17 tests.
+- `npm run typecheck` — PASS.
+- `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n budgets, scaffold
+  guardrails, tokens, privacy scan, and text hygiene.
+- `npm run check` — PASS: lint, typecheck, 70 Jest suites / 539 tests, 118 node tests, scaffold
+  checks, tokens, privacy scan, and text hygiene. Output still includes the existing non-failing
+  React `act(...)` warning in `src/test/screen-header.render.test.tsx`.
+
+Implementation notes:
+- `Review history` now expands inline Diary history instead of calling the standalone Timeline route.
+- The inline state uses a separate history timeline query, so Diary hero/status calculations remain
+  based on today's rows only.
+- The history state renders Clay-style `All / Feeding / Potty / Sleep` filter chips, day dividers,
+  and the existing `FactCard` logged-fact anatomy.
+- Stage 4 native screenshot comparison for `5b-diary-history` remains open.
+
 ## 11. Quick Log route Stage-0 lock evidence
 
 **2026-06-30 next implementation slice:** `/quick-log` route duplicate-warning anatomy.
