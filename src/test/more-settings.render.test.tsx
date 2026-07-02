@@ -142,6 +142,7 @@ describe('More settings entries', () => {
             openPetSettings={jest.fn()}
             openHelp={jest.fn()}
             openPlus={jest.fn()}
+            openReminders={jest.fn()}
             openSitterMode={jest.fn()}
             openTimeline={jest.fn()}
             puppy={puppy}
@@ -165,7 +166,7 @@ describe('More settings entries', () => {
 
     expect(screen.getByText(i18n.t('more.sections.records'))).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('more.rows.timeline') })).toBeTruthy();
-    expect(screen.getByText(i18n.t('more.rows.reminders'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.rows.reminders') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.rows.notifications'))).toBeTruthy();
 
     expect(screen.getByText(i18n.t('more.sections.privacy'))).toBeTruthy();
@@ -179,8 +180,8 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', { name: i18n.t('more.rows.puppyplan-plus') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
 
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(3);
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(3);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(2);
 
     const scrollView = result.UNSAFE_getByType(ScrollView);
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
@@ -190,11 +191,12 @@ describe('More settings entries', () => {
     );
   });
 
-  it('opens Pet settings, household, sitter mode, notification, help, and Plus settings from the More hub', () => {
+  it('opens Pet settings, household, sitter mode, reminders, notification, help, and Plus settings from the More hub', () => {
     const openHousehold = jest.fn();
     const openPetSettings = jest.fn();
     const openSitterMode = jest.fn();
     const openShareableCards = jest.fn();
+    const openReminders = jest.fn();
     const openNotifications = jest.fn();
     const openHelp = jest.fn();
     const openPlus = jest.fn();
@@ -209,6 +211,7 @@ describe('More settings entries', () => {
             openNotifications={openNotifications}
             openPetSettings={openPetSettings}
             openPlus={openPlus}
+            openReminders={openReminders}
             openShareableCards={openShareableCards}
             openSitterMode={openSitterMode}
             openTimeline={jest.fn()}
@@ -230,6 +233,9 @@ describe('More settings entries', () => {
       name: i18n.t('more.rows.shareable-cards'),
     }));
     fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.rows.reminders'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.rows.notifications'),
     }));
     fireEvent.press(screen.getByRole('button', {
@@ -243,6 +249,7 @@ describe('More settings entries', () => {
     expect(openHousehold).toHaveBeenCalledTimes(1);
     expect(openSitterMode).toHaveBeenCalledTimes(1);
     expect(openShareableCards).toHaveBeenCalledTimes(1);
+    expect(openReminders).toHaveBeenCalledTimes(1);
     expect(openNotifications).toHaveBeenCalledTimes(1);
     expect(openHelp).toHaveBeenCalledTimes(1);
     expect(openPlus).toHaveBeenCalledTimes(1);

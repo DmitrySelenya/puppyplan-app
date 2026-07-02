@@ -2062,6 +2062,40 @@ GREEN / regression evidence:
   scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing reduced-motion `act(...)`
   warnings remain unrelated to this slice.
 
+### 19b. More Reminders access wiring
+
+**2026-07-02 access slice:** make the More tab's Reminders row open the existing
+`/reminders/edit` route. This only restores access to the implemented create/edit modal; it does not
+claim the full Reminders Hub, reminder list rendering, lifecycle actions, occurrence generation, or
+local notification scheduling.
+
+- Source spec card: `docs/design/v1/specs/04-quick-log-routines-reminders.md`.
+- Source canon: DESIGN.md §4.2.1 Reminders Hub and §4.2.2 Create / Edit Reminder Form.
+- Route/components: `/more`, `/reminders/edit`, `src/features/more/screens/MoreScreen.tsx`.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-REM-ACCESS-1: More records section renders Reminders as an active `ListRow` button, not a
+  deferred row.
+- AC-REM-ACCESS-2: pressing the row calls the injected `openReminders` handler.
+- AC-REM-ACCESS-3: the production More route wires that handler to `router.push('/reminders/edit')`.
+- AC-REM-ACCESS-4: no new hub/list/scheduling/native module/schema work is introduced in this slice.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx`
+  — FAIL before implementation: Reminders row was not accessible as a button and pressing it could not
+  call `openReminders`.
+
+GREEN evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx`
+  — PASS: 1 suite, 27 tests.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts src/test/app-shell.render.test.tsx`
+  — PASS: 3 suites, 47 tests.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 75 suites / 599 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing reduced-motion `act(...)`
+  warnings remain unrelated to this slice.
+
 ## 20. Trusted sitter checklist reminder anatomy evidence
 
 **2026-06-30 next implementation slice:** Trusted Sitter Checklist Reminder card anatomy inside

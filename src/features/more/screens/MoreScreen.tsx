@@ -28,6 +28,7 @@ export type MoreScreenProps = Readonly<{
   openNotifications?: () => void;
   openPetSettings?: () => void;
   openPlus?: () => void;
+  openReminders?: () => void;
   openShareableCards?: () => void;
   openSitterMode?: () => void;
   openTimeline: () => void;
@@ -54,6 +55,7 @@ export function MoreScreen({
   openNotifications,
   openPetSettings,
   openPlus,
+  openReminders,
   openShareableCards,
   openSitterMode,
   openTimeline,
@@ -109,7 +111,13 @@ export function MoreScreen({
           title={t('more.rows.timeline')}
           variant="settings"
         />
-        <DeferredListRow icon="bell" title={t('more.rows.reminders')} />
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="bell" />}
+          onPress={openReminders}
+          title={t('more.rows.reminders')}
+          variant="settings"
+        />
         <ListRow
           accessory="chevron"
           leading={<AppIcon name="gear" />}
