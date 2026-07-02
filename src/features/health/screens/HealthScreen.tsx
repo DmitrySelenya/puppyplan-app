@@ -31,9 +31,11 @@ import {
   useDeleteHealthRecordMutation,
   useHealthRecordDetailQuery,
   useRestoreHealthRecordMutation,
+  useUpdateHealthRecordMutation,
   type HealthRecordCreateDraft,
   type HealthRecordDeleteDraft,
   type HealthRecordDraftStatus,
+  type HealthRecordUpdateDraft,
 } from '@/lib/query/health-records';
 
 export type HealthScreenProps = Readonly<{
@@ -893,6 +895,9 @@ export function HealthRecordDetailRouteScreen({
   const detail = useHealthRecordDetailQuery(activeCare.careContext?.puppyId, recordId);
   const deleteHealthRecord = useDeleteHealthRecordMutation();
   const restoreHealthRecord = useRestoreHealthRecordMutation();
+  const updateHealthRecord = useUpdateHealthRecordMutation();
+  const [isEditing, setIsEditing] = useState(false);
+  const [savedRecord, setSavedRecord] = useState<HealthRecord | null>(null);
 
   if (localState) {
     return (
@@ -935,6 +940,27 @@ export function HealthRecordDetailRouteScreen({
   }
 
   const careContext = activeCare.careContext;
+  const visibleRecord = savedRecord ?? detail.data;
+
+  if (isEditing) {
+    return (
+      <Screen contentStyle={styles.content}>
+        <HealthRecordDetailEditForm
+          careContext={careContext}
+          isSaving={updateHealthRecord.isPending}
+          onCancel={() => {
+            setIsEditing(false);
+          }}
+          onSave={async (draft) => {
+            const updatedRecord = await updateHealthRecord.mutateAsync(draft);
+            setSavedRecord(updatedRecord);
+            setIsEditing(false);
+          }}
+          record={visibleRecord}
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen contentStyle={styles.content}>
@@ -943,7 +969,7 @@ export function HealthRecordDetailRouteScreen({
         onConfirmDelete={async () => {
           const deleteDraft = toHealthRecordDeleteDraft({
             careContext,
-            record: detail.data,
+            record: visibleRecord,
           });
 
           try {
@@ -953,7 +979,7 @@ export function HealthRecordDetailRouteScreen({
             return;
           }
 
-          const snackbarId = `health-record-delete-${detail.data.id}`;
+          const snackbarId = `health-record-delete-${visibleRecord.id}`;
           snackbar.showSnackbar({
             accessibilityLabel: [
               t('health.edit-record.delete-undo-toast'),
@@ -968,7 +994,7 @@ export function HealthRecordDetailRouteScreen({
               onPress: () => {
                 const restoreDraft = toHealthRecordDeleteDraft({
                   careContext,
-                  record: detail.data,
+                  record: visibleRecord,
                 });
 
                 void restoreHealthRecord.mutateAsync(restoreDraft).catch(() => {
@@ -988,13 +1014,192 @@ export function HealthRecordDetailRouteScreen({
           onClose();
         }}
         onClose={onClose}
-        record={detail.data}
+        onEdit={() => {
+          setIsEditing(true);
+        }}
+        record={visibleRecord}
       />
     </Screen>
   );
 }
 
 const HEALTH_RECORD_DELETE_UNDO_DURATION_MS = 5_000;
+
+function HealthRecordDetailEditForm({
+  careContext,
+  isSaving = false,
+  onCancel,
+  onSave,
+  record,
+}: Readonly<{
+  careContext: ActiveCareContext;
+  isSaving?: boolean;
+  onCancel: () => void;
+  onSave: (draft: HealthRecordUpdateDraft) => Promise<void>;
+  record: HealthRecord;
+}>) {
+  const { t } = useAppTranslation();
+  const initialDate = healthRecordEffectiveDate(record);
+  const initialStatus = toEditableHealthRecordStatus(record.status);
+  const initialProviderName = record.provider_name ?? '';
+  const initialNotes = record.notes ?? '';
+  const [title, setTitle] = useState(record.title);
+  const [providerName, setProviderName] = useState(initialProviderName);
+  const [notes, setNotes] = useState(initialNotes);
+  const [status, setStatus] = useState<HealthRecordDraftStatus>(initialStatus);
+  const [localReviewState, setLocalReviewState] = useState<HealthRecordEditReviewState | undefined>(undefined);
+  const visibleReviewState = localReviewState ?? (isSaving ? 'pending-write' : undefined);
+  const isDirty = title !== record.title
+    || providerName !== initialProviderName
+    || notes !== initialNotes
+    || status !== initialStatus;
+  const canSave = title.trim().length > 0 && isDirty && visibleReviewState !== 'pending-write';
+
+  async function submit() {
+    if (!canSave) {
+      return;
+    }
+
+    setLocalReviewState('pending-write');
+
+    try {
+      await onSave(toHealthRecordUpdateDraft({
+        careContext,
+        notes,
+        providerName,
+        record,
+        scheduledFor: initialDate,
+        status,
+        title,
+      }));
+    } catch {
+      setLocalReviewState('error');
+    }
+  }
+
+  return (
+    <Card accessibilityLabel={t('health.edit-record.screen-title')}>
+      <Stack gap="md">
+        <Stack align="center" direction="horizontal" justify="space-between">
+          <Button
+            label={t('common.cancel')}
+            onPress={onCancel}
+            variant="tertiary"
+          />
+          <AppText accessibilityRole="header" variant="headline">
+            {t('health.edit-record.screen-title')}
+          </AppText>
+          <Button
+            disabled={!canSave}
+            label={t('common.save')}
+            loading={visibleReviewState === 'pending-write'}
+            onPress={() => {
+              void submit();
+            }}
+            variant="tertiary"
+          />
+        </Stack>
+        {visibleReviewState ? (
+          <HealthRecordEditStateCard state={visibleReviewState} />
+        ) : null}
+        <SectionHeader title={t('health.add-record.section-main')} />
+        <TextField
+          label={t('health.add-record.field-name')}
+          onChangeText={setTitle}
+          value={title}
+        />
+        <ListRow
+          meta={initialDate}
+          title={t('health.add-record.field-date')}
+        />
+        <SegmentedControl
+          accessibilityLabel={t('health.add-record.field-status')}
+          onValueChange={(value) => {
+            setStatus(value as HealthRecordDraftStatus);
+          }}
+          options={[
+            { label: t('health.add-record.status-segments.0'), value: 'template' },
+            { label: t('health.add-record.status-segments.1'), value: 'confirmed' },
+            { label: t('health.add-record.status-segments.2'), value: 'done' },
+          ]}
+          value={status}
+        />
+        <SectionHeader title={t('health.add-record.section-extra')} />
+        <TextField
+          label={t('health.add-record.field-clinic')}
+          onChangeText={setProviderName}
+          value={providerName}
+        />
+        <TextField
+          label={t('health.add-record.field-note')}
+          multiline
+          onChangeText={setNotes}
+          placeholder={t('health.add-record.privacy-hint')}
+          value={notes}
+        />
+        <AppText tone="tertiary" variant="footnote">{t('health.add-record.note-hint')}</AppText>
+      </Stack>
+    </Card>
+  );
+}
+
+function toHealthRecordUpdateDraft({
+  careContext,
+  notes,
+  providerName,
+  record,
+  scheduledFor,
+  status,
+  title,
+}: Readonly<{
+  careContext: ActiveCareContext;
+  notes: string;
+  providerName: string;
+  record: HealthRecord;
+  scheduledFor: string;
+  status: HealthRecordDraftStatus;
+  title: string;
+}>): HealthRecordUpdateDraft {
+  return {
+    householdId: careContext.householdId,
+    id: record.id,
+    notes,
+    previousScheduledFor: healthRecordEffectiveDate(record),
+    providerName,
+    puppyId: careContext.puppyId,
+    recordType: record.record_type,
+    scheduledFor,
+    source: toHealthRecordUpdateSource(record.source),
+    status,
+    title,
+    updatedAt: new Date().toISOString(),
+    userId: careContext.userId,
+  };
+}
+
+function healthRecordEffectiveDate(record: HealthRecord): string {
+  return record.scheduled_for ?? record.completed_at?.slice(0, 10) ?? record.updated_at.slice(0, 10);
+}
+
+function toEditableHealthRecordStatus(status: string): HealthRecordDraftStatus {
+  if (status === 'done' || status === 'completed') {
+    return 'done';
+  }
+
+  if (status === 'confirmed') {
+    return 'confirmed';
+  }
+
+  return 'template';
+}
+
+function toHealthRecordUpdateSource(source: string): HealthRecordUpdateDraft['source'] {
+  if (source === 'template' || source === 'manual' || source === 'confirmed') {
+    return source;
+  }
+
+  return 'confirmed';
+}
 
 function toHealthRecordDeleteDraft({
   careContext,
@@ -1212,6 +1417,7 @@ export function HealthRecordDetailPreview({
   deletePending = false,
   onConfirmDelete,
   onClose,
+  onEdit,
   record,
   showDestructiveActions = true,
   status = 'confirmed',
@@ -1219,6 +1425,7 @@ export function HealthRecordDetailPreview({
   deletePending?: boolean;
   onConfirmDelete?: () => Promise<void> | void;
   onClose?: () => void;
+  onEdit?: () => void;
   record?: HealthRecord;
   showDestructiveActions?: boolean;
   status?: HealthRecordStatus;
@@ -1250,7 +1457,15 @@ export function HealthRecordDetailPreview({
             <AppText accessibilityRole="header" variant="headline">
               {t('health.edit-record.screen-title')}
             </AppText>
-            <View style={styles.headerSpacer} />
+            {onEdit ? (
+              <Button
+                label={t('common.edit')}
+                onPress={onEdit}
+                variant="tertiary"
+              />
+            ) : (
+              <View style={styles.headerSpacer} />
+            )}
           </Stack>
         ) : null}
         <Stack direction="horizontal" gap="md">

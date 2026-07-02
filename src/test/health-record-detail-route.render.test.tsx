@@ -19,6 +19,7 @@ const mockUseHealthRecordDetailQuery = jest.fn();
 const mockDeleteMutateAsync = jest.fn();
 const mockRestoreMutateAsync = jest.fn();
 const mockShowSnackbar = jest.fn();
+const mockUpdateMutateAsync = jest.fn();
 
 jest.mock('expo-router', () => ({
   router: {
@@ -50,6 +51,10 @@ jest.mock('@/lib/query/health-records', () => ({
     isPending: false,
     mutateAsync: mockRestoreMutateAsync,
   }),
+  useUpdateHealthRecordMutation: () => ({
+    isPending: false,
+    mutateAsync: mockUpdateMutateAsync,
+  }),
 }));
 
 jest.mock('@/design/primitives/Snackbar', () => ({
@@ -70,6 +75,24 @@ describe('HealthRecordDetailRoute', () => {
     mockRestoreMutateAsync.mockReset();
     mockRestoreMutateAsync.mockResolvedValue(undefined);
     mockShowSnackbar.mockReset();
+    mockUpdateMutateAsync.mockReset();
+    mockUpdateMutateAsync.mockImplementation(async (draft) => ({
+      completed_at: draft.status === 'done' ? `${draft.scheduledFor}T12:00:00.000Z` : null,
+      created_at: '2026-07-02T08:00:00.000Z',
+      deleted_at: null,
+      id: draft.id,
+      notes: draft.notes.trim().length > 0 ? draft.notes.trim() : null,
+      provider_name: draft.providerName.trim().length > 0 ? draft.providerName.trim() : null,
+      puppy_id: draft.puppyId,
+      record_type: draft.recordType,
+      scheduled_for: draft.scheduledFor,
+      source: draft.source,
+      status: draft.status,
+      title: draft.title.trim(),
+      updated_at: draft.updatedAt,
+      updated_by: draft.userId,
+      version: 2,
+    }));
     mockUseHealthRecordDetailQuery.mockReset();
     mockUseHealthRecordDetailQuery.mockReturnValue({
       data: {
@@ -176,5 +199,72 @@ describe('HealthRecordDetailRoute', () => {
     await waitFor(() => expect(screen.getByTestId('health-record-detail-state-error')).toBeTruthy());
     expect(mockBack).not.toHaveBeenCalled();
     expect(mockShowSnackbar).not.toHaveBeenCalled();
+  });
+
+  it('AC-PET-EDIT-PROD-1 AC-PET-EDIT-PROD-2 AC-PET-EDIT-PROD-3 AC-PET-EDIT-PROD-4 edits a dirty server record and keeps the route open', async () => {
+    render(<HealthRecordDetailRoute />);
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('common.edit'),
+    }));
+
+    const titleInput = screen.getByLabelText(i18n.t('health.add-record.field-name'));
+    expect(titleInput.props.value).toBe('DHPP booster');
+    expect(screen.getByText('2026-07-02')).toBeTruthy();
+    expect(screen.getByLabelText(i18n.t('health.add-record.field-clinic')).props.value)
+      .toBe('Clay Vet');
+    expect(screen.getByLabelText(i18n.t('health.add-record.field-note')).props.value)
+      .toBe('Bring the paper record');
+
+    const saveButton = screen.getByRole('button', {
+      name: i18n.t('common.save'),
+    });
+    expect(saveButton.props.accessibilityState.disabled).toBe(true);
+
+    fireEvent.changeText(titleInput, 'DHPP booster updated');
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('common.save'),
+    }));
+
+    await waitFor(() => expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+      householdId: mockCareContext.householdId,
+      id: mockRecordId,
+      notes: 'Bring the paper record',
+      previousScheduledFor: '2026-07-02',
+      providerName: 'Clay Vet',
+      puppyId: mockCareContext.puppyId,
+      recordType: 'vaccination',
+      scheduledFor: '2026-07-02',
+      source: 'manual',
+      status: 'confirmed',
+      title: 'DHPP booster updated',
+      updatedAt: expect.any(String),
+      userId: mockCareContext.userId,
+    }));
+    expect(mockBack).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText(i18n.t('health.add-record.field-name'))).toBeNull();
+    expect(screen.getByText('DHPP booster updated')).toBeTruthy();
+  });
+
+  it('AC-PET-EDIT-PROD-5 keeps the edit form visible and shows the form error state when save fails', async () => {
+    mockUpdateMutateAsync.mockRejectedValue(new Error('update failed'));
+
+    render(<HealthRecordDetailRoute />);
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('common.edit'),
+    }));
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('health.add-record.field-note')),
+      'Updated notes',
+    );
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('common.save'),
+    }));
+
+    await waitFor(() => expect(screen.getByTestId('health-add-record-state-error')).toBeTruthy());
+    expect(screen.getByLabelText(i18n.t('health.add-record.field-note')).props.value)
+      .toBe('Updated notes');
+    expect(mockBack).not.toHaveBeenCalled();
   });
 });

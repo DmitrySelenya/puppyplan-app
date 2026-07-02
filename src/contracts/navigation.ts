@@ -198,8 +198,11 @@ export const plannedRouteFiles = [
 
 export const shellI18nKeys = [
   'common.back',
+  'common.cancel',
   'common.close',
+  'common.edit',
   'common.loading',
+  'common.save',
   'errors.load-failed',
   'tabs.diary',
   'tabs.diary-hint',

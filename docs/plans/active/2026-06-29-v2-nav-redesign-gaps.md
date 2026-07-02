@@ -142,7 +142,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       Durable edit/delete/restore data-layer contracts are now implemented with source preservation,
       affected-date invalidation, zero-row delete failure handling, and single-record detail loading.
       Production detail routing and delete + 5-second undo restore snackbar wiring are implemented;
-      editable dirty-state UI and seeded production Stage 4 delete evidence remain open.
+      editable dirty-state UI now saves through the typed update mutation. Seeded production Stage 4
+      delete/edit evidence remains open.
 - [x] ✅ Status transitions visualisation Template→Confirmed→Done (§4.1.6) — native detail
       status strip now renders four visible icon+label steps with exactly one active filled state and
       full sequence accessibility label. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
@@ -1690,6 +1691,66 @@ Stage 4 status:
   (ignored local artifact). Production delete/undo behavior is covered by route render tests until a
   seeded debug record or approved harness route exists.
 
+### 17d. Health record production editable detail UI
+
+**2026-07-02 production edit slice:** turn the production Health detail route from read-only +
+delete into an editable detail surface backed by the already implemented typed update mutation. This
+closes the editable dirty-state UI gap without adding native DatePicker, offline queue behavior,
+schema changes, or new analytics.
+
+- Source spec card: `docs/design/v1/specs/05-pet-health.md`.
+- Source canon: `DESIGN.md` §4.1.4 Edit Record / Delete (Undo) and §4.1.6 status transitions.
+- Route/components: `app/(modals)/pet/health-record/[recordId].tsx`,
+  `src/features/health/screens/HealthScreen.tsx`, `src/lib/query/health-records.ts`,
+  `src/contracts/navigation.ts`, and existing design primitives.
+- TDD mode: lightweight; reduced assurance because this continuation is running in the main thread,
+  but RED route tests must be observed before production code.
+
+Acceptance:
+- AC-PET-EDIT-PROD-1: the production detail route exposes a localized Edit action for a loaded
+  server record; loading/unavailable/not-found/error states do not expose editing controls.
+- AC-PET-EDIT-PROD-2: pressing Edit swaps the read-only detail rows for the existing primitive-backed
+  form controls prefilled from the server record title, date, status, provider, and notes.
+- AC-PET-EDIT-PROD-3: Save is disabled until a real dirty change exists, while Cancel exits edit mode
+  without calling the update mutation.
+- AC-PET-EDIT-PROD-4: pressing Save calls the typed update mutation with record id, puppy id,
+  household id, record type, source preservation, previous scheduled date, edited fields, status,
+  user id, and explicit `updatedAt`.
+- AC-PET-EDIT-PROD-5: successful save exits edit mode and leaves the detail route open; failed save
+  keeps the edit form visible and renders the existing pending/error form-state anatomy.
+- Out of scope: native DatePicker, offline Health queue, delete/restore changes, schema changes, and
+  any notes/provider analytics or logs.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health-record-detail-route.render.test.tsx`
+  failed before implementation because the production detail route had no `Edit` button.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health-record-detail-route.render.test.tsx`
+  — PASS: 1 suite, 5 tests. Output includes the existing reduced-motion `act(...)` warning from
+  `src/design/motion/index.ts`; no failures.
+- `npm run typecheck` — PASS.
+- `npm run test:unit -- --runTestsByPath src/test/health-record-detail-route.render.test.tsx src/test/health-records-query.test.ts src/test/health.render.test.tsx src/test/pet-route.render.test.tsx src/test/health-record-edit-route.render.test.tsx`
+  — PASS: 5 suites, 36 tests. The same reduced-motion warning remains non-failing.
+- `npm run check` — PASS after adding existing `common.cancel`, `common.edit`, and `common.save`
+  keys to `shellI18nKeys`: lint, typecheck, 72 Jest suites / 574 tests, 118 node tests, scaffold,
+  i18n, tokens, privacy scan, and text hygiene. The reduced-motion `act(...)` warning remains
+  non-failing and unrelated to this slice.
+
+Implementation notes:
+- Loaded production detail records now expose a localized `Edit` action. Edit mode uses existing
+  primitives (`Button`, `TextField`, `ListRow`, `SegmentedControl`, `HealthRecordEditStateCard`) and
+  is prefilled from the server record title, effective date, status, provider, and notes.
+- Save is disabled until the user makes a real dirty change. Cancel exits edit mode without calling
+  the update mutation.
+- Save builds an explicit timestamped `HealthRecordUpdateDraft`, preserves the server `source`,
+  includes the previous affected date for invalidation, and updates the visible detail route from the
+  mutation result without closing the modal.
+- Save failures keep the edit form open and surface the existing form error state; notes/provider data
+  are not logged or sent to analytics.
+- `src/contracts/navigation.ts` now includes the existing `common.cancel`, `common.edit`, and
+  `common.save` keys in `shellI18nKeys` because Health shell code now uses them directly.
+
 ## 18. Vet visit prep card Stage-0 lock evidence
 
 **2026-06-30 next implementation slice:** Pet Health vet visit prep reference card.
@@ -3063,6 +3124,11 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Added production Health detail editable dirty-state UI: loaded server records expose
+  Edit, the form preloads title/date/status/provider/notes, Save is disabled until dirty, update uses
+  the typed mutation with source preservation and previous-date invalidation, success keeps the modal
+  open with the returned record, and failure keeps the form visible with the existing error state.
+  RED/GREEN route tests, adjacent Health/query tests, typecheck, and full `npm run check` passed.
 - 2026-07-02: Wired production Health detail delete + 5-second undo snackbar: loaded detail records
   now expose destructive controls, delete calls the typed mutation, success closes back to Pet and
   shows warning snackbar with Undo, restore uses the typed restore mutation, and delete failure keeps
