@@ -22,7 +22,10 @@ import {
 import { tokens } from '@/design/tokens';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
-import { useRemindersQuery } from '@/lib/query/reminders';
+import {
+  useRemindersQuery,
+  useToggleReminderEnabledMutation,
+} from '@/lib/query/reminders';
 
 type ReminderSegment = 'active' | 'off';
 type ReminderHubState = 'empty' | 'error' | 'loading';
@@ -73,6 +76,8 @@ const sectionIcon: Record<ReminderSection, AppIconName> = {
 export type RemindersHubScreenProps = Readonly<{
   onAddReminder: () => void;
   onBack: () => void;
+  onToggleReminder?: (reminderId: string, enabled: boolean) => void;
+  pendingToggleReminderId?: string;
   reminders?: readonly Reminder[];
   reviewState?: ReminderHubState;
 }>;
@@ -89,6 +94,7 @@ export function ConnectedRemindersHubScreen({
     activeCare.careContext?.householdId,
     activeCare.careContext?.puppyId,
   );
+  const toggleReminderMutation = useToggleReminderEnabledMutation();
 
   if (activeCare.status === 'loading') {
     return (
@@ -110,6 +116,8 @@ export function ConnectedRemindersHubScreen({
     );
   }
 
+  const careContext = activeCare.careContext;
+
   if (remindersQuery.isLoading) {
     return (
       <RemindersHubScreen
@@ -120,7 +128,7 @@ export function ConnectedRemindersHubScreen({
     );
   }
 
-  if (remindersQuery.isError) {
+  if (remindersQuery.isError || toggleReminderMutation.isError) {
     return (
       <RemindersHubScreen
         onAddReminder={onAddReminder}
@@ -134,6 +142,18 @@ export function ConnectedRemindersHubScreen({
     <RemindersHubScreen
       onAddReminder={onAddReminder}
       onBack={onBack}
+      onToggleReminder={(reminderId, enabled) => {
+        toggleReminderMutation.mutate({
+          enabled,
+          householdId: careContext.householdId,
+          puppyId: careContext.puppyId,
+          reminderId,
+          todayDate: careContext.todayDate,
+        });
+      }}
+      pendingToggleReminderId={toggleReminderMutation.isPending
+        ? toggleReminderMutation.variables?.reminderId
+        : undefined}
       reminders={remindersQuery.data ?? []}
     />
   );
@@ -142,6 +162,8 @@ export function ConnectedRemindersHubScreen({
 export function RemindersHubScreen({
   onAddReminder,
   onBack,
+  onToggleReminder,
+  pendingToggleReminderId,
   reminders = [],
   reviewState,
 }: RemindersHubScreenProps) {
@@ -198,6 +220,8 @@ export function RemindersHubScreen({
                   {rows.map((reminder) => (
                     <ReminderRow
                       key={reminder.id}
+                      onToggleReminder={onToggleReminder}
+                      pending={pendingToggleReminderId === reminder.id}
                       reminder={reminder}
                       section={section}
                     />
@@ -243,9 +267,13 @@ function RemindersHubStateCard({ state }: Readonly<{ state: ReminderHubState }>)
 }
 
 function ReminderRow({
+  onToggleReminder,
+  pending,
   reminder,
   section,
 }: Readonly<{
+  onToggleReminder?: (reminderId: string, enabled: boolean) => void;
+  pending: boolean;
   reminder: Reminder;
   section: ReminderSection;
 }>) {
@@ -262,7 +290,10 @@ function ReminderRow({
       trailing={(
         <Toggle
           accessibilityLabel={reminder.reminder_type}
-          onValueChange={() => undefined}
+          disabled={pending}
+          onValueChange={(enabled) => {
+            onToggleReminder?.(reminder.id, enabled);
+          }}
           testID={`reminder-row-toggle-${reminder.id}`}
           value={reminder.enabled}
         />

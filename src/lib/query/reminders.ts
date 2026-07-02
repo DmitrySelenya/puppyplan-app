@@ -8,6 +8,7 @@ import {
 import type { Reminder } from '@/contracts/supabase';
 import { createSupabaseReminderRepository } from '@/lib/supabase/reminders';
 import type {
+  ReminderEnabledUpdate,
   ReminderInsert,
   SupabaseReminderRepository,
 } from '@/lib/supabase/reminders';
@@ -30,6 +31,19 @@ export type ReminderCreateDraft = Readonly<{
 export type ReminderCreateMutationOptions = Readonly<{
   mutationFn(draft: ReminderCreateDraft): Promise<Reminder>;
   onSuccess(record: Reminder, draft: ReminderCreateDraft): Promise<void>;
+}>;
+
+export type ReminderToggleDraft = Readonly<{
+  enabled: boolean;
+  householdId: string;
+  puppyId: string;
+  reminderId: string;
+  todayDate: string;
+}>;
+
+export type ReminderToggleMutationOptions = Readonly<{
+  mutationFn(draft: ReminderToggleDraft): Promise<Reminder>;
+  onSuccess(record: Reminder, draft: ReminderToggleDraft): Promise<void>;
 }>;
 
 type ReminderInvalidationClient = Pick<QueryClient, 'invalidateQueries'>;
@@ -92,6 +106,22 @@ export function useCreateReminderMutation(
   });
 }
 
+export function useToggleReminderEnabledMutation(
+  repository: Pick<SupabaseReminderRepository, 'updateReminderEnabled'> =
+  createSupabaseReminderRepository(),
+) {
+  const queryClient = useQueryClient();
+  const options = createReminderToggleMutationOptions({
+    queryClient,
+    repository,
+  });
+
+  return useMutation({
+    mutationFn: options.mutationFn,
+    onSuccess: options.onSuccess,
+  });
+}
+
 export function toReminderInsert(draft: ReminderCreateDraft): ReminderInsert {
   return {
     assigned_to: null,
@@ -109,6 +139,14 @@ export function toReminderInsert(draft: ReminderCreateDraft): ReminderInsert {
   };
 }
 
+export function toReminderToggleUpdate(draft: ReminderToggleDraft): ReminderEnabledUpdate {
+  return {
+    enabled: draft.enabled,
+    id: draft.reminderId,
+    puppy_id: draft.puppyId,
+  };
+}
+
 export function createReminderCreateMutationOptions(
   dependencies: Readonly<{
     queryClient?: ReminderInvalidationClient;
@@ -117,6 +155,27 @@ export function createReminderCreateMutationOptions(
 ): ReminderCreateMutationOptions {
   return {
     mutationFn: (draft) => dependencies.repository.insertReminder(toReminderInsert(draft)),
+    onSuccess: async (_record, draft) => {
+      await Promise.all([
+        dependencies.queryClient?.invalidateQueries({
+          queryKey: queryKeys.reminders.list(draft.householdId, draft.puppyId),
+        }),
+        dependencies.queryClient?.invalidateQueries({
+          queryKey: queryKeys.today.dashboard(draft.householdId, draft.puppyId, draft.todayDate),
+        }),
+      ]);
+    },
+  };
+}
+
+export function createReminderToggleMutationOptions(
+  dependencies: Readonly<{
+    queryClient?: ReminderInvalidationClient;
+    repository: Pick<SupabaseReminderRepository, 'updateReminderEnabled'>;
+  }>,
+): ReminderToggleMutationOptions {
+  return {
+    mutationFn: (draft) => dependencies.repository.updateReminderEnabled(toReminderToggleUpdate(draft)),
     onSuccess: async (_record, draft) => {
       await Promise.all([
         dependencies.queryClient?.invalidateQueries({

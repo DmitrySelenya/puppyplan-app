@@ -1,9 +1,12 @@
 import type { Reminder } from '@/contracts/supabase';
 import {
   createReminderCreateMutationOptions,
+  createReminderToggleMutationOptions,
   createRemindersQueryOptions,
   toReminderInsert,
+  toReminderToggleUpdate,
   type ReminderCreateDraft,
+  type ReminderToggleDraft,
 } from '@/lib/query/reminders';
 import {
   createSupabaseReminderRepository,
@@ -42,6 +45,14 @@ const draft: ReminderCreateDraft = {
   userId,
 };
 
+const toggleDraft: ReminderToggleDraft = {
+  enabled: false,
+  householdId,
+  puppyId,
+  reminderId: reminder.id,
+  todayDate: '2026-07-02',
+};
+
 describe('Supabase reminder repository boundary', () => {
   it('AC-REM-DURABLE-1 lists non-deleted puppy reminders through the typed wrapper', async () => {
     const client = createClient({
@@ -74,6 +85,40 @@ describe('Supabase reminder repository boundary', () => {
 
     await expect(repository.insertReminder(toReminderInsert(draft)))
       .rejects.toThrow('reminder_insert_failed');
+  });
+
+  it('AC-REM-TOGGLE-1 updates a non-deleted reminder enabled flag through the typed wrapper', async () => {
+    const client = createClient({
+      insertData: reminder,
+      listData: [reminder],
+      updateData: {
+        ...reminder,
+        enabled: false,
+      },
+    });
+    const repository = createSupabaseReminderRepository(client);
+
+    await expect(repository.updateReminderEnabled(toReminderToggleUpdate(toggleDraft)))
+      .resolves.toEqual({
+        ...reminder,
+        enabled: false,
+      });
+    expect(client.updateReminderEnabled).toHaveBeenCalledWith({
+      enabled: false,
+      id: reminder.id,
+      puppy_id: puppyId,
+    });
+  });
+
+  it('AC-REM-TOGGLE-1 surfaces enabled update failures instead of returning stale rows', async () => {
+    const repository = createSupabaseReminderRepository(createClient({
+      insertData: reminder,
+      listData: [reminder],
+      updateError: { message: 'denied' },
+    }));
+
+    await expect(repository.updateReminderEnabled(toReminderToggleUpdate(toggleDraft)))
+      .rejects.toThrow('reminder_update_failed');
   });
 });
 
@@ -135,6 +180,32 @@ describe('reminder query mutation contract', () => {
       queryKey: ['today', householdId, puppyId, '2026-07-02'],
     });
   });
+
+  it('AC-REM-TOGGLE-2 invalidates reminder list and current Diary dashboard after enabled toggle', async () => {
+    const invalidateQueries = jest.fn().mockResolvedValue(undefined);
+    const updateReminderEnabled = jest.fn().mockResolvedValue({
+      ...reminder,
+      enabled: false,
+    });
+    const options = createReminderToggleMutationOptions({
+      queryClient: { invalidateQueries },
+      repository: { updateReminderEnabled },
+    });
+
+    await expect(options.mutationFn(toggleDraft)).resolves.toEqual({
+      ...reminder,
+      enabled: false,
+    });
+    await options.onSuccess({ ...reminder, enabled: false }, toggleDraft);
+
+    expect(updateReminderEnabled).toHaveBeenCalledWith(toReminderToggleUpdate(toggleDraft));
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['reminders', householdId, puppyId],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['today', householdId, puppyId, '2026-07-02'],
+    });
+  });
 });
 
 function createClient({
@@ -142,12 +213,18 @@ function createClient({
   insertError = null,
   listData,
   listError = null,
+  updateData,
+  updateError = null,
 }: Readonly<{
   insertData?: unknown;
   insertError?: unknown;
   listData?: unknown;
   listError?: unknown;
-}>): jest.Mocked<ReminderClient> {
+  updateData?: unknown;
+  updateError?: unknown;
+}>): jest.Mocked<ReminderClient> & Readonly<{
+  updateReminderEnabled: jest.Mock;
+}> {
   return {
     insertReminder: jest.fn().mockResolvedValue({
       data: insertData,
@@ -156,6 +233,10 @@ function createClient({
     listReminders: jest.fn().mockResolvedValue({
       data: listData,
       error: listError,
+    }),
+    updateReminderEnabled: jest.fn().mockResolvedValue({
+      data: updateData,
+      error: updateError,
     }),
   };
 }

@@ -1,7 +1,7 @@
 # 12.1 — Reminders Hub
 Route: `/reminders`   Atlas: `docs/design/v1/screenshots/reminders/12-1.png`
 Device sizes: SE compact primary, atlas 393x852
-Allowed deviations: production rows may show durable reminder titles from `public.reminder.reminder_type`; real toggle mutation, swipe edit/delete, occurrence generation, and local notification scheduling are deferred.
+Allowed deviations: production rows may show durable reminder titles from `public.reminder.reminder_type`; swipe edit/delete, occurrence generation, and local notification scheduling are deferred.
 
 ## Anatomy (top -> bottom)
 - `ScreenHeader` — back label `more.screen-title`, centered title `reminders.screen-title`, trailing add icon button.
@@ -32,4 +32,4 @@ Allowed deviations: production rows may show durable reminder titles from `publi
 - State cards use alert/polite semantics where applicable and do not rely on color alone.
 
 ## Notes / deferred
-- Toggle mutation, optimistic pending dot, swipe edit/delete, occurrence rows, missed-today rows, local notification scheduling, and native screenshot Stage 4 are separate plan-owned follow-ups.
+- Enabled/off toggle persistence is implemented through the typed reminder mutation path. Optimistic pending dot, swipe edit/delete, occurrence rows, missed-today rows, local notification scheduling, and native screenshot Stage 4 are separate plan-owned follow-ups.

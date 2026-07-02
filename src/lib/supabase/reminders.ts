@@ -24,9 +24,16 @@ export type ReminderInsert = Readonly<{
   trusted_sitter_visible: boolean;
 }>;
 
+export type ReminderEnabledUpdate = Readonly<{
+  enabled: boolean;
+  id: string;
+  puppy_id: string;
+}>;
+
 export type SupabaseReminderRepository = Readonly<{
   insertReminder(insert: ReminderInsert): Promise<Reminder>;
   listReminders(input: Readonly<{ puppyId: string }>): Promise<readonly Reminder[]>;
+  updateReminderEnabled(update: ReminderEnabledUpdate): Promise<Reminder>;
 }>;
 
 export type ReminderClient = Readonly<{
@@ -35,6 +42,10 @@ export type ReminderClient = Readonly<{
     error: unknown;
   }>>;
   listReminders(input: Readonly<{ puppyId: string }>): PromiseLike<Readonly<{
+    data: unknown;
+    error: unknown;
+  }>>;
+  updateReminderEnabled(update: ReminderEnabledUpdate): PromiseLike<Readonly<{
     data: unknown;
     error: unknown;
   }>>;
@@ -61,6 +72,15 @@ export function createSupabaseReminderRepository(
       }
 
       return z.array(reminderSchema).parse(response.data);
+    },
+    updateReminderEnabled: async (update) => {
+      const response = await client.updateReminderEnabled(update);
+
+      if (response.error || response.data === null) {
+        throw new Error('reminder_update_failed');
+      }
+
+      return reminderSchema.parse(response.data);
     },
   };
 }
@@ -95,5 +115,13 @@ function createDefaultReminderClient(): ReminderClient {
       .eq('puppy_id', puppyId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false }),
+    updateReminderEnabled: ({ id, puppy_id, enabled }) => getSupabaseClient()
+      .from('reminder')
+      .update({ enabled })
+      .eq('id', id)
+      .eq('puppy_id', puppy_id)
+      .is('deleted_at', null)
+      .select(reminderSelectColumns)
+      .maybeSingle(),
   };
 }

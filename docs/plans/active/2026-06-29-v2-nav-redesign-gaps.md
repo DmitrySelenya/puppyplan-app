@@ -195,7 +195,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Reminders/Routines hub + lifecycle (Mark done / Back-date / Skip / Pause / Delete; "Diary entries stay")
       — `/reminders` native durable-list hub is implemented with active/off segments, durable row
       grouping, More navigation, and Stage 4 native SE evidence from a synthetic dev-gallery handoff
-      shell. Lifecycle actions, occurrence generation, and local notification scheduling remain deferred.
+      shell. Enabled/off toggle persistence is implemented. Mark done/back-date/skip/pause/delete
+      lifecycle actions, occurrence generation, and local notification scheduling remain deferred.
 - [x] ✅ Reminder push — iOS lock-screen (§4.2.4 → 12.4)
 - [x] ✅ Reminder card on Diary (§4.2.5)
 - [x] ✅ Quiet hours picker (§4.2.3) — native reminder-edit anatomy slice implemented:
@@ -2182,6 +2183,62 @@ Implementation notes:
   segmented control, Feeding and Health sections, `Morning feeding`, `DHPP booster`, schedule
   subtitles, and switch states.
 
+### 19d. Reminders Hub durable toggle slice
+
+**2026-07-02 behavior slice:** connect the existing Reminders Hub row switch to the current
+`public.reminder.enabled` field through typed Supabase/query boundaries. This closes only the durable
+enabled/off lifecycle toggle; it does not introduce occurrence generation, local notification
+scheduling, swipe edit/delete, or native modules.
+
+- Stage 0 lock: `docs/design/v1/specs/12-1-reminders-hub.md`.
+- Source canon: DESIGN.md §4.2.1 Reminders Hub and
+  `docs/design/v1/specs/04-quick-log-routines-reminders.md`.
+- Route/components: `/reminders`, `src/features/reminders/screens/RemindersHubScreen.tsx`,
+  `src/lib/supabase/reminders.ts`, `src/lib/query/reminders.ts`.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-REM-TOGGLE-1: the Supabase boundary can update one non-deleted reminder by `id` and `puppy_id`,
+  writes only the `enabled` value, and parses the returned row through `reminderSchema`.
+- AC-REM-TOGGLE-2: successful toggle invalidates `queryKeys.reminders.list(householdId, puppyId)`
+  and the current `today.dashboard` key; no broad cache clear or free-form reminder query key.
+- AC-REM-TOGGLE-3: the connected `/reminders` route requires active care context and pressing a row
+  switch calls the toggle mutation with `householdId`, `puppyId`, `reminderId`, next `enabled` value,
+  and current `todayDate`.
+- AC-REM-TOGGLE-4: the toggled row switch is disabled while its mutation is pending and mutation
+  failure renders the existing calm Reminders error card without fake rows.
+- AC-REM-TOGGLE-5: no occurrence generation, notification scheduling, OS permission probing, native
+  picker replacement, schema migration, new native module, analytics payload, or `ios`/`android/` edit
+  is introduced in this slice.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-query.test.ts src/test/reminders-hub-route.render.test.tsx`
+  — FAIL before implementation: query tests failed on missing `toReminderToggleUpdate` /
+  `createReminderToggleMutationOptions`, and the hub route test failed because the switch did not call
+  the mutation or disable while pending.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-query.test.ts src/test/reminders-hub-route.render.test.tsx`
+  — PASS: 2 suites, 15 tests. Existing reduced-motion `act(...)` warnings remain unrelated.
+- `npm run typecheck` — PASS.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run tokens:check` — PASS.
+- `npm run check` — PASS before this evidence note was recorded: lint, typecheck, Jest 76 suites /
+  610 tests, node 118 tests, scaffold/i18n/tokens/privacy/text hygiene. Existing reduced-motion
+  `act(...)` warnings remain unrelated.
+
+Implementation notes:
+- `src/lib/supabase/reminders.ts` now exposes `updateReminderEnabled`, scoped by `id` + `puppy_id`
+  and `deleted_at is null`, returning the parsed `reminderSchema` row.
+- `src/lib/query/reminders.ts` now exposes `useToggleReminderEnabledMutation` and invalidates the
+  durable reminders list plus the current Diary dashboard key after success.
+- `/reminders` switch interaction calls the toggle mutation with active care context, disables the
+  matching row while pending, and uses the existing calm Reminders error card if the mutation fails.
+- No schema migration, native module, notification scheduling, occurrence generation, analytics
+  payload, or `ios/` / `android/` change was introduced. Stage 4 visual evidence remains covered by
+  the existing Reminders Hub list capture because this slice changes behavior on existing controls;
+  optimistic pending dot and additional native state captures remain future follow-ups.
+
 ## 20. Trusted sitter checklist reminder anatomy evidence
 
 **2026-06-30 next implementation slice:** Trusted Sitter Checklist Reminder card anatomy inside
@@ -3869,3 +3926,8 @@ Implementation notes:
   coverage and an explicit `Card accessible={false}` override for this nested-button container.
   Real delete/undo snackbar Stage 4 remains blocked by the known deferred Health soft-delete RLS gap:
   authenticated `deleted_at` update returns `42501`; the dev seed was restored afterward.
+- 2026-07-02: Added the Reminders Hub durable enabled/off toggle slice: `public.reminder.enabled`
+  updates now go through the typed Supabase/query boundary, invalidate the durable reminders list plus
+  current Diary dashboard, and the `/reminders` row switch sends active care context while disabling
+  the pending row and surfacing mutation failure through the existing calm error card. No scheduling,
+  occurrence generation, native module, schema, analytics, or native-project edit was introduced.

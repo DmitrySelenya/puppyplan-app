@@ -14,6 +14,8 @@ const mockRouterBack = jest.fn();
 const mockRouterPush = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseRemindersQuery = jest.fn();
+const mockUseToggleReminderEnabledMutation = jest.fn();
+const mockToggleReminderMutate = jest.fn();
 
 jest.mock('expo-router', () => ({
   router: {
@@ -31,6 +33,7 @@ jest.mock('@/lib/query/reminders', () => ({
     receivedHouseholdId: string | undefined,
     receivedPuppyId: string | undefined,
   ) => mockUseRemindersQuery(receivedHouseholdId, receivedPuppyId),
+  useToggleReminderEnabledMutation: () => mockUseToggleReminderEnabledMutation(),
 }));
 
 describe('RemindersHubRoute', () => {
@@ -38,6 +41,7 @@ describe('RemindersHubRoute', () => {
     await i18n.changeLanguage('en');
     mockRouterBack.mockClear();
     mockRouterPush.mockClear();
+    mockToggleReminderMutate.mockClear();
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
         authState: 'authenticated',
@@ -68,6 +72,12 @@ describe('RemindersHubRoute', () => {
       ],
       isError: false,
       isLoading: false,
+    });
+    mockUseToggleReminderEnabledMutation.mockReturnValue({
+      isError: false,
+      isPending: false,
+      mutate: mockToggleReminderMutate,
+      variables: undefined,
     });
   });
 
@@ -110,6 +120,55 @@ describe('RemindersHubRoute', () => {
 
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
     expect(mockRouterPush).toHaveBeenCalledWith('/reminders/edit');
+  });
+
+  it('AC-REM-TOGGLE-3 calls the enabled toggle mutation with active care context and next value', () => {
+    render(<RemindersHubRoute />, { wrapper: AppProviders });
+
+    fireEvent(
+      screen.getByTestId('reminder-row-toggle-00000000-0000-4000-8000-000000005101'),
+      'valueChange',
+      false,
+    );
+
+    expect(mockToggleReminderMutate).toHaveBeenCalledWith({
+      enabled: false,
+      householdId,
+      puppyId,
+      reminderId: '00000000-0000-4000-8000-000000005101',
+      todayDate: '2026-07-02',
+    });
+  });
+
+  it('AC-REM-TOGGLE-4 disables the pending row toggle and renders mutation errors as the calm state card', () => {
+    mockUseToggleReminderEnabledMutation.mockReturnValueOnce({
+      isError: false,
+      isPending: true,
+      mutate: mockToggleReminderMutate,
+      variables: {
+        enabled: false,
+        householdId,
+        puppyId,
+        reminderId: '00000000-0000-4000-8000-000000005101',
+        todayDate: '2026-07-02',
+      },
+    });
+    const pending = render(<RemindersHubRoute />, { wrapper: AppProviders });
+
+    expect(screen.getByTestId('reminder-row-toggle-00000000-0000-4000-8000-000000005101').props.disabled)
+      .toBe(true);
+    pending.unmount();
+
+    mockUseToggleReminderEnabledMutation.mockReturnValueOnce({
+      isError: true,
+      isPending: false,
+      mutate: mockToggleReminderMutate,
+      variables: undefined,
+    });
+    render(<RemindersHubRoute />, { wrapper: AppProviders });
+
+    expect(screen.getByText(i18n.t('reminders.states.error.title'))).toBeTruthy();
+    expect(screen.queryByText('Morning feeding')).toBeNull();
   });
 
   it('AC-REM-HUB-2 renders loading, empty, and error states without fake durable rows', () => {
