@@ -414,7 +414,7 @@ GREEN / regression evidence:
       Quick Trackers settings now has RED/GREEN templates for loading, error, empty, and
       owner-only access plus dev-gallery and Stage 4 SE evidence;
       Pet Health main list now has RED/GREEN templates for loading, error, and offline-read
-      plus production route loading/error wiring and dev-gallery coverage;
+      plus production route loading/error wiring, dev-gallery coverage, and Stage 4 SE evidence;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -1383,10 +1383,19 @@ Implementation notes:
 - `/pet` maps active-care loading, health-record loading, active-care error, missing active context,
   and health-record query error into the appropriate Health main list state.
 - The development gallery now includes the three compact Pet Health main state cards for native
-  handoff. Stage 4 native screenshot comparison is not recorded for this slice yet; no Stage 4 PASS is
-  claimed here.
+  handoff.
 - No schema migration, native module, health offline queue, permission system, analytics payload, or
   `ios` / `android` edit was introduced.
+
+Stage 4:
+- PASS recorded 2026-07-03 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro on port 8081.
+- Native evidence: `output/v2-nav-gaps-stage4/pet-health-main-states-cards-stage4.png`.
+- Visual review covers the compact Pet Health main `Loading`, `Could not load`, and `Offline` state
+  cards in the dev-gallery handoff shell, with readable status pills, non-bright error tone,
+  sunken offline surface, wrapped body copy, and no fake Health rows. `idb describe-all` did not
+  expose the nested Card labels in this scroll position, so this PASS is based on the bitmap capture
+  plus the RED/GREEN render assertions above.
 
 ## 16. Health Add Record route Stage-0 lock evidence
 
@@ -3575,7 +3584,8 @@ Implementation notes:
   loading/error wiring from active-care and health-record queries. The cards use design primitives,
   typed EN/RU/ES copy, alert/live-region semantics, and dev-gallery handoff coverage without adding
   schema/native/offline-queue work. Targeted Health/Pet/dev-gallery tests, i18n, token drift,
-  typecheck, and whitespace checks passed; Stage 4 native screenshot comparison remains unclaimed.
+  typecheck, and whitespace checks passed. Stage 4 SE evidence is now recorded for the compact
+  dev-gallery handoff.
 - 2026-07-02: Wired `/sharing/puppy-card` Share CTA to the React Native OS share sheet with existing
   localized, privacy-safe card copy. The route now shows pending-write while the OS sheet is pending,
   share-options after success, and the existing error state on rejection without closing the modal.
