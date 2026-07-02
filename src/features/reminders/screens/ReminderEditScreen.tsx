@@ -9,6 +9,7 @@ import { ListRow } from '@/design/primitives/ListRow';
 import { Screen } from '@/design/primitives/Screen';
 import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { Stack } from '@/design/primitives/Stack';
+import { StatusPill, type StatusPillTone } from '@/design/primitives/StatusPill';
 import { TextField } from '@/design/primitives/TextField';
 import { Toggle } from '@/design/primitives/Toggle';
 import { tokens } from '@/design/tokens';
@@ -17,6 +18,22 @@ import { type I18nKey, useAppTranslation } from '@/lib/i18n';
 type ReminderCategoryOption = Readonly<{
   icon: AppIconName;
   key: I18nKey;
+}>;
+
+export type ReminderEditReviewState =
+  | 'loading'
+  | 'pending-write'
+  | 'error'
+  | 'offline-read';
+
+type ReminderEditStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
 }>;
 
 const categoryOptions: readonly ReminderCategoryOption[] = [
@@ -28,12 +45,48 @@ const categoryOptions: readonly ReminderCategoryOption[] = [
   { icon: 'sliders', key: 'reminders.form.category-options.5' },
 ];
 
+const reminderEditStateMeta: Record<ReminderEditReviewState, ReminderEditStateMeta> = {
+  'error': {
+    bodyKey: 'reminders.form.states.error.body',
+    icon: 'warningTriangle',
+    role: 'alert',
+    statusKey: 'reminders.form.states.error.status',
+    titleKey: 'reminders.form.states.error.title',
+    tone: 'failed',
+  },
+  'loading': {
+    bodyKey: 'reminders.form.states.loading.body',
+    icon: 'bell',
+    statusKey: 'reminders.form.states.loading.status',
+    titleKey: 'reminders.form.states.loading.title',
+    tone: 'pending',
+  },
+  'offline-read': {
+    bodyKey: 'reminders.form.states.offline-read.body',
+    icon: 'lock',
+    statusKey: 'reminders.form.states.offline-read.status',
+    titleKey: 'reminders.form.states.offline-read.title',
+    tone: 'template',
+  },
+  'pending-write': {
+    bodyKey: 'reminders.form.states.pending-write.body',
+    icon: 'docText',
+    liveRegion: 'polite',
+    statusKey: 'reminders.form.states.pending-write.status',
+    titleKey: 'reminders.form.states.pending-write.title',
+    tone: 'pending',
+  },
+};
+
 export function ReminderEditScreen({
   onClose,
+  reviewState,
 }: Readonly<{
   onClose: () => void;
+  reviewState?: ReminderEditReviewState;
 }>) {
   const { t } = useAppTranslation();
+  const isPendingWrite = reviewState === 'pending-write';
 
   return (
     <Screen contentStyle={styles.content} modal>
@@ -49,12 +102,15 @@ export function ReminderEditScreen({
               {t('reminders.form.title-new')}
             </AppText>
             <Button
-              disabled
+              disabled={!isPendingWrite}
               label={t('reminders.form.save')}
+              loading={isPendingWrite}
               onPress={() => undefined}
               variant="tertiary"
             />
           </Stack>
+
+          {reviewState ? <ReminderEditStateCard state={reviewState} /> : null}
 
           <Stack gap="md">
             <TextField
@@ -135,6 +191,44 @@ export function ReminderEditScreen({
       <QuietHoursCard />
       <ReminderPermissionDeniedCard />
     </Screen>
+  );
+}
+
+function ReminderEditStateCard({
+  state,
+}: Readonly<{
+  state: ReminderEditReviewState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = reminderEditStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`reminder-edit-state-${state}`}
+      variant={state === 'offline-read' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name={meta.icon}
+              size={14}
+            />
+          )}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="bodyEmph">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">{body}</AppText>
+      </Stack>
+    </Card>
   );
 }
 

@@ -54,6 +54,7 @@
         "quick-log-sheet": "Quick Log sheet, subtype choices, duplicate warning, local pending, failed retry, and access states.",
         "quick-log-details": "Quick Log details route with synthetic slow-saving and error states.",
         "health-v2": "Health list, empty, edit, detail, review, delete, and weight entry states.",
+        "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
         "timeline-v2": "Timeline default, filtered, empty, pending, failed, and delete-confirm states.",
         "today-core": "Today hero, daily cards, guidance, and data states.",
         "guidance": "Starter guidance read, tried, and skipped states.",
@@ -1375,7 +1376,29 @@
       "toggle-sound": "Sound",
       "hint": "This reminder runs locally on this device. Turn on push in Settings to get it even when the app is closed.",
       "error-no-days": "Pick at least one day",
-      "permission-banner": "Notifications are off. The reminder will be saved, but it won't make a sound"
+      "permission-banner": "Notifications are off. The reminder will be saved, but it won't make a sound",
+      "states": {
+        "loading": {
+          "status": "Loading",
+          "title": "Preparing reminder options",
+          "body": "We are checking categories, quiet hours, and notification settings."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving reminder",
+          "body": "Keep this screen open while the reminder is saved."
+        },
+        "error": {
+          "status": "Could not save",
+          "title": "Could not save this reminder",
+          "body": "Check your connection and try again. No reminder was scheduled."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "No connection",
+          "body": "You can review the reminder. Saving waits until you are back online."
+        }
+      }
     },
     "quiet-hours": {
       "title": "Quiet hours",

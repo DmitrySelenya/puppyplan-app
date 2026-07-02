@@ -42,6 +42,7 @@ import {
 } from '@/features/onboarding/screens/OnboardingScreen';
 import { QuickLogLocalEvents } from '@/features/quick-log/components/QuickLogLocalEvents';
 import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
+import { ReminderEditScreen } from '@/features/reminders/screens/ReminderEditScreen';
 import {
   SyntheticTodayPreview,
   TodayStatusCard,
@@ -67,6 +68,8 @@ export function DesignGalleryScreen() {
           <AppText variant="title">{t('dev.gallery.title')}</AppText>
           <AppText tone="secondary">{t('dev.gallery.subtitle')}</AppText>
         </Stack>
+
+        <SyntheticReminderEditShell />
 
         {gallerySections.map((section) => (
           <Card key={section.id}>
@@ -587,6 +590,35 @@ export function SyntheticQuickLogDetailsShell() {
         <QuickLogDetailsScreen
           initialTrackerId="zoomies"
           status="error"
+        />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticReminderEditShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.reminder-edit"
+          titleKey="reminders.form.title-new"
+        />
+        <ReminderEditScreen
+          onClose={noop}
+          reviewState="loading"
+        />
+        <ReminderEditScreen
+          onClose={noop}
+          reviewState="pending-write"
+        />
+        <ReminderEditScreen
+          onClose={noop}
+          reviewState="error"
+        />
+        <ReminderEditScreen
+          onClose={noop}
+          reviewState="offline-read"
         />
       </Stack>
     </Card>

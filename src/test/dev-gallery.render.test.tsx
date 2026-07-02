@@ -9,6 +9,7 @@ import {
   SyntheticHealthShell,
   SyntheticQuickLogDetailsShell,
   SyntheticQuickLogSheetShell,
+  SyntheticReminderEditShell,
   SyntheticOnboardingShell,
   SyntheticMoreSettingsShell,
   SyntheticPuppyProfileSettingsShell,
@@ -131,6 +132,7 @@ describe('development-only design gallery', () => {
         <SyntheticMoreSettingsShell />
         <SyntheticQuickLogSheetShell />
         <SyntheticHealthShell />
+        <SyntheticReminderEditShell />
         <SyntheticTodayShell />
         <SyntheticQuickLogDetailsShell />
       </>,
@@ -162,6 +164,21 @@ describe('development-only design gallery', () => {
     expect(screen.getByText(i18n.t('today.deferred.reminders'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.details.states.saving.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.details.states.error.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.states.reminder-edit'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('reminders.form.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.form.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.form.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.form.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/supabase|production write|token/i)).toBeNull();
   });
 

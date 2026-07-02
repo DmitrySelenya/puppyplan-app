@@ -2,6 +2,7 @@ import { AccessibilityInfo } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { tokens } from '@/design/tokens';
+import { ReminderEditScreen } from '@/features/reminders/screens/ReminderEditScreen';
 import { i18n } from '@/lib/i18n';
 
 import ReminderEditRoute from '../../app/(modals)/reminders/edit';
@@ -143,5 +144,35 @@ describe('ReminderEditRoute', () => {
     }));
 
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-REM-EDIT-STATES renders deterministic loading, pending, error, and offline states', () => {
+    render(
+      <>
+        <ReminderEditScreen onClose={mockRouterBack} reviewState="loading" />
+        <ReminderEditScreen onClose={mockRouterBack} reviewState="pending-write" />
+        <ReminderEditScreen onClose={mockRouterBack} reviewState="error" />
+        <ReminderEditScreen onClose={mockRouterBack} reviewState="offline-read" />
+      </>,
+    );
+
+    for (const state of [
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+    ] as const) {
+      expect(screen.getByTestId(`reminder-edit-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`reminders.form.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`reminders.form.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('reminder-edit-state-error').props.accessibilityRole).toBe('alert');
+    expect(screen.getByTestId('reminder-edit-state-pending-write').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getAllByRole('button', {
+      name: i18n.t('reminders.form.save'),
+    }).some((button) => button.props.accessibilityState.busy)).toBe(true);
+    expect(screen.queryByText(/diagnosis|dosage|treatment plan|emergency/i)).toBeNull();
   });
 });

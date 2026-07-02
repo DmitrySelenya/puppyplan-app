@@ -188,8 +188,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       remain open.
 - [x] ✅ Create / edit reminder form (§4.2.2) — native route anatomy implemented at
       `/reminders/edit`: title/name/category/time/repeat/timezone/toggles/helper copy and disabled
-      Save state. Stage 4 native SE screenshot comparison passed 2026-07-02; real reminder
-      save/scheduling/loading/error/offline states remain open.
+      Save state, plus deterministic loading / pending-write / error / offline-read state templates.
+      Stage 4 native SE screenshot comparison passed 2026-07-02 for the base form; real reminder
+      save/scheduling/persistence and native state captures remain open.
 - [x] ✅ Push permission denied — calm in-app state (§4.2.7) — native non-modal permission card
       implemented inside `/reminders/edit`; reminder creation remains visually available and not
       blocked. Stage 4 native SE screenshot comparison passed 2026-07-02; OS settings deeplink
@@ -259,6 +260,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       denied / Revoked) re-applied per new screen (§4.5) — primitives (StatusPill, Form states) exist;
       coverage per-screen is the work. Health Add Record now has RED/GREEN state templates for
       loading, pending write, error, offline read, and permission denied plus Stage 4 SE captures;
+      Reminder Edit now has RED/GREEN state templates for loading, pending write, error, and
+      offline read plus dev-gallery coverage;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -1402,6 +1405,33 @@ Implementation notes:
   exposed the required controls and labels: Cancel, disabled Save, name field, category options,
   Time / Repeat / Time zone rows, Respect quiet hours, Sound, quiet-hours example range,
   per-puppy toggle, Notifications are off, How to enable, and fallback copy.
+- State-template follow-up (2026-07-02): `ReminderEditScreen` now accepts a typed synthetic
+  `reviewState` for `loading`, `pending-write`, `error`, and `offline-read`. Each state renders a
+  tokenized `Card` + `StatusPill` using EN/RU/ES keys, with an alert role for error and a polite
+  live region / busy Save action for pending write. This is a deterministic UI template only; durable
+  reminder save, local notification scheduling, queued offline writes, OS permission probing, and
+  native Stage 4 state screenshots remain open.
+- State-template RED evidence:
+  `npm run test:unit -- --runTestsByPath src/test/reminder-edit-route.render.test.tsx` failed as
+  expected because `reminder-edit-state-loading` did not exist.
+- State-template GREEN evidence:
+  `npm run test:unit -- --runTestsByPath src/test/reminder-edit-route.render.test.tsx src/test/dev-gallery.render.test.tsx`
+  — PASS: 2 suites, 9 tests.
+- Adjacent state/i18n evidence:
+  `node scripts/checks/check-i18n.mjs` — PASS; `npm run typecheck` — PASS.
+- Full gate evidence:
+  `npm run check` — PASS: 70 Jest suites / 542 tests, 118 node tests, navigation/shell i18n,
+  i18n parity, scaffold guardrails, tokens, privacy scan, and text hygiene all green. Existing
+  non-failing reduced-motion `act(...)` warning in `src/test/screen-header.render.test.tsx` remains
+  unrelated to this slice.
+- State-template Stage 4 PASS (2026-07-02): launched the already installed PuppyPlan.app on
+  `Grith iPhone SE 3 iOS 26.3` over Metro, opened `/_dev/components`, and captured the reminder edit
+  state-template preview. Evidence:
+  `output/v2-nav-gaps-stage4/reminders-edit-state-templates-stage4.png`. The viewport capture shows
+  the native dev-gallery shell, `/reminders/edit` modal chrome, disabled Save, and the loading state
+  card. Runtime snapshot evidence also found `reminder-edit-state-pending-write`,
+  `reminder-edit-state-error`, and `reminder-edit-state-offline-read` with the expected localized
+  labels/body copy.
 
 ## 20. Trusted sitter checklist reminder anatomy evidence
 
@@ -2590,6 +2620,9 @@ Implementation notes:
   form, quiet-hours preview, and calm permission-denied state with design primitives and existing
   localized copy; RED/GREEN route/navigation tests, typecheck, and scaffold checks passed. Real
   scheduling/persistence/permission deeplink and Stage 4 screenshots remain open.
+- 2026-07-02: Added `/reminders/edit` state templates for loading, pending write, error, and offline
+  read with typed EN/RU/ES copy, alert/live-region accessibility, busy Save feedback for pending write,
+  dev-gallery preview coverage, and Stage 4 native evidence. Durable save/scheduling remains open.
 - 2026-06-30: Added the trusted-sitter checklist reminder anatomy slice inside `/reminders/edit`:
   source label, person icon slot, left accent rail, 1/3 progress bar, and localized Open checklist /
   Mark all done / Skip actions; RED/GREEN route coverage and related i18n/navigation suites passed.

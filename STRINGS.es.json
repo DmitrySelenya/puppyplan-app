@@ -53,6 +53,7 @@
         "quick-log-sheet": "Hoja de Quick Log, subtipos, aviso de duplicado, pendiente local, reintento fallido y estados de acceso.",
         "quick-log-details": "Ruta de detalles de Quick Log con estados sintéticos de guardado lento y error.",
         "health-v2": "Lista de salud, vacío, edición, detalle, revisión, eliminación y entrada de peso.",
+        "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
         "timeline-v2": "Timeline predeterminado, filtrado, vacío, pendiente, error y confirmación de borrado.",
         "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
         "guidance": "Estados de guía inicial: leído, probado y omitido.",
@@ -1447,7 +1448,29 @@
       "toggle-sound": "Sonido",
       "hint": "Este recordatorio se ejecuta localmente en este dispositivo. Activa Push en Configuración para recibirlo incluso cuando la aplicación esté cerrada.",
       "error-no-days": "Elige al menos un día",
-      "permission-banner": "Las notificaciones están desactivadas. El recordatorio se guardará, pero no emitirá ningún sonido."
+      "permission-banner": "Las notificaciones están desactivadas. El recordatorio se guardará, pero no emitirá ningún sonido.",
+      "states": {
+        "loading": {
+          "status": "Cargando",
+          "title": "Preparando opciones del recordatorio",
+          "body": "Estamos revisando categorías, horas tranquilas y ajustes de notificaciones."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando recordatorio",
+          "body": "Mantén esta pantalla abierta mientras se guarda el recordatorio."
+        },
+        "error": {
+          "status": "No se pudo guardar",
+          "title": "No se pudo guardar este recordatorio",
+          "body": "Revisa tu conexión e inténtalo de nuevo. No se programó ningún recordatorio."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Sin conexión",
+          "body": "Puedes revisar el recordatorio. El guardado esperará hasta que vuelvas a estar online."
+        }
+      }
     },
     "quiet-hours": {
       "title": "Horas tranquilas",
