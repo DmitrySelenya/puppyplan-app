@@ -170,6 +170,12 @@ describe('app shell screens', () => {
 
     expect(screen.getByText(i18n.t('states.revoked-or-expired.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('states.revoked-or-expired.body-long'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('states.revoked-or-expired.status'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('states.revoked-or-expired.safety-label'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('states.revoked-or-expired.safety-body'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('states.revoked-or-expired.next-step-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('states.revoked-or-expired.next-step-body'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('states.revoked-or-expired.action') })).toBeTruthy();
     expect(screen.queryByText(/\[[^\]]*token[^\]]*\]/i)).toBeNull();
   });
 

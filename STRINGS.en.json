@@ -161,6 +161,11 @@
       "title": "This access is no longer available",
       "body": "Contact the owner if you need new access.",
       "body-long": "Contact the owner if you need up-to-date information.",
+      "status": "Access closed",
+      "safety-label": "Private details stay hidden",
+      "safety-body": "PuppyPlan uses the same message for every closed link, so it never reveals whether access changed or when.",
+      "next-step-title": "Ask the owner for a new link",
+      "next-step-body": "They can share a fresh invite or card if they want you to view the latest puppy care details.",
       "action": "Got it",
       "_comment": "Canonical wording from §3.3.6 — one phrasing for both revoked and expired. Don't use \"revoked\", \"expired\", \"deleted\", \"closed by owner\"."
     }

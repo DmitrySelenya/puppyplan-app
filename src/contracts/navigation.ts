@@ -518,6 +518,12 @@ export const shellI18nKeys = [
   'quick-log.duplicate-warning.secondary',
   'states.revoked-or-expired.title',
   'states.revoked-or-expired.body-long',
+  'states.revoked-or-expired.status',
+  'states.revoked-or-expired.safety-label',
+  'states.revoked-or-expired.safety-body',
+  'states.revoked-or-expired.next-step-title',
+  'states.revoked-or-expired.next-step-body',
+  'states.revoked-or-expired.action',
 ] as const satisfies readonly I18nKey[];
 
 export type PrimaryTabId = (typeof primaryTabs)[number]['id'];

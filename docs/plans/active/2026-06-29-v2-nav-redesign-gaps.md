@@ -152,7 +152,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Trainer invite — scope selector / ScopeStripe (§3.3.2 → 8.1)
 - [x] ✅ Trainer preview — included / excluded (§3.3.3 → 8.2)
 - [x] ✅ Trainer accepted read-only view (§3.3.5 → 8.3)
-- [x] ✅ Revoked / expired share (§3.3.6 → 10.1)
+- [x] ✅ Revoked / expired share (§3.3.6 → 10.1) — `/share/[token]` now renders a native
+      closed-access shell with neutral privacy copy, locked status, next-step card, and Stage 4
+      SE evidence. Live token lookup/provider payload remains deferred.
 - [x] ✅ Trusted Sitter mode owner setup shell (§3.2) — More Trainer/Sitter now opens
       `/settings/sitter-mode`, with caregiver row, time window, checklist, visibility preview, and
       enable CTA. Deterministic no-caregiver / pending / active / exit-confirm state templates now
@@ -2237,6 +2239,53 @@ Implementation notes:
 - Added EN/RU/ES invite state copy plus a dev-gallery description key, while keeping existing
   `sharing.family.accepted.*` shell keys intact.
 
+### 31b. Revoked / Expired Share Closed-Access Shell (§3.3.6 → 10.1)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/07-sharing-access-cards.md`.
+- Source: `DESIGN.md` §3.3.6 plus freeze marker `10.1`.
+- Route: `/share/[token]`.
+- Allowed deviation: this slice remains a deterministic closed-access shell. Live token lookup,
+  provider payload parsing, and public web projection remain deferred.
+
+Acceptance:
+- AC-SHARE-REVOKED-1: `/share/[token]` renders a native neutral closed-access shell, not a
+  two-line placeholder.
+- AC-SHARE-REVOKED-2: visible copy uses one canonical closed-link message and never differentiates
+  revoked vs expired.
+- AC-SHARE-REVOKED-3: the shell uses design primitives for hero card, status pill, iconography,
+  info/next-step cards, and CTA.
+- AC-SHARE-REVOKED-4: visible copy does not expose raw share tokens, provider names, private
+  reasons, contact details, or puppy records.
+- AC-SHARE-REVOKED-5: EN/RU/ES i18n and `shellI18nKeys` stay in sync.
+
+RED evidence:
+- `npm run test:unit -- src/test/app-shell.render.test.tsx --runInBand` failed as expected before
+  implementation because `states.revoked-or-expired.status` and the supporting closed-access
+  anatomy were absent.
+
+GREEN evidence:
+- `npm run test:unit -- src/test/app-shell.render.test.tsx --runInBand` — PASS: 1 suite, 9 tests.
+- `npm run typecheck` — PASS.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `node scripts/checks/check-shell-i18n.mjs` — PASS after adding the new shell keys to
+  `shellI18nKeys`.
+
+Stage 4 evidence:
+- Stage 4 PASS (2026-07-02): launched the already installed PuppyPlan.app on the primary SE
+  simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) over `npx expo start --localhost`, opened
+  `puppyplan://share/stage4-access-unavailable`, and captured a native screenshot.
+- Evidence file: `output/v2-nav-gaps-stage4/access-unavailable-stage4.png`.
+- First visual pass showed the CTA partly below the initial SE viewport; typography was compacted
+  from `title1`/body to `title2`/callout and the screenshot was recaptured with the CTA fully visible.
+
+Implementation notes:
+- Rebuilt `AccessUnavailableScreen` with `Screen`, `Card`, `StatusPill`, `AppIcon`, `AppText`, and
+  `Button`; no raw UI `Pressable`/`Text` was introduced.
+- Added EN/RU/ES privacy-safe copy for closed-access status, private-detail disclosure, next step,
+  and CTA.
+- Kept the screen deterministic and token-agnostic; real share-token validation remains deferred.
+
 ### 32. Manage Household Shell Slice (§3.1.6)
 
 Stage-0 lock:
@@ -3008,3 +3057,7 @@ Implementation notes:
   state templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy, and
   primary SE Stage 4 screenshots. Live caregiver lookup, enable/exit mutations, active checklist data,
   completion push, auto-expire, and pending-sync behavior remain deferred.
+- 2026-07-02: Rebuilt `/share/[token]` revoked/expired as a native closed-access shell with
+  privacy-safe neutral copy, locked status pill, info/next-step cards, CTA, EN/RU/ES shell keys,
+  RED/GREEN render coverage, shell i18n contract update, and primary SE Stage 4 screenshot. Live
+  token lookup, provider payload parsing, and public projection remain deferred.

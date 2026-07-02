@@ -158,6 +158,11 @@
       "title": "Este acceso ya no está disponible",
       "body": "Contacta al propietario si necesitas un nuevo acceso.",
       "body-long": "Contacta al propietario si necesitas información actualizada.",
+      "status": "Acceso cerrado",
+      "safety-label": "Los detalles privados permanecen ocultos",
+      "safety-body": "PuppyPlan muestra el mismo mensaje para cada enlace cerrado, así que nunca revela si el acceso cambió ni cuándo.",
+      "next-step-title": "Pide al propietario un enlace nuevo",
+      "next-step-body": "Puede compartir una nueva invitación o tarjeta si quiere que veas los datos de cuidado más recientes.",
       "action": "Entiendo",
       "_comment": "Redacción canónica de §3.3.6: una frase tanto para revocados como para vencidos. No utilice \"revocado\", \"caducado\", \"eliminado\", \"cerrado por el propietario\"."
     }
