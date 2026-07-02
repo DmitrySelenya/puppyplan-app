@@ -5,14 +5,22 @@ import {
 } from '@/lib/supabase/health-records';
 import {
   createHealthRecordMutationOptions,
+  createHealthRecordDeleteMutationOptions,
+  createHealthRecordRestoreMutationOptions,
+  createHealthRecordUpdateMutationOptions,
   toHealthRecordInsert,
+  toHealthRecordUpdate,
   type HealthRecordCreateDraft,
+  type HealthRecordDeleteDraft,
+  type HealthRecordUpdateDraft,
 } from '@/lib/query/health-records';
 import { queryKeys } from '@/lib/query/keys';
 
 const puppyId = '00000000-0000-4000-8000-000000003001';
 const actorId = '00000000-0000-4000-8000-000000003002';
 const recordId = '00000000-0000-4000-8000-000000003003';
+const householdId = '00000000-0000-4000-8000-000000003004';
+const now = '2026-07-02T09:15:00.000Z';
 
 const healthRecord: HealthRecord = {
   completed_at: null,
@@ -46,7 +54,7 @@ const insert: HealthRecordInsert = {
 };
 
 const draft: HealthRecordCreateDraft = {
-  householdId: '00000000-0000-4000-8000-000000003004',
+  householdId,
   notes: '  Bring vaccine card  ',
   providerName: '  Example Vet  ',
   puppyId,
@@ -57,14 +65,43 @@ const draft: HealthRecordCreateDraft = {
   userId: actorId,
 };
 
+const updateDraft: HealthRecordUpdateDraft = {
+  householdId,
+  id: recordId,
+  notes: '  Bring the paper record  ',
+  providerName: '  Clay Vet  ',
+  puppyId,
+  previousScheduledFor: '2026-07-02',
+  recordType: 'vaccination',
+  scheduledFor: '2026-07-03',
+  source: 'manual',
+  status: 'confirmed',
+  title: '  DHPP booster  ',
+  updatedAt: now,
+  userId: actorId,
+};
+
+const deleteDraft: HealthRecordDeleteDraft = {
+  affectedDate: '2026-07-01',
+  deletedAt: now,
+  householdId,
+  id: recordId,
+  puppyId,
+  updatedAt: now,
+  userId: actorId,
+};
+
 describe('Supabase health record repository boundary', () => {
   it('AC-PET-ADD-DURABLE-1 inserts health records through the typed wrapper', async () => {
     const client = {
+      deleteHealthRecord: jest.fn(),
       insertHealthRecord: jest.fn(async () => ({
         data: healthRecord,
         error: null,
       })),
       listHealthRecords: jest.fn(),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
     };
     const repository = createSupabaseHealthRecordRepository(client);
 
@@ -74,16 +111,128 @@ describe('Supabase health record repository boundary', () => {
 
   it('AC-PET-ADD-DURABLE-1 lists non-deleted puppy health records in recency order', async () => {
     const client = {
+      deleteHealthRecord: jest.fn(),
       insertHealthRecord: jest.fn(),
       listHealthRecords: jest.fn(async () => ({
         data: [healthRecord],
         error: null,
       })),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
     };
     const repository = createSupabaseHealthRecordRepository(client);
 
     await expect(repository.listHealthRecords({ puppyId })).resolves.toEqual([healthRecord]);
     expect(client.listHealthRecords).toHaveBeenCalledWith({ puppyId });
+  });
+
+  it('AC-PET-EDIT-DURABLE-1 updates health records through the typed wrapper', async () => {
+    const client = {
+      deleteHealthRecord: jest.fn(),
+      insertHealthRecord: jest.fn(),
+      listHealthRecords: jest.fn(),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(async () => ({
+        data: {
+          ...healthRecord,
+          provider_name: 'Clay Vet',
+          status: 'confirmed',
+          title: 'DHPP booster',
+          updated_at: now,
+        },
+        error: null,
+      })),
+    };
+    const repository = createSupabaseHealthRecordRepository(client);
+    const update = toHealthRecordUpdate(updateDraft);
+
+    await expect(repository.updateHealthRecord(update)).resolves.toMatchObject({
+      provider_name: 'Clay Vet',
+      status: 'confirmed',
+      title: 'DHPP booster',
+      updated_at: now,
+    });
+    expect(client.updateHealthRecord).toHaveBeenCalledWith(update);
+  });
+
+  it('AC-PET-EDIT-DURABLE-2 soft-deletes health records without selecting the tombstone through RLS', async () => {
+    const client = {
+      deleteHealthRecord: jest.fn(async () => ({
+        count: 1,
+        data: null,
+        error: null,
+      })),
+      insertHealthRecord: jest.fn(),
+      listHealthRecords: jest.fn(),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
+    };
+    const repository = createSupabaseHealthRecordRepository(client);
+
+    await expect(repository.deleteHealthRecord({
+      deleted_at: now,
+      id: recordId,
+      puppy_id: puppyId,
+      updated_at: now,
+      updated_by: actorId,
+    })).resolves.toBeUndefined();
+    expect(client.deleteHealthRecord).toHaveBeenCalledWith({
+      deleted_at: now,
+      id: recordId,
+      puppy_id: puppyId,
+      updated_at: now,
+      updated_by: actorId,
+    });
+  });
+
+  it('AC-PET-EDIT-DURABLE-2 treats a zero-row soft delete as a failed delete', async () => {
+    const client = {
+      deleteHealthRecord: jest.fn(async () => ({
+        count: 0,
+        data: null,
+        error: null,
+      })),
+      insertHealthRecord: jest.fn(),
+      listHealthRecords: jest.fn(),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
+    };
+    const repository = createSupabaseHealthRecordRepository(client);
+
+    await expect(repository.deleteHealthRecord({
+      deleted_at: now,
+      id: recordId,
+      puppy_id: puppyId,
+      updated_at: now,
+      updated_by: actorId,
+    })).rejects.toThrow('health_record_delete_failed');
+  });
+
+  it('AC-PET-EDIT-DURABLE-3 restores health records through the typed wrapper', async () => {
+    const client = {
+      deleteHealthRecord: jest.fn(),
+      insertHealthRecord: jest.fn(),
+      listHealthRecords: jest.fn(),
+      restoreHealthRecord: jest.fn(async () => ({
+        data: healthRecord,
+        error: null,
+      })),
+      updateHealthRecord: jest.fn(),
+    };
+    const repository = createSupabaseHealthRecordRepository(client);
+
+    await expect(repository.restoreHealthRecord({
+      id: recordId,
+      puppy_id: puppyId,
+      updated_at: now,
+      updated_by: actorId,
+    })).resolves.toEqual(healthRecord);
+    expect(client.restoreHealthRecord).toHaveBeenCalledWith({
+      id: recordId,
+      puppy_id: puppyId,
+      updated_at: now,
+      updated_by: actorId,
+    });
   });
 });
 
@@ -138,4 +287,103 @@ describe('health record query mutation contract', () => {
       queryKey: queryKeys.sharing.projectionRoot(draft.householdId, puppyId),
     });
   });
+
+  it('AC-PET-EDIT-DURABLE-1 maps an update draft to the current health_record schema', () => {
+    expect(toHealthRecordUpdate(updateDraft)).toEqual({
+      completed_at: null,
+      id: recordId,
+      notes: 'Bring the paper record',
+      provider_name: 'Clay Vet',
+      puppy_id: puppyId,
+      record_type: 'vaccination',
+      scheduled_for: '2026-07-03',
+      source: 'manual',
+      status: 'confirmed',
+      title: 'DHPP booster',
+      updated_at: now,
+      updated_by: actorId,
+    });
+  });
+
+  it('AC-PET-EDIT-DURABLE-4 sends update/delete/restore through the repository', async () => {
+    const repository = {
+      deleteHealthRecord: jest.fn(async () => undefined),
+      restoreHealthRecord: jest.fn(async () => healthRecord),
+      updateHealthRecord: jest.fn(async () => healthRecord),
+    };
+    const updateOptions = createHealthRecordUpdateMutationOptions({ repository });
+    const deleteOptions = createHealthRecordDeleteMutationOptions({ repository });
+    const restoreOptions = createHealthRecordRestoreMutationOptions({ repository });
+
+    await expect(updateOptions.mutationFn(updateDraft)).resolves.toEqual(healthRecord);
+    await expect(deleteOptions.mutationFn(deleteDraft)).resolves.toBeUndefined();
+    await expect(restoreOptions.mutationFn(deleteDraft)).resolves.toEqual(healthRecord);
+
+    expect(repository.updateHealthRecord).toHaveBeenCalledWith(toHealthRecordUpdate(updateDraft));
+    expect(repository.deleteHealthRecord).toHaveBeenCalledWith({
+      deleted_at: now,
+      id: recordId,
+      puppy_id: puppyId,
+      updated_at: now,
+      updated_by: actorId,
+    });
+    expect(repository.restoreHealthRecord).toHaveBeenCalledWith({
+      id: recordId,
+      puppy_id: puppyId,
+      updated_at: now,
+      updated_by: actorId,
+    });
+  });
+
+  it('AC-PET-EDIT-DURABLE-4 invalidates dependent Health, Today, puppy, and sharing queries', async () => {
+    const invalidateQueries = jest.fn(async () => undefined);
+    const repository = {
+      deleteHealthRecord: jest.fn(async () => undefined),
+      restoreHealthRecord: jest.fn(async () => healthRecord),
+      updateHealthRecord: jest.fn(async () => healthRecord),
+    };
+    const updateOptions = createHealthRecordUpdateMutationOptions({
+      queryClient: { invalidateQueries },
+      repository,
+    });
+    const deleteOptions = createHealthRecordDeleteMutationOptions({
+      queryClient: { invalidateQueries },
+      repository,
+    });
+    const restoreOptions = createHealthRecordRestoreMutationOptions({
+      queryClient: { invalidateQueries },
+      repository,
+    });
+
+    await updateOptions.onSuccess(healthRecord, updateDraft);
+    expectHealthRecordInvalidations(invalidateQueries, ['2026-07-02', '2026-07-03']);
+    invalidateQueries.mockClear();
+
+    await deleteOptions.onSuccess(undefined, deleteDraft);
+    expectHealthRecordInvalidations(invalidateQueries, ['2026-07-01']);
+    invalidateQueries.mockClear();
+
+    await restoreOptions.onSuccess(healthRecord, deleteDraft);
+    expectHealthRecordInvalidations(invalidateQueries, ['2026-07-01']);
+  });
 });
+
+function expectHealthRecordInvalidations(
+  invalidateQueries: jest.Mock,
+  dates: readonly string[],
+) {
+  expect(invalidateQueries).toHaveBeenCalledWith({
+    queryKey: queryKeys.health.records(puppyId),
+  });
+  for (const date of dates) {
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.today.dashboard(householdId, puppyId, date),
+    });
+  }
+  expect(invalidateQueries).toHaveBeenCalledWith({
+    queryKey: queryKeys.puppy.summary(householdId, puppyId),
+  });
+  expect(invalidateQueries).toHaveBeenCalledWith({
+    queryKey: queryKeys.sharing.projectionRoot(householdId, puppyId),
+  });
+}

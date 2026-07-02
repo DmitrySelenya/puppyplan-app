@@ -132,11 +132,14 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       chooser, empty form anatomy, and deterministic loading / pending-write / error / offline-read /
       permission-denied state templates. Stage 4 SE native screenshot comparison PASS recorded
       2026-07-02 for chooser + empty form + the new state templates. Durable create/list refresh is
-      now implemented through the typed health-record repository and query hooks. Edit/delete
-      persistence, offline queue, native DatePicker, and template generation remain open.
+      now implemented through the typed health-record repository and query hooks. Durable edit/delete/
+      restore data-layer contracts are also implemented; production detail-route wiring, offline queue,
+      native DatePicker, and template generation remain open.
 - [ ] 🟡 Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
-      Durable edit/delete, timed 5-second undo restore, and persistence remain open.
+      Durable edit/delete/restore data-layer contracts are now implemented with source preservation,
+      affected-date invalidation, and zero-row delete failure handling. Production detail-route wiring,
+      timed 5-second undo restore, and native persistence UI remain open.
 - [x] ✅ Status transitions visualisation Template→Confirmed→Done (§4.1.6) — native detail
       status strip now renders four visible icon+label steps with exactly one active filled state and
       full sequence accessibility label. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
@@ -1434,6 +1437,70 @@ Implementation notes:
   confirmed and needs-vet-review detail rows, four non-color-only stage steps, one active filled stage,
   the delete confirm card, disabled destructive delete, and undo-toast preview. Real record persistence,
   editable dirty-state behavior, soft warning haptic, timed undo restore, and durable delete remain open.
+
+### 17a. Health record durable edit/delete/restore slice
+
+**2026-07-02 data-layer slice:** extend the existing Health record Supabase/query boundary from
+create/list into edit, soft-delete, and restore operations using the current `public.health_record`
+schema and RLS policy. This is the persistence foundation for §4.1.4; it does not add a new native
+detail route or offline queue.
+
+- Source spec card: `docs/design/v1/specs/05-pet-health.md`.
+- Source canon: `DESIGN.md` §4.1.4 Edit Record / Delete (Undo), PRD Health Basics
+  (`updated_by`, `updated_at`, `deleted_at`), and `docs/architecture/03-client-data-layer.md`
+  health mutation invalidation row.
+- Route/components: `src/lib/supabase/health-records.ts`, `src/lib/query/health-records.ts`,
+  `src/test/health-records-query.test.ts`.
+- TDD mode: lightweight; reduced assurance because this continuation is running in the main thread,
+  but the slice is constrained to repository/query contracts with focused RED/GREEN tests before code.
+
+Acceptance:
+- AC-PET-EDIT-DURABLE-1: the Supabase boundary can update an existing non-deleted `health_record`
+  row by id/puppy id with trimmed title/provider/notes, status/source/date fields, `updated_by`,
+  and explicit `updated_at`, then parse the returned row through `healthRecordSchema`.
+- AC-PET-EDIT-DURABLE-2: the Supabase boundary can soft-delete a row by id/puppy id by setting
+  `deleted_at`, `updated_at`, and `updated_by` without selecting the deleted row back through RLS.
+- AC-PET-EDIT-DURABLE-3: the Supabase boundary can restore a soft-deleted row by id/puppy id by
+  setting `deleted_at: null`, `updated_at`, and `updated_by`, then parse the visible restored row.
+- AC-PET-EDIT-DURABLE-4: update/delete/restore mutation options invalidate `health.records`,
+  `today.dashboard`, `puppy.summary`, and sharing projection root via `queryKeys`; no broad cache
+  clear and no free-form query keys.
+- AC-PET-EDIT-DURABLE-5: no schema migrations, native DatePicker, offline queue, new analytics,
+  or `ios/`/`android/` edits are introduced in this slice.
+- AC-PET-EDIT-DURABLE-6: raw notes/provider data are never logged or added to analytics/share
+  previews by this slice.
+
+Deferred from this slice:
+- native Health detail routing, editable dirty-state UI, haptics, timed 5-second undo scheduling,
+  offline health queue, and Stage 4 screenshots for the future production detail route.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts` failed first with
+  six expected missing-contract failures: `toHealthRecordUpdate`, update/delete/restore repository
+  methods, and update/delete/restore mutation option factories did not exist.
+- Follow-up RED for the no-silent-delete guard failed as expected because a zero-row soft delete
+  (`count: 0`) resolved successfully instead of rejecting.
+- Review follow-up RED failed as expected because update changed existing manual `source` to
+  status-derived `confirmed`, and date-change invalidation skipped the previous Today dashboard key.
+
+GREEN evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts`
+  — PASS: 1 suite, 12 tests.
+- `npm run typecheck` — PASS.
+- `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts src/test/health-record-edit-route.render.test.tsx src/test/pet-route.render.test.tsx src/test/health.render.test.tsx`
+  — PASS: 4 suites, 26 tests.
+
+Implementation notes:
+- `src/lib/supabase/health-records.ts` now exposes typed update, soft-delete, and restore methods.
+  Soft delete intentionally does not select the tombstoned row back, because the existing RLS read
+  policy hides rows after `deleted_at` is set. The default soft-delete call requests exact affected
+  row count and treats `count: 0` as `health_record_delete_failed` instead of silently succeeding.
+- `src/lib/query/health-records.ts` now maps edit/delete/restore drafts, preserves the existing
+  create/list behavior, preserves existing `source` on update, and invalidates Health records,
+  affected Today dashboard date(s), puppy summary, and sharing projection root through `queryKeys`.
+- No UI route, native picker, offline queue, analytics, schema, `ios/`, or `android/` changes were
+  introduced. Stage 4 screenshot evidence is not applicable to this data-layer slice; the future
+  production Health detail route still owns that visual gate.
 
 ## 18. Vet visit prep card Stage-0 lock evidence
 

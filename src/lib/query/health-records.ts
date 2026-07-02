@@ -8,7 +8,10 @@ import {
 import type { HealthRecord } from '@/contracts/supabase';
 import { createSupabaseHealthRecordRepository } from '@/lib/supabase/health-records';
 import type {
+  HealthRecordDelete,
   HealthRecordInsert,
+  HealthRecordRestore,
+  HealthRecordUpdate,
   SupabaseHealthRecordRepository,
 } from '@/lib/supabase/health-records';
 
@@ -28,14 +31,57 @@ export type HealthRecordCreateDraft = Readonly<{
   userId: string;
 }>;
 
-export type HealthRecordMutationDependencies = Readonly<{
-  queryClient?: Pick<QueryClient, 'invalidateQueries'>;
+export type HealthRecordUpdateDraft = Readonly<{
+  householdId: string;
+  id: string;
+  notes: string;
+  providerName: string;
+  previousScheduledFor?: string;
+  puppyId: string;
+  recordType: string;
+  scheduledFor: string;
+  source: HealthRecordInsert['source'];
+  status: HealthRecordDraftStatus;
+  title: string;
+  updatedAt: string;
+  userId: string;
+}>;
+
+export type HealthRecordDeleteDraft = Readonly<{
+  affectedDate: string;
+  deletedAt: string;
+  householdId: string;
+  id: string;
+  puppyId: string;
+  updatedAt: string;
+  userId: string;
+}>;
+
+type QueryInvalidationClient = Pick<QueryClient, 'invalidateQueries'>;
+
+export type HealthRecordCreateMutationDependencies = Readonly<{
+  queryClient?: QueryInvalidationClient;
   repository: Pick<SupabaseHealthRecordRepository, 'insertHealthRecord'>;
 }>;
 
-export type HealthRecordMutationOptions = Readonly<{
-  mutationFn(draft: HealthRecordCreateDraft): Promise<HealthRecord>;
-  onSuccess(record: HealthRecord, draft: HealthRecordCreateDraft): Promise<void>;
+export type HealthRecordUpdateMutationDependencies = Readonly<{
+  queryClient?: QueryInvalidationClient;
+  repository: Pick<SupabaseHealthRecordRepository, 'updateHealthRecord'>;
+}>;
+
+export type HealthRecordDeleteMutationDependencies = Readonly<{
+  queryClient?: QueryInvalidationClient;
+  repository: Pick<SupabaseHealthRecordRepository, 'deleteHealthRecord'>;
+}>;
+
+export type HealthRecordRestoreMutationDependencies = Readonly<{
+  queryClient?: QueryInvalidationClient;
+  repository: Pick<SupabaseHealthRecordRepository, 'restoreHealthRecord'>;
+}>;
+
+export type HealthRecordMutationOptions<TDraft = HealthRecordCreateDraft, TResult = HealthRecord> = Readonly<{
+  mutationFn(draft: TDraft): Promise<TResult>;
+  onSuccess(record: TResult, draft: TDraft): Promise<void>;
 }>;
 
 export function useHealthRecordsQuery(
@@ -68,47 +114,164 @@ export function useCreateHealthRecordMutation(
   });
 }
 
-export function toHealthRecordInsert(draft: HealthRecordCreateDraft): HealthRecordInsert {
-  const status = draft.status;
+export function useUpdateHealthRecordMutation(
+  repository: Pick<SupabaseHealthRecordRepository, 'updateHealthRecord'> =
+  createSupabaseHealthRecordRepository(),
+) {
+  const queryClient = useQueryClient();
+  const options = createHealthRecordUpdateMutationOptions({
+    queryClient,
+    repository,
+  });
 
+  return useMutation({
+    mutationFn: options.mutationFn,
+    onSuccess: options.onSuccess,
+  });
+}
+
+export function useDeleteHealthRecordMutation(
+  repository: Pick<SupabaseHealthRecordRepository, 'deleteHealthRecord'> =
+  createSupabaseHealthRecordRepository(),
+) {
+  const queryClient = useQueryClient();
+  const options = createHealthRecordDeleteMutationOptions({
+    queryClient,
+    repository,
+  });
+
+  return useMutation({
+    mutationFn: options.mutationFn,
+    onSuccess: options.onSuccess,
+  });
+}
+
+export function useRestoreHealthRecordMutation(
+  repository: Pick<SupabaseHealthRecordRepository, 'restoreHealthRecord'> =
+  createSupabaseHealthRecordRepository(),
+) {
+  const queryClient = useQueryClient();
+  const options = createHealthRecordRestoreMutationOptions({
+    queryClient,
+    repository,
+  });
+
+  return useMutation({
+    mutationFn: options.mutationFn,
+    onSuccess: options.onSuccess,
+  });
+}
+
+export function toHealthRecordInsert(draft: HealthRecordCreateDraft): HealthRecordInsert {
   return {
-    completed_at: status === 'done' ? `${draft.scheduledFor}T12:00:00.000Z` : null,
+    completed_at: healthRecordCompletedAt(draft.status, draft.scheduledFor),
     notes: optionalTrimmed(draft.notes),
     provider_name: optionalTrimmed(draft.providerName),
     puppy_id: draft.puppyId,
     record_type: draft.recordType,
     scheduled_for: draft.scheduledFor,
-    source: status === 'template' ? 'template' : 'confirmed',
-    status,
+    source: healthRecordSource(draft.status),
+    status: draft.status,
     title: draft.title.trim(),
     updated_by: draft.userId,
   };
 }
 
+export function toHealthRecordUpdate(draft: HealthRecordUpdateDraft): HealthRecordUpdate {
+  return {
+    completed_at: healthRecordCompletedAt(draft.status, draft.scheduledFor),
+    id: draft.id,
+    notes: optionalTrimmed(draft.notes),
+    provider_name: optionalTrimmed(draft.providerName),
+    puppy_id: draft.puppyId,
+    record_type: draft.recordType,
+    scheduled_for: draft.scheduledFor,
+    source: draft.source,
+    status: draft.status,
+    title: draft.title.trim(),
+    updated_at: draft.updatedAt,
+    updated_by: draft.userId,
+  };
+}
+
+export function toHealthRecordDelete(draft: HealthRecordDeleteDraft): HealthRecordDelete {
+  return {
+    deleted_at: draft.deletedAt,
+    id: draft.id,
+    puppy_id: draft.puppyId,
+    updated_at: draft.updatedAt,
+    updated_by: draft.userId,
+  };
+}
+
+export function toHealthRecordRestore(draft: HealthRecordDeleteDraft): HealthRecordRestore {
+  return {
+    id: draft.id,
+    puppy_id: draft.puppyId,
+    updated_at: draft.updatedAt,
+    updated_by: draft.userId,
+  };
+}
+
 export function createHealthRecordMutationOptions(
-  dependencies: HealthRecordMutationDependencies,
+  dependencies: HealthRecordCreateMutationDependencies,
 ): HealthRecordMutationOptions {
   return {
     mutationFn: (draft) => dependencies.repository.insertHealthRecord(toHealthRecordInsert(draft)),
     onSuccess: async (_record, draft) => {
-      if (!dependencies.queryClient) {
-        return;
-      }
+      await invalidateHealthRecordDependents(dependencies.queryClient, {
+        dates: [draft.scheduledFor],
+        householdId: draft.householdId,
+        puppyId: draft.puppyId,
+      });
+    },
+  };
+}
 
-      await Promise.all([
-        dependencies.queryClient.invalidateQueries({
-          queryKey: queryKeys.health.records(draft.puppyId),
-        }),
-        dependencies.queryClient.invalidateQueries({
-          queryKey: queryKeys.today.dashboard(draft.householdId, draft.puppyId, draft.scheduledFor),
-        }),
-        dependencies.queryClient.invalidateQueries({
-          queryKey: queryKeys.puppy.summary(draft.householdId, draft.puppyId),
-        }),
-        dependencies.queryClient.invalidateQueries({
-          queryKey: queryKeys.sharing.projectionRoot(draft.householdId, draft.puppyId),
-        }),
-      ]);
+export function createHealthRecordUpdateMutationOptions(
+  dependencies: HealthRecordUpdateMutationDependencies,
+): HealthRecordMutationOptions<HealthRecordUpdateDraft> {
+  return {
+    mutationFn: (draft) => dependencies.repository.updateHealthRecord(toHealthRecordUpdate(draft)),
+    onSuccess: async (_record, draft) => {
+      await invalidateHealthRecordDependents(dependencies.queryClient, {
+        dates: uniqueHealthRecordDates([
+          draft.previousScheduledFor,
+          draft.scheduledFor,
+        ]),
+        householdId: draft.householdId,
+        puppyId: draft.puppyId,
+      });
+    },
+  };
+}
+
+export function createHealthRecordDeleteMutationOptions(
+  dependencies: HealthRecordDeleteMutationDependencies,
+): HealthRecordMutationOptions<HealthRecordDeleteDraft, void> {
+  return {
+    mutationFn: (draft) => dependencies.repository.deleteHealthRecord(toHealthRecordDelete(draft)),
+    onSuccess: async (_record, draft) => {
+      await invalidateHealthRecordDependents(dependencies.queryClient, {
+        dates: [draft.affectedDate],
+        householdId: draft.householdId,
+        puppyId: draft.puppyId,
+      });
+    },
+  };
+}
+
+export function createHealthRecordRestoreMutationOptions(
+  dependencies: HealthRecordRestoreMutationDependencies,
+): HealthRecordMutationOptions<HealthRecordDeleteDraft> {
+  return {
+    mutationFn: (draft) => dependencies.repository.restoreHealthRecord(toHealthRecordRestore(draft)),
+    onSuccess: async (_record, draft) => {
+      await invalidateHealthRecordDependents(dependencies.queryClient, {
+        dates: [draft.affectedDate],
+        householdId: draft.householdId,
+        puppyId: draft.puppyId,
+      });
     },
   };
 }
@@ -117,4 +280,48 @@ function optionalTrimmed(value: string): string | null {
   const trimmed = value.trim();
 
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function healthRecordSource(status: HealthRecordDraftStatus): HealthRecordInsert['source'] {
+  return status === 'template' ? 'template' : 'confirmed';
+}
+
+function healthRecordCompletedAt(status: HealthRecordDraftStatus, scheduledFor: string): string | null {
+  return status === 'done' ? `${scheduledFor}T12:00:00.000Z` : null;
+}
+
+async function invalidateHealthRecordDependents(
+  queryClient: QueryInvalidationClient | undefined,
+  input: Readonly<{
+    dates: readonly string[];
+    householdId: string;
+    puppyId: string;
+  }>,
+) {
+  if (!queryClient) {
+    return;
+  }
+
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.health.records(input.puppyId),
+    }),
+    ...input.dates.map((date) => queryClient.invalidateQueries({
+      queryKey: queryKeys.today.dashboard(input.householdId, input.puppyId, date),
+    })),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.puppy.summary(input.householdId, input.puppyId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.sharing.projectionRoot(input.householdId, input.puppyId),
+    }),
+  ]);
+}
+
+function uniqueHealthRecordDates(dates: readonly (string | undefined)[]): readonly string[] {
+  return [...new Set(dates.filter(isHealthRecordDate))];
+}
+
+function isHealthRecordDate(date: string | undefined): date is string {
+  return date !== undefined && date.length > 0;
 }
