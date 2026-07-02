@@ -81,7 +81,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Day 7 weekly rhythm / summary (§2.2.8) — locked as `diary-weekly-rhythm`; production
       contract selects `day_7_weekly_rhythm` when the week summary exists, with prioritization and
       Diary render coverage. Route-wide Stage 4 remains under the Diary route gate.
-- [ ] 🟡 Loading / empty / offline / pending states (§2.2.9) — primitives exist; confirm all four
+- [x] ✅ Loading / empty / offline / pending states (§2.2.9) — locked grouped-state templates are
+      covered by RED/GREEN gallery tests and Stage 4 SE captures for loading/offline plus
+      pending/error. Clay production-route state polish remains governed by
+      `2026-06-30-v2-screen-polish-backlog.md`.
 
 ### Quick Log (central Add) — DESIGN.md §2.3
 - [x] ✅ Trigger & sheet anatomy (§2.3.1) — tiles Walk/Feeding/Nap/Play/Sleep/Potty
@@ -108,7 +111,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 ### Timeline / history — DESIGN.md §2.4
 - [x] ✅ **Decision: fold history into Diary** (no standalone Events tab). Filters (per-tracker)
       and a date-range control live *inside* Diary; old standalone Events screen is dropped.
-- [ ] 🟡 Item anatomy / edit / delete / undo within Diary history (§2.4.3–2.4.4)
+- [ ] 🟡 Item anatomy / edit / delete / undo within Diary history (§2.4.3–2.4.4) — inline
+      Clay history, filter chips, FactCard anatomy, edit action, and swipe/accessibility delete
+      are implemented and Stage-4 verified. Durable synced delete + snackbar undo remain deferred
+      with the RLS blocker in `2026-06-30-v2-screen-polish-backlog.md`.
 
 ### Pet (new tab) — DESIGN.md §4.1 (folded) + §4.4.2
 - [x] ✅ Edit pet profile — Name/Breed/Sex/Current weight/Age (§4.4.2)
@@ -212,7 +218,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       compact modal header fix. Live IAP/restore/purchase states remain open.
 
 ### Onboarding / intake — DESIGN.md §2.1
-- [ ] 🟡 First-run variants — present in freeze (partial)
+- [ ] 🟡 First-run variants — visual slices are implemented across Welcome, Puppy Setup, Tracker
+      Selection, Plan Reveal, First Log, and post-value account/notification prompt previews.
+      Runtime prompt scheduler, OS permission handoff, and native DatePicker integration remain
+      explicitly deferred/partial under the rows below.
 - [x] ✅ Welcome (§2.1.1) — native initial `/onboarding` anatomy implemented: decorative warm
       illustration frame, locked H1/subtitle, primary setup CTA, and secondary sign-in action.
       Stage 4 native SE screenshot comparison passed 2026-07-02.
@@ -223,14 +232,14 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Age Hint (§2.1.3) — native profile-step inline hint implemented: info icon, status info tint,
       localized age-range copy, and accessible "Hint. …" label before tracker selection. Stage 4
       native SE screenshot comparison passed 2026-07-02.
-- [ ] 🟡 Quick Tracker Selection (§2.1.4) — native tracker-step chrome/anatomy slice implemented:
+- [x] ✅ Quick Tracker Selection (§2.1.4) — native tracker-step chrome/anatomy slice implemented:
       visible Step 3 chrome, helper copy, selected checkmark, selected/unselected a11y labels,
       zero-selected Skip Selection CTA, and skip-to-default save normalization. Stage 4 native SE
       screenshot comparison passed 2026-07-02.
-- [ ] 🟡 Plan Reveal (§2.1.5) — native value-moment anatomy slice implemented: puppy summary row,
+- [x] ✅ Plan Reveal (§2.1.5) — native value-moment anatomy slice implemented: puppy summary row,
       Honey/accent HeroCard 96pt, three separate DailyCard starter actions, and bottom first-log CTA.
       Stage 4 native SE screenshot comparison passed 2026-07-02.
-- [ ] 🟡 First Log (§2.1.6) — native first-value completion anatomy implemented: Diary chrome,
+- [x] ✅ First Log (§2.1.6) — native first-value completion anatomy implemented: Diary chrome,
       pending/local-only state, no pre-value account pressure, and celebration snackbar. Real Quick
       Log sheet selection/persistence remains covered by Quick Log slices; Stage 4 native SE
       comparison passed for content/chrome and transient celebration snackbar visual capture 2026-07-02.
@@ -2282,6 +2291,17 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Tightened the First-run variants row so the remaining partial scope is explicit:
+  visual onboarding slices are implemented, while runtime prompt scheduling, OS permission handoff,
+  and native DatePicker integration remain deferred/partial.
+- 2026-07-02: Reconciled onboarding coverage rows with existing evidence: Quick Tracker Selection,
+  Plan Reveal, and First Log now reflect their RED/GREEN coverage and SE Stage 4 screenshots in the
+  top matrix; Puppy Setup remains partial because real platform DatePicker wiring is still blocked
+  until a native picker module can be used safely.
+- 2026-07-02: Reconciled the top Diary/Timeline coverage rows with current Clay evidence: grouped
+  Diary loading/offline/pending/error templates are now marked implemented with RED/GREEN gallery
+  coverage and SE Stage 4 screenshots, while Diary history item actions remain explicitly partial
+  because durable synced delete + snackbar undo are deferred behind the known RLS blocker.
 - 2026-07-02: Closed the Pet/More IA duplication follow-up from the screen-polish backlog: Pet is now
   the canonical home for puppy profile and Quick Trackers, More renders a single localized
   `Pet settings` deep link to `/pet`, and Pet `Edit profile` opens `/settings/puppy-profile`.
