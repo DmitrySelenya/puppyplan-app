@@ -44,8 +44,53 @@ export type HealthScreenProps = Readonly<{
   onOpenPuppyProfile?: () => void;
   onOpenQuickTrackers?: () => void;
   healthRecords?: readonly HealthRecord[];
-  reviewState?: 'empty' | 'mixed-list';
+  reviewState?: HealthMainReviewState;
 }>;
+
+export type HealthMainReviewState =
+  | 'empty'
+  | 'error'
+  | 'loading'
+  | 'mixed-list'
+  | 'offline-read';
+
+type HealthMainState = Exclude<HealthMainReviewState, 'empty' | 'mixed-list'>;
+
+type HealthMainStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
+}>;
+
+const healthMainStateMeta: Record<HealthMainState, HealthMainStateMeta> = {
+  error: {
+    bodyKey: 'health.states.error.body',
+    icon: 'warningTriangle',
+    role: 'alert',
+    statusKey: 'health.states.error.status',
+    titleKey: 'health.states.error.title',
+    tone: 'failed',
+  },
+  loading: {
+    bodyKey: 'health.states.loading.body',
+    icon: 'stethoscope',
+    liveRegion: 'polite',
+    statusKey: 'health.states.loading.status',
+    titleKey: 'health.states.loading.title',
+    tone: 'pending',
+  },
+  'offline-read': {
+    bodyKey: 'health.states.offline-read.body',
+    icon: 'lock',
+    statusKey: 'health.states.offline-read.status',
+    titleKey: 'health.states.offline-read.title',
+    tone: 'template',
+  },
+};
 
 export function HealthScreen({
   healthRecords,
@@ -60,6 +105,7 @@ export function HealthScreen({
   const rows = healthRecords !== undefined
     ? healthRecords.map(healthRecordToRow)
     : reviewState === 'mixed-list' ? healthReviewRows : [];
+  const healthMainState = getHealthMainState(reviewState);
   const visibleRows = rows.filter((row) =>
     selectedSegment === 'all' || row.segment === selectedSegment);
   const currentRows = visibleRows.filter((row) => row.section === 'current');
@@ -108,7 +154,9 @@ export function HealthScreen({
           tone="completed"
         />
       </Stack>
-      {visibleRows.length > 0 ? (
+      {healthMainState ? (
+        <HealthMainStatePreview state={healthMainState} />
+      ) : visibleRows.length > 0 ? (
         <Stack gap="md">
           <HealthRowsSection
             onOpenHealthRecord={onOpenHealthRecord}
@@ -141,6 +189,50 @@ export function HealthScreen({
       <AppText tone="secondary" variant="footnote">{t('health.footer-hint')}</AppText>
     </Screen>
   );
+}
+
+export function HealthMainStatePreview({
+  state,
+}: Readonly<{
+  state: HealthMainState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = healthMainStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`health-main-state-${state}`}
+      variant={state === 'offline-read' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={<AppIcon name={meta.icon} size={14} />}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="bodyEmph">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">{body}</AppText>
+      </Stack>
+    </Card>
+  );
+}
+
+function getHealthMainState(reviewState: HealthMainReviewState | undefined): HealthMainState | undefined {
+  if (
+    reviewState === 'error'
+    || reviewState === 'loading'
+    || reviewState === 'offline-read'
+  ) {
+    return reviewState;
+  }
+
+  return undefined;
 }
 
 function HealthVetPrepCard() {

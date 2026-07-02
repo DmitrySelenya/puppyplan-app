@@ -1272,6 +1272,23 @@
       "vet-visit-meta": "Done · April 28 · Added by you"
     },
     "error-card": "Couldn't load entries. Try refreshing.",
+    "states": {
+      "loading": {
+        "status": "Loading",
+        "title": "Loading health entries",
+        "body": "We are checking the latest saved records for this puppy."
+      },
+      "error": {
+        "status": "Could not load",
+        "title": "Could not load health entries",
+        "body": "Check your connection and try again. No health details were changed."
+      },
+      "offline-read": {
+        "status": "Offline",
+        "title": "Showing the last saved health entries",
+        "body": "Showing the last saved data. New changes can wait until you are back online."
+      }
+    },
     "refresh": "Refresh",
     "pills": {
       "template": "Template",

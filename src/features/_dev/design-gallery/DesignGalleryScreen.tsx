@@ -30,6 +30,7 @@ import {
   type WeekStripDay,
 } from '@/design/primitives';
 import {
+  HealthMainStatePreview,
   HealthRecordDetailPreview,
   HealthRecordEditPreview,
   HealthScreen,
@@ -818,6 +819,9 @@ export function SyntheticHealthShell() {
         />
         <HealthScreen reviewState="mixed-list" />
         <HealthScreen />
+        <HealthMainStatePreview state="loading" />
+        <HealthMainStatePreview state="error" />
+        <HealthMainStatePreview state="offline-read" />
         <HealthRecordEditPreview reviewState="loading" />
         <HealthRecordEditPreview />
         <HealthRecordEditPreview filled />

@@ -413,6 +413,8 @@ GREEN / regression evidence:
       plus dev-gallery coverage;
       Quick Trackers settings now has RED/GREEN templates for loading, error, empty, and
       owner-only access plus dev-gallery and Stage 4 SE evidence;
+      Pet Health main list now has RED/GREEN templates for loading, error, and offline-read
+      plus production route loading/error wiring and dev-gallery coverage;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -1330,6 +1332,61 @@ Implementation notes:
   Add weight, accessible Quick Trackers entry, health filters/chips, empty Health state, Add entry,
   disabled Browse templates, and non-diagnostic footer copy without bottom-chrome overlap. Mixed health
   list, add-record modal, detail/delete, and vet-prep Stage 4 checks remain separate plan items.
+
+### 15a. Pet Health main state templates
+
+**2026-07-02 state slice:** add deterministic Loading / Error / Offline-read state templates to the
+main `/pet` Health list surface and wire the production route to real active-care / health-record
+query loading and error states. This closes only the main Health list state shell; it does not add
+health offline writes, permissions, new data model fields, or native modules.
+
+- Stage 0 lock: `docs/design/v1/specs/05-pet-health.md`.
+- Source canon: DESIGN.md §4.5 global screen states and §4.1 Pet / Health folded surface.
+- Route/components: `/pet`, `src/features/health/screens/HealthScreen.tsx`,
+  `app/(tabs)/pet/index.tsx`, dev-gallery health shell.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-PET-STATES-1: `HealthScreen` exposes deterministic `loading`, `error`, and `offline-read`
+  review states using tokenized `Card` + `StatusPill`, typed EN/RU/ES copy, and stable
+  `health-main-state-*` test IDs.
+- AC-PET-STATES-2: error state uses alert semantics, loading uses a polite live region, and
+  offline-read copy explicitly says it is showing the last saved data.
+- AC-PET-STATES-3: the production `/pet` route passes loading while active-care or health records are
+  loading, and passes error when either query fails or active care context is unavailable.
+- AC-PET-STATES-4: the state cards render in the Pet Health surface without fake health rows and
+  without hiding the Pet profile hub.
+- AC-PET-STATES-5: no schema migration, native module, health offline queue, permission system, or
+  `ios` / `android` edit is introduced in this slice.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health.render.test.tsx src/test/pet-route.render.test.tsx`
+  failed as expected before implementation: `health-main-state-loading` was absent, and the
+  production Pet route still rendered the empty Health state while the health-record query was
+  loading.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health.render.test.tsx src/test/pet-route.render.test.tsx src/test/dev-gallery.render.test.tsx`
+  — PASS: 3 suites, 18 tests.
+- `node scripts/checks/check-i18n.mjs` — PASS: i18n parity, typed helper usage, and string budgets ok.
+- `npm run tokens:check` — PASS.
+- `npm run typecheck` — PASS.
+- `git diff --check` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 76 suites / 612 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing reduced-motion `act(...)` warnings
+  remain unrelated to this slice.
+
+Implementation notes:
+- `HealthScreen` now exposes compact `HealthMainStatePreview` cards for loading, error, and
+  offline-read states. The state card renders after the Pet profile hub and before health rows, so
+  it does not hide the profile surface and does not fabricate health records.
+- `/pet` maps active-care loading, health-record loading, active-care error, missing active context,
+  and health-record query error into the appropriate Health main list state.
+- The development gallery now includes the three compact Pet Health main state cards for native
+  handoff. Stage 4 native screenshot comparison is not recorded for this slice yet; no Stage 4 PASS is
+  claimed here.
+- No schema migration, native module, health offline queue, permission system, analytics payload, or
+  `ios` / `android` edit was introduced.
 
 ## 16. Health Add Record route Stage-0 lock evidence
 
@@ -3514,6 +3571,11 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-03: Added Pet Health main loading/error/offline-read state templates and production `/pet`
+  loading/error wiring from active-care and health-record queries. The cards use design primitives,
+  typed EN/RU/ES copy, alert/live-region semantics, and dev-gallery handoff coverage without adding
+  schema/native/offline-queue work. Targeted Health/Pet/dev-gallery tests, i18n, token drift,
+  typecheck, and whitespace checks passed; Stage 4 native screenshot comparison remains unclaimed.
 - 2026-07-02: Wired `/sharing/puppy-card` Share CTA to the React Native OS share sheet with existing
   localized, privacy-safe card copy. The route now shows pending-write while the OS sheet is pending,
   share-options after success, and the existing error state on rejection without closing the modal.

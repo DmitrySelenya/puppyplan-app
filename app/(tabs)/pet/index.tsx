@@ -8,6 +8,13 @@ export default function PetRoute() {
   const router = useRouter();
   const activeCare = useActiveCareContext();
   const healthRecords = useHealthRecordsQuery(activeCare.careContext?.puppyId);
+  const reviewState = activeCare.status === 'loading' || healthRecords.isLoading
+    ? 'loading'
+    : activeCare.status === 'error'
+      || activeCare.careContext === null
+      || healthRecords.isError
+      ? 'error'
+      : undefined;
 
   return (
     <HealthScreen
@@ -27,6 +34,7 @@ export default function PetRoute() {
       onOpenQuickTrackers={() => {
         router.push('/settings/quick-trackers');
       }}
+      reviewState={reviewState}
     />
   );
 }

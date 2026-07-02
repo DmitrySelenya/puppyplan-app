@@ -1329,6 +1329,23 @@
       "vet-visit-meta": "Hecho · 28 de abril · Agregado por ti"
     },
     "error-card": "No se pudieron cargar las entradas. Intenta actualizar.",
+    "states": {
+      "loading": {
+        "status": "Cargando",
+        "title": "Cargando entradas de salud",
+        "body": "Estamos revisando los últimos registros guardados de este cachorro."
+      },
+      "error": {
+        "status": "No se pudo cargar",
+        "title": "No se pudieron cargar las entradas de salud",
+        "body": "Revisa tu conexión e inténtalo de nuevo. No se cambiaron datos de salud."
+      },
+      "offline-read": {
+        "status": "Offline",
+        "title": "Mostrando las últimas entradas de salud guardadas",
+        "body": "Se muestran los últimos datos guardados. Los cambios nuevos pueden esperar hasta que vuelvas a estar online."
+      }
+    },
     "refresh": "Refrescar",
     "pills": {
       "template": "Plantilla",

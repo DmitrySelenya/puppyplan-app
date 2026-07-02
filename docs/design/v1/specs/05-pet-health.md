@@ -23,7 +23,7 @@ Allowed deviations: old standalone Health/Profile screens are folded into Pet.
 
 ## States Covered
 
-- landing/hub, profile edit, loading, single-weight-point, no-vet-visit, add record, edit record, confirmed detail, needs vet review, empty first-run, offline.
+- landing/hub, profile edit, health list loading, health list error, health list offline-read, single-weight-point, no-vet-visit, add record, edit record, confirmed detail, needs vet review, empty first-run, offline.
 
 ## Accessibility
 

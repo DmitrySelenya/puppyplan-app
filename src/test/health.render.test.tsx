@@ -125,6 +125,30 @@ describe('Health V2 anatomy', () => {
     expect(screen.queryByText(/diagnosis|dosage|treatment plan|emergency/i)).toBeNull();
   });
 
+  it('AC-PET-STATES-1 AC-PET-STATES-2 renders main Health loading, error, and offline-read state cards', () => {
+    render(
+      <>
+        <HealthScreen reviewState="loading" />
+        <HealthScreen reviewState="error" />
+        <HealthScreen reviewState="offline-read" />
+      </>,
+    );
+
+    for (const state of ['loading', 'error', 'offline-read'] as const) {
+      expect(screen.getByTestId(`health-main-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`health.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`health.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('health-main-state-loading').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getByTestId('health-main-state-error').props.accessibilityRole)
+      .toBe('alert');
+    expect(i18n.t('health.states.offline-read.body')).toMatch(/last saved/i);
+    expect(screen.getAllByTestId('pet-profile-hub-card')).toHaveLength(3);
+    expect(screen.queryByText(i18n.t('health.empty.title'))).toBeNull();
+  });
+
   it('AC-PET-ADD opens the health record add flow from the empty Pet health state', () => {
     const openAddRecord = jest.fn();
 

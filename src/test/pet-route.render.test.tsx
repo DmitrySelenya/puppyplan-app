@@ -14,7 +14,10 @@ const mockCareContext = {
   todayDate: '2026-07-02',
   userId: '00000000-0000-4000-8000-000000003002',
 };
+let mockActiveCareStatus: 'error' | 'loading' | 'ready' = 'ready';
 let mockHealthRecords: unknown[] = [];
+let mockHealthRecordsError = false;
+let mockHealthRecordsLoading = false;
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({
@@ -24,17 +27,17 @@ jest.mock('expo-router', () => ({
 
 jest.mock('@/lib/query/active-care-context', () => ({
   useActiveCareContext: () => ({
-    careContext: mockCareContext,
+    careContext: mockActiveCareStatus === 'ready' ? mockCareContext : null,
     puppy: null,
-    status: 'ready',
+    status: mockActiveCareStatus,
   }),
 }));
 
 jest.mock('@/lib/query/health-records', () => ({
   useHealthRecordsQuery: () => ({
     data: mockHealthRecords,
-    isError: false,
-    isLoading: false,
+    isError: mockHealthRecordsError,
+    isLoading: mockHealthRecordsLoading,
   }),
 }));
 
@@ -43,7 +46,10 @@ describe('PetRoute', () => {
 
   beforeEach(async () => {
     mockRouterPush.mockClear();
+    mockActiveCareStatus = 'ready';
     mockHealthRecords = [];
+    mockHealthRecordsError = false;
+    mockHealthRecordsLoading = false;
     reduceMotionProbe = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
       .mockReturnValue(new Promise<boolean>(() => {}));
@@ -82,6 +88,31 @@ describe('PetRoute', () => {
     }));
 
     expect(mockRouterPush).toHaveBeenCalledWith('/pet/health-record-edit');
+  });
+
+  it('AC-PET-STATES-3 renders Pet Health loading and error states from the production route queries', () => {
+    mockHealthRecordsLoading = true;
+    const loading = render(<PetRoute />);
+
+    expect(screen.getByTestId('health-main-state-loading')).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.states.loading.title'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('health.empty.title'))).toBeNull();
+    loading.unmount();
+
+    mockHealthRecordsLoading = false;
+    mockHealthRecordsError = true;
+    const queryError = render(<PetRoute />);
+
+    expect(screen.getByTestId('health-main-state-error')).toBeTruthy();
+    expect(screen.queryByText(i18n.t('health.empty.title'))).toBeNull();
+    queryError.unmount();
+
+    mockHealthRecordsError = false;
+    mockActiveCareStatus = 'error';
+    render(<PetRoute />);
+
+    expect(screen.getByTestId('health-main-state-error')).toBeTruthy();
+    expect(screen.getByTestId('pet-profile-hub-card')).toBeTruthy();
   });
 
   it('AC-PET-ADD-DURABLE-3 renders health records from the typed route query', () => {
