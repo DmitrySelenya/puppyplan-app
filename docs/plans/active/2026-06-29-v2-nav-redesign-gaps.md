@@ -250,7 +250,31 @@ GREEN / regression evidence:
 - [x] ✅ Notification preferences (§4.4.4) — `/settings/notifications` native anatomy slice
       implemented: local reminders, push reminders/sitter completion, quiet hours, timezone rows,
       and More hub navigation. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
-      Persistence / OS permission handoff remains open.
+      OS settings handoff is now wired from the push toggles. Persistence and real permission-state
+      wiring remain open.
+
+#### 4.4.4a Notification preferences OS settings handoff
+
+Stage-0 lock:
+- Source: DESIGN.md §4.4.4 and the implemented `/settings/notifications` push section.
+- Scope: route-level OS settings handoff only. No permission probing, no notification scheduling,
+  no persistence, and no new native module.
+
+Acceptance:
+- AC-NOTIF-SETTINGS-1: changing a push toggle opens the platform settings handoff through
+  `Linking.openSettings()`.
+- AC-NOTIF-SETTINGS-2: the route stays open and does not mutate local reminder toggles.
+- AC-NOTIF-SETTINGS-3: if the settings handoff rejects, the route renders the existing notification
+  preferences error state instead of swallowing the failure.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` failed as
+  expected while the push toggles still had no-op handlers: `Linking.openSettings()` was never
+  called and no notification preferences error state rendered after a rejected settings handoff.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` — PASS:
+  1 suite, 25 tests.
 - [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
       topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
       Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Email handoff is now wired

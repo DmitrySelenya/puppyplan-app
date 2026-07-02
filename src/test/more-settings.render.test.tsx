@@ -65,11 +65,15 @@ const puppy: PuppyProfile = {
 
 describe('More settings entries', () => {
   let reduceMotionProbe: jest.SpyInstance;
+  let openSettingsSpy: jest.SpyInstance<Promise<void>, []>;
   let openUrlSpy: jest.SpyInstance<Promise<void>, [string]>;
   let shareSpy: jest.SpyInstance;
 
   beforeEach(async () => {
     mockRouterBack.mockClear();
+    openSettingsSpy = jest
+      .spyOn(Linking, 'openSettings')
+      .mockResolvedValue(undefined);
     openUrlSpy = jest
       .spyOn(Linking, 'openURL')
       .mockResolvedValue(undefined);
@@ -97,6 +101,7 @@ describe('More settings entries', () => {
 
   afterEach(() => {
     cleanup();
+    openSettingsSpy.mockRestore();
     openUrlSpy.mockRestore();
     reduceMotionProbe.mockRestore();
     shareSpy.mockRestore();
@@ -392,6 +397,36 @@ describe('More settings entries', () => {
     expect(screen.getByTestId('notifications-state-pending-write').props.accessibilityLiveRegion)
       .toBe('polite');
     expect(screen.queryByText(/apns|fcm|device token|raw token/i)).toBeNull();
+  });
+
+  it('opens OS settings when a push notification toggle changes without mutating local reminders', async () => {
+    render(
+      <AppProviders>
+        <NotificationPreferencesScreen />
+      </AppProviders>,
+    );
+
+    fireEvent(screen.getByTestId('notifications-push-reminders-toggle'), 'valueChange', false);
+
+    await waitFor(() => {
+      expect(openSettingsSpy).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(true);
+  });
+
+  it('renders notification preferences error state when OS settings handoff fails', async () => {
+    openSettingsSpy.mockRejectedValueOnce(new Error('settings unavailable'));
+    render(
+      <AppProviders>
+        <NotificationPreferencesScreen />
+      </AppProviders>,
+    );
+
+    fireEvent(screen.getByTestId('notifications-push-sitter-toggle'), 'valueChange', false);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('notifications-state-error')).toBeTruthy();
+    });
   });
 
   it('renders the support help anatomy without requesting private data', () => {

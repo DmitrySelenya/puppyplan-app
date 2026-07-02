@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { Linking, StyleSheet } from 'react-native';
 
 import {
   AppIcon,
@@ -82,6 +83,19 @@ export function NotificationPreferencesScreen({
   reviewState,
 }: NotificationPreferencesScreenProps) {
   const { t } = useAppTranslation();
+  const [localReviewState, setLocalReviewState] = useState<
+    NotificationPreferencesReviewState | undefined
+  >();
+  const visibleReviewState = reviewState ?? localReviewState;
+
+  const openNotificationSettings = async () => {
+    setLocalReviewState(undefined);
+    try {
+      await Linking.openSettings();
+    } catch {
+      setLocalReviewState('error');
+    }
+  };
 
   return (
     <Screen contentStyle={styles.content}>
@@ -95,8 +109,8 @@ export function NotificationPreferencesScreen({
         <ScreenHeader title={t('more.notifications.screen-title')} />
       )}
 
-      {reviewState ? (
-        <NotificationPreferencesStatePreview state={reviewState} />
+      {visibleReviewState ? (
+        <NotificationPreferencesStatePreview state={visibleReviewState} />
       ) : null}
 
       <NotificationSection title={t('more.notifications.section-local')}>
@@ -128,7 +142,9 @@ export function NotificationPreferencesScreen({
           trailing={(
             <Toggle
               accessibilityLabel={t('more.notifications.row-push-reminders')}
-              onValueChange={() => undefined}
+              onValueChange={() => {
+                void openNotificationSettings();
+              }}
               testID="notifications-push-reminders-toggle"
               value
             />
@@ -141,7 +157,9 @@ export function NotificationPreferencesScreen({
           trailing={(
             <Toggle
               accessibilityLabel={t('more.notifications.row-push-sitter')}
-              onValueChange={() => undefined}
+              onValueChange={() => {
+                void openNotificationSettings();
+              }}
               testID="notifications-push-sitter-toggle"
               value
             />
