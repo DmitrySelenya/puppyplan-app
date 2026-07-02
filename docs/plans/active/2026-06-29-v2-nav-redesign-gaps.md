@@ -143,7 +143,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       affected-date invalidation, zero-row delete failure handling, and single-record detail loading.
       Production detail routing and delete + 5-second undo restore snackbar wiring are implemented;
       editable dirty-state UI now saves through the typed update mutation. Seeded production Stage 4
-      delete/edit evidence remains open.
+      detail/read, edit, and delete-confirm evidence is recorded. Real delete/undo snackbar Stage 4
+      remains blocked by the known deferred Health soft-delete RLS gap (`42501` on authenticated
+      `deleted_at` update).
 - [x] ✅ Status transitions visualisation Template→Confirmed→Done (§4.1.6) — native detail
       status strip now renders four visible icon+label steps with exactly one active filled state and
       full sequence accessibility label. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
@@ -1736,9 +1738,14 @@ Stage 4 status:
   anatomy already has Stage 4 SE evidence from `health/11-4.png` and `health/11-5.png`.
 - No new visual anatomy was introduced in this slice; the route only swaps synthetic DHPP values for
   real `health_record` values and hides synthetic-only destructive controls in production.
-- A live production-route SE capture is still **not recorded as PASS** because it requires a
-  deterministic debug-account `health_record` seed or a dedicated approved harness route. Do not
-  treat this note as closing the future native persistence / timed undo Stage 4 gate.
+- Stage 4 PASS follow-up (2026-07-02): created a synthetic non-production Supabase Dev
+  `health_record` seed for the existing debug account active puppy, launched the installed
+  PuppyPlan.app over Metro on the primary SE simulator, and deep-linked to
+  `puppyplan:///pet/health-record/00000000-0000-4000-8000-000000003003`.
+  Evidence: `output/v2-nav-gaps-stage4/health-detail-production-seeded-stage4.jpg`.
+  The screenshot shows the production route loading the seeded `DHPP booster` record with date,
+  confirmed status, empty clinic/note values, and the status stage strip. The seed intentionally
+  leaves provider/name notes empty to avoid storing private provider or note data.
 
 ### 17c. Health record production delete + timed undo wiring
 
@@ -1802,13 +1809,20 @@ Stage 4 status:
 - Metro was started with `npx expo start`; the already-installed `PuppyPlan.app` was launched through
   XcodeBuildMCP without native rebuild, then deep-linked to
   `puppyplan:///pet/health-record/00000000-0000-4000-8000-000000003003`.
-- Runtime screenshot confirms the route loads current JS and renders the localized detail error state
-  for an unavailable record. The production delete/undo snackbar path is **not recorded as Stage 4
-  PASS** because this simulator/debug account still lacks a deterministic loaded `health_record` seed
-  for the detail route.
-- Evidence file: `output/v2-nav-gaps-stage4/health-detail-delete-production-runtime-blocker.jpg`
-  (ignored local artifact). Production delete/undo behavior is covered by route render tests until a
-  seeded debug record or approved harness route exists.
+- Stage 4 partial PASS follow-up (2026-07-02): after adding a non-production debug seed, the same
+  production route now renders the destructive delete area and confirm card on a loaded server record.
+  Evidence:
+  `output/v2-nav-gaps-stage4/health-detail-delete-confirm-production-seeded-stage4.jpg`.
+- Runtime accessibility follow-up: XcodeBuildMCP initially exposed only the aggregate alert card, not
+  the nested `Cancel` / `Delete` buttons. RED/GREEN coverage was added in
+  `src/test/health.render.test.tsx`, and `Card` now allows an explicit `accessible={false}` override
+  for non-interactive containers with nested button controls. A repeated runtime snapshot exposed
+  separate `Cancel` and `Delete` button targets.
+- Real delete/undo snackbar Stage 4 remains **not PASS**. Pressing the runtime confirm `Delete`
+  exercised the real authenticated mutation and reproduced the known deferred Health soft-delete RLS
+  gap: authenticated `health_record` update with `deleted_at` returns `42501`
+  (`new row violates row-level security policy`). The route correctly rendered the existing Health
+  error state instead of silently closing. The dev seed was restored to `deleted_at: null` afterward.
 
 ### 17d. Health record production editable detail UI
 
@@ -1869,6 +1883,15 @@ Implementation notes:
   are not logged or sent to analytics.
 - `src/contracts/navigation.ts` now includes the existing `common.cancel`, `common.edit`, and
   `common.save` keys in `shellI18nKeys` because Health shell code now uses them directly.
+
+Stage 4 status:
+- Stage 4 PASS follow-up (2026-07-02): using the same non-production debug seed and installed
+  PuppyPlan.app over Metro, the production detail route opened edit mode from the loaded server
+  record. Evidence:
+  `output/v2-nav-gaps-stage4/health-detail-edit-production-seeded-stage4.jpg`.
+  The screenshot shows the localized modal chrome, prefilled name/date/status controls, disabled
+  Save before dirty changes, and empty clinic/note fields without storing private provider/note data
+  in the seed.
 
 ## 18. Vet visit prep card Stage-0 lock evidence
 
@@ -3839,3 +3862,10 @@ Implementation notes:
   privacy-safe neutral copy, locked status pill, info/next-step cards, CTA, EN/RU/ES shell keys,
   RED/GREEN render coverage, shell i18n contract update, and primary SE Stage 4 screenshot. Live
   token lookup, provider payload parsing, and public projection remain deferred.
+- 2026-07-02: Added a non-production Supabase Dev health-record seed for the existing debug account
+  and closed seeded production Stage 4 evidence for `/pet/health-record/[recordId]` loaded detail,
+  edit mode, and delete-confirm anatomy. The runtime pass exposed an iOS accessibility issue where
+  the delete-confirm alert Card swallowed nested `Cancel` / `Delete` button targets; added RED/GREEN
+  coverage and an explicit `Card accessible={false}` override for this nested-button container.
+  Real delete/undo snackbar Stage 4 remains blocked by the known deferred Health soft-delete RLS gap:
+  authenticated `deleted_at` update returns `42501`; the dev seed was restored afterward.

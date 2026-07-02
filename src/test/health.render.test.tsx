@@ -173,6 +173,7 @@ describe('Health V2 anatomy', () => {
   it('keeps delete as the only danger-filled Health action with confirm and busy states', () => {
     render(<HealthRecordDetailPreview deletePending />);
 
+    const confirmCard = screen.getByTestId('health-record-delete-confirm-card');
     const deleteAction = screen.getByRole('button', {
       name: i18n.t('health.edit-record.delete-action'),
     });
@@ -180,6 +181,7 @@ describe('Health V2 anatomy', () => {
       name: i18n.t('health.edit-record.delete-confirm.destructive'),
     });
 
+    expect(confirmCard.props.accessible).toBe(false);
     expect(deleteAction.props.accessibilityState.busy).toBe(true);
     expect(screen.getByLabelText(i18n.t('health.edit-record.delete-confirm.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.edit-record.delete-undo-toast'))).toBeTruthy();

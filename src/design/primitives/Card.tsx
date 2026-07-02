@@ -11,6 +11,7 @@ export type CardVariant = 'resting' | 'interactive' | 'hero' | 'mutedTemplate';
 type StaticCardVariant = Exclude<CardVariant, 'interactive'>;
 
 type StaticCardProps = PropsWithChildren<{
+  accessible?: ViewProps['accessible'];
   accessibilityLiveRegion?: ViewProps['accessibilityLiveRegion'];
   accessibilityLabel?: string;
   accessibilityRole?: ViewProps['accessibilityRole'];
@@ -21,6 +22,7 @@ type StaticCardProps = PropsWithChildren<{
 }>;
 
 type InteractiveCardProps = PropsWithChildren<{
+  accessible?: never;
   accessibilityLiveRegion?: never;
   accessibilityLabel: string;
   accessibilityRole?: never;
@@ -33,6 +35,7 @@ type InteractiveCardProps = PropsWithChildren<{
 export type CardProps = StaticCardProps | InteractiveCardProps;
 
 export function Card({
+  accessible,
   accessibilityLabel,
   accessibilityLiveRegion,
   accessibilityRole,
@@ -72,7 +75,7 @@ export function Card({
       accessibilityLabel={accessibilityLabel}
       accessibilityLiveRegion={accessibilityLiveRegion}
       accessibilityRole={accessibilityRole}
-      accessible={Boolean(accessibilityLiveRegion || accessibilityRole)}
+      accessible={accessible ?? Boolean(accessibilityLiveRegion || accessibilityRole)}
       style={rootStyle}
       testID={testID}>
       {children}

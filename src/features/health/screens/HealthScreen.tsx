@@ -1522,8 +1522,10 @@ export function HealthRecordDetailPreview({
               variant="destructive"
             />
             <Card
+              accessible={false}
               accessibilityLabel={t('health.edit-record.delete-confirm.title')}
               accessibilityRole="alert"
+              testID="health-record-delete-confirm-card"
               variant="mutedTemplate">
               <Stack gap="sm">
                 <AppText variant="headline">{t('health.edit-record.delete-confirm.title')}</AppText>
