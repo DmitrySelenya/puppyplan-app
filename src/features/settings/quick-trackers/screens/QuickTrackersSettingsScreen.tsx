@@ -17,6 +17,7 @@ import { Screen } from '@/design/primitives/Screen';
 import { ScreenHeader } from '@/design/primitives/ScreenHeader';
 import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { Stack } from '@/design/primitives/Stack';
+import { StatusPill, type StatusPillTone } from '@/design/primitives/StatusPill';
 import { Toggle } from '@/design/primitives/Toggle';
 import { tokens } from '@/design/tokens';
 import { type AppTranslate, useAppTranslation } from '@/lib/i18n';
@@ -28,6 +29,49 @@ import {
 } from '@/lib/query/puppy';
 
 type QuickTrackersAccessState = 'loading' | 'empty' | 'error' | 'owner' | 'nonOwner';
+type QuickTrackersStateTemplate = Exclude<QuickTrackersAccessState, 'owner'>;
+
+const quickTrackersStateMeta = {
+  empty: {
+    icon: 'paw',
+    statusKey: 'more.quick-trackers.states.empty.status',
+    titleKey: 'more.quick-trackers.states.empty.title',
+    bodyKey: 'more.quick-trackers.states.empty.body',
+    testId: 'quick-trackers-state-empty',
+    tone: 'template',
+  },
+  error: {
+    icon: 'warningTriangle',
+    statusKey: 'more.quick-trackers.states.error.status',
+    titleKey: 'more.quick-trackers.states.error.title',
+    bodyKey: 'more.quick-trackers.states.error.body',
+    testId: 'quick-trackers-state-error',
+    tone: 'failed',
+  },
+  loading: {
+    icon: 'sliders',
+    statusKey: 'more.quick-trackers.states.loading.status',
+    titleKey: 'more.quick-trackers.states.loading.title',
+    bodyKey: 'more.quick-trackers.states.loading.body',
+    testId: 'quick-trackers-state-loading',
+    tone: 'pending',
+  },
+  nonOwner: {
+    icon: 'lock',
+    statusKey: 'more.quick-trackers.states.non-owner.status',
+    titleKey: 'more.quick-trackers.states.non-owner.title',
+    bodyKey: 'more.quick-trackers.states.non-owner.body',
+    testId: 'quick-trackers-state-non-owner',
+    tone: 'failed',
+  },
+} as const satisfies Record<QuickTrackersStateTemplate, {
+  bodyKey: Parameters<AppTranslate>[0];
+  icon: AppIconName;
+  statusKey: Parameters<AppTranslate>[0];
+  testId: string;
+  titleKey: Parameters<AppTranslate>[0];
+  tone: StatusPillTone;
+}>;
 
 const trackerIconNames: Record<QuickLogTrackerId, AppIconName> = {
   feeding: 'bowl',
@@ -208,19 +252,19 @@ export function QuickTrackersSettingsScreen({
   };
 
   if (effectiveAccessState === 'loading') {
-    return <StateCard message={t('common.loading')} />;
+    return <StateScreen onBack={onBack} state="loading" />;
   }
 
   if (effectiveAccessState === 'error') {
-    return <AlertStateCard message={t('errors.load-failed')} />;
+    return <StateScreen onBack={onBack} state="error" />;
   }
 
   if (effectiveAccessState === 'empty') {
-    return <StateCard message={t('today.quick-log.unavailable.title')} />;
+    return <StateScreen onBack={onBack} state="empty" />;
   }
 
   if (effectiveAccessState === 'nonOwner') {
-    return <AlertStateCard message={t('errors.owner-only-settings')} />;
+    return <StateScreen onBack={onBack} state="nonOwner" />;
   }
 
   const selectedRows = selectedTrackerIds;
@@ -395,20 +439,27 @@ function createReorderActions(
   return actions;
 }
 
-function StateCard({ message }: Readonly<{ message: string }>) {
-  return (
-    <Screen>
-      <Card>
-        <AppText>{message}</AppText>
-      </Card>
-    </Screen>
-  );
-}
+function StateScreen({
+  onBack,
+  state,
+}: Readonly<{
+  onBack?: () => void;
+  state: QuickTrackersStateTemplate;
+}>) {
+  const { t } = useAppTranslation();
 
-function AlertStateCard({ message }: Readonly<{ message: string }>) {
   return (
     <Screen>
-      <AlertStateCardContent message={message} />
+      {onBack ? (
+        <ScreenHeader
+          backLabel={t('more.screen-title')}
+          onBack={onBack}
+          title={t('more.quick-trackers.screen-title')}
+        />
+      ) : (
+        <ScreenHeader title={t('more.quick-trackers.screen-title')} />
+      )}
+      <QuickTrackersStatePreview state={state} />
     </Screen>
   );
 }
@@ -420,6 +471,46 @@ function AlertStateCardContent({ message }: Readonly<{ message: string }>) {
       accessibilityLiveRegion="polite"
       accessibilityRole="alert">
       <AppText>{message}</AppText>
+    </Card>
+  );
+}
+
+export function QuickTrackersStatePreview({
+  state,
+}: Readonly<{
+  state: QuickTrackersStateTemplate;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = quickTrackersStateMeta[state];
+  const status = t(meta.statusKey);
+  const isAlert = state === 'error' || state === 'nonOwner';
+  const isLoading = state === 'loading';
+
+  return (
+    <Card
+      accessibilityLabel={t(meta.titleKey)}
+      accessibilityLiveRegion={isLoading ? 'polite' : undefined}
+      accessibilityRole={isAlert ? 'alert' : undefined}
+      testID={meta.testId}
+      variant={state === 'empty' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.pill[meta.tone].text}
+              name={meta.icon}
+              size={tokens.component.pill.icon}
+            />
+          )}
+          label={status}
+          tone={meta.tone}
+        />
+        <Stack gap="xs">
+          <AppText variant="headline">{t(meta.titleKey)}</AppText>
+          <AppText tone="secondary">{t(meta.bodyKey)}</AppText>
+        </Stack>
+      </Stack>
     </Card>
   );
 }

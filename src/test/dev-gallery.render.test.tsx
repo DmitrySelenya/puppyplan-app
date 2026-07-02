@@ -18,6 +18,7 @@ import {
   SyntheticOnboardingShell,
   SyntheticMoreSettingsShell,
   SyntheticPuppyProfileSettingsShell,
+  SyntheticQuickTrackersStatesShell,
   SyntheticQuickTrackersSettingsShell,
   SyntheticTodayShell,
 } from '@/features/_dev/design-gallery/DesignGalleryScreen';
@@ -134,6 +135,7 @@ describe('development-only design gallery', () => {
         <SyntheticOnboardingShell />
         <SyntheticPuppyProfileSettingsShell />
         <SyntheticQuickTrackersSettingsShell />
+        <SyntheticQuickTrackersStatesShell />
         <SyntheticMoreSettingsShell />
         <SyntheticQuickLogSheetShell />
         <SyntheticHealthShell />
@@ -157,6 +159,9 @@ describe('development-only design gallery', () => {
     expect(screen.getByText(i18n.t('more.privacy.section-account-removal'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
     expect(screen.getByText(i18n.t('dev.gallery.states.quick-log-sheet'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.states.quick-trackers-states'), {
       includeHiddenElements: true,
     })).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.potty-subtype.title'))).toBeTruthy();
@@ -205,6 +210,18 @@ describe('development-only design gallery', () => {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('more.notifications.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.quick-trackers.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.quick-trackers.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.quick-trackers.states.empty.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.quick-trackers.states.non-owner.title'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('dev.gallery.states.paywall-states'), {

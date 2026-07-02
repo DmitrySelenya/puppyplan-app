@@ -50,6 +50,7 @@
         "onboarding": "Welcome, profile, age hint, tracker picker, and plan reveal.",
         "profile": "Saved and editing states for the puppy profile settings route.",
         "quick-trackers": "Selected tracker count, limit state, and reorder-ready rows.",
+        "quick-trackers-states": "Quick Tracker settings loading, error, empty, and owner-only states.",
         "more-settings": "More hub, profile entry, tracker settings, notification note, privacy, account removal, and Plus placeholder.",
         "quick-log-sheet": "Quick Log sheet, subtype choices, duplicate warning, local pending, failed retry, and access states.",
         "quick-log-details": "Quick Log details route with synthetic slow-saving and error states.",
@@ -1731,6 +1732,28 @@
       "move-down": "Move down",
       "max-reached-hint": "Turn off one of the selected first",
       "min-required-hint": "Keep at least one tracker selected",
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading quick trackers",
+          "body": "We are checking the trackers saved for this puppy."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Could not load quick trackers",
+          "body": "Keep the current setup and try again in a moment."
+        },
+        "empty": {
+          "status": "Setup needed",
+          "title": "Create a puppy profile first",
+          "body": "Quick trackers are ready after the puppy profile is available."
+        },
+        "non-owner": {
+          "status": "Owner only",
+          "title": "Only the owner can change trackers",
+          "body": "You can keep viewing shared care details without changing this setup."
+        }
+      },
       "items": ["Feeding", "Potty", "Sleep", "Walk", "Weight", "Play", "Biting"]
     },
     "notifications": {

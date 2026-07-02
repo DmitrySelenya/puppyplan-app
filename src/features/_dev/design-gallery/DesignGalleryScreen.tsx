@@ -61,6 +61,9 @@ import {
   ReminderEditStatePreview,
 } from '@/features/reminders/screens/ReminderEditScreen';
 import {
+  QuickTrackersStatePreview,
+} from '@/features/settings/quick-trackers/screens/QuickTrackersSettingsScreen';
+import {
   SyntheticTodayPreview,
   TodayStatusCard,
   type TodayStatusState,
@@ -90,6 +93,7 @@ export function DesignGalleryScreen() {
         <SyntheticInviteAcceptStatesShell />
         <SyntheticShareablePuppyCardStatesShell />
         <SyntheticSitterModeStatesShell />
+        <SyntheticQuickTrackersStatesShell />
         <SyntheticNotificationPreferencesShell />
         <SyntheticReminderEditShell />
 
@@ -378,6 +382,23 @@ export function SyntheticQuickTrackersSettingsShell() {
             title={t(tracker.labelKey)}
           />
         ))}
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticQuickTrackersStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.quick-trackers-states"
+          titleKey="more.quick-trackers.screen-title"
+        />
+        <QuickTrackersStatePreview state="loading" />
+        <QuickTrackersStatePreview state="error" />
+        <QuickTrackersStatePreview state="empty" />
+        <QuickTrackersStatePreview state="nonOwner" />
       </Stack>
     </Card>
   );

@@ -277,6 +277,50 @@ describe('Quick tracker settings screen', () => {
     expect(screen.queryByText(i18n.t('errors.save-failed-connection'))).toBeNull();
   });
 
+  it('AC-QT-STATES renders deterministic access-state templates', () => {
+    render(
+      <AppProviders>
+        <QuickTrackersSettingsScreen
+          accessState="loading"
+          saveSelectedTrackerIds={jest.fn()}
+          selectedTrackerIds={[]}
+        />
+        <QuickTrackersSettingsScreen
+          accessState="error"
+          saveSelectedTrackerIds={jest.fn()}
+          selectedTrackerIds={[]}
+        />
+        <QuickTrackersSettingsScreen
+          accessState="empty"
+          saveSelectedTrackerIds={jest.fn()}
+          selectedTrackerIds={[]}
+        />
+        <QuickTrackersSettingsScreen
+          accessState="nonOwner"
+          saveSelectedTrackerIds={jest.fn()}
+          selectedTrackerIds={[]}
+        />
+      </AppProviders>,
+    );
+
+    for (const state of ['loading', 'error', 'empty', 'non-owner'] as const) {
+      expect(screen.getByTestId(`quick-trackers-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`more.quick-trackers.states.${state}.status`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`more.quick-trackers.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`more.quick-trackers.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('quick-trackers-state-loading').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getByTestId('quick-trackers-state-error').props.accessibilityRole)
+      .toBe('alert');
+    expect(screen.getByTestId('quick-trackers-state-non-owner').props.accessibilityRole)
+      .toBe('alert');
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.trackers.feeding'),
+    })).toBeNull();
+  });
+
   it('does not render the editable tracker form for non-owners', () => {
     render(
       <AppProviders>
@@ -288,11 +332,11 @@ describe('Quick tracker settings screen', () => {
       </AppProviders>,
     );
 
-    expect(screen.getByText(i18n.t('errors.owner-only-settings'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.quick-trackers.states.non-owner.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.quick-trackers.states.non-owner.body'))).toBeTruthy();
     expect(
-      screen.getByLabelText(i18n.t('errors.owner-only-settings')).props,
+      screen.getByLabelText(i18n.t('more.quick-trackers.states.non-owner.title')).props,
     ).toMatchObject({
-      accessibilityLiveRegion: 'polite',
       accessibilityRole: 'alert',
     });
     expect(screen.queryByRole('button', {

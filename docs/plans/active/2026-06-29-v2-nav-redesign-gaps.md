@@ -281,6 +281,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       share options, loading, pending write, error, and offline-read plus dev-gallery coverage;
       Sitter Mode now has RED/GREEN templates for no caregiver, pending, active, and exit-confirm
       plus dev-gallery coverage;
+      Quick Trackers settings now has RED/GREEN templates for loading, error, empty, and
+      owner-only access plus dev-gallery and Stage 4 SE evidence;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -1083,6 +1085,51 @@ Implementation notes:
   Options rows, history-preservation hint, and no bottom Save CTA. The live debug account had 3 of 5
   trackers selected, so the max-reached hint was not visible; that state remains covered by the
   render suite above.
+
+### 14a. Quick Trackers settings state templates
+
+**2026-07-02 global-state slice:** deterministic `/settings/quick-trackers` state templates for
+§4.5 access and unavailable states.
+
+- Source spec card: `docs/design/v1/specs/04-quick-log-routines-reminders.md`.
+- Route/component: `/settings/quick-trackers` via
+  `src/features/settings/quick-trackers/screens/QuickTrackersSettingsScreen.tsx`.
+- Dev-gallery handoff: `/_dev/components` renders `SyntheticQuickTrackersStatesShell`.
+- Allowed deviation: this slice only standardizes deterministic loading, error, empty, and
+  non-owner access templates. Live tracker persistence, save rollback, and real owner/viewer
+  authorization remain covered by the existing Quick Trackers route slice above.
+
+Acceptance:
+- AC-QT-STATES-1: loading, error, empty, and non-owner states render deterministic card templates
+  with stable test IDs.
+- AC-QT-STATES-2: each state uses `Card`, `StatusPill`, `AppIcon`, `AppText`, typed i18n keys, and
+  EN/RU/ES copy.
+- AC-QT-STATES-3: loading announces politely; error and non-owner states use alert semantics.
+- AC-QT-STATES-4: the dev-gallery exposes all four states for Stage 4 native handoff.
+- AC-QT-STATES-5: non-owner state exposes no editable tracker rows or raw private data.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/quick-trackers-settings.render.test.tsx`
+  failed first because `quick-trackers-state-loading` was absent.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx` failed first
+  because `dev.gallery.states.quick-trackers-states` was absent from the rendered gallery.
+
+GREEN evidence:
+- `npm run test:unit -- --runTestsByPath src/test/quick-trackers-settings.render.test.tsx src/test/dev-gallery.render.test.tsx`
+  — PASS: 2 suites, 11 tests.
+- `npm run typecheck` — PASS.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+
+Stage 4 evidence:
+- Primary SE simulator: `5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`.
+- Installed `PuppyPlan.app` launched over fresh Metro with `puppyplan:///_dev/components`.
+- Runtime snapshot confirmed the dev-gallery block: `Quick trackers` and
+  `Quick Tracker settings loading, error, empty, and owner-only states.`
+- Runtime snapshot after scroll confirmed the empty-state card text:
+  `Create a puppy profile first` / `Quick trackers are ready after the puppy profile is available.`
+- Evidence files:
+  `output/v2-nav-gaps-stage4/quick-trackers-states-top-stage4.png`,
+  `output/v2-nav-gaps-stage4/quick-trackers-states-empty-stage4.jpg`.
 
 ## 15. Pet tab landing/hub Stage-0 lock evidence
 
@@ -2682,6 +2729,10 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Added deterministic Quick Trackers settings loading, error, empty, and owner-only
+  state templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy, and
+  primary SE Stage 4 evidence. Existing implicit-save/reorder persistence coverage remains in the
+  main Quick Trackers slice; live authorization/data wiring remains deferred to app services.
 - 2026-07-02: Tightened the First-run variants row so the remaining partial scope is explicit:
   visual onboarding slices are implemented, while runtime prompt scheduling, OS permission handoff,
   and native DatePicker integration remain deferred/partial.
