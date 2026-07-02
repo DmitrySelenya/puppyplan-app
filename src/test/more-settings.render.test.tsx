@@ -12,7 +12,10 @@ import {
   ShareablePuppyCardScreen,
   ShareablePuppyCardStatePreview,
 } from '@/features/more/screens/ShareablePuppyCardScreen';
-import { SitterModeScreen } from '@/features/more/screens/SitterModeScreen';
+import {
+  SitterModeScreen,
+  SitterModeStatePreview,
+} from '@/features/more/screens/SitterModeScreen';
 import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -453,6 +456,31 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('sharing.sitter.disclosure'))).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('sharing.sitter.enable-cta') })).toBeTruthy();
     expect(screen.queryByText(/@|token/i)).toBeNull();
+  });
+
+  it('AC-SITTER-STATES renders compact sitter mode state templates for native handoff', () => {
+    render(
+      <AppProviders>
+        <SitterModeStatePreview state="no-caregiver" />
+        <SitterModeStatePreview state="pending" />
+        <SitterModeStatePreview state="active" />
+        <SitterModeStatePreview state="exit-confirm" />
+      </AppProviders>,
+    );
+
+    for (const state of [
+      'no-caregiver',
+      'pending',
+      'active',
+      'exit-confirm',
+    ] as const) {
+      expect(screen.getByTestId(`sitter-mode-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`sharing.sitter.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`sharing.sitter.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.queryByText(/@|token|raw/i)).toBeNull();
+    expect(screen.queryByTestId('sitter-mode-checklist-row')).toBeNull();
   });
 
   it('renders the PuppyPlan Plus shell anatomy without live billing', () => {

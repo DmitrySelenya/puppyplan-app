@@ -58,6 +58,7 @@
         "paywall-states": "Estados de PuppyPlan Plus: carga, compra pendiente, error, offline y suscripción activa.",
         "invite-accept-states": "Estados de aceptar invitación: carga, no disponible, reintento y ya eres miembro.",
         "shareable-card-states": "Estados de tarjeta compartible: selección vacía, salud incluida, opciones para compartir, carga, guardado, revisión y offline.",
+        "sitter-mode-states": "Estados de modo cuidador: sin cuidador, pendiente, activo y confirmación de salida.",
         "timeline-v2": "Timeline predeterminado, filtrado, vacío, pendiente, error y confirmación de borrado.",
         "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
         "guidance": "Estados de guía inicial: leído, probado y omitido.",
@@ -1028,6 +1029,28 @@
       "no-caregiver": "Primero invite a un cuidador. El modo cuidador amplía a un cuidador existente.",
       "no-caregiver-cta": "Invitar a un cuidador",
       "pending-hint": "Esperando a que {name} acepte la invitación.",
+      "states": {
+        "no-caregiver": {
+          "status": "Configurar",
+          "title": "Elige un cuidador",
+          "body": "El modo cuidador permanece apagado hasta elegir un cuidador y una ventana de tiempo."
+        },
+        "pending": {
+          "status": "Enviando",
+          "title": "Enviando acceso al cuidador",
+          "body": "Mantén esta pantalla abierta mientras se prepara la ventana de cuidado."
+        },
+        "active": {
+          "status": "Activo",
+          "title": "El modo cuidador está activo",
+          "body": "El cuidador solo ve la lista y el contexto de cuidado que seleccionaste."
+        },
+        "exit-confirm": {
+          "status": "Confirmar",
+          "title": "¿Finalizar el acceso del cuidador?",
+          "body": "Al finalizar el acceso, se cierra la vista del cuidador. Las entradas de Diary permanecen en tu hogar."
+        }
+      },
       "checklist-view": {
         "role-chip": "cuidador",
         "deadline-strip": "Modo cuidador hasta {date}, {time}",

@@ -9,6 +9,7 @@ import {
   SyntheticHealthShell,
   SyntheticInviteAcceptStatesShell,
   SyntheticShareablePuppyCardStatesShell,
+  SyntheticSitterModeStatesShell,
   SyntheticPaywallStatesShell,
   SyntheticQuickLogDetailsShell,
   SyntheticQuickLogSheetShell,
@@ -141,6 +142,7 @@ describe('development-only design gallery', () => {
         <SyntheticPaywallStatesShell />
         <SyntheticInviteAcceptStatesShell />
         <SyntheticShareablePuppyCardStatesShell />
+        <SyntheticSitterModeStatesShell />
         <SyntheticTodayShell />
         <SyntheticQuickLogDetailsShell />
       </>,
@@ -241,6 +243,21 @@ describe('development-only design gallery', () => {
     expect(screen.getByText(i18n.t('dev.gallery.states.shareable-card-states'), {
       includeHiddenElements: true,
     })).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.states.sitter-mode-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('sharing.sitter.states.no-caregiver.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.sitter.states.pending.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.sitter.states.active.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.sitter.states.exit-confirm.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('sharing.card-management.states.empty-builder.title'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);

@@ -59,6 +59,7 @@
         "paywall-states": "PuppyPlan Plus loading, pending purchase, error, offline, and active subscription states.",
         "invite-accept-states": "Accept invite loading, unavailable, retry, and already-member states.",
         "shareable-card-states": "Shareable Puppy Card empty builder, health disclosure, share options, loading, pending, error, and offline states.",
+        "sitter-mode-states": "Trusted sitter no-caregiver, pending, active, and exit-confirm states.",
         "timeline-v2": "Timeline default, filtered, empty, pending, failed, and delete-confirm states.",
         "today-core": "Today hero, daily cards, guidance, and data states.",
         "guidance": "Starter guidance read, tried, and skipped states.",
@@ -977,6 +978,28 @@
       "no-caregiver": "First invite a caregiver. Sitter mode extends an existing caregiver.",
       "no-caregiver-cta": "Invite a caregiver",
       "pending-hint": "Waiting for {name} to accept the invite.",
+      "states": {
+        "no-caregiver": {
+          "status": "Setup",
+          "title": "Choose a caregiver",
+          "body": "Sitter mode stays off until a caregiver and time window are selected."
+        },
+        "pending": {
+          "status": "Sending",
+          "title": "Sending sitter access",
+          "body": "Keep this screen open while the sitter window is prepared."
+        },
+        "active": {
+          "status": "Active",
+          "title": "Sitter mode is active",
+          "body": "The sitter can see only the checklist and care context you selected."
+        },
+        "exit-confirm": {
+          "status": "Confirm",
+          "title": "End sitter access?",
+          "body": "Ending access stops the sitter view. Diary entries stay in your household."
+        }
+      },
       "checklist-view": {
         "role-chip": "sitter",
         "deadline-strip": "Sitter mode through {date}, {time}",

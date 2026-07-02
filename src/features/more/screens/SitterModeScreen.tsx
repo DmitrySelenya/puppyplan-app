@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import {
   AppIcon,
+  type AppIconName,
   AppText,
   Avatar,
   Button,
@@ -14,13 +15,64 @@ import {
   SectionHeader,
   Stack,
   StatusPill,
+  type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
-import { useAppTranslation } from '@/lib/i18n';
+import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+
+export type SitterModeReviewState =
+  | 'no-caregiver'
+  | 'pending'
+  | 'active'
+  | 'exit-confirm';
+
+type SitterModeStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
+}>;
 
 export type SitterModeScreenProps = Readonly<{
   onBack?: () => void;
+  reviewState?: SitterModeReviewState;
 }>;
+
+const sitterModeStateMeta: Record<SitterModeReviewState, SitterModeStateMeta> = {
+  active: {
+    bodyKey: 'sharing.sitter.states.active.body',
+    icon: 'check',
+    statusKey: 'sharing.sitter.states.active.status',
+    titleKey: 'sharing.sitter.states.active.title',
+    tone: 'confirmed',
+  },
+  'exit-confirm': {
+    bodyKey: 'sharing.sitter.states.exit-confirm.body',
+    icon: 'warningTriangle',
+    role: 'alert',
+    statusKey: 'sharing.sitter.states.exit-confirm.status',
+    titleKey: 'sharing.sitter.states.exit-confirm.title',
+    tone: 'failed',
+  },
+  'no-caregiver': {
+    bodyKey: 'sharing.sitter.states.no-caregiver.body',
+    icon: 'personCluster',
+    statusKey: 'sharing.sitter.states.no-caregiver.status',
+    titleKey: 'sharing.sitter.states.no-caregiver.title',
+    tone: 'template',
+  },
+  pending: {
+    bodyKey: 'sharing.sitter.states.pending.body',
+    icon: 'docText',
+    liveRegion: 'polite',
+    statusKey: 'sharing.sitter.states.pending.status',
+    titleKey: 'sharing.sitter.states.pending.title',
+    tone: 'pending',
+  },
+};
 
 const checklistKeys = [
   'sharing.sitter.checklist-feeding',
@@ -32,6 +84,7 @@ const checklistKeys = [
 
 export function SitterModeScreen({
   onBack,
+  reviewState,
 }: SitterModeScreenProps) {
   const { t } = useAppTranslation();
   const caregiverName = t('sharing.family.manage.badge-caregiver');
@@ -47,6 +100,8 @@ export function SitterModeScreen({
       ) : (
         <ScreenHeader title={t('sharing.sitter.screen-title')} />
       )}
+
+      {reviewState ? <SitterModeStatePreview state={reviewState} /> : null}
 
       <Card testID="sitter-mode-hero-card">
         <Stack gap="sm" style={styles.heroLayout}>
@@ -129,6 +184,44 @@ export function SitterModeScreen({
         onPress={() => undefined}
       />
     </Screen>
+  );
+}
+
+export function SitterModeStatePreview({
+  state,
+}: Readonly<{
+  state: SitterModeReviewState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = sitterModeStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`sitter-mode-state-${state}`}
+      variant={state === 'no-caregiver' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name={meta.icon}
+              size={14}
+            />
+          )}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="bodyEmph">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">{body}</AppText>
+      </Stack>
+    </Card>
   );
 }
 

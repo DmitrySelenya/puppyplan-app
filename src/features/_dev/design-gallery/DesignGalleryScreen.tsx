@@ -42,6 +42,9 @@ import {
   ShareablePuppyCardStatePreview,
 } from '@/features/more/screens/ShareablePuppyCardScreen';
 import {
+  SitterModeStatePreview,
+} from '@/features/more/screens/SitterModeScreen';
+import {
   NotificationPreferencesStatePreview,
 } from '@/features/more/screens/NotificationPreferencesScreen';
 import {
@@ -86,6 +89,7 @@ export function DesignGalleryScreen() {
         <SyntheticPaywallStatesShell />
         <SyntheticInviteAcceptStatesShell />
         <SyntheticShareablePuppyCardStatesShell />
+        <SyntheticSitterModeStatesShell />
         <SyntheticNotificationPreferencesShell />
         <SyntheticReminderEditShell />
 
@@ -698,6 +702,23 @@ export function SyntheticShareablePuppyCardStatesShell() {
         <ShareablePuppyCardStatePreview state="pending-write" />
         <ShareablePuppyCardStatePreview state="error" />
         <ShareablePuppyCardStatePreview state="offline-read" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticSitterModeStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.sitter-mode-states"
+          titleKey="sharing.sitter.screen-title"
+        />
+        <SitterModeStatePreview state="no-caregiver" />
+        <SitterModeStatePreview state="pending" />
+        <SitterModeStatePreview state="active" />
+        <SitterModeStatePreview state="exit-confirm" />
       </Stack>
     </Card>
   );

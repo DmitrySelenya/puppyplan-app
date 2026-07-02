@@ -155,8 +155,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Revoked / expired share (§3.3.6 → 10.1)
 - [x] ✅ Trusted Sitter mode owner setup shell (§3.2) — More Trainer/Sitter now opens
       `/settings/sitter-mode`, with caregiver row, time window, checklist, visibility preview, and
-      enable CTA. Live enable mutation, active status, completion push, auto-expire, exit confirm,
-      remain open; Stage 4 native SE screenshot comparison passed 2026-07-02.
+      enable CTA. Deterministic no-caregiver / pending / active / exit-confirm state templates now
+      have dev-gallery coverage. Live enable mutation, real active status, completion push,
+      auto-expire, and exit mutation remain open; Stage 4 native SE screenshot comparison passed
+      2026-07-02 for the owner shell and compact state templates.
 - [x] ✅ Accept-invite flow, caregiver-side (§3.1.4) — `/invite/[token]` native shell
       implemented: inviter/puppy context, caregiver role, included/excluded preview, disclosure,
       Accept/Decline actions, token-safe rendering, and deterministic loading / load-error /
@@ -275,6 +277,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       already-member plus dev-gallery coverage;
       Shareable Puppy Card now has RED/GREEN templates for empty builder, health disclosure,
       share options, loading, pending write, error, and offline-read plus dev-gallery coverage;
+      Sitter Mode now has RED/GREEN templates for no caregiver, pending, active, and exit-confirm
+      plus dev-gallery coverage;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -2329,6 +2333,61 @@ Implementation notes:
   selection, date/time picker, checklist editing, enable mutation, active owner status, completion
   push, auto-expire, and exit confirm remain deferred.
 
+### 33a. Trusted Sitter Mode State Templates (§3.2 + §4.5)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/07-sharing-access-cards.md`.
+- Source: `DESIGN.md` §3.2.1 Enable Sitter Mode and §4.5 global screen states.
+- Route: `/settings/sitter-mode`; compact dev-gallery handoff shell under `/_dev/components`.
+- Device: primary SE simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) for Stage 4.
+- Allowed deviation: templates are synthetic review-only cards. Live caregiver lookup, enable/exit
+  mutations, active checklist data, completion push, auto-expire, and pending-sync behavior remain
+  deferred.
+
+Acceptance:
+- AC-SITTER-STATES-1: Sitter Mode can render deterministic review states for no-caregiver,
+  pending send, active mode, and exit-confirm.
+- AC-SITTER-STATES-2: pending exposes a polite live region; exit-confirm exposes alert semantics.
+- AC-SITTER-STATES-3: the state templates use design primitives, tokenized styles, and typed
+  EN/RU/ES i18n keys.
+- AC-SITTER-STATES-4: the dev-gallery includes all four compact Sitter Mode state templates for
+  native handoff.
+- AC-SITTER-STATES-5: templates do not expose raw email, invite/share tokens, caregiver contact
+  data, Supabase details, or production write language.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/dev-gallery.render.test.tsx --silent`
+  failed as expected before implementation because `SitterModeStatePreview` was undefined and the
+  dev-gallery did not render `dev.gallery.states.sitter-mode-states`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/dev-gallery.render.test.tsx --silent`
+  — PASS: 2 suites, 23 tests.
+- `node scripts/checks/check-i18n.mjs` — PASS: i18n parity, typed helper usage, and string budgets ok.
+- `npm run tokens:check` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, 70 Jest suites / 549 tests, node checks 118/118,
+  scaffold, tokens, privacy scan, and text hygiene all green. Existing non-failing reduced-motion
+  `act(...)` warning in `src/test/screen-header.render.test.tsx` is unrelated to this slice.
+
+Implementation notes:
+- Added typed `SitterModeReviewState` metadata and compact `SitterModeStatePreview` cards to
+  `src/features/more/screens/SitterModeScreen.tsx`.
+- Added `SyntheticSitterModeStatesShell` to the dev-gallery immediately after Shareable Puppy Card
+  state templates.
+- Added typed EN/RU/ES copy under `sharing.sitter.states.*` and
+  `dev.gallery.states.sitter-mode-states`.
+
+Stage 4:
+- PASS recorded 2026-07-02 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro.
+  Native evidence:
+  `output/v2-nav-gaps-stage4/sitter-mode-states-top-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/sitter-mode-states-bottom-stage4.jpg`. Visual review covers the
+  dev-gallery shell, no-caregiver setup card, pending send card, active mode card, and exit-confirm
+  alert card. Real caregiver lookup, enable/exit mutations, active sitter checklist data, completion
+  push, auto-expire, and pending-sync state remain deferred.
+
 ### 34. Shareable Puppy Card Shell Slice (§3.4)
 
 Stage-0 lock:
@@ -2945,3 +3004,7 @@ Implementation notes:
   exposed truncated helper copy in list rows; the state anatomy was corrected to wrapping rows before
   recording Stage 4 PASS. Live signed-link creation, OS share sheet, expiry editing, revoke/extend,
   and public web projection remain deferred.
+- 2026-07-02: Added deterministic Trusted Sitter Mode no-caregiver, pending, active, and exit-confirm
+  state templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy, and
+  primary SE Stage 4 screenshots. Live caregiver lookup, enable/exit mutations, active checklist data,
+  completion push, auto-expire, and pending-sync behavior remain deferred.
