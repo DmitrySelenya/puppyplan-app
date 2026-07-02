@@ -131,8 +131,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [ ] 🟡 Add Record full flow (§4.1.3) — native route now opens from Pet, shows record-type
       chooser, empty form anatomy, and deterministic loading / pending-write / error / offline-read /
       permission-denied state templates. Stage 4 SE native screenshot comparison PASS recorded
-      2026-07-02 for chooser + empty form + the new state templates. Durable save/persistence remains
-      open.
+      2026-07-02 for chooser + empty form + the new state templates. Durable create/list refresh is
+      now implemented through the typed health-record repository and query hooks. Edit/delete
+      persistence, offline queue, native DatePicker, and template generation remain open.
 - [ ] 🟡 Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
       Durable edit/delete, timed 5-second undo restore, and persistence remain open.
@@ -1293,6 +1294,84 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/health-record-edit-form-stage4-bottom-after-card-a11y.png`.
   Runtime snapshot also exposes the four type chooser targets and the empty-form fields, confirming
   the chooser can be operated through native accessibility. Durable save/persistence remains open.
+
+### 16a. Health Add Record durable create/list slice
+
+**2026-07-02 data-layer slice:** make the existing `/pet/health-record-edit` form create rows in the
+current `public.health_record` schema and let Pet render those rows through a typed query.
+
+- Source spec card: `docs/design/v1/specs/05-pet-health.md`.
+- Source canon: `DESIGN.md` §4.1.3 Add Record Flow, PRD Health Record Contract, and
+  `docs/architecture/03-client-data-layer.md` health mutation invalidation row.
+- Route/components: `/pet`, `/pet/health-record-edit`,
+  `src/features/health/screens/HealthScreen.tsx`, `src/lib/supabase/health-records.ts`,
+  `src/lib/query/health-records.ts`.
+- TDD mode: heavy/full-isolated target; if implemented in the main thread, treat this as reduced
+  isolation and keep scope small with repository/query tests first.
+- No-Linear exception: user explicitly directed this thread to implement the active nav-gaps plan;
+  no separate Linear issue was provided in this continuation.
+
+Acceptance:
+- AC-PET-ADD-DURABLE-1: the Supabase boundary can list non-deleted `health_record` rows for one puppy
+  ordered by scheduled/completed/created recency and can insert a row using only current schema fields.
+- AC-PET-ADD-DURABLE-2: the create mutation requires an authenticated active care context and writes
+  `puppy_id`, `record_type`, trimmed `title`, `status`, `source`, `scheduled_for`, optional
+  `provider_name`, optional `notes`, and `updated_by`.
+- AC-PET-ADD-DURABLE-3: the Pet screen consumes the typed health-record query; server rows render as
+  Health list rows, while the old mixed-list fixture remains synthetic-only.
+- AC-PET-ADD-DURABLE-4: Save is disabled until a title exists, shows pending state during mutation,
+  closes the sheet after success, and invalidates `health.records.list`, `today.dashboard`,
+  `puppy.summary`, and sharing projection roots.
+- AC-PET-ADD-DURABLE-5: no new columns, migrations, native DatePicker, offline queue, durable delete,
+  or `ios/`/`android/` edits are introduced in this slice.
+- AC-PET-ADD-DURABLE-6: copy remains calm and non-diagnostic; notes/provider data are never logged,
+  cached in analytics, or added to share previews by this slice.
+
+Deferred from this slice:
+- edit/delete/undo, timed undo restore, offline health queue, native DatePicker, urgent persistence,
+  health share projection expansion, and real template recommendation generation.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts` failed first because
+  `insertHealthRecord` / `listHealthRecords` were stubbed as not implemented.
+- The same focused suite failed next because `toHealthRecordInsert` and the mutation function were
+  not implemented.
+- The same focused suite failed next because mutation `onSuccess` did not exist.
+- `npm run test:unit -- --runTestsByPath src/test/pet-route.render.test.tsx` failed because the Pet
+  route ignored the typed health-record query and did not render the server row fixture.
+- `npm run test:unit -- --runTestsByPath src/test/health-record-edit-route.render.test.tsx` failed
+  because the Add Record form did not call the create mutation on Save.
+
+GREEN evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts`
+  — PASS: 1 suite, 5 tests.
+- `npm run test:unit -- --runTestsByPath src/test/pet-route.render.test.tsx`
+  — PASS: 1 suite, 4 tests.
+- `npm run test:unit -- --runTestsByPath src/test/health-record-edit-route.render.test.tsx`
+  — PASS: 1 suite, 4 tests.
+- `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts src/test/health-record-edit-route.render.test.tsx src/test/pet-route.render.test.tsx src/test/health.render.test.tsx src/test/app-shell.render.test.tsx`
+  — PASS: 5 suites, 29 tests.
+- `npm run typecheck` — PASS.
+
+Implementation notes:
+- `src/lib/supabase/health-records.ts` is the only Supabase boundary for this slice. Feature UI does
+  not import the raw Supabase client.
+- `src/lib/query/health-records.ts` owns draft normalization, create mutation, and query invalidation.
+- Mutation settle invalidates health records, Today dashboard, puppy summary, and sharing projection
+  roots without broad cache clearing.
+- Pet production rows now come from `useHealthRecordsQuery`; `reviewState="mixed-list"` remains an
+  explicit synthetic fixture.
+- `/pet/health-record-edit` save uses the active care context, keeps Save disabled until a title and
+  care context exist, shows pending state during mutation, and closes only after successful create.
+
+Stage 4 evidence:
+- Primary SE simulator: `5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`.
+- Installed `PuppyPlan.app` launched over Metro with `puppyplan:///pet/health-record-edit`.
+- Runtime snapshot confirmed the native chooser targets (`Vaccination`, `Parasite treatment`,
+  `Preventive care`, `Vet visit`) and the form fields (`Name`, `Date`, clinic, note, urgent toggle).
+- Direct deep-link runtime had no active care context, so Save remained disabled; the mutation/save
+  path is proven by the render test with active care context rather than a live Supabase write.
+- Evidence file: `output/v2-nav-gaps-stage4/health-add-record-durable-form-stage4.jpg`.
 
 ## 17. Health detail status/delete anatomy Stage-0 lock evidence
 
@@ -2729,6 +2808,11 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Added Pet Health Add Record durable create/list refresh on the existing
+  `health_record` schema: typed Supabase repository, health query/mutation hooks, normalized
+  create draft, targeted invalidation, Pet route server-row rendering, and Add Record Save wiring.
+  RED/GREEN repository/query/route tests, typecheck, and SE form evidence recorded. Edit/delete,
+  offline queue, native DatePicker, urgent persistence, and real template generation remain open.
 - 2026-07-02: Added deterministic Quick Trackers settings loading, error, empty, and owner-only
   state templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy, and
   primary SE Stage 4 evidence. Existing implicit-save/reorder persistence coverage remains in the

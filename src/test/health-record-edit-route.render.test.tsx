@@ -1,5 +1,5 @@
 import { AccessibilityInfo } from 'react-native';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { i18n } from '@/lib/i18n';
 
@@ -11,6 +11,15 @@ import {
 import HealthRecordEditRoute from '../../app/(modals)/pet/health-record-edit';
 
 const mockRouterBack = jest.fn();
+const mockMutateAsync = jest.fn();
+const mockCareContext = {
+  householdId: '00000000-0000-4000-8000-000000003004',
+  householdRole: 'owner',
+  puppyId: '00000000-0000-4000-8000-000000003001',
+  selectedTrackerIds: ['feeding'],
+  todayDate: '2026-07-02',
+  userId: '00000000-0000-4000-8000-000000003002',
+};
 
 jest.mock('expo-router', () => ({
   router: {
@@ -18,11 +27,28 @@ jest.mock('expo-router', () => ({
   },
 }));
 
+jest.mock('@/lib/query/active-care-context', () => ({
+  useActiveCareContext: () => ({
+    careContext: mockCareContext,
+    puppy: null,
+    status: 'ready',
+  }),
+}));
+
+jest.mock('@/lib/query/health-records', () => ({
+  useCreateHealthRecordMutation: () => ({
+    isPending: false,
+    mutateAsync: mockMutateAsync,
+  }),
+}));
+
 describe('HealthRecordEditRoute', () => {
   let reduceMotionProbe: jest.SpyInstance;
 
   beforeEach(async () => {
     mockRouterBack.mockClear();
+    mockMutateAsync.mockReset();
+    mockMutateAsync.mockResolvedValue(undefined);
     reduceMotionProbe = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
       .mockReturnValue(new Promise<boolean>(() => {}));
@@ -106,5 +132,39 @@ describe('HealthRecordEditRoute', () => {
     expect(screen.getByTestId('health-add-record-state-permission-denied').props.accessibilityRole)
       .toBe('alert');
     expect(screen.queryByText(/diagnosis|dosage|treatment plan|emergency/i)).toBeNull();
+  });
+
+  it('AC-PET-ADD-DURABLE-2 AC-PET-ADD-DURABLE-4 saves a valid form draft and closes on success', async () => {
+    render(<HealthRecordEditRoute />);
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('health.record-types.vaccination'),
+    }));
+
+    const saveButton = screen.getByRole('button', {
+      name: i18n.t('health.add-record.form-save'),
+    });
+    expect(saveButton.props.accessibilityState.disabled).toBe(true);
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('health.add-record.field-name')),
+      'DHPP vaccine',
+    );
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('health.add-record.form-save'),
+    }));
+
+    await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledWith({
+      householdId: mockCareContext.householdId,
+      notes: '',
+      providerName: '',
+      puppyId: mockCareContext.puppyId,
+      recordType: 'vaccination',
+      scheduledFor: mockCareContext.todayDate,
+      status: 'template',
+      title: 'DHPP vaccine',
+      userId: mockCareContext.userId,
+    }));
+    expect(mockRouterBack).toHaveBeenCalledTimes(1);
   });
 });

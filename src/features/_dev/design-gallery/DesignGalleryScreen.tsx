@@ -31,7 +31,6 @@ import {
 import {
   HealthRecordDetailPreview,
   HealthRecordEditPreview,
-  HealthRecordEditRouteScreen,
   HealthScreen,
   HealthWeightEntryPreview,
 } from '@/features/health/screens/HealthScreen';
@@ -755,10 +754,7 @@ export function SyntheticHealthShell() {
         />
         <HealthScreen reviewState="mixed-list" />
         <HealthScreen />
-        <HealthRecordEditRouteScreen
-          onClose={() => undefined}
-          reviewState="loading"
-        />
+        <HealthRecordEditPreview reviewState="loading" />
         <HealthRecordEditPreview />
         <HealthRecordEditPreview filled />
         <HealthRecordEditPreview reviewState="pending-write" />

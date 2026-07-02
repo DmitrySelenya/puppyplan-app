@@ -20,15 +20,27 @@ import { Touchable } from '@/design/primitives/Touchable';
 import { Toggle } from '@/design/primitives/Toggle';
 import { tokens } from '@/design/tokens';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+import type { HealthRecord } from '@/contracts/supabase';
+import type { ActiveCareContext } from '@/contracts/onboarding';
+import {
+  useActiveCareContext,
+} from '@/lib/query/active-care-context';
+import {
+  useCreateHealthRecordMutation,
+  type HealthRecordCreateDraft,
+  type HealthRecordDraftStatus,
+} from '@/lib/query/health-records';
 
 export type HealthScreenProps = Readonly<{
   onOpenAddRecord?: () => void;
   onOpenPuppyProfile?: () => void;
   onOpenQuickTrackers?: () => void;
+  healthRecords?: readonly HealthRecord[];
   reviewState?: 'empty' | 'mixed-list';
 }>;
 
 export function HealthScreen({
+  healthRecords,
   onOpenAddRecord = () => undefined,
   onOpenPuppyProfile = () => undefined,
   onOpenQuickTrackers = () => undefined,
@@ -36,7 +48,9 @@ export function HealthScreen({
 }: HealthScreenProps = {}) {
   const { t } = useAppTranslation();
   const [selectedSegment, setSelectedSegment] = useState<HealthSegment>('all');
-  const rows = reviewState === 'mixed-list' ? healthReviewRows : [];
+  const rows = healthRecords !== undefined
+    ? healthRecords.map(healthRecordToRow)
+    : reviewState === 'mixed-list' ? healthReviewRows : [];
   const visibleRows = rows.filter((row) =>
     selectedSegment === 'all' || row.segment === selectedSegment);
   const currentRows = visibleRows.filter((row) => row.section === 'current');
@@ -289,14 +303,16 @@ function PetHubFact({
 type HealthSegment = 'all' | 'vaccinations' | 'treatments' | 'visits';
 type HealthRow = Readonly<{
   icon: AppIconName;
-  metaKey: I18nKey;
+  metaKey?: I18nKey;
+  metaText?: string;
   pillIcon: AppIconName;
   pillKey: I18nKey;
   pillTone: StatusPillTone;
   section: 'current' | 'previous';
   segment: HealthSegment;
   subtitleKey?: I18nKey;
-  titleKey: I18nKey;
+  titleKey?: I18nKey;
+  titleText?: string;
 }>;
 
 function HealthRowsSection({
@@ -323,16 +339,16 @@ function HealthRowsSection({
           <ListRow
             accessory="chevron"
             accessibilityLabel={[
-              t(row.titleKey),
+              resolveHealthRowTitle(row, t),
               t(row.pillKey),
-              t(row.metaKey),
+              resolveHealthRowMeta(row, t),
               row.subtitleKey ? t(row.subtitleKey) : undefined,
             ].filter(Boolean).join('. ')}
-            key={row.titleKey}
+            key={resolveHealthRowKey(row)}
             leading={<AppIcon color={tokens.color.text.secondary} name={row.icon} />}
-            meta={t(row.metaKey)}
+            meta={resolveHealthRowMeta(row, t)}
             subtitle={row.subtitleKey ? t(row.subtitleKey) : undefined}
-            title={t(row.titleKey)}
+            title={resolveHealthRowTitle(row, t)}
             trailing={(
               <Stack align="center" direction="horizontal" gap="sm">
                 <StatusPill
@@ -354,6 +370,18 @@ function HealthRowsSection({
       </ListGroup>
     </Stack>
   );
+}
+
+function resolveHealthRowKey(row: HealthRow): string {
+  return row.titleKey ?? `${row.titleText}:${row.metaText}`;
+}
+
+function resolveHealthRowTitle(row: HealthRow, t: ReturnType<typeof useAppTranslation>['t']): string {
+  return row.titleKey ? t(row.titleKey) : row.titleText ?? '';
+}
+
+function resolveHealthRowMeta(row: HealthRow, t: ReturnType<typeof useAppTranslation>['t']): string {
+  return row.metaKey ? t(row.metaKey) : row.metaText ?? '';
 }
 
 const healthReviewRows = [
@@ -410,6 +438,124 @@ const healthReviewRows = [
     titleKey: 'health.rows.vet-visit-title',
   },
 ] as const satisfies readonly HealthRow[];
+
+function healthRecordToRow(record: HealthRecord): HealthRow {
+  const recordType = normalizeHealthRecordType(record.record_type);
+  const status = normalizeHealthRecordStatus(record.status);
+
+  return {
+    icon: healthRecordIcon(recordType),
+    metaText: record.scheduled_for ?? record.completed_at?.slice(0, 10) ?? record.created_at.slice(0, 10),
+    pillIcon: healthRecordStatusIcon(status),
+    pillKey: healthRecordStatusKey(status),
+    pillTone: healthRecordStatusTone(status),
+    section: record.completed_at === null ? 'current' : 'previous',
+    segment: healthRecordSegment(recordType),
+    titleText: record.title,
+  };
+}
+
+function normalizeHealthRecordType(type: string): HealthRecordType {
+  if (type === 'vaccination' || type === 'deworming' || type === 'prophylaxis' || type === 'vet-visit') {
+    return type;
+  }
+
+  return 'prophylaxis';
+}
+
+type HealthRecordRowStatus = 'template' | 'confirmed' | 'completed' | 'needsVetReview';
+
+function normalizeHealthRecordStatus(status: string): HealthRecordRowStatus {
+  if (status === 'confirmed') {
+    return 'confirmed';
+  }
+
+  if (status === 'done' || status === 'completed') {
+    return 'completed';
+  }
+
+  if (status === 'needs_vet_review') {
+    return 'needsVetReview';
+  }
+
+  return 'template';
+}
+
+function healthRecordIcon(type: HealthRecordType): AppIconName {
+  if (type === 'vaccination') {
+    return 'vaccine';
+  }
+
+  if (type === 'deworming') {
+    return 'stethoscope';
+  }
+
+  if (type === 'vet-visit') {
+    return 'stethoscope';
+  }
+
+  return 'docText';
+}
+
+function healthRecordSegment(type: HealthRecordType): HealthSegment {
+  if (type === 'vaccination') {
+    return 'vaccinations';
+  }
+
+  if (type === 'vet-visit') {
+    return 'visits';
+  }
+
+  return 'treatments';
+}
+
+function healthRecordStatusIcon(status: HealthRecordRowStatus): AppIconName {
+  if (status === 'confirmed') {
+    return 'vaccine';
+  }
+
+  if (status === 'needsVetReview') {
+    return 'stethoscope';
+  }
+
+  if (status === 'completed') {
+    return 'docText';
+  }
+
+  return 'docText';
+}
+
+function healthRecordStatusKey(status: HealthRecordRowStatus): I18nKey {
+  if (status === 'confirmed') {
+    return 'health.pills.confirmed';
+  }
+
+  if (status === 'needsVetReview') {
+    return 'health.pills.needs-vet-review';
+  }
+
+  if (status === 'completed') {
+    return 'health.pills.completed';
+  }
+
+  return 'health.pills.template';
+}
+
+function healthRecordStatusTone(status: HealthRecordRowStatus): StatusPillTone {
+  if (status === 'confirmed') {
+    return 'confirmed';
+  }
+
+  if (status === 'needsVetReview') {
+    return 'needsVetReview';
+  }
+
+  if (status === 'completed') {
+    return 'completed';
+  }
+
+  return 'template';
+}
 
 type HealthRecordType = 'vaccination' | 'deworming' | 'prophylaxis' | 'vet-visit';
 
@@ -509,11 +655,23 @@ export function HealthRecordEditRouteScreen({
 }>) {
   const { t } = useAppTranslation();
   const [selectedType, setSelectedType] = useState<HealthRecordType | null>(null);
+  const activeCare = useActiveCareContext();
+  const createHealthRecord = useCreateHealthRecordMutation();
 
   if (selectedType) {
     return (
       <Screen contentStyle={styles.content}>
-        <HealthRecordEditPreview reviewState={reviewState} />
+        <HealthRecordEditPreview
+          careContext={activeCare.careContext}
+          isSaving={createHealthRecord.isPending}
+          onClose={onClose}
+          onSave={async (draft) => {
+            await createHealthRecord.mutateAsync(draft);
+            onClose();
+          }}
+          recordType={selectedType}
+          reviewState={reviewState}
+        />
       </Screen>
     );
   }
@@ -564,14 +722,55 @@ export function HealthRecordEditRouteScreen({
 }
 
 export function HealthRecordEditPreview({
+  careContext,
   filled = false,
+  isSaving = false,
+  onClose,
+  onSave,
+  recordType = 'vaccination',
   reviewState,
 }: Readonly<{
+  careContext?: ActiveCareContext | null;
   filled?: boolean;
+  isSaving?: boolean;
+  onClose?: () => void;
+  onSave?: (draft: HealthRecordCreateDraft) => Promise<void>;
+  recordType?: HealthRecordType;
   reviewState?: HealthRecordEditReviewState;
 }> = {}) {
   const { t } = useAppTranslation();
-  const isPendingWrite = reviewState === 'pending-write';
+  const [title, setTitle] = useState(filled ? t('health.rows.dhpp-title') : '');
+  const [providerName, setProviderName] = useState('');
+  const [notes, setNotes] = useState('');
+  const [status, setStatus] = useState<HealthRecordDraftStatus>(filled ? 'confirmed' : 'template');
+  const [localReviewState, setLocalReviewState] = useState<HealthRecordEditReviewState | undefined>(undefined);
+  const visibleReviewState = reviewState ?? localReviewState;
+  const isPendingWrite = visibleReviewState === 'pending-write' || isSaving;
+  const canSave = title.trim().length > 0 && careContext !== null && careContext !== undefined && !isPendingWrite;
+
+  async function submit() {
+    if (!canSave || !onSave || !careContext) {
+      return;
+    }
+
+    setLocalReviewState('pending-write');
+
+    try {
+      await onSave({
+        householdId: careContext.householdId,
+        notes,
+        providerName,
+        puppyId: careContext.puppyId,
+        recordType,
+        scheduledFor: careContext.todayDate,
+        status,
+        title,
+        userId: careContext.userId,
+      });
+    } catch {
+      setLocalReviewState('error');
+    }
+  }
 
   return (
     <Card accessibilityLabel={t('health.add-record.sheet-title')}>
@@ -579,56 +778,60 @@ export function HealthRecordEditPreview({
         <Stack align="center" direction="horizontal" justify="space-between">
           <Button
             label={t('health.add-record.form-cancel')}
-            onPress={() => undefined}
+            onPress={onClose ?? (() => undefined)}
             variant="tertiary"
           />
           <AppText accessibilityRole="header" variant="headline">
             {t('health.add-record.sheet-title')}
           </AppText>
           <Button
-            disabled={!filled && !isPendingWrite}
+            disabled={!canSave}
             label={t('health.add-record.form-save')}
             loading={isPendingWrite}
-            onPress={() => undefined}
+            onPress={() => {
+              void submit();
+            }}
             variant="tertiary"
           />
         </Stack>
-        {reviewState ? (
-          <HealthRecordEditStateCard state={reviewState} />
+        {visibleReviewState ? (
+          <HealthRecordEditStateCard state={visibleReviewState} />
         ) : null}
         <SectionHeader title={t('health.add-record.section-main')} />
         <TextField
           label={t('health.add-record.field-name')}
-          onChangeText={() => undefined}
+          onChangeText={setTitle}
           placeholder={t('health.rows.dhpp-title')}
-          value={filled ? t('health.rows.dhpp-title') : ''}
+          value={title}
         />
         <ListRow
-          meta={filled ? t('health.detail.date-value') : t('health.add-record.default-date')}
+          meta={careContext?.todayDate ?? (filled ? t('health.detail.date-value') : t('health.add-record.default-date'))}
           title={t('health.add-record.field-date')}
         />
         <SegmentedControl
           accessibilityLabel={t('health.add-record.field-status')}
-          onValueChange={() => undefined}
+          onValueChange={(value) => {
+            setStatus(value as HealthRecordDraftStatus);
+          }}
           options={[
             { label: t('health.add-record.status-segments.0'), value: 'template' },
             { label: t('health.add-record.status-segments.1'), value: 'confirmed' },
             { label: t('health.add-record.status-segments.2'), value: 'done' },
           ]}
-          value={filled ? 'confirmed' : 'template'}
+          value={status}
         />
         <SectionHeader title={t('health.add-record.section-extra')} />
         <TextField
           label={t('health.add-record.field-clinic')}
-          onChangeText={() => undefined}
-          value=""
+          onChangeText={setProviderName}
+          value={providerName}
         />
         <TextField
           label={t('health.add-record.field-note')}
           multiline
-          onChangeText={() => undefined}
+          onChangeText={setNotes}
           placeholder={t('health.add-record.privacy-hint')}
-          value=""
+          value={notes}
         />
         <AppText tone="tertiary" variant="footnote">{t('health.add-record.note-hint')}</AppText>
         <ListRow

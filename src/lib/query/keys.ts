@@ -36,6 +36,9 @@ export const queryKeys = {
     list: (householdId: string, puppyId: string) =>
       ['reminders', householdId, puppyId] as const,
   },
+  health: {
+    records: (puppyId: string) => ['health', 'records', uuidSchema.parse(puppyId)] as const,
+  },
   sharing: {
     list: (householdId: string, puppyId: string) =>
       ['sharing', householdId, puppyId, 'list'] as const,
@@ -47,6 +50,8 @@ export const queryKeys = {
     ] as const,
     projection: (householdId: string, puppyId: string, scope: ShareScope) =>
       ['sharing', householdId, puppyId, 'projection', scope] as const,
+    projectionRoot: (householdId: string, puppyId: string) =>
+      ['sharing', householdId, puppyId, 'projection'] as const,
   },
 } as const;
 

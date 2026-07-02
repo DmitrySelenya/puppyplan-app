@@ -1,12 +1,17 @@
 import { useRouter } from 'expo-router';
 
 import { HealthScreen } from '@/features/health/screens/HealthScreen';
+import { useActiveCareContext } from '@/lib/query/active-care-context';
+import { useHealthRecordsQuery } from '@/lib/query/health-records';
 
 export default function PetRoute() {
   const router = useRouter();
+  const activeCare = useActiveCareContext();
+  const healthRecords = useHealthRecordsQuery(activeCare.careContext?.puppyId);
 
   return (
     <HealthScreen
+      healthRecords={healthRecords.data}
       onOpenAddRecord={() => {
         router.push('/pet/health-record-edit');
       }}
