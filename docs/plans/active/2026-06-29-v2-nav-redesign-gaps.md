@@ -206,8 +206,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       Stage 4 native SE screenshot comparison passed 2026-07-02.
 - [ ] 🟡 Puppy Setup (§2.1.2) — native profile-step chrome/stepper slice implemented: visible
       back/step chrome, age section label, locked age-stepper anatomy, birth-date date-zone wrapper,
-      and disabled-until-name CTA behavior. Real platform DatePicker replacement and Stage 4 native
-      screenshot comparison remain open.
+      and disabled-until-name CTA behavior. Stage 4 native SE screenshot comparison passed
+      2026-07-02; real platform DatePicker replacement remains open.
 - [x] ✅ Age Hint (§2.1.3) — native profile-step inline hint implemented: info icon, status info tint,
       localized age-range copy, and accessible "Hint. …" label before tracker selection. Stage 4
       native SE screenshot comparison passed 2026-07-02.
@@ -1429,8 +1429,14 @@ Implementation notes:
   primitives (`Screen`, `Stack`, `Touchable`, `AppText`, `AppIcon`, `Button`, `TextField`, `Card`).
 - EN/RU/ES startup locale files include the new step label, back label, dynamic `{count}` age value,
   and increment/decrement accessibility labels.
-- Stage 4 remains open: `/onboarding` Puppy Setup still needs native screenshot comparison against
-  the three locked atlas states.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`)
+  from the installed PuppyPlan.app over Metro. Native evidence:
+  `output/v2-nav-gaps-stage4/onboarding-puppy-setup-default-stage4.png`,
+  `output/v2-nav-gaps-stage4/onboarding-age-hint-stage4.png`,
+  `output/v2-nav-gaps-stage4/onboarding-puppy-setup-error-stage4.png`. Runtime snapshot evidence
+  exposed Back, Step 2 of 5, name field, disabled/enabled Continue, age section, birth-date date-zone
+  field, and future-date inline error. The visual Birth date segment required one `idb ui tap`
+  coordinate tap because XcodeBuildMCP exposed the segment text but not an actionable target.
 - Real platform DatePicker replacement remains open and should use the native picker integration
   slice rather than adding a web-style custom picker here.
 
@@ -2284,6 +2290,9 @@ Implementation notes:
   evidence over Metro showing Step 2 chrome, privacy-safe synthetic name input, Age/Birth date
   segmented control, 8-week stepper, info-tinted age hint, and enabled Continue action without keyboard
   overlay.
+- 2026-07-02: Closed Stage 4 for `/onboarding` Puppy Setup default/filled/error states: captured native
+  SE evidence for disabled-until-name default, filled age-stepper/age-hint state, and future birth-date
+  validation error. Real platform DatePicker replacement remains open.
 - 2026-06-30: Added the Reminder edit route anatomy slice: `/reminders/edit` now renders the create/edit
   form, quiet-hours preview, and calm permission-denied state with design primitives and existing
   localized copy; RED/GREEN route/navigation tests, typecheck, and scaffold checks passed. Real
