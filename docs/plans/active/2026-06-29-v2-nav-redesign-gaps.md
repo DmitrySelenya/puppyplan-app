@@ -317,7 +317,38 @@ chosen model is a **time-gated trial → soft-lock**, collapsing monetization to
 - [x] ➕ **Trial status indicator** — subtle "X days left" (gentle, non-nagging).
 - [x] ➕ **Soft-lock state** — read-only banner ("Subscribe to add new entries"), export still
       reachable; applied app-wide via the single entitlement check.
-- [ ] (no new screen) **Trainer link** stays live regardless of subscription.
+- [x] (no new screen) **Trainer link** stays live regardless of subscription.
+
+### 6.4.1 Trainer Share Soft-Lock Contract Slice
+
+Stage-0 lock:
+- Source: this plan §6.1-§6.4 and `docs/architecture/14-feature-flags-and-entitlements.md`.
+- Scope: executable contract only. No live IAP provider, no remote entitlement adapter, no schema
+  change, and no production paywall enforcement in this nav-redesign wave.
+
+Acceptance:
+- AC-ENT-1: `active` and `trial` app entitlement states allow write actions.
+- AC-ENT-2: `soft_locked` disallows new writes: new logs, routines, reminders, edits, and new
+  share/invite creation.
+- AC-ENT-3: `soft_locked` still allows read/export/delete/privacy/revoke/restore/manage
+  subscription/notification opt-out/sign-out actions.
+- AC-ENT-4: `soft_locked` still allows existing trainer share viewing, so public trainer links stay
+  live regardless of the owner's subscription.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/entitlements-contracts.test.ts` failed as expected
+  while the new entitlement contract stub returned `false` for `active`/`trial` writes and all
+  soft-lock allowed actions.
+
+GREEN evidence:
+- `npm run test:unit -- --runTestsByPath src/test/entitlements-contracts.test.ts` — PASS: 1 suite,
+  4 tests.
+
+Implementation notes:
+- Added `src/contracts/entitlements.ts` as the executable app entitlement action taxonomy. The
+  contract keeps live IAP/enforcement deferred, gates new write actions for `soft_locked`, and keeps
+  `view_existing_trainer_share` available for both `soft_locked` and `loading` states so trainer
+  links are not accidentally bricked by subscription state.
 
 ### 6.5 Reconcile with existing docs
 - **PRD §8** used to specify feature-tiered freemium (1 puppy / 3 reminders / 7-day timeline /
@@ -2177,6 +2208,11 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Closed the no-new-screen trainer-link soft-lock contract: added
+  `src/contracts/entitlements.ts` plus RED/GREEN coverage proving `active`/`trial` allow writes,
+  `soft_locked` blocks new writes, owner data/privacy/restore/revoke actions remain available, and
+  existing trainer share viewing remains live for `soft_locked` / `loading` states without adding live
+  IAP or production paywall enforcement.
 - 2026-07-02: Closed Quick Log snackbar/undo Stage 4: added RED/GREEN coverage that active
   snackbar messages render through `FullWindowOverlay` above native-stack screens, captured production
   SE evidence at
