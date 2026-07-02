@@ -163,6 +163,12 @@ spacing or ensure body+actions are visible without scrolling. No change if it re
 **Acceptance:** Screenshot of the Pet empty state showing icon + body + CTAs; spacing adjusted only
 if needed.
 
+**Item 6 evidence (2026-07-02):** Verify-only PASS. JS-over-Metro on the installed PuppyPlan.app
+with the primary SE simulator shows the Pet health empty state is not an icon-only void: the icon,
+body copy, primary `Add entry` CTA, secondary `Browse templates` CTA, and medical-advice disclaimer
+are all visible in one scrolled viewport. No UI code change needed. Screenshot:
+`output/v2-screen-polish-screenshots/item6-pet-empty-state-verified.jpg`.
+
 ---
 
 # Items 7–12: Diary Clay fidelity follow-ups (added 2026-07-02)
