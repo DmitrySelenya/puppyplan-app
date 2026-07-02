@@ -203,7 +203,7 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [ ] 🟡 First-run variants — present in freeze (partial)
 - [x] ✅ Welcome (§2.1.1) — native initial `/onboarding` anatomy implemented: decorative warm
       illustration frame, locked H1/subtitle, primary setup CTA, and secondary sign-in action.
-      Stage 4 native screenshot comparison remains open.
+      Stage 4 native SE screenshot comparison passed 2026-07-02.
 - [ ] 🟡 Puppy Setup (§2.1.2) — native profile-step chrome/stepper slice implemented: visible
       back/step chrome, age section label, locked age-stepper anatomy, birth-date date-zone wrapper,
       and disabled-until-name CTA behavior. Real platform DatePicker replacement and Stage 4 native
@@ -1324,8 +1324,11 @@ Implementation notes:
   and tokenized decorative `View` anatomy with `decorativeViewProps`.
 - `ConnectedOnboardingScreen` accepts optional `openSignIn`, and `app/onboarding/index.tsx` wires the
   secondary action to `router.replace('/sign-in')`.
-- Stage 4 remains open: `/onboarding` Welcome still needs native screenshot comparison against
-  `docs/design/v1/screenshots/onboarding/2-1.png` before the onboarding welcome state can be marked done.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`)
+  from the installed PuppyPlan.app over Metro. Native evidence:
+  `output/v2-nav-gaps-stage4/onboarding-welcome-stage4.png`. Runtime snapshot evidence exposed the
+  locked H1 accessibility text, subtitle, `Get started` primary CTA, and `I already have an account`
+  secondary action with no stale modal layer after app restart.
 
 ## 22. Onboarding Puppy Setup / Age Hint anatomy evidence
 
@@ -2268,6 +2271,10 @@ Implementation notes:
   captured native SE evidence for the source label, person icon slot, left accent rail, evening
   checklist title, privacy-safe caregiver label, progress bar, and Open checklist / Mark all done /
   Skip actions. Real sitter checklist data, completion push, and pending-sync state remain open.
+- 2026-07-02: Closed Stage 4 for `/onboarding` Welcome: restarted the installed PuppyPlan.app over
+  Metro, captured clean native SE evidence for the decorative warm illustration frame, locked H1,
+  subtitle, primary Get started CTA, and secondary sign-in action, and verified the runtime snapshot
+  no longer included stale Reminders modal targets.
 - 2026-06-30: Added the Reminder edit route anatomy slice: `/reminders/edit` now renders the create/edit
   form, quiet-hours preview, and calm permission-denied state with design primitives and existing
   localized copy; RED/GREEN route/navigation tests, typecheck, and scaffold checks passed. Real
