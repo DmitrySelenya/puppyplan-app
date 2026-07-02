@@ -1,4 +1,4 @@
-import { AccessibilityInfo, ScrollView, Share, StyleSheet } from 'react-native';
+import { AccessibilityInfo, Linking, ScrollView, Share, StyleSheet } from 'react-native';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import type { PuppyProfile } from '@/contracts/supabase';
@@ -65,10 +65,14 @@ const puppy: PuppyProfile = {
 
 describe('More settings entries', () => {
   let reduceMotionProbe: jest.SpyInstance;
+  let openUrlSpy: jest.SpyInstance<Promise<void>, [string]>;
   let shareSpy: jest.SpyInstance;
 
   beforeEach(async () => {
     mockRouterBack.mockClear();
+    openUrlSpy = jest
+      .spyOn(Linking, 'openURL')
+      .mockResolvedValue(undefined);
     shareSpy = jest
       .spyOn(Share, 'share')
       .mockResolvedValue({ action: Share.sharedAction });
@@ -93,6 +97,7 @@ describe('More settings entries', () => {
 
   afterEach(() => {
     cleanup();
+    openUrlSpy.mockRestore();
     reduceMotionProbe.mockRestore();
     shareSpy.mockRestore();
   });
@@ -409,6 +414,40 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', { name: i18n.t('more.help.contact-row') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.help.privacy-note'))).toBeTruthy();
     expect(screen.queryByText(/support@example/i)).toBeNull();
+  });
+
+  it('opens a privacy-safe support email draft from the Help screen', async () => {
+    render(
+      <AppProviders>
+        <HelpSupportScreen />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('more.help.contact-row') }));
+
+    await waitFor(() => {
+      expect(openUrlSpy).toHaveBeenCalledTimes(1);
+    });
+    const [supportUrl] = openUrlSpy.mock.calls[0];
+    expect(supportUrl.startsWith(`mailto:${i18n.t('more.help.support-email')}?`)).toBe(true);
+    expect(decodeURIComponent(supportUrl)).toContain('PuppyPlan support request');
+    expect(decodeURIComponent(supportUrl)).toContain(i18n.t('more.help.privacy-note'));
+    expect(decodeURIComponent(supportUrl)).not.toMatch(/Puppy A|Caregiver|token=/i);
+  });
+
+  it('renders a visible Help support error when the email handoff fails', async () => {
+    openUrlSpy.mockRejectedValueOnce(new Error('email unavailable'));
+    render(
+      <AppProviders>
+        <HelpSupportScreen />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('more.help.contact-row') }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('more-help-support-error')).toBeTruthy();
+    });
   });
 
   it('renders the Manage household shell anatomy without private invite data', () => {

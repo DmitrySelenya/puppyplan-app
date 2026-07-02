@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { Linking, StyleSheet } from 'react-native';
 
 import {
   AppIcon,
@@ -11,6 +12,7 @@ import {
   ScreenHeader,
   SectionHeader,
   Stack,
+  StatusPill,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
@@ -23,6 +25,22 @@ export function HelpSupportScreen({
   onBack,
 }: HelpSupportScreenProps) {
   const { t } = useAppTranslation();
+  const [supportErrorVisible, setSupportErrorVisible] = useState(false);
+
+  const openSupportDraft = async () => {
+    setSupportErrorVisible(false);
+    const supportUrl = buildSupportMailtoUrl({
+      body: t('more.help.support-draft-body'),
+      email: t('more.help.support-email'),
+      subject: t('more.help.support-draft-subject'),
+    });
+
+    try {
+      await Linking.openURL(supportUrl);
+    } catch {
+      setSupportErrorVisible(true);
+    }
+  };
 
   return (
     <Screen contentStyle={styles.content}>
@@ -88,12 +106,43 @@ export function HelpSupportScreen({
         <ListRow
           accessory="chevron"
           leading={<AppIcon name="docText" />}
-          onPress={() => undefined}
+          onPress={() => {
+            void openSupportDraft();
+          }}
           subtitle={t('more.help.contact-hint')}
           title={t('more.help.contact-row')}
           variant="settings"
         />
       </HelpSection>
+
+      {supportErrorVisible ? (
+        <Card
+          accessibilityLabel={[
+            t('more.help.support-error-title'),
+            t('more.help.support-error-body'),
+          ].join('. ')}
+          accessibilityRole="alert"
+          style={styles.errorCard}
+          testID="more-help-support-error">
+          <Stack gap="sm">
+            <StatusPill
+              accessibilityLabel={t('more.help.support-error-title')}
+              icon={(
+                <AppIcon
+                  color={tokens.color.status.danger}
+                  name="warningTriangle"
+                  size={14}
+                />
+              )}
+              label={t('more.help.support-error-title')}
+              tone="failed"
+            />
+            <AppText tone="secondary" variant="subheadline">
+              {t('more.help.support-error-body')}
+            </AppText>
+          </Stack>
+        </Card>
+      ) : null}
 
       <Card
         accessibilityLabel={t('more.help.privacy-note')}
@@ -106,6 +155,18 @@ export function HelpSupportScreen({
       </Card>
     </Screen>
   );
+}
+
+function buildSupportMailtoUrl({
+  body,
+  email,
+  subject,
+}: Readonly<{
+  body: string;
+  email: string;
+  subject: string;
+}>) {
+  return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function HelpSection({
@@ -126,6 +187,10 @@ function HelpSection({
 const styles = StyleSheet.create({
   content: {
     paddingBottom: tokens.layout.tabBarHeight + tokens.space[6],
+  },
+  errorCard: {
+    backgroundColor: tokens.color.status.dangerTint,
+    borderColor: tokens.color.status.danger,
   },
   privacyCard: {
     backgroundColor: tokens.color.status.infoTint,

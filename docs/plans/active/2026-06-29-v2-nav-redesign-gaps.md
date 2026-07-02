@@ -253,8 +253,33 @@ GREEN / regression evidence:
       Persistence / OS permission handoff remains open.
 - [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
       topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
-      Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Real ticket/email handoff
-      and diagnostics upload remain open.
+      Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Email handoff is now wired
+      as a privacy-safe mail draft; diagnostics upload remains open.
+
+#### 4.4.6a Help support email handoff
+
+Stage-0 lock:
+- Source: DESIGN.md §4.4.6 and the implemented `/settings/help` support note row.
+- Scope: route-level email draft only. No backend ticket creation, no diagnostics upload, no
+  private user data collection, and no automatic send.
+
+Acceptance:
+- AC-HELP-SUPPORT-1: pressing `Prepare support note` opens a `mailto:` draft to the public support
+  address from typed i18n.
+- AC-HELP-SUPPORT-2: the draft subject/body are localized and privacy-safe; the body reminds the
+  user not to include puppy names, notes, emails, providers, photos, or tokens.
+- AC-HELP-SUPPORT-3: if the platform handoff rejects, the screen renders a visible support error
+  state instead of swallowing the failure.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` failed as
+  expected while `Prepare support note` still had a no-op handler: `Linking.openURL()` was never
+  called and no visible support error rendered after a rejected email handoff.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` — PASS:
+  1 suite, 23 tests.
+- `node scripts/checks/check-i18n.mjs` — PASS.
 - [x] ✅ Full PuppyPlan Plus screen (features list + Restore purchases) — `/paywall` native shell
       implemented: feature list, annual/monthly/lifetime plan rows, primary CTA, Restore purchases,
       soft-lock note, and deterministic loading / pending-purchase / purchase-error / offline-read /
