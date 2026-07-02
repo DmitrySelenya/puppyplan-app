@@ -11,11 +11,36 @@ import { i18n } from '@/lib/i18n';
 import ReminderEditRoute from '../../app/(modals)/reminders/edit';
 
 const mockRouterBack = jest.fn();
+const mockCreateReminderMutateAsync = jest.fn();
+const mockCareContext = {
+  householdId: '00000000-0000-4000-8000-000000004102',
+  householdRole: 'owner',
+  puppyId: '00000000-0000-4000-8000-000000004103',
+  selectedTrackerIds: ['feeding'],
+  todayDate: '2026-07-02',
+  userId: '00000000-0000-4000-8000-000000004101',
+};
 
 jest.mock('expo-router', () => ({
   router: {
     back: () => mockRouterBack(),
   },
+}));
+
+jest.mock('@/lib/query/active-care-context', () => ({
+  useActiveCareContext: () => ({
+    careContext: mockCareContext,
+    puppy: null,
+    status: 'ready',
+  }),
+}));
+
+jest.mock('@/lib/query/reminders', () => ({
+  useCreateReminderMutation: () => ({
+    isError: false,
+    isPending: false,
+    mutateAsync: mockCreateReminderMutateAsync,
+  }),
 }));
 
 describe('ReminderEditRoute', () => {
@@ -24,6 +49,26 @@ describe('ReminderEditRoute', () => {
 
   beforeEach(async () => {
     mockRouterBack.mockClear();
+    mockCreateReminderMutateAsync.mockReset();
+    mockCreateReminderMutateAsync.mockResolvedValue({
+      assigned_to: null,
+      created_at: '2026-07-02T10:00:00.000Z',
+      created_by: mockCareContext.userId,
+      deleted_at: null,
+      enabled: true,
+      id: '00000000-0000-4000-8000-000000004104',
+      puppy_id: mockCareContext.puppyId,
+      quiet_hours: null,
+      reminder_type: 'Morning potty',
+      schedule_rule: {
+        repeat: 'daily',
+        time: '7:30',
+      },
+      timezone: 'UTC',
+      trusted_sitter_visible: false,
+      updated_at: '2026-07-02T10:05:00.000Z',
+      version: 1,
+    });
     openSettingsSpy = jest
       .spyOn(Linking, 'openSettings')
       .mockResolvedValue(undefined);
@@ -151,6 +196,34 @@ describe('ReminderEditRoute', () => {
       name: i18n.t('reminders.form.cancel'),
     }));
 
+    expect(mockRouterBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-REM-DURABLE-4 saves a named reminder from the connected route before closing', async () => {
+    render(<ReminderEditRoute />);
+
+    const saveButton = screen.getByRole('button', {
+      name: i18n.t('reminders.form.save'),
+    });
+    expect(saveButton.props.accessibilityState.disabled).toBe(true);
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('reminders.form.field-name')),
+      ' Morning potty ',
+    );
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('reminders.form.save'),
+    }));
+
+    await waitFor(() => {
+      expect(mockCreateReminderMutateAsync).toHaveBeenCalledWith({
+        householdId: mockCareContext.householdId,
+        puppyId: mockCareContext.puppyId,
+        reminderName: ' Morning potty ',
+        todayDate: mockCareContext.todayDate,
+        userId: mockCareContext.userId,
+      });
+    });
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
   });
 

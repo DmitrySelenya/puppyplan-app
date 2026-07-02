@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 
-import { ReminderEditScreen } from '@/features/reminders/screens/ReminderEditScreen';
+import { ConnectedReminderEditScreen } from '@/features/reminders/screens/ReminderEditScreen';
 
 export default function ReminderEditRoute() {
   return (
-    <ReminderEditScreen
+    <ConnectedReminderEditScreen
       onClose={() => {
         router.back();
       }}

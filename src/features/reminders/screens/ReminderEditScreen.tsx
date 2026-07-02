@@ -15,6 +15,11 @@ import { TextField } from '@/design/primitives/TextField';
 import { Toggle } from '@/design/primitives/Toggle';
 import { tokens } from '@/design/tokens';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+import { useActiveCareContext } from '@/lib/query/active-care-context';
+import {
+  type ReminderCreateDraft,
+  useCreateReminderMutation,
+} from '@/lib/query/reminders';
 
 type ReminderCategoryOption = Readonly<{
   icon: AppIconName;
@@ -80,21 +85,42 @@ const reminderEditStateMeta: Record<ReminderEditReviewState, ReminderEditStateMe
 };
 
 export function ReminderEditScreen({
+  isSaving = false,
   onClose,
+  onSaveReminder,
   reviewState,
 }: Readonly<{
+  isSaving?: boolean;
   onClose: () => void;
+  onSaveReminder?: (draft: Pick<ReminderCreateDraft, 'reminderName'>) => Promise<void> | void;
   reviewState?: ReminderEditReviewState;
 }>) {
   const { t } = useAppTranslation();
   const [localReviewState, setLocalReviewState] = useState<ReminderEditReviewState | undefined>();
+  const [reminderName, setReminderName] = useState('');
   const visibleReviewState = reviewState ?? localReviewState;
-  const isPendingWrite = visibleReviewState === 'pending-write';
+  const isPendingWrite = isSaving || visibleReviewState === 'pending-write';
+  const canSave = onSaveReminder !== undefined && reminderName.trim().length > 0 && !isPendingWrite;
 
   const handleOpenNotificationSettings = async () => {
     setLocalReviewState(undefined);
     try {
       await Linking.openSettings();
+    } catch {
+      setLocalReviewState('error');
+    }
+  };
+
+  const handleSaveReminder = async () => {
+    if (!canSave) {
+      return;
+    }
+
+    setLocalReviewState(undefined);
+
+    try {
+      await onSaveReminder({ reminderName });
+      onClose();
     } catch {
       setLocalReviewState('error');
     }
@@ -114,10 +140,12 @@ export function ReminderEditScreen({
               {t('reminders.form.title-new')}
             </AppText>
             <Button
-              disabled={!isPendingWrite}
+              disabled={!canSave}
               label={t('reminders.form.save')}
               loading={isPendingWrite}
-              onPress={() => undefined}
+              onPress={() => {
+                void handleSaveReminder();
+              }}
               variant="tertiary"
             />
           </Stack>
@@ -127,8 +155,8 @@ export function ReminderEditScreen({
           <Stack gap="md">
             <TextField
               label={t('reminders.form.field-name')}
-              onChangeText={() => undefined}
-              value=""
+              onChangeText={setReminderName}
+              value={reminderName}
             />
 
             <SectionHeader title={t('reminders.form.field-category')} />
@@ -203,6 +231,50 @@ export function ReminderEditScreen({
       <QuietHoursCard />
       <ReminderPermissionDeniedCard onOpenSettings={handleOpenNotificationSettings} />
     </Screen>
+  );
+}
+
+export function ConnectedReminderEditScreen({
+  onClose,
+}: Readonly<{
+  onClose: () => void;
+}>) {
+  const activeCare = useActiveCareContext();
+  const createReminder = useCreateReminderMutation();
+
+  if (activeCare.status === 'loading') {
+    return (
+      <ReminderEditScreen
+        onClose={onClose}
+        reviewState="loading"
+      />
+    );
+  }
+
+  if (activeCare.status === 'error' || activeCare.careContext === null) {
+    return (
+      <ReminderEditScreen
+        onClose={onClose}
+        reviewState="error"
+      />
+    );
+  }
+
+  const careContext = activeCare.careContext;
+
+  return (
+    <ReminderEditScreen
+      isSaving={createReminder.isPending}
+      onClose={onClose}
+      onSaveReminder={(draft) => createReminder.mutateAsync({
+        householdId: careContext.householdId,
+        puppyId: careContext.puppyId,
+        reminderName: draft.reminderName,
+        todayDate: careContext.todayDate,
+        userId: careContext.userId,
+      }).then(() => undefined)}
+      reviewState={createReminder.isError ? 'error' : undefined}
+    />
   );
 }
 

@@ -205,8 +205,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Create / edit reminder form (§4.2.2) — native route anatomy implemented at
       `/reminders/edit`: title/name/category/time/repeat/timezone/toggles/helper copy and disabled
       Save state, plus deterministic loading / pending-write / error / offline-read state templates.
-      Stage 4 native SE screenshot comparison passed 2026-07-02 for the base form; real reminder
-      save/scheduling/persistence and native state captures remain open.
+      Stage 4 native SE screenshot comparison passed 2026-07-02 for the base form; durable create
+      persistence is now wired through the typed reminder repository/query layer. Local notification
+      scheduling, occurrence generation, real reminder list rendering, and native post-save capture
+      remain open.
 - [x] ✅ Push permission denied — calm in-app state (§4.2.7) — native non-modal permission card
       implemented inside `/reminders/edit`; reminder creation remains visually available and not
       blocked. Stage 4 native SE screenshot comparison passed 2026-07-02; OS settings deeplink
@@ -2011,6 +2013,54 @@ Implementation notes:
   `reminder-edit-state-loading`, `reminder-edit-state-pending-write`, `reminder-edit-state-error`, and
   `reminder-edit-state-offline-read`; the screenshot comparison shows loading/pending and error/offline
   cards readable with no nested time-picker/form chrome.
+
+### 19a. Reminder edit durable create/list slice
+
+**2026-07-02 data-layer slice:** connect the existing `/reminders/edit` form to the current
+`public.reminder` schema through typed Supabase/query boundaries. This is the persistence foundation
+only; it does not schedule local notifications or generate reminder occurrences.
+
+- Source spec card: `docs/design/v1/specs/04-quick-log-routines-reminders.md`.
+- Source canon: DESIGN.md §4.2.2 Create / edit reminder form and
+  `docs/architecture/03-client-data-layer.md` reminder invalidation row.
+- Route/components: `/reminders/edit`,
+  `src/features/reminders/screens/ReminderEditScreen.tsx`, `src/lib/supabase/reminders.ts`,
+  `src/lib/query/reminders.ts`.
+- TDD mode: lightweight; reduced assurance because this continuation is running in the main thread,
+  but repository/query and route RED tests must fail before production implementation.
+
+Acceptance:
+- AC-REM-DURABLE-1: the Supabase boundary can list non-deleted reminders for one puppy and insert a
+  reminder row using only existing schema fields, parsing responses through `reminderSchema`.
+- AC-REM-DURABLE-2: the create mutation writes `puppy_id`, trimmed `reminder_type`, `created_by`,
+  `timezone`, default `enabled=true`, default `trusted_sitter_visible=false`, and a simple
+  schedule rule for the existing static time/repeat rows.
+- AC-REM-DURABLE-3: successful create invalidates `queryKeys.reminders.list(householdId, puppyId)`
+  and the current `today.dashboard` key; no broad cache clear or free-form query keys.
+- AC-REM-DURABLE-4: the connected `/reminders/edit` route requires an authenticated active care
+  context, enables Save only after the name field is non-empty, shows pending/error state from the
+  mutation, closes only after successful save, and keeps the OS settings handoff behavior unchanged.
+- AC-REM-DURABLE-5: no occurrence generation, notification scheduling, OS permission probing, native
+  picker replacement, recurrence engine, schema migration, new native module, analytics payload, or
+  `ios/`/`android/` edit is introduced in this slice.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-query.test.ts src/test/reminder-edit-route.render.test.tsx`
+  — FAIL before implementation: repository/query tests failed on `reminder_*_not_implemented`
+  stubs; the connected route test failed because Save did not call the create mutation.
+- `npm run test:unit -- --runTestsByPath src/test/reminders-query.test.ts`
+  — FAIL after review follow-up: `AC-REM-DURABLE-3 keeps the read list key aligned with create
+  invalidation` failed because `createRemindersQueryOptions` was missing.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-query.test.ts src/test/reminder-edit-route.render.test.tsx`
+  — PASS: 2 suites, 15 tests.
+- `npm run typecheck` — PASS.
+- `npm run test:unit -- --runTestsByPath src/test/reminder-edit-route.render.test.tsx src/test/navigation-contract.test.ts src/test/app-shell.render.test.tsx src/test/dev-gallery.render.test.tsx`
+  — PASS: 4 suites, 33 tests.
+- `npm run check` — PASS: lint, typecheck, Jest 75 suites / 599 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing reduced-motion `act(...)`
+  warnings remain unrelated to this slice.
 
 ## 20. Trusted sitter checklist reminder anatomy evidence
 
