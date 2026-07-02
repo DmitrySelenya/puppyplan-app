@@ -116,10 +116,11 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       chooser and empty form anatomy. Stage 4 SE native screenshot comparison PASS recorded
       2026-07-02 for chooser + empty form. Save/persistence/loading/error/offline states remain open.
 - [ ] 🟡 Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
-      anatomy implemented; durable edit/delete, timed 5-second undo restore, and persistence remain open.
+      anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
+      Durable edit/delete, timed 5-second undo restore, and persistence remain open.
 - [x] ✅ Status transitions visualisation Template→Confirmed→Done (§4.1.6) — native detail
       status strip now renders four visible icon+label steps with exactly one active filled state and
-      full sequence accessibility label. Stage 4 native screenshot comparison remains open.
+      full sequence accessibility label. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
 - [x] ✅ Vet visit prep card (§4.1.7) — native reference-card anatomy implemented inside Pet
       Health: visit subtitle, four checklist rows, Add item affordance, and non-instruction disclaimer.
       Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Real checklist editing remains open.
@@ -1104,8 +1105,18 @@ Implementation notes:
   region without adding a new primitive or unsupported React Native role.
 - `src/contracts/navigation.ts` now includes `health.edit-record.delete-undo-toast` in
   `shellI18nKeys`.
-- Stage 4 remains open: Health detail status/delete states still need native screenshot comparison
-  against the locked Pet/Health boards before the full Health detail flow can be marked done.
+- Stage 4 PASS (2026-07-02): captured native SE screenshots from the installed PuppyPlan.app running
+  JS-over-Metro and compared against `docs/design/v1/specs/05-pet-health.md` plus this slice's locked
+  acceptance. Evidence:
+  `output/v2-nav-gaps-stage4/health-detail-confirmed-stage4.png`,
+  `output/v2-nav-gaps-stage4/health-detail-stage-strip-stage4.png`,
+  `output/v2-nav-gaps-stage4/health-detail-needs-review-stage4.png`, and
+  `output/v2-nav-gaps-stage4/health-detail-delete-pending-stage4.png`. Runtime snapshot evidence also
+  exposed the status-strip accessibility labels (`Stage 3 of 4: Confirmed...` and
+  `Stage 2 of 4: Needs vet review...`) plus the busy `Delete entry` target. The screenshots show
+  confirmed and needs-vet-review detail rows, four non-color-only stage steps, one active filled stage,
+  the delete confirm card, disabled destructive delete, and undo-toast preview. Real record persistence,
+  editable dirty-state behavior, soft warning haptic, timed undo restore, and durable delete remain open.
 
 ## 18. Vet visit prep card Stage-0 lock evidence
 
@@ -2222,6 +2233,12 @@ Implementation notes:
   localized undo-toast preview; targeted health tests, typecheck, scaffold checks, related route/i18n
   suites, and full `npm run check` passed. Real timed undo restore/persistence and Stage 4 screenshots
   remain open.
+- 2026-07-02: Closed Stage 4 for Health detail status/delete: captured native SE confirmed,
+  needs-vet-review, stage-strip, and delete-pending screenshots from the synthetic health preview over
+  Metro. Evidence covers noun status pills, detail rows, four icon+label stage steps with exactly one
+  active filled state, aggregate stage accessibility labels in runtime snapshot, busy delete action,
+  confirm card, disabled destructive button, and undo-toast preview. Durable edit/delete persistence,
+  warning haptic, and timed restore remain open.
 - 2026-06-30: Added the Vet Visit Prep card anatomy slice inside Pet Health: localized visit subtitle,
   four 36pt+ checklist rows, Add item affordance, and non-instruction disclaimer; RED/GREEN health
   render coverage, related route/i18n suites, typecheck, scaffold checks, and full `npm run check`
