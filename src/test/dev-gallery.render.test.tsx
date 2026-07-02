@@ -13,6 +13,7 @@ import {
   SyntheticPaywallStatesShell,
   SyntheticQuickLogDetailsShell,
   SyntheticQuickLogSheetShell,
+  SyntheticRemindersHubShell,
   SyntheticReminderEditShell,
   SyntheticNotificationPreferencesShell,
   SyntheticOnboardingShell,
@@ -139,6 +140,7 @@ describe('development-only design gallery', () => {
         <SyntheticMoreSettingsShell />
         <SyntheticQuickLogSheetShell />
         <SyntheticHealthShell />
+        <SyntheticRemindersHubShell />
         <SyntheticReminderEditShell />
         <SyntheticNotificationPreferencesShell />
         <SyntheticPaywallStatesShell />
@@ -197,6 +199,12 @@ describe('development-only design gallery', () => {
     expect(screen.queryByTestId('reminder-edit-time-picker-row', {
       includeHiddenElements: true,
     })).toBeNull();
+    expect(screen.getByText('Morning feeding', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('reminders.sections.feeding'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('dev.gallery.states.notification-preferences'), {
       includeHiddenElements: true,
     })).toBeTruthy();

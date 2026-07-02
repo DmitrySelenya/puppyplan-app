@@ -56,6 +56,7 @@
         "quick-log-sheet": "Quick Log sheet, подтипы, предупреждение о дубле, локальное ожидание, неудачный retry и состояния доступа.",
         "quick-log-details": "Маршрут деталей Quick Log с синтетическими состояниями медленного сохранения и ошибки.",
         "health-v2": "Health list, empty, edit, detail, review, delete и weight entry состояния.",
+        "reminders-hub": "Маршрут центра reminders с активными durable-строками для native handoff.",
         "reminder-edit": "Маршрут редактирования reminder с состояниями загрузки, сохранения, ошибки и offline read.",
         "notification-preferences": "Маршрут настроек уведомлений с состояниями загрузки, сохранения, ошибки и offline read.",
         "paywall-states": "Состояния PuppyPlan Plus: загрузка, покупка, ошибка, офлайн и активная подписка.",

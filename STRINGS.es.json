@@ -54,6 +54,7 @@
         "quick-log-sheet": "Hoja de Quick Log, subtipos, aviso de duplicado, pendiente local, reintento fallido y estados de acceso.",
         "quick-log-details": "Ruta de detalles de Quick Log con estados sintéticos de guardado lento y error.",
         "health-v2": "Lista de salud, vacío, edición, detalle, revisión, eliminación y entrada de peso.",
+        "reminders-hub": "Ruta del centro de recordatorios con filas durables activas para entrega nativa.",
         "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
         "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
         "paywall-states": "Estados de PuppyPlan Plus: carga, compra pendiente, error, offline y suscripción activa.",

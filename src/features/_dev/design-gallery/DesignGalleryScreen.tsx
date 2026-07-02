@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import type { Reminder } from '@/contracts/supabase';
 import {
   AppText,
   Button,
@@ -57,6 +58,9 @@ import {
 import { QuickLogLocalEvents } from '@/features/quick-log/components/QuickLogLocalEvents';
 import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
 import {
+  RemindersHubScreen,
+} from '@/features/reminders/screens/RemindersHubScreen';
+import {
   ReminderEditStatePreview,
 } from '@/features/reminders/screens/ReminderEditScreen';
 import {
@@ -77,6 +81,47 @@ import {
 
 const noop = () => undefined;
 
+const syntheticReminders: readonly Reminder[] = [
+  {
+    assigned_to: null,
+    created_at: '2026-07-02T10:00:00.000Z',
+    created_by: '00000000-0000-4000-8000-000000006001',
+    deleted_at: null,
+    enabled: true,
+    id: '00000000-0000-4000-8000-000000006101',
+    puppy_id: '00000000-0000-4000-8000-000000006002',
+    quiet_hours: null,
+    reminder_type: 'Morning feeding',
+    schedule_rule: {
+      repeat: 'daily',
+      time: '7:30',
+    },
+    timezone: 'UTC',
+    trusted_sitter_visible: false,
+    updated_at: '2026-07-02T10:05:00.000Z',
+    version: 1,
+  },
+  {
+    assigned_to: null,
+    created_at: '2026-07-02T10:00:00.000Z',
+    created_by: '00000000-0000-4000-8000-000000006001',
+    deleted_at: null,
+    enabled: true,
+    id: '00000000-0000-4000-8000-000000006102',
+    puppy_id: '00000000-0000-4000-8000-000000006002',
+    quiet_hours: null,
+    reminder_type: 'DHPP booster',
+    schedule_rule: {
+      repeat: 'daily',
+      time: '9:00',
+    },
+    timezone: 'UTC',
+    trusted_sitter_visible: false,
+    updated_at: '2026-07-02T10:05:00.000Z',
+    version: 1,
+  },
+];
+
 export function DesignGalleryScreen() {
   const { t } = useAppTranslation();
 
@@ -94,6 +139,7 @@ export function DesignGalleryScreen() {
         <SyntheticSitterModeStatesShell />
         <SyntheticQuickTrackersStatesShell />
         <SyntheticNotificationPreferencesShell />
+        <SyntheticRemindersHubShell />
         <SyntheticReminderEditShell />
 
         {gallerySections.map((section) => (
@@ -650,6 +696,24 @@ export function SyntheticReminderEditShell() {
         <ReminderEditStatePreview state="pending-write" />
         <ReminderEditStatePreview state="error" />
         <ReminderEditStatePreview state="offline-read" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticRemindersHubShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.reminders-hub"
+          titleKey="reminders.screen-title"
+        />
+        <RemindersHubScreen
+          onAddReminder={noop}
+          onBack={noop}
+          reminders={syntheticReminders}
+        />
       </Stack>
     </Card>
   );

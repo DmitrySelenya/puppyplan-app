@@ -55,6 +55,7 @@
         "quick-log-sheet": "Quick Log sheet, subtype choices, duplicate warning, local pending, failed retry, and access states.",
         "quick-log-details": "Quick Log details route with synthetic slow-saving and error states.",
         "health-v2": "Health list, empty, edit, detail, review, delete, and weight entry states.",
+        "reminders-hub": "Reminders hub route with active durable rows for native handoff.",
         "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
         "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
         "paywall-states": "PuppyPlan Plus loading, pending purchase, error, offline, and active subscription states.",

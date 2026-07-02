@@ -191,6 +191,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 
 ### Reminders / Routines — DESIGN.md §4.2
 - [x] ✅ Reminders/Routines hub + lifecycle (Mark done / Back-date / Skip / Pause / Delete; "Diary entries stay")
+      — `/reminders` native durable-list hub is implemented with active/off segments, durable row
+      grouping, More navigation, and Stage 4 native SE evidence from a synthetic dev-gallery handoff
+      shell. Lifecycle actions, occurrence generation, and local notification scheduling remain deferred.
 - [x] ✅ Reminder push — iOS lock-screen (§4.2.4 → 12.4)
 - [x] ✅ Reminder card on Diary (§4.2.5)
 - [x] ✅ Quiet hours picker (§4.2.3) — native reminder-edit anatomy slice implemented:
@@ -207,8 +210,7 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       Save state, plus deterministic loading / pending-write / error / offline-read state templates.
       Stage 4 native SE screenshot comparison passed 2026-07-02 for the base form; durable create
       persistence is now wired through the typed reminder repository/query layer. Local notification
-      scheduling, occurrence generation, real reminder list rendering, and native post-save capture
-      remain open.
+      scheduling, occurrence generation, and native post-save capture remain open.
 - [x] ✅ Push permission denied — calm in-app state (§4.2.7) — native non-modal permission card
       implemented inside `/reminders/edit`; reminder creation remains visually available and not
       blocked. Stage 4 native SE screenshot comparison passed 2026-07-02; OS settings deeplink
@@ -2131,6 +2133,9 @@ RED evidence:
 GREEN / regression evidence:
 - `npm run test:unit -- --runTestsByPath src/test/navigation-contract.test.ts src/test/more-settings.render.test.tsx src/test/reminders-hub-route.render.test.tsx`
   — PASS: 3 suites, 44 tests. Existing reduced-motion `act(...)` warnings remain unrelated.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx`
+  — RED before the Stage 4 handoff shell because the gallery did not render `Morning feeding`; PASS
+  after adding the synthetic Reminders Hub shell: 1 suite, 4 tests.
 - `npm run typecheck` — PASS after regenerating local Expo typed routes with
   `npx expo start --localhost --port 8099` and stopping Metro.
 - `node scripts/checks/check-i18n.mjs` — PASS.
@@ -2146,7 +2151,13 @@ Implementation notes:
 - More -> Reminders opens the hub; hub Add opens `/reminders/edit`.
 - Active/off segments split durable rows by `enabled`; rows are grouped from current durable metadata
   without adding schema fields. Toggle mutation, occurrence generation, local notification scheduling,
-  swipe edit/delete, missed-today rows, and native Stage 4 screenshot capture remain open.
+  swipe edit/delete, and missed-today rows remain open.
+- Stage 4 PASS follow-up recorded 2026-07-02 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro on port
+  8081. Native evidence: `output/v2-nav-gaps-stage4/reminders-hub-stage4.jpg`. Runtime snapshot
+  evidence exposed Reminders title/header, More back action, Add reminder action, Active/Off
+  segmented control, Feeding and Health sections, `Morning feeding`, `DHPP booster`, schedule
+  subtitles, and switch states.
 
 ## 20. Trusted sitter checklist reminder anatomy evidence
 
