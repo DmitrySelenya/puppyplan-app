@@ -68,6 +68,7 @@ export const modalRoutes = [
   scheduleAction.href,
   '/quick-log/details',
   '/paywall',
+  '/reminders',
   '/reminders/edit',
   '/family/invite',
   '/sharing/trainer-preview',
@@ -178,6 +179,11 @@ export const plannedRouteFiles = [
   {
     route: '/pet/health-record/[recordId]',
     file: 'app/(modals)/pet/health-record/[recordId].tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/reminders',
+    file: 'app/(modals)/reminders/index.tsx',
     implementationStage: 'existing',
   },
   {

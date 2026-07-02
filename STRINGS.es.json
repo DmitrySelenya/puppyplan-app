@@ -1527,14 +1527,37 @@
       "Activo",
       "Apagado"
     ],
+    "segments-a11y": "Estado de recordatorios",
+    "actions": {
+      "add": "Agregar recordatorio"
+    },
     "sections": {
       "feeding": "Alimentación",
       "health": "Salud",
       "sitter": "cuidador de confianza",
+      "other": "Otro",
       "missed-today": "No registrado hoy"
     },
     "footer-quiet-hours": "Horas de silencio: en la configuración de notificaciones.",
     "empty": "Tus recordatorios aparecerán aquí",
+    "row-subtitle-daily-template": "Cada día · {time}",
+    "states": {
+      "loading": {
+        "status": "Cargando",
+        "title": "Cargando recordatorios",
+        "body": "Estamos revisando los recordatorios guardados para este cachorro."
+      },
+      "empty": {
+        "status": "Vacío",
+        "title": "Aún no hay recordatorios aquí",
+        "body": "Usa el botón más para agregar el primer recordatorio."
+      },
+      "error": {
+        "status": "No se pudo cargar",
+        "title": "No se pudieron cargar los recordatorios",
+        "body": "Revisa tu conexión e inténtalo de nuevo."
+      }
+    },
     "form": {
       "cancel": "Cancelar",
       "title-new": "Nuevo recordatorio",

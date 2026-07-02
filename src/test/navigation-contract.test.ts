@@ -34,6 +34,21 @@ describe('navigation contract', () => {
     expect(modalRoutes).toContain(quickLogAction.href);
   });
 
+  it('tracks the Reminders hub as a modal route separate from the create form', () => {
+    expect(modalRoutes).toContain('/reminders');
+    expect(modalRoutes).toContain('/reminders/edit');
+    expect(primaryTabs.map((tab) => tab.href)).not.toContain('/reminders');
+    expect(plannedRouteFiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          route: '/reminders',
+          file: 'app/(modals)/reminders/index.tsx',
+          implementationStage: 'existing',
+        }),
+      ]),
+    );
+  });
+
   it('exposes a schedule chooser action distinct from quick log', () => {
     expect(scheduleAction.href).not.toBe(quickLogAction.href);
     expect(modalRoutes).toContain(scheduleAction.href);

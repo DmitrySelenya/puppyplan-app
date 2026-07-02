@@ -2096,6 +2096,58 @@ GREEN evidence:
   scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing reduced-motion `act(...)`
   warnings remain unrelated to this slice.
 
+### 19c. Reminders Hub durable list route
+
+**2026-07-02 list slice:** add the missing `/reminders` hub from atlas `12.1 Reminders list` and
+render durable reminder rows from the typed `useRemindersQuery` path. This closes the visible list
+surface only; lifecycle actions, toggle mutation, occurrence generation, local notification
+scheduling, swipe edit/delete, and native Stage 4 capture remain follow-ups.
+
+- Stage 0 lock: `docs/design/v1/specs/12-1-reminders-hub.md`.
+- Atlas: `docs/design/v1/screenshots/reminders/12-1.png`, route `/reminders`, state `default`,
+  393x852.
+- Source canon: DESIGN.md §4.2.1 Reminders Hub and
+  `docs/design/v1/specs/04-quick-log-routines-reminders.md`.
+- Route/components: `/reminders`, More -> Reminders, `src/features/reminders/screens`.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-REM-HUB-1: `/reminders` is tracked in navigation contracts and the More Reminders row opens
+  `/reminders`, not the create form directly.
+- AC-REM-HUB-2: the connected hub requires an active care context, uses `useRemindersQuery` with
+  `householdId` and `puppyId`, and renders loading/error/empty states without fake production rows.
+- AC-REM-HUB-3: active and off segments split durable rows by `enabled`, and rows render title,
+  schedule subtitle, icon, and switch state through design primitives and typed i18n keys.
+- AC-REM-HUB-4: the header add action opens `/reminders/edit`; no toggle mutation, occurrence
+  generation, local notification scheduling, schema migration, native module, or `ios`/`android` edit
+  is introduced in this slice.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/navigation-contract.test.ts src/test/more-settings.render.test.tsx src/test/reminders-hub-route.render.test.tsx`
+  — FAIL before implementation: `/reminders` was absent from `modalRoutes`, More still pushed
+  `/reminders/edit`, and the new hub stub did not call `useRemindersQuery` or render the locked
+  anatomy.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/navigation-contract.test.ts src/test/more-settings.render.test.tsx src/test/reminders-hub-route.render.test.tsx`
+  — PASS: 3 suites, 44 tests. Existing reduced-motion `act(...)` warnings remain unrelated.
+- `npm run typecheck` — PASS after regenerating local Expo typed routes with
+  `npx expo start --localhost --port 8099` and stopping Metro.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `node scripts/checks/check-navigation-contract.mjs` — PASS.
+- `npm run tokens:check` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 76 suites / 605 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing reduced-motion `act(...)` warnings remain
+  unrelated to this slice.
+
+Implementation notes:
+- `/reminders` now uses `ScreenHeader`, `SegmentedControl`, `SectionHeader`, `ListGroup`,
+  `ListRow`, `Toggle`, `StatusPill`, `Card`, and typed EN/RU/ES i18n keys.
+- More -> Reminders opens the hub; hub Add opens `/reminders/edit`.
+- Active/off segments split durable rows by `enabled`; rows are grouped from current durable metadata
+  without adding schema fields. Toggle mutation, occurrence generation, local notification scheduling,
+  swipe edit/delete, missed-today rows, and native Stage 4 screenshot capture remain open.
+
 ## 20. Trusted sitter checklist reminder anatomy evidence
 
 **2026-06-30 next implementation slice:** Trusted Sitter Checklist Reminder card anatomy inside

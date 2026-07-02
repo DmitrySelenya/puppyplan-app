@@ -1459,14 +1459,37 @@
   "reminders": {
     "screen-title": "Reminders",
     "segments": ["Active", "Off"],
+    "segments-a11y": "Reminder status",
+    "actions": {
+      "add": "Add reminder"
+    },
     "sections": {
       "feeding": "Feeding",
       "health": "Health",
       "sitter": "Trusted sitter",
+      "other": "Other",
       "missed-today": "Not logged today"
     },
     "footer-quiet-hours": "Quiet hours — in Notification settings.",
     "empty": "Your reminders will show up here",
+    "row-subtitle-daily-template": "Every day · {time}",
+    "states": {
+      "loading": {
+        "status": "Loading",
+        "title": "Loading reminders",
+        "body": "We are checking the reminders saved for this puppy."
+      },
+      "empty": {
+        "status": "Empty",
+        "title": "No reminders here yet",
+        "body": "Use the plus button to add the first reminder."
+      },
+      "error": {
+        "status": "Could not load",
+        "title": "Could not load reminders",
+        "body": "Check your connection and try again."
+      }
+    },
     "form": {
       "cancel": "Cancel",
       "title-new": "New reminder",

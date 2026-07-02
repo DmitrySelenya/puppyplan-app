@@ -7,6 +7,7 @@ export default function ModalLayout() {
       <Stack.Screen name="timeline/index" />
       <Stack.Screen name="pet/health-record-edit/index" />
       <Stack.Screen name="pet/health-record/[recordId]" />
+      <Stack.Screen name="reminders/index" />
       <Stack.Screen name="reminders/edit/index" />
       <Stack.Screen name="settings/puppy-profile/index" />
       <Stack.Screen name="settings/quick-trackers/index" />

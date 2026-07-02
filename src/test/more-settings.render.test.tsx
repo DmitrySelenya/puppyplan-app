@@ -23,16 +23,19 @@ import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
 
+import MoreRoute from '../../app/(tabs)/more';
 import ShareablePuppyCardRoute from '../../app/(modals)/sharing/puppy-card';
 
 const mockUseActiveCareContext = jest.fn();
 const mockUseNotificationPreferenceQuery = jest.fn();
 const mockUseUpdateNotificationPreferenceMutation = jest.fn();
 const mockRouterBack = jest.fn();
+const mockRouterPush = jest.fn();
 
 jest.mock('expo-router', () => ({
   router: {
     back: () => mockRouterBack(),
+    push: (href: string) => mockRouterPush(href),
   },
 }));
 
@@ -86,6 +89,7 @@ describe('More settings entries', () => {
 
   beforeEach(async () => {
     mockRouterBack.mockClear();
+    mockRouterPush.mockClear();
     openSettingsSpy = jest
       .spyOn(Linking, 'openSettings')
       .mockResolvedValue(undefined);
@@ -253,6 +257,22 @@ describe('More settings entries', () => {
     expect(openNotifications).toHaveBeenCalledTimes(1);
     expect(openHelp).toHaveBeenCalledTimes(1);
     expect(openPlus).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-REM-HUB-1 opens the Reminders hub route from the production More tab', () => {
+    render(
+      <AppProviders>
+        <AuthProvider dependencies={authDependencies}>
+          <MoreRoute />
+        </AuthProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.rows.reminders'),
+    }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith('/reminders');
   });
 
   it('opens Pet settings from the puppy summary card', () => {

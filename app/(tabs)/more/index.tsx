@@ -27,7 +27,7 @@ export default function MoreRoute() {
         router.push('/paywall');
       }}
       openReminders={() => {
-        router.push('/reminders/edit');
+        router.push('/reminders');
       }}
       openTimeline={() => {
         router.push('/timeline');
