@@ -122,7 +122,7 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       full sequence accessibility label. Stage 4 native screenshot comparison remains open.
 - [x] ✅ Vet visit prep card (§4.1.7) — native reference-card anatomy implemented inside Pet
       Health: visit subtitle, four checklist rows, Add item affordance, and non-instruction disclaimer.
-      Stage 4 native screenshot comparison and real checklist editing remain open.
+      Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Real checklist editing remains open.
 - [x] 🚫 Medication card + "Request a Refill" — out of this wave. `docs/design/v1/specs/05-pet-health.md`
       explicitly defers medication/refill, and §5.3 limits Pet/Health depth to lightweight + minimal CRUD.
 
@@ -1156,8 +1156,12 @@ Implementation notes:
   `AppText`) and existing `health.vet-prep.*` localized copy.
 - EN/RU/ES gained localized sample date/time values for the existing interpolated subtitle.
 - `src/contracts/navigation.ts` now includes the `health.vet-prep.*` keys used by shell UI.
-- Stage 4 remains open: `/pet` vet prep state still needs native screenshot comparison against the
-  locked Pet/Health board before the Pet Health route can be marked done.
+- Stage 4 PASS (2026-07-02): captured a native SE screenshot from the installed PuppyPlan.app running
+  JS-over-Metro and compared against `docs/design/v1/specs/05-pet-health.md` plus this slice's locked
+  acceptance. Evidence: `output/v2-nav-gaps-stage4/pet-vet-prep-stage4.png`. The screenshot shows the
+  Health list context, `Getting ready for the visit`, visit date/time subtitle, four checklist rows,
+  Add item affordance, and the non-instruction/non-medical-advice footer copy. Real checklist editing,
+  actual upcoming-vet-visit data, item completion state, and notifications remain open.
 
 ## 19. Reminder edit route Stage-0 lock evidence
 
@@ -2222,6 +2226,10 @@ Implementation notes:
   four 36pt+ checklist rows, Add item affordance, and non-instruction disclaimer; RED/GREEN health
   render coverage, related route/i18n suites, typecheck, scaffold checks, and full `npm run check`
   passed. Real checklist editing/data wiring and Stage 4 screenshots remain open.
+- 2026-07-02: Closed Stage 4 for the `/pet` vet-prep state: captured native SE evidence over Metro
+  showing the Health list context, vet-prep title/subtitle, all four checklist rows, Add item affordance,
+  and non-instruction/non-medical-advice footer copy. Real checklist editing, actual visit data,
+  item completion state, and notifications remain open.
 - 2026-06-30: Added the Reminder edit route anatomy slice: `/reminders/edit` now renders the create/edit
   form, quiet-hours preview, and calm permission-denied state with design primitives and existing
   localized copy; RED/GREEN route/navigation tests, typecheck, and scaffold checks passed. Real
