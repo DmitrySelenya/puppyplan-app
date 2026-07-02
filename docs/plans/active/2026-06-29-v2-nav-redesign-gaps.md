@@ -159,17 +159,20 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Reminder card on Diary (§4.2.5)
 - [x] ✅ Quiet hours picker (§4.2.3) — native reminder-edit anatomy slice implemented:
       quiet-hours card, example range, per-puppy toggle, and calm helper copy. Real range editing,
-      validation, persistence, and Stage 4 screenshot comparison remain open.
+      validation, and persistence remain open; Stage 4 native SE screenshot comparison passed
+      2026-07-02.
 - [x] ✅ Sitter checklist reminders (§4.2.6) — native structural anatomy implemented
       inside `/reminders/edit`: trusted-sitter source label, person icon slot, left accent rail,
       1/3 progress bar, and localized action set. Real sitter checklist data, completion push,
       scheduling, pending-sync state, and Stage 4 screenshot comparison remain open.
 - [x] ✅ Create / edit reminder form (§4.2.2) — native route anatomy implemented at
       `/reminders/edit`: title/name/category/time/repeat/timezone/toggles/helper copy and disabled
-      Save state. Real reminder save/scheduling/loading/error/offline states remain open.
+      Save state. Stage 4 native SE screenshot comparison passed 2026-07-02; real reminder
+      save/scheduling/loading/error/offline states remain open.
 - [x] ✅ Push permission denied — calm in-app state (§4.2.7) — native non-modal permission card
       implemented inside `/reminders/edit`; reminder creation remains visually available and not
-      blocked. OS settings deeplink and real permission state wiring remain open.
+      blocked. Stage 4 native SE screenshot comparison passed 2026-07-02; OS settings deeplink
+      and real permission state wiring remain open.
 
 ### Guidance cards — DESIGN.md §4.3
 - [x] 🚫 Guidance card anatomy + states (Read/Practiced/Skip) + topics (§4.3) — deferred for this
@@ -1187,8 +1190,7 @@ preview, and calm push-permission-denied anatomy.
   `src/features/reminders/screens/ReminderEditScreen.tsx`.
 - Allowed deviation: this slice implements native structural anatomy only. Real reminder persistence,
   local notification scheduling, OS permission probing, Settings deeplink, quiet-hours range editing,
-  validation, loading/error/offline states, and native screenshot comparison remain plan-owned follow-up
-  work.
+  validation, and loading/error/offline states remain plan-owned follow-up work.
 - TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
 
 Spec lock for this slice:
@@ -1225,8 +1227,15 @@ Implementation notes:
   copy.
 - `app/(modals)/_layout.tsx` now registers `reminders/edit/index`, and
   `src/contracts/navigation.ts` tracks `/reminders/edit` as an existing modal route file.
-- Stage 4 remains open: `/reminders/edit` still needs native screenshot comparison against the locked
-  Reminder edit / quiet hours / permission-denied boards before the Reminders slice can be marked done.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`)
+  from the installed PuppyPlan.app over Metro. Native evidence:
+  `output/v2-nav-gaps-stage4/reminders-edit-stage4-top.png`,
+  `output/v2-nav-gaps-stage4/reminders-edit-stage4-form-pickers.png`,
+  `output/v2-nav-gaps-stage4/reminders-edit-stage4-quiet-hours.png`,
+  `output/v2-nav-gaps-stage4/reminders-edit-stage4-permission-denied.png`. Runtime snapshot evidence
+  exposed the required controls and labels: Cancel, disabled Save, name field, category options,
+  Time / Repeat / Time zone rows, Respect quiet hours, Sound, quiet-hours example range,
+  per-puppy toggle, Notifications are off, How to enable, and fallback copy.
 
 ## 20. Trusted sitter checklist reminder anatomy evidence
 
@@ -2247,6 +2256,11 @@ Implementation notes:
   showing the Health list context, vet-prep title/subtitle, all four checklist rows, Add item affordance,
   and non-instruction/non-medical-advice footer copy. Real checklist editing, actual visit data,
   item completion state, and notifications remain open.
+- 2026-07-02: Closed Stage 4 for `/reminders/edit` create/edit, quiet-hours, and permission-denied
+  anatomy: captured native SE top/form/quiet/permission screenshots from the installed PuppyPlan.app
+  over Metro, with runtime snapshot evidence for the modal actions, disabled Save, category selector,
+  time/repeat/timezone rows, toggles, quiet-hours range/per-puppy control, permission CTA, and fallback
+  copy. Sitter checklist Stage 4 remains separate.
 - 2026-06-30: Added the Reminder edit route anatomy slice: `/reminders/edit` now renders the create/edit
   form, quiet-hours preview, and calm permission-denied state with design primitives and existing
   localized copy; RED/GREEN route/navigation tests, typecheck, and scaffold checks passed. Real
