@@ -185,8 +185,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       public-link disclosure, and active-card list. Rich builder / multi-template editor → roadmap,
       not this wave. Deterministic empty-builder / health-on / share-options / loading /
       pending-write / error / offline-read state templates now have dev-gallery coverage. Live
-      signed-link creation, OS share sheet, expiry editing, and revoke actions remain open; Stage 4
-      native SE screenshot comparison passed 2026-07-02 for the route shell and state templates.
+      OS share sheet handoff is now wired with privacy-safe localized card copy. Signed-link
+      creation, expiry editing, and revoke actions remain open; Stage 4 native SE screenshot
+      comparison passed 2026-07-02 for the route shell and state templates.
 
 ### Reminders / Routines — DESIGN.md §4.2
 - [x] ✅ Reminders/Routines hub + lifecycle (Mark done / Back-date / Skip / Pause / Delete; "Diary entries stay")
@@ -2987,6 +2988,54 @@ Stage 4:
   truncated helper copy in `ListRow`; the state anatomy was adjusted to wrap-friendly `Stack` /
   `AppText` rows and re-captured before PASS.
 
+### 34b. Shareable Puppy Card OS share sheet handoff (§3.4)
+
+**2026-07-02 route handoff slice:** wire the existing `/sharing/puppy-card` Share CTA to the
+React Native OS share sheet with privacy-safe localized card copy. This closes the OS share sheet
+handoff gap only; signed-link creation, expiry editing, revoke/extend, durable card history, and
+public web projection remain deferred.
+
+- Spec card: `docs/design/v1/specs/07-sharing-access-cards.md`.
+- Route/components: `app/(modals)/sharing/puppy-card/index.tsx` and
+  `src/features/more/screens/ShareablePuppyCardScreen.tsx`.
+- TDD mode: lightweight; reduced assurance because this continuation is running in the main thread,
+  but the route test must be RED before implementation.
+
+Acceptance:
+- AC-SHARE-CARD-SHARE-1: pressing the production route Share CTA invokes `Share.share` with a
+  localized title/message assembled from existing card strings.
+- AC-SHARE-CARD-SHARE-2: the shared payload contains no raw email, provider/clinic name, invite/share
+  token, private notes, Supabase details, or durable signed-link placeholder.
+- AC-SHARE-CARD-SHARE-3: while the OS share call is pending, the route renders the existing
+  pending-write state; after success it renders the existing share-options state without closing the
+  modal.
+- AC-SHARE-CARD-SHARE-4: if the OS share call rejects, the route renders the existing error state
+  instead of silently swallowing the failure.
+- Out of scope: signed-link creation, copy-link, expiry editing, revoke/extend mutations, card
+  history persistence, analytics, schema changes, and new native modules.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx`
+  failed before implementation because `Share.share` was never called and the route never rendered the
+  share error state when the mocked OS share call rejected.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx`
+  — PASS: 1 suite, 21 tests.
+- `npm run typecheck` — PASS.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/navigation-contract.test.ts src/test/dev-gallery.render.test.tsx src/test/app-shell.render.test.tsx`
+  — PASS: 4 suites, 45 tests.
+- `npm run test:scaffold` — PASS: navigation contract, shell i18n, i18n parity/budgets, scaffold
+  guardrails, tokens, privacy scan, and text hygiene.
+
+Implementation notes:
+- `/sharing/puppy-card` now owns the OS share-sheet handoff with React Native `Share.share`, using
+  existing localized card title/footer strings and the generic sample puppy label. It does not create
+  or expose a signed link.
+- The route renders the existing pending-write state while awaiting the OS share sheet, the existing
+  share-options state after success, and the existing error state on rejection. The route stays open
+  in all cases and does not log/share provider, email, token, private notes, or Supabase details.
+
 ### 35. Guidance Active-UI Deferral Reconciliation (§4.3)
 
 Stage-0 lock:
@@ -3124,6 +3173,11 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Wired `/sharing/puppy-card` Share CTA to the React Native OS share sheet with existing
+  localized, privacy-safe card copy. The route now shows pending-write while the OS sheet is pending,
+  share-options after success, and the existing error state on rejection without closing the modal.
+  RED/GREEN route tests, adjacent More/navigation/dev-gallery/app-shell tests, typecheck, and scaffold
+  checks passed.
 - 2026-07-02: Added production Health detail editable dirty-state UI: loaded server records expose
   Edit, the form preloads title/date/status/provider/notes, Save is disabled until dirty, update uses
   the typed mutation with source preservation and previous-date invalidation, success keeps the modal

@@ -1,5 +1,5 @@
-import { AccessibilityInfo, ScrollView, StyleSheet } from 'react-native';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react-native';
+import { AccessibilityInfo, ScrollView, Share, StyleSheet } from 'react-native';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import type { PuppyProfile } from '@/contracts/supabase';
 import { tokens } from '@/design/tokens';
@@ -20,7 +20,16 @@ import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
 
+import ShareablePuppyCardRoute from '../../app/(modals)/sharing/puppy-card';
+
 const mockUseActiveCareContext = jest.fn();
+const mockRouterBack = jest.fn();
+
+jest.mock('expo-router', () => ({
+  router: {
+    back: () => mockRouterBack(),
+  },
+}));
 
 jest.mock('@/lib/query/active-care-context', () => ({
   useActiveCareContext: () => mockUseActiveCareContext(),
@@ -56,8 +65,13 @@ const puppy: PuppyProfile = {
 
 describe('More settings entries', () => {
   let reduceMotionProbe: jest.SpyInstance;
+  let shareSpy: jest.SpyInstance;
 
   beforeEach(async () => {
+    mockRouterBack.mockClear();
+    shareSpy = jest
+      .spyOn(Share, 'share')
+      .mockResolvedValue({ action: Share.sharedAction });
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
         authState: 'authenticated',
@@ -80,6 +94,7 @@ describe('More settings entries', () => {
   afterEach(() => {
     cleanup();
     reduceMotionProbe.mockRestore();
+    shareSpy.mockRestore();
   });
 
   it('renders the atlas full-list structure with locked settings entries and deferred rows', () => {
@@ -637,5 +652,44 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('sharing.card-management.screen-title'))).toBeTruthy();
     expect(screen.getByTestId('shareable-card-state-pending-write')).toBeTruthy();
     expect(screen.getByTestId('shareable-card-preview')).toBeTruthy();
+  });
+
+  it('AC-SHARE-CARD-SHARE-1 AC-SHARE-CARD-SHARE-2 AC-SHARE-CARD-SHARE-3 invokes the OS share sheet with privacy-safe card copy', async () => {
+    render(
+      <AppProviders>
+        <ShareablePuppyCardRoute />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.card-preview.share'),
+    }));
+
+    await waitFor(() => expect(shareSpy).toHaveBeenCalledWith(expect.objectContaining({
+      message: expect.stringContaining(i18n.t('sharing.card-preview.footer')),
+      title: i18n.t('sharing.card-builder.screen-title', {
+        puppyName: i18n.t('sharing.card-management.sample-puppy-name'),
+      }),
+    })));
+    expect(shareSpy.mock.calls[0]?.[0].message).not.toMatch(/@|share token|invite token|provider name|supabase/i);
+    await waitFor(() => expect(screen.getByTestId('shareable-card-state-share-options')).toBeTruthy());
+    expect(mockRouterBack).not.toHaveBeenCalled();
+  });
+
+  it('AC-SHARE-CARD-SHARE-4 shows the existing error state when the OS share sheet rejects', async () => {
+    shareSpy.mockRejectedValue(new Error('share failed'));
+
+    render(
+      <AppProviders>
+        <ShareablePuppyCardRoute />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.card-preview.share'),
+    }));
+
+    await waitFor(() => expect(screen.getByTestId('shareable-card-state-error')).toBeTruthy());
+    expect(mockRouterBack).not.toHaveBeenCalled();
   });
 });
