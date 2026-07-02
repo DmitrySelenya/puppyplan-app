@@ -68,10 +68,19 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Day 1 / first value + empty ("Your Diary starts empty…") (§2.2.2)
 - [x] ✅ Day 2 morning (§2.2.3)
 - [x] ✅ Household attribution ("Caregiver A logged…/Owner A…") (§2.2.6 / §3.1.8)
-- [ ] 🟡 Accident recovery (§2.2.4) — confirm in freeze
-- [ ] 🟡 After-feeding pattern (§2.2.5) — confirm
-- [ ] 🟡 Missed reminder on Diary (§2.2.7) — marker present, confirm screen
-- [ ] 🟡 Day 7 weekly rhythm / summary (§2.2.8) — confirm
+- [x] ✅ Accident recovery (§2.2.4) — locked as `diary-accident-recovery`; production
+      contract selects `accident_recovery` from inside-potty events and Diary renders the calm
+      info-hero anatomy. RED/GREEN evidence recorded in §10; route-wide Stage 4 remains under
+      the Diary route gate.
+- [x] ✅ After-feeding pattern (§2.2.5) — locked as `diary-after-feeding`; production contract
+      emits `feeding_pattern` and Diary renders it as a single soft contextual tip. RED/GREEN
+      evidence recorded in §10; route-wide Stage 4 remains under the Diary route gate.
+- [x] ✅ Missed reminder on Diary (§2.2.7) — locked as `diary-missed-reminder`; synthetic
+      reminder visual anatomy renders as a calm past-unchecked-routine preview with no shame
+      language. Live reminder data remains deferred to Reminders production wiring.
+- [x] ✅ Day 7 weekly rhythm / summary (§2.2.8) — locked as `diary-weekly-rhythm`; production
+      contract selects `day_7_weekly_rhythm` when the week summary exists, with prioritization and
+      Diary render coverage. Route-wide Stage 4 remains under the Diary route gate.
 - [ ] 🟡 Loading / empty / offline / pending states (§2.2.9) — primitives exist; confirm all four
 
 ### Quick Log (central Add) — DESIGN.md §2.3
@@ -514,6 +523,11 @@ Design-fidelity note:
 - Recorded allowed deviation: implementation may temporarily reuse the existing `TodayScreen`
   module name internally, but public route/title/tab/navigation contract are `Diary`; `/today`
   remains a redirect alias only.
+- 2026-07-02 reconciliation: the top coverage matrix now treats accident recovery, after-feeding
+  pattern, past-unchecked reminder, and Day 7 weekly rhythm as implemented Diary anatomy slices
+  because their locked board ids are present above, their `buildTodayPlan` variants are covered in
+  `src/test/today-prioritization.test.ts`, and their visible Diary anatomy is covered in
+  `src/test/today-core.render.test.tsx`. This does not close the route-wide Stage 4 screenshot gate.
 - Implemented the first locked Diary anatomy slice: the Diary route now renders a seven-day week
   strip with separate selected-day and today states. The selected day comes from the route plan input
   and the today marker comes from the active care context, so `week-selected` can be represented
@@ -2420,6 +2434,10 @@ Implementation notes:
 - 2026-06-30: Added the Diary cold-start state slice: synthetic `screenState="cold-start"` renders
   the locked no-logs/no-routines setup status without falling back to first-day onboarding, with
   EN/RU/ES copy and RED/GREEN render coverage plus full `npm run check` pass.
+- 2026-07-02: Reconciled the top Diary coverage matrix with the existing Diary lock evidence:
+  accident recovery, after-feeding pattern, past-unchecked reminder, and Day 7 weekly rhythm are now
+  marked implemented where contract and render coverage already existed; the route-wide Stage 4
+  screenshot gate remains open.
 - 2026-06-30: Added the Diary synthetic pending-write state slice: `screenState="pending-write"` now
   renders the locked pending-write status without requiring queued local rows, with RED/GREEN render
   coverage and full `npm run check` pass recorded.
