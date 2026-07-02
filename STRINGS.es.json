@@ -55,6 +55,7 @@
         "health-v2": "Lista de salud, vacío, edición, detalle, revisión, eliminación y entrada de peso.",
         "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
         "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
+        "paywall-states": "Estados de PuppyPlan Plus: carga, compra pendiente, error, offline y suscripción activa.",
         "timeline-v2": "Timeline predeterminado, filtrado, vacío, pendiente, error y confirmación de borrado.",
         "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
         "guidance": "Estados de guía inicial: leído, probado y omitido.",
@@ -1874,7 +1875,32 @@
     "states": {
       "offline": "Cargaremos los planes una vez que vuelvas a estar en línea.",
       "error": "No se pudieron cargar los planes. Intenta actualizar.",
-      "active-until": "Suscripción activa hasta {date}. Gestionada en la App Store."
+      "active-until": "Suscripción activa hasta {date}. Gestionada en la App Store.",
+      "loading-products": {
+        "status": "Comprobando",
+        "title": "Cargando planes Plus",
+        "body": "Estamos comprobando los planes disponibles en este dispositivo."
+      },
+      "pending-purchase": {
+        "status": "Procesando",
+        "title": "Terminando la compra",
+        "body": "Mantén esta pantalla abierta mientras termina la compra."
+      },
+      "purchase-error": {
+        "status": "Requiere atención",
+        "title": "La compra no terminó",
+        "body": "No se hizo ningún cambio. Mantén el acceso actual e inténtalo de nuevo."
+      },
+      "offline-read": {
+        "status": "Sin conexión",
+        "title": "Mostrando detalles Plus guardados",
+        "body": "Los detalles del plan se actualizarán cuando este dispositivo vuelva a estar online."
+      },
+      "active-subscription": {
+        "status": "Activo",
+        "title": "Plus está activo",
+        "body": "Puedes seguir añadiendo entradas. Gestiona el pago en la App Store."
+      }
     },
     "a11y-price-example": "Anual, 39 dólares 99 céntimos al año"
   },

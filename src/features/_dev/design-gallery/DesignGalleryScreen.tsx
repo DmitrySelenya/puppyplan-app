@@ -39,6 +39,9 @@ import {
   NotificationPreferencesStatePreview,
 } from '@/features/more/screens/NotificationPreferencesScreen';
 import {
+  PuppyPlanPlusStatePreview,
+} from '@/features/more/screens/PuppyPlanPlusScreen';
+import {
   OnboardingAccountPromptPreview,
   OnboardingFirstLogPreview,
   OnboardingNotificationsPromptPreview,
@@ -72,6 +75,7 @@ export function DesignGalleryScreen() {
           <AppText tone="secondary">{t('dev.gallery.subtitle')}</AppText>
         </Stack>
 
+        <SyntheticPaywallStatesShell />
         <SyntheticNotificationPreferencesShell />
         <SyntheticReminderEditShell />
 
@@ -641,6 +645,24 @@ export function SyntheticNotificationPreferencesShell() {
         <NotificationPreferencesStatePreview state="pending-write" />
         <NotificationPreferencesStatePreview state="error" />
         <NotificationPreferencesStatePreview state="offline-read" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticPaywallStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.paywall-states"
+          titleKey="paywall.title"
+        />
+        <PuppyPlanPlusStatePreview state="loading-products" />
+        <PuppyPlanPlusStatePreview state="pending-purchase" />
+        <PuppyPlanPlusStatePreview state="purchase-error" />
+        <PuppyPlanPlusStatePreview state="offline-read" />
+        <PuppyPlanPlusStatePreview state="active-subscription" />
       </Stack>
     </Card>
   );

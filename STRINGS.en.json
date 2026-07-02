@@ -56,6 +56,7 @@
         "health-v2": "Health list, empty, edit, detail, review, delete, and weight entry states.",
         "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
         "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
+        "paywall-states": "PuppyPlan Plus loading, pending purchase, error, offline, and active subscription states.",
         "timeline-v2": "Timeline default, filtered, empty, pending, failed, and delete-confirm states.",
         "today-core": "Today hero, daily cards, guidance, and data states.",
         "guidance": "Starter guidance read, tried, and skipped states.",
@@ -1776,7 +1777,32 @@
     "states": {
       "offline": "We'll load the plans once you're back online",
       "error": "Couldn't load the plans. Try refreshing",
-      "active-until": "Subscription active through {date}. Managed in the App Store"
+      "active-until": "Subscription active through {date}. Managed in the App Store",
+      "loading-products": {
+        "status": "Checking",
+        "title": "Loading Plus plans",
+        "body": "We are checking the plans available for this device."
+      },
+      "pending-purchase": {
+        "status": "Processing",
+        "title": "Finishing purchase",
+        "body": "Keep this screen open while the purchase finishes."
+      },
+      "purchase-error": {
+        "status": "Needs attention",
+        "title": "Purchase did not finish",
+        "body": "No changes were made. Keep access as it is and try again."
+      },
+      "offline-read": {
+        "status": "Offline",
+        "title": "Showing saved Plus details",
+        "body": "Plan details will refresh when this device is back online."
+      },
+      "active-subscription": {
+        "status": "Active",
+        "title": "Plus is active",
+        "body": "You can keep adding entries. Manage billing in the App Store."
+      }
     },
     "a11y-price-example": "Annual, 39 dollars 99 cents per year"
   },

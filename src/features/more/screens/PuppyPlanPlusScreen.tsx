@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 
 import {
   AppIcon,
+  type AppIconName,
   AppText,
   Button,
   Card,
@@ -13,14 +14,74 @@ import {
   SectionHeader,
   Stack,
   StatusPill,
+  type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
-import { useAppTranslation } from '@/lib/i18n';
+import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+
+export type PuppyPlanPlusReviewState =
+  | 'loading-products'
+  | 'pending-purchase'
+  | 'purchase-error'
+  | 'offline-read'
+  | 'active-subscription';
+
+type PuppyPlanPlusStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
+}>;
+
+const paywallStateMeta: Record<PuppyPlanPlusReviewState, PuppyPlanPlusStateMeta> = {
+  'active-subscription': {
+    bodyKey: 'paywall.states.active-subscription.body',
+    icon: 'check',
+    statusKey: 'paywall.states.active-subscription.status',
+    titleKey: 'paywall.states.active-subscription.title',
+    tone: 'confirmed',
+  },
+  'loading-products': {
+    bodyKey: 'paywall.states.loading-products.body',
+    icon: 'calendar',
+    liveRegion: 'polite',
+    statusKey: 'paywall.states.loading-products.status',
+    titleKey: 'paywall.states.loading-products.title',
+    tone: 'pending',
+  },
+  'offline-read': {
+    bodyKey: 'paywall.states.offline-read.body',
+    icon: 'lock',
+    statusKey: 'paywall.states.offline-read.status',
+    titleKey: 'paywall.states.offline-read.title',
+    tone: 'template',
+  },
+  'pending-purchase': {
+    bodyKey: 'paywall.states.pending-purchase.body',
+    icon: 'docText',
+    liveRegion: 'polite',
+    statusKey: 'paywall.states.pending-purchase.status',
+    titleKey: 'paywall.states.pending-purchase.title',
+    tone: 'pending',
+  },
+  'purchase-error': {
+    bodyKey: 'paywall.states.purchase-error.body',
+    icon: 'warningTriangle',
+    role: 'alert',
+    statusKey: 'paywall.states.purchase-error.status',
+    titleKey: 'paywall.states.purchase-error.title',
+    tone: 'failed',
+  },
+};
 
 export type PuppyPlanPlusScreenProps = Readonly<{
   accessState?: 'trial' | 'softLocked';
   onClose?: () => void;
   onExport?: () => void;
+  reviewState?: PuppyPlanPlusReviewState;
   trialDaysRemaining?: number;
 }>;
 
@@ -34,9 +95,11 @@ export function PuppyPlanPlusScreen({
   accessState = 'trial',
   onClose,
   onExport = () => undefined,
+  reviewState,
   trialDaysRemaining = 30,
 }: PuppyPlanPlusScreenProps) {
   const { t } = useAppTranslation();
+  const isPendingPurchase = reviewState === 'pending-purchase';
 
   return (
     <Screen contentStyle={styles.content}>
@@ -75,6 +138,8 @@ export function PuppyPlanPlusScreen({
           </Stack>
         </Stack>
       </Card>
+
+      {reviewState ? <PuppyPlanPlusStatePreview state={reviewState} /> : null}
 
       {accessState === 'softLocked' ? (
         <Card
@@ -139,7 +204,11 @@ export function PuppyPlanPlusScreen({
       </PaywallSection>
 
       <Stack gap="sm">
-        <Button label={t('paywall.primary')} onPress={() => undefined} />
+        <Button
+          label={t('paywall.primary')}
+          loading={isPendingPurchase}
+          onPress={() => undefined}
+        />
         <Button
           label={t('paywall.secondary')}
           onPress={() => undefined}
@@ -160,6 +229,44 @@ export function PuppyPlanPlusScreen({
         {t('paywall.legal')}
       </AppText>
     </Screen>
+  );
+}
+
+export function PuppyPlanPlusStatePreview({
+  state,
+}: Readonly<{
+  state: PuppyPlanPlusReviewState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = paywallStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`paywall-state-${state}`}
+      variant={state === 'offline-read' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name={meta.icon}
+              size={14}
+            />
+          )}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="bodyEmph">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">{body}</AppText>
+      </Stack>
+    </Card>
   );
 }
 

@@ -217,8 +217,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       and diagnostics upload remain open.
 - [x] ✅ Full PuppyPlan Plus screen (features list + Restore purchases) — `/paywall` native shell
       implemented: feature list, annual/monthly/lifetime plan rows, primary CTA, Restore purchases,
-      and soft-lock note. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02 after the
-      compact modal header fix. Live IAP/restore/purchase states remain open.
+      soft-lock note, and deterministic loading / pending-purchase / purchase-error / offline-read /
+      active-subscription state templates. Stage 4 SE native screenshot comparison PASS recorded
+      2026-07-02 after the compact modal header fix. Live IAP/restore/purchase provider wiring
+      remains open.
 
 ### Onboarding / intake — DESIGN.md §2.1
 - [ ] 🟡 First-run variants — visual slices are implemented across Welcome, Puppy Setup, Tracker
@@ -263,6 +265,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       Reminder Edit now has RED/GREEN state templates for loading, pending write, error, and
       offline read plus dev-gallery coverage; Notification Preferences now has RED/GREEN state
       templates for loading, pending write, error, and offline read plus dev-gallery coverage;
+      PuppyPlan Plus now has RED/GREEN templates for loading products, pending purchase, purchase
+      error, offline read, and active subscription plus dev-gallery coverage;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -2057,6 +2061,62 @@ Implementation notes:
   Restore purchases, soft-lock info, and legal note. Loading/offline/error/pending purchase, real
   restore, active subscription, and soft-lock enforcement states remain deferred.
 
+### 30a. PuppyPlan Plus State Templates (§4.5)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/06-5-puppyplan-plus-paywall.md`.
+- Source: `DESIGN.md` §4.4.7 plus §4.5 global screen states.
+- Route: `/paywall`; dev-gallery review shell under `/_dev/components`.
+- Allowed deviation: no RevenueCat/StoreKit/provider wiring, no real product lookup, no restore
+  transaction, and no entitlement write. This slice is deterministic UI templates only.
+
+Acceptance:
+- AC-MORE-PLUS-STATES-1: paywall exposes deterministic `loading-products`,
+  `pending-purchase`, `purchase-error`, `offline-read`, and `active-subscription` review states.
+- AC-MORE-PLUS-STATES-2: each state renders a tokenized `Card` + `StatusPill`, localized EN/RU/ES
+  title/body/status copy, and stable `paywall-state-*` test IDs.
+- AC-MORE-PLUS-STATES-3: purchase error uses alert semantics, pending purchase uses a polite live
+  region, and pending purchase exposes busy feedback on the primary CTA.
+- AC-MORE-PLUS-STATES-4: state copy and visible shell do not mention RevenueCat, StoreKit provider
+  names, transaction IDs, or product identifiers.
+- AC-MORE-PLUS-STATES-5: dev-gallery includes compact previews for all five paywall state templates
+  for native Stage 4 handoff.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` failed as expected
+  because `paywall-state-loading-products` was absent.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx` failed as expected
+  because `SyntheticPaywallStatesShell` was not exported.
+
+GREEN evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` — PASS: 1 suite,
+  16 tests.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx` — PASS: 1 suite,
+  4 tests.
+- `npm run typecheck` — PASS.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `git diff --check` — PASS.
+
+Stage 4 evidence:
+- Stage 4 PASS (2026-07-02): launched the already installed PuppyPlan.app on the primary SE
+  simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) over `npx expo start`, opened
+  `puppyplan:///_dev/components`, and captured native screenshots for the deterministic
+  paywall state templates.
+- Evidence files: `output/v2-nav-gaps-stage4/paywall-states-top-stage4.jpg` and
+  `output/v2-nav-gaps-stage4/paywall-states-active-stage4.jpg`.
+- Visual review covered loading products, pending purchase, purchase error, offline read, and
+  active subscription cards in the dev-gallery shell. Live IAP, restore, product lookup, and
+  entitlement enforcement remain deferred.
+
+Implementation notes:
+- Added typed `PuppyPlanPlusReviewState` metadata and state cards to
+  `src/features/more/screens/PuppyPlanPlusScreen.tsx`.
+- Added pending-purchase busy feedback on the primary `Choose plan` CTA.
+- Added `PuppyPlanPlusStatePreview` and `SyntheticPaywallStatesShell` to the development design
+  gallery so all five state cards are visible for native handoff.
+- Added EN/RU/ES paywall state copy plus a dev-gallery description key, while keeping legacy
+  `paywall.states.offline/error/active-until` string leaves intact for existing string-policy tests.
+
 ### 31. Accept Invite Caregiver-Side Shell Slice (§3.1.4)
 
 Stage-0 lock:
@@ -2747,3 +2807,7 @@ Implementation notes:
   title lane, then recaptured top/bottom native screenshots showing the full header, feature rows,
   plan rows, Choose plan, Restore purchases, soft-lock info, and legal note. Live IAP/restore/
   entitlement enforcement remains deferred.
+- 2026-07-02: Added deterministic PuppyPlan Plus loading, pending-purchase, purchase-error,
+  offline-read, and active-subscription state templates with RED/GREEN render coverage,
+  dev-gallery native handoff, EN/RU/ES copy, and primary SE Stage 4 screenshots. Live IAP,
+  restore, product lookup, and entitlement enforcement remain deferred.

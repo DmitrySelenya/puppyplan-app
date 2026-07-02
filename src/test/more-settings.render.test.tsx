@@ -491,6 +491,39 @@ describe('More settings entries', () => {
     expect(screen.queryByText(/RevenueCat|hard paywall/i)).toBeNull();
   });
 
+  it('AC-MORE-PLUS-STATES renders deterministic loading, pending, error, offline, and active states', () => {
+    render(
+      <AppProviders>
+        <PuppyPlanPlusScreen reviewState="loading-products" />
+        <PuppyPlanPlusScreen reviewState="pending-purchase" />
+        <PuppyPlanPlusScreen reviewState="purchase-error" />
+        <PuppyPlanPlusScreen reviewState="offline-read" />
+        <PuppyPlanPlusScreen reviewState="active-subscription" />
+      </AppProviders>,
+    );
+
+    for (const state of [
+      'loading-products',
+      'pending-purchase',
+      'purchase-error',
+      'offline-read',
+      'active-subscription',
+    ] as const) {
+      expect(screen.getByTestId(`paywall-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`paywall.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`paywall.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('paywall-state-purchase-error').props.accessibilityRole)
+      .toBe('alert');
+    expect(screen.getByTestId('paywall-state-pending-purchase').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getAllByRole('button', {
+      name: i18n.t('paywall.primary'),
+    }).some((button) => button.props.accessibilityState.busy)).toBe(true);
+    expect(screen.queryByText(/RevenueCat|StoreKit|transaction id|product id|provider/i)).toBeNull();
+  });
+
   it('renders the minimal Shareable Puppy Card shell without private data', () => {
     render(
       <AppProviders>

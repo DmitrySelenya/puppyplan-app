@@ -1,7 +1,9 @@
 # 06.5 — PuppyPlan Plus Paywall Shell
 Route: `/paywall`   Atlas: `paywall/*` refs + Open Design V2 More/paywall board
 Device sizes: SE compact primary; iOS 390x844 and Android 412x900 in the V2 handoff
-Allowed deviations: live IAP, product loading, purchase, restore, and entitlement enforcement remain deferred. This slice is a feature-flag-ready native shell only.
+Allowed deviations: live IAP, real product lookup, purchase/restore transactions, and entitlement
+enforcement remain deferred. Deterministic loading/offline/error/pending/active state templates are
+synthetic review states only.
 
 ## Anatomy (top -> bottom)
 - Modal header — close/back affordance, title `paywall.title`.
@@ -20,11 +22,12 @@ Allowed deviations: live IAP, product loading, purchase, restore, and entitlemen
 
 ## States covered
 - Default shell — production.
-- Loading/offline/error/pending purchase, real restore flow, cancellation state, and entitlement writes gate — deferred.
+- Soft-lock read-only banner — production shell state.
+- Loading products, pending purchase, purchase error, offline read, and active subscription — synthetic review states.
+- Real restore flow, cancellation state, product-provider wiring, and entitlement writes gate — deferred.
 
 ## Accessibility
 - Annual plan selected state is structural, not color-only.
 - Restore purchases is a separate button.
 - Prices are visible text and have a readable accessibility label.
 - Legal and soft-lock notes are visible text.
-
