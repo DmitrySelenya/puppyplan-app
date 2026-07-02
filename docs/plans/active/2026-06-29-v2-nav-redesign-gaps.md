@@ -224,8 +224,7 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [ ] 🟡 First Log (§2.1.6) — native first-value completion anatomy implemented: Diary chrome,
       pending/local-only state, no pre-value account pressure, and celebration snackbar. Real Quick
       Log sheet selection/persistence remains covered by Quick Log slices; Stage 4 native SE
-      comparison passed for content/chrome 2026-07-02, with transient snackbar visual capture still
-      open.
+      comparison passed for content/chrome and transient celebration snackbar visual capture 2026-07-02.
 - [x] ✅ Account/Notifications prompts (§2.1.7) — post-first-value V2 native preview slices
       implemented as skippable SheetSurface prompts with account and quiet-reminder actions.
       Stage 4 native SE screenshot comparison passed 2026-07-02; runtime scheduler / OS permission
@@ -1626,11 +1625,12 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/onboarding-first-log-harness-stage4.png`. Runtime/visual evidence covers
   Diary-selected chrome, Pet/More tabs, separate Quick Log FAB, pending `Saving` pill, local-only row,
   Diary copy with no legacy `Today` wording, and no account/notification prompt.
-- Stage 4 remains open only for the transient celebration snackbar visual capture. The snackbar
-  contract is still covered by render evidence above (`SnackbarProvider`, message, accessibility
-  label, and `celebration` haptic metadata), but native screenshot attempts through both the dev
-  gallery and a temporary dev-route harness showed the first-log content/chrome without the transient
-  host before it could be captured.
+- Stage 4 PASS follow-up recorded 2026-07-02: after the shared `SnackbarProvider` host moved active
+  messages into `FullWindowOverlay`, a native SE screenshot from the installed PuppyPlan.app over
+  Metro captured the first-log preview and visible celebration snackbar:
+  `output/v2-nav-gaps-stage4/onboarding-first-log-snackbar-full-window-direct-stage4.png`. Evidence
+  shows Diary-selected bottom chrome, the separate Add/FAB action, pending/local-only first event
+  state, no account/notification prompt, and the visible snackbar message `Done. You can keep going.`
 
 ### 27. Onboarding Account / Notifications Prompt Reconciliation (§2.1.7)
 
@@ -2182,6 +2182,10 @@ Implementation notes:
   SE evidence at
   `output/v2-nav-gaps-stage4/quick-log-production-snackbar-full-window-fast3-stage4.png`, and verified
   the visible success surface carries `Logged · Feeding`, `Undo`, and `Add details`.
+- 2026-07-02: Closed the remaining Onboarding First Log snackbar Stage 4 gap after the shared
+  `FullWindowOverlay` snackbar fix: captured native SE evidence at
+  `output/v2-nav-gaps-stage4/onboarding-first-log-snackbar-full-window-direct-stage4.png` with the
+  first-value Diary preview and visible `Done. You can keep going.` celebration snackbar.
 - 2026-07-02: Closed Quick Log Stage 4 for duplicate warning and pending/failed inline rows:
   production route screenshots verify the default sheet and duplicate warning; a temporary restored
   dev-route harness verifies pending and failed local rows. The snackbar visual gap is now closed by
