@@ -152,8 +152,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       signed-link card + preview + expiry (PRD-allowed). Native shell implemented at
       `/sharing/puppy-card`: More entry, builder fields, health disclosure, 3:4 preview, share CTA,
       public-link disclosure, and active-card list. Rich builder / multi-template editor → roadmap,
-      not this wave. Live signed-link creation, expiry editing, revoke actions, and Stage 4 screenshots
-      remain open.
+      not this wave. Live signed-link creation, expiry editing, and revoke actions remain open; Stage 4
+      native SE screenshot comparison passed 2026-07-02.
 
 ### Reminders / Routines — DESIGN.md §4.2
 - [x] ✅ Reminders/Routines hub + lifecycle (Mark done / Back-date / Skip / Pause / Delete; "Diary entries stay")
@@ -2009,10 +2009,16 @@ Implementation notes:
 - Updated `MoreScreen` with `openShareableCards` and route wiring from `app/(tabs)/more/index.tsx`.
 - Updated navigation contracts and shell i18n allowlist to include `/sharing/puppy-card` and the
   card preview keys.
-- Stage 4 remains open: `/sharing/puppy-card` still needs native screenshot comparison against the
-  locked Shareable Puppy Card anatomy. Live signed-link creation, real share sheet, expiry editing,
-  copy-link, revoke/extend, card history, loading/error/offline states, and public web projection
-  remain deferred.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro. Native
+  evidence:
+  `output/v2-nav-gaps-stage4/sharing-puppy-card-top-stage4.png`,
+  `output/v2-nav-gaps-stage4/sharing-puppy-card-middle-stage4.png`. Visual evidence covers the modal
+  header, hero card, builder field list, health disclosure, 3:4 preview anatomy, Share CTA,
+  public-link disclosure, and active shared-card row without raw email, provider, invite/share token,
+  or private contact data. Live signed-link creation, real share sheet, expiry editing, copy-link,
+  revoke/extend, card history, loading/error/offline states, and public web projection remain
+  deferred.
 
 ### 35. Guidance Active-UI Deferral Reconciliation (§4.3)
 
@@ -2166,6 +2172,10 @@ Implementation notes:
   renders builder fields, health disclosure, 3:4 preview, share CTA, public-link disclosure, and an
   active-card row with privacy-safe sample data; route/i18n/scaffold contracts were updated. Live
   signed-link creation, real share sheet, revoke/extend/history states, and Stage 4 screenshots remain open.
+- 2026-07-02: Closed Stage 4 for `/sharing/puppy-card`: captured native SE top/middle screenshots
+  from the installed PuppyPlan.app over Metro and verified the modal header, builder fields, health
+  disclosure, locked 3:4 preview anatomy, Share CTA, public-link disclosure, active-card row, and
+  privacy-safe visible copy. Live signed-link and share operations remain deferred.
 - 2026-06-30: Added the Trusted Sitter mode owner setup shell: More Trainer / sitter now opens
   `/settings/sitter-mode`, with caregiver row, time window rows, checklist anatomy, included/excluded
   visibility preview, disclosure, and enable CTA. Live sitter data/mutations, owner active status,
