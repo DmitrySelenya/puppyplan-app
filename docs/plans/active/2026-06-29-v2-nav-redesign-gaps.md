@@ -220,8 +220,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       Stage 4 native SE screenshot comparison passed 2026-07-02.
 - [ ] 🟡 First Log (§2.1.6) — native first-value completion anatomy implemented: Diary chrome,
       pending/local-only state, no pre-value account pressure, and celebration snackbar. Real Quick
-      Log sheet selection/persistence remains covered by Quick Log slices; Stage 4 screenshot
-      comparison remains open.
+      Log sheet selection/persistence remains covered by Quick Log slices; Stage 4 native SE
+      comparison passed for content/chrome 2026-07-02, with transient snackbar visual capture still
+      open.
 - [x] ✅ Account/Notifications prompts (§2.1.7) — post-first-value V2 native preview slices
       implemented as skippable SheetSurface prompts with account and quiet-reminder actions.
       Runtime scheduler / OS permission handoff and Stage 4 screenshot comparison remain open.
@@ -1595,8 +1596,18 @@ Implementation notes:
   `SnackbarProvider`, matching the snackbar context the runtime app already has through providers.
 - EN/RU/ES locale files include the first-log celebration snackbar accessibility label and updated
   Diary-first body copy.
-- Stage 4 remains open: first-log completion still needs native screenshot comparison against
-  `docs/design/v1/screenshots/onboarding/2-6.png`.
+- Stage 4 partial PASS recorded 2026-07-02 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro. Native
+  content/chrome evidence:
+  `output/v2-nav-gaps-stage4/onboarding-first-log-chrome-stage4.png`,
+  `output/v2-nav-gaps-stage4/onboarding-first-log-harness-stage4.png`. Runtime/visual evidence covers
+  Diary-selected chrome, Pet/More tabs, separate Quick Log FAB, pending `Saving` pill, local-only row,
+  Diary copy with no legacy `Today` wording, and no account/notification prompt.
+- Stage 4 remains open only for the transient celebration snackbar visual capture. The snackbar
+  contract is still covered by render evidence above (`SnackbarProvider`, message, accessibility
+  label, and `celebration` haptic metadata), but native screenshot attempts through both the dev
+  gallery and a temporary dev-route harness showed the first-log content/chrome without the transient
+  host before it could be captured.
 
 ### 27. Onboarding Account / Notifications Prompt Reconciliation (§2.1.7)
 
@@ -2349,6 +2360,11 @@ Implementation notes:
   chrome with pending/local-only state, no legacy Today copy, and a design Snackbar celebration.
   RED/GREEN onboarding coverage, i18n parity, typecheck, dev-gallery regression coverage, scaffold
   checks, diff whitespace check, and full `npm run check` passed. Stage 4 screenshots remain open.
+- 2026-07-02: Added partial Stage 4 native evidence for Onboarding First Log: primary SE simulator
+  screenshots verify Diary-selected chrome, Pet/More tabs, separate Quick Log FAB, pending/local-only
+  first event state, Diary copy, and absence of account/notification pressure. Transient celebration
+  snackbar visual capture remains open after dev-gallery and temporary route-harness attempts; render
+  tests continue to cover the Snackbar primitive contract and celebration haptic metadata.
 - 2026-06-30: Reconciled the Onboarding Account/Notifications prompt slice as implemented and verified:
   skippable account and quiet-reminder SheetSurface previews pass onboarding anatomy coverage, with
   scheduler / OS permission handoff and Stage 4 screenshots still open.
