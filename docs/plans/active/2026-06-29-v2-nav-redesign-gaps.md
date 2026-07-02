@@ -146,7 +146,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Manage household (§3.1.6) — `/settings/household` native shell implemented:
       More Family row opens owner household preview with members, pending invite, non-color-only
       status badges, overflow affordances, privacy-safe invite label, and Invite CTA. Live member
-      query, role changes, removal, resend/revoke, confirm sheets, and Stage 4 screenshots remain open.
+      query, role changes, removal, resend/revoke, and confirm sheets remain open; Stage 4 native SE
+      screenshot comparison passed 2026-07-02.
 - [x] ➕ **Shareable Puppy Cards** (§3.4) — **decision: IN scope this wave, MINIMAL only**: a static /
       signed-link card + preview + expiry (PRD-allowed). Native shell implemented at
       `/sharing/puppy-card`: More entry, builder fields, health disclosure, 3:4 preview, share CTA,
@@ -1909,9 +1910,15 @@ Implementation notes:
 - Updated `MoreScreen` with `openHousehold`, active Family row, and route wiring from
   `app/(tabs)/more/index.tsx`.
 - Updated navigation contracts and scaffold guardrails to include `/settings/household`.
-- Stage 4 remains open: `/settings/household` still needs native screenshot comparison against the
-  locked Manage household anatomy. Live member/invite queries, role changes, access removal,
-  resend/revoke actions, and confirm sheets remain deferred.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro. Native
+  evidence:
+  `output/v2-nav-gaps-stage4/settings-household-top-stage4.png`,
+  `output/v2-nav-gaps-stage4/settings-household-bottom-stage4.png`. Visual evidence covers the modal
+  header, intro card, owner row, caregiver row, pending invite row, role/status badges, overflow
+  affordances, privacy-safe pending invite label, owner-alone guidance card, and Invite CTA. Live
+  member/invite queries, role changes, access removal, resend/revoke actions, and confirm sheets
+  remain deferred.
 
 ### 33. Trusted Sitter Mode Owner Shell Slice (§3.2)
 
@@ -2165,6 +2172,10 @@ Implementation notes:
   owner/caregiver rows, pending invite row, role/status badges, overflow affordances, privacy-safe
   invite labeling, and Invite CTA. Live member queries, role changes, removal, invite actions,
   confirm sheets, and Stage 4 screenshots remain open.
+- 2026-07-02: Closed Stage 4 for `/settings/household`: captured native SE top/bottom screenshots
+  from the installed PuppyPlan.app over Metro and verified the modal header, intro card, household
+  member rows, pending invite row, non-color-only status badges, overflow affordances, guidance card,
+  privacy-safe invite label, and Invite CTA. Live member/invite operations remain deferred.
 - 2026-06-30: Added the caregiver-side Accept Invite shell: `/invite/[token]` now renders
   inviter/puppy context, caregiver role, included/excluded preview, disclosure, and Accept/Decline
   actions without exposing raw invite tokens; public token routes are tracked in navigation
