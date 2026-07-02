@@ -36,6 +36,9 @@ import {
   HealthWeightEntryPreview,
 } from '@/features/health/screens/HealthScreen';
 import {
+  InviteAcceptStatePreview,
+} from '@/features/linking/screens/InviteAcceptScreen';
+import {
   NotificationPreferencesStatePreview,
 } from '@/features/more/screens/NotificationPreferencesScreen';
 import {
@@ -76,6 +79,7 @@ export function DesignGalleryScreen() {
         </Stack>
 
         <SyntheticPaywallStatesShell />
+        <SyntheticInviteAcceptStatesShell />
         <SyntheticNotificationPreferencesShell />
         <SyntheticReminderEditShell />
 
@@ -663,6 +667,23 @@ export function SyntheticPaywallStatesShell() {
         <PuppyPlanPlusStatePreview state="purchase-error" />
         <PuppyPlanPlusStatePreview state="offline-read" />
         <PuppyPlanPlusStatePreview state="active-subscription" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticInviteAcceptStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.invite-accept-states"
+          titleKey="sharing.family.accepted.accept"
+        />
+        <InviteAcceptStatePreview state="loading" />
+        <InviteAcceptStatePreview state="load-error" />
+        <InviteAcceptStatePreview state="expired" />
+        <InviteAcceptStatePreview state="already-member" />
       </Stack>
     </Card>
   );

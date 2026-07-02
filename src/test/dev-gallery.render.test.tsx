@@ -7,6 +7,7 @@ import { AccessibilityInfo } from 'react-native';
 import {
   DesignGalleryScreen,
   SyntheticHealthShell,
+  SyntheticInviteAcceptStatesShell,
   SyntheticPaywallStatesShell,
   SyntheticQuickLogDetailsShell,
   SyntheticQuickLogSheetShell,
@@ -137,6 +138,7 @@ describe('development-only design gallery', () => {
         <SyntheticReminderEditShell />
         <SyntheticNotificationPreferencesShell />
         <SyntheticPaywallStatesShell />
+        <SyntheticInviteAcceptStatesShell />
         <SyntheticTodayShell />
         <SyntheticQuickLogDetailsShell />
       </>,
@@ -214,6 +216,21 @@ describe('development-only design gallery', () => {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('paywall.states.active-subscription.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.invite-accept-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('sharing.family.accepted.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.family.accepted.states.load-error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.family.accepted.states.expired.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.family.accepted.states.already-member.title'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/supabase|production write|token/i)).toBeNull();

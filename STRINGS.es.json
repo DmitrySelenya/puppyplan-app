@@ -56,6 +56,7 @@
         "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
         "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
         "paywall-states": "Estados de PuppyPlan Plus: carga, compra pendiente, error, offline y suscripción activa.",
+        "invite-accept-states": "Estados de aceptar invitación: carga, no disponible, reintento y ya eres miembro.",
         "timeline-v2": "Timeline predeterminado, filtrado, vacío, pendiente, error y confirmación de borrado.",
         "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
         "guidance": "Estados de guía inicial: leído, probado y omitido.",
@@ -936,7 +937,29 @@
         "already-member": "Ya estás en la casa de {puppyName}.",
         "already-member-cta": "Abierto",
         "load-error": "No se pudo cargar la invitación. Comprueba tu conexión.",
-        "neutral-unavailable": "Esta invitación ya no está disponible. Pídele a {ownerName} que envíe una nueva."
+        "neutral-unavailable": "Esta invitación ya no está disponible. Pídele a {ownerName} que envíe una nueva.",
+        "states": {
+          "loading": {
+            "status": "Comprobando",
+            "title": "Comprobando invitación",
+            "body": "Estamos comprobando si esta invitación sigue disponible."
+          },
+          "load-error": {
+            "status": "Requiere atención",
+            "title": "La invitación no cargó",
+            "body": "Mantén esta pantalla abierta e inténtalo de nuevo cuando vuelva la conexión."
+          },
+          "expired": {
+            "status": "No disponible",
+            "title": "La invitación ya no está disponible",
+            "body": "Pide al propietario que envíe una nueva invitación si aún necesitas acceso."
+          },
+          "already-member": {
+            "status": "Ya te uniste",
+            "title": "Ya estás en esta familia",
+            "body": "Abre PuppyPlan para seguir ayudando con el cuidado."
+          }
+        }
       },
       "shared-today-viewer": {
         "read-only-hint": "Ver sólo",

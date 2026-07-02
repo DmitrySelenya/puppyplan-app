@@ -203,4 +203,30 @@ describe('app shell screens', () => {
     expect(screen.getByRole('button', { name: i18n.t('sharing.family.accepted.decline') })).toBeTruthy();
     expect(screen.queryByText(/raw-invite-token-for-test/i)).toBeNull();
   });
+
+  it('AC-SHARE-ACCEPT-STATES renders deterministic invite loading, error, expired, and already-member states', () => {
+    renderWithProviders(
+      <>
+        <InviteAcceptScreen inviteToken="raw-loading-token" reviewState="loading" />
+        <InviteAcceptScreen inviteToken="raw-error-token" reviewState="load-error" />
+        <InviteAcceptScreen inviteToken="raw-expired-token" reviewState="expired" />
+        <InviteAcceptScreen inviteToken="raw-member-token" reviewState="already-member" />
+      </>,
+    );
+
+    for (const state of ['loading', 'load-error', 'expired', 'already-member'] as const) {
+      expect(screen.getByTestId(`invite-accept-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`sharing.family.accepted.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`sharing.family.accepted.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('invite-accept-state-load-error').props.accessibilityRole)
+      .toBe('alert');
+    expect(screen.getByTestId('invite-accept-state-loading').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getAllByRole('button', {
+      name: i18n.t('sharing.family.accepted.accept'),
+    }).some((button) => button.props.accessibilityState.busy)).toBe(true);
+    expect(screen.queryByText(/raw-(loading|error|expired|member)-token/i)).toBeNull();
+  });
 });

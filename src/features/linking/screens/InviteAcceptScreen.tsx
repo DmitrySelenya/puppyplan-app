@@ -3,19 +3,72 @@ import { StyleSheet } from 'react-native';
 
 import {
   AppIcon,
+  type AppIconName,
   AppText,
   Button,
   Card,
   Screen,
   Stack,
+  StatusPill,
+  type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
-import { useAppTranslation } from '@/lib/i18n';
+import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+
+export type InviteAcceptReviewState =
+  | 'loading'
+  | 'load-error'
+  | 'expired'
+  | 'already-member';
+
+type InviteAcceptStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
+}>;
+
+const inviteAcceptStateMeta: Record<InviteAcceptReviewState, InviteAcceptStateMeta> = {
+  'already-member': {
+    bodyKey: 'sharing.family.accepted.states.already-member.body',
+    icon: 'check',
+    statusKey: 'sharing.family.accepted.states.already-member.status',
+    titleKey: 'sharing.family.accepted.states.already-member.title',
+    tone: 'confirmed',
+  },
+  expired: {
+    bodyKey: 'sharing.family.accepted.states.expired.body',
+    icon: 'lock',
+    statusKey: 'sharing.family.accepted.states.expired.status',
+    titleKey: 'sharing.family.accepted.states.expired.title',
+    tone: 'template',
+  },
+  'load-error': {
+    bodyKey: 'sharing.family.accepted.states.load-error.body',
+    icon: 'warningTriangle',
+    role: 'alert',
+    statusKey: 'sharing.family.accepted.states.load-error.status',
+    titleKey: 'sharing.family.accepted.states.load-error.title',
+    tone: 'failed',
+  },
+  loading: {
+    bodyKey: 'sharing.family.accepted.states.loading.body',
+    icon: 'calendar',
+    liveRegion: 'polite',
+    statusKey: 'sharing.family.accepted.states.loading.status',
+    titleKey: 'sharing.family.accepted.states.loading.title',
+    tone: 'pending',
+  },
+};
 
 export type InviteAcceptScreenProps = Readonly<{
   inviteToken?: string;
   ownerName?: string;
   puppyName?: string;
+  reviewState?: InviteAcceptReviewState;
 }>;
 
 const defaultOwnerName = 'Owner';
@@ -24,9 +77,11 @@ const defaultPuppyName = 'Puppy';
 export function InviteAcceptScreen({
   ownerName = defaultOwnerName,
   puppyName = defaultPuppyName,
+  reviewState,
 }: InviteAcceptScreenProps) {
   const { t } = useAppTranslation();
   const translationOptions = { ownerName, puppyName };
+  const isLoadingInvite = reviewState === 'loading';
 
   return (
     <Screen contentStyle={styles.content}>
@@ -74,6 +129,8 @@ export function InviteAcceptScreen({
           </Stack>
         </Card>
 
+        {reviewState ? <InviteAcceptStatePreview state={reviewState} /> : null}
+
         <Card style={styles.disclosureCard} variant="mutedTemplate">
           <AppText tone="secondary" variant="body">
             {t('sharing.family.accepted.disclosure', { ownerName })}
@@ -83,6 +140,7 @@ export function InviteAcceptScreen({
         <Stack gap="sm">
           <Button
             label={t('sharing.family.accepted.accept')}
+            loading={isLoadingInvite}
             onPress={() => undefined}
           />
           <Button
@@ -93,6 +151,44 @@ export function InviteAcceptScreen({
         </Stack>
       </Stack>
     </Screen>
+  );
+}
+
+export function InviteAcceptStatePreview({
+  state,
+}: Readonly<{
+  state: InviteAcceptReviewState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = inviteAcceptStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`invite-accept-state-${state}`}
+      variant={state === 'expired' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name={meta.icon}
+              size={14}
+            />
+          )}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="bodyEmph">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">{body}</AppText>
+      </Stack>
+    </Card>
   );
 }
 

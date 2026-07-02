@@ -159,8 +159,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       remain open; Stage 4 native SE screenshot comparison passed 2026-07-02.
 - [x] ✅ Accept-invite flow, caregiver-side (§3.1.4) — `/invite/[token]` native shell
       implemented: inviter/puppy context, caregiver role, included/excluded preview, disclosure,
-      Accept/Decline actions, and token-safe rendering. Stage 4 native SE screenshot comparison
-      passed 2026-07-02; live token lookup/accept/decline remain open.
+      Accept/Decline actions, token-safe rendering, and deterministic loading / load-error /
+      expired / already-member state templates. Stage 4 native SE screenshot comparison passed
+      2026-07-02; live token lookup/accept/decline remain open.
 - [x] ✅ Manage household (§3.1.6) — `/settings/household` native shell implemented:
       More Family row opens owner household preview with members, pending invite, non-color-only
       status badges, overflow affordances, privacy-safe invite label, and Invite CTA. Live member
@@ -267,6 +268,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       templates for loading, pending write, error, and offline read plus dev-gallery coverage;
       PuppyPlan Plus now has RED/GREEN templates for loading products, pending purchase, purchase
       error, offline read, and active subscription plus dev-gallery coverage;
+      Accept Invite now has RED/GREEN templates for loading, load error, expired, and
+      already-member plus dev-gallery coverage;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -2166,6 +2169,62 @@ Implementation notes:
   loading/error/already-member/expired states, accept RPC, decline confirmation, and post-accept
   redirect remain deferred.
 
+### 31a. Accept Invite State Templates (§4.5)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/07-1-accept-invite.md`.
+- Source: `DESIGN.md` §3.1.4 plus §4.5 global screen states.
+- Route: `/invite/[token]`; dev-gallery review shell under `/_dev/components`.
+- Allowed deviation: no live token lookup, provider payload parsing, accept RPC, decline RPC, or
+  post-accept redirect. This slice is deterministic UI templates only.
+
+Acceptance:
+- AC-SHARE-ACCEPT-STATES-1: accept-invite exposes deterministic `loading`, `load-error`,
+  `expired`, and `already-member` review states.
+- AC-SHARE-ACCEPT-STATES-2: each state renders a tokenized `Card` + `StatusPill`, localized
+  EN/RU/ES title/body/status copy, and stable `invite-accept-state-*` test IDs.
+- AC-SHARE-ACCEPT-STATES-3: load error uses alert semantics, loading uses a polite live region, and
+  loading exposes busy feedback on the primary Accept CTA.
+- AC-SHARE-ACCEPT-STATES-4: visible state copy and shells never render raw invite tokens, provider
+  names, invite IDs, or private contact data.
+- AC-SHARE-ACCEPT-STATES-5: dev-gallery includes compact previews for all four invite state
+  templates for native Stage 4 handoff.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/app-shell.render.test.tsx` failed as expected
+  because `invite-accept-state-loading` was absent.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx` failed as expected
+  because `SyntheticInviteAcceptStatesShell` was not exported.
+
+GREEN evidence:
+- `npm run test:unit -- --runTestsByPath src/test/app-shell.render.test.tsx` — PASS: 1 suite,
+  9 tests.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx` — PASS: 1 suite,
+  4 tests.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run typecheck` — PASS.
+
+Stage 4 evidence:
+- Stage 4 PASS (2026-07-02): launched the already installed PuppyPlan.app on the primary SE
+  simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) over `npx expo start`, opened
+  `puppyplan:///_dev/components`, and captured native screenshots for the deterministic Accept
+  Invite state templates.
+- Evidence files: `output/v2-nav-gaps-stage4/invite-accept-states-top-stage4.jpg` and
+  `output/v2-nav-gaps-stage4/invite-accept-states-bottom-stage4.jpg`.
+- Visual review covered loading, load error, expired/unavailable, and already-member cards in the
+  dev-gallery shell. Live token lookup, provider payload parsing, accept/decline RPCs, and
+  post-accept redirect remain deferred.
+
+Implementation notes:
+- Added typed `InviteAcceptReviewState` metadata and state cards to
+  `src/features/linking/screens/InviteAcceptScreen.tsx`.
+- Added loading-state busy feedback on the primary Accept CTA without changing the production valid
+  invite shell.
+- Added `InviteAcceptStatePreview` and `SyntheticInviteAcceptStatesShell` to the development design
+  gallery so all four state cards are visible for native handoff.
+- Added EN/RU/ES invite state copy plus a dev-gallery description key, while keeping existing
+  `sharing.family.accepted.*` shell keys intact.
+
 ### 32. Manage Household Shell Slice (§3.1.6)
 
 Stage-0 lock:
@@ -2545,6 +2604,10 @@ Implementation notes:
   installed PuppyPlan.app over Metro using a synthetic invite deep link and verified the caregiver
   role shell, included/excluded permission anatomy, owner revocation disclosure, Accept/Decline
   actions, and token-safe visible copy. Live token lookup and accept/decline flows remain deferred.
+- 2026-07-02: Added deterministic Accept Invite loading, load-error, expired, and already-member
+  state templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy, and
+  primary SE Stage 4 screenshots. Live token lookup, provider payload parsing, accept/decline RPCs,
+  and post-accept redirect remain deferred.
 - 2026-06-29: Initial coverage/gap analysis from board `uXjVL0aEXPU=` (source) vs `uXjVHA5hn48=`
   (freeze) cross-referenced against DESIGN.md.
 - 2026-06-29: Resolved §5 decisions (Events→Diary, Health lightweight+CRUD, Onboarding now,

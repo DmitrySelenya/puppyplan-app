@@ -57,6 +57,7 @@
         "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
         "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
         "paywall-states": "PuppyPlan Plus loading, pending purchase, error, offline, and active subscription states.",
+        "invite-accept-states": "Accept invite loading, unavailable, retry, and already-member states.",
         "timeline-v2": "Timeline default, filtered, empty, pending, failed, and delete-confirm states.",
         "today-core": "Today hero, daily cards, guidance, and data states.",
         "guidance": "Starter guidance read, tried, and skipped states.",
@@ -891,7 +892,29 @@
         "already-member": "You're already in {puppyName}'s household.",
         "already-member-cta": "Open",
         "load-error": "Couldn't load the invite. Check your connection.",
-        "neutral-unavailable": "This invite is no longer available. Ask {ownerName} to send a new one."
+        "neutral-unavailable": "This invite is no longer available. Ask {ownerName} to send a new one.",
+        "states": {
+          "loading": {
+            "status": "Checking",
+            "title": "Checking invite",
+            "body": "We are checking whether this invite is still available."
+          },
+          "load-error": {
+            "status": "Needs attention",
+            "title": "Invite did not load",
+            "body": "Keep this screen open and try again when your connection is back."
+          },
+          "expired": {
+            "status": "Unavailable",
+            "title": "Invite is no longer available",
+            "body": "Ask the owner to send a new invite if you still need access."
+          },
+          "already-member": {
+            "status": "Already joined",
+            "title": "You are already in this household",
+            "body": "Open PuppyPlan to continue helping with care."
+          }
+        }
       },
       "shared-today-viewer": {
         "read-only-hint": "View only",
