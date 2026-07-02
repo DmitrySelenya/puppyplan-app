@@ -277,6 +277,20 @@ gallery), re-render the three states per the atlas. Other `TodayStatusCard` stat
 **Acceptance:** The three states match the atlas structurally (anatomy tests) and visually
 (simulator screenshot per state, synthetic data only); `npm run check` green.
 
+**Item 10 evidence (2026-07-02):** RED
+`npm run test:unit -- --runTestsByPath src/test/today-core.render.test.tsx` failed because
+`all-done`, `cold-start`, and `empty-history` still rendered through the generic
+`TodayStatusCard` (`today-state-*`). GREEN added the compact `EmptyIllustration` primitive, routed
+`cold-start` / `empty-history` to centered Clay empty-state compositions, routed `all-done` to a
+sage completion card, left loading/offline/error/permission/pending states on `TodayStatusCard`,
+and added the primitive to the dev gallery. Focused tests passed:
+`src/test/today-core.render.test.tsx`, `src/test/diary-primitives.render.test.tsx`, and
+`src/test/dev-gallery.render.test.tsx`. Stage 4 synthetic SE screenshots captured through the real
+Diary tab shell over Metro:
+`output/v2-screen-polish-screenshots/item10-diary-cold-start-tab-stage4.png`,
+`output/v2-screen-polish-screenshots/item10-diary-empty-history-tab-stage4.png`, and
+`output/v2-screen-polish-screenshots/item10-diary-all-done-tab-stage4.png`.
+
 ## P2 — Item 11: WeekStrip — rolling window vs calendar week + non-interactive "tabs"
 
 **What's wrong (two parts):**

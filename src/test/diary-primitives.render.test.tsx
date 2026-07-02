@@ -6,6 +6,7 @@ import {
   AppText,
   CheckCircle,
   DayDivider,
+  EmptyIllustration,
   FactCard,
   IconChip,
   InfoHero,
@@ -141,6 +142,20 @@ describe('InfoHero', () => {
     expect(screen.getByText('Puppies around 9 weeks sleep 18-20 hours.')).toBeTruthy();
     expect(screen.getByTestId('hero').props.accessibilityRole).toBe('summary');
     expect(flatten(screen.getByTestId('hero')).borderRadius).toBe(tokens.radius.hero);
+  });
+});
+
+describe('EmptyIllustration', () => {
+  it('matches the compact Diary empty-state illustration frame', () => {
+    render(<EmptyIllustration testID="empty-illustration" />);
+    const frameStyle = flatten(screen.getByTestId('empty-illustration', {
+      includeHiddenElements: true,
+    }));
+
+    expect(frameStyle.backgroundColor).toBe(tokens.color.primary[50]);
+    expect(frameStyle.height).toBe(96);
+    expect(frameStyle.width).toBe(96);
+    expect(frameStyle.borderRadius).toBe(48);
   });
 });
 

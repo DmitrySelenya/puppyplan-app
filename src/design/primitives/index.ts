@@ -12,6 +12,10 @@ export { Card, type CardProps, type CardVariant } from '@/design/primitives/Card
 export { CheckCircle, type CheckCircleProps } from '@/design/primitives/CheckCircle';
 export { DayDivider, type DayDividerProps } from '@/design/primitives/DayDivider';
 export { EmptyState, type EmptyStateProps } from '@/design/primitives/EmptyState';
+export {
+  EmptyIllustration,
+  type EmptyIllustrationProps,
+} from '@/design/primitives/EmptyIllustration';
 export { FAB } from '@/design/primitives/FAB';
 export { FactCard, type FactCardProps } from '@/design/primitives/FactCard';
 export {

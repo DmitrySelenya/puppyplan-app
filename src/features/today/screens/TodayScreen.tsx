@@ -15,16 +15,18 @@ import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { EmptyIllustration } from '@/design/primitives/EmptyIllustration';
 import { FactCard } from '@/design/primitives/FactCard';
 import { IconButton } from '@/design/primitives/IconButton';
 import { type EventAccent } from '@/design/primitives/IconChip';
 import { InfoHero } from '@/design/primitives/InfoHero';
 import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
+import { StatusPill } from '@/design/primitives/StatusPill';
 import { SwipeToDelete } from '@/design/primitives/SwipeToDelete';
 import { WeekStrip, type WeekStripDay } from '@/design/primitives/WeekStrip';
 import { tokens } from '@/design/tokens';
-import { useAppTranslation } from '@/lib/i18n';
+import { useAppTranslation, type I18nKey } from '@/lib/i18n';
 import {
   calendarDateToUtc,
   getLocalCalendarDate,
@@ -69,6 +71,24 @@ export type TodayScreenProps = Readonly<{
 
 const emptyActions: QuickLogEventActionHandlers = {};
 const DIARY_HISTORY_SECTION_GAP = 10;
+const DIARY_COLD_START_PADDING_TOP = 44;
+const DIARY_EMPTY_HISTORY_PADDING_TOP = 86;
+const DIARY_EMPTY_HORIZONTAL_PADDING = 28;
+const DIARY_EMPTY_BODY_MAX_WIDTH = 280;
+const DIARY_EMPTY_QUIET_BODY_MAX_WIDTH = 260;
+const diaryEmptyStateCopy: Record<'cold-start' | 'empty-history', {
+  bodyKey: I18nKey;
+  titleKey: I18nKey;
+}> = {
+  'cold-start': {
+    bodyKey: 'today.states.cold-start.body',
+    titleKey: 'today.states.cold-start.title',
+  },
+  'empty-history': {
+    bodyKey: 'today.states.empty-history.body',
+    titleKey: 'today.states.empty-history.title',
+  },
+};
 
 export function TodayScreen({
   actions = emptyActions,
@@ -135,6 +155,7 @@ export function TodayScreen({
     timelineStatus: timelineRows.status,
   });
   const showTodayPlan = todayPlan !== null
+    && todayStatus !== 'all-done'
     && screenState !== 'cold-start'
     && screenState !== 'empty-history'
     && screenState !== 'pending-write'
@@ -155,7 +176,14 @@ export function TodayScreen({
         selectedDate={todayPlanSourceInput?.todayDate ?? careContext.todayDate}
         todayDate={careContext.todayDate}
       />
-      {todayStatus === null || (todayStatus === 'empty' && todayPlan !== null)
+      <DiaryClayState
+        onPrimaryAction={openQuickLog ?? openTimeline}
+        onSecondaryAction={openTimeline}
+        state={todayStatus}
+      />
+      {todayStatus === null
+        || isClayDiaryState(todayStatus)
+        || (todayStatus === 'empty' && todayPlan !== null)
         ? null
         : <TodayStatusCard state={todayStatus} />}
       {showTodayPlan && todayPlan !== null ? (
@@ -225,6 +253,128 @@ export function TodayScreen({
       </Stack>
       ) : null}
     </Screen>
+  );
+}
+
+function DiaryClayState({
+  onPrimaryAction,
+  onSecondaryAction,
+  state,
+}: Readonly<{
+  onPrimaryAction: () => void;
+  onSecondaryAction: () => void;
+  state: TodayStatusState | null;
+}>) {
+  if (state === 'all-done') {
+    return <DiaryAllDoneCard />;
+  }
+
+  if (state === 'cold-start' || state === 'empty-history') {
+    return (
+      <DiaryEmptyState
+        onPrimaryAction={onPrimaryAction}
+        onSecondaryAction={onSecondaryAction}
+        state={state}
+      />
+    );
+  }
+
+  return null;
+}
+
+function isClayDiaryState(state: TodayStatusState): boolean {
+  return state === 'all-done' || state === 'cold-start' || state === 'empty-history';
+}
+
+function DiaryEmptyState({
+  onPrimaryAction,
+  onSecondaryAction,
+  state,
+}: Readonly<{
+  onPrimaryAction: () => void;
+  onSecondaryAction: () => void;
+  state: 'cold-start' | 'empty-history';
+}>) {
+  const { t } = useAppTranslation();
+  const copy = diaryEmptyStateCopy[state];
+  const label = `${t(copy.titleKey)}. ${t(copy.bodyKey)}`;
+  const isColdStart = state === 'cold-start';
+
+  return (
+    <View
+      accessibilityLabel={label}
+      accessible
+      style={[
+        styles.diaryEmptyState,
+        isColdStart ? styles.diaryColdStartState : styles.diaryEmptyHistoryState,
+      ]}
+      testID={`diary-empty-state-${state}`}>
+      <EmptyIllustration />
+      <Stack
+        align="center"
+        gap="xs">
+        <AppText
+          accessibilityRole="header"
+          style={styles.diaryEmptyTitle}
+          variant="title3">
+          {t(copy.titleKey)}
+        </AppText>
+        <AppText
+          style={[
+            styles.diaryEmptyBody,
+            isColdStart ? styles.diaryColdStartBody : styles.diaryEmptyHistoryBody,
+          ]}
+          tone="secondary"
+          variant="callout">
+          {t(copy.bodyKey)}
+        </AppText>
+      </Stack>
+      {isColdStart ? (
+        <Stack
+          align="stretch"
+          gap="sm"
+          style={styles.diaryEmptyActions}>
+          <Button
+            label={t('nav.quick-log-slab')}
+            onPress={onPrimaryAction}
+            variant="primary"
+          />
+          <Button
+            label={t('nav.schedule-slab')}
+            onPress={onSecondaryAction}
+            variant="secondary"
+          />
+        </Stack>
+      ) : null}
+    </View>
+  );
+}
+
+function DiaryAllDoneCard() {
+  const { t } = useAppTranslation();
+
+  return (
+    <Card
+      accessibilityLabel={`${t('today.states.all-done.title')}. ${t('today.states.all-done.body')}`}
+      style={styles.diaryAllDoneCard}
+      testID="diary-all-done-card">
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={t('today.states.all-done.status')}
+          icon={
+            <AppIcon
+              color={tokens.color.pill.completed.text}
+              name="check"
+              size={14}
+            />
+          }
+          label={t('today.states.all-done.status')}
+          tone="completed"
+        />
+        <AppText variant="title3">{t('today.states.all-done.title')}</AppText>
+        <AppText variant="callout">{t('today.states.all-done.body')}</AppText>
+      </Stack>
+    </Card>
   );
 }
 
@@ -773,6 +923,41 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: tokens.layout.bottomInsetFab,
     paddingTop: tokens.space[2],
+  },
+  diaryAllDoneCard: {
+    backgroundColor: tokens.color.sage[100],
+    borderColor: tokens.color.sage[300],
+    borderRadius: tokens.radius.hero,
+    marginBottom: tokens.space[5],
+    padding: tokens.space[5],
+  },
+  diaryColdStartBody: {
+    maxWidth: DIARY_EMPTY_BODY_MAX_WIDTH,
+  },
+  diaryColdStartState: {
+    paddingTop: DIARY_COLD_START_PADDING_TOP,
+  },
+  diaryEmptyActions: {
+    alignSelf: 'stretch',
+    marginTop: tokens.space[3],
+  },
+  diaryEmptyBody: {
+    textAlign: 'center',
+  },
+  diaryEmptyHistoryBody: {
+    maxWidth: DIARY_EMPTY_QUIET_BODY_MAX_WIDTH,
+  },
+  diaryEmptyHistoryState: {
+    paddingTop: DIARY_EMPTY_HISTORY_PADDING_TOP,
+  },
+  diaryEmptyState: {
+    alignItems: 'center',
+    gap: tokens.space[5],
+    paddingBottom: tokens.layout.bottomInsetFab,
+    paddingHorizontal: DIARY_EMPTY_HORIZONTAL_PADDING,
+  },
+  diaryEmptyTitle: {
+    textAlign: 'center',
   },
   factCard: {
     flex: 1,

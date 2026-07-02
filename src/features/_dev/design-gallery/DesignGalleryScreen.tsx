@@ -6,6 +6,7 @@ import {
   Card,
   CheckCircle,
   DayDivider,
+  EmptyIllustration,
   EmptyState,
   AppIcon,
   FactCard,
@@ -179,6 +180,9 @@ export function SyntheticDiaryClayShell() {
           <AppText tone="secondary" variant="footnote">
             {t('dev.gallery.diary.routine-note')}
           </AppText>
+          <Stack align="center">
+            <EmptyIllustration testID="gallery-empty-illustration" />
+          </Stack>
           <RoutineCard
             accent="clay"
             accessibilityLabel={t('quick-log.trackers.walk')}

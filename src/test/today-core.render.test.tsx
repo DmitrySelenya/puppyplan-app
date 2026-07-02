@@ -320,12 +320,13 @@ describe('Today core card rendering', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('today-state-all-done')).toBeTruthy();
+      expect(screen.getByTestId('diary-all-done-card')).toBeTruthy();
     });
 
     expect(screen.getByText(i18n.t('today.states.all-done.status'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.all-done.title'))).toBeTruthy();
     expect(screen.getByLabelText(`${i18n.t('today.states.all-done.title')}. ${i18n.t('today.states.all-done.body')}`)).toBeTruthy();
+    expect(screen.queryByTestId('today-state-all-done')).toBeNull();
     expect(screen.queryByText(i18n.t('today.states.empty.title'))).toBeNull();
   });
 
@@ -348,12 +349,17 @@ describe('Today core card rendering', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('today-state-empty-history')).toBeTruthy();
+      expect(screen.getByTestId('diary-empty-state-empty-history')).toBeTruthy();
     });
 
-    expect(screen.getByText(i18n.t('today.states.empty-history.status'))).toBeTruthy();
+    expect(screen.getByTestId('diary-empty-illustration', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.empty-history.title'))).toBeTruthy();
     expect(screen.getByLabelText(`${i18n.t('today.states.empty-history.title')}. ${i18n.t('today.states.empty-history.body')}`)).toBeTruthy();
+    expect(screen.queryByTestId('today-state-empty-history')).toBeNull();
+    expect(screen.queryByRole('button', { name: i18n.t('nav.quick-log-slab') })).toBeNull();
+    expect(screen.queryByRole('button', { name: i18n.t('nav.schedule-slab') })).toBeNull();
     expect(screen.queryByText(i18n.t('today.hero.first-day.title'))).toBeNull();
     expect(screen.queryByTestId('today-hero-card')).toBeNull();
     expect(screen.queryByText(i18n.t('today.daily-cards.starter-section-title'))).toBeNull();
@@ -369,12 +375,17 @@ describe('Today core card rendering', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('today-state-cold-start')).toBeTruthy();
+      expect(screen.getByTestId('diary-empty-state-cold-start')).toBeTruthy();
     });
 
-    expect(screen.getByText(i18n.t('today.states.cold-start.status'))).toBeTruthy();
+    expect(screen.getByTestId('diary-empty-illustration', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.cold-start.title'))).toBeTruthy();
     expect(screen.getByLabelText(`${i18n.t('today.states.cold-start.title')}. ${i18n.t('today.states.cold-start.body')}`)).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('nav.quick-log-slab') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('nav.schedule-slab') })).toBeTruthy();
+    expect(screen.queryByTestId('today-state-cold-start')).toBeNull();
     expect(screen.queryByText(i18n.t('today.hero.first-day.title'))).toBeNull();
     expect(screen.queryByText(i18n.t('today.daily-cards.starter-section-title'))).toBeNull();
   });
