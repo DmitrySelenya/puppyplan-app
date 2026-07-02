@@ -217,7 +217,7 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       screenshot comparison passed 2026-07-02.
 - [ ] 🟡 Plan Reveal (§2.1.5) — native value-moment anatomy slice implemented: puppy summary row,
       Honey/accent HeroCard 96pt, three separate DailyCard starter actions, and bottom first-log CTA.
-      Stage 4 native screenshot comparison remains open.
+      Stage 4 native SE screenshot comparison passed 2026-07-02.
 - [ ] 🟡 First Log (§2.1.6) — native first-value completion anatomy implemented: Diary chrome,
       pending/local-only state, no pre-value account pressure, and celebration snackbar. Real Quick
       Log sheet selection/persistence remains covered by Quick Log slices; Stage 4 screenshot
@@ -1545,8 +1545,12 @@ Implementation notes:
   accent HeroCard, three separate starter action cards, and bottom CTA using design primitives.
 - EN/RU/ES locale files include the Plan Reveal summary, summary accessibility label, birth-date
   fallback, hero accessibility label, and starter-card accessibility template.
-- Stage 4 remains open: `/onboarding` Plan Reveal still needs native screenshot comparison against
-  `docs/design/v1/screenshots/onboarding/2-5.png`.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`)
+  from the installed PuppyPlan.app over Metro. Native evidence:
+  `output/v2-nav-gaps-stage4/onboarding-plan-reveal-stage4.png`. Runtime snapshot evidence exposed the
+  plan title/supporting copy, hero first-log copy, three separate starter actions, and `Start your
+  first log` CTA; visual evidence also covers the localized puppy summary row with privacy-safe
+  synthetic name and age.
 
 ## 26. Onboarding First Log anatomy evidence
 
@@ -2302,6 +2306,10 @@ Implementation notes:
   and zero-selected states over Metro, verifying Step 3 chrome, helper copy, selected checkmarks,
   selected/unselected accessibility labels in runtime snapshot, counter changes from 5/5 to 0/5, and
   the zero-state `Skip selection` CTA without a minimum-warning alert.
+- 2026-07-02: Closed Stage 4 for `/onboarding` Plan Reveal: captured native SE evidence over Metro
+  after the debug-account tracker flow, verifying the puppy summary row, title/supporting copy,
+  Honey/accent first-log hero card, three separate starter cards, and bottom `Start your first log`
+  CTA.
 - 2026-06-30: Added the Reminder edit route anatomy slice: `/reminders/edit` now renders the create/edit
   form, quiet-hours preview, and calm permission-denied state with design primitives and existing
   localized copy; RED/GREEN route/navigation tests, typecheck, and scaffold checks passed. Real
