@@ -225,7 +225,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       open.
 - [x] ✅ Account/Notifications prompts (§2.1.7) — post-first-value V2 native preview slices
       implemented as skippable SheetSurface prompts with account and quiet-reminder actions.
-      Runtime scheduler / OS permission handoff and Stage 4 screenshot comparison remain open.
+      Stage 4 native SE screenshot comparison passed 2026-07-02; runtime scheduler / OS permission
+      handoff remain deferred.
 
 ### Cross-cutting
 - [x] ✅ **Apply new TabBar (Diary/Pet/More + Add) to every migrated screen** — the tab shell now
@@ -1634,8 +1635,14 @@ Implementation notes:
   EN/RU/ES copy and design `SheetSurface` / `Button` primitives.
 - This section reconciles the plan status from ❌ to ✅ after fresh verification; it did not add a new
   runtime prompt scheduler.
-- Stage 4 remains open: these prompts need fresh native capture comparison because the v1 atlas has
-  no separate 2.7 PNG.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro. Native
+  evidence:
+  `output/v2-nav-gaps-stage4/onboarding-account-prompt-clean-stage4.png`,
+  `output/v2-nav-gaps-stage4/onboarding-notifications-prompt-clean-stage4.png`. Visual evidence covers
+  the account SheetSurface with Apple, Google, Email, and Not now actions, plus the quiet-reminder
+  SheetSurface with Turn on and Not now actions. Runtime scheduler and OS permission handoff remain
+  deferred.
 
 ### 28. More Notification Preferences Anatomy Slice (§4.4.4)
 
@@ -2368,6 +2375,10 @@ Implementation notes:
 - 2026-06-30: Reconciled the Onboarding Account/Notifications prompt slice as implemented and verified:
   skippable account and quiet-reminder SheetSurface previews pass onboarding anatomy coverage, with
   scheduler / OS permission handoff and Stage 4 screenshots still open.
+- 2026-07-02: Closed Stage 4 for the Onboarding Account/Notifications prompt previews: captured clean
+  native SE screenshots from the installed PuppyPlan.app over Metro for the account sheet and quiet
+  reminder sheet, verifying the skippable SheetSurface anatomy and required actions. Runtime scheduler
+  and OS permission handoff remain deferred.
 - 2026-06-30: Added the More Notification Preferences anatomy slice: More now opens
   `/settings/notifications`, the screen renders local reminders, push reminders/sitter completion,
   quiet hours, and timezone sections with design primitives, navigation/scaffold contracts were updated,
