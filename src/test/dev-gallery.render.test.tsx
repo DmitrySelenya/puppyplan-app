@@ -150,8 +150,12 @@ describe('development-only design gallery', () => {
     expect(screen.getByText(i18n.t('quick-log.potty-subtype.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.duplicate-warning.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.failed.pill'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('health.rows.parasite-review-title'))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('health.rows.parasite-review-title')).length)
+      .toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('health.pills.needs-vet-review')).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('health.add-record.states.loading.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.add-record.states.error.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.add-record.states.permission-denied.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.weight-entry.title'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('today.deferred.synthetic-badge')).length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('today.deferred.family-invite'))).toBeTruthy();

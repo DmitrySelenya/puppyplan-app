@@ -1278,7 +1278,34 @@
       "privacy-hint": "Las notas solo son visibles para ti y los familiares invitados.",
       "save-toast": "Entrada guardada",
       "offline-banner": "Guardaremos esto tan pronto como vuelvas a estar en línea.",
-      "error-date": "Por favor revisa la fecha"
+      "error-date": "Por favor revisa la fecha",
+      "states": {
+        "loading": {
+          "status": "Cargando",
+          "title": "Preparando el formulario",
+          "body": "Estamos revisando el contexto actual del cachorro antes de agregar el registro."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando entrada de salud",
+          "body": "Mantén esta pantalla abierta mientras se guarda la entrada."
+        },
+        "error": {
+          "status": "No se guardó",
+          "title": "No pudimos guardar esta entrada",
+          "body": "Revisa tu conexión e inténtalo de nuevo. No se enviaron datos de salud."
+        },
+        "offline-read": {
+          "status": "Sin conexión",
+          "title": "No hay conexión",
+          "body": "Puedes revisar el formulario. Guardar esperará hasta que vuelvas a estar en línea."
+        },
+        "permission-denied": {
+          "status": "Solo propietario",
+          "title": "Solo un propietario puede agregar registros de salud",
+          "body": "Aún puedes ver el contexto de salud compartido."
+        }
+      }
     },
     "edit-record": {
       "screen-title": "Entrada",

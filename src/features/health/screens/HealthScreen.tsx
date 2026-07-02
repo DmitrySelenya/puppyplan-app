@@ -441,11 +441,71 @@ const healthRecordTypeOptions = [
 }[];
 
 type HealthRecordStatus = 'confirmed' | 'needsVetReview';
+type HealthRecordEditReviewState =
+  | 'loading'
+  | 'pending-write'
+  | 'error'
+  | 'offline-read'
+  | 'permission-denied';
+
+type HealthRecordEditStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
+}>;
+
+const healthRecordEditStateMeta: Record<HealthRecordEditReviewState, HealthRecordEditStateMeta> = {
+  loading: {
+    bodyKey: 'health.add-record.states.loading.body',
+    icon: 'spark',
+    liveRegion: 'polite',
+    statusKey: 'health.add-record.states.loading.status',
+    titleKey: 'health.add-record.states.loading.title',
+    tone: 'pending',
+  },
+  'pending-write': {
+    bodyKey: 'health.add-record.states.pending-write.body',
+    icon: 'docText',
+    liveRegion: 'polite',
+    statusKey: 'health.add-record.states.pending-write.status',
+    titleKey: 'health.add-record.states.pending-write.title',
+    tone: 'pending',
+  },
+  error: {
+    bodyKey: 'health.add-record.states.error.body',
+    icon: 'infoCircle',
+    role: 'alert',
+    statusKey: 'health.add-record.states.error.status',
+    titleKey: 'health.add-record.states.error.title',
+    tone: 'failed',
+  },
+  'offline-read': {
+    bodyKey: 'health.add-record.states.offline-read.body',
+    icon: 'lock',
+    statusKey: 'health.add-record.states.offline-read.status',
+    titleKey: 'health.add-record.states.offline-read.title',
+    tone: 'template',
+  },
+  'permission-denied': {
+    bodyKey: 'health.add-record.states.permission-denied.body',
+    icon: 'lock',
+    role: 'alert',
+    statusKey: 'health.add-record.states.permission-denied.status',
+    titleKey: 'health.add-record.states.permission-denied.title',
+    tone: 'failed',
+  },
+};
 
 export function HealthRecordEditRouteScreen({
   onClose,
+  reviewState,
 }: Readonly<{
   onClose: () => void;
+  reviewState?: HealthRecordEditReviewState;
 }>) {
   const { t } = useAppTranslation();
   const [selectedType, setSelectedType] = useState<HealthRecordType | null>(null);
@@ -453,7 +513,7 @@ export function HealthRecordEditRouteScreen({
   if (selectedType) {
     return (
       <Screen contentStyle={styles.content}>
-        <HealthRecordEditPreview />
+        <HealthRecordEditPreview reviewState={reviewState} />
       </Screen>
     );
   }
@@ -472,6 +532,9 @@ export function HealthRecordEditRouteScreen({
               variant="tertiary"
             />
           </Stack>
+          {reviewState ? (
+            <HealthRecordEditStateCard state={reviewState} />
+          ) : null}
           <ListGroup>
             {healthRecordTypeOptions.map((option) => (
               <ListRow
@@ -502,10 +565,13 @@ export function HealthRecordEditRouteScreen({
 
 export function HealthRecordEditPreview({
   filled = false,
+  reviewState,
 }: Readonly<{
   filled?: boolean;
+  reviewState?: HealthRecordEditReviewState;
 }> = {}) {
   const { t } = useAppTranslation();
+  const isPendingWrite = reviewState === 'pending-write';
 
   return (
     <Card accessibilityLabel={t('health.add-record.sheet-title')}>
@@ -520,12 +586,16 @@ export function HealthRecordEditPreview({
             {t('health.add-record.sheet-title')}
           </AppText>
           <Button
-            disabled={!filled}
+            disabled={!filled && !isPendingWrite}
             label={t('health.add-record.form-save')}
+            loading={isPendingWrite}
             onPress={() => undefined}
             variant="tertiary"
           />
         </Stack>
+        {reviewState ? (
+          <HealthRecordEditStateCard state={reviewState} />
+        ) : null}
         <SectionHeader title={t('health.add-record.section-main')} />
         <TextField
           label={t('health.add-record.field-name')}
@@ -567,6 +637,38 @@ export function HealthRecordEditPreview({
           trailing={<Toggle onValueChange={() => undefined} value={false} />}
         />
         <AppText tone="tertiary" variant="footnote">{t('health.add-record.urgent-hint')}</AppText>
+      </Stack>
+    </Card>
+  );
+}
+
+function HealthRecordEditStateCard({
+  state,
+}: Readonly<{
+  state: HealthRecordEditReviewState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = healthRecordEditStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`health-add-record-state-${state}`}
+      variant={meta.role ? 'resting' : 'mutedTemplate'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={<AppIcon name={meta.icon} size={14} />}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="headline">{title}</AppText>
+        <AppText tone="secondary" variant="callout">{body}</AppText>
       </Stack>
     </Card>
   );

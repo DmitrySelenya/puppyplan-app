@@ -129,8 +129,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] 🚫 Standalone Health tab anatomy (§4.1.1) — out-of-batch (folded into Pet)
 - [x] 🚫 Health charts / milestone surfaces — explicitly out-of-batch
 - [ ] 🟡 Add Record full flow (§4.1.3) — native route now opens from Pet, shows record-type
-      chooser and empty form anatomy. Stage 4 SE native screenshot comparison PASS recorded
-      2026-07-02 for chooser + empty form. Save/persistence/loading/error/offline states remain open.
+      chooser, empty form anatomy, and deterministic loading / pending-write / error / offline-read /
+      permission-denied state templates. Stage 4 SE native screenshot comparison PASS recorded
+      2026-07-02 for chooser + empty form + the new state templates. Durable save/persistence remains
+      open.
 - [ ] 🟡 Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
       Durable edit/delete, timed 5-second undo restore, and persistence remain open.
@@ -255,7 +257,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       FAB remains under `app/(tabs)`. See §36.
 - [ ] 🟡 **Global screen states** (Loading / Empty / Offline read banner / Pending write / Permission
       denied / Revoked) re-applied per new screen (§4.5) — primitives (StatusPill, Form states) exist;
-      coverage per-screen is the work
+      coverage per-screen is the work. Health Add Record now has RED/GREEN state templates for
+      loading, pending write, error, offline read, and permission denied plus Stage 4 SE captures;
+      other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
 ## 5. Decisions (resolved 2026-06-29)
@@ -1187,6 +1191,31 @@ Implementation notes:
 - `app/(modals)/pet/health-record-edit/index.tsx` stays thin and wires Close to `router.back()`.
 - `HealthRecordEditRouteScreen` uses design primitives (`Screen`, `Card`, `Button`, `ListGroup`,
   `ListRow`, `AppIcon`, `SegmentedControl`, `TextField`, `Toggle`) and existing EN/RU/ES i18n keys.
+- State-template follow-up (2026-07-02): `HealthRecordEditRouteScreen` and
+  `HealthRecordEditPreview` now accept a typed synthetic `reviewState` for `loading`,
+  `pending-write`, `error`, `offline-read`, and `permission-denied`. Each state renders a
+  tokenized `Card` + `StatusPill` using EN/RU/ES keys, with alert roles for error/permission and a
+  polite live region for pending write. This is a deterministic UI template only; durable save,
+  queued offline writes, permission enforcement, and native Stage 4 state screenshots remain open.
+- State-template RED evidence:
+  `npm run test:unit -- --runTestsByPath src/test/health-record-edit-route.render.test.tsx`
+  failed as expected because `health-add-record-state-loading` did not exist.
+- State-template GREEN evidence:
+  `npm run test:unit -- --runTestsByPath src/test/health-record-edit-route.render.test.tsx`
+  — PASS: 1 suite, 3 tests.
+- Adjacent state/i18n evidence:
+  `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx src/test/i18n.test.ts src/test/health.render.test.tsx src/test/health-record-edit-route.render.test.tsx`
+  — PASS: 4 suites, 24 tests; `node scripts/checks/check-i18n.mjs` — PASS.
+- State-template Stage 4 PASS (2026-07-02): launched the already installed PuppyPlan.app on
+  `Grith iPhone SE 3 iOS 26.3` over Metro, opened `/_dev/components`, and captured synthetic native
+  screenshots for all Add Record state templates. Evidence:
+  `output/v2-nav-gaps-stage4/health-add-record-state-loading-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/health-add-record-state-pending-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/health-add-record-state-error-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/health-add-record-state-offline-stage4.jpg`, and
+  `output/v2-nav-gaps-stage4/health-add-record-state-permission-stage4.jpg`. The captures show the
+  state cards inside the native Add Record chrome, readable form content below, alert/error coloring
+  for blocked states, and no diagnosis/dosage/treatment-plan/emergency copy.
 - Stage 4 PASS (2026-07-02): captured native SE screenshots from the installed PuppyPlan.app running
   JS-over-Metro and compared against `docs/design/v1/specs/05-pet-health.md` plus this slice's locked
   acceptance. Evidence:
@@ -1194,8 +1223,7 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/health-record-edit-form-stage4-top-after-card-a11y.png`, and
   `output/v2-nav-gaps-stage4/health-record-edit-form-stage4-bottom-after-card-a11y.png`.
   Runtime snapshot also exposes the four type chooser targets and the empty-form fields, confirming
-  the chooser can be operated through native accessibility. Save/persistence/loading/error/offline
-  states remain open.
+  the chooser can be operated through native accessibility. Durable save/persistence remains open.
 
 ## 17. Health detail status/delete anatomy Stage-0 lock evidence
 
@@ -2506,7 +2534,11 @@ Implementation notes:
   native SE chooser and form screenshots over Metro. Chooser targets (`Vaccination`, `Parasite treatment`,
   `Preventive care`, `Vet visit`, `Close`) are exposed to the runtime snapshot; form top/bottom evidence
   covers Cancel/New entry/disabled Save, main fields, status control, note/privacy copy, and urgent toggle.
-  Save/persistence/loading/error/offline states remain open.
+  Save/persistence and native captures for state variants remain open.
+- 2026-07-02: Added Health Add Record state templates for loading, pending write, error, offline read,
+  and permission denied with typed EN/RU/ES copy, alert/live-region accessibility, dev-gallery preview
+  coverage, RED/GREEN route tests, and Stage 4 SE captures from the native dev gallery. Durable
+  save/persistence remains open.
 - 2026-06-30: Added the Health detail status/delete anatomy slice: record detail now shows a
   non-color-only four-step status strip with one active filled state, and delete pending shows the
   localized undo-toast preview; targeted health tests, typecheck, scaffold checks, related route/i18n

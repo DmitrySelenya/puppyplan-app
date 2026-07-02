@@ -3,6 +3,11 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { i18n } from '@/lib/i18n';
 
+import {
+  HealthRecordEditPreview,
+  HealthRecordEditRouteScreen,
+} from '@/features/health/screens/HealthScreen';
+
 import HealthRecordEditRoute from '../../app/(modals)/pet/health-record-edit';
 
 const mockRouterBack = jest.fn();
@@ -70,5 +75,36 @@ describe('HealthRecordEditRoute', () => {
     }));
 
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-PET-ADD-STATES renders deterministic loading, pending, error, offline, and permission states', () => {
+    render(
+      <>
+        <HealthRecordEditRouteScreen onClose={mockRouterBack} reviewState="loading" />
+        <HealthRecordEditPreview reviewState="pending-write" />
+        <HealthRecordEditPreview reviewState="error" />
+        <HealthRecordEditPreview reviewState="offline-read" />
+        <HealthRecordEditPreview reviewState="permission-denied" />
+      </>,
+    );
+
+    for (const state of [
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+      'permission-denied',
+    ] as const) {
+      expect(screen.getByTestId(`health-add-record-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`health.add-record.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`health.add-record.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('health-add-record-state-error').props.accessibilityRole).toBe('alert');
+    expect(screen.getByTestId('health-add-record-state-pending-write').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getByTestId('health-add-record-state-permission-denied').props.accessibilityRole)
+      .toBe('alert');
+    expect(screen.queryByText(/diagnosis|dosage|treatment plan|emergency/i)).toBeNull();
   });
 });

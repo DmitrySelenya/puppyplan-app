@@ -1217,7 +1217,34 @@
       "privacy-hint": "Notes are visible only to you and invited family members.",
       "save-toast": "Entry saved",
       "offline-banner": "We'll save this as soon as you're back online",
-      "error-date": "Please check the date"
+      "error-date": "Please check the date",
+      "states": {
+        "loading": {
+          "status": "Loading",
+          "title": "Preparing the form",
+          "body": "We are checking the current puppy context before you add a record."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving health entry",
+          "body": "Keep this screen open while the entry is saved."
+        },
+        "error": {
+          "status": "Could not save",
+          "title": "Could not save this entry",
+          "body": "Check your connection and try again. No health details were sent."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "No connection",
+          "body": "You can review the form. Saving waits until you are back online."
+        },
+        "permission-denied": {
+          "status": "Owner only",
+          "title": "Only an owner can add health records",
+          "body": "You can still view shared health context."
+        }
+      }
     },
     "edit-record": {
       "screen-title": "Entry",
