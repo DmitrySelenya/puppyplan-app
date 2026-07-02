@@ -20,7 +20,7 @@ import { Touchable } from '@/design/primitives/Touchable';
 import { Toggle } from '@/design/primitives/Toggle';
 import { tokens } from '@/design/tokens';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
-import type { HealthRecord } from '@/contracts/supabase';
+import type { ActivePuppyProfile, HealthRecord } from '@/contracts/supabase';
 import type { ActiveCareContext } from '@/contracts/onboarding';
 import {
   useActiveCareContext,
@@ -640,6 +640,25 @@ type HealthRecordEditReviewState =
   | 'offline-read'
   | 'permission-denied';
 
+type HealthRecordTemplateSuggestion = Readonly<{
+  icon: AppIconName;
+  key: 'dhpp-12-weeks';
+  recordType: HealthRecordType;
+  status: HealthRecordDraftStatus;
+  subtitleKey: I18nKey;
+  titleKey: I18nKey;
+}>;
+
+const DHPP_12_WEEK_TEMPLATE_AGE_WEEKS = 12;
+const dhpp12WeekTemplateSuggestion: HealthRecordTemplateSuggestion = {
+  icon: 'docText',
+  key: 'dhpp-12-weeks',
+  recordType: 'vaccination',
+  status: 'template',
+  subtitleKey: 'health.template-row-subline',
+  titleKey: 'health.rows.dhpp-template-title',
+};
+
 type HealthRecordEditStateMeta = Readonly<{
   bodyKey: I18nKey;
   icon: AppIconName;
@@ -701,21 +720,26 @@ export function HealthRecordEditRouteScreen({
 }>) {
   const { t } = useAppTranslation();
   const [selectedType, setSelectedType] = useState<HealthRecordType | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<HealthRecordTemplateSuggestion | null>(null);
   const activeCare = useActiveCareContext();
   const createHealthRecord = useCreateHealthRecordMutation();
+  const templateSuggestions = getHealthRecordTemplateSuggestions(activeCare.puppy);
+  const selectedRecordType = selectedTemplate?.recordType ?? selectedType;
 
-  if (selectedType) {
+  if (selectedRecordType) {
     return (
       <Screen contentStyle={styles.content}>
         <HealthRecordEditPreview
           careContext={activeCare.careContext}
+          initialStatus={selectedTemplate?.status}
+          initialTitleKey={selectedTemplate?.titleKey}
           isSaving={createHealthRecord.isPending}
           onClose={onClose}
           onSave={async (draft) => {
             await createHealthRecord.mutateAsync(draft);
             onClose();
           }}
-          recordType={selectedType}
+          recordType={selectedRecordType}
           reviewState={reviewState}
         />
       </Screen>
@@ -740,6 +764,44 @@ export function HealthRecordEditRouteScreen({
             <HealthRecordEditStateCard state={reviewState} />
           ) : null}
           <ListGroup>
+            {templateSuggestions.map((template) => (
+              <ListRow
+                accessibilityLabel={[
+                  t(template.titleKey),
+                  t('health.pills.template'),
+                  t(template.subtitleKey),
+                ].join('. ')}
+                accessory="chevron"
+                key={template.key}
+                leading={(
+                  <AppIcon
+                    color={tokens.color.text.secondary}
+                    name={template.icon}
+                  />
+                )}
+                onPress={() => {
+                  setSelectedTemplate(template);
+                }}
+                subtitle={t(template.subtitleKey)}
+                title={t(template.titleKey)}
+                trailing={(
+                  <Stack align="center" direction="horizontal" gap="sm">
+                    <StatusPill
+                      accessibilityLabel={t('health.pills.template')}
+                      icon={<AppIcon name="docText" size={14} />}
+                      label={t('health.pills.template')}
+                      tone="template"
+                    />
+                    <AppIcon
+                      color={tokens.color.text.tertiary}
+                      name="chevronRight"
+                      size={18}
+                    />
+                  </Stack>
+                )}
+                variant="health"
+              />
+            ))}
             {healthRecordTypeOptions.map((option) => (
               <ListRow
                 accessory="chevron"
@@ -765,6 +827,16 @@ export function HealthRecordEditRouteScreen({
       </Card>
     </Screen>
   );
+}
+
+function getHealthRecordTemplateSuggestions(
+  puppy: ActivePuppyProfile | null,
+): readonly HealthRecordTemplateSuggestion[] {
+  if (puppy?.age_weeks_estimate !== DHPP_12_WEEK_TEMPLATE_AGE_WEEKS) {
+    return [];
+  }
+
+  return [dhpp12WeekTemplateSuggestion];
 }
 
 type HealthRecordDetailState = 'loading' | 'unavailable' | 'not-found' | 'error';
@@ -891,6 +963,8 @@ function HealthRecordDetailStateCard({
 export function HealthRecordEditPreview({
   careContext,
   filled = false,
+  initialStatus,
+  initialTitleKey,
   isSaving = false,
   onClose,
   onSave,
@@ -899,6 +973,8 @@ export function HealthRecordEditPreview({
 }: Readonly<{
   careContext?: ActiveCareContext | null;
   filled?: boolean;
+  initialStatus?: HealthRecordDraftStatus;
+  initialTitleKey?: I18nKey;
   isSaving?: boolean;
   onClose?: () => void;
   onSave?: (draft: HealthRecordCreateDraft) => Promise<void>;
@@ -906,10 +982,10 @@ export function HealthRecordEditPreview({
   reviewState?: HealthRecordEditReviewState;
 }> = {}) {
   const { t } = useAppTranslation();
-  const [title, setTitle] = useState(filled ? t('health.rows.dhpp-title') : '');
+  const [title, setTitle] = useState(initialTitleKey ? t(initialTitleKey) : filled ? t('health.rows.dhpp-title') : '');
   const [providerName, setProviderName] = useState('');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<HealthRecordDraftStatus>(filled ? 'confirmed' : 'template');
+  const [status, setStatus] = useState<HealthRecordDraftStatus>(initialStatus ?? (filled ? 'confirmed' : 'template'));
   const [localReviewState, setLocalReviewState] = useState<HealthRecordEditReviewState | undefined>(undefined);
   const visibleReviewState = reviewState ?? localReviewState;
   const isPendingWrite = visibleReviewState === 'pending-write' || isSaving;

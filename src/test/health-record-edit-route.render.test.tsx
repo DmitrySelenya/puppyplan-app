@@ -20,6 +20,19 @@ const mockCareContext = {
   todayDate: '2026-07-02',
   userId: '00000000-0000-4000-8000-000000003002',
 };
+const mockActivePuppy = {
+  age_weeks_estimate: 12,
+  birth_date: null,
+  created_at: '2026-06-01T08:00:00.000Z',
+  deleted_at: null,
+  household_id: mockCareContext.householdId,
+  household_role: 'owner',
+  id: mockCareContext.puppyId,
+  name: 'Puppy',
+  quick_tracker_ids: ['feeding'],
+  updated_at: '2026-06-01T08:00:00.000Z',
+};
+let mockPuppy: typeof mockActivePuppy | null = mockActivePuppy;
 
 jest.mock('expo-router', () => ({
   router: {
@@ -30,7 +43,7 @@ jest.mock('expo-router', () => ({
 jest.mock('@/lib/query/active-care-context', () => ({
   useActiveCareContext: () => ({
     careContext: mockCareContext,
-    puppy: null,
+    puppy: mockPuppy,
     status: 'ready',
   }),
 }));
@@ -49,6 +62,7 @@ describe('HealthRecordEditRoute', () => {
     mockRouterBack.mockClear();
     mockMutateAsync.mockReset();
     mockMutateAsync.mockResolvedValue(undefined);
+    mockPuppy = mockActivePuppy;
     reduceMotionProbe = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
       .mockReturnValue(new Promise<boolean>(() => {}));
@@ -101,6 +115,46 @@ describe('HealthRecordEditRoute', () => {
     }));
 
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-PET-TEMPLATE-1 AC-PET-TEMPLATE-2 AC-PET-TEMPLATE-3 opens and saves the generated DHPP template', async () => {
+    render(<HealthRecordEditRoute />);
+
+    expect(screen.getByText(i18n.t('health.template-row-subline'))).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('health.rows.dhpp-template-title'),
+    }));
+
+    const titleInput = screen.getByLabelText(i18n.t('health.add-record.field-name'));
+    expect(titleInput.props.value).toBe(i18n.t('health.rows.dhpp-template-title'));
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('health.add-record.form-save'),
+    }));
+
+    await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledWith({
+      householdId: mockCareContext.householdId,
+      notes: '',
+      providerName: '',
+      puppyId: mockCareContext.puppyId,
+      recordType: 'vaccination',
+      scheduledFor: mockCareContext.todayDate,
+      status: 'template',
+      title: i18n.t('health.rows.dhpp-template-title'),
+      userId: mockCareContext.userId,
+    }));
+  });
+
+  it('AC-PET-TEMPLATE-4 keeps generated templates hidden when puppy age is unavailable', () => {
+    mockPuppy = null;
+
+    render(<HealthRecordEditRoute />);
+
+    expect(screen.queryByText(i18n.t('health.rows.dhpp-template-title'))).toBeNull();
+    expect(screen.getByRole('button', {
+      name: i18n.t('health.record-types.vaccination'),
+    })).toBeTruthy();
   });
 
   it('AC-PET-ADD-STATES renders deterministic loading, pending, error, offline, and permission states', () => {

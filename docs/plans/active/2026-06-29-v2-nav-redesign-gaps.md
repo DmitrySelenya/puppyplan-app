@@ -134,8 +134,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       2026-07-02 for chooser + empty form + the new state templates. Durable create/list refresh is
       now implemented through the typed health-record repository and query hooks. Durable edit/delete/
       restore data-layer contracts are also implemented; production read-only detail-route wiring is
-      implemented at `/pet/health-record/[recordId]`. Offline queue, native DatePicker, and template
-      generation remain open.
+      implemented at `/pet/health-record/[recordId]`. The authored `DHPP, 12 weeks` template
+      generation is implemented for active puppies with `age_weeks_estimate === 12`; offline queue
+      and native DatePicker remain open.
 - [ ] 🟡 Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
       Durable edit/delete/restore data-layer contracts are now implemented with source preservation,
@@ -1377,6 +1378,61 @@ Stage 4 evidence:
 - Direct deep-link runtime had no active care context, so Save remained disabled; the mutation/save
   path is proven by the render test with active care context rather than a live Supabase write.
 - Evidence file: `output/v2-nav-gaps-stage4/health-add-record-durable-form-stage4.jpg`.
+
+### 16b. Health Add Record template generation slice
+
+**2026-07-02 next implementation slice:** replace the remaining static-only Health template
+recommendation with a deterministic production template suggestion in `/pet/health-record-edit`.
+This slice is intentionally narrow: it implements the authored `DHPP, 12 weeks` template from the
+atlas and does not introduce dosage, diagnosis, medication instruction, emergency triage, offline
+queue, or native DatePicker work.
+
+- Source spec card: `docs/design/v1/specs/05-pet-health.md`.
+- Source canon: `DESIGN.md` §4.1.5 Template Suggestion and the PRD Health safety rule:
+  vaccination/deworming schedules are editable templates and must use review-with-vet wording.
+- Source atlas: `health/11-1.png` / raw `HealthRow` showing `DHPP, 12 weeks` as a suggested
+  template with `Template, not a prescription`.
+- Route/components: `/pet/health-record-edit` and `src/features/health/screens/HealthScreen.tsx`.
+- TDD mode: lightweight; reduced assurance because this continuation is running in the main thread,
+  but RED tests must be observed before implementation.
+
+Acceptance:
+- AC-PET-TEMPLATE-1: when active puppy age resolves to 12 weeks, the add-record chooser renders a
+  calm suggested `DHPP, 12 weeks` template row with existing non-prescriptive copy.
+- AC-PET-TEMPLATE-2: pressing the suggested template opens the existing Add Record form prefilled
+  as a vaccination template, with title `DHPP, 12 weeks` and status `template`.
+- AC-PET-TEMPLATE-3: saving that prefilled form writes the same typed create draft path as manual
+  records; no separate schema, analytics payload, raw provider/note logging, or native module is added.
+- AC-PET-TEMPLATE-4: if the puppy age is not known or not in the 12-week window, the chooser keeps
+  the existing manual record-type options and does not fabricate the DHPP template.
+
+Implementation evidence:
+- RED: `npm run test:unit -- --runTestsByPath src/test/health-record-edit-route.render.test.tsx`
+  failed before implementation on `Unable to find an element with text: Template, not a prescription`.
+- GREEN: the same command now passes 6 tests, including AC-PET-TEMPLATE-1 through
+  AC-PET-TEMPLATE-4.
+- Related render check:
+  `npm run test:unit -- --runTestsByPath src/test/health.render.test.tsx src/test/pet-route.render.test.tsx src/test/app-shell.render.test.tsx`
+  passes 21 tests.
+- Type check: `npm run typecheck` passes.
+
+Implementation notes:
+- The route now generates exactly one authored template suggestion when the active puppy has
+  `age_weeks_estimate === 12`; unknown or different ages keep the manual record-type chooser only.
+- The suggested row uses existing `ListRow`, `StatusPill`, typed i18n keys, and the current durable
+  create draft mutation. It does not add schema fields, analytics payloads, native modules, or health
+  schedule inference.
+
+Stage 4 evidence:
+- Primary SE simulator: `5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`.
+- Metro was started with `npx expo start`; the already-installed `PuppyPlan.app` was launched through
+  XcodeBuildMCP without native rebuild, then deep-linked with `puppyplan:///pet/health-record-edit`.
+- Runtime screenshot proved the route still loads over current JS and renders the manual chooser
+  correctly. The runtime did not have an active puppy with `age_weeks_estimate === 12`, so the
+  generated template state was not visually captured in the simulator.
+- Evidence file: `output/v2-nav-gaps-stage4/health-add-record-template-runtime-blocker.jpg`
+  (ignored local artifact). Template-state behavior is covered by the render test with mocked active
+  puppy context until a dev account fixture exposes a 12-week puppy in runtime.
 
 ## 17. Health detail status/delete anatomy Stage-0 lock evidence
 
@@ -2941,7 +2997,8 @@ Implementation notes:
   `health_record` schema: typed Supabase repository, health query/mutation hooks, normalized
   create draft, targeted invalidation, Pet route server-row rendering, and Add Record Save wiring.
   RED/GREEN repository/query/route tests, typecheck, and SE form evidence recorded. Edit/delete,
-  offline queue, native DatePicker, urgent persistence, and real template generation remain open.
+  offline queue, native DatePicker, and urgent persistence remain open. The authored `DHPP, 12 weeks`
+  template generation is now implemented in the follow-up template slice.
 - 2026-07-02: Added deterministic Quick Trackers settings loading, error, empty, and owner-only
   state templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy, and
   primary SE Stage 4 evidence. Existing implicit-save/reorder persistence coverage remains in the
