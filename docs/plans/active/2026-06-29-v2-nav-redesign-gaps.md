@@ -141,7 +141,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       and Stage 4 screenshots remain open.
 - [x] ✅ Accept-invite flow, caregiver-side (§3.1.4) — `/invite/[token]` native shell
       implemented: inviter/puppy context, caregiver role, included/excluded preview, disclosure,
-      Accept/Decline actions, and token-safe rendering. Live token lookup/accept/decline remain open.
+      Accept/Decline actions, and token-safe rendering. Stage 4 native SE screenshot comparison
+      passed 2026-07-02; live token lookup/accept/decline remain open.
 - [x] ✅ Manage household (§3.1.6) — `/settings/household` native shell implemented:
       More Family row opens owner household preview with members, pending invite, non-color-only
       status badges, overflow affordances, privacy-safe invite label, and Invite CTA. Live member
@@ -1858,9 +1859,14 @@ Implementation notes:
 - Updated `app/invite/[token].tsx` to render the accept shell through a thin Expo Router wrapper.
 - Updated navigation contracts to track `/invite/[token]` and `/share/[token]` as existing public
   token routes.
-- Stage 4 remains open: `/invite/[token]` still needs native screenshot comparison against the
-  locked accept-invite anatomy. Live token lookup, loading/error/already-member/expired states, accept
-  RPC, decline confirmation, and post-accept redirect remain deferred.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro using
+  synthetic deep link `puppyplan://invite/stage4-preview-token`. Native evidence:
+  `output/v2-nav-gaps-stage4/invite-accept-stage4.png`. Visual evidence covers inviter/puppy context,
+  caregiver role, included and excluded permission blocks with non-color-only icons, owner revocation
+  disclosure, Accept/Decline actions, and no visible raw token. Live token lookup,
+  loading/error/already-member/expired states, accept RPC, decline confirmation, and post-accept
+  redirect remain deferred.
 
 ### 32. Manage Household Shell Slice (§3.1.6)
 
@@ -2164,6 +2170,10 @@ Implementation notes:
   actions without exposing raw invite tokens; public token routes are tracked in navigation
   contracts. Live token lookup, accept/decline RPCs, already-member/expired states, post-accept
   redirect, and Stage 4 screenshots remain open.
+- 2026-07-02: Closed Stage 4 for `/invite/[token]`: captured a native SE screenshot from the
+  installed PuppyPlan.app over Metro using a synthetic invite deep link and verified the caregiver
+  role shell, included/excluded permission anatomy, owner revocation disclosure, Accept/Decline
+  actions, and token-safe visible copy. Live token lookup and accept/decline flows remain deferred.
 - 2026-06-29: Initial coverage/gap analysis from board `uXjVL0aEXPU=` (source) vs `uXjVHA5hn48=`
   (freeze) cross-referenced against DESIGN.md.
 - 2026-06-29: Resolved §5 decisions (Events→Diary, Health lightweight+CRUD, Onboarding now,
