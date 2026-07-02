@@ -36,6 +36,9 @@ import {
   HealthWeightEntryPreview,
 } from '@/features/health/screens/HealthScreen';
 import {
+  NotificationPreferencesStatePreview,
+} from '@/features/more/screens/NotificationPreferencesScreen';
+import {
   OnboardingAccountPromptPreview,
   OnboardingFirstLogPreview,
   OnboardingNotificationsPromptPreview,
@@ -69,6 +72,7 @@ export function DesignGalleryScreen() {
           <AppText tone="secondary">{t('dev.gallery.subtitle')}</AppText>
         </Stack>
 
+        <SyntheticNotificationPreferencesShell />
         <SyntheticReminderEditShell />
 
         {gallerySections.map((section) => (
@@ -620,6 +624,23 @@ export function SyntheticReminderEditShell() {
           onClose={noop}
           reviewState="offline-read"
         />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticNotificationPreferencesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.notification-preferences"
+          titleKey="more.notifications.screen-title"
+        />
+        <NotificationPreferencesStatePreview state="loading" />
+        <NotificationPreferencesStatePreview state="pending-write" />
+        <NotificationPreferencesStatePreview state="error" />
+        <NotificationPreferencesStatePreview state="offline-read" />
       </Stack>
     </Card>
   );

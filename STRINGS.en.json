@@ -55,6 +55,7 @@
         "quick-log-details": "Quick Log details route with synthetic slow-saving and error states.",
         "health-v2": "Health list, empty, edit, detail, review, delete, and weight entry states.",
         "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
+        "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
         "timeline-v2": "Timeline default, filtered, empty, pending, failed, and delete-confirm states.",
         "today-core": "Today hero, daily cards, guidance, and data states.",
         "guidance": "Starter guidance read, tried, and skipped states.",
@@ -1654,7 +1655,29 @@
       "section-quiet-hours": "Quiet hours",
       "quiet-hours-example": "10:00 pm – 7:00 am",
       "section-tz": "Time zone",
-      "tz-example": "Europe/Berlin (auto)"
+      "tz-example": "Europe/Berlin (auto)",
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading notification settings",
+          "body": "We are checking the settings saved on this device."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Updating preferences",
+          "body": "Your changes are saved locally first and will finish when the device is ready."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Could not update notifications",
+          "body": "Keep your current settings and try again in a moment."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Showing saved preferences",
+          "body": "You can review the last saved settings while this device is offline."
+        }
+      }
     },
     "privacy": {
       "screen-title": "Data and account",

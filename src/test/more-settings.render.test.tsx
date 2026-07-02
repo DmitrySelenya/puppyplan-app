@@ -341,6 +341,33 @@ describe('More settings entries', () => {
     })).toBeTruthy();
   });
 
+  it('AC-MORE-NOTIF-STATES renders deterministic loading, pending, error, and offline states', () => {
+    render(
+      <AppProviders>
+        <NotificationPreferencesScreen reviewState="loading" />
+        <NotificationPreferencesScreen reviewState="pending-write" />
+        <NotificationPreferencesScreen reviewState="error" />
+        <NotificationPreferencesScreen reviewState="offline-read" />
+      </AppProviders>,
+    );
+
+    for (const state of [
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+    ] as const) {
+      expect(screen.getByTestId(`notifications-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`more.notifications.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`more.notifications.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('notifications-state-error').props.accessibilityRole).toBe('alert');
+    expect(screen.getByTestId('notifications-state-pending-write').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.queryByText(/apns|fcm|device token|raw token/i)).toBeNull();
+  });
+
   it('renders the support help anatomy without requesting private data', () => {
     render(
       <AppProviders>

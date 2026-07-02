@@ -261,7 +261,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       coverage per-screen is the work. Health Add Record now has RED/GREEN state templates for
       loading, pending write, error, offline read, and permission denied plus Stage 4 SE captures;
       Reminder Edit now has RED/GREEN state templates for loading, pending write, error, and
-      offline read plus dev-gallery coverage;
+      offline read plus dev-gallery coverage; Notification Preferences now has RED/GREEN state
+      templates for loading, pending write, error, and offline read plus dev-gallery coverage;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -1894,6 +1895,50 @@ Implementation notes:
   header, local reminders toggle, push reminders/sitter completion toggles, quiet-hours row, and
   timezone row without clipping/overlap. Persistence and OS permission handoff remain deferred.
 
+### 28a. More Notification Preferences State Templates (§4.5)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/06-more-privacy-paywall.md` states notification preferences and
+  cross-screen states are in scope.
+- Source: `DESIGN.md` §4.4.4 notification preferences plus §4.5 global screen states.
+- Route: `/settings/notifications`; dev-gallery review shell under `/_dev/components`.
+
+Acceptance:
+- AC-MORE-NOTIF-STATES-1: notification preferences exposes deterministic `loading`,
+  `pending-write`, `error`, and `offline-read` review states without wiring live push/device-token
+  services.
+- AC-MORE-NOTIF-STATES-2: each state renders a tokenized `Card` + `StatusPill`, localized
+  EN/RU/ES title/body/status copy, and stable `notifications-state-*` test IDs.
+- AC-MORE-NOTIF-STATES-3: error state uses alert semantics, pending-write uses a polite live region,
+  and copy does not expose APNs/FCM/device-token details.
+- AC-MORE-NOTIF-STATES-4: dev-gallery includes the four notification preferences state templates for
+  native Stage 4 handoff.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` failed as expected
+  because `notifications-state-loading` was absent.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx` failed as expected
+  because `SyntheticNotificationPreferencesShell` was not exported.
+
+GREEN evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` — PASS: 1 suite,
+  15 tests.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx` — PASS: 1 suite,
+  4 tests.
+
+Implementation notes:
+- Added typed `NotificationPreferencesReviewState` metadata and state cards to
+  `src/features/more/screens/NotificationPreferencesScreen.tsx`.
+- Added `NotificationPreferencesStatePreview` and `SyntheticNotificationPreferencesShell` to the
+  development design gallery so all four state cards are visible for native handoff.
+- Added EN/RU/ES notification state copy plus a dev-gallery description key.
+- Stage 4 PASS (2026-07-02): captured native SE screenshots from the installed PuppyPlan.app running
+  JS-over-Metro for the dev-gallery notification state shell. Evidence:
+  `output/v2-nav-gaps-stage4/settings-notifications-states-top-stage4.jpg` shows loading, pending
+  write, and error states; `output/v2-nav-gaps-stage4/settings-notifications-states-offline-stage4.jpg`
+  shows the offline-read state and the handoff transition into the next shell. Runtime snapshot also
+  matched `notifications-state-offline-read`. Persistence and OS permission handoff remain deferred.
+
 ### 29. More Support / Help Anatomy Slice (§4.4.6)
 
 Stage-0 lock:
@@ -2678,6 +2723,12 @@ Implementation notes:
   installed PuppyPlan.app over Metro and verified the modal header, local reminders toggle, push
   reminders/sitter completion toggles, quiet-hours row, and timezone row against the locked More
   notification preferences anatomy. Persistence and OS permission handoff remain deferred.
+- 2026-07-02: Added `/settings/notifications` state templates for loading, pending write, error, and
+  offline read with typed EN/RU/ES copy, alert/live-region accessibility, no raw push-token details,
+  and dev-gallery preview coverage. Persistence and OS permission handoff remain deferred.
+- 2026-07-02: Closed Stage 4 for `/settings/notifications` state templates: captured native SE
+  dev-gallery screenshots over Metro for loading/pending/error and offline-read cards. Real
+  persistence, scheduling, and OS permission handoff remain deferred.
 - 2026-06-30: Added the More Support / Help anatomy slice: More now opens `/settings/help`, the
   screen renders topic shortcuts, diagnostics rows, contact affordance, and a privacy-safe support
   note with EN/RU/ES typed copy; navigation/scaffold contracts were updated, and full `npm run check`

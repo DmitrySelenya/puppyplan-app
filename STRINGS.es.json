@@ -54,6 +54,7 @@
         "quick-log-details": "Ruta de detalles de Quick Log con estados sintéticos de guardado lento y error.",
         "health-v2": "Lista de salud, vacío, edición, detalle, revisión, eliminación y entrada de peso.",
         "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
+        "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
         "timeline-v2": "Timeline predeterminado, filtrado, vacío, pendiente, error y confirmación de borrado.",
         "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
         "guidance": "Estados de guía inicial: leído, probado y omitido.",
@@ -1753,7 +1754,29 @@
       "section-quiet-hours": "Horas tranquilas",
       "quiet-hours-example": "10:00 pm – 7:00 am",
       "section-tz": "Huso horario",
-      "tz-example": "Europa/Berlín (automático)"
+      "tz-example": "Europa/Berlín (automático)",
+      "states": {
+        "loading": {
+          "status": "Comprobando",
+          "title": "Cargando ajustes de notificaciones",
+          "body": "Estamos comprobando los ajustes guardados en este dispositivo."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Actualizando preferencias",
+          "body": "Los cambios se guardan primero localmente y terminarán cuando el dispositivo esté listo."
+        },
+        "error": {
+          "status": "Requiere atención",
+          "title": "No se pudieron actualizar las notificaciones",
+          "body": "Conserva tus ajustes actuales e inténtalo de nuevo en un momento."
+        },
+        "offline-read": {
+          "status": "Sin conexión",
+          "title": "Mostrando preferencias guardadas",
+          "body": "Puedes revisar los últimos ajustes guardados mientras este dispositivo está sin conexión."
+        }
+      }
     },
     "privacy": {
       "screen-title": "Datos y cuenta",

@@ -10,6 +10,7 @@ import {
   SyntheticQuickLogDetailsShell,
   SyntheticQuickLogSheetShell,
   SyntheticReminderEditShell,
+  SyntheticNotificationPreferencesShell,
   SyntheticOnboardingShell,
   SyntheticMoreSettingsShell,
   SyntheticPuppyProfileSettingsShell,
@@ -133,6 +134,7 @@ describe('development-only design gallery', () => {
         <SyntheticQuickLogSheetShell />
         <SyntheticHealthShell />
         <SyntheticReminderEditShell />
+        <SyntheticNotificationPreferencesShell />
         <SyntheticTodayShell />
         <SyntheticQuickLogDetailsShell />
       </>,
@@ -177,6 +179,21 @@ describe('development-only design gallery', () => {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('reminders.form.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.notification-preferences'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('more.notifications.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.notifications.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.notifications.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.notifications.states.offline-read.title'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/supabase|production write|token/i)).toBeNull();
