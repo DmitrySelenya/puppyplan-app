@@ -1256,6 +1256,30 @@ describe('design primitives', () => {
     expect(screen.getByTestId('snackbar-host')).toBeTruthy();
   });
 
+  it('renders snackbar host inside a full-window overlay above native-stack screens', () => {
+    let snackbar: SnackbarController | null = null;
+
+    render(
+      <SnackbarProvider>
+        <SnackbarControllerProbe onReady={(controller) => {
+          snackbar = controller;
+        }} />
+      </SnackbarProvider>,
+    );
+
+    act(() => {
+      snackbar?.showSnackbar({
+        accessibilityLabel: 'Logged: feeding.',
+        id: 'quick-log:evt_00000000-0000-4000-8000-000000000301',
+        message: 'Logged · Feeding',
+        tone: 'success',
+      });
+    });
+
+    expect(screen.getByTestId('snackbar-window-overlay')).toBeTruthy();
+    expect(screen.getByTestId('snackbar-host')).toBeTruthy();
+  });
+
   it('triggers the snackbar haptic feedback contract when a message is shown', async () => {
     const hapticAdapter = jest.fn();
     let snackbar: SnackbarController | null = null;

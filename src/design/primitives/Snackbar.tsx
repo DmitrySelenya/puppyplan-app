@@ -11,6 +11,7 @@ import {
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FullWindowOverlay } from 'react-native-screens';
 
 import { decorativeViewProps } from '@/design/a11y';
 import { AppText } from '@/design/primitives/AppText';
@@ -120,7 +121,7 @@ export function SnackbarProvider({ children }: PropsWithChildren) {
           style={styles.providerRoot}
           testID="snackbar-provider-root">
           {children}
-          <SnackbarHost message={message} />
+          <SnackbarWindowOverlay message={message} />
         </View>
       </SnackbarActivityContext.Provider>
     </SnackbarContext.Provider>
@@ -145,6 +146,23 @@ export function useSnackbar(): SnackbarController {
 
 export function useSnackbarActive(): boolean {
   return useContext(SnackbarActivityContext);
+}
+
+function SnackbarWindowOverlay({ message }: { message: SnackbarMessage | null }) {
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <FullWindowOverlay>
+      <View
+        pointerEvents="box-none"
+        style={styles.windowOverlay}
+        testID="snackbar-window-overlay">
+        <SnackbarHost message={message} />
+      </View>
+    </FullWindowOverlay>
+  );
 }
 
 function SnackbarHost({ message }: { message: SnackbarMessage | null }) {
@@ -237,6 +255,9 @@ const styles = StyleSheet.create({
   },
   providerRoot: {
     flex: 1,
+  },
+  windowOverlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   host: {
     bottom: 0,

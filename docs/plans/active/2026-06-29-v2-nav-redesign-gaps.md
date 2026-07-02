@@ -83,7 +83,7 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Optional details — Note (§2.3.7)
 - [x] ✅ Snackbar / Undo (§2.3.8) — native route anatomy implemented: after-tap success
       snackbar, polite live region, Undo/Add details actions, and `saveSuccess` feedback contract.
-      Stage 4 native visual capture remains open for the transient snackbar host.
+      Stage 4 SE native screenshot comparison PASS recorded 2026-07-02 on the production route.
 - [x] ✅ Pending / failed / retry (§2.3.9) — failed-save inline row anatomy implemented
       with retry/discard; snackbar replacement uses error feedback; pending mutation events now
       render inline before cached rows refresh. Stage 4 SE native screenshot comparison PASS
@@ -877,12 +877,20 @@ Implementation notes:
 - `src/test/quick-log-sheet.render.test.tsx` now pins the `4.2 Quick Log after tap` route anatomy:
   sheet closes, success snackbar remains, status is polite, surface uses success tint, and Undo/Add
   details are available for a detail-capable tracker.
-- 2026-07-02 follow-up: runtime screenshot attempts after production Quick Log saves and through a
+- Initial 2026-07-02 follow-up: runtime screenshot attempts after production Quick Log saves and through a
   temporary local `SnackbarProvider` route harness still did not expose the transient snackbar host
   on the SE simulator. A RED/GREEN primitive regression now pins `SnackbarProvider` to a full-height
-  root (`snackbar-provider-root`) so absolute snackbar overlays have a valid anchor, but native
-  visual capture for the snackbar host remains open. Do not mark this slice Stage 4 PASS until a
-  screenshot shows the success surface with Undo/Add details.
+  root (`snackbar-provider-root`) so absolute snackbar overlays have a valid anchor. At that point,
+  native visual capture for the snackbar host remained open pending a production screenshot with the
+  success surface, Undo, and Add details.
+- 2026-07-02 Stage 4 PASS follow-up: root-cause verification showed the production snackbar host was
+  reachable in the runtime tree but could be visually covered by the native-stack layer during bitmap
+  capture. A RED/GREEN primitive regression now pins active snackbar messages inside
+  `react-native-screens` `FullWindowOverlay` (`snackbar-window-overlay`) while preserving the
+  full-height provider root anchor. Native SE evidence from the installed PuppyPlan.app over Metro:
+  runtime snapshot after a real Quick Log save exposed `Undo` and `Add details`, and
+  `output/v2-nav-gaps-stage4/quick-log-production-snackbar-full-window-fast3-stage4.png` shows a
+  real production Diary save with `Logged · Feeding`, visible `Undo`, and visible `Add details`.
 
 ## 14. Quick Trackers settings / Edit Trackers evidence
 
@@ -2169,11 +2177,15 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Closed Quick Log snackbar/undo Stage 4: added RED/GREEN coverage that active
+  snackbar messages render through `FullWindowOverlay` above native-stack screens, captured production
+  SE evidence at
+  `output/v2-nav-gaps-stage4/quick-log-production-snackbar-full-window-fast3-stage4.png`, and verified
+  the visible success surface carries `Logged · Feeding`, `Undo`, and `Add details`.
 - 2026-07-02: Closed Quick Log Stage 4 for duplicate warning and pending/failed inline rows:
   production route screenshots verify the default sheet and duplicate warning; a temporary restored
-  dev-route harness verifies pending and failed local rows. Snackbar visual capture remains open after
-  production and harness attempts; added RED/GREEN `SnackbarProvider` full-height root coverage to
-  address the discovered absolute-overlay anchoring gap.
+  dev-route harness verifies pending and failed local rows. The snackbar visual gap is now closed by
+  the follow-up `FullWindowOverlay` fix above.
 - 2026-07-01: Closed Quick Log §2.3.9 pending route coverage: `started` mutation events now render
   inline pending rows before cached rows refresh, reuse existing pending-row anatomy/i18n, and wire
   Undo through the active care context. RED/GREEN route tests and adjacent Quick Log render suites pass;
