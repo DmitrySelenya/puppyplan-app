@@ -40,7 +40,6 @@ export function WeekStrip({
   return (
     <View
       accessibilityLabel={accessibilityLabel}
-      accessibilityRole="tablist"
       style={styles.strip}
       testID={testID}>
       {days.map((entry, index) => {
@@ -50,8 +49,8 @@ export function WeekStrip({
         return (
           <Touchable
             accessibilityLabel={entry.accessibilityLabel}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: isSelected }}
+            accessibilityRole={onSelectDay ? 'button' : 'text'}
+            accessibilityState={onSelectDay ? { selected: isSelected } : undefined}
             key={entry.key}
             minTarget="none"
             onPress={onSelectDay ? () => onSelectDay(index) : undefined}

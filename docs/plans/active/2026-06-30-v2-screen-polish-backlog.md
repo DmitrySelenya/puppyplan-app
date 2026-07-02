@@ -309,6 +309,16 @@ window as a named deviation in `diary-v2.md`. Do not silently keep the current h
 **Quick sub-fix allowed now:** while days are non-interactive, drop the `tab` role/selected state
 promise (keep the descriptive a11y labels).
 
+**Quick sub-fix status (2026-07-02):** done. `WeekStrip` now preserves the container label but
+does not expose the old `tablist` role; React Native's current `AccessibilityRole` type has no
+`group` role in this stack. Non-interactive days expose text semantics with descriptive labels only,
+while the primitive still uses `button` semantics when `onSelectDay` is supplied. RED/GREEN coverage:
+`src/test/diary-primitives.render.test.tsx` + `src/test/today-core.render.test.tsx`.
+Runtime evidence: XcodeBuildMCP runtime snapshot on the primary SE simulator showed the production
+Diary WeekStrip day entries as `text` rows and no `tab`/`tablist` targets after relaunching the
+installed app over Metro. The fixed locale week vs rolling-window/day-selection design decision
+remains open.
+
 **Acceptance:** Decision recorded in `diary-v2.md`; implementation matches it; a11y roles don't
 promise unavailable interactions; tests updated; `npm run check` green.
 

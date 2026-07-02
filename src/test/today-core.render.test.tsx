@@ -210,26 +210,25 @@ describe('Today core card rendering', () => {
       expect(screen.getByTestId('diary-header')).toBeTruthy();
     });
 
-    expect(screen.getByLabelText(i18n.t('today.week-strip.label'))).toBeTruthy();
-    expect(screen.getAllByRole('tab')).toHaveLength(7);
+    const weekStrip = screen.getByLabelText(i18n.t('today.week-strip.label'));
+    expect(weekStrip.props.accessibilityRole).toBeUndefined();
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
 
-    const selectedDay = screen.getByRole('tab', {
-      name: i18n.t('today.week-strip.day-label', {
-        date: 'Jun 10',
-        state: i18n.t('today.week-strip.state-selected'),
-        weekday: 'Wednesday',
-      }),
-    });
-    const todayMarker = screen.getByRole('tab', {
-      name: i18n.t('today.week-strip.day-label', {
-        date: 'Jun 12',
-        state: i18n.t('today.week-strip.state-today'),
-        weekday: 'Friday',
-      }),
-    });
+    const selectedDay = screen.getByLabelText(i18n.t('today.week-strip.day-label', {
+      date: 'Jun 10',
+      state: i18n.t('today.week-strip.state-selected'),
+      weekday: 'Wednesday',
+    }));
+    const todayMarker = screen.getByLabelText(i18n.t('today.week-strip.day-label', {
+      date: 'Jun 12',
+      state: i18n.t('today.week-strip.state-today'),
+      weekday: 'Friday',
+    }));
 
-    expect(selectedDay.props.accessibilityState).toMatchObject({ selected: true });
-    expect(todayMarker.props.accessibilityState).toMatchObject({ selected: false });
+    expect(selectedDay.props.accessibilityRole).toBe('text');
+    expect(todayMarker.props.accessibilityRole).toBe('text');
+    expect(selectedDay.props.accessibilityState?.selected).toBeUndefined();
+    expect(todayMarker.props.accessibilityState?.selected).toBeUndefined();
   });
 
   it('renders the error state when active care events cannot refresh', async () => {

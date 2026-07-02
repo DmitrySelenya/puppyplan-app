@@ -2268,6 +2268,9 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Closed the WeekStrip non-interactive a11y quick sub-fix: `WeekStrip` now removes
+  `tablist`/`tab` semantics when `onSelectDay` is absent, preserves real `button` semantics for
+  interactive use, and no longer exposes `selected` promises on the current Diary route.
 - 2026-07-02: Closed the Diary grouped-state template Stage 4 follow-up: added RED/GREEN coverage
   for the development-only gallery error fixture, exposed `loading`, `offline-read`, `pending-write`,
   and `error` in the deterministic Today/Diary shell preview, and captured native SE evidence at

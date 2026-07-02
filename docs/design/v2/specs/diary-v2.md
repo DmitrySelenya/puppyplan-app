@@ -71,7 +71,11 @@ default/populated (`4`), past (`5`), history (`5b`), cold-start (`6`), empty-wit
 
 ## Accessibility
 - Greeting exposes header semantics via `AppText`.
-- WeekStrip: `role=group` + per-day button labels incl. today/selected.
+- WeekStrip: container keeps the localized WeekStrip label. React Native's current
+  `AccessibilityRole` type in this stack has no `group` role, so the native container intentionally
+  exposes no `tablist`/`group` role. Current production route is non-interactive, so days expose text
+  semantics only and do not set `tab`/`selected` accessibility state. When day selection ships,
+  per-day controls become real buttons.
 - RoutineCard: whole card labelled "`{title}, planned for {time}. Not marked.`"; CheckCircle a separate button "Mark done"/"Marked done"; OverflowButton "Routine actions". All 44pt targets.
 - FactCard: labelled "`{title}, {time}, {caption}`".
 - Status conveyed by shape + text, never colour alone (done = filled check + sage; past = dimmed + quiet, not colour-only).

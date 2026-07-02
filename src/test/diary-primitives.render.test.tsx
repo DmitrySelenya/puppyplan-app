@@ -96,7 +96,7 @@ describe('CheckCircle', () => {
 });
 
 describe('WeekStrip', () => {
-  it('renders seven day tabs and marks the selected one', () => {
+  it('renders non-interactive labelled days without tab semantics', () => {
     render(
       <WeekStrip
         accessibilityLabel="Week"
@@ -106,17 +106,10 @@ describe('WeekStrip', () => {
       />,
     );
 
-    const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(7);
-    expect(tabs.map((t) => t.props.accessibilityState?.selected)).toEqual([
-      false,
-      false,
-      false,
-      true,
-      false,
-      false,
-      false,
-    ]);
+    expect(screen.getByLabelText('Week').props.accessibilityRole).toBeUndefined();
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    expect(screen.getByLabelText('Thu 14').props.accessibilityState?.selected).toBeUndefined();
     // Selected day number is rendered on the clay fill (on-primary text).
     expect(flatten(screen.getByText('14')).color).toBe(tokens.color.text.onPrimary);
   });
@@ -131,7 +124,7 @@ describe('WeekStrip', () => {
         selectedIndex={3}
       />,
     );
-    fireEvent.press(screen.getByRole('tab', { name: 'Mon 11' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Mon 11' }));
     expect(onSelectDay).toHaveBeenCalledWith(0);
   });
 });
