@@ -213,8 +213,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       native SE screenshot comparison passed 2026-07-02.
 - [ ] 🟡 Quick Tracker Selection (§2.1.4) — native tracker-step chrome/anatomy slice implemented:
       visible Step 3 chrome, helper copy, selected checkmark, selected/unselected a11y labels,
-      zero-selected Skip Selection CTA, and skip-to-default save normalization. Stage 4 native
-      screenshot comparison remains open.
+      zero-selected Skip Selection CTA, and skip-to-default save normalization. Stage 4 native SE
+      screenshot comparison passed 2026-07-02.
 - [ ] 🟡 Plan Reveal (§2.1.5) — native value-moment anatomy slice implemented: puppy summary row,
       Honey/accent HeroCard 96pt, three separate DailyCard starter actions, and bottom first-log CTA.
       Stage 4 native screenshot comparison remains open.
@@ -1489,8 +1489,13 @@ Implementation notes:
   `AppIcon name="check"` and tokenized primary/check colors.
 - EN/RU/ES startup locale files include the new tracker back label, step label, selected/unselected
   tile accessibility templates, and the locked `Skip selection` wording.
-- Stage 4 remains open: `/onboarding` Tracker Selection still needs native screenshot comparison
-  against `docs/design/v1/screenshots/onboarding/2-4.png`.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`)
+  from the installed PuppyPlan.app over Metro. Native evidence:
+  `output/v2-nav-gaps-stage4/onboarding-tracker-selection-stage4.png`,
+  `output/v2-nav-gaps-stage4/onboarding-tracker-selection-zero-stage4.png`. Runtime snapshot evidence
+  exposed Back, Step 3 of 5, helper copy, five selected tracker tiles with selected accessibility
+  labels, visible checkmarks, `5 of 5 selected`, `Continue`, then all five unselected labels,
+  `0 of 5 selected`, and `Skip selection` with no minimum-warning alert.
 
 ## 25. Onboarding Plan Reveal anatomy evidence
 
@@ -2293,6 +2298,10 @@ Implementation notes:
 - 2026-07-02: Closed Stage 4 for `/onboarding` Puppy Setup default/filled/error states: captured native
   SE evidence for disabled-until-name default, filled age-stepper/age-hint state, and future birth-date
   validation error. Real platform DatePicker replacement remains open.
+- 2026-07-02: Closed Stage 4 for `/onboarding` Quick Tracker Selection: captured native SE selected
+  and zero-selected states over Metro, verifying Step 3 chrome, helper copy, selected checkmarks,
+  selected/unselected accessibility labels in runtime snapshot, counter changes from 5/5 to 0/5, and
+  the zero-state `Skip selection` CTA without a minimum-warning alert.
 - 2026-06-30: Added the Reminder edit route anatomy slice: `/reminders/edit` now renders the create/edit
   form, quiet-hours preview, and calm permission-denied state with design primitives and existing
   localized copy; RED/GREEN route/navigation tests, typecheck, and scaffold checks passed. Real
