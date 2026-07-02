@@ -37,6 +37,12 @@ export const queryKeys = {
       ['reminders', householdId, puppyId] as const,
   },
   health: {
+    record: (puppyId: string, recordId: string) => [
+      'health',
+      'records',
+      uuidSchema.parse(puppyId),
+      uuidSchema.parse(recordId),
+    ] as const,
     records: (puppyId: string) => ['health', 'records', uuidSchema.parse(puppyId)] as const,
   },
   sharing: {

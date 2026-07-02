@@ -109,4 +109,39 @@ describe('PetRoute', () => {
     expect(screen.getByText('2026-07-02')).toBeTruthy();
     expect(screen.getByText(i18n.t('health.pills.template'))).toBeTruthy();
   });
+
+  it('AC-PET-DETAIL-1 routes a server health record row to its detail modal', () => {
+    mockHealthRecords = [{
+      completed_at: null,
+      created_at: '2026-07-02T08:00:00.000Z',
+      deleted_at: null,
+      id: '00000000-0000-4000-8000-000000003003',
+      notes: null,
+      provider_name: null,
+      puppy_id: mockCareContext.puppyId,
+      record_type: 'vaccination',
+      scheduled_for: '2026-07-02',
+      source: 'manual',
+      status: 'confirmed',
+      title: 'DHPP vaccine',
+      updated_at: '2026-07-02T08:00:00.000Z',
+      updated_by: mockCareContext.userId,
+      version: 1,
+    }];
+
+    render(<PetRoute />);
+
+    fireEvent.press(screen.getByRole('button', {
+      name: [
+        'DHPP vaccine',
+        i18n.t('health.pills.confirmed'),
+        '2026-07-02',
+      ].join('. '),
+    }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith({
+      pathname: '/pet/health-record/[recordId]',
+      params: { recordId: '00000000-0000-4000-8000-000000003003' },
+    });
+  });
 });

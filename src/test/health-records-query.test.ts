@@ -92,9 +92,28 @@ const deleteDraft: HealthRecordDeleteDraft = {
 };
 
 describe('Supabase health record repository boundary', () => {
+  it('AC-PET-DETAIL-2 fetches one non-deleted puppy health record by id', async () => {
+    const client = {
+      deleteHealthRecord: jest.fn(),
+      getHealthRecord: jest.fn(async () => ({
+        data: healthRecord,
+        error: null,
+      })),
+      insertHealthRecord: jest.fn(),
+      listHealthRecords: jest.fn(),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
+    };
+    const repository = createSupabaseHealthRecordRepository(client);
+
+    await expect(repository.getHealthRecord({ puppyId, recordId })).resolves.toEqual(healthRecord);
+    expect(client.getHealthRecord).toHaveBeenCalledWith({ puppyId, recordId });
+  });
+
   it('AC-PET-ADD-DURABLE-1 inserts health records through the typed wrapper', async () => {
     const client = {
       deleteHealthRecord: jest.fn(),
+      getHealthRecord: jest.fn(),
       insertHealthRecord: jest.fn(async () => ({
         data: healthRecord,
         error: null,
@@ -112,6 +131,7 @@ describe('Supabase health record repository boundary', () => {
   it('AC-PET-ADD-DURABLE-1 lists non-deleted puppy health records in recency order', async () => {
     const client = {
       deleteHealthRecord: jest.fn(),
+      getHealthRecord: jest.fn(),
       insertHealthRecord: jest.fn(),
       listHealthRecords: jest.fn(async () => ({
         data: [healthRecord],
@@ -129,6 +149,7 @@ describe('Supabase health record repository boundary', () => {
   it('AC-PET-EDIT-DURABLE-1 updates health records through the typed wrapper', async () => {
     const client = {
       deleteHealthRecord: jest.fn(),
+      getHealthRecord: jest.fn(),
       insertHealthRecord: jest.fn(),
       listHealthRecords: jest.fn(),
       restoreHealthRecord: jest.fn(),
@@ -162,6 +183,7 @@ describe('Supabase health record repository boundary', () => {
         data: null,
         error: null,
       })),
+      getHealthRecord: jest.fn(),
       insertHealthRecord: jest.fn(),
       listHealthRecords: jest.fn(),
       restoreHealthRecord: jest.fn(),
@@ -192,6 +214,7 @@ describe('Supabase health record repository boundary', () => {
         data: null,
         error: null,
       })),
+      getHealthRecord: jest.fn(),
       insertHealthRecord: jest.fn(),
       listHealthRecords: jest.fn(),
       restoreHealthRecord: jest.fn(),
@@ -211,6 +234,7 @@ describe('Supabase health record repository boundary', () => {
   it('AC-PET-EDIT-DURABLE-3 restores health records through the typed wrapper', async () => {
     const client = {
       deleteHealthRecord: jest.fn(),
+      getHealthRecord: jest.fn(),
       insertHealthRecord: jest.fn(),
       listHealthRecords: jest.fn(),
       restoreHealthRecord: jest.fn(async () => ({
@@ -374,6 +398,9 @@ function expectHealthRecordInvalidations(
 ) {
   expect(invalidateQueries).toHaveBeenCalledWith({
     queryKey: queryKeys.health.records(puppyId),
+  });
+  expect(invalidateQueries).toHaveBeenCalledWith({
+    queryKey: queryKeys.health.record(puppyId, recordId),
   });
   for (const date of dates) {
     expect(invalidateQueries).toHaveBeenCalledWith({

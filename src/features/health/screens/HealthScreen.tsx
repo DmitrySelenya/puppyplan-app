@@ -27,12 +27,14 @@ import {
 } from '@/lib/query/active-care-context';
 import {
   useCreateHealthRecordMutation,
+  useHealthRecordDetailQuery,
   type HealthRecordCreateDraft,
   type HealthRecordDraftStatus,
 } from '@/lib/query/health-records';
 
 export type HealthScreenProps = Readonly<{
   onOpenAddRecord?: () => void;
+  onOpenHealthRecord?: (recordId: string) => void;
   onOpenPuppyProfile?: () => void;
   onOpenQuickTrackers?: () => void;
   healthRecords?: readonly HealthRecord[];
@@ -42,6 +44,7 @@ export type HealthScreenProps = Readonly<{
 export function HealthScreen({
   healthRecords,
   onOpenAddRecord = () => undefined,
+  onOpenHealthRecord,
   onOpenPuppyProfile = () => undefined,
   onOpenQuickTrackers = () => undefined,
   reviewState = 'empty',
@@ -102,10 +105,12 @@ export function HealthScreen({
       {visibleRows.length > 0 ? (
         <Stack gap="md">
           <HealthRowsSection
+            onOpenHealthRecord={onOpenHealthRecord}
             rows={currentRows}
             titleKey="health.rows.current-section"
           />
           <HealthRowsSection
+            onOpenHealthRecord={onOpenHealthRecord}
             rows={previousRows}
             titleKey="health.rows.previous-section"
           />
@@ -308,6 +313,7 @@ type HealthRow = Readonly<{
   pillIcon: AppIconName;
   pillKey: I18nKey;
   pillTone: StatusPillTone;
+  recordId?: string;
   section: 'current' | 'previous';
   segment: HealthSegment;
   subtitleKey?: I18nKey;
@@ -316,9 +322,11 @@ type HealthRow = Readonly<{
 }>;
 
 function HealthRowsSection({
+  onOpenHealthRecord,
   rows,
   titleKey,
 }: Readonly<{
+  onOpenHealthRecord?: (recordId: string) => void;
   rows: readonly HealthRow[];
   titleKey: I18nKey;
 }>) {
@@ -347,6 +355,11 @@ function HealthRowsSection({
             key={resolveHealthRowKey(row)}
             leading={<AppIcon color={tokens.color.text.secondary} name={row.icon} />}
             meta={resolveHealthRowMeta(row, t)}
+            onPress={row.recordId && onOpenHealthRecord
+              ? () => {
+                  onOpenHealthRecord(row.recordId ?? '');
+                }
+              : undefined}
             subtitle={row.subtitleKey ? t(row.subtitleKey) : undefined}
             title={resolveHealthRowTitle(row, t)}
             trailing={(
@@ -373,7 +386,7 @@ function HealthRowsSection({
 }
 
 function resolveHealthRowKey(row: HealthRow): string {
-  return row.titleKey ?? `${row.titleText}:${row.metaText}`;
+  return row.recordId ?? row.titleKey ?? `${row.titleText}:${row.metaText}`;
 }
 
 function resolveHealthRowTitle(row: HealthRow, t: ReturnType<typeof useAppTranslation>['t']): string {
@@ -449,6 +462,7 @@ function healthRecordToRow(record: HealthRecord): HealthRow {
     pillIcon: healthRecordStatusIcon(status),
     pillKey: healthRecordStatusKey(status),
     pillTone: healthRecordStatusTone(status),
+    recordId: record.id,
     section: record.completed_at === null ? 'current' : 'previous',
     segment: healthRecordSegment(recordType),
     titleText: record.title,
@@ -557,6 +571,38 @@ function healthRecordStatusTone(status: HealthRecordRowStatus): StatusPillTone {
   return 'template';
 }
 
+function healthRecordStageIndex(status: HealthRecordRowStatus): 0 | 1 | 2 | 3 {
+  if (status === 'needsVetReview') {
+    return 1;
+  }
+
+  if (status === 'confirmed') {
+    return 2;
+  }
+
+  if (status === 'completed') {
+    return 3;
+  }
+
+  return 0;
+}
+
+function healthRecordTypeKey(type: HealthRecordType): I18nKey {
+  if (type === 'vaccination') {
+    return 'health.record-types.vaccination';
+  }
+
+  if (type === 'deworming') {
+    return 'health.record-types.deworming';
+  }
+
+  if (type === 'vet-visit') {
+    return 'health.record-types.vet-visit';
+  }
+
+  return 'health.record-types.prophylaxis';
+}
+
 type HealthRecordType = 'vaccination' | 'deworming' | 'prophylaxis' | 'vet-visit';
 
 const healthRecordTypeOptions = [
@@ -586,7 +632,7 @@ const healthRecordTypeOptions = [
   labelKey: I18nKey;
 }[];
 
-type HealthRecordStatus = 'confirmed' | 'needsVetReview';
+type HealthRecordStatus = HealthRecordRowStatus;
 type HealthRecordEditReviewState =
   | 'loading'
   | 'pending-write'
@@ -718,6 +764,127 @@ export function HealthRecordEditRouteScreen({
         </Stack>
       </Card>
     </Screen>
+  );
+}
+
+type HealthRecordDetailState = 'loading' | 'unavailable' | 'not-found' | 'error';
+
+const healthRecordDetailStateMeta: Record<HealthRecordDetailState, HealthRecordEditStateMeta> = {
+  error: {
+    bodyKey: 'health.detail.states.error.body',
+    icon: 'infoCircle',
+    role: 'alert',
+    statusKey: 'health.detail.states.error.status',
+    titleKey: 'health.detail.states.error.title',
+    tone: 'failed',
+  },
+  loading: {
+    bodyKey: 'health.detail.states.loading.body',
+    icon: 'spark',
+    liveRegion: 'polite',
+    statusKey: 'health.detail.states.loading.status',
+    titleKey: 'health.detail.states.loading.title',
+    tone: 'pending',
+  },
+  'not-found': {
+    bodyKey: 'health.detail.states.not-found.body',
+    icon: 'docText',
+    statusKey: 'health.detail.states.not-found.status',
+    titleKey: 'health.detail.states.not-found.title',
+    tone: 'template',
+  },
+  unavailable: {
+    bodyKey: 'health.detail.states.unavailable.body',
+    icon: 'lock',
+    role: 'alert',
+    statusKey: 'health.detail.states.unavailable.status',
+    titleKey: 'health.detail.states.unavailable.title',
+    tone: 'failed',
+  },
+};
+
+export function HealthRecordDetailRouteScreen({
+  onClose,
+  recordId,
+}: Readonly<{
+  onClose: () => void;
+  recordId?: string;
+}>) {
+  const activeCare = useActiveCareContext();
+  const detail = useHealthRecordDetailQuery(activeCare.careContext?.puppyId, recordId);
+
+  if (!activeCare.careContext || !recordId) {
+    return (
+      <Screen contentStyle={styles.content}>
+        <HealthRecordDetailStateCard state="unavailable" />
+      </Screen>
+    );
+  }
+
+  if (detail.isLoading) {
+    return (
+      <Screen contentStyle={styles.content}>
+        <HealthRecordDetailStateCard state="loading" />
+      </Screen>
+    );
+  }
+
+  if (detail.isError) {
+    return (
+      <Screen contentStyle={styles.content}>
+        <HealthRecordDetailStateCard state="error" />
+      </Screen>
+    );
+  }
+
+  if (!detail.data) {
+    return (
+      <Screen contentStyle={styles.content}>
+        <HealthRecordDetailStateCard state="not-found" />
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen contentStyle={styles.content}>
+      <HealthRecordDetailPreview
+        onClose={onClose}
+        record={detail.data}
+        showDestructiveActions={false}
+      />
+    </Screen>
+  );
+}
+
+function HealthRecordDetailStateCard({
+  state,
+}: Readonly<{
+  state: HealthRecordDetailState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = healthRecordDetailStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`health-record-detail-state-${state}`}
+      variant={meta.role ? 'resting' : 'mutedTemplate'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={<AppIcon name={meta.icon} size={14} />}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="headline">{title}</AppText>
+        <AppText tone="secondary" variant="callout">{body}</AppText>
+      </Stack>
+    </Card>
   );
 }
 
@@ -879,19 +1046,47 @@ function HealthRecordEditStateCard({
 
 export function HealthRecordDetailPreview({
   deletePending = false,
+  onClose,
+  record,
+  showDestructiveActions = true,
   status = 'confirmed',
 }: Readonly<{
   deletePending?: boolean;
+  onClose?: () => void;
+  record?: HealthRecord;
+  showDestructiveActions?: boolean;
   status?: HealthRecordStatus;
 }> = {}) {
   const { t } = useAppTranslation();
-  const statusKey = healthDetailStatusKey[status];
-  const statusTone = status === 'confirmed' ? 'confirmed' : 'needsVetReview';
-  const statusIcon = status === 'confirmed' ? 'vaccine' : 'stethoscope';
+  const normalizedStatus = record ? normalizeHealthRecordStatus(record.status) : status;
+  const recordType = record ? normalizeHealthRecordType(record.record_type) : 'vaccination';
+  const statusKey = healthRecordStatusKey(normalizedStatus);
+  const statusTone = healthRecordStatusTone(normalizedStatus);
+  const statusIcon = healthRecordStatusIcon(normalizedStatus);
+  const detailDate = record?.scheduled_for
+    ?? record?.completed_at?.slice(0, 10)
+    ?? t('health.detail.date-value');
+  const clinicValue = record?.provider_name ?? t('health.detail.empty-value');
+  const noteValue = record?.notes ?? t('health.detail.empty-value');
+  const currentStage = healthRecordStageIndex(normalizedStatus);
+  const historyDate = record?.updated_at.slice(0, 10) ?? t('health.detail.history-date');
 
   return (
     <Card accessibilityLabel={t('health.edit-record.screen-title')}>
       <Stack gap="md">
+        {onClose ? (
+          <Stack align="center" direction="horizontal" justify="space-between">
+            <Button
+              label={t('health.add-record.form-cancel')}
+              onPress={onClose}
+              variant="tertiary"
+            />
+            <AppText accessibilityRole="header" variant="headline">
+              {t('health.edit-record.screen-title')}
+            </AppText>
+            <View style={styles.headerSpacer} />
+          </Stack>
+        ) : null}
         <Stack direction="horizontal" gap="md">
           <View style={styles.detailIconFrame}>
             <AppIcon
@@ -901,8 +1096,10 @@ export function HealthRecordDetailPreview({
             />
           </View>
           <Stack gap="xs" style={styles.detailTitleCopy}>
-            <AppText variant="title2">{t('health.rows.dhpp-title')}</AppText>
-            <AppText tone="tertiary" variant="callout">{t('health.detail.subtitle')}</AppText>
+            <AppText variant="title2">{record?.title ?? t('health.rows.dhpp-title')}</AppText>
+            <AppText tone="tertiary" variant="callout">
+              {record ? t(healthRecordTypeKey(recordType)) : t('health.detail.subtitle')}
+            </AppText>
             <StatusPill
               accessibilityLabel={t(statusKey)}
               icon={<AppIcon name={statusIcon} size={14} />}
@@ -914,68 +1111,72 @@ export function HealthRecordDetailPreview({
         <SectionHeader title={t('health.edit-record.section-details')} />
         <Card variant="mutedTemplate">
           <Stack gap="sm">
-            <DetailRow label={t('health.detail.date-label')} value={t('health.detail.date-value')} />
+            <DetailRow label={t('health.detail.date-label')} value={detailDate} />
             <DetailRow label={t('health.detail.status-label')} value={t(statusKey)} />
-            <DetailRow label={t('health.detail.clinic-label')} value={t('health.detail.clinic-value')} />
+            <DetailRow label={t('health.detail.clinic-label')} value={clinicValue} />
             <DetailRow
               label={t('health.detail.note-label')}
-              value={t('health.detail.note-value')}
+              value={noteValue}
             />
           </Stack>
         </Card>
         <SectionHeader title={t('health.detail.stage-section')} />
         <Card variant="mutedTemplate">
-          <HealthStageStrip current={status === 'confirmed' ? 2 : 1} />
+          <HealthStageStrip current={currentStage} />
         </Card>
         <SectionHeader title={t('health.edit-record.section-history')} />
         <Card variant="mutedTemplate">
           <AppText tone="secondary" variant="footnote">
-            {t('health.edit-record.history-line', { date: t('health.detail.history-date') })}
+            {t('health.edit-record.history-line', { date: historyDate })}
           </AppText>
         </Card>
-        <Button
-          accessibilityHint={t('health.edit-record.delete-confirm.body')}
-          label={t('health.edit-record.delete-action')}
-          leading={<AppIcon color={tokens.color.text.onPrimary} name="trash" size={18} />}
-          loading={deletePending}
-          onPress={() => undefined}
-          variant="destructive"
-        />
-        <Card
-          accessibilityLabel={t('health.edit-record.delete-confirm.title')}
-          accessibilityRole="alert"
-          variant="mutedTemplate">
-          <Stack gap="sm">
-            <AppText variant="headline">{t('health.edit-record.delete-confirm.title')}</AppText>
-            <AppText tone="secondary">{t('health.edit-record.delete-confirm.body')}</AppText>
-            <Stack direction="horizontal" gap="sm" wrap>
-              <Button
-                label={t('health.edit-record.delete-confirm.cancel')}
-                onPress={() => undefined}
-                variant="tertiary"
-              />
-              <Button
-                disabled={deletePending}
-                label={t('health.edit-record.delete-confirm.destructive')}
-                onPress={() => undefined}
-                variant="destructive"
-              />
-            </Stack>
-          </Stack>
-        </Card>
-        {deletePending ? (
-          <Card accessibilityLiveRegion="polite" variant="mutedTemplate">
-            <Stack align="center" direction="horizontal" gap="sm">
-              <AppIcon
-                color={tokens.color.status.warning}
-                name="warningTriangle"
-                size={18}
-              />
-              <AppText variant="callout">
-                {t('health.edit-record.delete-undo-toast')}
-              </AppText>
-            </Stack>
-          </Card>
+        {showDestructiveActions ? (
+          <>
+            <Button
+              accessibilityHint={t('health.edit-record.delete-confirm.body')}
+              label={t('health.edit-record.delete-action')}
+              leading={<AppIcon color={tokens.color.text.onPrimary} name="trash" size={18} />}
+              loading={deletePending}
+              onPress={() => undefined}
+              variant="destructive"
+            />
+            <Card
+              accessibilityLabel={t('health.edit-record.delete-confirm.title')}
+              accessibilityRole="alert"
+              variant="mutedTemplate">
+              <Stack gap="sm">
+                <AppText variant="headline">{t('health.edit-record.delete-confirm.title')}</AppText>
+                <AppText tone="secondary">{t('health.edit-record.delete-confirm.body')}</AppText>
+                <Stack direction="horizontal" gap="sm" wrap>
+                  <Button
+                    label={t('health.edit-record.delete-confirm.cancel')}
+                    onPress={() => undefined}
+                    variant="tertiary"
+                  />
+                  <Button
+                    disabled={deletePending}
+                    label={t('health.edit-record.delete-confirm.destructive')}
+                    onPress={() => undefined}
+                    variant="destructive"
+                  />
+                </Stack>
+              </Stack>
+            </Card>
+            {deletePending ? (
+              <Card accessibilityLiveRegion="polite" variant="mutedTemplate">
+                <Stack align="center" direction="horizontal" gap="sm">
+                  <AppIcon
+                    color={tokens.color.status.warning}
+                    name="warningTriangle"
+                    size={18}
+                  />
+                  <AppText variant="callout">
+                    {t('health.edit-record.delete-undo-toast')}
+                  </AppText>
+                </Stack>
+              </Card>
+            ) : null}
+          </>
         ) : null}
       </Stack>
     </Card>
@@ -1106,11 +1307,6 @@ function HealthStageStrip({
   );
 }
 
-const healthDetailStatusKey = {
-  confirmed: 'health.pills.confirmed',
-  needsVetReview: 'health.pills.needs-vet-review',
-} as const satisfies Record<HealthRecordStatus, I18nKey>;
-
 const healthStageKeys = [
   'health.status-transitions.stages.0',
   'health.status-transitions.stages.1',
@@ -1168,6 +1364,9 @@ const styles = StyleSheet.create({
   detailValue: {
     flex: 1,
     textAlign: 'right',
+  },
+  headerSpacer: {
+    width: tokens.component.listItem.minHeight,
   },
   petHubFact: {
     alignItems: 'center',

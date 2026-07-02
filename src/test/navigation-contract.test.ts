@@ -67,6 +67,19 @@ describe('navigation contract', () => {
     expect(settingsRoutes).not.toContain('/paywall');
   });
 
+  it('tracks health record detail as a dynamic Pet modal route', () => {
+    expect(modalRoutes).toContain('/pet/health-record/[recordId]');
+    expect(plannedRouteFiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          route: '/pet/health-record/[recordId]',
+          file: 'app/(modals)/pet/health-record/[recordId].tsx',
+          implementationStage: 'existing',
+        }),
+      ]),
+    );
+  });
+
   it('keeps legacy Today, Health, and Timeline paths as migration aliases, not primary tabs', () => {
     expect(atlasRouteAliases['/today']).toBe('/diary');
     expect(atlasRouteAliases['/health']).toBe('/pet');

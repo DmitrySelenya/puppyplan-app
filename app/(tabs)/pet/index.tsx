@@ -15,6 +15,12 @@ export default function PetRoute() {
       onOpenAddRecord={() => {
         router.push('/pet/health-record-edit');
       }}
+      onOpenHealthRecord={(recordId) => {
+        router.push({
+          pathname: '/pet/health-record/[recordId]',
+          params: { recordId },
+        });
+      }}
       onOpenPuppyProfile={() => {
         router.push('/settings/puppy-profile');
       }}

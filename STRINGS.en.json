@@ -1381,7 +1381,30 @@
       "note-label": "Note",
       "note-value": "Mild post-visit note, resolved within 24 hours.",
       "stage-section": "Stage",
-      "history-date": "May 12, 2026"
+      "history-date": "May 12, 2026",
+      "empty-value": "Not added",
+      "states": {
+        "loading": {
+          "status": "Loading",
+          "title": "Opening entry",
+          "body": "We are loading this health entry."
+        },
+        "unavailable": {
+          "status": "Unavailable",
+          "title": "No active puppy context",
+          "body": "Return to Pet and try opening the entry again."
+        },
+        "not-found": {
+          "status": "Not found",
+          "title": "Entry is not available",
+          "body": "It may have been deleted or is no longer shared with you."
+        },
+        "error": {
+          "status": "Could not load",
+          "title": "Could not load this entry",
+          "body": "Check your connection and try again."
+        }
+      }
     },
     "weight-entry": {
       "title": "Weight entry",

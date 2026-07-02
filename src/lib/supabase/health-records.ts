@@ -52,6 +52,7 @@ export type HealthRecordRestore = Readonly<{
 
 export type SupabaseHealthRecordRepository = Readonly<{
   deleteHealthRecord(input: HealthRecordDelete): Promise<void>;
+  getHealthRecord(input: Readonly<{ puppyId: string; recordId: string }>): Promise<HealthRecord>;
   insertHealthRecord(insert: HealthRecordInsert): Promise<HealthRecord>;
   listHealthRecords(input: Readonly<{ puppyId: string }>): Promise<readonly HealthRecord[]>;
   restoreHealthRecord(input: HealthRecordRestore): Promise<HealthRecord>;
@@ -61,6 +62,10 @@ export type SupabaseHealthRecordRepository = Readonly<{
 export type HealthRecordClient = Readonly<{
   deleteHealthRecord(input: HealthRecordDelete): PromiseLike<Readonly<{
     count?: number | null;
+    data: unknown;
+    error: unknown;
+  }>>;
+  getHealthRecord(input: Readonly<{ puppyId: string; recordId: string }>): PromiseLike<Readonly<{
     data: unknown;
     error: unknown;
   }>>;
@@ -92,6 +97,15 @@ export function createSupabaseHealthRecordRepository(
       if (response.error || response.count === 0) {
         throw new Error('health_record_delete_failed');
       }
+    },
+    getHealthRecord: async (input) => {
+      const response = await client.getHealthRecord(input);
+
+      if (response.error || response.data === null) {
+        throw new Error('health_record_get_failed');
+      }
+
+      return healthRecordSchema.parse(response.data);
     },
     insertHealthRecord: async (insert) => {
       const response = await client.insertHealthRecord(insert);
@@ -158,6 +172,13 @@ function createDefaultHealthRecordClient(): HealthRecordClient {
       .eq('id', id)
       .eq('puppy_id', puppy_id)
       .is('deleted_at', null),
+    getHealthRecord: ({ puppyId, recordId }) => getSupabaseClient()
+      .from('health_record')
+      .select(healthRecordSelectColumns)
+      .eq('id', recordId)
+      .eq('puppy_id', puppyId)
+      .is('deleted_at', null)
+      .maybeSingle(),
     insertHealthRecord: (insert) => getSupabaseClient()
       .from('health_record')
       .insert(insert)

@@ -98,6 +98,24 @@ export function useHealthRecordsQuery(
   });
 }
 
+export function useHealthRecordDetailQuery(
+  puppyId: string | undefined,
+  recordId: string | undefined,
+  repository: Pick<SupabaseHealthRecordRepository, 'getHealthRecord'> =
+  createSupabaseHealthRecordRepository(),
+) {
+  return useQuery({
+    enabled: puppyId !== undefined && recordId !== undefined,
+    queryFn: () => repository.getHealthRecord({
+      puppyId: puppyId ?? '',
+      recordId: recordId ?? '',
+    }),
+    queryKey: puppyId === undefined || recordId === undefined
+      ? ['health', 'records', 'detail', 'inactive']
+      : queryKeys.health.record(puppyId, recordId),
+  });
+}
+
 export function useCreateHealthRecordMutation(
   repository: Pick<SupabaseHealthRecordRepository, 'insertHealthRecord'> =
   createSupabaseHealthRecordRepository(),
@@ -241,6 +259,7 @@ export function createHealthRecordUpdateMutationOptions(
         ]),
         householdId: draft.householdId,
         puppyId: draft.puppyId,
+        recordId: draft.id,
       });
     },
   };
@@ -256,6 +275,7 @@ export function createHealthRecordDeleteMutationOptions(
         dates: [draft.affectedDate],
         householdId: draft.householdId,
         puppyId: draft.puppyId,
+        recordId: draft.id,
       });
     },
   };
@@ -271,6 +291,7 @@ export function createHealthRecordRestoreMutationOptions(
         dates: [draft.affectedDate],
         householdId: draft.householdId,
         puppyId: draft.puppyId,
+        recordId: draft.id,
       });
     },
   };
@@ -296,6 +317,7 @@ async function invalidateHealthRecordDependents(
     dates: readonly string[];
     householdId: string;
     puppyId: string;
+    recordId?: string;
   }>,
 ) {
   if (!queryClient) {
@@ -306,6 +328,9 @@ async function invalidateHealthRecordDependents(
     queryClient.invalidateQueries({
       queryKey: queryKeys.health.records(input.puppyId),
     }),
+    ...(input.recordId ? [queryClient.invalidateQueries({
+      queryKey: queryKeys.health.record(input.puppyId, input.recordId),
+    })] : []),
     ...input.dates.map((date) => queryClient.invalidateQueries({
       queryKey: queryKeys.today.dashboard(input.householdId, input.puppyId, date),
     })),

@@ -74,6 +74,7 @@ export const modalRoutes = [
   '/sharing/scope-selector',
   '/sharing/puppy-card',
   '/pet/health-record-edit',
+  '/pet/health-record/[recordId]',
   ...settingsRoutes,
 ] as const;
 
@@ -172,6 +173,11 @@ export const plannedRouteFiles = [
   {
     route: '/pet/health-record-edit',
     file: 'app/(modals)/pet/health-record-edit/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/pet/health-record/[recordId]',
+    file: 'app/(modals)/pet/health-record/[recordId].tsx',
     implementationStage: 'existing',
   },
   {
@@ -355,6 +361,19 @@ export const shellI18nKeys = [
   'health.detail.note-value',
   'health.detail.stage-section',
   'health.detail.history-date',
+  'health.detail.empty-value',
+  'health.detail.states.loading.status',
+  'health.detail.states.loading.title',
+  'health.detail.states.loading.body',
+  'health.detail.states.unavailable.status',
+  'health.detail.states.unavailable.title',
+  'health.detail.states.unavailable.body',
+  'health.detail.states.not-found.status',
+  'health.detail.states.not-found.title',
+  'health.detail.states.not-found.body',
+  'health.detail.states.error.status',
+  'health.detail.states.error.title',
+  'health.detail.states.error.body',
   'health.status-transitions.stages.0',
   'health.status-transitions.stages.1',
   'health.status-transitions.stages.2',

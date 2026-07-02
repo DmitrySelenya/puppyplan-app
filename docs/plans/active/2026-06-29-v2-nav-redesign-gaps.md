@@ -133,13 +133,15 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       permission-denied state templates. Stage 4 SE native screenshot comparison PASS recorded
       2026-07-02 for chooser + empty form + the new state templates. Durable create/list refresh is
       now implemented through the typed health-record repository and query hooks. Durable edit/delete/
-      restore data-layer contracts are also implemented; production detail-route wiring, offline queue,
-      native DatePicker, and template generation remain open.
+      restore data-layer contracts are also implemented; production read-only detail-route wiring is
+      implemented at `/pet/health-record/[recordId]`. Offline queue, native DatePicker, and template
+      generation remain open.
 - [ ] 🟡 Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
       Durable edit/delete/restore data-layer contracts are now implemented with source preservation,
-      affected-date invalidation, and zero-row delete failure handling. Production detail-route wiring,
-      timed 5-second undo restore, and native persistence UI remain open.
+      affected-date invalidation, zero-row delete failure handling, and single-record detail loading.
+      Production read-only detail routing is implemented; timed 5-second undo restore and native
+      persistence UI remain open.
 - [x] ✅ Status transitions visualisation Template→Confirmed→Done (§4.1.6) — native detail
       status strip now renders four visible icon+label steps with exactly one active filled state and
       full sequence accessibility label. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
@@ -1501,6 +1503,66 @@ Implementation notes:
 - No UI route, native picker, offline queue, analytics, schema, `ios/`, or `android/` changes were
   introduced. Stage 4 screenshot evidence is not applicable to this data-layer slice; the future
   production Health detail route still owns that visual gate.
+
+### 17b. Health record production detail route wiring
+
+**2026-07-02 read-only route slice:** wire server-backed Pet Health rows to a real production
+detail modal at `/pet/health-record/[recordId]`, backed by a typed single-record Supabase/query
+contract. This closes the route wiring gap only; edit/delete/timed undo persistence remains a
+separate §4.1.4 slice.
+
+- Source spec card: `docs/design/v1/specs/05-pet-health.md`.
+- Source atlas: `health/11-4.png` confirmed detail and `health/11-5.png` needs-vet-review detail.
+- Route/components: `app/(tabs)/pet/index.tsx`,
+  `app/(modals)/pet/health-record/[recordId].tsx`, `src/features/health/screens/HealthScreen.tsx`,
+  `src/lib/supabase/health-records.ts`, `src/lib/query/health-records.ts`, `src/contracts/navigation.ts`.
+- TDD mode: lightweight; reduced assurance because this continuation is running in the main thread,
+  but each acceptance item below had a focused RED before implementation.
+
+Acceptance:
+- AC-PET-DETAIL-1: pressing a server-backed Pet Health row routes to
+  `/pet/health-record/[recordId]` with the selected `health_record.id`.
+- AC-PET-DETAIL-2: the Supabase boundary can fetch one non-deleted `health_record` by `recordId`
+  and `puppyId`, parse it through `healthRecordSchema`, and fail closed when the row is missing or
+  inaccessible.
+- AC-PET-DETAIL-3: the production detail modal reads the active puppy context and route param,
+  renders real title/date/status/provider/note values, and uses localized calm states for loading,
+  unavailable, not-found, and error.
+- AC-PET-DETAIL-4: update/delete/restore mutation invalidation now includes the single-record
+  detail query key in addition to the list and dependent dashboard/projection keys.
+- AC-PET-DETAIL-5: production detail is read-only in this slice; the existing delete confirm/undo
+  anatomy remains synthetic-only until real timed undo restore wiring is implemented.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/pet-route.render.test.tsx` failed first because
+  server-backed Health rows were static views, not buttons, and no detail route push occurred.
+- `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts` failed first with
+  `detailRepository.getHealthRecord is not a function`.
+- `npm run test:unit -- --runTestsByPath src/test/health-record-detail-route.render.test.tsx`
+  failed first because `app/(modals)/pet/health-record/[recordId].tsx` did not exist.
+- `npm run test:unit -- --runTestsByPath src/test/navigation-contract.test.ts` failed first
+  because the dynamic detail route was missing from `modalRoutes` / `plannedRouteFiles`.
+
+GREEN evidence:
+- Targeted RED/GREEN suites passed:
+  `src/test/pet-route.render.test.tsx`, `src/test/health-record-detail-route.render.test.tsx`,
+  `src/test/health-records-query.test.ts`, `src/test/navigation-contract.test.ts`, and
+  `src/test/health.render.test.tsx`.
+- `npm run typecheck` initially failed until Expo Router typed routes were regenerated by starting
+  Metro on a temporary port; the repeated `npm run typecheck` passed.
+- `npm run test:scaffold` passed after adding the new `health.detail.*` state keys to
+  `shellI18nKeys`.
+- Full `npm run check` passed on 2026-07-02: lint, typecheck, 72 Jest suites / 568 tests,
+  node checks, scaffold, tokens, privacy scan, and text hygiene.
+
+Stage 4 status:
+- The production route uses the same native detail component whose confirmed / needs-vet-review
+  anatomy already has Stage 4 SE evidence from `health/11-4.png` and `health/11-5.png`.
+- No new visual anatomy was introduced in this slice; the route only swaps synthetic DHPP values for
+  real `health_record` values and hides synthetic-only destructive controls in production.
+- A live production-route SE capture is still **not recorded as PASS** because it requires a
+  deterministic debug-account `health_record` seed or a dedicated approved harness route. Do not
+  treat this note as closing the future native persistence / timed undo Stage 4 gate.
 
 ## 18. Vet visit prep card Stage-0 lock evidence
 

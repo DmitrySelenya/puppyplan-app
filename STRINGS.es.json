@@ -1447,7 +1447,30 @@
       "note-label": "Nota",
       "note-value": "Nota leve después de la visita, resuelta en 24 horas.",
       "stage-section": "Etapa",
-      "history-date": "12 de mayo de 2026"
+      "history-date": "12 de mayo de 2026",
+      "empty-value": "No agregado",
+      "states": {
+        "loading": {
+          "status": "Cargando",
+          "title": "Abriendo entrada",
+          "body": "Estamos cargando esta entrada de salud."
+        },
+        "unavailable": {
+          "status": "No disponible",
+          "title": "No hay contexto activo del cachorro",
+          "body": "Vuelve a Pet e intenta abrir la entrada de nuevo."
+        },
+        "not-found": {
+          "status": "No encontrada",
+          "title": "La entrada no está disponible",
+          "body": "Puede haberse eliminado o ya no estar compartida contigo."
+        },
+        "error": {
+          "status": "No se pudo cargar",
+          "title": "No pudimos cargar esta entrada",
+          "body": "Revisa tu conexión e inténtalo de nuevo."
+        }
+      }
     },
     "weight-entry": {
       "title": "Entrada de peso",
