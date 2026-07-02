@@ -210,7 +210,31 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Push permission denied — calm in-app state (§4.2.7) — native non-modal permission card
       implemented inside `/reminders/edit`; reminder creation remains visually available and not
       blocked. Stage 4 native SE screenshot comparison passed 2026-07-02; OS settings deeplink
-      and real permission state wiring remain open.
+      is now wired through the route's calm permission card. Real permission state wiring remains open.
+
+#### 4.2.7a Reminder permission settings handoff
+
+Stage-0 lock:
+- Source: DESIGN.md §4.2.7 and the implemented `/reminders/edit` permission-denied card.
+- Scope: route-level handoff only. No native permission prompt, no permission-state probing, no
+  scheduling/persistence changes, and no new native module.
+
+Acceptance:
+- AC-REM-SETTINGS-1: pressing `How to enable` calls the platform settings handoff through
+  `Linking.openSettings()`.
+- AC-REM-SETTINGS-2: the reminder edit route stays open; this action must not close the modal or
+  block reminder creation.
+- AC-REM-SETTINGS-3: if the settings handoff rejects, the route renders the existing reminder
+  edit error state instead of swallowing the failure into a no-op.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminder-edit-route.render.test.tsx` failed as
+  expected while the permission-card CTA still had a no-op handler: `Linking.openSettings()` was
+  never called and the error state never rendered after a rejected settings handoff.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminder-edit-route.render.test.tsx` — PASS:
+  1 suite, 8 tests.
 
 ### Guidance cards — DESIGN.md §4.3
 - [x] 🚫 Guidance card anatomy + states (Read/Practiced/Skip) + topics (§4.3) — deferred for this

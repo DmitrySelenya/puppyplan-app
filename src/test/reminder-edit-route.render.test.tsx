@@ -1,5 +1,5 @@
-import { AccessibilityInfo } from 'react-native';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { AccessibilityInfo, Linking } from 'react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { tokens } from '@/design/tokens';
 import {
@@ -19,10 +19,14 @@ jest.mock('expo-router', () => ({
 }));
 
 describe('ReminderEditRoute', () => {
+  let openSettingsSpy: jest.SpyInstance<Promise<void>, []>;
   let reduceMotionProbe: jest.SpyInstance;
 
   beforeEach(async () => {
     mockRouterBack.mockClear();
+    openSettingsSpy = jest
+      .spyOn(Linking, 'openSettings')
+      .mockResolvedValue(undefined);
     reduceMotionProbe = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
       .mockReturnValue(new Promise<boolean>(() => {}));
@@ -30,6 +34,7 @@ describe('ReminderEditRoute', () => {
   });
 
   afterEach(() => {
+    openSettingsSpy.mockRestore();
     reduceMotionProbe.mockRestore();
   });
 
@@ -147,6 +152,34 @@ describe('ReminderEditRoute', () => {
     }));
 
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-REM-SETTINGS opens OS settings from the calm permission card without closing the route', async () => {
+    render(<ReminderEditRoute />);
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('reminders.permission-denied.how-to-enable'),
+    }));
+
+    await waitFor(() => {
+      expect(openSettingsSpy).toHaveBeenCalledTimes(1);
+    });
+    expect(mockRouterBack).not.toHaveBeenCalled();
+    expect(screen.getByText(i18n.t('reminders.form.title-new'))).toBeTruthy();
+  });
+
+  it('AC-REM-SETTINGS renders the route error state when OS settings handoff fails', async () => {
+    openSettingsSpy.mockRejectedValueOnce(new Error('settings failed'));
+    render(<ReminderEditRoute />);
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('reminders.permission-denied.how-to-enable'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('reminder-edit-state-error')).toBeTruthy();
+    });
+    expect(mockRouterBack).not.toHaveBeenCalled();
   });
 
   it('AC-REM-EDIT-STATES renders deterministic loading, pending, error, and offline states', () => {

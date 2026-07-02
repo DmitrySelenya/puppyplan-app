@@ -1,4 +1,5 @@
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
@@ -86,7 +87,18 @@ export function ReminderEditScreen({
   reviewState?: ReminderEditReviewState;
 }>) {
   const { t } = useAppTranslation();
-  const isPendingWrite = reviewState === 'pending-write';
+  const [localReviewState, setLocalReviewState] = useState<ReminderEditReviewState | undefined>();
+  const visibleReviewState = reviewState ?? localReviewState;
+  const isPendingWrite = visibleReviewState === 'pending-write';
+
+  const handleOpenNotificationSettings = async () => {
+    setLocalReviewState(undefined);
+    try {
+      await Linking.openSettings();
+    } catch {
+      setLocalReviewState('error');
+    }
+  };
 
   return (
     <Screen contentStyle={styles.content} modal>
@@ -110,7 +122,7 @@ export function ReminderEditScreen({
             />
           </Stack>
 
-          {reviewState ? <ReminderEditStatePreview state={reviewState} /> : null}
+          {visibleReviewState ? <ReminderEditStatePreview state={visibleReviewState} /> : null}
 
           <Stack gap="md">
             <TextField
@@ -189,7 +201,7 @@ export function ReminderEditScreen({
 
       <TrustedSitterChecklistReminderCard />
       <QuietHoursCard />
-      <ReminderPermissionDeniedCard />
+      <ReminderPermissionDeniedCard onOpenSettings={handleOpenNotificationSettings} />
     </Screen>
   );
 }
@@ -356,7 +368,11 @@ function QuietHoursCard() {
   );
 }
 
-function ReminderPermissionDeniedCard() {
+function ReminderPermissionDeniedCard({
+  onOpenSettings,
+}: Readonly<{
+  onOpenSettings: () => Promise<void>;
+}>) {
   const { t } = useAppTranslation();
 
   return (
@@ -382,7 +398,9 @@ function ReminderPermissionDeniedCard() {
         </Stack>
         <Button
           label={t('reminders.permission-denied.how-to-enable')}
-          onPress={() => undefined}
+          onPress={() => {
+            void onOpenSettings();
+          }}
           variant="secondary"
         />
         <AppText tone="tertiary" variant="footnote">
