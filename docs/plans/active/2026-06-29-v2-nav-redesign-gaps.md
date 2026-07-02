@@ -163,8 +163,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       2026-07-02.
 - [x] ✅ Sitter checklist reminders (§4.2.6) — native structural anatomy implemented
       inside `/reminders/edit`: trusted-sitter source label, person icon slot, left accent rail,
-      1/3 progress bar, and localized action set. Real sitter checklist data, completion push,
-      scheduling, pending-sync state, and Stage 4 screenshot comparison remain open.
+      1/3 progress bar, and localized action set. Stage 4 native SE screenshot comparison passed
+      2026-07-02; real sitter checklist data, completion push, scheduling, and pending-sync state
+      remain open.
 - [x] ✅ Create / edit reminder form (§4.2.2) — native route anatomy implemented at
       `/reminders/edit`: title/name/category/time/repeat/timezone/toggles/helper copy and disabled
       Save state. Stage 4 native SE screenshot comparison passed 2026-07-02; real reminder
@@ -1248,8 +1249,7 @@ the Reminders edit/review surface.
   `src/features/reminders/screens/ReminderEditScreen.tsx`.
 - Allowed deviation: this slice implements a static native structural anatomy preview inside the
   current reminder-edit route. Real sitter checklist source data, checklist open flow, whole-checklist
-  completion, push to the owner, pending-sync state, and native screenshot comparison remain plan-owned
-  follow-up work.
+  completion, push to the owner, and pending-sync state remain plan-owned follow-up work.
 - TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
 
 Spec lock for this slice:
@@ -1275,8 +1275,11 @@ Implementation notes:
   `AppText`, `Stack`) and tokenized styles. No new primitive or dependency was introduced.
 - EN/RU/ES `reminders.sitter-card.*` strings now include the progress accessibility label and the
   full three-action checklist reminder set.
-- Stage 4 remains open: the trusted-sitter checklist reminder state still needs native screenshot
-  comparison against the locked Reminders/Sitter board before the Reminders route can be marked done.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`)
+  from the installed PuppyPlan.app over Metro. Native evidence:
+  `output/v2-nav-gaps-stage4/reminders-edit-stage4-sitter-checklist.png`. Runtime snapshot evidence
+  exposed the `Trusted sitter` label, `Evening checklist · 7:00 pm` title, privacy-safe caregiver
+  label, `Open checklist`, `Mark all done`, and `Skip` actions.
 
 ## 21. Onboarding Welcome anatomy evidence
 
@@ -2261,6 +2264,10 @@ Implementation notes:
   over Metro, with runtime snapshot evidence for the modal actions, disabled Save, category selector,
   time/repeat/timezone rows, toggles, quiet-hours range/per-puppy control, permission CTA, and fallback
   copy. Sitter checklist Stage 4 remains separate.
+- 2026-07-02: Closed Stage 4 for the trusted-sitter checklist reminder card inside `/reminders/edit`:
+  captured native SE evidence for the source label, person icon slot, left accent rail, evening
+  checklist title, privacy-safe caregiver label, progress bar, and Open checklist / Mark all done /
+  Skip actions. Real sitter checklist data, completion push, and pending-sync state remain open.
 - 2026-06-30: Added the Reminder edit route anatomy slice: `/reminders/edit` now renders the create/edit
   form, quiet-hours preview, and calm permission-denied state with design primitives and existing
   localized copy; RED/GREEN route/navigation tests, typecheck, and scaffold checks passed. Real
