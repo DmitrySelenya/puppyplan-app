@@ -83,13 +83,14 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Optional details — Note (§2.3.7)
 - [x] ✅ Snackbar / Undo (§2.3.8) — native route anatomy implemented: after-tap success
       snackbar, polite live region, Undo/Add details actions, and `saveSuccess` feedback contract.
-      Stage 4 native screenshot comparison remains open for the full Quick Log route.
+      Stage 4 native visual capture remains open for the transient snackbar host.
 - [x] ✅ Pending / failed / retry (§2.3.9) — failed-save inline row anatomy implemented
       with retry/discard; snackbar replacement uses error feedback; pending mutation events now
-      render inline before cached rows refresh. Stage 4 still open.
+      render inline before cached rows refresh. Stage 4 SE native screenshot comparison PASS
+      recorded 2026-07-02 for synthetic pending+failed route anatomy.
 - [x] ✅ Duplicate warning (§2.3.10) — native route anatomy implemented: warning tint,
       warning glyph, localized save-anyway/cancel actions, and no mutation before explicit confirm.
-      Stage 4 native screenshot comparison remains open for the full Quick Log route.
+      Stage 4 SE native screenshot comparison PASS recorded 2026-07-02 on the production route.
 - [x] ✅ **Tracker grid "Edit Trackers"** config (§2.3.2 / §4.4.3) — implemented as
       `/settings/quick-trackers`, reachable from Quick Log sheet and More, with implicit-save
       toggle/reorder rows and owner-only guardrails. Stage 4 SE native screenshot comparison PASS
@@ -761,8 +762,12 @@ Implementation notes:
   warning-tinted `Card` with a visible warning icon slot and the existing localized confirm/cancel
   actions.
 - `src/design/primitives/AppIcon.tsx` now includes `warningTriangle` for warning-state anatomy.
-- Stage 4 remains open: `/quick-log` still needs native screenshot comparison against
-  `docs/design/v1/screenshots/quicklog/4-4.png` before the route can be marked done.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator from the installed PuppyPlan.app
+  over Metro. Native evidence: `output/v2-nav-gaps-stage4/quick-log-production-default-stage4.png`
+  and `output/v2-nav-gaps-stage4/quick-log-production-duplicate-warning-stage4.png`. The
+  production flow opened Diary → Add → Quick Log, tapped a same-tracker Feeding event within the
+  duplicate window, and exposed the warning-tinted card, warning glyph, localized `Add anyway` /
+  `Cancel` actions, and dimmed route backdrop without queuing the mutation before confirmation.
 
 ## 12. Quick Log failed-save row Stage-0 lock evidence
 
@@ -811,8 +816,11 @@ Implementation notes:
   `tokens.color.status.danger`, and keeps pending rows on the non-danger path with
   `quick-log-local-event-pending-card`.
 - Retry/discard callbacks remain unchanged and covered through the component and sheet tests.
-- Stage 4 remains open: `/quick-log` failed state still needs native screenshot comparison against
-  `docs/design/v1/screenshots/quicklog/4-5.png` before the route can be marked done.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator from a temporary `/_dev/components`
+  route harness, restored before commit. Native evidence:
+  `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`. The screenshot verifies
+  the same Quick Log sheet anatomy with a pending Feeding row (`Saving`, Undo, Discard) and a failed
+  Walk row using muted danger tint/border, visible `Not saved` status, `Try again`, and `Discard`.
 
 ## 13. Quick Log snackbar/undo Stage-0 lock evidence
 
@@ -869,8 +877,12 @@ Implementation notes:
 - `src/test/quick-log-sheet.render.test.tsx` now pins the `4.2 Quick Log after tap` route anatomy:
   sheet closes, success snackbar remains, status is polite, surface uses success tint, and Undo/Add
   details are available for a detail-capable tracker.
-- Stage 4 remains open: `/quick-log` after-tap snackbar still needs native screenshot comparison
-  against the locked Open Design board before the route can be marked done.
+- 2026-07-02 follow-up: runtime screenshot attempts after production Quick Log saves and through a
+  temporary local `SnackbarProvider` route harness still did not expose the transient snackbar host
+  on the SE simulator. A RED/GREEN primitive regression now pins `SnackbarProvider` to a full-height
+  root (`snackbar-provider-root`) so absolute snackbar overlays have a valid anchor, but native
+  visual capture for the snackbar host remains open. Do not mark this slice Stage 4 PASS until a
+  screenshot shows the success surface with Undo/Add details.
 
 ## 14. Quick Trackers settings / Edit Trackers evidence
 
@@ -2152,10 +2164,16 @@ Implementation notes:
 - The same mapping keeps failed mutation events on the failed-row path if cache rows have not refreshed.
 - Cached local rows and mutation-event rows are merged by `clientEventId`, with the latest mutation event
   overriding a stale cached row for the same event.
-- Stage 4 remains open: `/quick-log` pending/failed states still need native screenshot comparison
-  against the locked Quick Log state artboards before the full route can be marked done.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator from the temporary Quick Log
+  pending/failed route harness noted in §12. Native evidence:
+  `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Closed Quick Log Stage 4 for duplicate warning and pending/failed inline rows:
+  production route screenshots verify the default sheet and duplicate warning; a temporary restored
+  dev-route harness verifies pending and failed local rows. Snackbar visual capture remains open after
+  production and harness attempts; added RED/GREEN `SnackbarProvider` full-height root coverage to
+  address the discovered absolute-overlay anchoring gap.
 - 2026-07-01: Closed Quick Log §2.3.9 pending route coverage: `started` mutation events now render
   inline pending rows before cached rows refresh, reuse existing pending-row anatomy/i18n, and wire
   Undo through the active care context. RED/GREEN route tests and adjacent Quick Log render suites pass;

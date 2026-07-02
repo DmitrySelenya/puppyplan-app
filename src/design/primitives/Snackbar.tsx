@@ -116,8 +116,12 @@ export function SnackbarProvider({ children }: PropsWithChildren) {
   return (
     <SnackbarContext.Provider value={controller}>
       <SnackbarActivityContext.Provider value={message !== null}>
-        {children}
-        <SnackbarHost message={message} />
+        <View
+          style={styles.providerRoot}
+          testID="snackbar-provider-root">
+          {children}
+          <SnackbarHost message={message} />
+        </View>
       </SnackbarActivityContext.Provider>
     </SnackbarContext.Provider>
   );
@@ -230,6 +234,9 @@ const styles = StyleSheet.create({
   action: {
     paddingHorizontal: tokens.space[2],
     paddingVertical: tokens.space[1],
+  },
+  providerRoot: {
+    flex: 1,
   },
   host: {
     bottom: 0,
