@@ -25,10 +25,12 @@ describe('Health V2 anatomy', () => {
   });
 
   it('AC-PET-HUB renders a Pet profile hub before the lightweight Health block', () => {
+    const openPuppyProfile = jest.fn();
     const openQuickTrackers = jest.fn();
 
     render(
       <HealthScreen
+        onOpenPuppyProfile={openPuppyProfile}
         onOpenQuickTrackers={openQuickTrackers}
         reviewState="mixed-list"
       />,
@@ -46,14 +48,17 @@ describe('Health V2 anatomy', () => {
     expect(screen.getByText(i18n.t('more.puppy-profile.screen-title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.puppy-summary.no-age'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('more.puppy-profile.missing-value')).length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByRole('button', { name: i18n.t('health.pet-hub.edit-profile') })).toBeTruthy();
+    const editProfile = screen.getByRole('button', { name: i18n.t('health.pet-hub.edit-profile') });
+    expect(editProfile).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('health.pet-hub.add-weight') })).toBeTruthy();
     const trackersEntry = screen.getByRole('button', {
       name: i18n.t('health.pet-hub.quick-trackers-a11y'),
     });
 
+    fireEvent.press(editProfile);
     expect(trackersEntry).toBeTruthy();
     fireEvent.press(trackersEntry);
+    expect(openPuppyProfile).toHaveBeenCalledTimes(1);
     expect(openQuickTrackers).toHaveBeenCalledTimes(1);
     expect(screen.getByText(i18n.t('health.rows.dhpp-title'))).toBeTruthy();
     expect(screen.queryByText(/chart/i)).toBeNull();

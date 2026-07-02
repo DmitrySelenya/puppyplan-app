@@ -23,12 +23,14 @@ import { type I18nKey, useAppTranslation } from '@/lib/i18n';
 
 export type HealthScreenProps = Readonly<{
   onOpenAddRecord?: () => void;
+  onOpenPuppyProfile?: () => void;
   onOpenQuickTrackers?: () => void;
   reviewState?: 'empty' | 'mixed-list';
 }>;
 
 export function HealthScreen({
   onOpenAddRecord = () => undefined,
+  onOpenPuppyProfile = () => undefined,
   onOpenQuickTrackers = () => undefined,
   reviewState = 'empty',
 }: HealthScreenProps = {}) {
@@ -46,7 +48,10 @@ export function HealthScreen({
   return (
     <Screen contentStyle={styles.content}>
       <ScreenHeader title={t('tabs.pet')} />
-      <PetProfileHub onOpenQuickTrackers={onOpenQuickTrackers} />
+      <PetProfileHub
+        onOpenPuppyProfile={onOpenPuppyProfile}
+        onOpenQuickTrackers={onOpenQuickTrackers}
+      />
       <SegmentedControl
         accessibilityLabel={t('health.tab-title')}
         onValueChange={(value) => {
@@ -167,8 +172,10 @@ function HealthVetPrepCard() {
 }
 
 function PetProfileHub({
+  onOpenPuppyProfile,
   onOpenQuickTrackers,
 }: Readonly<{
+  onOpenPuppyProfile: () => void;
   onOpenQuickTrackers: () => void;
 }>) {
   const { t } = useAppTranslation();
@@ -199,7 +206,7 @@ function PetProfileHub({
           </Stack>
           <Button
             label={t('health.pet-hub.edit-profile')}
-            onPress={() => undefined}
+            onPress={onOpenPuppyProfile}
             variant="tertiary"
           />
         </Stack>

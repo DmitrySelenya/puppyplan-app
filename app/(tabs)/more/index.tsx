@@ -5,11 +5,8 @@ import { ConnectedMoreScreen } from '@/features/more/screens/MoreScreen';
 export default function MoreRoute() {
   return (
     <ConnectedMoreScreen
-      openPuppyProfile={() => {
-        router.push('/settings/puppy-profile');
-      }}
-      openQuickTrackers={() => {
-        router.push('/settings/quick-trackers');
+      openPetSettings={() => {
+        router.push('/pet');
       }}
       openHousehold={() => {
         router.push('/settings/household');

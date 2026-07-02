@@ -379,6 +379,7 @@ export const shellI18nKeys = [
   'more.sections.support',
   'more.puppy-summary.age-weeks',
   'more.puppy-summary.no-age',
+  'more.rows.pet-settings',
   'more.rows.puppy-profile',
   'more.rows.quick-trackers',
   'more.rows.family',

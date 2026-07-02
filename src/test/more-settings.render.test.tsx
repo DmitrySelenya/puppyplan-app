@@ -83,8 +83,7 @@ describe('More settings entries', () => {
           <MoreScreen
             canManagePuppySettings
             openHousehold={jest.fn()}
-            openPuppyProfile={jest.fn()}
-            openQuickTrackers={jest.fn()}
+            openPetSettings={jest.fn()}
             openHelp={jest.fn()}
             openPlus={jest.fn()}
             openSitterMode={jest.fn()}
@@ -99,9 +98,10 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('more.puppy-summary.age-weeks', { count: 9 }))).toBeTruthy();
 
     expect(screen.getByText(i18n.t('more.sections.puppy'))).toBeTruthy();
-    expect(screen.getByRole('button', { name: i18n.t('more.rows.puppy-profile') })).toBeTruthy();
-    expect(screen.getByRole('button', { name: i18n.t('more.rows.quick-trackers') })).toBeTruthy();
-    expect(screen.getByText(i18n.t('more.quick-trackers.selected-count', { count: 5, max: 5 }))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.rows.pet-settings') })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: i18n.t('more.rows.puppy-profile') })).toBeNull();
+    expect(screen.queryByRole('button', { name: i18n.t('more.rows.quick-trackers') })).toBeNull();
+    expect(screen.queryByText(i18n.t('more.quick-trackers.selected-count', { count: 5, max: 5 }))).toBeNull();
 
     expect(screen.getByText(i18n.t('more.sections.sharing'))).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('more.rows.family') })).toBeTruthy();
@@ -134,10 +134,9 @@ describe('More settings entries', () => {
     );
   });
 
-  it('opens profile, quick tracker, household, sitter mode, notification, help, and Plus settings from the More hub', () => {
+  it('opens Pet settings, household, sitter mode, notification, help, and Plus settings from the More hub', () => {
     const openHousehold = jest.fn();
-    const openPuppyProfile = jest.fn();
-    const openQuickTrackers = jest.fn();
+    const openPetSettings = jest.fn();
     const openSitterMode = jest.fn();
     const openShareableCards = jest.fn();
     const openNotifications = jest.fn();
@@ -152,9 +151,8 @@ describe('More settings entries', () => {
             openHousehold={openHousehold}
             openHelp={openHelp}
             openNotifications={openNotifications}
+            openPetSettings={openPetSettings}
             openPlus={openPlus}
-            openPuppyProfile={openPuppyProfile}
-            openQuickTrackers={openQuickTrackers}
             openShareableCards={openShareableCards}
             openSitterMode={openSitterMode}
             openTimeline={jest.fn()}
@@ -164,10 +162,7 @@ describe('More settings entries', () => {
     );
 
     fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('more.rows.puppy-profile'),
-    }));
-    fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('more.rows.quick-trackers'),
+      name: i18n.t('more.rows.pet-settings'),
     }));
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.rows.family'),
@@ -188,8 +183,7 @@ describe('More settings entries', () => {
       name: i18n.t('more.rows.puppyplan-plus'),
     }));
 
-    expect(openPuppyProfile).toHaveBeenCalledTimes(1);
-    expect(openQuickTrackers).toHaveBeenCalledTimes(1);
+    expect(openPetSettings).toHaveBeenCalledTimes(1);
     expect(openHousehold).toHaveBeenCalledTimes(1);
     expect(openSitterMode).toHaveBeenCalledTimes(1);
     expect(openShareableCards).toHaveBeenCalledTimes(1);
@@ -198,16 +192,15 @@ describe('More settings entries', () => {
     expect(openPlus).toHaveBeenCalledTimes(1);
   });
 
-  it('opens profile settings from the puppy summary card', () => {
-    const openPuppyProfile = jest.fn();
+  it('opens Pet settings from the puppy summary card', () => {
+    const openPetSettings = jest.fn();
 
     render(
       <AppProviders>
         <AuthProvider dependencies={authDependencies}>
           <MoreScreen
             canManagePuppySettings
-            openPuppyProfile={openPuppyProfile}
-            openQuickTrackers={jest.fn()}
+            openPetSettings={openPetSettings}
             openTimeline={jest.fn()}
             puppy={puppy}
           />
@@ -217,7 +210,7 @@ describe('More settings entries', () => {
 
     fireEvent.press(screen.getByRole('button', { name: puppy.name }));
 
-    expect(openPuppyProfile).toHaveBeenCalledTimes(1);
+    expect(openPetSettings).toHaveBeenCalledTimes(1);
   });
 
   it('formats puppy summary birth dates for the active locale', async () => {
@@ -228,8 +221,7 @@ describe('More settings entries', () => {
         <AuthProvider dependencies={authDependencies}>
           <MoreScreen
             canManagePuppySettings
-            openPuppyProfile={jest.fn()}
-            openQuickTrackers={jest.fn()}
+            openPetSettings={jest.fn()}
             openTimeline={jest.fn()}
             puppy={{
               ...puppy,
@@ -251,14 +243,16 @@ describe('More settings entries', () => {
         <AuthProvider dependencies={authDependencies}>
           <MoreScreen
             canManagePuppySettings={false}
-            openPuppyProfile={jest.fn()}
-            openQuickTrackers={jest.fn()}
+            openPetSettings={jest.fn()}
             openTimeline={jest.fn()}
           />
         </AuthProvider>
       </AppProviders>,
     );
 
+    expect(screen.queryByRole('button', {
+      name: i18n.t('more.rows.pet-settings'),
+    })).toBeNull();
     expect(screen.queryByRole('button', {
       name: i18n.t('more.rows.puppy-profile'),
     })).toBeNull();
@@ -274,8 +268,7 @@ describe('More settings entries', () => {
           <MoreScreen
             canManagePuppySettings
             openNotifications={jest.fn()}
-            openPuppyProfile={jest.fn()}
-            openQuickTrackers={jest.fn()}
+            openPetSettings={jest.fn()}
             openTimeline={jest.fn()}
             puppy={puppy}
           />
@@ -307,8 +300,7 @@ describe('More settings entries', () => {
       <AppProviders>
         <AuthProvider dependencies={authDependencies}>
           <ConnectedMoreScreen
-            openPuppyProfile={jest.fn()}
-            openQuickTrackers={jest.fn()}
+            openPetSettings={jest.fn()}
             openTimeline={jest.fn()}
           />
         </AuthProvider>

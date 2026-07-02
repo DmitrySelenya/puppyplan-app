@@ -2268,6 +2268,11 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Closed the Pet/More IA duplication follow-up from the screen-polish backlog: Pet is now
+  the canonical home for puppy profile and Quick Trackers, More renders a single localized
+  `Pet settings` deep link to `/pet`, and Pet `Edit profile` opens `/settings/puppy-profile`.
+  RED/GREEN More/Health/Pet route coverage, i18n parity, Stage 4 SE screenshots, and full
+  `npm run check` passed.
 - 2026-07-02: Closed the WeekStrip non-interactive a11y quick sub-fix: `WeekStrip` now removes
   `tablist`/`tab` semantics when `onSelectDay` is absent, preserves real `button` semantics for
   interactive use, and no longer exposes `selected` promises on the current Diary route.

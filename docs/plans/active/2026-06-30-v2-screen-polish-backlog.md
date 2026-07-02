@@ -67,6 +67,20 @@ and the More screen, with no clear primary home — it muddies the information a
 **Acceptance:** Each of "Puppy profile" and "Quick trackers" has exactly one primary entry point;
 the spec cards state where; tests updated and green.
 
+**Item 2 evidence (2026-07-02):** Decision recorded in `05-pet-health.md` and
+`06-more-privacy-paywall.md`: Pet owns puppy profile + Quick Trackers; More keeps one `Pet settings`
+deep link to the Pet tab. RED `more-settings.render.test.tsx` failed because More still rendered
+separate `Puppy profile` / `Quick trackers` rows and no `Pet settings` row; RED
+`health.render.test.tsx` / `pet-route.render.test.tsx` failed because Pet `Edit profile` did not
+open profile settings. GREEN replaced the duplicate More rows with one localized `Pet settings` row,
+wired More to `/pet`, and wired Pet `Edit profile` to `/settings/puppy-profile` while keeping Quick
+Trackers owned by Pet. Focused More/Health/Pet route/i18n/navigation suites passed; `node
+scripts/checks/check-i18n.mjs`, `git diff --check`, and full `npm run check` passed (70 Jest suites /
+540 tests, node/scaffold gates green; existing `screen-header.render.test.tsx` `act(...)` warning
+only). Stage 4 JS-over-Metro evidence on the primary SE simulator:
+`output/v2-screen-polish-screenshots/item2-pet-primary-settings.png` and
+`output/v2-screen-polish-screenshots/item2-more-pet-settings-redacted.png`.
+
 ## P1 — Item 3: "Deferred" rows exposed to users in More
 
 **What's wrong (nuance):** More renders 7 rows tagged `"Deferred"` (Family, Trainer/sitter,

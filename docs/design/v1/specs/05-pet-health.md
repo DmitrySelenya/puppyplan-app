@@ -7,6 +7,9 @@ Allowed deviations: old standalone Health/Profile screens are folded into Pet.
 ## Anatomy
 
 - Profile header: photo, name, age, breed, edit affordance.
+- Pet is the canonical home for puppy profile settings and Quick Trackers. More may deep-link to
+  Pet as a single `Pet settings` entry, but it must not duplicate separate primary Puppy Profile or
+  Quick Trackers rows.
 - Growth: current weight and add-weight affordance. No chart for beta.
 - Health: visible block, not hidden behind a collapsed row.
 - Health rows: vaccinations, deworming/preventive care, vet visits, add record.

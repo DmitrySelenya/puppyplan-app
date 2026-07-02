@@ -26,9 +26,8 @@ export type MoreScreenProps = Readonly<{
   openHousehold?: () => void;
   openHelp?: () => void;
   openNotifications?: () => void;
+  openPetSettings?: () => void;
   openPlus?: () => void;
-  openPuppyProfile?: () => void;
-  openQuickTrackers?: () => void;
   openShareableCards?: () => void;
   openSitterMode?: () => void;
   openTimeline: () => void;
@@ -53,9 +52,8 @@ export function MoreScreen({
   openHousehold,
   openHelp,
   openNotifications,
+  openPetSettings,
   openPlus,
-  openPuppyProfile,
-  openQuickTrackers,
   openShareableCards,
   openSitterMode,
   openTimeline,
@@ -71,15 +69,13 @@ export function MoreScreen({
       {puppy ? (
         <PuppySummaryCard
           locale={locale}
-          onPress={openPuppyProfile}
+          onPress={openPetSettings}
           puppy={puppy}
           t={t}
         />
       ) : null}
       <PuppySettingsSection
-        openPuppyProfile={openPuppyProfile}
-        openQuickTrackers={openQuickTrackers}
-        puppy={puppy}
+        openPetSettings={openPetSettings}
         state={settingsState}
       />
       <SettingsSection title={t('more.sections.sharing')}>
@@ -216,14 +212,10 @@ const styles = StyleSheet.create({
 });
 
 function PuppySettingsSection({
-  openPuppyProfile,
-  openQuickTrackers,
+  openPetSettings,
   state,
-  puppy,
 }: Readonly<{
-  openPuppyProfile?: () => void;
-  openQuickTrackers?: () => void;
-  puppy: PuppyProfile | null;
+  openPetSettings?: () => void;
   state: PuppySettingsAccessState;
 }>) {
   const { t } = useAppTranslation();
@@ -248,26 +240,13 @@ function PuppySettingsSection({
         </Card>
       ) : null}
       {state === 'owner' ? (
-        <>
-          <ListRow
-            accessory="chevron"
-            leading={<AppIcon name="paw" />}
-            onPress={openPuppyProfile}
-            title={t('more.rows.puppy-profile')}
-            variant="settings"
-          />
-          <ListRow
-            accessory="chevron"
-            leading={<AppIcon name="plus" />}
-            meta={t('more.quick-trackers.selected-count', {
-              count: puppy?.quick_tracker_ids?.length ?? 0,
-              max: 5,
-            })}
-            onPress={openQuickTrackers}
-            title={t('more.rows.quick-trackers')}
-            variant="settings"
-          />
-        </>
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="paw" />}
+          onPress={openPetSettings}
+          title={t('more.rows.pet-settings')}
+          variant="settings"
+        />
       ) : null}
     </SettingsSection>
   );

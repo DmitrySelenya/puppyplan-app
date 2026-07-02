@@ -38,6 +38,16 @@ describe('PetRoute', () => {
     expect(mockRouterPush).toHaveBeenCalledWith('/settings/quick-trackers');
   });
 
+  it('routes the Pet hub Edit profile action to puppy profile settings', () => {
+    render(<PetRoute />);
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('health.pet-hub.edit-profile'),
+    }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith('/settings/puppy-profile');
+  });
+
   it('routes the empty Pet Health Add record action to the health record editor', () => {
     render(<PetRoute />);
 

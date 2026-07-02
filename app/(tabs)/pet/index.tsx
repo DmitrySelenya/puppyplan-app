@@ -10,6 +10,9 @@ export default function PetRoute() {
       onOpenAddRecord={() => {
         router.push('/pet/health-record-edit');
       }}
+      onOpenPuppyProfile={() => {
+        router.push('/settings/puppy-profile');
+      }}
       onOpenQuickTrackers={() => {
         router.push('/settings/quick-trackers');
       }}

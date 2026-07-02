@@ -6,7 +6,10 @@ Allowed deviations: live IAP enforcement is deferred; paywall/soft-lock surfaces
 
 ## Anatomy
 
-- More hub: routines/reminders, family/trainer/sitter access, quick trackers, notifications, privacy/account, support, paywall shell.
+- More hub: app/account/support settings, routines/reminders, family/trainer/sitter access,
+  notifications, privacy/account, support, paywall shell.
+- Pet-scoped settings are not duplicated in More. More may show one `Pet settings` row that
+  deep-links to the Pet tab; Puppy Profile and Quick Trackers remain primary actions inside Pet.
 - Profile subflows: saved view, editing form, breed picker/search.
 - Notification preferences and quiet hours.
 - Privacy/account: export, delete own data/account, revoke shares, sign-out.

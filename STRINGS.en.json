@@ -1521,6 +1521,7 @@
       "subscription": "Subscription"
     },
     "rows": {
+      "pet-settings": "Pet settings",
       "puppy-profile": "Puppy profile",
       "quick-trackers": "Quick trackers",
       "family": "Family",
