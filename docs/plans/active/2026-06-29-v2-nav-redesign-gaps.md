@@ -138,7 +138,7 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Trusted Sitter mode owner setup shell (§3.2) — More Trainer/Sitter now opens
       `/settings/sitter-mode`, with caregiver row, time window, checklist, visibility preview, and
       enable CTA. Live enable mutation, active status, completion push, auto-expire, exit confirm,
-      and Stage 4 screenshots remain open.
+      remain open; Stage 4 native SE screenshot comparison passed 2026-07-02.
 - [x] ✅ Accept-invite flow, caregiver-side (§3.1.4) — `/invite/[token]` native shell
       implemented: inviter/puppy context, caregiver role, included/excluded preview, disclosure,
       Accept/Decline actions, and token-safe rendering. Stage 4 native SE screenshot comparison
@@ -1955,9 +1955,15 @@ Implementation notes:
 - Added route file `app/(modals)/settings/sitter-mode/index.tsx` and modal stack registration.
 - Updated `MoreScreen` with `openSitterMode` and route wiring from `app/(tabs)/more/index.tsx`.
 - Updated navigation contracts and scaffold guardrails to include `/settings/sitter-mode`.
-- Stage 4 remains open: `/settings/sitter-mode` still needs native screenshot comparison against
-  the locked Trusted Sitter anatomy. Real caregiver selection, date/time picker, checklist editing,
-  enable mutation, active owner status, completion push, auto-expire, and exit confirm remain deferred.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro. Native
+  evidence:
+  `output/v2-nav-gaps-stage4/settings-sitter-mode-stage4.png`,
+  `output/v2-nav-gaps-stage4/settings-sitter-mode-bottom-stage4.png`. Visual evidence covers the modal
+  header, hero copy, caregiver row, time window rows, checklist selected/unselected icon states,
+  visibility preview included/excluded icon states, disclosure, and enable CTA. Real caregiver
+  selection, date/time picker, checklist editing, enable mutation, active owner status, completion
+  push, auto-expire, and exit confirm remain deferred.
 
 ### 34. Shareable Puppy Card Shell Slice (§3.4)
 
@@ -2164,6 +2170,10 @@ Implementation notes:
   `/settings/sitter-mode`, with caregiver row, time window rows, checklist anatomy, included/excluded
   visibility preview, disclosure, and enable CTA. Live sitter data/mutations, owner active status,
   completion push, auto-expire, exit confirm, and Stage 4 screenshots remain open.
+- 2026-07-02: Closed Stage 4 for `/settings/sitter-mode`: captured native SE top/bottom screenshots
+  from the installed PuppyPlan.app over Metro and verified the owner-side setup shell, caregiver row,
+  time window, selected/unselected checklist icons, visibility included/excluded icons, disclosure,
+  and enable CTA. Live sitter data and mutations remain deferred.
 - 2026-06-30: Added PuppyPlan Plus trial/soft-lock shell states: default `/paywall` now shows a
   subtle trial-days-left status and note; synthetic `accessState="softLocked"` renders the read-only
   write-gate banner with export and Restore purchases still reachable. Live entitlement enforcement,
