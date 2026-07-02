@@ -195,8 +195,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Reminders/Routines hub + lifecycle (Mark done / Back-date / Skip / Pause / Delete; "Diary entries stay")
       — `/reminders` native durable-list hub is implemented with active/off segments, durable row
       grouping, More navigation, and Stage 4 native SE evidence from a synthetic dev-gallery handoff
-      shell. Enabled/off toggle persistence is implemented. Mark done/back-date/skip/pause/delete
-      lifecycle actions, occurrence generation, and local notification scheduling remain deferred.
+      shell. Enabled/off toggle persistence and row-level pending feedback are implemented. Mark
+      done/back-date/skip/pause/delete lifecycle actions, occurrence generation, and local
+      notification scheduling remain deferred.
 - [x] ✅ Reminder push — iOS lock-screen (§4.2.4 → 12.4)
 - [x] ✅ Reminder card on Diary (§4.2.5)
 - [x] ✅ Quiet hours picker (§4.2.3) — native reminder-edit anatomy slice implemented:
@@ -242,6 +243,38 @@ RED evidence:
 GREEN / regression evidence:
 - `npm run test:unit -- --runTestsByPath src/test/reminder-edit-route.render.test.tsx` — PASS:
   1 suite, 8 tests.
+
+#### 4.2.7b Reminders Hub optimistic pending feedback
+
+Stage-0 lock:
+- Source: `docs/design/v1/specs/12-1-reminders-hub.md` Reminders Hub row pending state.
+- Scope: visible in-row pending feedback for the already-implemented durable enabled/off toggle
+  mutation only. No occurrence generation, mark-done/back-date/skip/pause/delete lifecycle,
+  local notification scheduling, permission probing, schema change, or native module.
+
+Acceptance:
+- AC-REM-PENDING-1: while a reminder toggle mutation is pending, the affected durable row renders a
+  visible non-color-only pending indicator with stable `reminder-row-pending-${id}` anatomy.
+- AC-REM-PENDING-2: the pending indicator uses design primitives, typed EN/RU/ES i18n copy, and an
+  icon plus label so status is not color-only.
+- AC-REM-PENDING-3: unaffected rows do not render a pending indicator; the existing pending-row
+  disabled toggle behavior remains.
+
+TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR were not context-isolated.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-hub-route.render.test.tsx` — FAIL as
+  expected before implementation: unable to find
+  `reminder-row-pending-00000000-0000-4000-8000-000000005101`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-hub-route.render.test.tsx` — PASS:
+  1 suite, 6 tests. Existing motion-related `act(...)` warnings remain non-failing.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 76 suites / 612 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing motion-related `act(...)` warnings remain
+  non-failing.
 
 ### Guidance cards — DESIGN.md §4.3
 - [x] 🚫 Guidance card anatomy + states (Read/Practiced/Skip) + topics (§4.3) — deferred for this
@@ -2303,7 +2336,8 @@ Implementation notes:
 - No schema migration, native module, notification scheduling, occurrence generation, analytics
   payload, or `ios/` / `android/` change was introduced. Stage 4 visual evidence remains covered by
   the existing Reminders Hub list capture because this slice changes behavior on existing controls;
-  optimistic pending dot and additional native state captures remain future follow-ups.
+  row-level pending feedback is now covered by §4.2.7b. Additional native state captures remain
+  future follow-ups.
 
 ## 20. Trusted sitter checklist reminder anatomy evidence
 

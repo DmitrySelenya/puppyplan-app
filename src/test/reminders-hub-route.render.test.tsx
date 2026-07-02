@@ -157,6 +157,10 @@ describe('RemindersHubRoute', () => {
 
     expect(screen.getByTestId('reminder-row-toggle-00000000-0000-4000-8000-000000005101').props.disabled)
       .toBe(true);
+    expect(screen.getByTestId('reminder-row-pending-00000000-0000-4000-8000-000000005101')).toBeTruthy();
+    expect(screen.getByText(i18n.t('reminders.row-pending'))).toBeTruthy();
+    expect(screen.queryByTestId('reminder-row-pending-00000000-0000-4000-8000-000000005102'))
+      .toBeNull();
     pending.unmount();
 
     mockUseToggleReminderEnabledMutation.mockReturnValueOnce({

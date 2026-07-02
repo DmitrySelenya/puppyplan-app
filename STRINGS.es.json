@@ -1559,6 +1559,7 @@
     "footer-quiet-hours": "Horas de silencio: en la configuración de notificaciones.",
     "empty": "Tus recordatorios aparecerán aquí",
     "row-subtitle-daily-template": "Cada día · {time}",
+    "row-pending": "Sincronizando",
     "states": {
       "loading": {
         "status": "Cargando",

@@ -1487,6 +1487,7 @@
     "footer-quiet-hours": "Тихие часы — в Настройках уведомлений.",
     "empty": "Здесь будут ваши напоминания",
     "row-subtitle-daily-template": "Каждый день · {time}",
+    "row-pending": "Синхронизация",
     "states": {
       "loading": {
         "status": "Загрузка",

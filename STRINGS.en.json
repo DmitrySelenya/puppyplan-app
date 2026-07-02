@@ -1491,6 +1491,7 @@
     "footer-quiet-hours": "Quiet hours — in Notification settings.",
     "empty": "Your reminders will show up here",
     "row-subtitle-daily-template": "Every day · {time}",
+    "row-pending": "Syncing",
     "states": {
       "loading": {
         "status": "Loading",

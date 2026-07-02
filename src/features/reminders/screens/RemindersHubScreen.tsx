@@ -288,15 +288,27 @@ function ReminderRow({
       title={reminder.reminder_type}
       titleNumberOfLines={2}
       trailing={(
-        <Toggle
-          accessibilityLabel={reminder.reminder_type}
-          disabled={pending}
-          onValueChange={(enabled) => {
-            onToggleReminder?.(reminder.id, enabled);
-          }}
-          testID={`reminder-row-toggle-${reminder.id}`}
-          value={reminder.enabled}
-        />
+        <Stack align="center" direction="horizontal" gap="xs">
+          {pending ? (
+            <Stack testID={`reminder-row-pending-${reminder.id}`}>
+              <StatusPill
+                accessibilityLabel={t('reminders.row-pending')}
+                icon={<AppIcon name="bell" size={14} />}
+                label={t('reminders.row-pending')}
+                tone="pending"
+              />
+            </Stack>
+          ) : null}
+          <Toggle
+            accessibilityLabel={reminder.reminder_type}
+            disabled={pending}
+            onValueChange={(enabled) => {
+              onToggleReminder?.(reminder.id, enabled);
+            }}
+            testID={`reminder-row-toggle-${reminder.id}`}
+            value={reminder.enabled}
+          />
+        </Stack>
       )}
       variant="settings"
     />
