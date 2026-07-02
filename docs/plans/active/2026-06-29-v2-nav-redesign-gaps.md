@@ -780,7 +780,13 @@ Implementation notes:
   based on today's rows only.
 - The history state renders Clay-style `All / Feeding / Potty / Sleep` filter chips, day dividers,
   and the existing `FactCard` logged-fact anatomy.
-- Stage 4 native screenshot comparison for `5b-diary-history` remains open.
+- Stage 4 PASS recorded 2026-07-02 on the primary SE simulator from the installed PuppyPlan.app running
+  JS-over-Metro. Evidence: `output/v2-nav-gaps-stage4/diary-history-inline-stage4.jpg`. Runtime
+  snapshot after pressing `Review history` exposed inline `Today · Thursday` grouping, a nested
+  horizontal history filter scroller, and multiple `diary-history-logged-fact-card` rows without
+  navigating to the standalone Timeline route. The screenshot verifies the visible `All / Feeding /
+  Potty / Sleep` chips, day divider, FactCard row anatomy, and persistent Diary/Pet/More bottom chrome
+  with the central Add action. Filter interaction remains covered by the RED/GREEN render test above.
 
 ## 11. Quick Log route Stage-0 lock evidence
 
@@ -2388,6 +2394,10 @@ Implementation notes:
 - 2026-06-30: Added the synced Diary item delete-action slice: synced logged facts now expose a
   localized destructive delete action wired through `createQuickLogDeleteRequest`, with RED/GREEN
   render coverage, shell i18n allowlist coverage, and full `npm run check` pass recorded.
+- 2026-07-02: Closed Stage 4 for inline Diary history (`5b-diary-history`): captured a native SE
+  screenshot from the installed PuppyPlan.app over Metro after pressing `Review history`, verifying
+  visible filter chips, day divider, logged FactCard anatomy, and canonical bottom chrome. Runtime
+  snapshot evidence confirmed the state stayed inside Diary and did not route to standalone Timeline.
 - 2026-06-30: Added the Quick Log duplicate-warning anatomy slice: duplicate detection now renders
   a warning-tinted card with a warning glyph and localized save-anyway/cancel actions, while blocking
   mutation until explicit confirmation; targeted Quick Log + design primitive suites and full
