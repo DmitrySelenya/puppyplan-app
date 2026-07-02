@@ -13,6 +13,7 @@ import { Screen } from '@/design/primitives/Screen';
 import { ScreenHeader } from '@/design/primitives/ScreenHeader';
 import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { SegmentedControl } from '@/design/primitives/SegmentedControl';
+import { useSnackbar } from '@/design/primitives/Snackbar';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill, type StatusPillTone } from '@/design/primitives/StatusPill';
 import { TextField } from '@/design/primitives/TextField';
@@ -27,8 +28,11 @@ import {
 } from '@/lib/query/active-care-context';
 import {
   useCreateHealthRecordMutation,
+  useDeleteHealthRecordMutation,
   useHealthRecordDetailQuery,
+  useRestoreHealthRecordMutation,
   type HealthRecordCreateDraft,
+  type HealthRecordDeleteDraft,
   type HealthRecordDraftStatus,
 } from '@/lib/query/health-records';
 
@@ -882,8 +886,21 @@ export function HealthRecordDetailRouteScreen({
   onClose: () => void;
   recordId?: string;
 }>) {
+  const { t } = useAppTranslation();
+  const snackbar = useSnackbar();
+  const [localState, setLocalState] = useState<HealthRecordDetailState | null>(null);
   const activeCare = useActiveCareContext();
   const detail = useHealthRecordDetailQuery(activeCare.careContext?.puppyId, recordId);
+  const deleteHealthRecord = useDeleteHealthRecordMutation();
+  const restoreHealthRecord = useRestoreHealthRecordMutation();
+
+  if (localState) {
+    return (
+      <Screen contentStyle={styles.content}>
+        <HealthRecordDetailStateCard state={localState} />
+      </Screen>
+    );
+  }
 
   if (!activeCare.careContext || !recordId) {
     return (
@@ -917,15 +934,86 @@ export function HealthRecordDetailRouteScreen({
     );
   }
 
+  const careContext = activeCare.careContext;
+
   return (
     <Screen contentStyle={styles.content}>
       <HealthRecordDetailPreview
+        deletePending={deleteHealthRecord.isPending}
+        onConfirmDelete={async () => {
+          const deleteDraft = toHealthRecordDeleteDraft({
+            careContext,
+            record: detail.data,
+          });
+
+          try {
+            await deleteHealthRecord.mutateAsync(deleteDraft);
+          } catch {
+            setLocalState('error');
+            return;
+          }
+
+          const snackbarId = `health-record-delete-${detail.data.id}`;
+          snackbar.showSnackbar({
+            accessibilityLabel: [
+              t('health.edit-record.delete-undo-toast'),
+              t('quick-log.snackbar.undo'),
+            ].join('. '),
+            durationMs: HEALTH_RECORD_DELETE_UNDO_DURATION_MS,
+            hapticEvent: 'warning',
+            id: snackbarId,
+            message: t('health.edit-record.delete-undo-toast'),
+            primaryAction: {
+              label: t('quick-log.snackbar.undo'),
+              onPress: () => {
+                const restoreDraft = toHealthRecordDeleteDraft({
+                  careContext,
+                  record: detail.data,
+                });
+
+                void restoreHealthRecord.mutateAsync(restoreDraft).catch(() => {
+                  snackbar.replaceSnackbar({
+                    accessibilityLabel: t('health.detail.states.error.body'),
+                    durationMs: HEALTH_RECORD_DELETE_UNDO_DURATION_MS,
+                    hapticEvent: 'error',
+                    id: snackbarId,
+                    message: t('health.detail.states.error.body'),
+                    tone: 'error',
+                  });
+                });
+              },
+            },
+            tone: 'warning',
+          });
+          onClose();
+        }}
         onClose={onClose}
         record={detail.data}
-        showDestructiveActions={false}
       />
     </Screen>
   );
+}
+
+const HEALTH_RECORD_DELETE_UNDO_DURATION_MS = 5_000;
+
+function toHealthRecordDeleteDraft({
+  careContext,
+  record,
+}: Readonly<{
+  careContext: ActiveCareContext;
+  record: HealthRecord;
+}>): HealthRecordDeleteDraft {
+  const timestamp = new Date().toISOString();
+
+  return {
+    affectedDate: record.scheduled_for ?? record.completed_at?.slice(0, 10) ?? record.updated_at.slice(0, 10),
+    deletedAt: timestamp,
+    householdId: careContext.householdId,
+    id: record.id,
+    puppyId: careContext.puppyId,
+    updatedAt: timestamp,
+    userId: careContext.userId,
+  };
 }
 
 function HealthRecordDetailStateCard({
@@ -1122,12 +1210,14 @@ function HealthRecordEditStateCard({
 
 export function HealthRecordDetailPreview({
   deletePending = false,
+  onConfirmDelete,
   onClose,
   record,
   showDestructiveActions = true,
   status = 'confirmed',
 }: Readonly<{
   deletePending?: boolean;
+  onConfirmDelete?: () => Promise<void> | void;
   onClose?: () => void;
   record?: HealthRecord;
   showDestructiveActions?: boolean;
@@ -1232,7 +1322,9 @@ export function HealthRecordDetailPreview({
                   <Button
                     disabled={deletePending}
                     label={t('health.edit-record.delete-confirm.destructive')}
-                    onPress={() => undefined}
+                    onPress={() => {
+                      void onConfirmDelete?.();
+                    }}
                     variant="destructive"
                   />
                 </Stack>

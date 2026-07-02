@@ -141,8 +141,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
       Durable edit/delete/restore data-layer contracts are now implemented with source preservation,
       affected-date invalidation, zero-row delete failure handling, and single-record detail loading.
-      Production read-only detail routing is implemented; timed 5-second undo restore and native
-      persistence UI remain open.
+      Production detail routing and delete + 5-second undo restore snackbar wiring are implemented;
+      editable dirty-state UI and seeded production Stage 4 delete evidence remain open.
 - [x] ✅ Status transitions visualisation Template→Confirmed→Done (§4.1.6) — native detail
       status strip now renders four visible icon+label steps with exactly one active filled state and
       full sequence accessibility label. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
@@ -1620,6 +1620,76 @@ Stage 4 status:
   deterministic debug-account `health_record` seed or a dedicated approved harness route. Do not
   treat this note as closing the future native persistence / timed undo Stage 4 gate.
 
+### 17c. Health record production delete + timed undo wiring
+
+**2026-07-02 production wiring slice:** connect the existing read-only production Health detail
+route to the already implemented delete/restore mutations and existing global Snackbar primitive.
+This closes the user-facing delete/undo wiring gap without adding new schema, native modules, or
+offline queue behavior.
+
+- Source spec card: `docs/design/v1/specs/05-pet-health.md`.
+- Source atlas: `health/11-4.png` confirmed detail, `health/11-5.png` needs-vet-review detail, and
+  the existing §17 delete pending anatomy evidence.
+- Source canon: `DESIGN.md` §4.1.4 Edit Record / Delete (Undo): delete confirm, warning feedback,
+  and undo available for 5 seconds.
+- Route/components: `app/(modals)/pet/health-record/[recordId].tsx`,
+  `src/features/health/screens/HealthScreen.tsx`, `src/lib/query/health-records.ts`, and
+  `src/design/primitives/Snackbar.tsx`.
+- TDD mode: lightweight; reduced assurance because this continuation is running in the main thread,
+  but RED tests must be observed before implementation.
+
+Acceptance:
+- AC-PET-DELETE-PROD-1: the production detail route renders the existing destructive Delete entry
+  affordance for a loaded server record, while loading/unavailable/not-found/error states keep it hidden.
+- AC-PET-DELETE-PROD-2: confirming delete calls the typed delete mutation with record id, puppy id,
+  household id, affected date, user id, and explicit timestamp fields; no raw notes/provider data are
+  logged or added to analytics.
+- AC-PET-DELETE-PROD-3: after successful delete, the route closes back to Pet and shows the existing
+  design Snackbar with warning haptic, localized delete/undo copy, localized Undo action, and
+  `durationMs: 5000`.
+- AC-PET-DELETE-PROD-4: pressing Undo on that snackbar calls the typed restore mutation with the same
+  record id / puppy id / household id / affected date / user id fields and a fresh explicit
+  `updatedAt`.
+- AC-PET-DELETE-PROD-5: delete failure keeps the user on the detail route and renders the existing
+  Health error state; it does not silently close the modal or hide the failure.
+- Out of scope: editable dirty-state form, offline health queue, native DatePicker, schema changes,
+  and new analytics payloads.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health-record-detail-route.render.test.tsx`
+  failed before implementation because the production detail route did not render `Delete entry` or
+  the confirm `Delete` control.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health-record-detail-route.render.test.tsx`
+  — PASS: 1 suite, 3 tests.
+- `npm run test:unit -- --runTestsByPath src/test/health-record-detail-route.render.test.tsx src/test/health-records-query.test.ts src/test/health.render.test.tsx src/test/pet-route.render.test.tsx src/test/design-primitives.render.test.tsx`
+  — PASS: 5 suites, 73 tests.
+- `npm run typecheck` — PASS.
+
+Implementation notes:
+- `HealthRecordDetailRouteScreen` now uses the existing typed delete/restore mutations and global
+  design `Snackbar`; loaded record states render the destructive controls, while loading/unavailable/
+  not-found/error states still use state cards without destructive actions.
+- Successful delete builds an explicit timestamped draft, triggers warning haptic snackbar feedback
+  for 5 seconds, closes the modal, and exposes an Undo action that restores through the typed restore
+  mutation. Delete failure renders the existing detail error state and does not close.
+- Restore failures replace the same snackbar with the existing localized Health error copy instead of
+  silently swallowing the failure.
+
+Stage 4 status:
+- Primary SE simulator: `5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`.
+- Metro was started with `npx expo start`; the already-installed `PuppyPlan.app` was launched through
+  XcodeBuildMCP without native rebuild, then deep-linked to
+  `puppyplan:///pet/health-record/00000000-0000-4000-8000-000000003003`.
+- Runtime screenshot confirms the route loads current JS and renders the localized detail error state
+  for an unavailable record. The production delete/undo snackbar path is **not recorded as Stage 4
+  PASS** because this simulator/debug account still lacks a deterministic loaded `health_record` seed
+  for the detail route.
+- Evidence file: `output/v2-nav-gaps-stage4/health-detail-delete-production-runtime-blocker.jpg`
+  (ignored local artifact). Production delete/undo behavior is covered by route render tests until a
+  seeded debug record or approved harness route exists.
+
 ## 18. Vet visit prep card Stage-0 lock evidence
 
 **2026-06-30 next implementation slice:** Pet Health vet visit prep reference card.
@@ -2993,6 +3063,12 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-02: Wired production Health detail delete + 5-second undo snackbar: loaded detail records
+  now expose destructive controls, delete calls the typed mutation, success closes back to Pet and
+  shows warning snackbar with Undo, restore uses the typed restore mutation, and delete failure keeps
+  the route visible with the existing error state. RED/GREEN route tests, adjacent Health/query/
+  Snackbar tests, and typecheck passed. Runtime SE evidence confirms route loading but not the loaded
+  delete path because the debug account lacks a deterministic health-record seed.
 - 2026-07-02: Added Pet Health Add Record durable create/list refresh on the existing
   `health_record` schema: typed Supabase repository, health query/mutation hooks, normalized
   create draft, targeted invalidation, Pet route server-row rendering, and Add Record Save wiring.
