@@ -194,6 +194,65 @@ describe('QuickLogShell', () => {
     expect(closeSheet).toHaveBeenCalledTimes(1);
   });
 
+  it('AC-OB-PROMPT-RUNTIME schedules post-save prompts only after an actual tracker log', () => {
+    const closeSheet = jest.fn();
+    const mutation = createMutationPort();
+    const onQuickLogSaved = jest.fn();
+
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        closeSheet={closeSheet}
+        mutation={mutation}
+        onQuickLogSaved={onQuickLogSaved}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.dismiss'),
+    }));
+
+    expect(onQuickLogSaved).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.feeding'),
+    }));
+
+    expect(mutation.mutate).toHaveBeenCalledTimes(1);
+    expect(closeSheet).toHaveBeenCalledTimes(2);
+    expect(onQuickLogSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-OB-PROMPT-RUNTIME does not schedule post-save prompts when duplicate warning is canceled', () => {
+    const mutation = createMutationPort();
+    const onQuickLogSaved = jest.fn();
+
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={mutation}
+        now={() => new Date('2026-05-27T08:30:00.000Z')}
+        onQuickLogSaved={onQuickLogSaved}
+        recentEvent={{
+          occurredAtMs: Date.parse('2026-05-27T08:29:30.000Z'),
+          trackerId: 'feeding',
+        }}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.feeding'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.duplicate-warning.secondary'),
+    }));
+
+    expect(mutation.mutate).not.toHaveBeenCalled();
+    expect(onQuickLogSaved).not.toHaveBeenCalled();
+  });
+
   it('renders selected tracker ids from the active care context in order', () => {
     renderWithQuickLogFeedback(
       <QuickLogShell

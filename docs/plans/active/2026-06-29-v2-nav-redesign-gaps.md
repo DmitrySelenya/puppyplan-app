@@ -503,8 +503,9 @@ GREEN / regression evidence:
 ### Onboarding / intake — DESIGN.md §2.1
 - [ ] 🟡 First-run variants — visual slices are implemented across Welcome, Puppy Setup, Tracker
       Selection, Plan Reveal, First Log, and post-value account/notification prompt previews.
-      Runtime prompt scheduler, OS permission handoff, and native DatePicker integration remain
-      explicitly deferred/partial under the rows below.
+      The post-first-value Quick Log source-marker scheduler is now implemented; 48-hour re-prompt
+      cadence, permission probing, native OS permission request, and native DatePicker integration
+      remain explicitly deferred/partial under the rows below.
 - [x] ✅ Welcome (§2.1.1) — native initial `/onboarding` anatomy implemented: decorative warm
       illustration frame, locked H1/subtitle, primary setup CTA, and secondary sign-in action.
       Stage 4 native SE screenshot comparison passed 2026-07-02.
@@ -529,7 +530,9 @@ GREEN / regression evidence:
 - [x] ✅ Account/Notifications prompts (§2.1.7) — post-first-value V2 native preview slices
       implemented as skippable SheetSurface prompts with account and quiet-reminder actions.
       Stage 4 native SE screenshot comparison passed 2026-07-02; notification settings handoff is
-      wired through the quiet-reminder prompt. Runtime prompt scheduler remains deferred.
+      wired through the quiet-reminder prompt. The route/source-marker runtime scheduler is now
+      implemented and Stage 4 verified; 48-hour re-prompt cadence and native permission probing
+      remain deferred.
 
 ### Cross-cutting
 - [x] ✅ **Apply new TabBar (Diary/Pet/More + Add) to every migrated screen** — the tab shell now
@@ -2986,6 +2989,62 @@ Implementation notes:
   scheduler, permission probing, push token registration, notification scheduling, persistence,
   native module, schema change, or `ios/` / `android/` edit was introduced.
 
+### 27b. Onboarding Post-First-Value Prompt Scheduler (§2.1.7)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/02-7-onboarding-account-notifications-prompts.md`.
+- Source: DESIGN.md §2.1.7 plus the existing account / notification SheetSurface preview anatomy.
+- Scope: route/source-marker runtime scheduler only. The Plan Reveal CTA opens Quick Log with an
+  onboarding first-value source marker; a successful tracker log returns to the post-first-value
+  account prompt, then local prompt state advances account -> notification -> first-log complete.
+- Out of scope: auth provider actions, 48-hour re-prompt cadence, persistence, notification
+  permission probing, actual OS permission request, push token registration, notification
+  scheduling, schema changes, native modules, and `ios/` / `android/` edits.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-OB-PROMPT-RUNTIME-1: Plan Reveal opens Quick Log with an onboarding first-value source marker
+  instead of losing the onboarding context.
+- AC-OB-PROMPT-RUNTIME-2: Quick Log calls the post-save scheduler only after an actual tracker log;
+  dismiss, unavailable, view-only, or duplicate-warning cancel states do not schedule prompts.
+- AC-OB-PROMPT-RUNTIME-3: when Quick Log was launched from onboarding first-value, a successful log
+  returns to `/onboarding?postFirstValuePrompt=account`.
+- AC-OB-PROMPT-RUNTIME-4: `postFirstValuePrompt=account` renders the first-log completion surface
+  with the account prompt overlay; account `Not now` advances to the notification prompt, and
+  notification `Not now` clears the overlay while keeping first-log completion visible.
+- AC-OB-PROMPT-RUNTIME-5: no sign-in action, permission grant, push-token, notification scheduling,
+  persistence, schema/native module, or generated native project change is introduced.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/onboarding-flow.render.test.tsx src/test/onboarding-route.render.test.tsx src/test/quick-log-sheet.render.test.tsx src/test/quick-log-route.render.test.tsx`
+  — FAIL as expected before implementation: Plan Reveal did not push
+  `/quick-log?source=onboarding-first-value`, `OnboardingScreen postFirstValuePrompt="account"`
+  still rendered Welcome, `QuickLogShell` never called `onQuickLogSaved`, and the Quick Log route
+  did not return to `/onboarding?postFirstValuePrompt=account`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/onboarding-flow.render.test.tsx src/test/onboarding-route.render.test.tsx src/test/quick-log-sheet.render.test.tsx src/test/quick-log-route.render.test.tsx`
+  — PASS: 4 suites, 49 tests.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 77 suites / 625 tests, node 118 tests,
+  navigation/shell i18n, i18n parity and string budgets, scaffold guardrails, token drift, privacy
+  scan, and text hygiene. Existing reduced-motion `act(...)` console warnings remain non-failing.
+- Stage 4 native SE screenshot comparison PASS on `Grith iPhone SE 3 iOS 26.3`
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the installed PuppyPlan.app over Metro:
+  `output/v2-nav-gaps-stage4/onboarding-post-first-value-account-runtime-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/onboarding-post-first-value-notifications-runtime-stage4.jpg`.
+
+Implementation notes:
+- `app/onboarding` now parses `postFirstValuePrompt=account|notifications` and opens Quick Log with
+  `source=onboarding-first-value` from Plan Reveal.
+- `app/(sheets)/quick-log` parses that source marker and passes an `onQuickLogSaved` scheduler to
+  `QuickLogShell`; the scheduler only runs after `mutation.mutate` for an actual tracker log.
+- `OnboardingScreen` renders the existing first-log completion surface with account or notification
+  prompt overlays for post-first-value runtime states. Account `Not now` advances to notification;
+  notification `Not now` clears the overlay and leaves first-log completion visible.
+- No auth provider action, permission grant/probing, push token, notification scheduling,
+  persistence, schema/native module, or generated native project change was introduced.
+
 ### 28. More Notification Preferences Anatomy Slice (§4.4.4)
 
 Stage-0 lock:
@@ -4272,6 +4331,13 @@ Implementation notes:
   native SE screenshots from the installed PuppyPlan.app over Metro for the account sheet and quiet
   reminder sheet, verifying the skippable SheetSurface anatomy and required actions. Runtime scheduler
   and OS permission handoff remain deferred.
+- 2026-07-03: Added the Onboarding post-first-value prompt scheduler: Plan Reveal opens Quick Log with
+  `source=onboarding-first-value`, successful Quick Log saves return to
+  `/onboarding?postFirstValuePrompt=account`, and the runtime post-value state advances account prompt
+  -> notification prompt -> first-log completion. RED/GREEN render/route coverage and full
+  `npm run check` passed; primary SE Stage 4 screenshots captured both runtime prompt states. The
+  48-hour re-prompt cadence, permission probing/native permission request, push-token registration,
+  notification scheduling, and persistence remain deferred.
 - 2026-06-30: Added the More Notification Preferences anatomy slice: More now opens
   `/settings/notifications`, the screen renders local reminders, push reminders/sitter completion,
   quiet hours, and timezone sections with design primitives, navigation/scaffold contracts were updated,

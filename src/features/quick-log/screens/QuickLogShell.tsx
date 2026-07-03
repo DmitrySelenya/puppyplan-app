@@ -52,6 +52,7 @@ export type QuickLogShellProps = Readonly<{
   mutationEvents?: readonly QuickLogMutationEvent[];
   localEvents?: readonly QuickLogLocalEventView[];
   now?: () => Date;
+  onQuickLogSaved?: () => void;
   openDetails?: (request: QuickLogEventEditRequest) => void;
   recentEvent?: QuickLogRecentEvent | null;
   recentEvents?: readonly QuickLogRecentEvent[];
@@ -230,6 +231,7 @@ function QuickLogShellContent({
   mutation,
   mutationEvents = [],
   now,
+  onQuickLogSaved,
   openDetails,
   recentEvent = null,
   recentEvents = [],
@@ -250,6 +252,7 @@ function QuickLogShellContent({
     mutation: mutation ?? unavailableMutation,
     mutationEvents,
     now,
+    onQuickLogSaved,
     openDetails,
     recentEvent,
     recentEvents,

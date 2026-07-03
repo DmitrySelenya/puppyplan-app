@@ -747,4 +747,35 @@ describe('Onboarding production flow', () => {
     });
     expect(saveProfile.mock.calls[0]?.[0].selectedTrackerIds).toHaveLength(5);
   });
+
+  it('AC-OB-PROMPT-RUNTIME shows account then notification after an onboarding first-value log', () => {
+    render(
+      <AppProviders>
+        <OnboardingScreen
+          openQuickLog={jest.fn()}
+          postFirstValuePrompt="account"
+          saveProfile={jest.fn(async () => undefined)}
+        />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('onboarding.first-log.hero-after-first'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('onboarding.account-wall.title'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('onboarding.notifications-prompt.title'))).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.account-wall.secondary'),
+    }));
+
+    expect(screen.queryByText(i18n.t('onboarding.account-wall.title'))).toBeNull();
+    expect(screen.getByText(i18n.t('onboarding.notifications-prompt.title'))).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.notifications-prompt.secondary'),
+    }));
+
+    expect(screen.getByText(i18n.t('onboarding.first-log.hero-after-first'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('onboarding.account-wall.title'))).toBeNull();
+    expect(screen.queryByText(i18n.t('onboarding.notifications-prompt.title'))).toBeNull();
+  });
 });

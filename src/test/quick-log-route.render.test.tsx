@@ -14,6 +14,7 @@ const mockRouterBack = jest.fn();
 const mockRouterCanGoBack = jest.fn();
 const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
+const mockUseLocalSearchParams = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogCachedRows = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
@@ -57,6 +58,7 @@ jest.mock('expo-router', () => ({
     push: (href: string) => mockRouterPush(href),
     replace: (href: string) => mockRouterReplace(href),
   },
+  useLocalSearchParams: () => mockUseLocalSearchParams(),
 }));
 
 jest.mock('@/lib/query/active-care-context', () => ({
@@ -81,6 +83,8 @@ describe('QuickLogRoute', () => {
     mockRouterCanGoBack.mockReturnValue(true);
     mockRouterPush.mockClear();
     mockRouterReplace.mockClear();
+    mockUseLocalSearchParams.mockReset();
+    mockUseLocalSearchParams.mockReturnValue({});
     mockUseActiveCareContext.mockReturnValue({
       careContext: null,
       puppy: null,
@@ -190,6 +194,46 @@ describe('QuickLogRoute', () => {
       householdId: '00000000-0000-4000-8000-000000003001',
       puppyId: '00000000-0000-4000-8000-000000003002',
     }));
+  });
+
+  it('AC-OB-PROMPT-RUNTIME returns to the onboarding account prompt after a first-value Quick Log save', () => {
+    const mutation = createMutationPort();
+    mockUseLocalSearchParams.mockReturnValue({
+      source: 'onboarding-first-value',
+    });
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: '00000000-0000-4000-8000-000000003001',
+        householdRole: 'owner',
+        puppyId: '00000000-0000-4000-8000-000000003002',
+        selectedTrackerIds: ['walk', 'feeding'],
+        todayDate: '2026-06-09',
+        userId: '00000000-0000-4000-8000-000000003003',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.walk'),
+    }));
+
+    expect(mutation.mutate).toHaveBeenCalledTimes(1);
+    expect(mockRouterReplace).toHaveBeenCalledWith('/onboarding?postFirstValuePrompt=account');
   });
 
   it('derives duplicate warning context from cached rows before mutating', () => {

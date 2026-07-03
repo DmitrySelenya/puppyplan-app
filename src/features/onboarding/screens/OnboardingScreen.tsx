@@ -48,10 +48,14 @@ const ONBOARDING_TITLE_MAX_FONT_SIZE_MULTIPLIER = 2;
 export type OnboardingScreenProps = Readonly<{
   openQuickLog: () => void;
   openSignIn?: () => void;
+  postFirstValuePrompt?: OnboardingPostFirstValuePrompt | null;
   saveProfile: (profile: PuppyProfileInput) => Promise<unknown> | unknown;
 }>;
 
+export type OnboardingPostFirstValuePrompt = 'account' | 'notifications';
+
 type OnboardingStep = 'welcome' | 'profile' | 'trackers' | 'plan';
+type OnboardingPostFirstValueStage = OnboardingPostFirstValuePrompt | 'complete';
 type ProfileErrorTarget = 'ageWeeksEstimate' | 'birthDate' | 'name';
 type ProfileErrorKey =
   | 'onboarding.puppy-profile.error-age-required'
@@ -66,9 +70,11 @@ type ProfileError = Readonly<{
 export function ConnectedOnboardingScreen({
   openQuickLog,
   openSignIn,
+  postFirstValuePrompt = null,
 }: Readonly<{
   openQuickLog: () => void;
   openSignIn?: () => void;
+  postFirstValuePrompt?: OnboardingPostFirstValuePrompt | null;
 }>) {
   const saveMutation = useSavePuppyProfileMutation();
 
@@ -76,6 +82,7 @@ export function ConnectedOnboardingScreen({
     <OnboardingScreen
       openQuickLog={openQuickLog}
       openSignIn={openSignIn}
+      postFirstValuePrompt={postFirstValuePrompt}
       saveProfile={(profile) => saveMutation.mutateAsync({ profile })}
     />
   );
@@ -84,10 +91,13 @@ export function ConnectedOnboardingScreen({
 export function OnboardingScreen({
   openQuickLog,
   openSignIn,
+  postFirstValuePrompt = null,
   saveProfile,
 }: OnboardingScreenProps) {
   const { t } = useAppTranslation();
   const [step, setStep] = useState<OnboardingStep>('welcome');
+  const [postFirstValueStage, setPostFirstValueStage] =
+    useState<OnboardingPostFirstValueStage | null>(postFirstValuePrompt);
   const [name, setName] = useState('');
   const [ageMode, setAgeMode] = useState<PuppyAgeMode>('age_weeks');
   const [ageWeeksText, setAgeWeeksText] = useState('8');
@@ -154,6 +164,10 @@ export function OnboardingScreen({
     && profileInput.ageWeeksEstimate !== null
     && name.trim().length > 0;
 
+  useEffect(() => {
+    setPostFirstValueStage(postFirstValuePrompt);
+  }, [postFirstValuePrompt]);
+
   const adjustAgeWeeks = (delta: number) => {
     setAgeWeeksText(String(clampAgeWeeks(ageWeeksValue + delta)));
     clearProfileError('ageWeeksEstimate', setProfileError);
@@ -198,6 +212,16 @@ export function OnboardingScreen({
       setSaving(false);
     }
   };
+
+  if (postFirstValueStage !== null) {
+    return (
+      <OnboardingPostFirstValuePromptScreen
+        onSkipAccount={() => setPostFirstValueStage('notifications')}
+        onSkipNotifications={() => setPostFirstValueStage('complete')}
+        stage={postFirstValueStage}
+      />
+    );
+  }
 
   return (
     <Screen
@@ -648,6 +672,32 @@ export function OnboardingScreen({
   );
 }
 
+function OnboardingPostFirstValuePromptScreen({
+  onSkipAccount,
+  onSkipNotifications,
+  stage,
+}: Readonly<{
+  onSkipAccount: () => void;
+  onSkipNotifications: () => void;
+  stage: OnboardingPostFirstValueStage;
+}>) {
+  return (
+    <View style={styles.postFirstValuePromptRoot}>
+      <OnboardingFirstLogPreview />
+      {stage === 'account' ? (
+        <View style={styles.postFirstValuePromptOverlay}>
+          <OnboardingAccountPromptPreview onSkip={onSkipAccount} />
+        </View>
+      ) : null}
+      {stage === 'notifications' ? (
+        <View style={styles.postFirstValuePromptOverlay}>
+          <OnboardingNotificationsPromptPreview onSkip={onSkipNotifications} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 export function OnboardingFirstLogPreview() {
   const { t } = useAppTranslation();
   const { replaceSnackbar } = useSnackbar();
@@ -745,7 +795,17 @@ export function OnboardingFirstLogPreview() {
   );
 }
 
-export function OnboardingAccountPromptPreview() {
+export function OnboardingAccountPromptPreview({
+  onApple = noop,
+  onEmail = noop,
+  onGoogle = noop,
+  onSkip = noop,
+}: Readonly<{
+  onApple?: () => void;
+  onEmail?: () => void;
+  onGoogle?: () => void;
+  onSkip?: () => void;
+}> = {}) {
   const { t } = useAppTranslation();
 
   return (
@@ -761,24 +821,24 @@ export function OnboardingAccountPromptPreview() {
         <Button
           label={t('onboarding.account-wall.apple')}
           labelMaxFontSizeMultiplier={ONBOARDING_CONTROL_MAX_FONT_SIZE_MULTIPLIER}
-          onPress={() => undefined}
+          onPress={onApple}
         />
         <Button
           label={t('onboarding.account-wall.google')}
           labelMaxFontSizeMultiplier={ONBOARDING_CONTROL_MAX_FONT_SIZE_MULTIPLIER}
-          onPress={() => undefined}
+          onPress={onGoogle}
           variant="secondary"
         />
         <Button
           label={t('onboarding.account-wall.email')}
           labelMaxFontSizeMultiplier={ONBOARDING_CONTROL_MAX_FONT_SIZE_MULTIPLIER}
-          onPress={() => undefined}
+          onPress={onEmail}
           variant="secondary"
         />
         <Button
           label={t('onboarding.account-wall.secondary')}
           labelMaxFontSizeMultiplier={ONBOARDING_CONTROL_MAX_FONT_SIZE_MULTIPLIER}
-          onPress={() => undefined}
+          onPress={onSkip}
           variant="tertiary"
         />
       </Stack>
@@ -786,7 +846,11 @@ export function OnboardingAccountPromptPreview() {
   );
 }
 
-export function OnboardingNotificationsPromptPreview() {
+export function OnboardingNotificationsPromptPreview({
+  onSkip = noop,
+}: Readonly<{
+  onSkip?: () => void;
+}> = {}) {
   const { t } = useAppTranslation();
   const [settingsErrorVisible, setSettingsErrorVisible] = useState(false);
 
@@ -841,12 +905,16 @@ export function OnboardingNotificationsPromptPreview() {
         <Button
           label={t('onboarding.notifications-prompt.secondary')}
           labelMaxFontSizeMultiplier={ONBOARDING_CONTROL_MAX_FONT_SIZE_MULTIPLIER}
-          onPress={() => undefined}
+          onPress={onSkip}
           variant="tertiary"
         />
       </Stack>
     </SheetSurface>
   );
+}
+
+function noop() {
+  return undefined;
 }
 
 function PostValuePromptHeading({
@@ -1100,6 +1168,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 44,
+  },
+  postFirstValuePromptOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    paddingBottom: tokens.space[4],
+    paddingHorizontal: tokens.space[4],
+    zIndex: 2,
+  },
+  postFirstValuePromptRoot: {
+    flex: 1,
+    minHeight: 620,
   },
   promptBody: {
     textAlign: 'center',
