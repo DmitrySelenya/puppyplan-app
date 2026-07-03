@@ -57,6 +57,7 @@
         "reminders-hub": "Ruta del centro de recordatorios con filas durables activas para entrega nativa.",
         "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
         "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
+        "help-support-states": "Estados de ayuda y soporte: carga, nota pendiente, error y lectura offline.",
         "paywall-states": "Estados de PuppyPlan Plus: carga, compra pendiente, error, offline y suscripción activa.",
         "invite-accept-states": "Estados de aceptar invitación: carga, no disponible, reintento y ya eres miembro.",
         "shareable-card-states": "Estados de tarjeta compartible: selección vacía, salud incluida, opciones para compartir, carga, guardado, revisión y offline.",
@@ -2002,6 +2003,28 @@
       "support-error-title": "No se pudo abrir el email",
       "support-error-body": "Abre tu app de email y escribe a soporte cuando quieras.",
       "privacy-note": "No incluyas nombres, notas, emails, proveedores, fotos ni tokens en una nota de soporte.",
+      "states": {
+        "loading": {
+          "status": "Comprobando",
+          "title": "Cargando opciones de ayuda",
+          "body": "Estamos comprobando los temas de ayuda y los datos locales de la app."
+        },
+        "pending-write": {
+          "status": "Preparando",
+          "title": "Preparando nota de soporte",
+          "body": "El borrador se prepara localmente. Nada se envía automáticamente."
+        },
+        "error": {
+          "status": "Necesita atención",
+          "title": "No se abrió el contacto con soporte",
+          "body": "Mantén la pantalla abierta e inténtalo de nuevo cuando tu app de email esté disponible."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "La ayuda guardada sigue disponible",
+          "body": "Puedes leer los temas de ayuda ahora. El contacto con soporte puede esperar a que vuelva la conexión."
+        }
+      },
       "section-contact": "Contacto",
       "row-support": "Contactar con soporte",
       "support-email": "support@puppyplan.app",

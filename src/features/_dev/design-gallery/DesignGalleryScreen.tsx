@@ -40,6 +40,9 @@ import {
   InviteAcceptStatePreview,
 } from '@/features/linking/screens/InviteAcceptScreen';
 import {
+  HelpSupportStatePreview,
+} from '@/features/more/screens/HelpSupportScreen';
+import {
   ShareablePuppyCardStatePreview,
 } from '@/features/more/screens/ShareablePuppyCardScreen';
 import {
@@ -139,6 +142,7 @@ export function DesignGalleryScreen() {
         <SyntheticShareablePuppyCardStatesShell />
         <SyntheticSitterModeStatesShell />
         <SyntheticQuickTrackersStatesShell />
+        <SyntheticHelpSupportStatesShell />
         <SyntheticNotificationPreferencesShell />
         <SyntheticRemindersHubShell />
         <SyntheticReminderEditShell />
@@ -732,6 +736,23 @@ export function SyntheticNotificationPreferencesShell() {
         <NotificationPreferencesStatePreview state="pending-write" />
         <NotificationPreferencesStatePreview state="error" />
         <NotificationPreferencesStatePreview state="offline-read" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticHelpSupportStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.help-support-states"
+          titleKey="more.help.screen-title"
+        />
+        <HelpSupportStatePreview state="loading" />
+        <HelpSupportStatePreview state="pending-write" />
+        <HelpSupportStatePreview state="error" />
+        <HelpSupportStatePreview state="offline-read" />
       </Stack>
     </Card>
   );

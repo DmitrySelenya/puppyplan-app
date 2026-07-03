@@ -58,6 +58,7 @@
         "reminders-hub": "Reminders hub route with active durable rows for native handoff.",
         "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
         "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
+        "help-support-states": "Help and support loading, pending note, error, and offline read states.",
         "paywall-states": "PuppyPlan Plus loading, pending purchase, error, offline, and active subscription states.",
         "invite-accept-states": "Accept invite loading, unavailable, retry, and already-member states.",
         "shareable-card-states": "Shareable Puppy Card empty builder, health disclosure, share options, loading, pending, error, and offline states.",
@@ -1903,6 +1904,28 @@
       "support-error-title": "Could not open email",
       "support-error-body": "Open your email app and write to support when you are ready.",
       "privacy-note": "Do not include names, notes, emails, providers, photos, or tokens in a support note.",
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading support options",
+          "body": "We are checking the help topics and local app details."
+        },
+        "pending-write": {
+          "status": "Preparing",
+          "title": "Preparing support note",
+          "body": "The draft is being prepared locally. Nothing is sent automatically."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Support handoff did not open",
+          "body": "Keep the screen open and try again when your email app is available."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Saved help is still available",
+          "body": "You can read help topics now. Contact handoff can wait until you are back online."
+        }
+      },
       "section-contact": "Contact",
       "row-support": "Contact support",
       "support-email": "support@puppyplan.app",

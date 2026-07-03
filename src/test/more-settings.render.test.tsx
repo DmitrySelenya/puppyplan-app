@@ -489,6 +489,46 @@ describe('More settings entries', () => {
     expect(changeSitterPush).not.toHaveBeenCalled();
   });
 
+  it('AC-MORE-HELP-STATES renders deterministic loading, pending, error, and offline states', () => {
+    render(
+      <AppProviders>
+        <HelpSupportScreen {...{ reviewState: 'loading' as const }} />
+        <HelpSupportScreen {...{ reviewState: 'pending-write' as const }} />
+        <HelpSupportScreen {...{ reviewState: 'error' as const }} />
+        <HelpSupportScreen {...{ reviewState: 'offline-read' as const }} />
+      </AppProviders>,
+    );
+
+    for (const state of [
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+    ] as const) {
+      expect(screen.getByTestId(`more-help-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`more.help.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`more.help.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('more-help-state-error').props.accessibilityRole).toBe('alert');
+    expect(screen.getByTestId('more-help-state-pending-write').props.accessibilityLiveRegion)
+      .toBe('polite');
+
+    for (const state of [
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+    ] as const) {
+      expect(i18n.t(`more.help.states.${state}.title`)).not.toMatch(
+        /support@|diagnostic payload|token|provider|puppy a/i,
+      );
+      expect(i18n.t(`more.help.states.${state}.body`)).not.toMatch(
+        /support@|diagnostic payload|token|provider|puppy a/i,
+      );
+    }
+  });
+
   it('AC-NOTIF-PERSIST-4 renders persisted push toggles and writes changes before OS handoff', async () => {
     const changeReminderPush = jest.fn().mockResolvedValue(undefined);
     const changeSitterPush = jest.fn().mockResolvedValue(undefined);

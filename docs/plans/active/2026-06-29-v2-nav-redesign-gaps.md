@@ -480,7 +480,8 @@ GREEN / regression evidence:
       Reminder Edit now has RED/GREEN state templates for loading, pending write, error, and
       offline read plus compact dev-gallery and Stage 4 SE captures; Notification Preferences now
       has RED/GREEN state templates for loading, pending write, error, and offline read plus
-      dev-gallery coverage;
+      dev-gallery coverage; Help Support now has RED/GREEN state templates for loading, pending
+      write, error, and offline read plus dev-gallery and Stage 4 SE evidence;
       PuppyPlan Plus now has RED/GREEN templates for loading products, pending purchase, purchase
       error, offline read, and active subscription plus dev-gallery coverage;
       Accept Invite now has RED/GREEN templates for loading, load error, expired, and
@@ -3077,6 +3078,61 @@ Implementation notes:
   privacy-safe support note. Allowed deferred items remain real support ticket creation, email composer
   handoff, and diagnostics upload.
 
+### 29a. More Support / Help State Templates (§4.5)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/06-4-more-support-help.md` plus `DESIGN.md` §4.5 global screen
+  states.
+- Route: `/settings/help`; dev-gallery review shell under `/_dev/components`.
+- Allowed deviation: no live support ticket, mail composer availability probing, diagnostic upload,
+  or PII-bearing support payload. This slice is deterministic UI templates only.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-MORE-HELP-STATES-1: support/help exposes deterministic `loading`, `pending-write`, `error`, and
+  `offline-read` review states without sending support tickets or uploading diagnostics.
+- AC-MORE-HELP-STATES-2: each state renders a tokenized `Card` + `StatusPill`, localized EN/RU/ES
+  title/body/status copy, and stable `more-help-state-*` test IDs.
+- AC-MORE-HELP-STATES-3: error state uses alert semantics, pending-write uses a polite live region,
+  and copy does not expose support email addresses, diagnostic payloads, tokens, provider names, or
+  private sample data.
+- AC-MORE-HELP-STATES-4: dev-gallery includes compact previews for all four support/help state
+  templates for native Stage 4 handoff.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern AC-MORE-HELP-STATES`
+  — FAIL as expected before implementation: `more-help-state-loading` was absent.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern "route-shell preview states"`
+  — FAIL as expected before implementation: `dev.gallery.states.help-support-states` was absent.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern AC-MORE-HELP-STATES`
+  — PASS: 1 focused test.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern "route-shell preview states"`
+  — PASS: 1 focused test.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx`
+  — PASS: 1 suite, 30 tests.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx`
+  — PASS: 1 suite, 4 tests.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 76 suites / 618 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing reduced-motion `act(...)`
+  warnings remain unrelated to this slice.
+
+Implementation notes:
+- `HelpSupportScreen` now accepts a deterministic `reviewState` and exports compact
+  `HelpSupportStatePreview` cards for `loading`, `pending-write`, `error`, and `offline-read`.
+- State cards use existing design primitives (`Card`, `StatusPill`, `AppIcon`, `AppText`, `Stack`)
+  and EN/RU/ES keys. The default support route, privacy note, and mailto fallback behavior remain
+  unchanged.
+- Dev-gallery now includes `SyntheticHelpSupportStatesShell`; no support ticket, email availability
+  probing, diagnostics upload, schema, native module, or native project edit was introduced.
+- Stage 4 PASS (2026-07-03): launched the already installed PuppyPlan.app on the primary SE simulator
+  over `npx expo start`, opened `puppyplan:///_dev/components`, and XcodeBuildMCP runtime snapshot
+  matched `Help and support loading, pending note, error, and offline read states.` Native evidence:
+  `output/v2-nav-gaps-stage4/settings-help-states-stage4.jpg`.
+
 ### 30. PuppyPlan Plus Paywall Shell Slice (§4.4.7)
 
 Stage-0 lock:
@@ -4176,6 +4232,10 @@ Implementation notes:
   card, topic rows, diagnostics/contact rows, and visible privacy note against
   `docs/design/v1/specs/06-4-more-support-help.md`. Real ticket/email handoff and diagnostics upload
   remain deferred.
+- 2026-07-03: Added deterministic Help Support loading, pending-write, error, and offline-read state
+  templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy, and primary
+  SE Stage 4 screenshot. Real support ticket creation, mail composer availability probing, and
+  diagnostics upload remain deferred.
 - 2026-06-30: Added the PuppyPlan Plus paywall shell slice: More now opens `/paywall`, the screen
   renders feature rows, annual/monthly/lifetime plan rows, Choose plan, Restore purchases, legal copy,
   and soft-lock availability note with EN/RU/ES typed copy; navigation/scaffold contracts were updated,

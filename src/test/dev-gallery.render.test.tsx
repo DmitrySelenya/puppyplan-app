@@ -6,6 +6,7 @@ import { AccessibilityInfo } from 'react-native';
 
 import {
   DesignGalleryScreen,
+  SyntheticHelpSupportStatesShell,
   SyntheticHealthShell,
   SyntheticInviteAcceptStatesShell,
   SyntheticShareablePuppyCardStatesShell,
@@ -142,6 +143,7 @@ describe('development-only design gallery', () => {
         <SyntheticHealthShell />
         <SyntheticRemindersHubShell />
         <SyntheticReminderEditShell />
+        <SyntheticHelpSupportStatesShell />
         <SyntheticNotificationPreferencesShell />
         <SyntheticPaywallStatesShell />
         <SyntheticInviteAcceptStatesShell />
@@ -218,6 +220,21 @@ describe('development-only design gallery', () => {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('more.notifications.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.help-support-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('more.help.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.help.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.help.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.help.states.offline-read.title'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('more.quick-trackers.states.loading.title'), {
