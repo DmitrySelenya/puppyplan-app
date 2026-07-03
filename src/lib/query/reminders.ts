@@ -8,6 +8,7 @@ import {
 import type { Reminder } from '@/contracts/supabase';
 import { createSupabaseReminderRepository } from '@/lib/supabase/reminders';
 import type {
+  ReminderDeleteUpdate,
   ReminderEnabledUpdate,
   ReminderInsert,
   ReminderQuietHours,
@@ -51,6 +52,19 @@ export type ReminderToggleDraft = Readonly<{
 export type ReminderToggleMutationOptions = Readonly<{
   mutationFn(draft: ReminderToggleDraft): Promise<Reminder>;
   onSuccess(record: Reminder, draft: ReminderToggleDraft): Promise<void>;
+}>;
+
+export type ReminderDeleteDraft = Readonly<{
+  deletedAt: string;
+  householdId: string;
+  puppyId: string;
+  reminderId: string;
+  todayDate: string;
+}>;
+
+export type ReminderDeleteMutationOptions = Readonly<{
+  mutationFn(draft: ReminderDeleteDraft): Promise<void>;
+  onSuccess(result: void, draft: ReminderDeleteDraft): Promise<void>;
 }>;
 
 type ReminderInvalidationClient = Pick<QueryClient, 'invalidateQueries'>;
@@ -129,6 +143,22 @@ export function useToggleReminderEnabledMutation(
   });
 }
 
+export function useDeleteReminderMutation(
+  repository: Pick<SupabaseReminderRepository, 'deleteReminder'> =
+  createSupabaseReminderRepository(),
+) {
+  const queryClient = useQueryClient();
+  const options = createReminderDeleteMutationOptions({
+    queryClient,
+    repository,
+  });
+
+  return useMutation({
+    mutationFn: options.mutationFn,
+    onSuccess: options.onSuccess,
+  });
+}
+
 export function toReminderInsert(draft: ReminderCreateDraft): ReminderInsert {
   return {
     assigned_to: null,
@@ -154,6 +184,14 @@ export function toReminderToggleUpdate(draft: ReminderToggleDraft): ReminderEnab
   };
 }
 
+export function toReminderDeleteUpdate(draft: ReminderDeleteDraft): ReminderDeleteUpdate {
+  return {
+    deleted_at: draft.deletedAt,
+    id: draft.reminderId,
+    puppy_id: draft.puppyId,
+  };
+}
+
 export function createReminderCreateMutationOptions(
   dependencies: Readonly<{
     queryClient?: ReminderInvalidationClient;
@@ -163,6 +201,27 @@ export function createReminderCreateMutationOptions(
   return {
     mutationFn: (draft) => dependencies.repository.insertReminder(toReminderInsert(draft)),
     onSuccess: async (_record, draft) => {
+      await Promise.all([
+        dependencies.queryClient?.invalidateQueries({
+          queryKey: queryKeys.reminders.list(draft.householdId, draft.puppyId),
+        }),
+        dependencies.queryClient?.invalidateQueries({
+          queryKey: queryKeys.today.dashboard(draft.householdId, draft.puppyId, draft.todayDate),
+        }),
+      ]);
+    },
+  };
+}
+
+export function createReminderDeleteMutationOptions(
+  dependencies: Readonly<{
+    queryClient?: ReminderInvalidationClient;
+    repository: Pick<SupabaseReminderRepository, 'deleteReminder'>;
+  }>,
+): ReminderDeleteMutationOptions {
+  return {
+    mutationFn: (draft) => dependencies.repository.deleteReminder(toReminderDeleteUpdate(draft)),
+    onSuccess: async (_result, draft) => {
       await Promise.all([
         dependencies.queryClient?.invalidateQueries({
           queryKey: queryKeys.reminders.list(draft.householdId, draft.puppyId),

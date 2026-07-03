@@ -1,3 +1,4 @@
+import { AccessibilityInfo } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import type { Reminder } from '@/contracts/supabase';
@@ -13,8 +14,10 @@ const userId = '00000000-0000-4000-8000-000000005003';
 const mockRouterBack = jest.fn();
 const mockRouterPush = jest.fn();
 const mockUseActiveCareContext = jest.fn();
+const mockUseDeleteReminderMutation = jest.fn();
 const mockUseRemindersQuery = jest.fn();
 const mockUseToggleReminderEnabledMutation = jest.fn();
+const mockDeleteReminderMutate = jest.fn();
 const mockToggleReminderMutate = jest.fn();
 
 jest.mock('expo-router', () => ({
@@ -33,12 +36,19 @@ jest.mock('@/lib/query/reminders', () => ({
     receivedHouseholdId: string | undefined,
     receivedPuppyId: string | undefined,
   ) => mockUseRemindersQuery(receivedHouseholdId, receivedPuppyId),
+  useDeleteReminderMutation: () => mockUseDeleteReminderMutation(),
   useToggleReminderEnabledMutation: () => mockUseToggleReminderEnabledMutation(),
 }));
 
 describe('RemindersHubRoute', () => {
+  let reduceMotionProbe: jest.SpyInstance;
+
   beforeEach(async () => {
+    reduceMotionProbe = jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockReturnValue(new Promise<boolean>(() => {}));
     await i18n.changeLanguage('en');
+    mockDeleteReminderMutate.mockClear();
     mockRouterBack.mockClear();
     mockRouterPush.mockClear();
     mockToggleReminderMutate.mockClear();
@@ -73,12 +83,22 @@ describe('RemindersHubRoute', () => {
       isError: false,
       isLoading: false,
     });
+    mockUseDeleteReminderMutation.mockReturnValue({
+      isError: false,
+      isPending: false,
+      mutate: mockDeleteReminderMutate,
+      variables: undefined,
+    });
     mockUseToggleReminderEnabledMutation.mockReturnValue({
       isError: false,
       isPending: false,
       mutate: mockToggleReminderMutate,
       variables: undefined,
     });
+  });
+
+  afterEach(() => {
+    reduceMotionProbe.mockRestore();
   });
 
   it('AC-REM-HUB-2 AC-REM-HUB-3 renders durable active reminder rows from the active care context', () => {
@@ -169,6 +189,92 @@ describe('RemindersHubRoute', () => {
       mutate: mockToggleReminderMutate,
       variables: undefined,
     });
+    render(<RemindersHubRoute />, { wrapper: AppProviders });
+
+    expect(screen.getByText(i18n.t('reminders.states.error.title'))).toBeTruthy();
+    expect(screen.queryByText('Morning feeding')).toBeNull();
+  });
+
+  it('AC-REM-DELETE-3 calls the soft-delete mutation with active care context and current timestamp', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-07-03T08:30:00.000Z'));
+
+    try {
+      render(<RemindersHubRoute />, { wrapper: AppProviders });
+
+      fireEvent.press(screen.getByTestId(
+        'reminder-row-delete-00000000-0000-4000-8000-000000005101',
+        { includeHiddenElements: true },
+      ));
+
+      expect(mockDeleteReminderMutate).toHaveBeenCalledWith({
+        deletedAt: '2026-07-03T08:30:00.000Z',
+        householdId,
+        puppyId,
+        reminderId: '00000000-0000-4000-8000-000000005101',
+        todayDate: '2026-07-02',
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('AC-REM-DELETE-3 exposes a VoiceOver parity delete action for reminder rows', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-07-03T08:30:00.000Z'));
+
+    try {
+      render(<RemindersHubRoute />, { wrapper: AppProviders });
+
+      fireEvent(screen.getByLabelText('Morning feeding. Every day · 7:30'), 'accessibilityAction', {
+        nativeEvent: {
+          actionName: 'delete',
+        },
+      });
+
+      expect(mockDeleteReminderMutate).toHaveBeenCalledWith({
+        deletedAt: '2026-07-03T08:30:00.000Z',
+        householdId,
+        puppyId,
+        reminderId: '00000000-0000-4000-8000-000000005101',
+        todayDate: '2026-07-02',
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('AC-REM-DELETE-4 disables the toggle and hides the swipe action while a delete mutation is pending', () => {
+    mockUseDeleteReminderMutation.mockReturnValueOnce({
+      isError: false,
+      isPending: true,
+      mutate: mockDeleteReminderMutate,
+      variables: {
+        deletedAt: '2026-07-03T08:30:00.000Z',
+        householdId,
+        puppyId,
+        reminderId: '00000000-0000-4000-8000-000000005101',
+        todayDate: '2026-07-02',
+      },
+    });
+
+    render(<RemindersHubRoute />, { wrapper: AppProviders });
+
+    expect(screen.getByTestId('reminder-row-toggle-00000000-0000-4000-8000-000000005101').props.disabled)
+      .toBe(true);
+    expect(screen.queryByTestId('reminder-row-delete-00000000-0000-4000-8000-000000005101'))
+      .toBeNull();
+    expect(screen.getByTestId('reminder-row-pending-00000000-0000-4000-8000-000000005101')).toBeTruthy();
+  });
+
+  it('AC-REM-DELETE-5 renders delete mutation errors as the calm state card', () => {
+    mockUseDeleteReminderMutation.mockReturnValueOnce({
+      isError: true,
+      isPending: false,
+      mutate: mockDeleteReminderMutate,
+      variables: undefined,
+    });
+
     render(<RemindersHubRoute />, { wrapper: AppProviders });
 
     expect(screen.getByText(i18n.t('reminders.states.error.title'))).toBeTruthy();

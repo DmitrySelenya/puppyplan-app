@@ -2545,6 +2545,72 @@ Implementation notes:
   scheduling, permission probing, native picker replacement, schema migration, native module,
   analytics payload, or `ios/` / `android/` edit was introduced.
 
+### 19f. Reminders Hub row soft-delete lifecycle slice
+
+Stage-0 lock:
+- Source spec card: `docs/design/v1/specs/12-1-reminders-hub.md` row lifecycle anatomy and
+  `docs/design/v1/specs/04-quick-log-routines-reminders.md` routine lifecycle contract.
+- Scope: soft-delete a reminder row from the Reminders Hub using the existing
+  `public.reminder.deleted_at` column and typed query/repository boundary. This closes only the
+  lightweight row delete lifecycle; the existing enabled/off toggle remains the pause/off path.
+- Allowed deviation: row delete uses the shared `SwipeToDelete` primitive plus a VoiceOver/TalkBack
+  accessibility action; edit/menu treatment remains deferred.
+- Out of scope: occurrence generation, mark-done/back-date/skip, local notification scheduling,
+  notification cancellation, edit route loading for existing reminders, native modules, schema
+  changes, analytics payloads, and `ios/` / `android/` edits.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-REM-DELETE-1: the Supabase reminder repository can soft-delete a non-deleted reminder by
+  `id` + `puppy_id` by setting `deleted_at`, without returning fake success on a failed write.
+- AC-REM-DELETE-2: delete mutation options invalidate `queryKeys.reminders.list(householdId, puppyId)`
+  and `queryKeys.today.dashboard(householdId, puppyId, todayDate)` after success.
+- AC-REM-DELETE-3: the connected `/reminders` row delete action calls the typed delete mutation with
+  active care context and a current timestamp.
+- AC-REM-DELETE-4: while delete is pending, the affected row shows the existing non-color-only
+  pending status and disables both the toggle and swipe/accessibility delete action.
+- AC-REM-DELETE-5: delete failures use the existing calm Reminders error state; no silent fallback,
+  occurrence mutation, notification scheduling, schema/native module, or generated native project
+  change is introduced.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-query.test.ts src/test/reminders-hub-route.render.test.tsx`
+  failed before production code because `repository.deleteReminder` and
+  `createReminderDeleteMutationOptions` were missing, the route had no
+  `reminder-row-delete-*` action, delete-pending rows did not disable the toggle, and delete errors
+  did not route to the calm Reminders error card.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-query.test.ts src/test/reminders-hub-route.render.test.tsx`
+  passed: 2 suites, 24 tests. Coverage includes repository success/failure/zero-row soft-delete,
+  delete invalidation keys, connected swipe action payload, VoiceOver/TalkBack delete action,
+  pending disable/hide behavior, and delete-error calm state.
+- `npm run typecheck` passed.
+- `node scripts/checks/check-i18n.mjs` passed.
+- `npm run tokens:check` passed.
+- `npm run check` passed: lint, typecheck, 77 Jest suites / 633 tests, node checks, scaffold
+  guardrails, i18n, tokens, privacy scan, and text hygiene. The full run still prints existing
+  reduced-motion `act(...)` warnings in unrelated `health-record-detail` / `screen-header` suites;
+  the targeted Reminders suites are clean.
+
+Implementation notes:
+- `src/lib/supabase/reminders.ts` now exposes `deleteReminder`, updates `deleted_at` through the
+  typed Supabase boundary, scopes by `id` + `puppy_id` + `deleted_at is null`, and rejects Supabase
+  errors or zero-row writes with `reminder_delete_failed`.
+- `src/lib/query/reminders.ts` adds `ReminderDeleteDraft`, `toReminderDeleteUpdate`,
+  `createReminderDeleteMutationOptions`, and `useDeleteReminderMutation`; delete success invalidates
+  the same reminders list key used by `useRemindersQuery` plus the current Diary dashboard key.
+- `src/features/reminders/screens/RemindersHubScreen.tsx` wraps non-pending rows in
+  `SwipeToDelete`, exposes a row accessibility `delete` action, sends the active care context plus
+  `new Date().toISOString()`, and reuses the existing pending pill/error state.
+- `src/design/primitives/ListRow.tsx` passes accessibility actions through to labelled static rows
+  so screen-reader actions do not require making the row a fake button.
+- Stage 4 native swipe capture was not re-run in this slice because the native build path remains
+  blocked and this change is JS-only over the existing installed app path; structural route coverage
+  plus the existing `SwipeToDelete` primitive coverage are the current evidence. No occurrence
+  generation, notification scheduling/cancellation, schema migration, native module, analytics
+  payload, or `ios/` / `android/` edit was introduced.
+
 ## 20. Trusted sitter checklist reminder anatomy evidence
 
 **2026-06-30 next implementation slice:** Trusted Sitter Checklist Reminder card anatomy inside
@@ -3970,6 +4036,13 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-03: Added Reminders Hub row soft-delete lifecycle wiring: typed Supabase repository
+  `deleted_at` update scoped by `id` + `puppy_id`, zero-row failure guard, TanStack delete mutation
+  invalidating the durable reminders list and current Diary dashboard, row `SwipeToDelete` plus
+  VoiceOver/TalkBack delete action, pending-row disable/hide behavior, and calm error state reuse.
+  Targeted RED/GREEN Reminders tests, i18n, tokens, typecheck, and full `npm run check` passed. No
+  occurrence generation, notification scheduling, schema/native module, analytics, or native project
+  edit was introduced.
 - 2026-07-03: Added Pet Health main loading/error/offline-read state templates and production `/pet`
   loading/error wiring from active-care and health-record queries. The cards use design primitives,
   typed EN/RU/ES copy, alert/live-region semantics, and dev-gallery handoff coverage without adding

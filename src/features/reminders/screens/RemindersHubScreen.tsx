@@ -16,6 +16,7 @@ import {
   SegmentedControl,
   Stack,
   StatusPill,
+  SwipeToDelete,
   type StatusPillTone,
   Toggle,
 } from '@/design/primitives';
@@ -23,6 +24,7 @@ import { tokens } from '@/design/tokens';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 import {
+  useDeleteReminderMutation,
   useRemindersQuery,
   useToggleReminderEnabledMutation,
 } from '@/lib/query/reminders';
@@ -76,7 +78,9 @@ const sectionIcon: Record<ReminderSection, AppIconName> = {
 export type RemindersHubScreenProps = Readonly<{
   onAddReminder: () => void;
   onBack: () => void;
+  onDeleteReminder?: (reminderId: string) => void;
   onToggleReminder?: (reminderId: string, enabled: boolean) => void;
+  pendingDeleteReminderId?: string;
   pendingToggleReminderId?: string;
   reminders?: readonly Reminder[];
   reviewState?: ReminderHubState;
@@ -95,6 +99,7 @@ export function ConnectedRemindersHubScreen({
     activeCare.careContext?.puppyId,
   );
   const toggleReminderMutation = useToggleReminderEnabledMutation();
+  const deleteReminderMutation = useDeleteReminderMutation();
 
   if (activeCare.status === 'loading') {
     return (
@@ -128,7 +133,7 @@ export function ConnectedRemindersHubScreen({
     );
   }
 
-  if (remindersQuery.isError || toggleReminderMutation.isError) {
+  if (remindersQuery.isError || toggleReminderMutation.isError || deleteReminderMutation.isError) {
     return (
       <RemindersHubScreen
         onAddReminder={onAddReminder}
@@ -142,6 +147,15 @@ export function ConnectedRemindersHubScreen({
     <RemindersHubScreen
       onAddReminder={onAddReminder}
       onBack={onBack}
+      onDeleteReminder={(reminderId) => {
+        deleteReminderMutation.mutate({
+          deletedAt: new Date().toISOString(),
+          householdId: careContext.householdId,
+          puppyId: careContext.puppyId,
+          reminderId,
+          todayDate: careContext.todayDate,
+        });
+      }}
       onToggleReminder={(reminderId, enabled) => {
         toggleReminderMutation.mutate({
           enabled,
@@ -151,6 +165,9 @@ export function ConnectedRemindersHubScreen({
           todayDate: careContext.todayDate,
         });
       }}
+      pendingDeleteReminderId={deleteReminderMutation.isPending
+        ? deleteReminderMutation.variables?.reminderId
+        : undefined}
       pendingToggleReminderId={toggleReminderMutation.isPending
         ? toggleReminderMutation.variables?.reminderId
         : undefined}
@@ -162,7 +179,9 @@ export function ConnectedRemindersHubScreen({
 export function RemindersHubScreen({
   onAddReminder,
   onBack,
+  onDeleteReminder,
   onToggleReminder,
+  pendingDeleteReminderId,
   pendingToggleReminderId,
   reminders = [],
   reviewState,
@@ -220,8 +239,10 @@ export function RemindersHubScreen({
                   {rows.map((reminder) => (
                     <ReminderRow
                       key={reminder.id}
+                      onDeleteReminder={onDeleteReminder}
                       onToggleReminder={onToggleReminder}
-                      pending={pendingToggleReminderId === reminder.id}
+                      pending={pendingToggleReminderId === reminder.id
+                        || pendingDeleteReminderId === reminder.id}
                       reminder={reminder}
                       section={section}
                     />
@@ -267,24 +288,33 @@ function RemindersHubStateCard({ state }: Readonly<{ state: ReminderHubState }>)
 }
 
 function ReminderRow({
+  onDeleteReminder,
   onToggleReminder,
   pending,
   reminder,
   section,
 }: Readonly<{
+  onDeleteReminder?: (reminderId: string) => void;
   onToggleReminder?: (reminderId: string, enabled: boolean) => void;
   pending: boolean;
   reminder: Reminder;
   section: ReminderSection;
 }>) {
   const { t } = useAppTranslation();
-
-  return (
+  const subtitle = t('reminders.row-subtitle-daily-template', {
+    time: getReminderTime(reminder),
+  });
+  const row = (
     <ListRow
+      accessibilityActions={onDeleteReminder && !pending ? [{ name: 'delete' }] : undefined}
+      accessibilityLabel={`${reminder.reminder_type}. ${subtitle}`}
       leading={<AppIcon color={tokens.color.text.secondary} name={sectionIcon[section]} />}
-      subtitle={t('reminders.row-subtitle-daily-template', {
-        time: getReminderTime(reminder),
-      })}
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === 'delete' && !pending) {
+          onDeleteReminder?.(reminder.id);
+        }
+      }}
+      subtitle={subtitle}
       title={reminder.reminder_type}
       titleNumberOfLines={2}
       trailing={(
@@ -312,6 +342,21 @@ function ReminderRow({
       )}
       variant="settings"
     />
+  );
+
+  if (!onDeleteReminder || pending) {
+    return row;
+  }
+
+  return (
+    <SwipeToDelete
+      deleteLabel={t('common.delete')}
+      onDelete={() => {
+        onDeleteReminder(reminder.id);
+      }}
+      testID={`reminder-row-delete-${reminder.id}`}>
+      {row}
+    </SwipeToDelete>
   );
 }
 

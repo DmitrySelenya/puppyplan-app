@@ -36,13 +36,25 @@ export type ReminderEnabledUpdate = Readonly<{
   puppy_id: string;
 }>;
 
+export type ReminderDeleteUpdate = Readonly<{
+  deleted_at: string;
+  id: string;
+  puppy_id: string;
+}>;
+
 export type SupabaseReminderRepository = Readonly<{
+  deleteReminder(update: ReminderDeleteUpdate): Promise<void>;
   insertReminder(insert: ReminderInsert): Promise<Reminder>;
   listReminders(input: Readonly<{ puppyId: string }>): Promise<readonly Reminder[]>;
   updateReminderEnabled(update: ReminderEnabledUpdate): Promise<Reminder>;
 }>;
 
 export type ReminderClient = Readonly<{
+  deleteReminder(update: ReminderDeleteUpdate): PromiseLike<Readonly<{
+    count?: number | null;
+    data: unknown;
+    error: unknown;
+  }>>;
   insertReminder(insert: ReminderInsert): PromiseLike<Readonly<{
     data: unknown;
     error: unknown;
@@ -61,6 +73,13 @@ export function createSupabaseReminderRepository(
   client: ReminderClient = createDefaultReminderClient(),
 ): SupabaseReminderRepository {
   return {
+    deleteReminder: async (update) => {
+      const response = await client.deleteReminder(update);
+
+      if (response.error || response.count === 0) {
+        throw new Error('reminder_delete_failed');
+      }
+    },
     insertReminder: async (insert) => {
       const response = await client.insertReminder(insert);
 
@@ -115,6 +134,13 @@ function createDefaultReminderClient(): ReminderClient {
       .insert(insert)
       .select(reminderSelectColumns)
       .maybeSingle(),
+    deleteReminder: ({ deleted_at, id, puppy_id }) => getSupabaseClient()
+      .from('reminder')
+      .update({ deleted_at }, { count: 'exact' })
+      .eq('id', id)
+      .eq('puppy_id', puppy_id)
+      .is('deleted_at', null)
+      .select('id'),
     listReminders: ({ puppyId }) => getSupabaseClient()
       .from('reminder')
       .select(reminderSelectColumns)

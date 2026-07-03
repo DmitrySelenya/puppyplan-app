@@ -115,7 +115,9 @@ export function ListRow({
 
   return (
     <View
+      accessibilityActions={accessibilityActions}
       accessibilityLabel={accessibilityLabel}
+      onAccessibilityAction={onAccessibilityAction}
       accessible={Boolean(accessibilityLabel)}
       style={rowStyle}>
       {content}

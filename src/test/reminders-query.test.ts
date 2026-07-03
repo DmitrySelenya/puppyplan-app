@@ -1,11 +1,14 @@
 import type { Reminder } from '@/contracts/supabase';
 import {
   createReminderCreateMutationOptions,
+  createReminderDeleteMutationOptions,
   createReminderToggleMutationOptions,
   createRemindersQueryOptions,
   toReminderInsert,
+  toReminderDeleteUpdate,
   toReminderToggleUpdate,
   type ReminderCreateDraft,
+  type ReminderDeleteDraft,
   type ReminderToggleDraft,
 } from '@/lib/query/reminders';
 import {
@@ -47,6 +50,14 @@ const draft: ReminderCreateDraft = {
 
 const toggleDraft: ReminderToggleDraft = {
   enabled: false,
+  householdId,
+  puppyId,
+  reminderId: reminder.id,
+  todayDate: '2026-07-02',
+};
+
+const deleteDraft: ReminderDeleteDraft = {
+  deletedAt: '2026-07-03T08:30:00.000Z',
   householdId,
   puppyId,
   reminderId: reminder.id,
@@ -119,6 +130,53 @@ describe('Supabase reminder repository boundary', () => {
 
     await expect(repository.updateReminderEnabled(toReminderToggleUpdate(toggleDraft)))
       .rejects.toThrow('reminder_update_failed');
+  });
+
+  it('AC-REM-DELETE-1 soft-deletes a non-deleted reminder through the typed wrapper', async () => {
+    const client = createClient({
+      deleteData: undefined,
+      insertData: reminder,
+      listData: [reminder],
+    });
+    const repository = createSupabaseReminderRepository(client);
+
+    expect(typeof repository.deleteReminder).toBe('function');
+    await expect(repository.deleteReminder({
+      deleted_at: deleteDraft.deletedAt,
+      id: reminder.id,
+      puppy_id: puppyId,
+    })).resolves.toBeUndefined();
+    expect(client.deleteReminder).toHaveBeenCalledWith({
+      deleted_at: deleteDraft.deletedAt,
+      id: reminder.id,
+      puppy_id: puppyId,
+    });
+  });
+
+  it('AC-REM-DELETE-1 surfaces soft-delete failures instead of returning fake success', async () => {
+    const repository = createSupabaseReminderRepository(createClient({
+      deleteError: { message: 'denied' },
+      insertData: reminder,
+      listData: [reminder],
+    }));
+
+    expect(typeof repository.deleteReminder).toBe('function');
+    await expect(repository.deleteReminder({
+      deleted_at: deleteDraft.deletedAt,
+      id: reminder.id,
+      puppy_id: puppyId,
+    })).rejects.toThrow('reminder_delete_failed');
+  });
+
+  it('AC-REM-DELETE-1 rejects zero-row soft-delete responses instead of reporting success', async () => {
+    const repository = createSupabaseReminderRepository(createClient({
+      deleteCount: 0,
+      insertData: reminder,
+      listData: [reminder],
+    }));
+
+    await expect(repository.deleteReminder(toReminderDeleteUpdate(deleteDraft)))
+      .rejects.toThrow('reminder_delete_failed');
   });
 });
 
@@ -225,9 +283,36 @@ describe('reminder query mutation contract', () => {
       queryKey: ['today', householdId, puppyId, '2026-07-02'],
     });
   });
+
+  it('AC-REM-DELETE-2 invalidates reminder list and current Diary dashboard after soft delete', async () => {
+    const invalidateQueries = jest.fn().mockResolvedValue(undefined);
+    const deleteReminder = jest.fn().mockResolvedValue(undefined);
+    const options = createReminderDeleteMutationOptions({
+      queryClient: { invalidateQueries },
+      repository: { deleteReminder },
+    });
+
+    await expect(options.mutationFn(deleteDraft)).resolves.toBeUndefined();
+    await options.onSuccess(undefined, deleteDraft);
+
+    expect(deleteReminder).toHaveBeenCalledWith({
+      deleted_at: deleteDraft.deletedAt,
+      id: reminder.id,
+      puppy_id: puppyId,
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['reminders', householdId, puppyId],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['today', householdId, puppyId, '2026-07-02'],
+    });
+  });
 });
 
 function createClient({
+  deleteCount,
+  deleteData,
+  deleteError = null,
   insertData,
   insertError = null,
   listData,
@@ -235,6 +320,9 @@ function createClient({
   updateData,
   updateError = null,
 }: Readonly<{
+  deleteCount?: number | null;
+  deleteData?: unknown;
+  deleteError?: unknown;
   insertData?: unknown;
   insertError?: unknown;
   listData?: unknown;
@@ -242,9 +330,15 @@ function createClient({
   updateData?: unknown;
   updateError?: unknown;
 }>): jest.Mocked<ReminderClient> & Readonly<{
+  deleteReminder: jest.Mock;
   updateReminderEnabled: jest.Mock;
 }> {
   return {
+    deleteReminder: jest.fn().mockResolvedValue({
+      count: deleteCount,
+      data: deleteData,
+      error: deleteError,
+    }),
     insertReminder: jest.fn().mockResolvedValue({
       data: insertData,
       error: insertError,
