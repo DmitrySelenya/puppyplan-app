@@ -211,6 +211,11 @@ describe('ReminderEditRoute', () => {
       screen.getByLabelText(i18n.t('reminders.form.field-name')),
       ' Morning potty ',
     );
+    fireEvent(
+      screen.getByTestId('reminder-edit-quiet-toggle'),
+      'valueChange',
+      false,
+    );
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('reminders.form.save'),
     }));
@@ -220,6 +225,7 @@ describe('ReminderEditRoute', () => {
         householdId: mockCareContext.householdId,
         puppyId: mockCareContext.puppyId,
         reminderName: ' Morning potty ',
+        respectQuietHours: false,
         todayDate: mockCareContext.todayDate,
         userId: mockCareContext.userId,
       });

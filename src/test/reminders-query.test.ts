@@ -161,6 +161,25 @@ describe('reminder query mutation contract', () => {
     });
   });
 
+  it('AC-REM-QH-1 includes quiet-hours JSON only when the create draft opts in', () => {
+    expect(toReminderInsert({
+      ...draft,
+      respectQuietHours: true,
+    })).toEqual(expect.objectContaining({
+      quiet_hours: {
+        enabled: true,
+        end: '07:00',
+        start: '22:00',
+      },
+    }));
+    expect(toReminderInsert({
+      ...draft,
+      respectQuietHours: false,
+    })).toEqual(expect.objectContaining({
+      quiet_hours: null,
+    }));
+  });
+
   it('AC-REM-DURABLE-3 invalidates reminder list and current Diary dashboard after create', async () => {
     const invalidateQueries = jest.fn().mockResolvedValue(undefined);
     const insertReminder = jest.fn().mockResolvedValue(reminder);

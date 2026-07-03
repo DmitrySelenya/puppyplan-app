@@ -201,9 +201,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Reminder push — iOS lock-screen (§4.2.4 → 12.4)
 - [x] ✅ Reminder card on Diary (§4.2.5)
 - [x] ✅ Quiet hours picker (§4.2.3) — native reminder-edit anatomy slice implemented:
-      quiet-hours card, example range, per-puppy toggle, and calm helper copy. Real range editing,
-      validation, and persistence remain open; Stage 4 native SE screenshot comparison passed
-      2026-07-02.
+      quiet-hours card, example range, per-puppy toggle, and calm helper copy. Create payload now
+      persists the existing quiet-hours toggle to `public.reminder.quiet_hours`; real range editing,
+      validation, timezone conversion, and scheduling remain open. Stage 4 native SE screenshot
+      comparison passed 2026-07-02.
 - [x] ✅ Sitter checklist reminders (§4.2.6) — native structural anatomy implemented
       inside `/reminders/edit`: trusted-sitter source label, person icon slot, left accent rail,
       1/3 progress bar, and localized action set. Stage 4 native SE screenshot comparison passed
@@ -2338,6 +2339,52 @@ Implementation notes:
   the existing Reminders Hub list capture because this slice changes behavior on existing controls;
   row-level pending feedback is now covered by §4.2.7b. Additional native state captures remain
   future follow-ups.
+
+### 19e. Reminder edit quiet-hours create payload
+
+Stage-0 lock:
+- Source spec card: `docs/design/v1/specs/04-quick-log-routines-reminders.md` Reminder preferences
+  quiet-hours anatomy and the existing `/reminders/edit` `Respect quiet hours` toggle.
+- Scope: persist the existing quiet-hours toggle into the create reminder payload using the current
+  `public.reminder.quiet_hours` JSONB field and locked static range example only.
+- Out of scope: editable quiet-hours range, validation UI, timezone conversion, occurrence generation,
+  local notification scheduling, permission probing, native picker replacement, schema migration,
+  new native module, analytics payload, and `ios/` / `android/` edits.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-REM-QH-1: `toReminderInsert` writes `quiet_hours: { enabled: true, start: '22:00', end: '07:00' }`
+  when the create draft opts into quiet hours, and preserves `quiet_hours: null` when the draft opts
+  out.
+- AC-REM-QH-2: the connected `/reminders/edit` route includes the current quiet-hours toggle value
+  in the create mutation draft.
+- AC-REM-QH-3: the toggle remains visible, accessible, and user-controlled; save behavior and
+  existing OS settings handoff stay unchanged.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-query.test.ts src/test/reminder-edit-route.render.test.tsx`
+  — FAIL as expected before implementation: `quiet_hours` remained `null` for an opted-in draft and
+  the connected route create mutation draft omitted `respectQuietHours`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-query.test.ts src/test/reminder-edit-route.render.test.tsx`
+  — PASS: 2 suites, 19 tests.
+- `npm run typecheck` — PASS.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run tokens:check` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 76 suites / 615 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing motion-related `act(...)` warnings remain
+  non-failing.
+
+Implementation notes:
+- `ReminderCreateDraft` now carries an optional `respectQuietHours` boolean. The connected
+  `/reminders/edit` route reads it from the existing `Respect quiet hours` toggle and passes it into
+  the create mutation.
+- `toReminderInsert` writes `quiet_hours: { enabled: true, start: '22:00', end: '07:00' }` only when
+  the draft opts in; opt-out and legacy callers still write `quiet_hours: null`.
+- No editable range, validation UI, timezone conversion, occurrence generation, local notification
+  scheduling, permission probing, native picker replacement, schema migration, native module,
+  analytics payload, or `ios/` / `android/` edit was introduced.
 
 ## 20. Trusted sitter checklist reminder anatomy evidence
 

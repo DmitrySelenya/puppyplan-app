@@ -10,6 +10,7 @@ import { createSupabaseReminderRepository } from '@/lib/supabase/reminders';
 import type {
   ReminderEnabledUpdate,
   ReminderInsert,
+  ReminderQuietHours,
   SupabaseReminderRepository,
 } from '@/lib/supabase/reminders';
 
@@ -17,6 +18,11 @@ import { queryKeys } from './keys';
 
 const defaultReminderTime = '7:30';
 const defaultReminderTimezone = 'UTC';
+const defaultQuietHours: ReminderQuietHours = {
+  enabled: true,
+  end: '07:00',
+  start: '22:00',
+};
 const inactiveHouseholdId = 'inactive-household';
 const inactivePuppyId = 'inactive-puppy';
 
@@ -24,6 +30,7 @@ export type ReminderCreateDraft = Readonly<{
   householdId: string;
   puppyId: string;
   reminderName: string;
+  respectQuietHours?: boolean;
   todayDate: string;
   userId: string;
 }>;
@@ -128,7 +135,7 @@ export function toReminderInsert(draft: ReminderCreateDraft): ReminderInsert {
     created_by: draft.userId,
     enabled: true,
     puppy_id: draft.puppyId,
-    quiet_hours: null,
+    quiet_hours: draft.respectQuietHours ? defaultQuietHours : null,
     reminder_type: draft.reminderName.trim(),
     schedule_rule: {
       repeat: 'daily',

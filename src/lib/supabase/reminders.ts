@@ -12,12 +12,18 @@ export type ReminderScheduleRule = Readonly<{
   time: string;
 }>;
 
+export type ReminderQuietHours = Readonly<{
+  enabled: true;
+  end: string;
+  start: string;
+}>;
+
 export type ReminderInsert = Readonly<{
   assigned_to: string | null;
   created_by: string;
   enabled: boolean;
   puppy_id: string;
-  quiet_hours: Record<string, never> | null;
+  quiet_hours: ReminderQuietHours | null;
   reminder_type: string;
   schedule_rule: ReminderScheduleRule;
   timezone: string;

@@ -92,12 +92,14 @@ export function ReminderEditScreen({
 }: Readonly<{
   isSaving?: boolean;
   onClose: () => void;
-  onSaveReminder?: (draft: Pick<ReminderCreateDraft, 'reminderName'>) => Promise<void> | void;
+  onSaveReminder?: (draft: Pick<ReminderCreateDraft, 'reminderName' | 'respectQuietHours'>) =>
+    Promise<void> | void;
   reviewState?: ReminderEditReviewState;
 }>) {
   const { t } = useAppTranslation();
   const [localReviewState, setLocalReviewState] = useState<ReminderEditReviewState | undefined>();
   const [reminderName, setReminderName] = useState('');
+  const [respectQuietHours, setRespectQuietHours] = useState(true);
   const visibleReviewState = reviewState ?? localReviewState;
   const isPendingWrite = isSaving || visibleReviewState === 'pending-write';
   const canSave = onSaveReminder !== undefined && reminderName.trim().length > 0 && !isPendingWrite;
@@ -119,7 +121,7 @@ export function ReminderEditScreen({
     setLocalReviewState(undefined);
 
     try {
-      await onSaveReminder({ reminderName });
+      await onSaveReminder({ reminderName, respectQuietHours });
       onClose();
     } catch {
       setLocalReviewState('error');
@@ -201,9 +203,9 @@ export function ReminderEditScreen({
                 trailing={(
                   <Toggle
                     accessibilityLabel={t('reminders.form.toggle-quiet')}
-                    onValueChange={() => undefined}
+                    onValueChange={setRespectQuietHours}
                     testID="reminder-edit-quiet-toggle"
-                    value
+                    value={respectQuietHours}
                   />
                 )}
               />
@@ -270,6 +272,7 @@ export function ConnectedReminderEditScreen({
         householdId: careContext.householdId,
         puppyId: careContext.puppyId,
         reminderName: draft.reminderName,
+        respectQuietHours: draft.respectQuietHours,
         todayDate: careContext.todayDate,
         userId: careContext.userId,
       }).then(() => undefined)}
