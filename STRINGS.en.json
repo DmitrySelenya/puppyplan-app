@@ -351,7 +351,10 @@
       "title": "Want quiet reminders?",
       "body": "We'll only send what you choose. No noise.",
       "primary": "Turn on",
-      "secondary": "Not now"
+      "secondary": "Not now",
+      "error-status": "Settings unavailable",
+      "error-title": "Could not open Settings",
+      "error-body": "You can keep going and turn reminders on later from your device settings."
     }
   },
 

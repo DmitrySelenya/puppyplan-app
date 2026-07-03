@@ -1,5 +1,12 @@
-import { AccessibilityInfo, StyleSheet } from 'react-native';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { AccessibilityInfo, Linking, StyleSheet } from 'react-native';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 
 import { tokens } from '@/design/tokens';
 import {
@@ -11,6 +18,10 @@ import {
 import type { PuppyProfileInput } from '@/contracts/onboarding';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
+
+const flushMicrotasks = async () => {
+  await Promise.resolve();
+};
 
 describe('Onboarding production flow', () => {
   let reduceMotionProbe: jest.SpyInstance;
@@ -571,6 +582,55 @@ describe('Onboarding production flow', () => {
     expect(screen.getAllByRole('button', {
       name: i18n.t('onboarding.notifications-prompt.secondary'),
     })).toHaveLength(1);
+  });
+
+  it('AC-OB-NOTIF-HANDOFF opens OS settings from the notification prompt without closing it', async () => {
+    const openSettings = jest.spyOn(Linking, 'openSettings').mockResolvedValueOnce(undefined);
+
+    render(
+      <AppProviders>
+        <OnboardingNotificationsPromptPreview />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.notifications-prompt.primary'),
+    }));
+    await act(flushMicrotasks);
+
+    expect(openSettings).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(i18n.t('onboarding.notifications-prompt.title'))).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('onboarding.notifications-prompt.secondary'),
+    })).toBeTruthy();
+
+    openSettings.mockRestore();
+  });
+
+  it('AC-OB-NOTIF-HANDOFF surfaces OS settings handoff failures', async () => {
+    const openSettings = jest
+      .spyOn(Linking, 'openSettings')
+      .mockRejectedValueOnce(new Error('settings unavailable'));
+
+    render(
+      <AppProviders>
+        <OnboardingNotificationsPromptPreview />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.notifications-prompt.primary'),
+    }));
+    await act(flushMicrotasks);
+
+    await waitFor(() => {
+      expect(openSettings).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('onboarding-notifications-settings-error')).toBeTruthy();
+    });
+    expect(screen.getByText(i18n.t('onboarding.notifications-prompt.error-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('onboarding.notifications-prompt.error-body'))).toBeTruthy();
+
+    openSettings.mockRestore();
   });
 
   it('keeps account and notification prompts absent from the first-value completion screen', () => {

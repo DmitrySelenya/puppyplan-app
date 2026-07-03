@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import {
   futureBirthDateIssueMessage,
@@ -788,6 +788,17 @@ export function OnboardingAccountPromptPreview() {
 
 export function OnboardingNotificationsPromptPreview() {
   const { t } = useAppTranslation();
+  const [settingsErrorVisible, setSettingsErrorVisible] = useState(false);
+
+  const openNotificationSettings = async () => {
+    setSettingsErrorVisible(false);
+
+    try {
+      await Linking.openSettings();
+    } catch {
+      setSettingsErrorVisible(true);
+    }
+  };
 
   return (
     <SheetSurface
@@ -798,11 +809,34 @@ export function OnboardingNotificationsPromptPreview() {
         icon="bell"
         title={t('onboarding.notifications-prompt.title')}
       />
+      {settingsErrorVisible ? (
+        <Card
+          accessibilityLabel={t('onboarding.notifications-prompt.error-title')}
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
+          testID="onboarding-notifications-settings-error"
+          variant="mutedTemplate">
+          <Stack gap="sm">
+            <StatusPill
+              accessibilityLabel={t('onboarding.notifications-prompt.error-status')}
+              icon={<AppIcon name="warningTriangle" size={14} />}
+              label={t('onboarding.notifications-prompt.error-status')}
+              tone="failed"
+            />
+            <AppText variant="bodyEmph">
+              {t('onboarding.notifications-prompt.error-title')}
+            </AppText>
+            <AppText tone="secondary">
+              {t('onboarding.notifications-prompt.error-body')}
+            </AppText>
+          </Stack>
+        </Card>
+      ) : null}
       <Stack gap="sm">
         <Button
           label={t('onboarding.notifications-prompt.primary')}
           labelMaxFontSizeMultiplier={ONBOARDING_CONTROL_MAX_FONT_SIZE_MULTIPLIER}
-          onPress={() => undefined}
+          onPress={openNotificationSettings}
         />
         <Button
           label={t('onboarding.notifications-prompt.secondary')}

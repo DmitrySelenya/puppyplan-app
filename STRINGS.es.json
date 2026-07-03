@@ -344,7 +344,10 @@
       "title": "¿Quieres recordatorios silenciosos?",
       "body": "Sólo enviaremos lo que elijas. Sin ruido.",
       "primary": "Encender",
-      "secondary": "Ahora no"
+      "secondary": "Ahora no",
+      "error-status": "Ajustes no disponibles",
+      "error-title": "No se pudo abrir Ajustes",
+      "error-body": "Puedes seguir y activar los recordatorios más tarde desde los ajustes del dispositivo."
     }
   },
   "today": {

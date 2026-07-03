@@ -420,8 +420,8 @@ GREEN / regression evidence:
       comparison passed for content/chrome and transient celebration snackbar visual capture 2026-07-02.
 - [x] ✅ Account/Notifications prompts (§2.1.7) — post-first-value V2 native preview slices
       implemented as skippable SheetSurface prompts with account and quiet-reminder actions.
-      Stage 4 native SE screenshot comparison passed 2026-07-02; runtime scheduler / OS permission
-      handoff remain deferred.
+      Stage 4 native SE screenshot comparison passed 2026-07-02; notification settings handoff is
+      wired through the quiet-reminder prompt. Runtime prompt scheduler remains deferred.
 
 ### Cross-cutting
 - [x] ✅ **Apply new TabBar (Diary/Pet/More + Add) to every migrated screen** — the tab shell now
@@ -2741,8 +2741,47 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/onboarding-account-prompt-clean-stage4.png`,
   `output/v2-nav-gaps-stage4/onboarding-notifications-prompt-clean-stage4.png`. Visual evidence covers
   the account SheetSurface with Apple, Google, Email, and Not now actions, plus the quiet-reminder
-  SheetSurface with Turn on and Not now actions. Runtime scheduler and OS permission handoff remain
-  deferred.
+  SheetSurface with Turn on and Not now actions. Runtime scheduler remains deferred; OS settings
+  handoff is covered by §27a.
+
+### 27a. Onboarding Notification Prompt OS Settings Handoff (§2.1.7)
+
+Stage-0 lock:
+- Source: `docs/design/v1/specs/02-7-onboarding-account-notifications-prompts.md` and the existing
+  `OnboardingNotificationsPromptPreview` sheet anatomy.
+- Scope: route-level OS settings handoff from the post-first-value notification prompt only.
+  No runtime prompt scheduler, notification permission probing, push token registration, local
+  notification scheduling, persistence, native module, schema change, or `ios/` / `android/` edit.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-OB-NOTIF-HANDOFF-1: pressing `onboarding.notifications-prompt.primary` calls
+  `Linking.openSettings()`.
+- AC-OB-NOTIF-HANDOFF-2: the prompt remains visible and skippable after the handoff; the action does
+  not navigate away or mark notification permission as granted.
+- AC-OB-NOTIF-HANDOFF-3: if the platform settings handoff rejects, the sheet renders a localized,
+  non-color-only calm error state instead of swallowing the failure.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/onboarding-flow.render.test.tsx` — FAIL as
+  expected before implementation: `Linking.openSettings()` was never called from the prompt's
+  primary action.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/onboarding-flow.render.test.tsx` — PASS:
+  1 suite, 18 tests.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 76 suites / 614 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing motion-related `act(...)` warnings remain
+  non-failing.
+
+Implementation notes:
+- `OnboardingNotificationsPromptPreview` now opens platform settings through `Linking.openSettings()`
+  from the existing primary CTA and keeps the sheet visible/skippable.
+- Rejected handoffs render a tokenized `Card` + `StatusPill` alert with EN/RU/ES copy. No prompt
+  scheduler, permission probing, push token registration, notification scheduling, persistence,
+  native module, schema change, or `ios/` / `android/` edit was introduced.
 
 ### 28. More Notification Preferences Anatomy Slice (§4.4.4)
 
