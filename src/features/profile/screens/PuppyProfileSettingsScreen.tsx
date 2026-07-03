@@ -9,7 +9,7 @@ import {
   type PuppyProfileInput,
 } from '@/contracts/onboarding';
 import type { PuppyProfile } from '@/contracts/supabase';
-import { AppIcon } from '@/design/primitives/AppIcon';
+import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Avatar } from '@/design/primitives/Avatar';
 import { Button } from '@/design/primitives/Button';
@@ -21,10 +21,16 @@ import { ScreenHeader } from '@/design/primitives/ScreenHeader';
 import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { Stack } from '@/design/primitives/Stack';
+import { StatusPill, type StatusPillTone } from '@/design/primitives/StatusPill';
 import { TextField } from '@/design/primitives/TextField';
 import { Touchable } from '@/design/primitives/Touchable';
 import { tokens } from '@/design/tokens';
-import { type AppTranslate, type SupportedLocale, useAppTranslation } from '@/lib/i18n';
+import {
+  type AppTranslate,
+  type I18nKey,
+  type SupportedLocale,
+  useAppTranslation,
+} from '@/lib/i18n';
 import { formatCalendarDate } from '@/lib/i18n/format-date';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 import {
@@ -33,6 +39,67 @@ import {
 } from '@/lib/query/puppy';
 
 type PuppyProfileAccessState = 'loading' | 'empty' | 'error' | 'owner' | 'nonOwner';
+export type PuppyProfileSettingsReviewState =
+  | 'loading'
+  | 'pending-write'
+  | 'error'
+  | 'offline-read'
+  | 'permission-denied';
+
+type PuppyProfileStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
+}>;
+
+const puppyProfileStateMeta: Record<
+  PuppyProfileSettingsReviewState,
+  PuppyProfileStateMeta
+> = {
+  error: {
+    bodyKey: 'more.puppy-profile.states.error.body',
+    icon: 'warningTriangle',
+    role: 'alert',
+    statusKey: 'more.puppy-profile.states.error.status',
+    titleKey: 'more.puppy-profile.states.error.title',
+    tone: 'failed',
+  },
+  loading: {
+    bodyKey: 'more.puppy-profile.states.loading.body',
+    icon: 'paw',
+    liveRegion: 'polite',
+    statusKey: 'more.puppy-profile.states.loading.status',
+    titleKey: 'more.puppy-profile.states.loading.title',
+    tone: 'pending',
+  },
+  'offline-read': {
+    bodyKey: 'more.puppy-profile.states.offline-read.body',
+    icon: 'lock',
+    statusKey: 'more.puppy-profile.states.offline-read.status',
+    titleKey: 'more.puppy-profile.states.offline-read.title',
+    tone: 'template',
+  },
+  'pending-write': {
+    bodyKey: 'more.puppy-profile.states.pending-write.body',
+    icon: 'docText',
+    liveRegion: 'polite',
+    statusKey: 'more.puppy-profile.states.pending-write.status',
+    titleKey: 'more.puppy-profile.states.pending-write.title',
+    tone: 'pending',
+  },
+  'permission-denied': {
+    bodyKey: 'more.puppy-profile.states.permission-denied.body',
+    icon: 'lock',
+    role: 'alert',
+    statusKey: 'more.puppy-profile.states.permission-denied.status',
+    titleKey: 'more.puppy-profile.states.permission-denied.title',
+    tone: 'failed',
+  },
+};
 
 export type PuppyProfileSettingsScreenProps = Readonly<{
   accessState?: PuppyProfileAccessState;
@@ -351,6 +418,44 @@ function AlertStateCardContent({ message }: Readonly<{ message: string }>) {
       accessibilityLiveRegion="polite"
       accessibilityRole="alert">
       <AppText>{message}</AppText>
+    </Card>
+  );
+}
+
+export function PuppyProfileSettingsStatePreview({
+  state,
+}: Readonly<{
+  state: PuppyProfileSettingsReviewState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = puppyProfileStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`puppy-profile-state-${state}`}
+      variant={state === 'offline-read' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name={meta.icon}
+              size={14}
+            />
+          )}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="bodyEmph">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">{body}</AppText>
+      </Stack>
     </Card>
   );
 }

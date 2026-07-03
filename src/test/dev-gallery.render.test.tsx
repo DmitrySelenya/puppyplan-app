@@ -21,6 +21,7 @@ import {
   SyntheticOnboardingShell,
   SyntheticMoreSettingsShell,
   SyntheticPuppyProfileSettingsShell,
+  SyntheticPuppyProfileSettingsStatesShell,
   SyntheticQuickTrackersStatesShell,
   SyntheticQuickTrackersSettingsShell,
   SyntheticTodayShell,
@@ -137,6 +138,7 @@ describe('development-only design gallery', () => {
       <>
         <SyntheticOnboardingShell />
         <SyntheticPuppyProfileSettingsShell />
+        <SyntheticPuppyProfileSettingsStatesShell />
         <SyntheticQuickTrackersSettingsShell />
         <SyntheticQuickTrackersStatesShell />
         <SyntheticMoreSettingsShell />
@@ -160,6 +162,7 @@ describe('development-only design gallery', () => {
     expect(screen.getAllByText(i18n.t('onboarding.tracker-picker.counter', { n: 5 })).length)
       .toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('more.puppy-profile.hint'))).toBeTruthy();
+    expect(screen.getAllByTestId('puppy-profile-state-loading').length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('more.quick-trackers.max-reached-hint'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.about.version'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.privacy.section-account-removal'))).toBeTruthy();
@@ -325,6 +328,17 @@ describe('development-only design gallery', () => {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/supabase|production write|token/i)).toBeNull();
+  });
+
+  it('AC-PROFILE-STATES renders profile state templates inside the visible profile shell', () => {
+    render(<SyntheticPuppyProfileSettingsShell />);
+
+    expect(screen.getByText(i18n.t('more.puppy-profile.hint'))).toBeTruthy();
+    expect(screen.getByTestId('puppy-profile-state-loading')).toBeTruthy();
+    expect(screen.getByTestId('puppy-profile-state-pending-write')).toBeTruthy();
+    expect(screen.getByTestId('puppy-profile-state-error')).toBeTruthy();
+    expect(screen.getByTestId('puppy-profile-state-offline-read')).toBeTruthy();
+    expect(screen.getByTestId('puppy-profile-state-permission-denied')).toBeTruthy();
   });
 
   it('adds only synthetic route files for the planned route shells', () => {

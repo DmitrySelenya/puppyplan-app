@@ -1490,6 +1490,73 @@ Stage 4 evidence:
   `output/v2-nav-gaps-stage4/quick-trackers-states-top-stage4.png`,
   `output/v2-nav-gaps-stage4/quick-trackers-states-empty-stage4.jpg`.
 
+### 14b. Puppy Profile Settings State Templates
+
+**2026-07-03 global-state slice:** deterministic `/settings/puppy-profile` loading, pending-write,
+error, offline-read, and permission-denied state templates for §4.5.
+
+- Source spec card: `docs/design/v1/specs/14-2-puppy-profile-settings.md`.
+- Source atlas: `docs/design/v1/screenshots/more/14-2-default.png`,
+  `docs/design/v1/screenshots/more/14-2-editing.png`.
+- Route/component: `/settings/puppy-profile` via
+  `src/features/profile/screens/PuppyProfileSettingsScreen.tsx`.
+- Dev-gallery handoff: `/_dev/components` should render the state templates inside the visible
+  `SyntheticPuppyProfileSettingsShell`; `SyntheticPuppyProfileSettingsStatesShell` remains an
+  exported focused-review helper.
+- Allowed deviation: this slice only standardizes deterministic state cards and the dev-gallery
+  handoff. Photo editing, breed/search picker, sex picker, optional field editors, native
+  DatePicker, offline queue, schema/native modules, analytics, and `ios/` / `android/` edits remain
+  out of scope.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-PROFILE-STATES-1: the profile settings surface exposes deterministic loading, pending-write,
+  error, offline-read, and permission-denied state templates with stable `puppy-profile-state-*`
+  test IDs.
+- AC-PROFILE-STATES-2: each state uses design primitives (`Card`, `StatusPill`, `AppIcon`,
+  `AppText`) and typed EN/RU/ES i18n status/title/body copy.
+- AC-PROFILE-STATES-3: loading and pending-write announce politely; error and permission-denied use
+  alert semantics; offline-read uses the muted template surface.
+- AC-PROFILE-STATES-4: state copy exposes no raw puppy names, notes, emails, provider names, photos,
+  tokens, or private contact data.
+- AC-PROFILE-STATES-5: the dev-gallery route-shell preview includes all five profile settings
+  state templates for native Stage 4 handoff.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/puppy-profile-settings.render.test.tsx --testNamePattern AC-PROFILE-STATES`
+  failed as expected before implementation because `PuppyProfileSettingsStatePreview` was not
+  exported.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern "route-shell preview states"`
+  failed as expected before implementation because `SyntheticPuppyProfileSettingsStatesShell` was not
+  exported/rendered.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern AC-PROFILE-STATES`
+  failed as expected during Stage 4 correction because the visible profile shell rendered only the
+  form, not the state templates.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/puppy-profile-settings.render.test.tsx --testNamePattern AC-PROFILE-STATES`
+  — PASS: 1 suite, 1 matching test.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern "route-shell preview states"`
+  — PASS: 1 suite, 1 matching test.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern AC-PROFILE-STATES`
+  — PASS: 1 suite, 1 matching test.
+- `npm run test:unit -- --runTestsByPath src/test/puppy-profile-settings.render.test.tsx src/test/dev-gallery.render.test.tsx src/test/i18n.test.ts`
+  — PASS: 3 suites, 24 tests.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, 79 Jest suites / 650 tests, node tests, scaffold
+  checks, token drift check, privacy scan, and text hygiene. Output still includes the existing React
+  `act(...)` warning from motion snapshot listeners; no failures.
+
+Stage 4 evidence:
+- PASS recorded 2026-07-03 on the primary SE simulator
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) using JS-over-Metro dev-client mode after clearing the
+  Metro cache and opening `puppyplan://_dev/components`; native build was not run.
+- Screenshots:
+  `output/v2-nav-gaps-stage4/puppy-profile-shell-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/puppy-profile-states-top-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/puppy-profile-states-bottom-stage4.jpg`.
+
 ## 15. Pet tab landing/hub Stage-0 lock evidence
 
 **2026-06-30 next implementation slice:** `/pet` landing/hub anatomy.
@@ -4295,6 +4362,11 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-03: Added deterministic Puppy Profile settings loading, pending-write, error,
+  offline-read, and permission-denied state templates with RED/GREEN render coverage, typed EN/RU/ES
+  copy, alert/live-region semantics, visible dev-gallery handoff, and primary SE Stage 4 screenshots.
+  Photo editing, breed/search pickers, sex picker, native date picker, offline queue, schema/native
+  modules, analytics, and native project edits remain out of scope.
 - 2026-07-03: Added deterministic Manage Household loading, pending-write, error, and offline-read
   state templates with RED/GREEN render coverage, dev-gallery handoff coverage, typed EN/RU/ES copy,
   alert/live-region semantics, privacy-safe non-token/non-email copy, full `npm run check`, and

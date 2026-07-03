@@ -49,6 +49,7 @@
       "states": {
         "onboarding": "Welcome, profile, age hint, tracker picker, and plan reveal.",
         "profile": "Saved and editing states for the puppy profile settings route.",
+        "profile-states": "Puppy profile loading, saving, error, offline, and owner-only states.",
         "quick-trackers": "Selected tracker count, limit state, and reorder-ready rows.",
         "quick-trackers-states": "Quick Tracker settings loading, error, empty, and owner-only states.",
         "more-settings": "More hub, profile entry, tracker settings, notification note, privacy, account removal, and Plus placeholder.",
@@ -1807,7 +1808,34 @@
         "Take a photo",
         "Pick from your library",
         "Use an illustration"
-      ]
+      ],
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading profile",
+          "body": "We are checking the saved profile view."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving profile",
+          "body": "Keep this screen open while profile changes are saved."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Could not load profile",
+          "body": "Keep the current profile view and try again in a moment."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Showing saved profile",
+          "body": "You can review the last saved profile view while offline."
+        },
+        "permission-denied": {
+          "status": "Owner only",
+          "title": "Only the owner can edit",
+          "body": "You can keep viewing care details without changing this profile."
+        }
+      }
     },
     "quick-trackers": {
       "screen-title": "Quick trackers",

@@ -2,7 +2,10 @@ import { AccessibilityInfo } from 'react-native';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import type { PuppyProfile } from '@/contracts/supabase';
-import { PuppyProfileSettingsScreen } from '@/features/profile/screens/PuppyProfileSettingsScreen';
+import {
+  PuppyProfileSettingsScreen,
+  PuppyProfileSettingsStatePreview,
+} from '@/features/profile/screens/PuppyProfileSettingsScreen';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
 
@@ -258,5 +261,36 @@ describe('Puppy profile settings screen', () => {
 
     expect(screen.getByText(i18n.t('onboarding.puppy-profile.error-required'))).toBeTruthy();
     expect(saveProfile).not.toHaveBeenCalled();
+  });
+
+  it('AC-PROFILE-STATES renders deterministic profile settings state templates', () => {
+    render(
+      <AppProviders>
+        <PuppyProfileSettingsStatePreview state="loading" />
+        <PuppyProfileSettingsStatePreview state="pending-write" />
+        <PuppyProfileSettingsStatePreview state="error" />
+        <PuppyProfileSettingsStatePreview state="offline-read" />
+        <PuppyProfileSettingsStatePreview state="permission-denied" />
+      </AppProviders>,
+    );
+
+    for (const state of [
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+      'permission-denied',
+    ] as const) {
+      expect(screen.getByTestId(`puppy-profile-state-${state}`)).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('puppy-profile-state-error').props.accessibilityRole).toBe('alert');
+    expect(screen.getByTestId('puppy-profile-state-permission-denied').props.accessibilityRole)
+      .toBe('alert');
+    expect(screen.getByTestId('puppy-profile-state-loading').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getByTestId('puppy-profile-state-pending-write').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.queryByText(/@|token|provider|puppy a|notes/i)).toBeNull();
   });
 });

@@ -62,6 +62,9 @@ import {
   OnboardingFirstLogPreview,
   OnboardingNotificationsPromptPreview,
 } from '@/features/onboarding/screens/OnboardingScreen';
+import {
+  PuppyProfileSettingsStatePreview,
+} from '@/features/profile/screens/PuppyProfileSettingsScreen';
 import { QuickLogLocalEvents } from '@/features/quick-log/components/QuickLogLocalEvents';
 import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
 import {
@@ -412,6 +415,29 @@ export function SyntheticPuppyProfileSettingsShell() {
           title={t('more.puppy-profile.field-breed')}
         />
         <Button label={t('more.puppy-profile.save')} onPress={noop} />
+        <PuppyProfileSettingsStatePreview state="loading" />
+        <PuppyProfileSettingsStatePreview state="pending-write" />
+        <PuppyProfileSettingsStatePreview state="error" />
+        <PuppyProfileSettingsStatePreview state="offline-read" />
+        <PuppyProfileSettingsStatePreview state="permission-denied" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticPuppyProfileSettingsStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.profile-states"
+          titleKey="more.puppy-profile.screen-title"
+        />
+        <PuppyProfileSettingsStatePreview state="loading" />
+        <PuppyProfileSettingsStatePreview state="pending-write" />
+        <PuppyProfileSettingsStatePreview state="error" />
+        <PuppyProfileSettingsStatePreview state="offline-read" />
+        <PuppyProfileSettingsStatePreview state="permission-denied" />
       </Stack>
     </Card>
   );
