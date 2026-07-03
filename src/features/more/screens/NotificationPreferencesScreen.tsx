@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, StyleSheet } from 'react-native';
 
 import {
@@ -26,6 +26,10 @@ import {
   useNotificationPreferenceQuery,
   useUpdateNotificationPreferenceMutation,
 } from '@/lib/query/notification-preferences';
+import {
+  type LocalReminderPreferenceController,
+  useLocalReminderPreference,
+} from '@/lib/notifications/localReminderPreference';
 
 export type NotificationPreferencesReviewState =
   | 'loading'
@@ -81,6 +85,8 @@ const notificationPreferencesStateMeta: Record<
 };
 
 export type NotificationPreferencesScreenProps = Readonly<{
+  localRemindersEnabled?: boolean;
+  onChangeLocalReminders?: (enabled: boolean) => Promise<void> | void;
   onChangeReminderPush?: (enabled: boolean) => Promise<void> | void;
   onChangeSitterPush?: (enabled: boolean) => Promise<void> | void;
   onBack?: () => void;
@@ -89,6 +95,8 @@ export type NotificationPreferencesScreenProps = Readonly<{
 }>;
 
 export function NotificationPreferencesScreen({
+  localRemindersEnabled: persistedLocalRemindersEnabled,
+  onChangeLocalReminders,
   onChangeReminderPush,
   onChangeSitterPush,
   onBack,
@@ -99,8 +107,26 @@ export function NotificationPreferencesScreen({
   const [localReviewState, setLocalReviewState] = useState<
     NotificationPreferencesReviewState | undefined
   >();
-  const [localRemindersEnabled, setLocalRemindersEnabled] = useState(true);
+  const [localRemindersEnabled, setLocalRemindersEnabled] = useState(
+    persistedLocalRemindersEnabled ?? true,
+  );
   const visibleReviewState = reviewState ?? localReviewState;
+
+  useEffect(() => {
+    if (persistedLocalRemindersEnabled !== undefined) {
+      setLocalRemindersEnabled(persistedLocalRemindersEnabled);
+    }
+  }, [persistedLocalRemindersEnabled]);
+
+  const updateLocalReminders = async (enabled: boolean) => {
+    setLocalReviewState(undefined);
+    setLocalRemindersEnabled(enabled);
+    try {
+      await onChangeLocalReminders?.(enabled);
+    } catch {
+      setLocalReviewState('error');
+    }
+  };
 
   const updatePushPreference = async (
     enabled: boolean,
@@ -138,7 +164,9 @@ export function NotificationPreferencesScreen({
           trailing={(
             <Toggle
               accessibilityLabel={t('more.notifications.row-all-reminders')}
-              onValueChange={setLocalRemindersEnabled}
+              onValueChange={(enabled) => {
+                void updateLocalReminders(enabled);
+              }}
               testID="notifications-local-all-toggle"
               value={localRemindersEnabled}
             />
@@ -218,15 +246,21 @@ export function NotificationPreferencesScreen({
 }
 
 export function ConnectedNotificationPreferencesScreen({
+  localReminderPreference,
   onBack,
 }: Readonly<{
+  localReminderPreference?: LocalReminderPreferenceController;
   onBack?: () => void;
 }>) {
   const activeCare = useActiveCareContext();
   const preferenceQuery = useNotificationPreferenceQuery(activeCare.careContext);
   const updatePreferenceMutation = useUpdateNotificationPreferenceMutation();
+  const localReminderPreferenceState = useLocalReminderPreference(localReminderPreference);
 
-  if (activeCare.status === 'loading' || preferenceQuery.isLoading) {
+  if (
+    activeCare.status === 'loading'
+    || preferenceQuery.isLoading
+  ) {
     return (
       <NotificationPreferencesScreen
         onBack={onBack}
@@ -238,6 +272,7 @@ export function ConnectedNotificationPreferencesScreen({
   if (
     activeCare.status === 'error'
     || preferenceQuery.isError
+    || localReminderPreferenceState.isError
     || activeCare.careContext === null
   ) {
     return (
@@ -258,7 +293,9 @@ export function ConnectedNotificationPreferencesScreen({
 
   return (
     <NotificationPreferencesScreen
+      localRemindersEnabled={localReminderPreferenceState.enabled}
       onBack={onBack}
+      onChangeLocalReminders={localReminderPreferenceState.setEnabled}
       onChangeReminderPush={async (enabled) => {
         await updatePreferenceMutation.mutateAsync({
           householdId: careContext.householdId,

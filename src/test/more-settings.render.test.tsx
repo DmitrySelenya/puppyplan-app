@@ -7,6 +7,11 @@ import { HelpSupportScreen } from '@/features/more/screens/HelpSupportScreen';
 import { HouseholdAccessScreen } from '@/features/more/screens/HouseholdAccessScreen';
 import { ConnectedMoreScreen, MoreScreen } from '@/features/more/screens/MoreScreen';
 import {
+  createLocalReminderPreferenceController,
+  type LocalReminderPreferenceController,
+  type LocalReminderPreferenceStore,
+} from '@/lib/notifications/localReminderPreference';
+import {
   ConnectedNotificationPreferencesScreen,
   NotificationPreferencesScreen,
 } from '@/features/more/screens/NotificationPreferencesScreen';
@@ -589,6 +594,112 @@ describe('More settings entries', () => {
     expect(openSettingsSpy).not.toHaveBeenCalled();
     expect(changeReminderPush).not.toHaveBeenCalled();
     expect(changeSitterPush).not.toHaveBeenCalled();
+  });
+
+  it('AC-NOTIF-LOCAL-PERSIST-4 writes local reminders without OS handoff or push mutation', async () => {
+    const changeLocalReminders = jest.fn().mockResolvedValue(undefined);
+    const changeReminderPush = jest.fn().mockResolvedValue(undefined);
+
+    render(
+      <AppProviders>
+        <NotificationPreferencesScreen
+          localRemindersEnabled={false}
+          onChangeLocalReminders={changeLocalReminders}
+          onChangeReminderPush={changeReminderPush}
+        />
+      </AppProviders>,
+    );
+
+    expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(false);
+
+    fireEvent(screen.getByTestId('notifications-local-all-toggle'), 'valueChange', true);
+
+    await waitFor(() => {
+      expect(changeLocalReminders).toHaveBeenCalledWith(true);
+    });
+    expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(true);
+    expect(openSettingsSpy).not.toHaveBeenCalled();
+    expect(changeReminderPush).not.toHaveBeenCalled();
+  });
+
+  it('AC-NOTIF-LOCAL-PERSIST-2 reads and writes local reminders across connected remounts', async () => {
+    const values = new Map<string, string>([
+      ['puppyplan:notifications:local-reminders-enabled:v1', 'false'],
+    ]);
+    const store: LocalReminderPreferenceStore = {
+      getItem: jest.fn(async (key) => values.get(key) ?? null),
+      setItem: jest.fn(async (key, value) => {
+        values.set(key, value);
+      }),
+    };
+    const localReminderPreference = createLocalReminderPreferenceController({ store });
+    const mutateAsync = jest.fn().mockResolvedValue(undefined);
+    mockUseUpdateNotificationPreferenceMutation.mockReturnValue({
+      isError: false,
+      isPending: false,
+      mutateAsync,
+    });
+
+    const renderResult = render(
+      <AppProviders>
+        <ConnectedNotificationPreferencesScreen
+          localReminderPreference={localReminderPreference}
+        />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(false);
+    });
+
+    fireEvent(screen.getByTestId('notifications-local-all-toggle'), 'valueChange', true);
+
+    await waitFor(() => {
+      expect(store.setItem).toHaveBeenCalledWith(
+        'puppyplan:notifications:local-reminders-enabled:v1',
+        'true',
+      );
+    });
+    expect(openSettingsSpy).not.toHaveBeenCalled();
+    expect(mutateAsync).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(true);
+    });
+
+    renderResult.rerender(
+      <AppProviders>
+        <ConnectedNotificationPreferencesScreen
+          key="remounted"
+          localReminderPreference={localReminderPreference}
+        />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(true);
+    });
+  });
+
+  it('AC-NOTIF-LOCAL-PERSIST-3 renders notification error state when local preference read fails', async () => {
+    const localReminderPreference: LocalReminderPreferenceController = {
+      read: jest.fn(async () => {
+        throw new Error('secure store unavailable');
+      }),
+      write: jest.fn(async () => undefined),
+    };
+
+    render(
+      <AppProviders>
+        <ConnectedNotificationPreferencesScreen
+          localReminderPreference={localReminderPreference}
+        />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('notifications-state-error')).toBeTruthy();
+    });
   });
 
   it('AC-MORE-HELP-STATES renders deterministic loading, pending, error, and offline states', () => {

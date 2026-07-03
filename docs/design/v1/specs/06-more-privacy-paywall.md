@@ -11,7 +11,8 @@ Allowed deviations: live IAP enforcement is deferred; paywall/soft-lock surfaces
 - Pet-scoped settings are not duplicated in More. More may show one `Pet settings` row that
   deep-links to the Pet tab; Puppy Profile and Quick Trackers remain primary actions inside Pet.
 - Profile subflows: saved view, editing form, breed picker/search.
-- Notification preferences and quiet hours.
+- Notification preferences and quiet hours. The `Local reminders` opt-out is persisted locally on
+  device; push reminder and sitter-completion toggles remain household Supabase preferences.
 - Privacy/account: export, delete own data/account, revoke shares, sign-out. Sign-out uses the
   existing auth boundary; export/delete remain shell-only until backend jobs are scoped.
 - Delete confirm: typed DELETE, muted danger tone, visible cancel.
@@ -27,8 +28,9 @@ Allowed deviations: live IAP enforcement is deferred; paywall/soft-lock surfaces
 
 ## States Covered
 
-- More default, profile edit, breed picker/search, notifications, privacy/account, delete confirm,
-  sign-out action, support, skippable paywall, day-30 soft-lock, trial status, read-only mode.
+- More default, profile edit, breed picker/search, notifications, local reminder opt-out,
+  privacy/account, delete confirm, sign-out action, support, skippable paywall, day-30 soft-lock,
+  trial status, read-only mode.
 
 ## Accessibility
 
@@ -39,3 +41,5 @@ Allowed deviations: live IAP enforcement is deferred; paywall/soft-lock surfaces
 ## Notes / Deferred
 
 - No per-feature freemium tiers, second-pet gate, reminder cap, history-window cap, trainer-depth gate, or export tier in this wave.
+- Local reminder opt-out persistence does not schedule/cancel notifications, request notification
+  permission, register push tokens, or change server notification preferences.

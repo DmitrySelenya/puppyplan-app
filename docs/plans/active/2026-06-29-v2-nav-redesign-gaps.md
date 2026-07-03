@@ -402,6 +402,45 @@ GREEN / regression evidence:
   copy, tokens, or native state; the new transient off-state is covered by structural render
   assertions and keeps scheduling/persistence deferred.
 
+#### 4.4.4d Notification preferences local reminders opt-out persistence
+
+Stage-0 lock:
+- Source: DESIGN.md §4.4.4 and `docs/design/v1/specs/06-more-privacy-paywall.md`.
+- Scope: persist only the existing `Local reminders` on/off preference on device, so a user opt-out
+  survives route remounts. Stored data is a single boolean flag; no puppy, household, user, reminder,
+  notification body, push token, or private content is stored.
+- Out of scope: local notification scheduling/cancellation, native permission probing or requests,
+  push token registration, quiet-hours editing/persistence, timezone editing, diagnostics, Supabase
+  schema changes, migrations, new native modules, and `ios/` / `android/` edits.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-NOTIF-LOCAL-PERSIST-1: the storage boundary reads a missing local reminder preference as the
+  default enabled state.
+- AC-NOTIF-LOCAL-PERSIST-2: changing `notifications-local-all-toggle` writes the local preference
+  and the connected `/settings/notifications` route reflects the stored value after remount.
+- AC-NOTIF-LOCAL-PERSIST-3: local reminder preference read/write failures are reported through the
+  shared observability boundary with stable non-PII context and render the existing notification
+  error state instead of failing silently.
+- AC-NOTIF-LOCAL-PERSIST-4: local reminder changes do not call `Linking.openSettings()`, do not call
+  push preference mutations, and do not change the durable Supabase push preference row.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/local-reminder-preference.test.ts src/test/more-settings.render.test.tsx --testNamePattern "AC-NOTIF-LOCAL-PERSIST"` failed before
+  implementation because the storage stub never called `getItem`/`setItem`, always returned
+  enabled, ignored storage failures, ignored the injected local-reminder screen props, and did not
+  surface connected local preference read failures.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/local-reminder-preference.test.ts src/test/more-settings.render.test.tsx --testNamePattern "AC-NOTIF-LOCAL-PERSIST"`:
+  2 suites / 6 tests passed after adding the SecureStore-backed local preference controller and
+  connected screen wiring.
+- `npm run test:unit -- --runTestsByPath src/test/notification-preferences-query.test.ts src/test/notification-preferences-repository.test.ts src/test/more-settings.render.test.tsx src/test/local-reminder-preference.test.ts`:
+  4 suites / 49 tests passed, covering the unchanged durable push preference query/mutation path.
+- `npm run typecheck`: passed.
+- Stage 4 screenshot not recaptured for this slice: anatomy and visual copy are unchanged from
+  §4.4.4c; this slice only persists the existing switch state and error path.
+
 #### 4.4.5a Privacy & Account route shell
 
 Stage-0 lock:
@@ -4207,6 +4246,13 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-03: Added Notification Preferences local reminder opt-out persistence: the existing
+  `Local reminders` switch now reads/writes a single device-local SecureStore boolean through the
+  notifications boundary, reports storage failures via the shared PII-scrubbed observability wrapper,
+  and keeps local changes separate from OS settings handoff and durable Supabase push preferences.
+  RED/GREEN local preference and More render tests, adjacent notification query/repository tests, and
+  typecheck passed. Scheduling/cancellation, permission probing, push token registration, quiet-hours
+  editing, schema/native modules, and native project edits remain out of scope.
 - 2026-07-03: Reconciled More Support / Help email composer handoff: the current production
   `/settings/help` route already opens a privacy-safe localized `mailto:` draft and renders a visible
   error card when the OS email handoff rejects. Updated the support/help spec and plan so email
