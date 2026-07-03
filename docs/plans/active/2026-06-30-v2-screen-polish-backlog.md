@@ -100,6 +100,18 @@ to assert the new behavior (legitimate — the spec changed), do not just delete
 
 **Acceptance:** Decision recorded in spec; More screen matches it; test reflects the new contract.
 
+**Item 3 evidence (2026-07-03):** Decision recorded in
+`docs/design/v1/specs/06-more-privacy-paywall.md`: production More rows are active actions or
+static information rows; internal roadmap status labels such as `Deferred` are not exposed.
+`About` remains a static version row with no chevron/accessory promise. RED
+`npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern "without exposing internal deferred labels"`
+failed because production More still rendered the `Deferred` meta label. GREEN replaced the
+production `DeferredListRow` with a static info row for About and kept the version subtitle.
+Focused More suite, `node scripts/checks/check-i18n.mjs`, and `npm run typecheck` passed. Stage 4
+JS-over-Metro evidence on the primary SE simulator: runtime snapshot showed `About` +
+`Version 1.0.0` and no `Deferred`; screenshot:
+`output/v2-screen-polish-screenshots/item3-more-about-no-deferred-stage4.jpg`.
+
 ## P1 — Item 4: Teal "Done" status pill is a Calm-Teal leftover
 
 **What's wrong:** The `completed`/"Done" status pill is teal (`#EAF3F3` fill / `#175255` text),

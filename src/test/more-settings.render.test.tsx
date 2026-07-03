@@ -169,7 +169,7 @@ describe('More settings entries', () => {
     shareSpy.mockRestore();
   });
 
-  it('renders the atlas full-list structure with locked settings entries and deferred rows', () => {
+  it('renders the atlas full-list structure without exposing internal deferred labels', () => {
     const result = render(
       <AppProviders>
         <AuthProvider dependencies={authDependencies}>
@@ -214,12 +214,10 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', { name: i18n.t('more.rows.help') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.rows.about'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.about.version'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('more.rows.deferred'))).toBeNull();
     expect(screen.queryByText(/beta/i)).toBeNull();
     expect(screen.getByRole('button', { name: i18n.t('more.rows.puppyplan-plus') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
-
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(1);
 
     const scrollView = result.UNSAFE_getByType(ScrollView);
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);

@@ -10,6 +10,9 @@ Allowed deviations: live IAP enforcement is deferred; paywall/soft-lock surfaces
   notifications, privacy/account, support, paywall shell.
 - Pet-scoped settings are not duplicated in More. More may show one `Pet settings` row that
   deep-links to the Pet tab; Puppy Profile and Quick Trackers remain primary actions inside Pet.
+- More does not expose internal roadmap status labels such as `Deferred` in production. Rows are
+  either active navigation/actions or static information rows. `About` remains a static version row
+  with no chevron/accessory promise until a real about surface is scoped.
 - Profile subflows: saved view, editing form, breed picker/search.
 - Notification preferences and quiet hours. The `Local reminders` opt-out is persisted locally on
   device; push reminder and sitter-completion toggles remain household Supabase preferences.

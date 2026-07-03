@@ -147,7 +147,7 @@ export function MoreScreen({
           title={t('more.rows.help')}
           variant="settings"
         />
-        <DeferredListRow
+        <StaticInfoListRow
           icon="infoCircle"
           subtitle={t('more.about.version')}
           title={t('more.rows.about')}
@@ -280,7 +280,7 @@ function SettingsSection({
   );
 }
 
-function DeferredListRow({
+function StaticInfoListRow({
   icon,
   subtitle,
   title,
@@ -289,14 +289,9 @@ function DeferredListRow({
   subtitle?: string;
   title: string;
 }>) {
-  const { t } = useAppTranslation();
-
   return (
     <ListRow
-      accessory="chevron"
-      disabled
       leading={<AppIcon name={icon} />}
-      meta={t('more.rows.deferred')}
       subtitle={subtitle}
       title={title}
       variant="settings"
