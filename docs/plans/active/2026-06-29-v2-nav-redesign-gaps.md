@@ -205,9 +205,11 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [x] ✅ Reminders/Routines hub + lifecycle (Mark done / Back-date / Skip / Pause / Delete; "Diary entries stay")
       — `/reminders` native durable-list hub is implemented with active/off segments, durable row
       grouping, More navigation, and Stage 4 native SE evidence from a synthetic dev-gallery handoff
-      shell. Enabled/off toggle persistence and row-level pending feedback are implemented. Mark
-      done/back-date/skip/pause/delete lifecycle actions, occurrence generation, and local
-      notification scheduling remain deferred.
+      shell. Enabled/off toggle persistence and row-level pending feedback are implemented. Row
+      delete UI/query wiring exists, but live durable tombstoning is blocked by the shared RLS
+      `deleted_at` transition issue recorded in the 2026-07-03 blocker audit. Mark
+      done/back-date/skip/pause lifecycle actions, occurrence generation, and local notification
+      scheduling remain deferred.
 - [x] ✅ Reminder push — iOS lock-screen (§4.2.4 → 12.4)
 - [x] ✅ Reminder card on Diary (§4.2.5)
 - [x] ✅ Quiet hours picker (§4.2.3) — native reminder-edit anatomy slice implemented:
@@ -2262,6 +2264,12 @@ Stage 4 status:
   gap: authenticated `health_record` update with `deleted_at` returns `42501`
   (`new row violates row-level security policy`). The route correctly rendered the existing Health
   error state instead of silently closing. The dev seed was restored to `deleted_at: null` afterward.
+- Runtime RLS follow-up (2026-07-03): a focused Supabase Dev authenticated-client smoke inserted
+  synthetic `health_record` rows as the debug owner. A normal title update with `updated_by =
+  auth.uid()` passed (`200`, count `1`), while both soft-delete variants (`deleted_at` with and
+  without `updated_by`) returned `42501`. This narrows the blocker to the RLS tombstone transition
+  class, not a broad Health update failure or a mismatched `updated_by` draft. Synthetic rows were
+  cleaned up with the dev-admin key.
 
 ### 17d. Health record production editable detail UI
 
@@ -2883,6 +2891,12 @@ Implementation notes:
 - `src/lib/query/reminders.ts` adds `ReminderDeleteDraft`, `toReminderDeleteUpdate`,
   `createReminderDeleteMutationOptions`, and `useDeleteReminderMutation`; delete success invalidates
   the same reminders list key used by `useRemindersQuery` plus the current Diary dashboard key.
+- Runtime RLS follow-up (2026-07-03): a Supabase Dev authenticated-client smoke as the debug owner
+  inserted a synthetic reminder and attempted the same `deleted_at` update through the public API.
+  The update returned `42501` (`new row violates row-level security policy for table "reminder"`),
+  matching the Health record tombstone failure class. The synthetic row was cleaned up with the
+  dev-admin key. Until the shared tombstone RLS policy is fixed, this slice should be read as
+  UI/query wiring plus failure surfacing, not live durable delete proof.
 - `src/features/reminders/screens/RemindersHubScreen.tsx` wraps non-pending rows in
   `SwipeToDelete`, exposes a row accessibility `delete` action, sends the active care context plus
   `new Date().toISOString()`, and reuses the existing pending pill/error state.
@@ -4636,6 +4650,11 @@ remaining pieces require one of the following explicit follow-up decisions befor
 - **Health Record delete/undo runtime proof:** blocked by RLS. The authenticated
   `health_record.deleted_at` update currently returns `42501`, so the implemented UI and query
   contracts cannot be proven through the real app until the policy/migration gap is resolved.
+- **Reminder row delete runtime proof:** blocked by the same RLS tombstone transition class. A
+  2026-07-03 Supabase Dev authenticated-client smoke inserted a synthetic reminder as the debug
+  owner, then reproduced `42501` on `public.reminder.deleted_at` update; the synthetic row was
+  cleaned up afterward. The UI/query wiring remains useful, but live durable delete needs the same
+  RLS follow-up as Health/Diary tombstones.
 - **Puppy Setup / Health Record native DatePicker:** blocked by native dependency scope. No native
   DatePicker package is installed; adding one is a new native dependency while native rebuilds are
   currently blocked by the known `expo-sqlite` / Xcode 26.2 issue.
@@ -4645,6 +4664,12 @@ remaining pieces require one of the following explicit follow-up decisions befor
   handoff and local preference persistence.
 
 ## Changelog
+- 2026-07-03: Reproduced the shared RLS tombstone blocker with focused Supabase Dev
+  authenticated-client smokes. Normal Health `UPDATE title` passed as the debug owner, but Health
+  `deleted_at` updates returned `42501` with and without `updated_by`; Reminder `deleted_at` update
+  returned the same `42501`. Synthetic smoke rows were cleaned up. The plan now treats Health,
+  Reminder, and Diary durable delete/undo as one RLS tombstone-transition follow-up rather than as
+  independent UI/anatomy gaps.
 - 2026-07-03: Added a remaining-blocker audit for the final unchecked matrix rows. The audit
   separates completed JS/design-fidelity work from follow-up decisions that require RLS/schema work,
   Health offline-outbox architecture, or new native notification/DatePicker dependencies. No
