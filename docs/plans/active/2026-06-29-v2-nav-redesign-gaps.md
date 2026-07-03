@@ -114,7 +114,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [ ] 🟡 Item anatomy / edit / delete / undo within Diary history (§2.4.3–2.4.4) — inline
       Clay history, filter chips, FactCard anatomy, edit action, and swipe/accessibility delete
       are implemented and Stage-4 verified. Durable synced delete + snackbar undo remain deferred
-      with the RLS blocker in `2026-06-30-v2-screen-polish-backlog.md`.
+      with the RLS blocker in `2026-06-30-v2-screen-polish-backlog.md`. Blocker audit
+      2026-07-03: this is not a remaining anatomy task; it requires an approved RLS/delete
+      implementation slice before code can continue.
 
 ### Pet (new tab) — DESIGN.md §4.1 (folded) + §4.4.2
 - [x] ✅ Edit pet profile — Name/Breed/Sex/Current weight/Age (§4.4.2)
@@ -136,7 +138,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       restore data-layer contracts are also implemented; production read-only detail-route wiring is
       implemented at `/pet/health-record/[recordId]`. The authored `DHPP, 12 weeks` template
       generation is implemented for active puppies with `age_weeks_estimate === 12`; offline queue
-      and native DatePicker remain open.
+      and native DatePicker remain open. Blocker audit 2026-07-03: the existing SQLite queue is
+      intentionally Quick Log-only and explicitly not a generic offline outbox, while no native
+      DatePicker dependency is installed. Continuing either thread requires an approved architecture
+      or native-dependency slice.
 - [ ] 🟡 Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
       Durable edit/delete/restore data-layer contracts are now implemented with source preservation,
@@ -145,7 +150,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       editable dirty-state UI now saves through the typed update mutation. Seeded production Stage 4
       detail/read, edit, and delete-confirm evidence is recorded. Real delete/undo snackbar Stage 4
       remains blocked by the known deferred Health soft-delete RLS gap (`42501` on authenticated
-      `deleted_at` update).
+      `deleted_at` update). Blocker audit 2026-07-03: do not keep adding UI around this; the
+      unimplemented piece is the RLS-backed authenticated soft-delete path.
 - [x] ✅ Status transitions visualisation Template→Confirmed→Done (§4.1.6) — native detail
       status strip now renders four visible icon+label steps with exactly one active filled state and
       full sequence accessibility label. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
@@ -649,14 +655,18 @@ GREEN / regression evidence:
       Selection, Plan Reveal, First Log, and post-value account/notification prompt previews.
       The post-first-value Quick Log source-marker scheduler and 48-hour prompt cadence are now
       implemented; permission probing, native OS permission request, and native DatePicker
-      integration remain explicitly deferred/partial under the rows below.
+      integration remain explicitly deferred/partial under the rows below. Blocker audit 2026-07-03:
+      `expo-notifications` is not installed, so real permission probing/request would add a new
+      native dependency; native DatePicker has the same dependency gate.
 - [x] ✅ Welcome (§2.1.1) — native initial `/onboarding` anatomy implemented: decorative warm
       illustration frame, locked H1/subtitle, primary setup CTA, and secondary sign-in action.
       Stage 4 native SE screenshot comparison passed 2026-07-02.
 - [ ] 🟡 Puppy Setup (§2.1.2) — native profile-step chrome/stepper slice implemented: visible
       back/step chrome, age section label, locked age-stepper anatomy, birth-date date-zone wrapper,
       and disabled-until-name CTA behavior. Stage 4 native SE screenshot comparison passed
-      2026-07-02; real platform DatePicker replacement remains open.
+      2026-07-02; real platform DatePicker replacement remains open. Blocker audit 2026-07-03:
+      no native DatePicker package is present, and adding one is a native-dependency decision while
+      the local native rebuild path is blocked.
 - [x] ✅ Age Hint (§2.1.3) — native profile-step inline hint implemented: info icon, status info tint,
       localized age-range copy, and accessible "Hint. …" label before tracker selection. Stage 4
       native SE screenshot comparison passed 2026-07-02.
@@ -4611,7 +4621,34 @@ Implementation notes:
   pending/failed route harness noted in §12. Native evidence:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
+## Remaining blocker audit — 2026-07-03
+
+The remaining unchecked rows are no longer generic design-fidelity or anatomy gaps. The in-scope
+screens have RED/GREEN and Stage 4 evidence where a JS-only route implementation was possible. The
+remaining pieces require one of the following explicit follow-up decisions before code should continue:
+
+- **Diary history durable delete + snackbar undo:** blocked by the same synced-delete/RLS follow-up
+  noted in `2026-06-30-v2-screen-polish-backlog.md`; do not add more visual-only affordances until
+  the authenticated delete/undo data path is approved.
+- **Pet Health Add Record offline queue:** blocked by architecture scope. `src/lib/queue/README.md`
+  limits the SQLite queue to unsent Quick Log routine events and explicitly excludes a generic
+  offline outbox; Health offline writes need a separate approved outbox design.
+- **Health Record delete/undo runtime proof:** blocked by RLS. The authenticated
+  `health_record.deleted_at` update currently returns `42501`, so the implemented UI and query
+  contracts cannot be proven through the real app until the policy/migration gap is resolved.
+- **Puppy Setup / Health Record native DatePicker:** blocked by native dependency scope. No native
+  DatePicker package is installed; adding one is a new native dependency while native rebuilds are
+  currently blocked by the known `expo-sqlite` / Xcode 26.2 issue.
+- **First-run permission probing/request:** blocked by native dependency scope. `expo-notifications`
+  is not installed; real permission probing/request, token registration, and scheduling require an
+  approved notification native-module slice. Current implemented work is limited to in-app settings
+  handoff and local preference persistence.
+
 ## Changelog
+- 2026-07-03: Added a remaining-blocker audit for the final unchecked matrix rows. The audit
+  separates completed JS/design-fidelity work from follow-up decisions that require RLS/schema work,
+  Health offline-outbox architecture, or new native notification/DatePicker dependencies. No
+  production code changed.
 - 2026-07-03: Reconciled the cross-cutting Global screen states matrix row as complete for all
   in-scope migrated screens. The row now points to the per-screen RED/GREEN and Stage 4 evidence
   already recorded for Diary, Pet/Health, Quick Log Details, Reminders, More subroutes, sharing,
