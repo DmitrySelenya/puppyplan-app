@@ -464,6 +464,50 @@ GREEN / regression evidence:
   full `Data and account` title, More back action, analytics/error switches, export row, and delete
   row. The first screenshot exposed title truncation and row-hint clipping; fixed via
   `ScreenHeader` single-line font fitting and full-width privacy hints before recording PASS.
+
+#### 4.4.5b Privacy & Account sign-out action
+
+Stage-0 lock:
+- Source: `docs/design/v1/specs/06-more-privacy-paywall.md` privacy/account anatomy and
+  always-available soft-lock actions.
+- Scope: expose the existing authenticated sign-out action inside `/settings/privacy-account`
+  using the shared `SignOutButton` and auth boundary. No export job, account deletion, consent
+  persistence, backend call beyond existing sign-out, schema change, native module, analytics
+  payload, or native project edit is introduced.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-MORE-PRIVACY-SIGNOUT-1: `/settings/privacy-account` renders a localized Sign out action in the
+  Account section.
+- AC-MORE-PRIVACY-SIGNOUT-2: pressing the action calls the existing auth `signOut()` path, not a
+  route-local fake state.
+- AC-MORE-PRIVACY-SIGNOUT-3: existing `SignOutButton` failure handling remains responsible for
+  visible localized error feedback.
+- AC-MORE-PRIVACY-SIGNOUT-4: real export, account deletion, analytics/error-report persistence,
+  backend jobs, schema changes, native modules, and native project edits remain deferred.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern "AC-MORE-PRIVACY-SIGNOUT|Privacy Account route shell"`
+  failed before production code because `/settings/privacy-account` exposed no localized Sign out
+  button in the Account section.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern "AC-MORE-PRIVACY-SIGNOUT|Privacy Account route shell"`
+  passed: 1 suite, 2 focused tests.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/sign-out-button.render.test.tsx --testNamePattern "AC-MORE-PRIVACY-SIGNOUT|Privacy Account route shell|sign-out failures"`
+  passed: 2 suites, 3 focused tests.
+
+Implementation notes:
+- `PrivacyAccountScreen` now reuses the existing `SignOutButton`, so success and localized
+  failure feedback continue to flow through the shared auth/snackbar boundary. Real export,
+  account deletion, analytics/error-report persistence, backend jobs, schema changes, native
+  modules, and native project edits remain deferred.
+- Stage 4 PASS (2026-07-03): launched the already installed PuppyPlan.app on the primary SE
+  simulator over `npx expo start`, opened `puppyplan://settings/privacy-account`, and verified the
+  runtime snapshot includes `Data and account`, `Export your data`, `Delete account`, and tappable
+  `Sign out`. Native evidence:
+  `output/v2-nav-gaps-stage4/settings-privacy-account-signout-stage4.jpg`.
+
 - [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
       topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
       Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Email handoff is now wired
@@ -4533,10 +4577,15 @@ Implementation notes:
 - 2026-07-03: Added `/settings/privacy-account` as a native UI-only shell from More `Data and account`:
   local analytics/error-report toggles, export-request notice, typed delete-confirm preview, route
   and shell-i18n contracts, RED/GREEN render/navigation coverage, Expo typed-route regeneration, and
-  primary SE Stage 4 screenshot. Real export, delete, sign-out, analytics/error-report persistence,
+  primary SE Stage 4 screenshot. Real export, delete, analytics/error-report persistence,
   backend jobs, schema changes, and native modules remain deferred. Stage 4 also tightened
   `ScreenHeader` long-title fitting and moved privacy hints out of switch rows so compact SE text is
   not truncated.
+- 2026-07-03: Added the real Privacy & Account sign-out action by reusing the shared `SignOutButton`
+  on `/settings/privacy-account`. RED/GREEN route coverage verifies the localized action calls the
+  existing auth `signOut()` path; export, delete, analytics/error-report persistence, backend jobs,
+  schema changes, and native modules remain deferred. Primary SE Stage 4 screenshot:
+  `output/v2-nav-gaps-stage4/settings-privacy-account-signout-stage4.jpg`.
 - 2026-06-30: Added the PuppyPlan Plus paywall shell slice: More now opens `/paywall`, the screen
   renders feature rows, annual/monthly/lifetime plan rows, Choose plan, Restore purchases, legal copy,
   and soft-lock availability note with EN/RU/ES typed copy; navigation/scaffold contracts were updated,

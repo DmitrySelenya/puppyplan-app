@@ -19,6 +19,8 @@ import {
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 
+import { SignOutButton } from '../components/SignOutButton';
+
 export type PrivacyAccountScreenProps = Readonly<{
   onBack?: () => void;
 }>;
@@ -128,6 +130,7 @@ export function PrivacyAccountScreen({ onBack }: PrivacyAccountScreenProps) {
           variant="settings"
         />
       </PrivacySection>
+      <SignOutButton />
 
       {deleteConfirmVisible ? (
         <Card

@@ -32,6 +32,7 @@ const mockUseNotificationPreferenceQuery = jest.fn();
 const mockUseUpdateNotificationPreferenceMutation = jest.fn();
 const mockRouterBack = jest.fn();
 const mockRouterPush = jest.fn();
+const mockSignOut = jest.fn<Promise<void>, []>();
 
 jest.mock('expo-router', () => ({
   router: {
@@ -58,7 +59,7 @@ const authDependencies: AuthProviderDependencies = {
   appState: { currentState: 'active', addEventListener: () => ({ remove: () => undefined }) },
   bootstrap: async () => ({ created: true, household_id: '00000000-0000-4000-8000-000000002301' }),
   getCurrentUser: () => new Promise(() => {}),
-  signOut: async () => undefined,
+  signOut: () => mockSignOut(),
   startAutoRefresh: () => undefined,
   stopAutoRefresh: () => undefined,
   subscribeToAuthChanges: () => () => undefined,
@@ -92,6 +93,8 @@ describe('More settings entries', () => {
   beforeEach(async () => {
     mockRouterBack.mockClear();
     mockRouterPush.mockClear();
+    mockSignOut.mockReset();
+    mockSignOut.mockResolvedValue(undefined);
     openSettingsSpy = jest
       .spyOn(Linking, 'openSettings')
       .mockResolvedValue(undefined);
@@ -405,7 +408,9 @@ describe('More settings entries', () => {
   it('AC-MORE-PRIVACY-2 AC-MORE-PRIVACY-3 AC-MORE-PRIVACY-4 AC-MORE-PRIVACY-5 renders the Privacy Account route shell locally', () => {
     render(
       <AppProviders>
-        <PrivacyAccountScreen />
+        <AuthProvider dependencies={authDependencies}>
+          <PrivacyAccountScreen />
+        </AuthProvider>
       </AppProviders>,
     );
 
@@ -449,6 +454,24 @@ describe('More settings entries', () => {
     expect(screen.queryByTestId('privacy-delete-confirm')).toBeNull();
     expect(screen.getByTestId('privacy-delete-requested')).toBeTruthy();
     expect(screen.getByText(i18n.t('more.privacy.delete-toast'))).toBeTruthy();
+  });
+
+  it('AC-MORE-PRIVACY-SIGNOUT-1 AC-MORE-PRIVACY-SIGNOUT-2 exposes the real auth sign-out action on Privacy Account', async () => {
+    render(
+      <AppProviders>
+        <AuthProvider dependencies={authDependencies}>
+          <PrivacyAccountScreen />
+        </AuthProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('auth.sign-out.cta'),
+    }));
+
+    await waitFor(() => {
+      expect(mockSignOut).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('keeps connected More in a loading state instead of treating it as non-owner', () => {

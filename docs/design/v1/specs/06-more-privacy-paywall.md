@@ -12,7 +12,8 @@ Allowed deviations: live IAP enforcement is deferred; paywall/soft-lock surfaces
   deep-links to the Pet tab; Puppy Profile and Quick Trackers remain primary actions inside Pet.
 - Profile subflows: saved view, editing form, breed picker/search.
 - Notification preferences and quiet hours.
-- Privacy/account: export, delete own data/account, revoke shares, sign-out.
+- Privacy/account: export, delete own data/account, revoke shares, sign-out. Sign-out uses the
+  existing auth boundary; export/delete remain shell-only until backend jobs are scoped.
 - Delete confirm: typed DELETE, muted danger tone, visible cancel.
 - Support/help: privacy-safe diagnostic entry.
 - Paywall: annual selected, monthly anchor, lifetime pass, restore purchases.
@@ -26,7 +27,8 @@ Allowed deviations: live IAP enforcement is deferred; paywall/soft-lock surfaces
 
 ## States Covered
 
-- More default, profile edit, breed picker/search, notifications, privacy/account, delete confirm, support, skippable paywall, day-30 soft-lock, trial status, read-only mode.
+- More default, profile edit, breed picker/search, notifications, privacy/account, delete confirm,
+  sign-out action, support, skippable paywall, day-30 soft-lock, trial status, read-only mode.
 
 ## Accessibility
 
