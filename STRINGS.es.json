@@ -991,6 +991,8 @@
         "section-invites": "invita",
         "active-ago": "Activo {timeAgo}",
         "pending-until": "Activo a través de {date}",
+        "pending-invite-caregiver": "Cuidador pendiente",
+        "pending-invite-viewer": "Observador pendiente",
         "invite-cta": "Invitar",
         "badge-owner": "Dueño",
         "badge-caregiver": "cuidador",

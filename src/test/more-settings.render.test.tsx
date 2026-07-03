@@ -36,6 +36,7 @@ import MoreRoute from '../../app/(tabs)/more';
 import ShareablePuppyCardRoute from '../../app/(modals)/sharing/puppy-card';
 
 const mockUseActiveCareContext = jest.fn();
+const mockUseHouseholdInvitesQuery = jest.fn();
 const mockUseNotificationPreferenceQuery = jest.fn();
 const mockUseUpdateNotificationPreferenceMutation = jest.fn();
 const mockRouterBack = jest.fn();
@@ -52,6 +53,16 @@ jest.mock('expo-router', () => ({
 jest.mock('@/lib/query/active-care-context', () => ({
   useActiveCareContext: () => mockUseActiveCareContext(),
 }));
+
+jest.mock('@/lib/query/household-access', () => {
+  const actual = jest.requireActual('@/lib/query/household-access');
+
+  return {
+    ...actual,
+    useHouseholdInvitesQuery: (householdId: string | undefined) =>
+      mockUseHouseholdInvitesQuery(householdId),
+  };
+});
 
 jest.mock('@/lib/query/notification-preferences', () => {
   const actual = jest.requireActual('@/lib/query/notification-preferences');
@@ -103,6 +114,11 @@ describe('More settings entries', () => {
     mockRouterPush.mockClear();
     mockSignOut.mockReset();
     mockSignOut.mockResolvedValue(undefined);
+    mockUseHouseholdInvitesQuery.mockReturnValue({
+      data: [],
+      isError: false,
+      isLoading: false,
+    });
     openSettingsSpy = jest
       .spyOn(Linking, 'openSettings')
       .mockResolvedValue(undefined);
@@ -992,6 +1008,44 @@ describe('More settings entries', () => {
     expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.body')).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('button', { name: i18n.t('sharing.family.manage.invite-cta') })).toBeTruthy();
     expect(screen.queryByText(/@/)).toBeNull();
+  });
+
+  it('AC-SHARE-HOUSEHOLD-INVITES-3 renders live pending invite rows without raw invite data', () => {
+    mockUseHouseholdInvitesQuery.mockReturnValue({
+      data: [{
+        accepted_at: null,
+        accepted_by: null,
+        created_at: '2026-07-03T10:00:00.000Z',
+        created_by: '00000000-0000-4000-8000-000000006302',
+        email_hash: 'sha256:recipient-hash',
+        expires_at: '2026-07-12T23:59:59.000Z',
+        household_id: '00000000-0000-4000-8000-000000002301',
+        id: '00000000-0000-4000-8000-000000006303',
+        revoked_at: null,
+        revoked_by: null,
+        role: 'caregiver',
+        token_last4: 'A1b2',
+        updated_at: '2026-07-03T10:05:00.000Z',
+      }],
+      isError: false,
+      isLoading: false,
+    });
+
+    render(
+      <AppProviders>
+        <HouseholdAccessScreen />
+      </AppProviders>,
+    );
+
+    expect(mockUseHouseholdInvitesQuery)
+      .toHaveBeenCalledWith('00000000-0000-4000-8000-000000002301');
+    expect(screen.getByText(i18n.t('sharing.family.manage.pending-until', {
+      date: '12 Jul',
+    }))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('sharing.family.manage.pending-until', {
+      date: '24 May',
+    }))).toBeNull();
+    expect(screen.queryByText(/A1b2|recipient-hash|@|token/i)).toBeNull();
   });
 
   it('AC-SHARE-HOUSEHOLD-STATES renders deterministic household state templates', () => {

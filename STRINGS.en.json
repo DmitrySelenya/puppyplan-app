@@ -946,6 +946,8 @@
         "section-invites": "Invites",
         "active-ago": "Active {timeAgo}",
         "pending-until": "Active through {date}",
+        "pending-invite-caregiver": "Pending caregiver",
+        "pending-invite-viewer": "Pending viewer",
         "invite-cta": "Invite",
         "badge-owner": "Owner",
         "badge-caregiver": "Caregiver",

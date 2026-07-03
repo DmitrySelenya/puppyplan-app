@@ -54,6 +54,8 @@ export const queryKeys = {
     records: (puppyId: string) => ['health', 'records', uuidSchema.parse(puppyId)] as const,
   },
   sharing: {
+    householdInvites: (householdId: string) =>
+      ['sharing', uuidSchema.parse(householdId), 'household-invites'] as const,
     list: (householdId: string, puppyId: string) =>
       ['sharing', householdId, puppyId, 'list'] as const,
     preview: (shareLinkId: string) => [

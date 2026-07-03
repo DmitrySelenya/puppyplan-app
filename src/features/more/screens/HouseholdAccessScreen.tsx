@@ -19,7 +19,10 @@ import {
   type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
-import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+import type { InviteRecord } from '@/contracts/supabase';
+import { type AppTranslate, type I18nKey, type SupportedLocale, useAppTranslation } from '@/lib/i18n';
+import { useActiveCareContext } from '@/lib/query/active-care-context';
+import { useHouseholdInvitesQuery } from '@/lib/query/household-access';
 
 export type HouseholdAccessScreenProps = Readonly<{
   onBack?: () => void;
@@ -81,7 +84,6 @@ const householdAccessStateMeta: Record<
 
 const ownerName = 'Owner';
 const caregiverName = 'Caregiver';
-const pendingContactLabel = 'Pending caregiver';
 const caregiverLastActive = '8 min ago';
 const pendingExpiryDate = '24 May';
 
@@ -89,7 +91,23 @@ export function HouseholdAccessScreen({
   onBack,
   reviewState,
 }: HouseholdAccessScreenProps) {
-  const { t } = useAppTranslation();
+  const { locale, t } = useAppTranslation();
+  const activeCare = useActiveCareContext();
+  const householdInvites = useHouseholdInvitesQuery(activeCare.careContext?.householdId);
+  const visibleReviewState = reviewState
+    ?? getHouseholdAccessReviewState(activeCare.status, householdInvites.isLoading, householdInvites.isError);
+  const livePendingInvites: readonly InviteRecord[] = householdInvites.data ?? [];
+  const pendingInviteRows = livePendingInvites.length > 0
+    ? livePendingInvites.map((invite) => ({
+        date: formatInviteExpiryDate(invite.expires_at, locale),
+        id: invite.id,
+        title: getPendingInviteTitle(invite, t),
+      }))
+    : [{
+        date: pendingExpiryDate,
+        id: 'static-pending-caregiver',
+        title: t('sharing.family.manage.pending-invite-caregiver'),
+      }];
 
   return (
     <Screen contentStyle={styles.content}>
@@ -103,7 +121,7 @@ export function HouseholdAccessScreen({
         <ScreenHeader title={t('sharing.family.manage.screen-title')} />
       )}
 
-      {reviewState ? <HouseholdAccessStatePreview state={reviewState} /> : null}
+      {visibleReviewState ? <HouseholdAccessStatePreview state={visibleReviewState} /> : null}
 
       <Card accessibilityLabel={t('sharing.family.today-prompt.title')} testID="household-intro-card">
         <Stack gap="sm" style={styles.introLayout}>
@@ -152,23 +170,26 @@ export function HouseholdAccessScreen({
       </HouseholdSection>
 
       <HouseholdSection title={t('sharing.family.manage.section-invites')}>
-        <MemberRow
-          avatarTone="auto"
-          name={pendingContactLabel}
-          subtitle={t('sharing.family.manage.pending-until', {
-            date: pendingExpiryDate,
-          })}
-          trailing={(
-            <Stack gap="sm" style={styles.trailingCluster}>
-              <HouseholdStatusPill
-                iconName="calendar"
-                label={t('sharing.family.manage.badge-pending')}
-                tone="needsVetReview"
-              />
-              <OverflowButton />
-            </Stack>
-          )}
-        />
+        {pendingInviteRows.map((invite) => (
+          <MemberRow
+            avatarTone="auto"
+            key={invite.id}
+            name={invite.title}
+            subtitle={t('sharing.family.manage.pending-until', {
+              date: invite.date,
+            })}
+            trailing={(
+              <Stack gap="sm" style={styles.trailingCluster}>
+                <HouseholdStatusPill
+                  iconName="calendar"
+                  label={t('sharing.family.manage.badge-pending')}
+                  tone="needsVetReview"
+                />
+                <OverflowButton />
+              </Stack>
+            )}
+          />
+        ))}
       </HouseholdSection>
 
       <Card style={styles.ownerHintCard} variant="mutedTemplate">
@@ -186,6 +207,48 @@ export function HouseholdAccessScreen({
       />
     </Screen>
   );
+}
+
+function getHouseholdAccessReviewState(
+  activeCareStatus: ReturnType<typeof useActiveCareContext>['status'],
+  invitesLoading: boolean,
+  invitesError: boolean,
+): HouseholdAccessReviewState | undefined {
+  if (activeCareStatus === 'loading' || invitesLoading) {
+    return 'loading';
+  }
+
+  if (activeCareStatus === 'error' || invitesError) {
+    return 'error';
+  }
+
+  return undefined;
+}
+
+function getPendingInviteTitle(invite: InviteRecord, t: AppTranslate): string {
+  return invite.role === 'viewer'
+    ? t('sharing.family.manage.pending-invite-viewer')
+    : t('sharing.family.manage.pending-invite-caregiver');
+}
+
+function formatInviteExpiryDate(timestamp: string, locale: SupportedLocale): string {
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return timestamp.slice(0, 10);
+  }
+
+  const parts = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).formatToParts(date);
+  const day = parts.find((part) => part.type === 'day')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+
+  return day !== undefined && month !== undefined
+    ? `${day} ${month}`
+    : timestamp.slice(0, 10);
 }
 
 export function HouseholdAccessStatePreview({

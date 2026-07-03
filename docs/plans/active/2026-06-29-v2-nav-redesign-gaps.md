@@ -180,9 +180,11 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       2026-07-02; live token lookup/accept/decline remain open.
 - [x] ✅ Manage household (§3.1.6) — `/settings/household` native shell implemented:
       More Family row opens owner household preview with members, pending invite, non-color-only
-      status badges, overflow affordances, privacy-safe invite label, and Invite CTA. Live member
-      query, role changes, removal, resend/revoke, and confirm sheets remain open; Stage 4 native SE
-      screenshot comparison passed 2026-07-02.
+      status badges, overflow affordances, privacy-safe invite label, and Invite CTA. Pending invite
+      rows now read owner-readable `public.invite` rows when available; live member query, role
+      changes, removal, resend/revoke, invite creation, and confirm sheets remain open; Stage 4
+      native SE screenshot comparison passed 2026-07-02, with an additional invite-read fallback
+      capture on 2026-07-03.
 - [x] ➕ **Shareable Puppy Cards** (§3.4) — **decision: IN scope this wave, MINIMAL only**: a static /
       signed-link card + preview + expiry (PRD-allowed). Native shell implemented at
       `/sharing/puppy-card`: More entry, builder fields, health disclosure, 3:4 preview, share CTA,
@@ -4088,6 +4090,74 @@ Stage 4 PASS:
   dev-gallery Family and access section plus loading, pending-write, error, and offline-read cards
   with typed copy, status pills/icons, alert/error coloring, and muted offline surface.
 
+### 32b. Manage Household pending invite read-only slice (§3.1.6)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/07-2-manage-household.md`.
+- Source: DESIGN.md §3.1.6 Manage household and existing `public.invite` RLS
+  `invite_owner_read`.
+- Scope: read non-accepted, non-revoked household invites for the current owner household and render
+  privacy-safe pending invite rows on `/settings/household`.
+- Allowed deviation: the member list remains the existing static owner/caregiver preview in this
+  slice because current RLS only exposes the signed-in user's own accepted membership
+  (`household_membership_read_own`). Full live member list, role changes, removal, resend/revoke,
+  invite creation, confirm sheets, token lookup, and email/contact display remain deferred until an
+  approved RLS/RPC design exists.
+- Out of scope: schema/RLS migrations, direct invite writes, token hashes, raw email/contact display,
+  analytics payloads, native modules, and `ios/` / `android/` edits.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-SHARE-HOUSEHOLD-INVITES-1: the Supabase household-access repository lists pending invites
+  scoped by `household_id`, excluding accepted and revoked rows, ordered by `expires_at`, and parses
+  rows through the existing `inviteRecordSchema`.
+- AC-SHARE-HOUSEHOLD-INVITES-2: the query layer reads by
+  `queryKeys.sharing.householdInvites(householdId)` and treats a null active-care context as disabled
+  without putting raw invite tokens, emails, or hashes in the cache key.
+- AC-SHARE-HOUSEHOLD-INVITES-3: the connected `/settings/household` route renders live pending
+  invite rows when available, with role/status/date copy only; no raw email address, invite token,
+  token hash, or provider data is rendered.
+- AC-SHARE-HOUSEHOLD-INVITES-4: invite-query loading and errors reuse the existing household state
+  templates; the Invite CTA and existing static member preview remain unchanged.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/household-access-repository.test.ts src/test/household-access-query.test.ts src/test/more-settings.render.test.tsx --testNamePattern "AC-SHARE-HOUSEHOLD-INVITES"`
+  failed as expected before implementation: repository/query stubs returned
+  `household_access_invites_not_implemented` / `household_invites_query_not_implemented`, inactive
+  query options were enabled with the wrong key, and `/settings/household` did not call the invite
+  query hook.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/household-access-repository.test.ts src/test/household-access-query.test.ts src/test/more-settings.render.test.tsx --testNamePattern "AC-SHARE-HOUSEHOLD-INVITES"`
+  — PASS: 3 suites, 5 matching tests.
+- `npm run test:unit -- --runTestsByPath src/test/household-access-repository.test.ts src/test/household-access-query.test.ts src/test/more-settings.render.test.tsx src/test/i18n.test.ts`
+  — PASS: 4 suites, 55 tests.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run typecheck` — PASS.
+
+Stage 4 evidence:
+- Primary SE simulator: `Grith iPhone SE 3 iOS 26.3`
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`).
+- Installed `PuppyPlan.app` launched over `npx expo start --localhost` in development-build mode;
+  `/settings/household` was opened via `puppyplan://settings/household`.
+- The non-production account had no live pending invites, so the native capture verifies the
+  connected route shell and privacy-safe pending fallback row; synthetic live invite row anatomy,
+  household-scoped query key, and absence of raw email/token/hash copy are covered by render/query
+  tests above.
+- Evidence file:
+  `output/v2-nav-gaps-stage4/settings-household-invite-read-stage4.jpg`.
+
+Implementation notes:
+- Added `src/lib/supabase/household-access.ts` with a typed `listPendingInvites` read path over
+  `public.invite`, scoped by household, accepted/revoked filters, `expires_at` ordering, and
+  `inviteRecordSchema` parsing.
+- Added `src/lib/query/household-access.ts` and `queryKeys.sharing.householdInvites(householdId)`;
+  inactive/null active-care context uses a disabled, privacy-safe key with no invite token, email,
+  hash, or provider data.
+- Connected `HouseholdAccessScreen` to active care and the pending-invite query. Live rows render
+  only localized role/status/date copy; static member preview, Invite CTA, role changes,
+  resend/revoke, invite creation, confirm sheets, and member-list data remain deferred.
+
 ### 33. Trusted Sitter Mode Owner Shell Slice (§3.2)
 
 Stage-0 lock:
@@ -4982,4 +5052,10 @@ Implementation notes:
   empty state templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy,
   and primary SE Stage 4 screenshots. Reminder scheduling, occurrence generation, local
   notifications, permission probing, row edit menus, schema/native modules, and native-project edits
+  remain deferred.
+- 2026-07-03: Added Manage Household pending invite read-only wiring: owner-readable `public.invite`
+  rows now flow through a typed Supabase/query boundary into `/settings/household`, using a
+  household-scoped privacy-safe cache key and rendering only localized role/status/date copy.
+  Current RLS still blocks a full live member list without an approved RLS/RPC design, so member
+  data, role changes, invite creation, resend/revoke, confirm sheets, and token/contact display
   remain deferred.

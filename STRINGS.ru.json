@@ -942,6 +942,8 @@
         "section-invites": "Приглашения",
         "active-ago": "Активна {timeAgo}",
         "pending-until": "Действует до {date}",
+        "pending-invite-caregiver": "Ожидает опекун",
+        "pending-invite-viewer": "Ожидает наблюдатель",
         "invite-cta": "Пригласить",
         "badge-owner": "Владелец",
         "badge-caregiver": "Опекун",

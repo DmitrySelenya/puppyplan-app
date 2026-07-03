@@ -1,13 +1,13 @@
 # 07.2 — Manage Household
 Route: `/settings/household`   Atlas: `family/manage-household` + Open Design V2 sharing boards
 Device sizes: SE compact primary; iOS 390x844 and Android 412x900 in the V2 handoff
-Allowed deviations: live member/invite queries, role changes, access removal, resend/revoke actions, and confirm sheets remain deferred. Pending invite rows use privacy-safe contact labels instead of email addresses. Deterministic loading/pending/error/offline state templates are synthetic handoff states until live household data is wired.
+Allowed deviations: live member queries, role changes, access removal, resend/revoke actions, invite creation, and confirm sheets remain deferred. Pending invite rows may come from live owner-readable invite rows, but they still use privacy-safe labels instead of email addresses or tokens. Deterministic loading/pending/error/offline state templates are synthetic handoff states for the remaining non-read actions.
 
 ## Anatomy (top -> bottom)
 - Modal header — back affordance to More, title `sharing.household.screen-title`.
 - Intro card — owner-facing sharing clarity copy and household icon.
 - Members section — owner row and caregiver row, avatar initials, role/status badges, last-active subtitle, overflow affordance.
-- Invitations section — pending invite row, pending badge, expiry subtitle, overflow affordance.
+- Invitations section — pending invite rows, pending badge, expiry subtitle, overflow affordance.
 - Empty owner-alone hint — neutral helper card describing why to invite.
 - Primary CTA — Invite caregiver.
 
@@ -19,9 +19,10 @@ Allowed deviations: live member/invite queries, role changes, access removal, re
 - Empty hint card: `surface.sunken`.
 
 ## States covered
-- Static owner household preview — production shell with synthetic metadata.
-- Loading household, pending invite/member write, load error, and offline read — deterministic synthetic handoff states.
-- Live member list, role changes, removal, invite resend/revoke, and confirm sheets — deferred.
+- Static owner household preview — production member shell with synthetic metadata.
+- Live pending invites read — owner-readable `public.invite` rows only, excluding accepted/revoked rows.
+- Loading household invite read, pending invite/member write, load error, and offline read — deterministic handoff states.
+- Live member list, role changes, removal, invite creation, invite resend/revoke, and confirm sheets — deferred.
 
 ## Accessibility
 - Member rows expose role/status via visible text, not color alone.
@@ -30,4 +31,7 @@ Allowed deviations: live member/invite queries, role changes, access removal, re
 - No raw emails, invite tokens, puppy notes, or private member names are rendered.
 
 ## Notes / deferred
-- Future data wiring must keep raw member emails and invite tokens out of analytics, logs, cache keys, docs, screenshots, and rendered copy.
+- Current invite read wiring must keep raw member emails, invite tokens, token hashes, and provider data
+  out of analytics, logs, cache keys, docs, screenshots, and rendered copy.
+- Live member list requires a separate approved RLS/RPC design because the current
+  `household_membership_read_own` policy only exposes the signed-in user's own accepted membership.
