@@ -6,6 +6,7 @@ import { AppText } from '@/design/primitives/AppText';
 import { Avatar } from '@/design/primitives/Avatar';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { CheckCircle } from '@/design/primitives/CheckCircle';
 import { EmptyState } from '@/design/primitives/EmptyState';
 import { ListGroup } from '@/design/primitives/ListGroup';
 import { ListRow } from '@/design/primitives/ListRow';
@@ -237,10 +238,18 @@ function getHealthMainState(reviewState: HealthMainReviewState | undefined): Hea
 
 function HealthVetPrepCard() {
   const { t } = useAppTranslation();
+  const [completedChecklistItems, setCompletedChecklistItems] = useState(
+    () => healthVetPrepChecklistKeys.map(() => false),
+  );
   const subtitle = t('health.vet-prep.subtitle', {
     date: t('health.vet-prep.sample-date'),
     time: t('health.vet-prep.sample-time'),
   });
+  const toggleChecklistItem = (index: number) => {
+    setCompletedChecklistItems((current) => current.map((checked, currentIndex) => (
+      currentIndex === index ? !checked : checked
+    )));
+  };
 
   return (
     <Card
@@ -265,12 +274,20 @@ function HealthVetPrepCard() {
           </Stack>
         </Stack>
         <Stack gap="xs">
-          {healthVetPrepChecklistKeys.map((key) => (
+          {healthVetPrepChecklistKeys.map((key, index) => (
             <View
               key={key}
               style={styles.vetPrepChecklistRow}
               testID="health-vet-prep-checklist-row">
-              <View style={styles.vetPrepCheckbox} />
+              <CheckCircle
+                accessibilityLabel={t(key)}
+                checked={completedChecklistItems[index] ?? false}
+                onPress={() => {
+                  toggleChecklistItem(index);
+                }}
+                quiet
+                testID={`health-vet-prep-checklist-toggle-${index}`}
+              />
               <AppText style={styles.vetPrepChecklistCopy} variant="body">
                 {t(key)}
               </AppText>
@@ -1918,13 +1935,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: tokens.space[2],
-  },
-  vetPrepCheckbox: {
-    borderColor: tokens.color.stroke.strong,
-    borderRadius: tokens.radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    height: 18,
-    width: 18,
   },
   vetPrepChecklistCopy: {
     flex: 1,

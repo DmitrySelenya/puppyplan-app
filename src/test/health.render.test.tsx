@@ -125,6 +125,37 @@ describe('Health V2 anatomy', () => {
     expect(screen.queryByText(/diagnosis|dosage|treatment plan|emergency/i)).toBeNull();
   });
 
+  it('AC-PET-VET-PREP-LOCAL toggles vet prep checklist completion locally', () => {
+    render(<HealthScreen reviewState="mixed-list" />);
+
+    const firstChecklistToggle = screen.getByRole('checkbox', {
+      name: i18n.t('health.vet-prep.checklist.0'),
+    });
+    const secondChecklistToggle = screen.getByRole('checkbox', {
+      name: i18n.t('health.vet-prep.checklist.1'),
+    });
+
+    expect(firstChecklistToggle.props.accessibilityState.checked).toBe(false);
+    expect(secondChecklistToggle.props.accessibilityState.checked).toBe(false);
+
+    fireEvent.press(firstChecklistToggle);
+
+    expect(screen.getByRole('checkbox', {
+      name: i18n.t('health.vet-prep.checklist.0'),
+    }).props.accessibilityState.checked).toBe(true);
+    expect(screen.getByRole('checkbox', {
+      name: i18n.t('health.vet-prep.checklist.1'),
+    }).props.accessibilityState.checked).toBe(false);
+
+    fireEvent.press(screen.getByRole('checkbox', {
+      name: i18n.t('health.vet-prep.checklist.0'),
+    }));
+
+    expect(screen.getByRole('checkbox', {
+      name: i18n.t('health.vet-prep.checklist.0'),
+    }).props.accessibilityState.checked).toBe(false);
+  });
+
   it('AC-PET-STATES-1 AC-PET-STATES-2 renders main Health loading, error, and offline-read state cards', () => {
     render(
       <>

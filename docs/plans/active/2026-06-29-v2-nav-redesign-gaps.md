@@ -151,7 +151,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       full sequence accessibility label. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
 - [x] ✅ Vet visit prep card (§4.1.7) — native reference-card anatomy implemented inside Pet
       Health: visit subtitle, four checklist rows, Add item affordance, and non-instruction disclaimer.
-      Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Real checklist editing remains open.
+      Local checklist completion state is now implemented with primitive checkbox controls. Stage 4
+      SE native screenshot comparison PASS recorded 2026-07-02. Durable checklist editing/data
+      wiring remains open.
 - [x] 🚫 Medication card + "Request a Refill" — out of this wave. `docs/design/v1/specs/05-pet-health.md`
       explicitly defers medication/refill, and §5.3 limits Pet/Health depth to lightweight + minimal CRUD.
 
@@ -2089,8 +2091,56 @@ Implementation notes:
   JS-over-Metro and compared against `docs/design/v1/specs/05-pet-health.md` plus this slice's locked
   acceptance. Evidence: `output/v2-nav-gaps-stage4/pet-vet-prep-stage4.png`. The screenshot shows the
   Health list context, `Getting ready for the visit`, visit date/time subtitle, four checklist rows,
-  Add item affordance, and the non-instruction/non-medical-advice footer copy. Real checklist editing,
-  actual upcoming-vet-visit data, item completion state, and notifications remain open.
+  Add item affordance, and the non-instruction/non-medical-advice footer copy. Durable checklist
+  editing, actual upcoming-vet-visit data, and notifications remain open; local item completion state
+  is covered in §18a.
+
+### 18a. Vet visit prep local checklist completion
+
+**2026-07-03 UI-state slice:** make the existing static vet-prep checklist rows locally checkable so
+the card behaves like a native checklist while durable checklist data remains deferred.
+
+- Source spec card: `docs/design/v1/specs/05-pet-health.md`.
+- Source canon: `DESIGN.md` §4.1.7 Vet Visit Prep Card.
+- Route/component: `/pet`, `HealthVetPrepCard` in
+  `src/features/health/screens/HealthScreen.tsx`.
+- Scope: local item completion state for the four existing vet-prep rows only.
+- Out of scope: adding/removing checklist items, actual upcoming visit data, durable checklist
+  persistence, notifications, schema changes, native DatePicker, and analytics.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-PET-VET-PREP-LOCAL-1: each vet-prep checklist row exposes a checkbox control with the localized
+  row label and non-color-only checked state.
+- AC-PET-VET-PREP-LOCAL-2: pressing a checklist checkbox toggles only that row's local checked state
+  inside the mounted Pet Health screen.
+- AC-PET-VET-PREP-LOCAL-3: the existing title, subtitle, four-row anatomy, Add item affordance, and
+  non-instruction disclaimer remain unchanged.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health.render.test.tsx --testNamePattern AC-PET-VET-PREP-LOCAL`
+  — FAIL as expected before implementation: no checkbox role existed for the localized checklist row.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/health.render.test.tsx --testNamePattern AC-PET-VET-PREP-LOCAL`
+  — PASS: 1 focused test.
+- `npm run test:unit -- --runTestsByPath src/test/health.render.test.tsx` — PASS:
+  1 suite, 9 tests.
+- `npm run test:unit -- --runTestsByPath src/test/health.render.test.tsx src/test/pet-route.render.test.tsx src/test/design-primitives.render.test.tsx`
+  — PASS: 3 suites, 60 tests.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 76 suites / 617 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing reduced-motion `act(...)`
+  warnings remain unrelated to this slice.
+
+Implementation notes:
+- `HealthVetPrepCard` now uses the existing `CheckCircle` primitive for each checklist row and keeps
+  completion state local to the mounted screen. No durable checklist data, Add item behavior,
+  notifications, schema, or analytics changed.
+- Stage 4 note: default `/pet` vet-prep screenshot evidence remains the 2026-07-02 PASS already
+  recorded for the same route anatomy. This slice replaces decorative boxes with primitive checkbox
+  controls and adds transient local checked state without changing copy, list order, Add item behavior,
+  or durable data wiring.
 
 ## 19. Reminder edit route Stage-0 lock evidence
 
