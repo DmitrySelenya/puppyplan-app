@@ -633,8 +633,10 @@ function createDiaryWeekDays(input: Readonly<{
   isToday: boolean;
   shortWeekday: string;
 }[] {
-  return [-3, -2, -1, 0, 1, 2, 3].map((offset) => {
-    const date = shiftCalendarDate(input.todayDate, offset);
+  const weekStartDate = getDiaryCalendarWeekStart(input.selectedDate) ?? input.todayDate;
+
+  return [0, 1, 2, 3, 4, 5, 6].map((offset) => {
+    const date = shiftCalendarDate(weekStartDate, offset);
     const utcDate = calendarDateToUtc(date);
     const isSelected = date === input.selectedDate;
     const isToday = date === input.todayDate;
@@ -671,6 +673,18 @@ function createDiaryWeekDays(input: Readonly<{
       shortWeekday,
     };
   });
+}
+
+function getDiaryCalendarWeekStart(calendarDate: string): string | null {
+  const utcDate = calendarDateToUtc(calendarDate);
+
+  if (utcDate === null) {
+    return null;
+  }
+
+  const daysSinceMonday = (utcDate.getUTCDay() + 6) % 7;
+
+  return shiftCalendarDate(calendarDate, -daysSinceMonday);
 }
 
 function getDiaryWeekDayStateLabel(input: Readonly<{

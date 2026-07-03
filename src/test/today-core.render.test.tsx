@@ -224,9 +224,21 @@ describe('Today core card rendering', () => {
       state: i18n.t('today.week-strip.state-today'),
       weekday: 'Friday',
     }));
+    const calendarWeekStart = screen.getByLabelText(i18n.t('today.week-strip.day-label', {
+      date: 'Jun 8',
+      state: i18n.t('today.week-strip.state-default'),
+      weekday: 'Monday',
+    }));
+    const rollingWindowOverflow = screen.queryByLabelText(i18n.t('today.week-strip.day-label', {
+      date: 'Jun 15',
+      state: i18n.t('today.week-strip.state-default'),
+      weekday: 'Monday',
+    }));
 
     expect(selectedDay.props.accessibilityRole).toBe('text');
     expect(todayMarker.props.accessibilityRole).toBe('text');
+    expect(calendarWeekStart.props.accessibilityRole).toBe('text');
+    expect(rollingWindowOverflow).toBeNull();
     expect(selectedDay.props.accessibilityState?.selected).toBeUndefined();
     expect(todayMarker.props.accessibilityState?.selected).toBeUndefined();
   });

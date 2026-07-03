@@ -333,6 +333,20 @@ Diary WeekStrip day entries as `text` rows and no `tab`/`tablist` targets after 
 installed app over Metro. The fixed locale week vs rolling-window/day-selection design decision
 remains open.
 
+**Item 11 calendar-week evidence (2026-07-03):** Decision source is now the locked
+`docs/design/v2/specs/diary-v2.md` WeekStrip anatomy: 7 columns Mon-Sun, with non-interactive day
+text semantics until day selection ships. RED
+`npm run test:unit -- --runTestsByPath src/test/today-core.render.test.tsx --testNamePattern "Diary week strip"`
+failed because the Diary strip rendered a rolling Tue Jun 9 -> Mon Jun 15 window for Friday Jun 12
+instead of the fixed Mon Jun 8 -> Sun Jun 14 calendar week. GREEN changed the production day
+generator to start from the selected date's Monday and render seven calendar days, preserving the
+existing selected/today labels and non-tab a11y semantics. Related checks passed:
+`src/test/today-core.render.test.tsx`, `src/test/diary-primitives.render.test.tsx`, and
+`src/test/i18n.test.ts`. Full `npm run check` passed: lint, typecheck, 81 Jest suites / 657 tests,
+node/scaffold gates, i18n, tokens, privacy scan, and text hygiene. JS-over-Metro native evidence on
+the primary SE simulator after an explicit Metro reload:
+`output/v2-screen-polish-screenshots/item11-weekstrip-calendar-week-stage4.png`.
+
 **Acceptance:** Decision recorded in `diary-v2.md`; implementation matches it; a11y roles don't
 promise unavailable interactions; tests updated; `npm run check` green.
 
