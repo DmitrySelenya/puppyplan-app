@@ -19,19 +19,21 @@ describe('ScreenHeader primitive', () => {
     expect(titleStyle.fontWeight).toBe('600');
   });
 
-  it('reserves a wider center lane for compact modal titles with side controls', () => {
+  it('reserves a wide center lane for compact modal titles with side controls', () => {
     render(
       <ScreenHeader
-        backLabel="Close"
+        backLabel="More"
         onBack={jest.fn()}
-        title="PuppyPlan Plus"
+        title="Data and account"
       />,
     );
 
-    const title = screen.getByRole('header', { name: 'PuppyPlan Plus' });
+    const title = screen.getByRole('header', { name: 'Data and account' });
     const titleStyle = StyleSheet.flatten(title.props.style);
 
     expect(title.props.numberOfLines).toBe(1);
+    expect(title.props.adjustsFontSizeToFit).toBe(true);
+    expect(title.props.minimumFontScale).toBe(0.8);
     expect(titleStyle.flex).toBe(3);
   });
 

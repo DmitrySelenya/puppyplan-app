@@ -401,6 +401,69 @@ GREEN / regression evidence:
   2026-07-02 PASS already recorded for the same route anatomy. This slice does not add new layout,
   copy, tokens, or native state; the new transient off-state is covered by structural render
   assertions and keeps scheduling/persistence deferred.
+
+#### 4.4.5a Privacy & Account route shell
+
+Stage-0 lock:
+- Source: DESIGN.md §4.4.5 and `docs/design/v1/specs/06-more-privacy-paywall.md`.
+- Route: `/settings/privacy-account` from the More hub `Data and account` row.
+- Scope: native privacy/account shell, local consent toggles, local export-request notice, and local
+  delete-confirm preview only.
+- Out of scope: real data export, account deletion, sign-out mutation, analytics consent persistence,
+  crash-report preference persistence, backend ticket/job creation, schema changes, and native modules.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-MORE-PRIVACY-1: More `Data and account` row is an active chevron row and opens
+  `/settings/privacy-account`.
+- AC-MORE-PRIVACY-2: `/settings/privacy-account` renders modal header, Consents, Error collection,
+  Your data, and Account sections with typed EN/RU/ES copy.
+- AC-MORE-PRIVACY-3: Usage analytics and Error reports use native switch anatomy and toggle local
+  in-screen state without persisting or calling external services.
+- AC-MORE-PRIVACY-4: Export row shows a local, privacy-safe request notice without performing a live
+  export.
+- AC-MORE-PRIVACY-5: Delete account opens a local confirm preview; the destructive action remains
+  disabled until the user types the localized confirmation word, and no live deletion occurs.
+- AC-MORE-PRIVACY-6: route/navigation contract, shell i18n, and scaffold guardrails include
+  `/settings/privacy-account`.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/navigation-contract.test.ts --testNamePattern "editable settings|planned route files"`
+  failed as expected while `settingsRoutes` and `plannedRouteFiles` did not include
+  `/settings/privacy-account`.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern "AC-MORE-PRIVACY|privacy row active|opens Pet settings"`
+  failed as expected while More still rendered `Data and account` as a disabled Deferred row.
+- `node scripts/checks/check-navigation-contract.mjs` failed as expected while the executable locked
+  settings route list did not include `/settings/privacy-account`.
+- Stage 4 visual follow-up exposed `ScreenHeader` compact title truncation/overlap on the SE route
+  screenshot; `npm run test:unit -- --runTestsByPath src/test/screen-header.render.test.tsx --testNamePattern "wide center lane"`
+  failed as expected before the primitive allowed the single-line title to shrink.
+
+GREEN / regression evidence:
+- Added `PrivacyAccountScreen` and `/settings/privacy-account` route shell. More now opens the active
+  chevron row; the screen uses design primitives for local analytics/error-report toggles, export
+  notice, and typed delete-confirm preview. No live export/delete/sign-out/persistence/backend call,
+  schema change, native module, or native-project edit was introduced.
+- Updated route/navigation contract, shell i18n keys, and local Expo typed routes so
+  `router.push('/settings/privacy-account')` typechecks.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` — PASS: 32/32.
+- `npm run test:unit -- --runTestsByPath src/test/navigation-contract.test.ts` — PASS: 12/12.
+- `npm run test:unit -- --runTestsByPath src/test/screen-header.render.test.tsx` — PASS: 5/5
+  (existing reduced-motion `act(...)` warning remains non-failing).
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `node scripts/checks/check-navigation-contract.mjs` / `node scripts/checks/check-shell-i18n.mjs` /
+  `node scripts/checks/check-scaffold-guardrails.mjs` — PASS.
+- `npm run typecheck` — PASS after regenerating local Expo typed routes with
+  `npx expo start --localhost`.
+- `npm run check` — PASS: lint, typecheck, 76 Jest suites / 620 tests, 118 node tests,
+  navigation/shell/i18n/scaffold guardrails, tokens, privacy scan, and text hygiene. Existing
+  reduced-motion React `act(...)` warnings remain non-failing.
+- Stage 4 PASS on primary SE simulator (`Grith iPhone SE 3 iOS 26.3`,
+  `5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) using installed PuppyPlan.app over Metro:
+  `output/v2-nav-gaps-stage4/settings-privacy-account-stage4.jpg`. Runtime snapshot exposed the
+  full `Data and account` title, More back action, analytics/error switches, export row, and delete
+  row. The first screenshot exposed title truncation and row-hint clipping; fixed via
+  `ScreenHeader` single-line font fitting and full-width privacy hints before recording PASS.
 - [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
       topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
       Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Email handoff is now wired
@@ -4236,6 +4299,13 @@ Implementation notes:
   templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy, and primary
   SE Stage 4 screenshot. Real support ticket creation, mail composer availability probing, and
   diagnostics upload remain deferred.
+- 2026-07-03: Added `/settings/privacy-account` as a native UI-only shell from More `Data and account`:
+  local analytics/error-report toggles, export-request notice, typed delete-confirm preview, route
+  and shell-i18n contracts, RED/GREEN render/navigation coverage, Expo typed-route regeneration, and
+  primary SE Stage 4 screenshot. Real export, delete, sign-out, analytics/error-report persistence,
+  backend jobs, schema changes, and native modules remain deferred. Stage 4 also tightened
+  `ScreenHeader` long-title fitting and moved privacy hints out of switch rows so compact SE text is
+  not truncated.
 - 2026-06-30: Added the PuppyPlan Plus paywall shell slice: More now opens `/paywall`, the screen
   renders feature rows, annual/monthly/lifetime plan rows, Choose plan, Restore purchases, legal copy,
   and soft-lock availability note with EN/RU/ES typed copy; navigation/scaffold contracts were updated,

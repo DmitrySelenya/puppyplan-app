@@ -10,6 +10,7 @@ import {
   ConnectedNotificationPreferencesScreen,
   NotificationPreferencesScreen,
 } from '@/features/more/screens/NotificationPreferencesScreen';
+import { PrivacyAccountScreen } from '@/features/more/screens/PrivacyAccountScreen';
 import { PuppyPlanPlusScreen } from '@/features/more/screens/PuppyPlanPlusScreen';
 import {
   ShareablePuppyCardScreen,
@@ -146,6 +147,7 @@ describe('More settings entries', () => {
             openPetSettings={jest.fn()}
             openHelp={jest.fn()}
             openPlus={jest.fn()}
+            openPrivacy={jest.fn()}
             openReminders={jest.fn()}
             openSitterMode={jest.fn()}
             openTimeline={jest.fn()}
@@ -174,7 +176,7 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('more.rows.notifications'))).toBeTruthy();
 
     expect(screen.getByText(i18n.t('more.sections.privacy'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('more.rows.data-account'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('more.rows.data-account') })).toBeTruthy();
 
     expect(screen.getByText(i18n.t('more.sections.support'))).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('more.rows.help') })).toBeTruthy();
@@ -184,8 +186,8 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', { name: i18n.t('more.rows.puppyplan-plus') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.plus.subtitle'))).toBeTruthy();
 
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(2);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(i18n.t('more.rows.deferred')).length).toBe(1);
 
     const scrollView = result.UNSAFE_getByType(ScrollView);
     const contentStyle = StyleSheet.flatten(scrollView.props.contentContainerStyle);
@@ -202,6 +204,7 @@ describe('More settings entries', () => {
     const openShareableCards = jest.fn();
     const openReminders = jest.fn();
     const openNotifications = jest.fn();
+    const openPrivacy = jest.fn();
     const openHelp = jest.fn();
     const openPlus = jest.fn();
 
@@ -215,6 +218,7 @@ describe('More settings entries', () => {
             openNotifications={openNotifications}
             openPetSettings={openPetSettings}
             openPlus={openPlus}
+            openPrivacy={openPrivacy}
             openReminders={openReminders}
             openShareableCards={openShareableCards}
             openSitterMode={openSitterMode}
@@ -243,6 +247,9 @@ describe('More settings entries', () => {
       name: i18n.t('more.rows.notifications'),
     }));
     fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.rows.data-account'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.rows.help'),
     }));
     fireEvent.press(screen.getByRole('button', {
@@ -255,6 +262,7 @@ describe('More settings entries', () => {
     expect(openShareableCards).toHaveBeenCalledTimes(1);
     expect(openReminders).toHaveBeenCalledTimes(1);
     expect(openNotifications).toHaveBeenCalledTimes(1);
+    expect(openPrivacy).toHaveBeenCalledTimes(1);
     expect(openHelp).toHaveBeenCalledTimes(1);
     expect(openPlus).toHaveBeenCalledTimes(1);
   });
@@ -344,7 +352,7 @@ describe('More settings entries', () => {
     })).toBeNull();
   });
 
-  it('keeps privacy placeholder aligned with V2 pass-3 copy while notifications has a route', () => {
+  it('keeps privacy row active with V2 pass-3 copy while notifications has a route', () => {
     render(
       <AppProviders>
         <AuthProvider dependencies={authDependencies}>
@@ -352,6 +360,7 @@ describe('More settings entries', () => {
             canManagePuppySettings
             openNotifications={jest.fn()}
             openPetSettings={jest.fn()}
+            openPrivacy={jest.fn()}
             openTimeline={jest.fn()}
             puppy={puppy}
           />
@@ -367,9 +376,74 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', {
       name: i18n.t('more.notifications.screen-title'),
     })).toBeTruthy();
-    expect(screen.queryByRole('button', {
+    expect(screen.getByRole('button', {
       name: i18n.t('more.privacy.screen-title'),
-    })).toBeNull();
+    })).toBeTruthy();
+  });
+
+  it('AC-MORE-PRIVACY-1 opens the Privacy Account route from the production More tab', () => {
+    render(
+      <AppProviders>
+        <AuthProvider dependencies={authDependencies}>
+          <MoreRoute />
+        </AuthProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.rows.data-account'),
+    }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith('/settings/privacy-account');
+  });
+
+  it('AC-MORE-PRIVACY-2 AC-MORE-PRIVACY-3 AC-MORE-PRIVACY-4 AC-MORE-PRIVACY-5 renders the Privacy Account route shell locally', () => {
+    render(
+      <AppProviders>
+        <PrivacyAccountScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('more.privacy.screen-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.section-consents'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.row-analytics'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.analytics-hint'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.section-errors'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.row-error-reports'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.errors-hint'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.section-your-data'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.section-account'))).toBeTruthy();
+
+    expect(screen.getByTestId('privacy-analytics-toggle').props.value).toBe(true);
+    fireEvent(screen.getByTestId('privacy-analytics-toggle'), 'valueChange', false);
+    expect(screen.getByTestId('privacy-analytics-toggle').props.value).toBe(false);
+    expect(screen.getByTestId('privacy-error-reports-toggle').props.value).toBe(true);
+    fireEvent(screen.getByTestId('privacy-error-reports-toggle'), 'valueChange', false);
+    expect(screen.getByTestId('privacy-error-reports-toggle').props.value).toBe(false);
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.privacy.row-export'),
+    }));
+    expect(screen.getByTestId('privacy-export-notice')).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.export-sheet'))).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('more.privacy.row-delete'),
+    }));
+    expect(screen.getByTestId('privacy-delete-confirm')).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.delete-sheet.body'))).toBeTruthy();
+    expect(screen.getByTestId('privacy-delete-confirm-action').props.accessibilityState.disabled).toBe(true);
+
+    fireEvent.changeText(
+      screen.getByTestId('privacy-delete-confirm-input'),
+      i18n.t('more.privacy.delete-sheet.confirm-input-word'),
+    );
+    expect(screen.getByTestId('privacy-delete-confirm-action').props.accessibilityState.disabled).toBe(false);
+    fireEvent.press(screen.getByTestId('privacy-delete-confirm-action'));
+
+    expect(screen.queryByTestId('privacy-delete-confirm')).toBeNull();
+    expect(screen.getByTestId('privacy-delete-requested')).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.privacy.delete-toast'))).toBeTruthy();
   });
 
   it('keeps connected More in a loading state instead of treating it as non-owner', () => {

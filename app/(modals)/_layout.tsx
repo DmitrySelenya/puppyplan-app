@@ -14,6 +14,7 @@ export default function ModalLayout() {
       <Stack.Screen name="settings/household/index" />
       <Stack.Screen name="settings/sitter-mode/index" />
       <Stack.Screen name="settings/notifications/index" />
+      <Stack.Screen name="settings/privacy-account/index" />
       <Stack.Screen name="settings/help/index" />
       <Stack.Screen name="paywall/index" />
       <Stack.Screen name="sharing/puppy-card/index" />

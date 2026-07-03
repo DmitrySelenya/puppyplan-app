@@ -66,6 +66,7 @@ describe('navigation contract', () => {
       '/settings/household',
       '/settings/sitter-mode',
       '/settings/notifications',
+      '/settings/privacy-account',
       '/settings/help',
     ]);
     expect(modalRoutes).toEqual(expect.arrayContaining(settingsRoutes));
@@ -165,6 +166,11 @@ describe('navigation contract', () => {
         expect.objectContaining({
           route: '/settings/notifications',
           file: 'app/(modals)/settings/notifications/index.tsx',
+          implementationStage: 'existing',
+        }),
+        expect.objectContaining({
+          route: '/settings/privacy-account',
+          file: 'app/(modals)/settings/privacy-account/index.tsx',
           implementationStage: 'existing',
         }),
         expect.objectContaining({

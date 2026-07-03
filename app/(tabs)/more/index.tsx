@@ -23,6 +23,9 @@ export default function MoreRoute() {
       openNotifications={() => {
         router.push('/settings/notifications');
       }}
+      openPrivacy={() => {
+        router.push('/settings/privacy-account');
+      }}
       openPlus={() => {
         router.push('/paywall');
       }}

@@ -28,6 +28,7 @@ export type MoreScreenProps = Readonly<{
   openNotifications?: () => void;
   openPetSettings?: () => void;
   openPlus?: () => void;
+  openPrivacy?: () => void;
   openReminders?: () => void;
   openShareableCards?: () => void;
   openSitterMode?: () => void;
@@ -55,6 +56,7 @@ export function MoreScreen({
   openNotifications,
   openPetSettings,
   openPlus,
+  openPrivacy,
   openReminders,
   openShareableCards,
   openSitterMode,
@@ -128,10 +130,13 @@ export function MoreScreen({
         />
       </SettingsSection>
       <SettingsSection title={t('more.sections.privacy')}>
-        <DeferredListRow
-          icon="lock"
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="lock" />}
+          onPress={openPrivacy}
           subtitle={t('more.privacy.section-account-removal')}
           title={t('more.rows.data-account')}
+          variant="settings"
         />
       </SettingsSection>
       <SettingsSection title={t('more.sections.support')}>

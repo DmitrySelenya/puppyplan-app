@@ -61,6 +61,8 @@ export function ScreenHeader({
       </View>
       <AppText
         accessibilityRole="header"
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
         numberOfLines={1}
         style={styles.title}
         variant="title1">
