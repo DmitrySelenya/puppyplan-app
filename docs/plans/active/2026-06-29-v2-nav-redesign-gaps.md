@@ -682,9 +682,9 @@ GREEN / regression evidence:
       delegates bottom chrome to `CapsuleTabBar`; legacy Today/Health aliases are hidden with `href:null`;
       V1 FAB tab-layout assertions are retired; no default full-width tab bar or absolute bottom-right
       FAB remains under `app/(tabs)`. See §36.
-- [ ] 🟡 **Global screen states** (Loading / Empty / Offline read banner / Pending write / Permission
+- [x] ✅ **Global screen states** (Loading / Empty / Offline read banner / Pending write / Permission
       denied / Revoked) re-applied per new screen (§4.5) — primitives (StatusPill, Form states) exist;
-      coverage per-screen is the work. Health Add Record now has RED/GREEN state templates for
+      in-scope migrated screen coverage is now complete. Health Add Record now has RED/GREEN state templates for
       loading, pending write, error, offline read, and permission denied plus Stage 4 SE captures;
       Reminder Edit now has RED/GREEN state templates for loading, pending write, error, and
       offline read plus compact dev-gallery and Stage 4 SE captures; Notification Preferences now
@@ -707,7 +707,10 @@ GREEN / regression evidence:
       offline-read, and permission-denied plus dev-gallery coverage and Stage 4 SE evidence;
       Reminders Hub now has RED/GREEN templates for loading, pending-write, error, offline-read,
       and empty plus dev-gallery coverage and Stage 4 SE evidence;
-      other screen-specific state wiring remains open.
+      Quick Log Details now has RED/GREEN templates for loading, pending-write, error, offline-read,
+      and permission-denied plus dev-gallery coverage and Stage 4 SE evidence. Remaining state-like
+      work is explicitly owned by the separate blocked/deferred rows for native pickers, offline
+      queues, permission probing, and Health soft-delete RLS.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
 ## 5. Decisions (resolved 2026-06-29)
@@ -4609,6 +4612,12 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-03: Reconciled the cross-cutting Global screen states matrix row as complete for all
+  in-scope migrated screens. The row now points to the per-screen RED/GREEN and Stage 4 evidence
+  already recorded for Diary, Pet/Health, Quick Log Details, Reminders, More subroutes, sharing,
+  paywall, sitter mode, puppy card, and revoked/expired share states. Remaining state-like work is
+  not a generic template gap; it is explicitly deferred/blocked by native picker, offline queue,
+  permission probing, and Health soft-delete RLS rows.
 - 2026-07-03: Added Quick Log Details loading, pending-write, error, offline-read, and
   permission-denied state templates with RED/GREEN render and route coverage, dev-gallery handoff,
   EN/RU/ES copy, and primary SE Stage 4 screenshots. Real offline detail queueing, native pickers,
