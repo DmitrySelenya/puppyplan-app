@@ -56,6 +56,7 @@
         "quick-log-details": "Ruta de detalles de Quick Log con estados sintéticos de guardado lento y error.",
         "health-v2": "Lista de salud, vacío, edición, detalle, revisión, eliminación y entrada de peso.",
         "reminders-hub": "Ruta del centro de recordatorios con filas durables activas para entrega nativa.",
+        "reminders-hub-states": "Estados del centro de recordatorios: carga, guardado, error, offline y vacío.",
         "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
       "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
       "privacy-account-states": "Estados de privacidad y cuenta: carga, guardado, error, offline e inicio requerido.",
@@ -1604,6 +1605,16 @@
         "status": "No se pudo cargar",
         "title": "No se pudieron cargar los recordatorios",
         "body": "Revisa tu conexión e inténtalo de nuevo."
+      },
+      "pending-write": {
+        "status": "Guardando",
+        "title": "Guardando cambios de recordatorios",
+        "body": "Mantén esta pantalla abierta mientras se actualiza la lista."
+      },
+      "offline-read": {
+        "status": "Offline",
+        "title": "Mostrando recordatorios guardados",
+        "body": "Puedes revisar los últimos recordatorios guardados sin conexión."
       }
     },
     "form": {

@@ -72,6 +72,7 @@ import { QuickLogLocalEvents } from '@/features/quick-log/components/QuickLogLoc
 import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
 import {
   RemindersHubScreen,
+  RemindersHubStatePreview,
 } from '@/features/reminders/screens/RemindersHubScreen';
 import {
   ReminderEditStatePreview,
@@ -156,6 +157,7 @@ export function DesignGalleryScreen() {
         <SyntheticNotificationPreferencesShell />
         <SyntheticPrivacyAccountStatesShell />
         <SyntheticRemindersHubShell />
+        <SyntheticRemindersHubStatesShell />
         <SyntheticReminderEditShell />
 
         {gallerySections.map((section) => (
@@ -771,6 +773,24 @@ export function SyntheticRemindersHubShell() {
           onBack={noop}
           reminders={syntheticReminders}
         />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticRemindersHubStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.reminders-hub-states"
+          titleKey="reminders.screen-title"
+        />
+        <RemindersHubStatePreview state="loading" />
+        <RemindersHubStatePreview state="pending-write" />
+        <RemindersHubStatePreview state="error" />
+        <RemindersHubStatePreview state="offline-read" />
+        <RemindersHubStatePreview state="empty" />
       </Stack>
     </Card>
   );

@@ -703,6 +703,8 @@ GREEN / regression evidence:
       plus production route loading/error wiring, dev-gallery coverage, and Stage 4 SE evidence;
       Privacy & Account now has RED/GREEN templates for loading, pending-write, error,
       offline-read, and permission-denied plus dev-gallery coverage and Stage 4 SE evidence;
+      Reminders Hub now has RED/GREEN templates for loading, pending-write, error, offline-read,
+      and empty plus dev-gallery coverage and Stage 4 SE evidence;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -2709,7 +2711,63 @@ Implementation notes:
   row-level pending feedback is now covered by §4.2.7b. Additional native state captures remain
   future follow-ups.
 
-### 19e. Reminder edit quiet-hours create payload
+### 19e. Reminders Hub State Templates (§4.5)
+
+**2026-07-03 global-state slice:** deterministic `/reminders` empty, loading, pending-write, error,
+and offline-read state templates for §4.5.
+
+- Source spec card: `docs/design/v1/specs/12-1-reminders-hub.md`.
+- Source atlas: `docs/design/v1/screenshots/reminders/12-1.png`.
+- Route/component: `/reminders` via `src/features/reminders/screens/RemindersHubScreen.tsx`.
+- Dev-gallery handoff: `/_dev/components` should render compact Reminders Hub state cards inside a
+  visible `SyntheticRemindersHubStatesShell`.
+- Allowed deviation: this slice only standardizes deterministic state cards and dev-gallery
+  handoff. Reminder create/save scheduling, occurrence generation, local notifications, permission
+  probing, row edit menus, schema/native modules, and `ios/` / `android/` edits remain out of scope.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-REM-HUB-STATES-1: the Reminders Hub exposes deterministic empty, loading, pending-write, error,
+  and offline-read state templates with stable `reminders-hub-state-*` test IDs.
+- AC-REM-HUB-STATES-2: each state uses design primitives (`Card`, `StatusPill`, `AppIcon`,
+  `AppText`) and typed EN/RU/ES i18n status/title/body copy.
+- AC-REM-HUB-STATES-3: loading and pending-write announce politely; error uses alert semantics;
+  offline-read uses the muted template surface.
+- AC-REM-HUB-STATES-4: state copy exposes no raw puppy names, notes, emails, provider names,
+  notification tokens, schedules from private user rows, or diagnostics payloads.
+- AC-REM-HUB-STATES-5: the dev-gallery route-shell preview includes all five Reminders Hub state
+  templates for native Stage 4 handoff.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-hub-route.render.test.tsx --testNamePattern AC-REM-HUB-STATES`
+  failed as expected before implementation because `RemindersHubStatePreview` was not exported.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern "route-shell preview states"`
+  failed as expected before implementation because `SyntheticRemindersHubStatesShell` was not
+  exported/rendered.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/reminders-hub-route.render.test.tsx --testNamePattern AC-REM-HUB-STATES`
+  — PASS: 1 suite, 1 matching test.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern "route-shell preview states"`
+  — PASS: 1 suite, 1 matching test.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run test:unit -- --runTestsByPath src/test/reminders-hub-route.render.test.tsx src/test/dev-gallery.render.test.tsx src/test/i18n.test.ts`
+  — PASS: 3 suites, 26 tests.
+
+Stage 4 evidence:
+- Primary SE simulator: `Grith iPhone SE 3 iOS 26.3`
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`).
+- Installed `PuppyPlan.app` launched over `npx expo start --localhost` in development-build mode;
+  existing `puppyplan:///_dev/components` route reloaded from the current bundle.
+- Runtime snapshot confirmed `Reminders hub loading, saving, error, offline, and empty states.`,
+  `Showing saved reminders`, and `No reminders here yet`.
+- Evidence files:
+  `output/v2-nav-gaps-stage4/reminders-hub-states-top-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/reminders-hub-states-bottom-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/reminders-hub-states-empty-stage4.jpg`.
+
+### 19f. Reminder edit quiet-hours create payload
 
 Stage-0 lock:
 - Source spec card: `docs/design/v1/specs/04-quick-log-routines-reminders.md` Reminder preferences
@@ -2755,7 +2813,7 @@ Implementation notes:
   scheduling, permission probing, native picker replacement, schema migration, native module,
   analytics payload, or `ios/` / `android/` edit was introduced.
 
-### 19f. Reminders Hub row soft-delete lifecycle slice
+### 19g. Reminders Hub row soft-delete lifecycle slice
 
 Stage-0 lock:
 - Source spec card: `docs/design/v1/specs/12-1-reminders-hub.md` row lifecycle anatomy and
@@ -4920,3 +4978,8 @@ Implementation notes:
   current Diary dashboard, and the `/reminders` row switch sends active care context while disabling
   the pending row and surfacing mutation failure through the existing calm error card. No scheduling,
   occurrence generation, native module, schema, analytics, or native-project edit was introduced.
+- 2026-07-03: Added deterministic Reminders Hub loading, pending-write, error, offline-read, and
+  empty state templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy,
+  and primary SE Stage 4 screenshots. Reminder scheduling, occurrence generation, local
+  notifications, permission probing, row edit menus, schema/native modules, and native-project edits
+  remain deferred.

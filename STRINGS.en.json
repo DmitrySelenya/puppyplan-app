@@ -57,6 +57,7 @@
         "quick-log-details": "Quick Log details route with synthetic slow-saving and error states.",
         "health-v2": "Health list, empty, edit, detail, review, delete, and weight entry states.",
         "reminders-hub": "Reminders hub route with active durable rows for native handoff.",
+        "reminders-hub-states": "Reminders hub loading, saving, error, offline, and empty states.",
         "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
       "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
       "privacy-account-states": "Privacy and account loading, saving, error, offline, and sign-in-required states.",
@@ -1536,6 +1537,16 @@
         "status": "Could not load",
         "title": "Could not load reminders",
         "body": "Check your connection and try again."
+      },
+      "pending-write": {
+        "status": "Saving",
+        "title": "Saving reminder changes",
+        "body": "Keep this screen open while the reminder list updates."
+      },
+      "offline-read": {
+        "status": "Offline",
+        "title": "Showing saved reminders",
+        "body": "You can review the last saved reminders while offline."
       }
     },
     "form": {

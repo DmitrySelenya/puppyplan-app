@@ -2,6 +2,7 @@ import { AccessibilityInfo } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import type { Reminder } from '@/contracts/supabase';
+import { RemindersHubStatePreview } from '@/features/reminders/screens/RemindersHubScreen';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
 
@@ -313,6 +314,37 @@ describe('RemindersHubRoute', () => {
 
     expect(screen.getByText(i18n.t('reminders.states.error.title'))).toBeTruthy();
     expect(screen.queryByText('Morning feeding')).toBeNull();
+  });
+
+  it('AC-REM-HUB-STATES renders deterministic hub state templates', () => {
+    render(
+      <AppProviders>
+        <RemindersHubStatePreview state="loading" />
+        <RemindersHubStatePreview state="pending-write" />
+        <RemindersHubStatePreview state="error" />
+        <RemindersHubStatePreview state="offline-read" />
+        <RemindersHubStatePreview state="empty" />
+      </AppProviders>,
+    );
+
+    for (const state of [
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+      'empty',
+    ] as const) {
+      expect(screen.getByTestId(`reminders-hub-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`reminders.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`reminders.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('reminders-hub-state-error').props.accessibilityRole).toBe('alert');
+    expect(screen.getByTestId('reminders-hub-state-loading').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getByTestId('reminders-hub-state-pending-write').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.queryByText(/@|token|provider|puppy a|notes|diagnostic payload/i)).toBeNull();
   });
 });
 

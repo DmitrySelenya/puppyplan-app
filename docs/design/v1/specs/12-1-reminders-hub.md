@@ -23,6 +23,8 @@ Allowed deviations: production rows may show durable reminder titles from `publi
 - loading — calm card with status pill and no fake rows.
 - empty — calm empty card, no fake rows.
 - error — alert card, no silent fallback.
+- pending write — calm card while a reminder list action is saving; no fake rows.
+- offline read — muted saved-data card for last saved reminder data.
 - off segment — shows disabled rows from the same durable data.
 - row pending — affected row shows a non-color-only pending status pill and disabled switch/action while its enabled toggle or delete mutation is saving.
 
@@ -30,7 +32,8 @@ Allowed deviations: production rows may show durable reminder titles from `publi
 - Back and add controls are buttons with localized labels.
 - Segmented control exposes tablist/tab roles and selected state.
 - Row toggles are switches with localized title-derived labels.
-- State cards and row pending status use icon + text and do not rely on color alone.
+- State cards and row pending status use icon + text and do not rely on color alone. Loading and
+  pending write announce politely; error uses alert semantics.
 
 ## Notes / deferred
 - Enabled/off toggle persistence, row-level pending feedback, and row soft-delete persistence are implemented through typed reminder mutation paths. Edit/menu treatment, occurrence rows, missed-today rows, local notification scheduling, and full lifecycle mark-done/back-date/skip behavior are separate plan-owned follow-ups.

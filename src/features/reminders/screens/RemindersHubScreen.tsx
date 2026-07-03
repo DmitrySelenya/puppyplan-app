@@ -30,12 +30,18 @@ import {
 } from '@/lib/query/reminders';
 
 type ReminderSegment = 'active' | 'off';
-type ReminderHubState = 'empty' | 'error' | 'loading';
+export type ReminderHubState =
+  | 'empty'
+  | 'error'
+  | 'loading'
+  | 'offline-read'
+  | 'pending-write';
 type ReminderSection = 'feeding' | 'health' | 'sitter' | 'other';
 
 type ReminderStateMeta = Readonly<{
   bodyKey: I18nKey;
   icon: AppIconName;
+  liveRegion?: 'polite';
   role?: 'alert';
   statusKey: I18nKey;
   titleKey: I18nKey;
@@ -63,6 +69,21 @@ const reminderStateMeta: Record<ReminderHubState, ReminderStateMeta> = {
     icon: 'bell',
     statusKey: 'reminders.states.loading.status',
     titleKey: 'reminders.states.loading.title',
+    tone: 'pending',
+  },
+  'offline-read': {
+    bodyKey: 'reminders.states.offline-read.body',
+    icon: 'bell',
+    statusKey: 'reminders.states.offline-read.status',
+    titleKey: 'reminders.states.offline-read.title',
+    tone: 'template',
+  },
+  'pending-write': {
+    bodyKey: 'reminders.states.pending-write.body',
+    icon: 'bell',
+    liveRegion: 'polite',
+    statusKey: 'reminders.states.pending-write.status',
+    titleKey: 'reminders.states.pending-write.title',
     tone: 'pending',
   },
 };
@@ -221,7 +242,7 @@ export function RemindersHubScreen({
         value={segment}
       />
 
-      {visibleState ? <RemindersHubStateCard state={visibleState} /> : null}
+      {visibleState ? <RemindersHubStatePreview state={visibleState} /> : null}
 
       {visibleState === undefined ? (
         <Stack gap="lg">
@@ -261,26 +282,36 @@ export function RemindersHubScreen({
   );
 }
 
-function RemindersHubStateCard({ state }: Readonly<{ state: ReminderHubState }>) {
+export function RemindersHubStatePreview({ state }: Readonly<{ state: ReminderHubState }>) {
   const { t } = useAppTranslation();
   const meta = reminderStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
 
   return (
     <Card
-      accessibilityLabel={t(meta.titleKey)}
-      accessibilityLiveRegion={state === 'loading' ? 'polite' : undefined}
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion ?? (state === 'loading' ? 'polite' : undefined)}
       accessibilityRole={meta.role}
-      variant="mutedTemplate">
+      testID={`reminders-hub-state-${state}`}
+      variant={state === 'offline-read' || state === 'empty' ? 'mutedTemplate' : 'resting'}>
       <Stack gap="sm">
         <StatusPill
-          accessibilityLabel={t(meta.statusKey)}
-          icon={<AppIcon name={meta.icon} size={14} />}
-          label={t(meta.statusKey)}
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name={meta.icon}
+              size={14}
+            />
+          )}
+          label={status}
           tone={meta.tone}
         />
-        <AppText variant="bodyEmph">{t(meta.titleKey)}</AppText>
+        <AppText variant="bodyEmph">{title}</AppText>
         <AppText tone="secondary" variant="body">
-          {t(meta.bodyKey)}
+          {body}
         </AppText>
       </Stack>
     </Card>

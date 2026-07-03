@@ -15,6 +15,7 @@ import {
   SyntheticPaywallStatesShell,
   SyntheticQuickLogDetailsShell,
   SyntheticQuickLogSheetShell,
+  SyntheticRemindersHubStatesShell,
   SyntheticRemindersHubShell,
   SyntheticReminderEditShell,
   SyntheticNotificationPreferencesShell,
@@ -146,6 +147,7 @@ describe('development-only design gallery', () => {
         <SyntheticQuickLogSheetShell />
         <SyntheticHealthShell />
         <SyntheticRemindersHubShell />
+        <SyntheticRemindersHubStatesShell />
         <SyntheticReminderEditShell />
         <SyntheticHelpSupportStatesShell />
         <SyntheticNotificationPreferencesShell />
@@ -213,6 +215,24 @@ describe('development-only design gallery', () => {
       includeHiddenElements: true,
     })).toBeTruthy();
     expect(screen.getAllByText(i18n.t('reminders.sections.feeding'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.reminders-hub-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('reminders.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.states.empty.title'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('dev.gallery.states.notification-preferences'), {
