@@ -1,7 +1,7 @@
 # 06.4 — More Support / Help
 Route: `/settings/help`   Atlas: Open Design V2 More/support board, no v1 PNG
 Device sizes: SE compact primary; iOS 390x844 and Android 412x900 in the V2 handoff
-Allowed deviations: no live support ticket submission, email composer, or diagnostic upload in this slice. The screen is a privacy-safe native help shell only.
+Allowed deviations: no live support ticket submission or diagnostic upload in this slice. Email composer handoff is limited to a privacy-safe localized `mailto:` draft and visible failure state.
 
 ## Anatomy (top -> bottom)
 - Modal header — back to More, title `more.help.screen-title`.
@@ -17,7 +17,8 @@ Allowed deviations: no live support ticket submission, email composer, or diagno
 
 ## States covered
 - Default support shell — production.
-- Live ticket submission, uploads, mail composer, and async send states — deferred.
+- Email composer handoff — production `mailto:` draft with localized subject/body and visible failure state.
+- Live ticket submission, uploads, and async send states — deferred.
 
 ## Accessibility
 - Help row in More is an active button with a chevron.
@@ -25,5 +26,5 @@ Allowed deviations: no live support ticket submission, email composer, or diagno
 - Privacy warning is visible text, not color-only.
 
 ## Notes / deferred
-- This route must not collect, log, or upload private support diagnostics in this slice.
+- This route must not collect, log, or upload private support diagnostics in this slice. The email draft body must explicitly tell the user not to include names, notes, emails, providers, photos, or tokens.
 - If a future slice sends diagnostics, it must go through PII-scrubbing observability wrappers and explicit user confirmation.

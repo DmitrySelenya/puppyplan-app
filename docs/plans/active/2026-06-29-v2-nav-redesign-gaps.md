@@ -3321,6 +3321,44 @@ Implementation notes:
   matched `Help and support loading, pending note, error, and offline read states.` Native evidence:
   `output/v2-nav-gaps-stage4/settings-help-states-stage4.jpg`.
 
+### 29b. More Support / Help email composer handoff reconciliation
+
+**2026-07-03 reconciliation slice:** the privacy-safe email composer handoff is already implemented in
+the current production route, but the plan/spec still described it as deferred. This slice updates
+the plan lock and records the existing evidence; no production code change is required.
+
+- Spec card: `docs/design/v1/specs/06-4-more-support-help.md`.
+- Route/component: `/settings/help`, `src/features/more/screens/HelpSupportScreen.tsx`.
+- TDD mode: lightweight; reduced assurance because this is evidence reconciliation for code/tests
+  already present in HEAD.
+
+Acceptance:
+- AC-MORE-HELP-MAIL-1: pressing the contact row opens `Linking.openURL` with a `mailto:` URL built
+  from typed EN/RU/ES i18n keys, not hardcoded JSX strings.
+- AC-MORE-HELP-MAIL-2: the draft subject/body are privacy-safe and explicitly avoid raw puppy names,
+  notes, emails, providers, photos, or tokens.
+- AC-MORE-HELP-MAIL-3: if the OS email handoff rejects, the route renders the visible
+  `more-help-support-error` alert card instead of silently swallowing the failure.
+- AC-MORE-HELP-MAIL-4: live support ticket submission, diagnostics upload, schema changes, native
+  modules, analytics payloads, and native project edits remain out of scope.
+
+Evidence:
+- Current code in `HelpSupportScreen` builds the `mailto:` URL from `more.help.support-email`,
+  `more.help.support-draft-subject`, and `more.help.support-draft-body`, calls
+  `Linking.openURL`, and renders `more-help-support-error` on rejection.
+- Existing tests in `src/test/more-settings.render.test.tsx` cover both the successful privacy-safe
+  mailto handoff and the visible failure state.
+
+Verification:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern "support email|support error"`
+  — PASS: 1 suite, 2 focused tests.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `node scripts/checks/text-hygiene.mjs` — PASS.
+
+Implementation notes:
+- `docs/design/v1/specs/06-4-more-support-help.md` now treats email composer handoff as production
+  while keeping live ticket submission, async send states, and diagnostics upload deferred.
+
 ### 30. PuppyPlan Plus Paywall Shell Slice (§4.4.7)
 
 Stage-0 lock:
@@ -4036,6 +4074,12 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-03: Reconciled More Support / Help email composer handoff: the current production
+  `/settings/help` route already opens a privacy-safe localized `mailto:` draft and renders a visible
+  error card when the OS email handoff rejects. Updated the support/help spec and plan so email
+  composer handoff is no longer listed as deferred; live ticket submission, diagnostics upload,
+  schema/native modules, analytics, and native project edits remain out of scope. Focused support
+  email tests, i18n parity, and text hygiene passed.
 - 2026-07-03: Added Reminders Hub row soft-delete lifecycle wiring: typed Supabase repository
   `deleted_at` update scoped by `id` + `puppy_id`, zero-row failure guard, TanStack delete mutation
   invalidating the durable reminders list and current Diary dashboard, row `SwipeToDelete` plus
