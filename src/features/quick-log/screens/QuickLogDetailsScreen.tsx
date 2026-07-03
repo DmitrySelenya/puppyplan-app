@@ -8,6 +8,8 @@ import {
   type QuickLogDetailTrackerId,
 } from '@/contracts/quick-log';
 import {
+  AppIcon,
+  type AppIconName,
   AppText,
   Button,
   Card,
@@ -15,10 +17,20 @@ import {
   SegmentedControl,
   SheetSurface,
   Stack,
+  StatusPill,
+  type StatusPillTone,
 } from '@/design/primitives';
+import { tokens } from '@/design/tokens';
 import { useAppTranslation, type I18nKey } from '@/lib/i18n';
 
-export type QuickLogDetailsStatus = 'error' | 'ready' | 'saving';
+export type QuickLogDetailsReviewState =
+  | 'loading'
+  | 'pending-write'
+  | 'error'
+  | 'offline-read'
+  | 'permission-denied';
+
+export type QuickLogDetailsStatus = QuickLogDetailsReviewState | 'ready';
 
 export type QuickLogDetailsScreenProps = Readonly<{
   initialTrackerId?: QuickLogDetailTrackerId | string;
@@ -40,6 +52,7 @@ export function QuickLogDetailsScreen({
   status = 'ready',
 }: QuickLogDetailsScreenProps) {
   const { t } = useAppTranslation();
+  const reviewState = status === 'ready' ? undefined : status;
   const [trackerId, setTrackerId] = useState<QuickLogDetailTrackerId>(() =>
     normalizeDetailTrackerId(initialTrackerId));
   const [feedingAmount, setFeedingAmount] = useState<FeedingAmountValue>('meal');
@@ -89,7 +102,7 @@ export function QuickLogDetailsScreen({
             }))}
             value={trackerId}
           />
-          {status === 'ready' ? null : <QuickLogDetailsStatusCard status={status} />}
+          {reviewState ? <QuickLogDetailsStatePreview state={reviewState} /> : null}
           {trackerId === 'feeding' ? (
             <FeedingDetailsFields
               value={feedingAmount}
@@ -207,23 +220,39 @@ function ZoomiesDetailsFields({
   );
 }
 
-function QuickLogDetailsStatusCard({
-  status,
+export function QuickLogDetailsStatePreview({
+  state,
 }: Readonly<{
-  status: Exclude<QuickLogDetailsStatus, 'ready'>;
+  state: QuickLogDetailsReviewState;
 }>) {
   const { t } = useAppTranslation();
-  const copy = detailStatusCopy[status];
+  const meta = detailStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
 
   return (
     <Card
-      accessibilityLabel={t(copy.titleKey)}
-      accessibilityLiveRegion="polite"
-      accessibilityRole={status === 'error' ? 'alert' : undefined}
-      variant={status === 'error' ? 'resting' : 'mutedTemplate'}>
-      <Stack gap="xs">
-        <AppText variant="headline">{t(copy.titleKey)}</AppText>
-        <AppText tone="secondary">{t(copy.bodyKey)}</AppText>
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`quick-log-details-state-${state}`}
+      variant={state === 'offline-read' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name={meta.icon}
+              size={14}
+            />
+          )}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="bodyEmph">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">{body}</AppText>
       </Stack>
     </Card>
   );
@@ -345,19 +374,57 @@ const zoomiesIntensityOptions = [
   value: ZoomiesIntensityValue;
 }[];
 
-const detailStatusCopy = {
+type QuickLogDetailsStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
+}>;
+
+const detailStateMeta: Record<QuickLogDetailsReviewState, QuickLogDetailsStateMeta> = {
   error: {
     bodyKey: 'quick-log.details.states.error.body',
+    icon: 'warningTriangle',
+    role: 'alert',
+    statusKey: 'quick-log.details.states.error.status',
     titleKey: 'quick-log.details.states.error.title',
+    tone: 'failed',
   },
-  saving: {
-    bodyKey: 'quick-log.details.states.saving.body',
-    titleKey: 'quick-log.details.states.saving.title',
+  loading: {
+    bodyKey: 'quick-log.details.states.loading.body',
+    icon: 'bowl',
+    liveRegion: 'polite',
+    statusKey: 'quick-log.details.states.loading.status',
+    titleKey: 'quick-log.details.states.loading.title',
+    tone: 'pending',
   },
-} as const satisfies Record<Exclude<QuickLogDetailsStatus, 'ready'>, {
-  bodyKey: I18nKey;
-  titleKey: I18nKey;
-}>;
+  'offline-read': {
+    bodyKey: 'quick-log.details.states.offline-read.body',
+    icon: 'lock',
+    statusKey: 'quick-log.details.states.offline-read.status',
+    titleKey: 'quick-log.details.states.offline-read.title',
+    tone: 'template',
+  },
+  'pending-write': {
+    bodyKey: 'quick-log.details.states.pending-write.body',
+    icon: 'docText',
+    liveRegion: 'polite',
+    statusKey: 'quick-log.details.states.pending-write.status',
+    titleKey: 'quick-log.details.states.pending-write.title',
+    tone: 'pending',
+  },
+  'permission-denied': {
+    bodyKey: 'quick-log.details.states.permission-denied.body',
+    icon: 'lock',
+    role: 'alert',
+    statusKey: 'quick-log.details.states.permission-denied.status',
+    titleKey: 'quick-log.details.states.permission-denied.title',
+    tone: 'failed',
+  },
+};
 
 const styles = StyleSheet.create({
   closeButton: {

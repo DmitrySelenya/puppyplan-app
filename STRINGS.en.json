@@ -54,7 +54,7 @@
         "quick-trackers-states": "Quick Tracker settings loading, error, empty, and owner-only states.",
         "more-settings": "More hub, profile entry, tracker settings, notification note, privacy, account removal, and Plus placeholder.",
         "quick-log-sheet": "Quick Log sheet, subtype choices, duplicate warning, local pending, failed retry, and access states.",
-        "quick-log-details": "Quick Log details route with synthetic slow-saving and error states.",
+                "quick-log-details": "Quick Log details loading, saving, error, offline, and view-only states.",
         "health-v2": "Health list, empty, edit, detail, review, delete, and weight entry states.",
         "reminders-hub": "Reminders hub route with active durable rows for native handoff.",
         "reminders-hub-states": "Reminders hub loading, saving, error, offline, and empty states.",
@@ -742,17 +742,38 @@
           "high": "High"
         }
       },
-      "states": {
-        "saving": {
-          "title": "Saving details",
-          "body": "The routine event is already logged; this optional detail is catching up."
+            "states": {
+                "loading": {
+                    "status": "Checking",
+                    "title": "Loading details",
+                    "body": "We are checking the current care context before details are saved."
+                },
+                "pending-write": {
+                    "status": "Saving",
+                    "title": "Saving details",
+                    "body": "The routine event is already logged; this optional detail is catching up."
+                },
+                "saving": {
+                    "title": "Saving details",
+                    "body": "The routine event is already logged; this optional detail is catching up."
+                },
+                "error": {
+                    "status": "Needs attention",
+                    "title": "Details did not save",
+                    "body": "The original Quick Log entry stays saved. Try the details again later."
+                },
+                "offline-read": {
+                    "status": "Offline",
+                    "title": "Showing saved details",
+                    "body": "You can review the detail form. Saving waits until the connection is back."
+                },
+                "permission-denied": {
+                    "status": "View only",
+                    "title": "Details are not editable",
+                    "body": "Ask the household owner for caregiver access before changing Quick Log details."
+                }
+            }
         },
-        "error": {
-          "title": "Details did not save",
-          "body": "The original Quick Log entry stays saved. Try the details again later."
-        }
-      }
-    },
     "pending": {
       "label": "Saving"
     },

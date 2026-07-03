@@ -53,7 +53,7 @@
         "quick-trackers-states": "Estados de ajustes de rastreadores rápidos: carga, error, vacío y solo propietario.",
         "more-settings": "Hub Más, entrada de perfil, ajustes de trackers, nota de notificaciones, privacidad, eliminación de cuenta y marcador Plus.",
         "quick-log-sheet": "Hoja de Quick Log, subtipos, aviso de duplicado, pendiente local, reintento fallido y estados de acceso.",
-        "quick-log-details": "Ruta de detalles de Quick Log con estados sintéticos de guardado lento y error.",
+      "quick-log-details": "Detalles de Quick Log con estados de carga, guardado, error, sin conexión y solo lectura.",
         "health-v2": "Lista de salud, vacío, edición, detalle, revisión, eliminación y entrada de peso.",
         "reminders-hub": "Ruta del centro de recordatorios con filas durables activas para entrega nativa.",
         "reminders-hub-states": "Estados del centro de recordatorios: carga, guardado, error, offline y vacío.",
@@ -759,13 +759,34 @@
         }
       },
       "states": {
+        "loading": {
+          "status": "Comprobando",
+          "title": "Cargando detalles",
+          "body": "Estamos comprobando el contexto de cuidado actual antes de guardar los detalles."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando detalles",
+          "body": "El evento de rutina ya está registrado; este detalle opcional se está poniendo al día."
+        },
         "saving": {
           "title": "Guardando detalles",
           "body": "El evento de rutina ya está registrado; este detalle opcional se está poniendo al día."
         },
         "error": {
+          "status": "Revisar",
           "title": "Los detalles no se guardaron",
           "body": "La entrada original de Quick Log sigue guardada. Prueba los detalles más tarde."
+        },
+        "offline-read": {
+          "status": "Sin conexión",
+          "title": "Mostrando detalles guardados",
+          "body": "Puedes revisar el formulario de detalles. El guardado esperará hasta que vuelva la conexión."
+        },
+        "permission-denied": {
+          "status": "Solo lectura",
+          "title": "Los detalles no se pueden editar",
+          "body": "Pide al propietario del hogar acceso de cuidador antes de cambiar detalles de Quick Log."
         }
       }
     },

@@ -191,8 +191,11 @@ describe('development-only design gallery', () => {
     expect(screen.getAllByText(i18n.t('today.deferred.synthetic-badge')).length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('today.deferred.family-invite'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.deferred.reminders'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('quick-log.details.states.saving.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.loading.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.pending-write.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.details.states.error.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.offline-read.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.permission-denied.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('dev.gallery.states.reminder-edit'), {
       includeHiddenElements: true,
     })).toBeTruthy();

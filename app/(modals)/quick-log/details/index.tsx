@@ -14,7 +14,10 @@ import {
   eventTypeSchema,
   uuidSchema,
 } from '@/contracts/supabase';
-import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
+import {
+  QuickLogDetailsScreen,
+  type QuickLogDetailsStatus,
+} from '@/features/quick-log/screens/QuickLogDetailsScreen';
 import { closeModalRoute } from '@/lib/navigation/modal-close';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 import { useQuickLogMutationPort } from '@/lib/query/quick-log';
@@ -45,6 +48,10 @@ export default function QuickLogDetailsRoute() {
   const mutation = quickLogMutation.mutation;
   const detailContext = parseQuickLogDetailsRouteContext(params);
   const initialTrackerId = detailContext?.trackerId ?? parseStandaloneTrackerId(params.trackerId);
+  const status = getQuickLogDetailsStatus({
+    activeCare,
+    quickLogMutationStatus: quickLogMutation.status,
+  });
   const close = () => {
     closeModalRoute(router);
   };
@@ -73,8 +80,36 @@ export default function QuickLogDetailsRoute() {
       initialTrackerId={initialTrackerId}
       onClose={close}
       onSave={save}
+      status={status}
     />
   );
+}
+
+function getQuickLogDetailsStatus(input: Readonly<{
+  activeCare: ReturnType<typeof useActiveCareContext>;
+  quickLogMutationStatus: ReturnType<typeof useQuickLogMutationPort>['status'];
+}>): QuickLogDetailsStatus {
+  if (input.activeCare.status === 'loading') {
+    return 'loading';
+  }
+
+  if (input.activeCare.status === 'error') {
+    return 'error';
+  }
+
+  if (input.quickLogMutationStatus === 'loading') {
+    return 'pending-write';
+  }
+
+  if (
+    input.activeCare.status === 'empty'
+    || input.quickLogMutationStatus === 'unavailable'
+    || input.activeCare.careContext?.householdRole === 'viewer'
+  ) {
+    return 'permission-denied';
+  }
+
+  return 'ready';
 }
 
 function parseQuickLogDetailsRouteContext(

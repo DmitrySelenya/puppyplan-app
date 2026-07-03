@@ -4505,6 +4505,64 @@ Notes:
   the stale cross-cutting "old nav still applied" matrix row and the explicitly deferred Pet/Health
   depth rows.
 
+### 36a. Quick Log Details State Templates (§2.3.7 / §4.5)
+
+Stage-0 lock:
+- Source spec card: `docs/design/v1/specs/04-quick-log-routines-reminders.md`.
+- Source canon: `DESIGN.md` §2.3.7 Details and §4.5 global screen states.
+- Route/component: `/quick-log/details`,
+  `src/features/quick-log/screens/QuickLogDetailsScreen.tsx`.
+- Dev-gallery handoff: `/_dev/components` should render all detail state templates inside the
+  visible `SyntheticQuickLogDetailsShell`.
+- Allowed deviation: this slice standardizes deterministic route/detail state templates only. Real
+  offline Quick Log detail queueing, native pickers, schema changes, analytics, native modules, and
+  `ios/` / `android/` edits remain out of scope.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-QL-DETAIL-STATES-1: the Quick Log details surface exposes deterministic loading,
+  pending-write, error, offline-read, and permission-denied state templates with stable
+  `quick-log-details-state-*` test IDs.
+- AC-QL-DETAIL-STATES-2: each state uses design primitives (`Card`, `StatusPill`, `AppIcon`,
+  `AppText`) and typed EN/RU/ES i18n status/title/body copy.
+- AC-QL-DETAIL-STATES-3: loading and pending-write announce politely; error and permission-denied
+  use alert semantics; offline-read uses the muted template surface.
+- AC-QL-DETAIL-STATES-4: route wiring maps active-care loading/error and unavailable or view-only
+  contexts to the deterministic templates without saving optional details.
+- AC-QL-DETAIL-STATES-5: state copy exposes no raw puppy names, notes, emails, provider names,
+  photos, tokens, diagnostics payloads, or private contact data.
+- AC-QL-DETAIL-STATES-6: the dev-gallery route-shell preview includes all five Quick Log details
+  state templates for native Stage 4 handoff.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/quick-log-details.test.tsx src/test/quick-log-details-route.render.test.tsx src/test/dev-gallery.render.test.tsx --testNamePattern "AC-QL-DETAIL-STATES|route-shell preview states"`
+  failed as expected before implementation because `QuickLogDetailsStatePreview` was not exported
+  and the route/dev-gallery did not render `quick-log-details-state-*` templates.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/quick-log-details.test.tsx src/test/quick-log-details-route.render.test.tsx src/test/dev-gallery.render.test.tsx --testNamePattern "AC-QL-DETAIL-STATES|route-shell preview states|synthetic pending-write|synthetic error"`
+  passed: 3 suites, 11 focused tests.
+- `npm run test:unit -- --runTestsByPath src/test/quick-log-details.test.tsx src/test/quick-log-details-route.render.test.tsx src/test/dev-gallery.render.test.tsx`
+  passed: 3 suites, 25 tests.
+- `node scripts/checks/check-i18n.mjs` passed.
+- `npm run typecheck` passed.
+- `npm run check` passed: lint, typecheck, 81 Jest suites / 665 tests, node checks,
+  navigation/scaffold/i18n/tokens/privacy/text hygiene.
+
+Implementation notes:
+- `QuickLogDetailsScreen` now exposes `QuickLogDetailsStatePreview` with loading, pending-write,
+  error, offline-read, and permission-denied states using `Card`, `StatusPill`, `AppIcon`, typed
+  i18n keys, polite live regions, alert semantics, and muted offline styling.
+- `/quick-log/details` maps active-care loading/error, local queue loading/unavailable, and viewer
+  contexts into deterministic templates. Real offline detail queueing, native pickers, schema/native
+  modules, and native project edits remain out of scope.
+- Stage 4 PASS recorded 2026-07-03 on the primary SE simulator over `npx expo start` and the
+  already-installed PuppyPlan.app. Native evidence:
+  `output/v2-nav-gaps-stage4/quick-log-details-states-stage4.png`,
+  `output/v2-nav-gaps-stage4/quick-log-details-states-loading-pending-stage4.png`,
+  `output/v2-nav-gaps-stage4/quick-log-details-states-offline-permission-stage4.png`,
+  `output/v2-nav-gaps-stage4/quick-log-details-states-permission-stage4.png`.
+
 ### 37. Quick Log Pending Route Coverage (§2.3.9)
 
 Stage-0 lock:
@@ -4551,6 +4609,10 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-03: Added Quick Log Details loading, pending-write, error, offline-read, and
+  permission-denied state templates with RED/GREEN render and route coverage, dev-gallery handoff,
+  EN/RU/ES copy, and primary SE Stage 4 screenshots. Real offline detail queueing, native pickers,
+  schema/native modules, analytics, and native project edits remain out of scope.
 - 2026-07-03: Added deterministic Puppy Profile settings loading, pending-write, error,
   offline-read, and permission-denied state templates with RED/GREEN render coverage, typed EN/RU/ES
   copy, alert/live-region semantics, visible dev-gallery handoff, and primary SE Stage 4 screenshots.

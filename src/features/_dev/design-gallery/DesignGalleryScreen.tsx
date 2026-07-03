@@ -730,13 +730,26 @@ export function SyntheticQuickLogDetailsShell() {
           bodyKey="dev.gallery.states.quick-log-details"
           titleKey="quick-log.details.title"
         />
+        <QuickLogDetailsScreen initialTrackerId="sleep" />
         <QuickLogDetailsScreen
-          initialTrackerId="sleep"
-          status="saving"
+          initialTrackerId="feeding"
+          status="loading"
+        />
+        <QuickLogDetailsScreen
+          initialTrackerId="feeding"
+          status="pending-write"
         />
         <QuickLogDetailsScreen
           initialTrackerId="zoomies"
           status="error"
+        />
+        <QuickLogDetailsScreen
+          initialTrackerId="sleep"
+          status="offline-read"
+        />
+        <QuickLogDetailsScreen
+          initialTrackerId="feeding"
+          status="permission-denied"
         />
       </Stack>
     </Card>
