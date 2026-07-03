@@ -3165,7 +3165,8 @@ Implementation notes:
   `docs/design/v1/specs/06-more-privacy-paywall.md` plus this slice's acceptance. Evidence:
   `output/v2-nav-gaps-stage4/settings-notifications-stage4.png`. The route shows the full modal
   header, local reminders toggle, push reminders/sitter completion toggles, quiet-hours row, and
-  timezone row without clipping/overlap. Persistence and OS permission handoff remain deferred.
+  timezone row without clipping/overlap. Persistence and real permission-state probing remain
+  deferred; the push-toggle OS settings deeplink is covered by §4.4.4a.
 
 ### 28a. More Notification Preferences State Templates (§4.5)
 
@@ -3209,7 +3210,8 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/settings-notifications-states-top-stage4.jpg` shows loading, pending
   write, and error states; `output/v2-nav-gaps-stage4/settings-notifications-states-offline-stage4.jpg`
   shows the offline-read state and the handoff transition into the next shell. Runtime snapshot also
-  matched `notifications-state-offline-read`. Persistence and OS permission handoff remain deferred.
+  matched `notifications-state-offline-read`. Persistence and real permission-state probing remain
+  deferred; the push-toggle OS settings deeplink is covered by §4.4.4a.
 
 ### 29. More Support / Help Anatomy Slice (§4.4.6)
 
@@ -4455,20 +4457,28 @@ Implementation notes:
   `npm run check` passed; primary SE Stage 4 screenshots captured both runtime prompt states. The
   48-hour re-prompt cadence, permission probing/native permission request, push-token registration,
   notification scheduling, and persistence remain deferred.
+- 2026-07-03: Reconciled Notification Preferences OS settings handoff wording: §4.4.4a already
+  covers push-toggle `Linking.openSettings()` behavior, while persistence, real permission-state
+  probing, scheduling, and device-token registration remain deferred. Focused notification handoff
+  tests and full `npm run check` passed.
 - 2026-06-30: Added the More Notification Preferences anatomy slice: More now opens
   `/settings/notifications`, the screen renders local reminders, push reminders/sitter completion,
   quiet hours, and timezone sections with design primitives, navigation/scaffold contracts were updated,
-  and full `npm run check` passed. Persistence, OS permission handoff, and Stage 4 screenshots remain open.
+  and full `npm run check` passed. Persistence and real permission-state probing remain open; the
+  push-toggle OS settings deeplink is covered by §4.4.4a.
 - 2026-07-02: Closed Stage 4 for `/settings/notifications`: captured a native SE screenshot from the
   installed PuppyPlan.app over Metro and verified the modal header, local reminders toggle, push
   reminders/sitter completion toggles, quiet-hours row, and timezone row against the locked More
-  notification preferences anatomy. Persistence and OS permission handoff remain deferred.
+  notification preferences anatomy. Persistence and real permission-state probing remain deferred;
+  the push-toggle OS settings deeplink is covered by §4.4.4a.
 - 2026-07-02: Added `/settings/notifications` state templates for loading, pending write, error, and
   offline read with typed EN/RU/ES copy, alert/live-region accessibility, no raw push-token details,
-  and dev-gallery preview coverage. Persistence and OS permission handoff remain deferred.
+  and dev-gallery preview coverage. Persistence and real permission-state probing remain deferred;
+  the push-toggle OS settings deeplink is covered by §4.4.4a.
 - 2026-07-02: Closed Stage 4 for `/settings/notifications` state templates: captured native SE
   dev-gallery screenshots over Metro for loading/pending/error and offline-read cards. Real
-  persistence, scheduling, and OS permission handoff remain deferred.
+  persistence, scheduling, and real permission-state probing remain deferred; the push-toggle OS
+  settings deeplink is covered by §4.4.4a.
 - 2026-06-30: Added the More Support / Help anatomy slice: More now opens `/settings/help`, the
   screen renders topic shortcuts, diagnostics rows, contact affordance, and a privacy-safe support
   note with EN/RU/ES typed copy; navigation/scaffold contracts were updated, and full `npm run check`
