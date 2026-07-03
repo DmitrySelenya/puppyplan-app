@@ -114,9 +114,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - [ ] 🟡 Item anatomy / edit / delete / undo within Diary history (§2.4.3–2.4.4) — inline
       Clay history, filter chips, FactCard anatomy, edit action, and swipe/accessibility delete
       are implemented and Stage-4 verified. Durable synced delete + snackbar undo remain deferred
-      with the RLS blocker in `2026-06-30-v2-screen-polish-backlog.md`. Blocker audit
-      2026-07-03: this is not a remaining anatomy task; it requires an approved RLS/delete
-      implementation slice before code can continue.
+      with the `event_log` synced-delete blocker in `2026-06-30-v2-screen-polish-backlog.md`.
+      Blocker audit 2026-07-03: this is not a remaining anatomy task. The 2026-07-03 tombstone RLS
+      slice explicitly excluded `event_log` / Diary synced-delete, so Diary remains a separate
+      blocked row and `src/lib/query/quick-log.ts` was not touched.
 
 ### Pet (new tab) — DESIGN.md §4.1 (folded) + §4.4.2
 - [x] ✅ Edit pet profile — Name/Breed/Sex/Current weight/Age (§4.4.2)
@@ -142,16 +143,18 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       intentionally Quick Log-only and explicitly not a generic offline outbox, while no native
       DatePicker dependency is installed. Continuing either thread requires an approved architecture
       or native-dependency slice.
-- [ ] 🟡 Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
+- [x] ✅ Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
       Durable edit/delete/restore data-layer contracts are now implemented with source preservation,
       affected-date invalidation, zero-row delete failure handling, and single-record detail loading.
       Production detail routing and delete + 5-second undo restore snackbar wiring are implemented;
       editable dirty-state UI now saves through the typed update mutation. Seeded production Stage 4
-      detail/read, edit, and delete-confirm evidence is recorded. Real delete/undo snackbar Stage 4
-      remains blocked by the known deferred Health soft-delete RLS gap (`42501` on authenticated
-      `deleted_at` update). Blocker audit 2026-07-03: do not keep adding UI around this; the
-      unimplemented piece is the RLS-backed authenticated soft-delete path.
+      detail/read, edit, and delete-confirm evidence is recorded. RLS follow-up proof recorded
+      2026-07-03: migration `20260703181913_fix_tombstone_update_rls.sql` allows owner/caregiver
+      Health soft-delete/restore while preserving viewer/non-member/anon denial. RED pgTAP failed on
+      current policy for positive Health tests 78-81, GREEN pgTAP passed 104/104 with the migration,
+      and Supabase Dev authenticated-client smoke returned `health_soft_delete status=204 count=1`
+      plus `health_restore status=200`; synthetic Health row cleanup returned count 1.
 - [x] ✅ Status transitions visualisation Template→Confirmed→Done (§4.1.6) — native detail
       status strip now renders four visible icon+label steps with exactly one active filled state and
       full sequence accessibility label. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
@@ -206,10 +209,13 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       — `/reminders` native durable-list hub is implemented with active/off segments, durable row
       grouping, More navigation, and Stage 4 native SE evidence from a synthetic dev-gallery handoff
       shell. Enabled/off toggle persistence and row-level pending feedback are implemented. Row
-      delete UI/query wiring exists, but live durable tombstoning is blocked by the shared RLS
-      `deleted_at` transition issue recorded in the 2026-07-03 blocker audit. Mark
-      done/back-date/skip/pause lifecycle actions, occurrence generation, and local notification
-      scheduling remain deferred.
+      delete UI/query wiring now has RLS runtime proof: migration
+      `20260703181913_fix_tombstone_update_rls.sql` allows owner/caregiver Reminder soft-delete while
+      preserving viewer/non-member/anon denial. RED pgTAP failed on current policy for positive
+      Reminder tests 85-86, GREEN pgTAP passed 104/104 with the migration, and Supabase Dev
+      authenticated-client smoke returned `reminder_soft_delete status=200 count=1`; synthetic
+      Reminder cleanup returned count 1. Mark done/back-date/skip/pause lifecycle actions,
+      occurrence generation, and local notification scheduling remain deferred.
 - [x] ✅ Reminder push — iOS lock-screen (§4.2.4 → 12.4)
 - [x] ✅ Reminder card on Diary (§4.2.5)
 - [x] ✅ Quiet hours picker (§4.2.3) — native reminder-edit anatomy slice implemented:
@@ -4641,20 +4647,22 @@ The remaining unchecked rows are no longer generic design-fidelity or anatomy ga
 screens have RED/GREEN and Stage 4 evidence where a JS-only route implementation was possible. The
 remaining pieces require one of the following explicit follow-up decisions before code should continue:
 
-- **Diary history durable delete + snackbar undo:** blocked by the same synced-delete/RLS follow-up
-  noted in `2026-06-30-v2-screen-polish-backlog.md`; do not add more visual-only affordances until
-  the authenticated delete/undo data path is approved.
+- **Diary history durable delete + snackbar undo:** still blocked by the synced-delete follow-up
+  noted in `2026-06-30-v2-screen-polish-backlog.md`. The 2026-07-03 tombstone RLS slice fixed only
+  `health_record` and `reminder`; `event_log` / Diary synced-delete was explicitly excluded and
+  `src/lib/query/quick-log.ts` was not touched.
 - **Pet Health Add Record offline queue:** blocked by architecture scope. `src/lib/queue/README.md`
   limits the SQLite queue to unsent Quick Log routine events and explicitly excludes a generic
   offline outbox; Health offline writes need a separate approved outbox design.
-- **Health Record delete/undo runtime proof:** blocked by RLS. The authenticated
-  `health_record.deleted_at` update currently returns `42501`, so the implemented UI and query
-  contracts cannot be proven through the real app until the policy/migration gap is resolved.
-- **Reminder row delete runtime proof:** blocked by the same RLS tombstone transition class. A
-  2026-07-03 Supabase Dev authenticated-client smoke inserted a synthetic reminder as the debug
-  owner, then reproduced `42501` on `public.reminder.deleted_at` update; the synthetic row was
-  cleaned up afterward. The UI/query wiring remains useful, but live durable delete needs the same
-  RLS follow-up as Health/Diary tombstones.
+- **Health Record delete/undo runtime proof:** resolved for this plan's Health scope by
+  `20260703181913_fix_tombstone_update_rls.sql`. RED pgTAP failed on current policy for
+  owner/caregiver Health soft-delete/restore; GREEN pgTAP passed 104/104 with the migration.
+  Supabase Dev authenticated-client smoke returned `health_soft_delete status=204 count=1` and
+  `health_restore status=200`, then synthetic cleanup returned count 1.
+- **Reminder row delete runtime proof:** resolved for this plan's Reminder scope by the same
+  migration. RED pgTAP failed on current policy for owner/caregiver Reminder soft-delete; GREEN
+  pgTAP passed 104/104 with the migration. Supabase Dev authenticated-client smoke returned
+  `reminder_soft_delete status=200 count=1`, then synthetic cleanup returned count 1.
 - **Puppy Setup / Health Record native DatePicker:** blocked by native dependency scope. No native
   DatePicker package is installed; adding one is a new native dependency while native rebuilds are
   currently blocked by the known `expo-sqlite` / Xcode 26.2 issue.
@@ -4664,6 +4672,12 @@ remaining pieces require one of the following explicit follow-up decisions befor
   handoff and local preference persistence.
 
 ## Changelog
+- 2026-07-03: Implemented the Health + Reminder tombstone RLS follow-up. Added pgTAP coverage for
+  owner/caregiver Health soft-delete/restore and Reminder soft-delete plus viewer/non-member/anon
+  denials. Created migration `20260703181913_fix_tombstone_update_rls.sql`, proved GREEN with 104/104
+  pgTAP assertions, applied the single migration to non-production Supabase Dev for runtime proof,
+  and verified authenticated-client Health soft-delete/restore plus Reminder soft-delete with
+  synthetic cleanup counts of 1. Diary `event_log` synced-delete remains explicitly out of scope.
 - 2026-07-03: Reproduced the shared RLS tombstone blocker with focused Supabase Dev
   authenticated-client smokes. Normal Health `UPDATE title` passed as the debug owner, but Health
   `deleted_at` updates returned `42501` with and without `updated_by`; Reminder `deleted_at` update

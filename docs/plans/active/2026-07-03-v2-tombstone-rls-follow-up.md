@@ -9,9 +9,9 @@
 **Goal:** unblock V2 durable delete/undo by allowing authorized owner/caregiver clients to soft-delete
 and restore app-owned tombstone rows without weakening household/privacy RLS.
 
-**Status:** Active - approval required before implementation.
+**Status:** Active - implementation complete locally; commit pending.
 
-**Current phase:** Phase 0 - Approval Gate And Spec Lock.
+**Current phase:** Phase 5 - Nav-Gaps Closure.
 
 **Plan type:** Active task plan.
 
@@ -24,9 +24,10 @@ with pgTAP coverage, not a UI workaround, SECURITY DEFINER bypass, or client-sid
 
 **Branch:** `redesign-v2-nav-codex-wip`
 
-**TDD mode:** heavy/full-isolated preferred because this is RLS/security behavior. If isolation tooling
-is unavailable, stop unless the user explicitly approves lower-assurance lightweight TDD for this exact
-RLS slice and record that approval here.
+**TDD mode:** lower-assurance lightweight approved for this exact RLS slice on 2026-07-03. Full
+isolated mode remains preferred for RLS/security behavior, but Docker/local Supabase isolation is
+unavailable in this workspace; the user explicitly approved running RED/GREEN pgTAP against the
+non-production Supabase Dev project `olymqppxsadsxfrcyskh` on synthetic data only.
 
 **Primary source docs:**
 - PRD: `puppyplan-prd-v2.md` - Health Basics and Reminders data model rows (`deleted_at` tombstones).
@@ -76,8 +77,7 @@ the exact root cause with RED pgTAP before changing policies.
 
 1. **Allow authorized tombstone transitions.**
    - Owner/caregiver household members can set `deleted_at` on their household puppy's
-     `health_record`, `reminder`, and relevant Quick Log `event_log` rows when the row is currently
-     visible and non-deleted.
+     `health_record` and `reminder` rows when the row is currently visible and non-deleted.
 2. **Allow authorized restore where the product has undo.**
    - Owner/caregiver household members can restore the same row classes when undo is within the app
      flow and the row belongs to their household puppy.
@@ -128,9 +128,8 @@ the exact root cause with RED pgTAP before changing policies.
   - **Test:** `supabase/tests/rls_baseline.sql`.
 - **Invariant 4:** owner/caregiver can soft-delete Reminder rows, and viewer/non-member/anon cannot.
   - **Test:** `supabase/tests/rls_baseline.sql`.
-- **Invariant 5:** Diary/Quick Log event tombstones remain household-scoped and trainer/share
-  projections cannot mutate base `event_log`.
-  - **Test:** `supabase/tests/rls_baseline.sql`.
+- **Invariant 5:** Diary/Quick Log `event_log` synced-delete is out of scope for this slice and remains
+  blocked separately in the nav-gaps plan.
 - **Invariant 6:** client repository methods still reject Supabase errors and zero-row writes.
   - **Test:** existing `src/test/health-records-query.test.ts`,
     `src/test/reminders-query.test.ts`, and Quick Log mutation tests.
@@ -151,14 +150,13 @@ the exact root cause with RED pgTAP before changing policies.
   return behavior.
 - `src/lib/supabase/reminders.ts` - review only; no change expected unless migration changes return
   behavior.
-- `src/lib/query/quick-log.ts` - review delete path after RLS fix; remove or fix silent catches only
-  if the RED test names the behavior and this scope is approved.
+- `src/lib/query/quick-log.ts` - explicitly out of scope for this slice; do not touch the existing
+  synced-delete path or silent-catch behavior in this pass.
 
 ### Tests
 - `src/test/health-records-query.test.ts` - keep zero-row/error rejection tests green.
 - `src/test/reminders-query.test.ts` - keep zero-row/error rejection tests green.
-- `src/test/quick-log-mutation.test.ts` - update only if Diary synced-delete behavior is included in
-  the approved scope.
+- `src/test/quick-log-mutation.test.ts` - out of scope for this slice.
 
 ### Docs
 - `docs/plans/active/2026-06-29-v2-nav-redesign-gaps.md` - update blocker rows and changelog after
@@ -200,9 +198,16 @@ the exact root cause with RED pgTAP before changing policies.
 - Read: `supabase/tests/rls_baseline.sql`
 
 **Checklist:**
-- [ ] Get exact user approval to create a local Supabase/RLS migration for the tombstone policy.
-- [ ] Confirm whether scope includes `event_log` / Diary synced delete, or only Health + Reminder.
-- [ ] Confirm TDD mode and record any reduced-assurance approval.
+- [x] Exact user approval recorded on 2026-07-03 to create a local Supabase/RLS migration for the
+  tombstone soft-delete/restore policy with `supabase migration new fix_tombstone_update_rls`.
+- [x] Scope locked on 2026-07-03 to `health_record` + `reminder` only. `event_log` / Diary
+  synced-delete is excluded from this slice and remains a separate blocked row in the nav-gaps plan.
+- [x] TDD mode locked on 2026-07-03: lower-assurance lightweight approved because Docker/local
+  Supabase isolation is unavailable; RED/GREEN pgTAP may run against Dev project
+  `olymqppxsadsxfrcyskh` on synthetic data only.
+- [x] Security constraints locked: no SECURITY DEFINER bypass, no broad `TO authenticated` policy
+  without household/puppy predicates, no production migration apply, and no household/privacy RLS
+  weakening.
 
 **Acceptance criteria:**
 - Scope names exact tables and row transitions before RED tests are written.
@@ -213,16 +218,25 @@ the exact root cause with RED pgTAP before changing policies.
 - Modify: `supabase/tests/rls_baseline.sql`
 
 **Checklist:**
-- [ ] Add helper `tests.try_soft_delete_health_record(target_record_id uuid, target_puppy_id uuid,
+- [x] Add helper `tests.try_soft_delete_health_record(target_record_id uuid, target_puppy_id uuid,
   target_deleted_at timestamptz, target_user_id uuid)` that performs authenticated-style update and
   catches only policy/constraint failures.
-- [ ] Add helper `tests.try_restore_health_record(...)` for `deleted_at = null`.
-- [ ] Add helper `tests.try_soft_delete_reminder(...)`.
-- [ ] Add event-log tombstone helper only if Phase 0 scope includes Diary synced delete.
-- [ ] Add positive owner/caregiver tests.
-- [ ] Add negative viewer/non-member/anon tests.
-- [ ] Run the RLS test command and confirm the new positive tombstone tests fail for the current
+- [x] Add helper `tests.try_restore_health_record(...)` for `deleted_at = null`.
+- [x] Add helper `tests.try_soft_delete_reminder(...)`.
+- [x] Skip event-log tombstone helper; Phase 0 scope excludes Diary synced delete.
+- [x] Add positive owner/caregiver tests.
+- [x] Add negative viewer/non-member/anon tests.
+- [x] Run the RLS test command and confirm the new positive tombstone tests fail for the current
   policy.
+
+**Evidence:**
+- `npm run supabase:test` remained blocked by the repo's no-Docker wrapper before pgTAP execution
+  (`Supabase CLI remote pgTAP requires Docker...`).
+- Lower-assurance approved no-Docker RED runner:
+  `npx -p pg@8.16.3 ... supabase/tests/rls_baseline.sql` against Dev project
+  `olymqppxsadsxfrcyskh` returned `not ok` for positive tests 78-81 and 85-86:
+  owner/caregiver Health soft-delete, Health restore, and Reminder soft-delete. Negative
+  viewer/non-member/anon tests 82-84 and 87-89 stayed `ok`.
 
 **Commands:**
 - Targeted/static first: `npm run supabase:guardrails`
@@ -239,13 +253,21 @@ the exact root cause with RED pgTAP before changing policies.
 - Modify: `supabase/tests/rls_baseline.sql` only if RED exposed missing negative coverage.
 
 **Checklist:**
-- [ ] Create migration with `supabase migration new fix_tombstone_update_rls`.
-- [ ] Adjust policies to allow authorized tombstone post-update rows while preserving household role
+- [x] Create migration with `supabase migration new fix_tombstone_update_rls`.
+- [x] Adjust policies to allow authorized tombstone post-update rows while preserving household role
   checks.
-- [ ] Keep SELECT policies restrictive for normal reads.
-- [ ] Avoid broad `TO authenticated` policies without ownership predicates.
-- [ ] Avoid SECURITY DEFINER bypass.
-- [ ] Run pgTAP/RLS tests until green.
+- [x] Keep SELECT policies restrictive for normal reads.
+- [x] Avoid broad `TO authenticated` policies without ownership predicates.
+- [x] Avoid SECURITY DEFINER bypass.
+- [x] Run pgTAP/RLS tests until green.
+
+**Evidence:**
+- Created `supabase/migrations/20260703181913_fix_tombstone_update_rls.sql` with the pinned CLI
+  equivalent of `supabase migration new fix_tombstone_update_rls`.
+- Transactional GREEN pgTAP with migration SQL prepended returned `1..104` and `ok 1` through
+  `ok 104`. DDL and seed were rolled back in that proof run.
+- After applying the single migration to Dev, direct pgTAP against
+  `supabase/tests/rls_baseline.sql` also returned `1..104` and `ok 1` through `ok 104`.
 
 **Acceptance criteria:**
 - Owner/caregiver positive tombstone and restore tests pass.
@@ -259,10 +281,16 @@ the exact root cause with RED pgTAP before changing policies.
 - Tests: existing query/repository tests.
 
 **Checklist:**
-- [ ] Run `npm run supabase:guardrails`.
-- [ ] Run `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts src/test/reminders-query.test.ts`.
-- [ ] If event_log is in scope, run relevant Quick Log mutation/timeline tests.
-- [ ] Run `npm run typecheck`.
+- [x] Run `npm run supabase:guardrails`.
+- [x] Run `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts src/test/reminders-query.test.ts`.
+- [x] Skip event_log/Quick Log regression; Phase 0 scope excludes Diary synced delete.
+- [x] Run `npm run typecheck`.
+
+**Evidence:**
+- `npm run supabase:guardrails`: PASS, 30 checks passed.
+- `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts src/test/reminders-query.test.ts`:
+  PASS, 2 suites / 27 tests passed.
+- `npm run typecheck`: PASS.
 
 **Acceptance criteria:**
 - Repository methods still reject Supabase errors and zero-row writes.
@@ -274,12 +302,25 @@ the exact root cause with RED pgTAP before changing policies.
 - No committed script expected unless a reusable privacy-safe smoke helper is approved.
 
 **Checklist:**
-- [ ] On known Dev project `olymqppxsadsxfrcyskh`, sign in as the synthetic debug account.
-- [ ] Insert synthetic Health record as owner; soft-delete through authenticated client; restore if
+- [x] On known Dev project `olymqppxsadsxfrcyskh`, sign in as the synthetic debug account.
+- [x] Insert synthetic Health record as owner; soft-delete through authenticated client; restore if
   included in scope; cleanup.
-- [ ] Insert synthetic Reminder as owner; soft-delete through authenticated client; cleanup.
-- [ ] If event_log is in scope, use synthetic Quick Log event only, no raw puppy names/notes.
-- [ ] Record status/count/error evidence in this plan and in the nav-gaps plan.
+- [x] Insert synthetic Reminder as owner; soft-delete through authenticated client; cleanup.
+- [x] Skip event_log Dev smoke; Phase 0 scope excludes Diary synced delete.
+- [x] Record status/count/error evidence in this plan and in the nav-gaps plan.
+
+**Evidence:**
+- Dev dry-run before apply: only pending migration was
+  `20260703181913_fix_tombstone_update_rls.sql`.
+- Applied that single migration to non-production Dev project `olymqppxsadsxfrcyskh`; no production
+  apply was run.
+- Authenticated-client smoke evidence:
+  `bootstrap status=200`, `membership_read status=200`, `active_puppy_read status=200`,
+  `health_insert status=201`, `health_soft_delete status=204 count=1 error=none`,
+  `health_restore status=200 error=none`, `reminder_insert status=201`,
+  `reminder_soft_delete status=200 count=1 error=none`.
+- Cleanup evidence: `cleanup_health status=204 count=1 error=none`; `cleanup_reminder status=204
+  count=1 error=none`.
 
 **Acceptance criteria:**
 - Runtime Dev smoke returns success/count for approved tombstone transitions.
@@ -294,11 +335,16 @@ the exact root cause with RED pgTAP before changing policies.
 - Modify: `docs/plans/README.md` if status changes.
 
 **Checklist:**
-- [ ] Update Health delete/undo blocker row with proof.
-- [ ] Update Reminder lifecycle note with proof.
-- [ ] Update Diary synced delete row only if event_log is in scope and proven.
-- [ ] Run `npm run check`.
+- [x] Update Health delete/undo blocker row with proof.
+- [x] Update Reminder lifecycle note with proof.
+- [x] Leave Diary synced delete blocked separately because event_log is not in scope.
+- [x] Run `npm run check`.
 - [ ] Commit one scoped RLS slice.
+
+**Evidence:**
+- `npm run check`: PASS. Lint and typecheck passed; Jest passed 81 suites / 665 tests; node tests
+  passed 118 checks; scaffold, i18n, tokens, privacy scan, and text hygiene passed. Existing
+  non-failing React `act(...)` warnings from reduced-motion tests remain present.
 
 **Acceptance criteria:**
 - Remaining nav-gaps blocker rows accurately reflect what is actually proven.
@@ -310,8 +356,6 @@ the exact root cause with RED pgTAP before changing policies.
 - `npm run supabase:guardrails`
 - `npm run supabase:test`
 - `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts src/test/reminders-query.test.ts`
-- If event_log is in scope:
-  `npm run test:unit -- --runTestsByPath src/test/quick-log-mutation.test.ts src/test/timeline-route.render.test.tsx src/test/today-route.render.test.tsx`
 - `npm run typecheck`
 - `npm run check`
 
@@ -319,8 +363,10 @@ the exact root cause with RED pgTAP before changing policies.
 
 ## Risks And Approvals
 
-- **Approval required:** exact local Supabase/RLS migration creation.
-- **Approval required:** any Dev remote mutation/smoke beyond synthetic debug data.
+- **Approved on 2026-07-03:** exact local Supabase/RLS migration creation for Health + Reminder
+  tombstone soft-delete/restore only.
+- **Approved on 2026-07-03:** Dev remote RED/GREEN pgTAP and runtime smoke only on synthetic debug
+  data in non-production project `olymqppxsadsxfrcyskh`.
 - **Approval required:** production Supabase migration apply.
 - **Risk:** a policy that allows `deleted_at IS NOT NULL` in `WITH CHECK` too broadly could let
   members move rows across ownership boundaries. Mitigation: keep household/puppy identity predicates
@@ -328,7 +374,7 @@ the exact root cause with RED pgTAP before changing policies.
 - **Risk:** restore may need access to a row hidden by SELECT policy. Mitigation: prove with pgTAP
   before choosing between policy shape and a separately approved helper.
 - **Risk:** Diary synced-delete may involve `event_log` and the existing `deleteSynced` silent catch.
-  Mitigation: include it in Phase 0 scope explicitly or leave it blocked.
+  Mitigation: excluded from this scope by explicit 2026-07-03 user decision; leave it blocked.
 
 ---
 
@@ -336,3 +382,15 @@ the exact root cause with RED pgTAP before changing policies.
 
 - 2026-07-03: Created plan from the V2 nav-gaps blocker audit and Supabase Dev smoke evidence. No
   RLS migration or production code was changed.
+- 2026-07-03: Approval Gate lifted for a local/dev-only Health + Reminder tombstone RLS slice:
+  create migration with `supabase migration new fix_tombstone_update_rls`, exclude `event_log` /
+  Diary synced-delete, use lower-assurance lightweight TDD because full isolated Docker/local
+  Supabase is unavailable, run only against synthetic data in Dev project `olymqppxsadsxfrcyskh`,
+  and do not use SECURITY DEFINER bypasses, broad unscoped authenticated policies, production applies,
+  or household/privacy RLS weakening.
+- 2026-07-03: Implemented Health + Reminder tombstone RLS migration. RED pgTAP failed on the current
+  policy for owner/caregiver Health soft-delete/restore and Reminder soft-delete while negative
+  viewer/non-member/anon checks stayed green. GREEN pgTAP passed 104/104 with the migration SQL.
+  Applied the single migration to Supabase Dev for runtime proof, then authenticated-client smoke
+  returned `health_soft_delete count=1`, `health_restore status=200`, `reminder_soft_delete count=1`,
+  and cleanup counts of 1 for both synthetic rows.
