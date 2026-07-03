@@ -8,6 +8,7 @@ import {
   DesignGalleryScreen,
   SyntheticHelpSupportStatesShell,
   SyntheticHealthShell,
+  SyntheticHouseholdAccessStatesShell,
   SyntheticInviteAcceptStatesShell,
   SyntheticShareablePuppyCardStatesShell,
   SyntheticSitterModeStatesShell,
@@ -145,6 +146,7 @@ describe('development-only design gallery', () => {
         <SyntheticReminderEditShell />
         <SyntheticHelpSupportStatesShell />
         <SyntheticNotificationPreferencesShell />
+        <SyntheticHouseholdAccessStatesShell />
         <SyntheticPaywallStatesShell />
         <SyntheticInviteAcceptStatesShell />
         <SyntheticShareablePuppyCardStatesShell />
@@ -168,6 +170,7 @@ describe('development-only design gallery', () => {
     expect(screen.getByText(i18n.t('dev.gallery.states.quick-trackers-states'), {
       includeHiddenElements: true,
     })).toBeTruthy();
+    expect(screen.getByTestId('household-state-loading')).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.potty-subtype.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.duplicate-warning.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.failed.pill'))).toBeTruthy();

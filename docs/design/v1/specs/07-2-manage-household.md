@@ -1,7 +1,7 @@
 # 07.2 — Manage Household
 Route: `/settings/household`   Atlas: `family/manage-household` + Open Design V2 sharing boards
 Device sizes: SE compact primary; iOS 390x844 and Android 412x900 in the V2 handoff
-Allowed deviations: live member/invite queries, role changes, access removal, resend/revoke actions, and confirm sheets remain deferred. Pending invite rows use privacy-safe contact labels instead of email addresses.
+Allowed deviations: live member/invite queries, role changes, access removal, resend/revoke actions, and confirm sheets remain deferred. Pending invite rows use privacy-safe contact labels instead of email addresses. Deterministic loading/pending/error/offline state templates are synthetic handoff states until live household data is wired.
 
 ## Anatomy (top -> bottom)
 - Modal header — back affordance to More, title `sharing.household.screen-title`.
@@ -20,7 +20,8 @@ Allowed deviations: live member/invite queries, role changes, access removal, re
 
 ## States covered
 - Static owner household preview — production shell with synthetic metadata.
-- Loading/error/live member list, role changes, removal, invite resend/revoke, and confirm sheets — deferred.
+- Loading household, pending invite/member write, load error, and offline read — deterministic synthetic handoff states.
+- Live member list, role changes, removal, invite resend/revoke, and confirm sheets — deferred.
 
 ## Accessibility
 - Member rows expose role/status via visible text, not color alone.

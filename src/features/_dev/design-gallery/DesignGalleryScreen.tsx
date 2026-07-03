@@ -40,6 +40,9 @@ import {
   InviteAcceptStatePreview,
 } from '@/features/linking/screens/InviteAcceptScreen';
 import {
+  HouseholdAccessStatePreview,
+} from '@/features/more/screens/HouseholdAccessScreen';
+import {
   HelpSupportStatePreview,
 } from '@/features/more/screens/HelpSupportScreen';
 import {
@@ -141,6 +144,7 @@ export function DesignGalleryScreen() {
         <SyntheticInviteAcceptStatesShell />
         <SyntheticShareablePuppyCardStatesShell />
         <SyntheticSitterModeStatesShell />
+        <SyntheticHouseholdAccessStatesShell />
         <SyntheticQuickTrackersStatesShell />
         <SyntheticHelpSupportStatesShell />
         <SyntheticNotificationPreferencesShell />
@@ -753,6 +757,23 @@ export function SyntheticHelpSupportStatesShell() {
         <HelpSupportStatePreview state="pending-write" />
         <HelpSupportStatePreview state="error" />
         <HelpSupportStatePreview state="offline-read" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticHouseholdAccessStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.household-states"
+          titleKey="sharing.family.manage.screen-title"
+        />
+        <HouseholdAccessStatePreview state="loading" />
+        <HouseholdAccessStatePreview state="pending-write" />
+        <HouseholdAccessStatePreview state="error" />
+        <HouseholdAccessStatePreview state="offline-read" />
       </Stack>
     </Card>
   );

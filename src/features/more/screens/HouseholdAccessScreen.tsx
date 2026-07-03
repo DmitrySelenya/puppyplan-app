@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import {
   AppIcon,
+  type AppIconName,
   AppText,
   Avatar,
   Button,
@@ -15,13 +16,68 @@ import {
   SectionHeader,
   Stack,
   StatusPill,
+  type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
-import { useAppTranslation } from '@/lib/i18n';
+import { type I18nKey, useAppTranslation } from '@/lib/i18n';
 
 export type HouseholdAccessScreenProps = Readonly<{
   onBack?: () => void;
+  reviewState?: HouseholdAccessReviewState;
 }>;
+
+export type HouseholdAccessReviewState =
+  | 'loading'
+  | 'pending-write'
+  | 'error'
+  | 'offline-read';
+
+type HouseholdAccessStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
+}>;
+
+const householdAccessStateMeta: Record<
+  HouseholdAccessReviewState,
+  HouseholdAccessStateMeta
+> = {
+  error: {
+    bodyKey: 'sharing.family.manage.states.error.body',
+    icon: 'warningTriangle',
+    role: 'alert',
+    statusKey: 'sharing.family.manage.states.error.status',
+    titleKey: 'sharing.family.manage.states.error.title',
+    tone: 'failed',
+  },
+  loading: {
+    bodyKey: 'sharing.family.manage.states.loading.body',
+    icon: 'personCluster',
+    liveRegion: 'polite',
+    statusKey: 'sharing.family.manage.states.loading.status',
+    titleKey: 'sharing.family.manage.states.loading.title',
+    tone: 'pending',
+  },
+  'offline-read': {
+    bodyKey: 'sharing.family.manage.states.offline-read.body',
+    icon: 'lock',
+    statusKey: 'sharing.family.manage.states.offline-read.status',
+    titleKey: 'sharing.family.manage.states.offline-read.title',
+    tone: 'template',
+  },
+  'pending-write': {
+    bodyKey: 'sharing.family.manage.states.pending-write.body',
+    icon: 'docText',
+    liveRegion: 'polite',
+    statusKey: 'sharing.family.manage.states.pending-write.status',
+    titleKey: 'sharing.family.manage.states.pending-write.title',
+    tone: 'pending',
+  },
+};
 
 const ownerName = 'Owner';
 const caregiverName = 'Caregiver';
@@ -31,6 +87,7 @@ const pendingExpiryDate = '24 May';
 
 export function HouseholdAccessScreen({
   onBack,
+  reviewState,
 }: HouseholdAccessScreenProps) {
   const { t } = useAppTranslation();
 
@@ -45,6 +102,8 @@ export function HouseholdAccessScreen({
       ) : (
         <ScreenHeader title={t('sharing.family.manage.screen-title')} />
       )}
+
+      {reviewState ? <HouseholdAccessStatePreview state={reviewState} /> : null}
 
       <Card accessibilityLabel={t('sharing.family.today-prompt.title')} testID="household-intro-card">
         <Stack gap="sm" style={styles.introLayout}>
@@ -126,6 +185,44 @@ export function HouseholdAccessScreen({
         onPress={() => undefined}
       />
     </Screen>
+  );
+}
+
+export function HouseholdAccessStatePreview({
+  state,
+}: Readonly<{
+  state: HouseholdAccessReviewState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = householdAccessStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`household-state-${state}`}
+      variant={state === 'offline-read' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name={meta.icon}
+              size={14}
+            />
+          )}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="bodyEmph">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">{body}</AppText>
+      </Stack>
+    </Card>
   );
 }
 

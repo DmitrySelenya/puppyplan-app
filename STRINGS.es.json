@@ -58,6 +58,7 @@
         "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
         "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
         "help-support-states": "Estados de ayuda y soporte: carga, nota pendiente, error y lectura offline.",
+        "household-states": "Estados de acceso familiar: carga, guardado, error y lectura offline.",
         "paywall-states": "Estados de PuppyPlan Plus: carga, compra pendiente, error, offline y suscripción activa.",
         "invite-accept-states": "Estados de aceptar invitación: carga, no disponible, reintento y ya eres miembro.",
         "shareable-card-states": "Estados de tarjeta compartible: selección vacía, salud incluida, opciones para compartir, carga, guardado, revisión y offline.",
@@ -1009,7 +1010,29 @@
           "destructive": "Cerrar acceso",
           "cancel": "Cancelar"
         },
-        "revoked-toast": "El acceso para {name} está cerrado."
+        "revoked-toast": "El acceso para {name} está cerrado.",
+        "states": {
+          "loading": {
+            "status": "Comprobando",
+            "title": "Cargando acceso familiar",
+            "body": "Estamos comprobando la vista guardada de acceso familiar."
+          },
+          "pending-write": {
+            "status": "Guardando",
+            "title": "Actualizando acceso",
+            "body": "Mantén esta pantalla abierta mientras se prepara el cambio de acceso."
+          },
+          "error": {
+            "status": "Requiere atención",
+            "title": "No se pudo cargar el acceso",
+            "body": "Conserva la vista familiar actual e inténtalo de nuevo en un momento."
+          },
+          "offline-read": {
+            "status": "Offline",
+            "title": "Mostrando acceso guardado",
+            "body": "Puedes revisar la última vista familiar guardada mientras estás offline."
+          }
+        }
       }
     },
     "sitter": {

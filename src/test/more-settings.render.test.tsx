@@ -958,6 +958,31 @@ describe('More settings entries', () => {
     expect(screen.queryByText(/@/)).toBeNull();
   });
 
+  it('AC-SHARE-HOUSEHOLD-STATES renders deterministic household state templates', () => {
+    render(
+      <AppProviders>
+        <HouseholdAccessScreen reviewState="loading" />
+        <HouseholdAccessScreen reviewState="pending-write" />
+        <HouseholdAccessScreen reviewState="error" />
+        <HouseholdAccessScreen reviewState="offline-read" />
+      </AppProviders>,
+    );
+
+    for (const state of [
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+    ] as const) {
+      expect(screen.getByTestId(`household-state-${state}`)).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('household-state-error').props.accessibilityRole).toBe('alert');
+    expect(screen.getByTestId('household-state-loading').props.accessibilityLiveRegion).toBe('polite');
+    expect(screen.getByTestId('household-state-pending-write').props.accessibilityLiveRegion).toBe('polite');
+    expect(screen.queryByText(/@|token|provider|puppy a/i)).toBeNull();
+  });
+
   it('renders the Trusted Sitter mode owner shell anatomy', () => {
     render(
       <AppProviders>

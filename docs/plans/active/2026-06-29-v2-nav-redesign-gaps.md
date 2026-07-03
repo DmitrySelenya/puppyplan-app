@@ -3853,6 +3853,55 @@ Implementation notes:
   member/invite queries, role changes, access removal, resend/revoke actions, and confirm sheets
   remain deferred.
 
+### 32a. Manage Household State Templates (§3.1.6 / §4.5)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/07-2-manage-household.md`.
+- Source: DESIGN.md §3.1.6 and §4.5 global screen states.
+- Scope: deterministic synthetic `loading`, `pending-write`, `error`, and `offline-read` cards for
+  `/settings/household`, plus dev-gallery handoff coverage.
+- Out of scope: live member/invite queries, role changes, access removal, invite resend/revoke,
+  confirm sheets, analytics, schema/native modules, and `ios/` / `android/` edits.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-SHARE-HOUSEHOLD-STATES-1: `HouseholdAccessScreen` accepts a deterministic `reviewState` for
+  loading, pending write, error, and offline read.
+- AC-SHARE-HOUSEHOLD-STATES-2: each state renders a primitive card with stable
+  `household-state-*` test ID, typed EN/RU/ES status/title/body copy, and alert/live-region semantics
+  for error/loading/pending.
+- AC-SHARE-HOUSEHOLD-STATES-3: state copy exposes no raw emails, invite/share tokens, member private
+  names, provider data, or puppy notes.
+- AC-SHARE-HOUSEHOLD-STATES-4: the dev-gallery includes all four Manage Household state templates
+  for Stage 4 native handoff.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/dev-gallery.render.test.tsx --testNamePattern "AC-SHARE-HOUSEHOLD-STATES|route-shell preview states"`
+  failed as expected before implementation because `household-state-loading` was absent from both
+  the `HouseholdAccessScreen` review-state surface and the dev-gallery route-shell preview.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern AC-SHARE-HOUSEHOLD-STATES`
+  — PASS: 1 suite, 1 matching test.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern "route-shell preview states"`
+  — PASS: 1 suite, 1 matching test.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/dev-gallery.render.test.tsx src/test/i18n.test.ts`
+  — PASS: 3 suites, 53 tests.
+- `npm run check` — PASS: lint, typecheck, 79 Jest suites / 648 tests, node tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Output still includes existing React `act(...)`
+  warnings from reduced-motion test listeners; no failures.
+
+Stage 4 PASS:
+- 2026-07-03 on the primary SE simulator (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`) from the
+  installed PuppyPlan.app over the already-running Metro server (`expo start --localhost`).
+  Native evidence:
+  `output/v2-nav-gaps-stage4/settings-household-states-top-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/settings-household-states-cards-stage4.jpg`. Visual evidence covers the
+  dev-gallery Family and access section plus loading, pending-write, error, and offline-read cards
+  with typed copy, status pills/icons, alert/error coloring, and muted offline surface.
+
 ### 33. Trusted Sitter Mode Owner Shell Slice (§3.2)
 
 Stage-0 lock:
@@ -4246,6 +4295,11 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/quick-log-pending-failed-harness-stage4.png`.
 
 ## Changelog
+- 2026-07-03: Added deterministic Manage Household loading, pending-write, error, and offline-read
+  state templates with RED/GREEN render coverage, dev-gallery handoff coverage, typed EN/RU/ES copy,
+  alert/live-region semantics, privacy-safe non-token/non-email copy, full `npm run check`, and
+  primary SE Stage 4 screenshots. Live member/invite queries, role changes, access removal, invite
+  resend/revoke, confirm sheets, schema/native modules, and native project edits remain deferred.
 - 2026-07-03: Added Notification Preferences local reminder opt-out persistence: the existing
   `Local reminders` switch now reads/writes a single device-local SecureStore boolean through the
   notifications boundary, reports storage failures via the shared PII-scrubbed observability wrapper,

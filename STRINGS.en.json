@@ -59,6 +59,7 @@
         "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
         "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
         "help-support-states": "Help and support loading, pending note, error, and offline read states.",
+        "household-states": "Manage household loading, pending access, error, and offline read states.",
         "paywall-states": "PuppyPlan Plus loading, pending purchase, error, offline, and active subscription states.",
         "invite-accept-states": "Accept invite loading, unavailable, retry, and already-member states.",
         "shareable-card-states": "Shareable Puppy Card empty builder, health disclosure, share options, loading, pending, error, and offline states.",
@@ -957,7 +958,29 @@
           "destructive": "Close access",
           "cancel": "Cancel"
         },
-        "revoked-toast": "Access for {name} is closed."
+        "revoked-toast": "Access for {name} is closed.",
+        "states": {
+          "loading": {
+            "status": "Checking",
+            "title": "Loading household access",
+            "body": "We are checking the saved family access view."
+          },
+          "pending-write": {
+            "status": "Saving",
+            "title": "Updating access",
+            "body": "Keep this screen open while the access change is prepared."
+          },
+          "error": {
+            "status": "Needs attention",
+            "title": "Could not load access",
+            "body": "Keep the current household view and try again in a moment."
+          },
+          "offline-read": {
+            "status": "Offline",
+            "title": "Showing saved access",
+            "body": "You can review the last saved household view while offline."
+          }
+        }
       }
     },
 
