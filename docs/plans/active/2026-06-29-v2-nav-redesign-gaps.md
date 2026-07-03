@@ -547,9 +547,9 @@ GREEN / regression evidence:
 ### Onboarding / intake — DESIGN.md §2.1
 - [ ] 🟡 First-run variants — visual slices are implemented across Welcome, Puppy Setup, Tracker
       Selection, Plan Reveal, First Log, and post-value account/notification prompt previews.
-      The post-first-value Quick Log source-marker scheduler is now implemented; 48-hour re-prompt
-      cadence, permission probing, native OS permission request, and native DatePicker integration
-      remain explicitly deferred/partial under the rows below.
+      The post-first-value Quick Log source-marker scheduler and 48-hour prompt cadence are now
+      implemented; permission probing, native OS permission request, and native DatePicker
+      integration remain explicitly deferred/partial under the rows below.
 - [x] ✅ Welcome (§2.1.1) — native initial `/onboarding` anatomy implemented: decorative warm
       illustration frame, locked H1/subtitle, primary setup CTA, and secondary sign-in action.
       Stage 4 native SE screenshot comparison passed 2026-07-02.
@@ -574,9 +574,8 @@ GREEN / regression evidence:
 - [x] ✅ Account/Notifications prompts (§2.1.7) — post-first-value V2 native preview slices
       implemented as skippable SheetSurface prompts with account and quiet-reminder actions.
       Stage 4 native SE screenshot comparison passed 2026-07-02; notification settings handoff is
-      wired through the quiet-reminder prompt. The route/source-marker runtime scheduler is now
-      implemented and Stage 4 verified; 48-hour re-prompt cadence and native permission probing
-      remain deferred.
+      wired through the quiet-reminder prompt. The route/source-marker runtime scheduler and
+      48-hour re-prompt cadence are now implemented; native permission probing remains deferred.
 
 ### Cross-cutting
 - [x] ✅ **Apply new TabBar (Diary/Pet/More + Add) to every migrated screen** — the tab shell now
@@ -3155,6 +3154,59 @@ Implementation notes:
 - No auth provider action, permission grant/probing, push token, notification scheduling,
   persistence, schema/native module, or generated native project change was introduced.
 
+### 27c. Onboarding post-first-value 48-hour prompt cadence (§2.1.7)
+
+Stage-0 lock:
+- Spec card: `docs/design/v1/specs/02-7-onboarding-account-notifications-prompts.md`.
+- Source: DESIGN.md §2.1.7 post-value account/notification prompt cadence plus the already
+  implemented §27b source-marker scheduler.
+- Scope: persist prompt skip timestamps for the post-first-value account and notification sheets,
+  apply a 48-hour cooldown per prompt type, and keep the first-log completion surface visible when a
+  requested prompt is still cooling down. Storage contains only prompt kind + timestamp; no puppy,
+  household, user, provider, note, token, push token, or analytics payload is stored.
+- Out of scope: auth provider actions, actual OS notification permission request, permission
+  probing, push token registration, local notification scheduling, schema changes, native modules,
+  and `ios/` / `android/` edits.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-OB-PROMPT-CADENCE-1: a requested `account` prompt resolves to the first prompt in the account
+  -> notification sequence whose last skip is not within the 48-hour cooldown.
+- AC-OB-PROMPT-CADENCE-2: pressing account `Not now` persists an account skip timestamp before
+  advancing to notification; pressing notification `Not now` persists a notification skip timestamp
+  before returning to the first-log completion surface.
+- AC-OB-PROMPT-CADENCE-3: if all requested prompts are within cooldown, onboarding renders the
+  first-log completion surface without either sheet, not Welcome or a repeated prompt.
+- AC-OB-PROMPT-CADENCE-4: storage read/write failures are reported through the shared
+  observability boundary with stable non-PII context and do not block the user from continuing.
+- AC-OB-PROMPT-CADENCE-5: no new dependency, native module, schema change, notification permission
+  probe, push-token persistence, analytics payload, or generated native project change is introduced.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/onboarding-prompt-cadence.test.ts src/test/onboarding-flow.render.test.tsx --testNamePattern "AC-OB-PROMPT-CADENCE"`
+  failed as expected before implementation: the resolver returned `account` while account was inside
+  the 48-hour cooldown, skip timestamps were not persisted, storage failures were not reported, and
+  `OnboardingScreen` did not call the cadence dependency.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/onboarding-prompt-cadence.test.ts src/test/onboarding-flow.render.test.tsx --testNamePattern "AC-OB-PROMPT-CADENCE"`
+  passed: 2 suites, 5 focused tests.
+- `npm run test:unit -- --runTestsByPath src/test/onboarding-flow.render.test.tsx src/test/onboarding-route.render.test.tsx src/test/quick-log-route.render.test.tsx src/test/quick-log-sheet.render.test.tsx src/test/onboarding-prompt-cadence.test.ts`
+  passed: 5 suites, 54 tests.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 78 suites / 641 tests, node 118 tests,
+  navigation/shell i18n, i18n parity and string budgets, scaffold guardrails, token drift, privacy
+  scan, and text hygiene. Existing reduced-motion `act(...)` console warnings remain non-failing.
+
+Implementation notes:
+- Added `src/lib/storage/onboardingPromptCadence.ts` with a pure 48-hour resolver, SecureStore-backed
+  prompt timestamp storage, injected storage for tests, and shared observability reporting on
+  read/write failures. Stored values are only prompt-kind keys plus timestamps.
+- `ConnectedOnboardingScreen` uses the persisted cadence; bare preview/tests keep an immediate
+  cadence dependency unless a test injects a fake. Account `Not now` records an account skip before
+  resolving the notification stage; notification `Not now` records its skip before returning to the
+  first-log completion surface.
+
 ### 28. More Notification Preferences Anatomy Slice (§4.4.4)
 
 Stage-0 lock:
@@ -4534,8 +4586,13 @@ Implementation notes:
   `/onboarding?postFirstValuePrompt=account`, and the runtime post-value state advances account prompt
   -> notification prompt -> first-log completion. RED/GREEN render/route coverage and full
   `npm run check` passed; primary SE Stage 4 screenshots captured both runtime prompt states. The
-  48-hour re-prompt cadence, permission probing/native permission request, push-token registration,
-  notification scheduling, and persistence remain deferred.
+  permission probing/native permission request, push-token registration, notification scheduling, and
+  persistence remain deferred.
+- 2026-07-03: Added the Onboarding 48-hour post-value prompt cadence: account/notification `Not now`
+  actions persist prompt-kind timestamps through a shared storage boundary, requested prompts skip
+  cooled-down sheets while keeping the first-log completion surface visible, and storage failures are
+  reported through shared observability with non-PII context. No native dependency, schema change,
+  permission probe, push-token persistence, analytics payload, or native project edit was introduced.
 - 2026-07-03: Reconciled Notification Preferences OS settings handoff wording: §4.4.4a already
   covers push-toggle `Linking.openSettings()` behavior, while persistence, real permission-state
   probing, scheduling, and device-token registration remain deferred. Focused notification handoff

@@ -18,6 +18,7 @@ import {
 import type { PuppyProfileInput } from '@/contracts/onboarding';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
+import type { OnboardingPromptCadence } from '@/lib/storage/onboardingPromptCadence';
 
 const flushMicrotasks = async () => {
   await Promise.resolve();
@@ -748,7 +749,7 @@ describe('Onboarding production flow', () => {
     expect(saveProfile.mock.calls[0]?.[0].selectedTrackerIds).toHaveLength(5);
   });
 
-  it('AC-OB-PROMPT-RUNTIME shows account then notification after an onboarding first-value log', () => {
+  it('AC-OB-PROMPT-RUNTIME shows account then notification after an onboarding first-value log', async () => {
     render(
       <AppProviders>
         <OnboardingScreen
@@ -767,6 +768,77 @@ describe('Onboarding production flow', () => {
       name: i18n.t('onboarding.account-wall.secondary'),
     }));
 
+    await waitFor(() => {
+      expect(screen.queryByText(i18n.t('onboarding.account-wall.title'))).toBeNull();
+      expect(screen.getByText(i18n.t('onboarding.notifications-prompt.title'))).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.notifications-prompt.secondary'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('onboarding.first-log.hero-after-first'))).toBeTruthy();
+      expect(screen.queryByText(i18n.t('onboarding.account-wall.title'))).toBeNull();
+      expect(screen.queryByText(i18n.t('onboarding.notifications-prompt.title'))).toBeNull();
+    });
+  });
+
+  it('AC-OB-PROMPT-CADENCE-3 keeps first-log completion visible without repeated cooled-down prompts', async () => {
+    const promptCadence: OnboardingPromptCadence = {
+      recordSkip: jest.fn(async () => undefined),
+      resolveInitialPrompt: jest.fn(async () => 'complete'),
+    };
+
+    render(
+      <AppProviders>
+        <OnboardingScreen
+          openQuickLog={jest.fn()}
+          postFirstValuePrompt="account"
+          promptCadence={promptCadence}
+          saveProfile={jest.fn(async () => undefined)}
+        />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(promptCadence.resolveInitialPrompt).toHaveBeenCalledWith('account');
+    });
+
+    expect(screen.getByText(i18n.t('onboarding.first-log.hero-after-first'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('onboarding.account-wall.title'))).toBeNull();
+    expect(screen.queryByText(i18n.t('onboarding.notifications-prompt.title'))).toBeNull();
+  });
+
+  it('AC-OB-PROMPT-CADENCE-2 records prompt skips before advancing through the sequence', async () => {
+    const promptCadence: OnboardingPromptCadence = {
+      recordSkip: jest.fn(async () => undefined),
+      resolveInitialPrompt: jest.fn(async (requested) => requested),
+    };
+
+    render(
+      <AppProviders>
+        <OnboardingScreen
+          openQuickLog={jest.fn()}
+          postFirstValuePrompt="account"
+          promptCadence={promptCadence}
+          saveProfile={jest.fn(async () => undefined)}
+        />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('onboarding.account-wall.title'))).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('onboarding.account-wall.secondary'),
+    }));
+
+    await waitFor(() => {
+      expect(promptCadence.recordSkip).toHaveBeenCalledWith('account');
+      expect(promptCadence.resolveInitialPrompt).toHaveBeenCalledWith('notifications');
+    });
     expect(screen.queryByText(i18n.t('onboarding.account-wall.title'))).toBeNull();
     expect(screen.getByText(i18n.t('onboarding.notifications-prompt.title'))).toBeTruthy();
 
@@ -774,8 +846,11 @@ describe('Onboarding production flow', () => {
       name: i18n.t('onboarding.notifications-prompt.secondary'),
     }));
 
-    expect(screen.getByText(i18n.t('onboarding.first-log.hero-after-first'))).toBeTruthy();
+    await waitFor(() => {
+      expect(promptCadence.recordSkip).toHaveBeenCalledWith('notifications');
+    });
     expect(screen.queryByText(i18n.t('onboarding.account-wall.title'))).toBeNull();
     expect(screen.queryByText(i18n.t('onboarding.notifications-prompt.title'))).toBeNull();
+    expect(screen.getByText(i18n.t('onboarding.first-log.hero-after-first'))).toBeTruthy();
   });
 });

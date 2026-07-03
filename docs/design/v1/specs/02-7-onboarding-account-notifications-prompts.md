@@ -18,6 +18,8 @@ Allowed deviations: these prompts are post-first-value surfaces only. They must 
 ## States covered
 - account prompt - production preview anatomy.
 - notification prompt - production preview anatomy.
+- 48-hour prompt cadence - account and notification skips persist only prompt-type timestamps; within
+  the cooldown, the first-log completion state remains visible without re-showing a skipped sheet.
 - system permission dialog handoff - route-level settings handoff only; OS prompt/probing remains deferred.
 
 ## Accessibility
@@ -26,4 +28,4 @@ Allowed deviations: these prompts are post-first-value surfaces only. They must 
 - Prompt copy is explicit that skipping is allowed and does not punish the user.
 
 ## Notes / deferred
-- The 48-hour re-prompt scheduler, persisted prompt cadence, actual OS notification permission request, permission probing, push token registration, and local notification scheduling remain deferred.
+- Actual OS notification permission request, permission probing, push token registration, and local notification scheduling remain deferred.

@@ -38,6 +38,11 @@ import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 import { getQuickLogTrackerLabelKey } from '@/lib/query/quick-log-event-view';
 import { useSavePuppyProfileMutation } from '@/lib/query/puppy';
+import {
+  defaultOnboardingPromptCadence,
+  immediateOnboardingPromptCadence,
+  type OnboardingPromptCadence,
+} from '@/lib/storage/onboardingPromptCadence';
 
 const ONBOARDING_CONTROL_MAX_FONT_SIZE_MULTIPLIER = 2;
 const ONBOARDING_SUPPORTING_MAX_FONT_SIZE_MULTIPLIER = 2;
@@ -49,6 +54,7 @@ export type OnboardingScreenProps = Readonly<{
   openQuickLog: () => void;
   openSignIn?: () => void;
   postFirstValuePrompt?: OnboardingPostFirstValuePrompt | null;
+  promptCadence?: OnboardingPromptCadence;
   saveProfile: (profile: PuppyProfileInput) => Promise<unknown> | unknown;
 }>;
 
@@ -70,10 +76,12 @@ type ProfileError = Readonly<{
 export function ConnectedOnboardingScreen({
   openQuickLog,
   openSignIn,
+  promptCadence = defaultOnboardingPromptCadence,
   postFirstValuePrompt = null,
 }: Readonly<{
   openQuickLog: () => void;
   openSignIn?: () => void;
+  promptCadence?: OnboardingPromptCadence;
   postFirstValuePrompt?: OnboardingPostFirstValuePrompt | null;
 }>) {
   const saveMutation = useSavePuppyProfileMutation();
@@ -83,6 +91,7 @@ export function ConnectedOnboardingScreen({
       openQuickLog={openQuickLog}
       openSignIn={openSignIn}
       postFirstValuePrompt={postFirstValuePrompt}
+      promptCadence={promptCadence}
       saveProfile={(profile) => saveMutation.mutateAsync({ profile })}
     />
   );
@@ -92,12 +101,15 @@ export function OnboardingScreen({
   openQuickLog,
   openSignIn,
   postFirstValuePrompt = null,
+  promptCadence = immediateOnboardingPromptCadence,
   saveProfile,
 }: OnboardingScreenProps) {
   const { t } = useAppTranslation();
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [postFirstValueStage, setPostFirstValueStage] =
-    useState<OnboardingPostFirstValueStage | null>(postFirstValuePrompt);
+    useState<OnboardingPostFirstValueStage | null>(
+      promptCadence === immediateOnboardingPromptCadence ? postFirstValuePrompt : null,
+    );
   const [name, setName] = useState('');
   const [ageMode, setAgeMode] = useState<PuppyAgeMode>('age_weeks');
   const [ageWeeksText, setAgeWeeksText] = useState('8');
@@ -165,8 +177,26 @@ export function OnboardingScreen({
     && name.trim().length > 0;
 
   useEffect(() => {
-    setPostFirstValueStage(postFirstValuePrompt);
-  }, [postFirstValuePrompt]);
+    let active = true;
+
+    if (postFirstValuePrompt === null) {
+      setPostFirstValueStage(null);
+
+      return () => {
+        active = false;
+      };
+    }
+
+    void promptCadence.resolveInitialPrompt(postFirstValuePrompt).then((nextStage) => {
+      if (active) {
+        setPostFirstValueStage(nextStage);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [postFirstValuePrompt, promptCadence]);
 
   const adjustAgeWeeks = (delta: number) => {
     setAgeWeeksText(String(clampAgeWeeks(ageWeeksValue + delta)));
@@ -216,8 +246,15 @@ export function OnboardingScreen({
   if (postFirstValueStage !== null) {
     return (
       <OnboardingPostFirstValuePromptScreen
-        onSkipAccount={() => setPostFirstValueStage('notifications')}
-        onSkipNotifications={() => setPostFirstValueStage('complete')}
+        onSkipAccount={() => {
+          void promptCadence.recordSkip('account')
+            .then(() => promptCadence.resolveInitialPrompt('notifications'))
+            .then(setPostFirstValueStage);
+        }}
+        onSkipNotifications={() => {
+          void promptCadence.recordSkip('notifications')
+            .then(() => setPostFirstValueStage('complete'));
+        }}
         stage={postFirstValueStage}
       />
     );
