@@ -357,6 +357,48 @@ GREEN / regression evidence:
 - `npm run check` — PASS: lint, typecheck, Jest 74 suites / 592 tests, node 118 tests,
   scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing `act(...)` warnings remain in
   motion-related render tests.
+
+#### 4.4.4c Notification preferences local reminders UI toggle
+
+Stage-0 lock:
+- Source: DESIGN.md §4.4.4 and `docs/design/v1/specs/06-more-privacy-paywall.md`
+  notification preferences anatomy.
+- Scope: local, in-screen control state for the existing `Local reminders` toggle only, so the row
+  behaves like a real switch while native scheduling/persistence remains deferred.
+- Out of scope: local notification scheduling, native permission probing, durable preference schema,
+  push token registration, quiet-hours editing, timezone editing, diagnostics, migrations, and new
+  native modules.
+
+Acceptance:
+- AC-NOTIF-LOCAL-1: changing `notifications-local-all-toggle` updates the visible toggle value inside
+  the mounted notification preferences screen.
+- AC-NOTIF-LOCAL-2: changing the local reminders toggle does not call `Linking.openSettings()` and
+  does not invoke the push preference mutation callbacks.
+- AC-NOTIF-LOCAL-3: push toggles keep their existing OS settings handoff and durable push preference
+  behavior unchanged.
+
+TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern AC-NOTIF-LOCAL`
+  — FAIL as expected before implementation: local reminders toggle stayed `true` after
+  `valueChange=false`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern AC-NOTIF-LOCAL`
+  — PASS: 1 focused test.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx` — PASS:
+  1 suite, 29 tests.
+- `npm run test:unit -- --runTestsByPath src/test/notification-preferences-query.test.ts src/test/notification-preferences-repository.test.ts`
+  — PASS: 2 suites, 8 tests.
+- `npm run typecheck` — PASS.
+- `npm run check` — PASS: lint, typecheck, Jest 76 suites / 616 tests, node 118 tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing reduced-motion `act(...)`
+  warnings remain unrelated to this slice.
+- Stage 4 note: default `/settings/notifications` native screenshot evidence remains the
+  2026-07-02 PASS already recorded for the same route anatomy. This slice does not add new layout,
+  copy, tokens, or native state; the new transient off-state is covered by structural render
+  assertions and keeps scheduling/persistence deferred.
 - [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
       topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
       Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Email handoff is now wired

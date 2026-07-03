@@ -99,6 +99,7 @@ export function NotificationPreferencesScreen({
   const [localReviewState, setLocalReviewState] = useState<
     NotificationPreferencesReviewState | undefined
   >();
+  const [localRemindersEnabled, setLocalRemindersEnabled] = useState(true);
   const visibleReviewState = reviewState ?? localReviewState;
 
   const updatePushPreference = async (
@@ -137,9 +138,9 @@ export function NotificationPreferencesScreen({
           trailing={(
             <Toggle
               accessibilityLabel={t('more.notifications.row-all-reminders')}
-              onValueChange={() => undefined}
+              onValueChange={setLocalRemindersEnabled}
               testID="notifications-local-all-toggle"
-              value
+              value={localRemindersEnabled}
             />
           )}
           variant="settings"

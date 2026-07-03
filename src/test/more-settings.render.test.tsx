@@ -466,6 +466,29 @@ describe('More settings entries', () => {
     expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(true);
   });
 
+  it('AC-NOTIF-LOCAL keeps the local reminders toggle stateful without OS handoff', () => {
+    const changeReminderPush = jest.fn();
+    const changeSitterPush = jest.fn();
+
+    render(
+      <AppProviders>
+        <NotificationPreferencesScreen
+          onChangeReminderPush={changeReminderPush}
+          onChangeSitterPush={changeSitterPush}
+        />
+      </AppProviders>,
+    );
+
+    expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(true);
+
+    fireEvent(screen.getByTestId('notifications-local-all-toggle'), 'valueChange', false);
+
+    expect(screen.getByTestId('notifications-local-all-toggle').props.value).toBe(false);
+    expect(openSettingsSpy).not.toHaveBeenCalled();
+    expect(changeReminderPush).not.toHaveBeenCalled();
+    expect(changeSitterPush).not.toHaveBeenCalled();
+  });
+
   it('AC-NOTIF-PERSIST-4 renders persisted push toggles and writes changes before OS handoff', async () => {
     const changeReminderPush = jest.fn().mockResolvedValue(undefined);
     const changeSitterPush = jest.fn().mockResolvedValue(undefined);
