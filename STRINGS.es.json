@@ -57,8 +57,9 @@
         "health-v2": "Lista de salud, vacío, edición, detalle, revisión, eliminación y entrada de peso.",
         "reminders-hub": "Ruta del centro de recordatorios con filas durables activas para entrega nativa.",
         "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
-        "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
-        "help-support-states": "Estados de ayuda y soporte: carga, nota pendiente, error y lectura offline.",
+      "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
+      "privacy-account-states": "Estados de privacidad y cuenta: carga, guardado, error, offline e inicio requerido.",
+      "help-support-states": "Estados de ayuda y soporte: carga, nota pendiente, error y lectura offline.",
         "household-states": "Estados de acceso familiar: carga, guardado, error y lectura offline.",
         "paywall-states": "Estados de PuppyPlan Plus: carga, compra pendiente, error, offline y suscripción activa.",
         "invite-accept-states": "Estados de aceptar invitación: carga, no disponible, reintento y ya eres miembro.",
@@ -2031,7 +2032,34 @@
         "confirm-input-prompt": "escribe la palabra \"ELIMINAR\"",
         "confirm-input-word": "ELIMINAR"
       },
-      "delete-toast": "Solicitud de eliminación recibida. Te enviaremos una confirmación a tu correo electrónico."
+      "delete-toast": "Solicitud de eliminación recibida. Te enviaremos una confirmación a tu correo electrónico.",
+      "states": {
+        "loading": {
+          "status": "Comprobando",
+          "title": "Cargando controles de privacidad",
+          "body": "Estamos revisando los controles guardados de privacidad y cuenta."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando elección de privacidad",
+          "body": "Mantén esta pantalla abierta mientras se guarda la solicitud."
+        },
+        "error": {
+          "status": "Revisar",
+          "title": "No se pudieron actualizar los controles",
+          "body": "Mantén la configuración actual e inténtalo de nuevo en un momento."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Mostrando controles guardados",
+          "body": "Puedes revisar los últimos controles de privacidad guardados sin conexión."
+        },
+        "permission-denied": {
+          "status": "Inicia sesión",
+          "title": "Se requiere acceso a la cuenta",
+          "body": "Vuelve a iniciar sesión antes de cambiar datos de cuenta o pedir exportación."
+        }
+      }
     },
     "help": {
       "screen-title": "Ayuda",

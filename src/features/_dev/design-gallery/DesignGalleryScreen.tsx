@@ -55,6 +55,9 @@ import {
   NotificationPreferencesStatePreview,
 } from '@/features/more/screens/NotificationPreferencesScreen';
 import {
+  PrivacyAccountStatePreview,
+} from '@/features/more/screens/PrivacyAccountScreen';
+import {
   PuppyPlanPlusStatePreview,
 } from '@/features/more/screens/PuppyPlanPlusScreen';
 import {
@@ -151,6 +154,7 @@ export function DesignGalleryScreen() {
         <SyntheticQuickTrackersStatesShell />
         <SyntheticHelpSupportStatesShell />
         <SyntheticNotificationPreferencesShell />
+        <SyntheticPrivacyAccountStatesShell />
         <SyntheticRemindersHubShell />
         <SyntheticReminderEditShell />
 
@@ -438,6 +442,24 @@ export function SyntheticPuppyProfileSettingsStatesShell() {
         <PuppyProfileSettingsStatePreview state="error" />
         <PuppyProfileSettingsStatePreview state="offline-read" />
         <PuppyProfileSettingsStatePreview state="permission-denied" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticPrivacyAccountStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.privacy-account-states"
+          titleKey="more.privacy.screen-title"
+        />
+        <PrivacyAccountStatePreview state="loading" />
+        <PrivacyAccountStatePreview state="pending-write" />
+        <PrivacyAccountStatePreview state="error" />
+        <PrivacyAccountStatePreview state="offline-read" />
+        <PrivacyAccountStatePreview state="permission-denied" />
       </Stack>
     </Card>
   );

@@ -58,8 +58,9 @@
         "health-v2": "Health list, empty, edit, detail, review, delete, and weight entry states.",
         "reminders-hub": "Reminders hub route with active durable rows for native handoff.",
         "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
-        "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
-        "help-support-states": "Help and support loading, pending note, error, and offline read states.",
+      "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
+      "privacy-account-states": "Privacy and account loading, saving, error, offline, and sign-in-required states.",
+      "help-support-states": "Help and support loading, pending note, error, and offline read states.",
         "household-states": "Manage household loading, pending access, error, and offline read states.",
         "paywall-states": "PuppyPlan Plus loading, pending purchase, error, offline, and active subscription states.",
         "invite-accept-states": "Accept invite loading, unavailable, retry, and already-member states.",
@@ -1932,7 +1933,34 @@
         "confirm-input-prompt": "type the word \"DELETE\"",
         "confirm-input-word": "DELETE"
       },
-      "delete-toast": "Deletion request received. We'll send a confirmation to your email"
+      "delete-toast": "Deletion request received. We'll send a confirmation to your email",
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading privacy controls",
+          "body": "We are checking saved privacy and account controls."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving privacy choice",
+          "body": "Keep this screen open while the privacy request is saved."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Could not update privacy controls",
+          "body": "Keep the current settings and try again in a moment."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Showing saved privacy controls",
+          "body": "You can review the last saved privacy controls while offline."
+        },
+        "permission-denied": {
+          "status": "Sign in required",
+          "title": "Account access required",
+          "body": "Sign in again before changing account data or export requests."
+        }
+      }
     },
     "help": {
       "screen-title": "Help",

@@ -547,6 +547,65 @@ Implementation notes:
   `Sign out`. Native evidence:
   `output/v2-nav-gaps-stage4/settings-privacy-account-signout-stage4.jpg`.
 
+#### 4.4.5c Privacy & Account State Templates (§4.5)
+
+**2026-07-03 global-state slice:** deterministic `/settings/privacy-account` loading,
+pending-write, error, offline-read, and permission-denied state templates for §4.5.
+
+- Source spec card: `docs/design/v1/specs/14-5-privacy-account.md`.
+- Source atlas: `docs/design/v1/screenshots/more/14-5.png`,
+  `docs/design/v1/screenshots/more/14-6.png`.
+- Route/component: `/settings/privacy-account` via
+  `src/features/more/screens/PrivacyAccountScreen.tsx`.
+- Dev-gallery handoff: `/_dev/components` should render the state templates inside a visible
+  `SyntheticPrivacyAccountStatesShell`.
+- Allowed deviation: this slice only standardizes deterministic state cards and dev-gallery
+  handoff. Real export jobs, account deletion jobs, analytics/error-report persistence, backend
+  jobs, schema/native modules, and `ios/` / `android/` edits remain out of scope.
+- TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
+
+Acceptance:
+- AC-MORE-PRIVACY-STATES-1: the privacy/account surface exposes deterministic loading,
+  pending-write, error, offline-read, and permission-denied state templates with stable
+  `privacy-account-state-*` test IDs.
+- AC-MORE-PRIVACY-STATES-2: each state uses design primitives (`Card`, `StatusPill`, `AppIcon`,
+  `AppText`) and typed EN/RU/ES i18n status/title/body copy.
+- AC-MORE-PRIVACY-STATES-3: loading and pending-write announce politely; error and
+  permission-denied use alert semantics; offline-read uses the muted template surface.
+- AC-MORE-PRIVACY-STATES-4: state copy exposes no raw puppy names, notes, emails, provider names,
+  photos, tokens, diagnostics payloads, or private contact data.
+- AC-MORE-PRIVACY-STATES-5: the dev-gallery route-shell preview includes all five privacy/account
+  state templates for native Stage 4 handoff.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern AC-MORE-PRIVACY-STATES`
+  failed as expected before implementation because `PrivacyAccountStatePreview` was not exported.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern "route-shell preview states"`
+  failed as expected before implementation because `SyntheticPrivacyAccountStatesShell` was not
+  exported/rendered.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern AC-MORE-PRIVACY-STATES`
+  — PASS: 1 suite, 1 matching test.
+- `npm run test:unit -- --runTestsByPath src/test/dev-gallery.render.test.tsx --testNamePattern "route-shell preview states"`
+  — PASS: 1 suite, 1 matching test.
+- `node scripts/checks/check-i18n.mjs` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/dev-gallery.render.test.tsx src/test/i18n.test.ts`
+  — PASS: 3 suites, 55 tests.
+
+Stage 4 evidence:
+- Primary SE simulator: `Grith iPhone SE 3 iOS 26.3`
+  (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`).
+- Installed `PuppyPlan.app` launched over `npx expo start --localhost` in development-build mode,
+  then opened `puppyplan:///_dev/components`.
+- Runtime snapshot confirmed `Data and account`, `Privacy and account loading, saving, error,
+  offline, and sign-in-required states.`, `Showing saved privacy controls`, and
+  `privacy-account-state-permission-denied`.
+- Evidence files:
+  `output/v2-nav-gaps-stage4/settings-privacy-account-states-top-stage4.jpg`,
+  `output/v2-nav-gaps-stage4/settings-privacy-account-states-bottom-stage4.jpg`.
+
 - [x] ✅ App support / help (§4.4.6) — `/settings/help` native anatomy slice implemented:
       topic shortcuts, diagnostics rows, privacy-safe support note, and More hub navigation.
       Stage 4 SE native screenshot comparison PASS recorded 2026-07-02. Email handoff is now wired
@@ -642,6 +701,8 @@ GREEN / regression evidence:
       owner-only access plus dev-gallery and Stage 4 SE evidence;
       Pet Health main list now has RED/GREEN templates for loading, error, and offline-read
       plus production route loading/error wiring, dev-gallery coverage, and Stage 4 SE evidence;
+      Privacy & Account now has RED/GREEN templates for loading, pending-write, error,
+      offline-read, and permission-denied plus dev-gallery coverage and Stage 4 SE evidence;
       other screen-specific state wiring remains open.
 - [x] ✅ **Theme resolved** → B · Minimal canonical (see §5.2)
 
@@ -4815,6 +4876,11 @@ Implementation notes:
   existing auth `signOut()` path; export, delete, analytics/error-report persistence, backend jobs,
   schema changes, and native modules remain deferred. Primary SE Stage 4 screenshot:
   `output/v2-nav-gaps-stage4/settings-privacy-account-signout-stage4.jpg`.
+- 2026-07-03: Added deterministic Privacy & Account loading, pending-write, error, offline-read,
+  and permission-denied state templates with RED/GREEN render coverage, dev-gallery native handoff,
+  EN/RU/ES copy, and primary SE Stage 4 screenshots. Real export jobs, account deletion jobs,
+  analytics/error-report persistence, backend jobs, schema changes, and native modules remain
+  deferred.
 - 2026-06-30: Added the PuppyPlan Plus paywall shell slice: More now opens `/paywall`, the screen
   renders feature rows, annual/monthly/lifetime plan rows, Choose plan, Restore purchases, legal copy,
   and soft-lock availability note with EN/RU/ES typed copy; navigation/scaffold contracts were updated,

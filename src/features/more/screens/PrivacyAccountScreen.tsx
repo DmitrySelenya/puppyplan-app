@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native';
 
 import {
   AppIcon,
+  type AppIconName,
   AppText,
   Button,
   Card,
@@ -13,19 +14,84 @@ import {
   ScreenHeader,
   SectionHeader,
   Stack,
+  StatusPill,
+  type StatusPillTone,
   TextField,
   Toggle,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
-import { useAppTranslation } from '@/lib/i18n';
+import { type I18nKey, useAppTranslation } from '@/lib/i18n';
 
 import { SignOutButton } from '../components/SignOutButton';
 
-export type PrivacyAccountScreenProps = Readonly<{
-  onBack?: () => void;
+export type PrivacyAccountReviewState =
+  | 'loading'
+  | 'pending-write'
+  | 'error'
+  | 'offline-read'
+  | 'permission-denied';
+
+type PrivacyAccountStateMeta = Readonly<{
+  bodyKey: I18nKey;
+  icon: AppIconName;
+  liveRegion?: 'polite';
+  role?: 'alert';
+  statusKey: I18nKey;
+  titleKey: I18nKey;
+  tone: StatusPillTone;
 }>;
 
-export function PrivacyAccountScreen({ onBack }: PrivacyAccountScreenProps) {
+const privacyAccountStateMeta: Record<PrivacyAccountReviewState, PrivacyAccountStateMeta> = {
+  error: {
+    bodyKey: 'more.privacy.states.error.body',
+    icon: 'warningTriangle',
+    role: 'alert',
+    statusKey: 'more.privacy.states.error.status',
+    titleKey: 'more.privacy.states.error.title',
+    tone: 'failed',
+  },
+  loading: {
+    bodyKey: 'more.privacy.states.loading.body',
+    icon: 'lock',
+    liveRegion: 'polite',
+    statusKey: 'more.privacy.states.loading.status',
+    titleKey: 'more.privacy.states.loading.title',
+    tone: 'pending',
+  },
+  'offline-read': {
+    bodyKey: 'more.privacy.states.offline-read.body',
+    icon: 'lock',
+    statusKey: 'more.privacy.states.offline-read.status',
+    titleKey: 'more.privacy.states.offline-read.title',
+    tone: 'template',
+  },
+  'pending-write': {
+    bodyKey: 'more.privacy.states.pending-write.body',
+    icon: 'docText',
+    liveRegion: 'polite',
+    statusKey: 'more.privacy.states.pending-write.status',
+    titleKey: 'more.privacy.states.pending-write.title',
+    tone: 'pending',
+  },
+  'permission-denied': {
+    bodyKey: 'more.privacy.states.permission-denied.body',
+    icon: 'lock',
+    role: 'alert',
+    statusKey: 'more.privacy.states.permission-denied.status',
+    titleKey: 'more.privacy.states.permission-denied.title',
+    tone: 'failed',
+  },
+};
+
+export type PrivacyAccountScreenProps = Readonly<{
+  onBack?: () => void;
+  reviewState?: PrivacyAccountReviewState;
+}>;
+
+export function PrivacyAccountScreen({
+  onBack,
+  reviewState,
+}: PrivacyAccountScreenProps) {
   const { t } = useAppTranslation();
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [errorReportsEnabled, setErrorReportsEnabled] = useState(true);
@@ -47,6 +113,8 @@ export function PrivacyAccountScreen({ onBack }: PrivacyAccountScreenProps) {
       ) : (
         <ScreenHeader title={t('more.privacy.screen-title')} />
       )}
+
+      {reviewState ? <PrivacyAccountStatePreview state={reviewState} /> : null}
 
       <PrivacySection title={t('more.privacy.section-consents')}>
         <ListRow
@@ -179,6 +247,44 @@ export function PrivacyAccountScreen({ onBack }: PrivacyAccountScreenProps) {
         </Card>
       ) : null}
     </Screen>
+  );
+}
+
+export function PrivacyAccountStatePreview({
+  state,
+}: Readonly<{
+  state: PrivacyAccountReviewState;
+}>) {
+  const { t } = useAppTranslation();
+  const meta = privacyAccountStateMeta[state];
+  const status = t(meta.statusKey);
+  const title = t(meta.titleKey);
+  const body = t(meta.bodyKey);
+
+  return (
+    <Card
+      accessibilityLabel={[status, title, body].join('. ')}
+      accessibilityLiveRegion={meta.liveRegion}
+      accessibilityRole={meta.role}
+      testID={`privacy-account-state-${state}`}
+      variant={state === 'offline-read' ? 'mutedTemplate' : 'resting'}>
+      <Stack gap="sm">
+        <StatusPill
+          accessibilityLabel={status}
+          icon={(
+            <AppIcon
+              color={tokens.color.text.secondary}
+              name={meta.icon}
+              size={14}
+            />
+          )}
+          label={status}
+          tone={meta.tone}
+        />
+        <AppText variant="bodyEmph">{title}</AppText>
+        <AppText tone="secondary" variant="subheadline">{body}</AppText>
+      </Stack>
+    </Card>
   );
 }
 

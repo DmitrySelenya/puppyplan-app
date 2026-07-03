@@ -20,6 +20,7 @@ import {
   SyntheticNotificationPreferencesShell,
   SyntheticOnboardingShell,
   SyntheticMoreSettingsShell,
+  SyntheticPrivacyAccountStatesShell,
   SyntheticPuppyProfileSettingsShell,
   SyntheticPuppyProfileSettingsStatesShell,
   SyntheticQuickTrackersStatesShell,
@@ -148,6 +149,7 @@ describe('development-only design gallery', () => {
         <SyntheticReminderEditShell />
         <SyntheticHelpSupportStatesShell />
         <SyntheticNotificationPreferencesShell />
+        <SyntheticPrivacyAccountStatesShell />
         <SyntheticHouseholdAccessStatesShell />
         <SyntheticPaywallStatesShell />
         <SyntheticInviteAcceptStatesShell />
@@ -226,6 +228,24 @@ describe('development-only design gallery', () => {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('more.notifications.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.privacy-account-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('more.privacy.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.privacy.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.privacy.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.privacy.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.privacy.states.permission-denied.title'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('dev.gallery.states.help-support-states'), {

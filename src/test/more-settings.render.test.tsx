@@ -15,7 +15,10 @@ import {
   ConnectedNotificationPreferencesScreen,
   NotificationPreferencesScreen,
 } from '@/features/more/screens/NotificationPreferencesScreen';
-import { PrivacyAccountScreen } from '@/features/more/screens/PrivacyAccountScreen';
+import {
+  PrivacyAccountScreen,
+  PrivacyAccountStatePreview,
+} from '@/features/more/screens/PrivacyAccountScreen';
 import { PuppyPlanPlusScreen } from '@/features/more/screens/PuppyPlanPlusScreen';
 import {
   ShareablePuppyCardScreen,
@@ -477,6 +480,39 @@ describe('More settings entries', () => {
     await waitFor(() => {
       expect(mockSignOut).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('AC-MORE-PRIVACY-STATES renders deterministic privacy account state templates', () => {
+    render(
+      <AppProviders>
+        <PrivacyAccountStatePreview state="loading" />
+        <PrivacyAccountStatePreview state="pending-write" />
+        <PrivacyAccountStatePreview state="error" />
+        <PrivacyAccountStatePreview state="offline-read" />
+        <PrivacyAccountStatePreview state="permission-denied" />
+      </AppProviders>,
+    );
+
+    for (const state of [
+      'loading',
+      'pending-write',
+      'error',
+      'offline-read',
+      'permission-denied',
+    ] as const) {
+      expect(screen.getByTestId(`privacy-account-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`more.privacy.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`more.privacy.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('privacy-account-state-error').props.accessibilityRole).toBe('alert');
+    expect(screen.getByTestId('privacy-account-state-permission-denied').props.accessibilityRole)
+      .toBe('alert');
+    expect(screen.getByTestId('privacy-account-state-loading').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getByTestId('privacy-account-state-pending-write').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.queryByText(/@|token|provider|puppy a|notes|diagnostic payload/i)).toBeNull();
   });
 
   it('keeps connected More in a loading state instead of treating it as non-owner', () => {
