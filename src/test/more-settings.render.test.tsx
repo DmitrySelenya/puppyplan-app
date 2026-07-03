@@ -84,6 +84,7 @@ const puppy: PuppyProfile = {
 
 describe('More settings entries', () => {
   let reduceMotionProbe: jest.SpyInstance;
+  let canOpenUrlSpy: jest.SpyInstance<Promise<boolean>, [string]>;
   let openSettingsSpy: jest.SpyInstance<Promise<void>, []>;
   let openUrlSpy: jest.SpyInstance<Promise<void>, [string]>;
   let shareSpy: jest.SpyInstance;
@@ -94,6 +95,9 @@ describe('More settings entries', () => {
     openSettingsSpy = jest
       .spyOn(Linking, 'openSettings')
       .mockResolvedValue(undefined);
+    canOpenUrlSpy = jest
+      .spyOn(Linking, 'canOpenURL')
+      .mockResolvedValue(true);
     openUrlSpy = jest
       .spyOn(Linking, 'openURL')
       .mockResolvedValue(undefined);
@@ -131,6 +135,7 @@ describe('More settings entries', () => {
 
   afterEach(() => {
     cleanup();
+    canOpenUrlSpy.mockRestore();
     openSettingsSpy.mockRestore();
     openUrlSpy.mockRestore();
     reduceMotionProbe.mockRestore();
@@ -729,13 +734,47 @@ describe('More settings entries', () => {
     fireEvent.press(screen.getByRole('button', { name: i18n.t('more.help.contact-row') }));
 
     await waitFor(() => {
+      expect(canOpenUrlSpy).toHaveBeenCalledTimes(1);
       expect(openUrlSpy).toHaveBeenCalledTimes(1);
     });
     const [supportUrl] = openUrlSpy.mock.calls[0];
+    expect(canOpenUrlSpy).toHaveBeenCalledWith(supportUrl);
     expect(supportUrl.startsWith(`mailto:${i18n.t('more.help.support-email')}?`)).toBe(true);
     expect(decodeURIComponent(supportUrl)).toContain('PuppyPlan support request');
     expect(decodeURIComponent(supportUrl)).toContain(i18n.t('more.help.privacy-note'));
     expect(decodeURIComponent(supportUrl)).not.toMatch(/Puppy A|Caregiver|token=/i);
+  });
+
+  it('renders a visible Help support error without opening mail when no composer is available', async () => {
+    canOpenUrlSpy.mockResolvedValueOnce(false);
+    render(
+      <AppProviders>
+        <HelpSupportScreen />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('more.help.contact-row') }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('more-help-support-error')).toBeTruthy();
+    });
+    expect(openUrlSpy).not.toHaveBeenCalled();
+  });
+
+  it('renders a visible Help support error when the mail composer availability probe fails', async () => {
+    canOpenUrlSpy.mockRejectedValueOnce(new Error('composer probe failed'));
+    render(
+      <AppProviders>
+        <HelpSupportScreen />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('more.help.contact-row') }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('more-help-support-error')).toBeTruthy();
+    });
+    expect(openUrlSpy).not.toHaveBeenCalled();
   });
 
   it('renders a visible Help support error when the email handoff fails', async () => {

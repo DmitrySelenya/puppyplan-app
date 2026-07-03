@@ -1,7 +1,7 @@
 # 06.4 — More Support / Help
 Route: `/settings/help`   Atlas: Open Design V2 More/support board, no v1 PNG
 Device sizes: SE compact primary; iOS 390x844 and Android 412x900 in the V2 handoff
-Allowed deviations: no live support ticket submission or diagnostic upload in this slice. Email composer handoff is limited to a privacy-safe localized `mailto:` draft and visible failure state.
+Allowed deviations: no live support ticket submission or diagnostic upload in this slice. Email composer handoff is limited to a privacy-safe localized `mailto:` draft, platform availability probe, and visible failure state.
 
 ## Anatomy (top -> bottom)
 - Modal header — back to More, title `more.help.screen-title`.
@@ -17,7 +17,7 @@ Allowed deviations: no live support ticket submission or diagnostic upload in th
 
 ## States covered
 - Default support shell — production.
-- Email composer handoff — production `mailto:` draft with localized subject/body and visible failure state.
+- Email composer handoff — production `mailto:` draft with localized subject/body, `Linking.canOpenURL()` availability probe, and visible failure state.
 - Live ticket submission, uploads, and async send states — deferred.
 
 ## Accessibility

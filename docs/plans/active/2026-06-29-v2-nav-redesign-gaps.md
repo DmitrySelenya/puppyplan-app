@@ -3265,8 +3265,8 @@ Implementation notes:
   `output/v2-nav-gaps-stage4/settings-help-stage4.png` (top) and
   `output/v2-nav-gaps-stage4/settings-help-stage4-bottom.png` (bottom). The route shows modal back
   header, intro card, three help topic chevron rows, diagnostics rows, contact row, and the visible
-  privacy-safe support note. Allowed deferred items remain real support ticket creation, email composer
-  handoff, and diagnostics upload.
+  privacy-safe support note. Allowed deferred items remain real support ticket creation and
+  diagnostics upload.
 
 ### 29a. More Support / Help State Templates (§4.5)
 
@@ -3274,8 +3274,8 @@ Stage-0 lock:
 - Spec card: `docs/design/v1/specs/06-4-more-support-help.md` plus `DESIGN.md` §4.5 global screen
   states.
 - Route: `/settings/help`; dev-gallery review shell under `/_dev/components`.
-- Allowed deviation: no live support ticket, mail composer availability probing, diagnostic upload,
-  or PII-bearing support payload. This slice is deterministic UI templates only.
+- Allowed deviation: no live support ticket, diagnostic upload, or PII-bearing support payload.
+  This slice is deterministic UI templates only.
 - TDD mode: lightweight; reduced assurance because RED/GREEN/REFACTOR are not context-isolated.
 
 Acceptance:
@@ -3360,6 +3360,41 @@ Verification:
 Implementation notes:
 - `docs/design/v1/specs/06-4-more-support-help.md` now treats email composer handoff as production
   while keeping live ticket submission, async send states, and diagnostics upload deferred.
+
+### 29c. More Support / Help email composer availability probe
+
+Stage-0 lock:
+- Source: `docs/design/v1/specs/06-4-more-support-help.md` support contact row and §29b mailto
+  handoff contract.
+- Scope: probe platform mail composer availability before opening the existing privacy-safe
+  `mailto:` URL. No live support ticket, diagnostics upload, schema, native module, analytics
+  payload, native project edit, or alternate support provider is introduced.
+
+Acceptance:
+- AC-MORE-HELP-MAIL-PROBE-1: pressing `Prepare support note` checks `Linking.canOpenURL()` with
+  the same `mailto:` URL before calling `Linking.openURL()`.
+- AC-MORE-HELP-MAIL-PROBE-2: if the platform reports that no composer can open the URL, the route
+  renders the existing `more-help-support-error` alert card and does not call `Linking.openURL()`.
+- AC-MORE-HELP-MAIL-PROBE-3: a rejected availability probe follows the same visible error path
+  instead of being swallowed into a no-op.
+- AC-MORE-HELP-MAIL-PROBE-4: successful availability keeps the existing privacy-safe localized
+  subject/body handoff and does not add raw private data to visible copy, logs, analytics, or tests.
+
+RED evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern "support email|support error|composer"`
+  failed before production code because the successful handoff did not call `Linking.canOpenURL()`
+  and the unavailable-composer case did not render `more-help-support-error`.
+
+GREEN / regression evidence:
+- `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx --testNamePattern "support email|support error|composer"`
+  passed: 1 suite, 4 focused tests, covering available composer, unavailable composer,
+  rejected availability probe, and rejected `openURL` handoff.
+
+Implementation notes:
+- `HelpSupportScreen` now checks `Linking.canOpenURL(supportUrl)` before opening the localized
+  `mailto:` draft. `false`, probe rejection, and `openURL` rejection all route to the existing
+  visible support error card. Live support tickets, diagnostics upload, schema/native changes,
+  analytics payloads, and alternate support providers remain deferred.
 
 ### 30. PuppyPlan Plus Paywall Shell Slice (§4.4.7)
 
@@ -4482,16 +4517,19 @@ Implementation notes:
 - 2026-06-30: Added the More Support / Help anatomy slice: More now opens `/settings/help`, the
   screen renders topic shortcuts, diagnostics rows, contact affordance, and a privacy-safe support
   note with EN/RU/ES typed copy; navigation/scaffold contracts were updated, and full `npm run check`
-  passed. Real support ticket/email handoff, diagnostics upload, and Stage 4 screenshots remain open.
+  passed. Real support ticket creation, diagnostics upload, and Stage 4 screenshots remain open.
 - 2026-07-02: Closed Stage 4 for `/settings/help`: captured top and bottom native screenshots on the
   required SE simulator from the installed PuppyPlan.app over Metro, verified the modal header, intro
   card, topic rows, diagnostics/contact rows, and visible privacy note against
-  `docs/design/v1/specs/06-4-more-support-help.md`. Real ticket/email handoff and diagnostics upload
-  remain deferred.
+  `docs/design/v1/specs/06-4-more-support-help.md`. Real support ticket creation and diagnostics
+  upload remain deferred.
 - 2026-07-03: Added deterministic Help Support loading, pending-write, error, and offline-read state
   templates with RED/GREEN render coverage, dev-gallery native handoff, EN/RU/ES copy, and primary
-  SE Stage 4 screenshot. Real support ticket creation, mail composer availability probing, and
-  diagnostics upload remain deferred.
+  SE Stage 4 screenshot. Real support ticket creation and diagnostics upload remain deferred.
+- 2026-07-03: Added Help Support email composer availability probing: the support contact row now
+  checks `Linking.canOpenURL()` before opening the privacy-safe localized `mailto:` draft, and
+  unavailable/rejected probes render the existing visible support error card without calling
+  `openURL`. Live support ticket creation and diagnostics upload remain deferred.
 - 2026-07-03: Added `/settings/privacy-account` as a native UI-only shell from More `Data and account`:
   local analytics/error-report toggles, export-request notice, typed delete-confirm preview, route
   and shell-i18n contracts, RED/GREEN render/navigation coverage, Expo typed-route regeneration, and

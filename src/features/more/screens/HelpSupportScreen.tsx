@@ -90,6 +90,12 @@ export function HelpSupportScreen({
     });
 
     try {
+      const canOpenSupportDraft = await Linking.canOpenURL(supportUrl);
+      if (!canOpenSupportDraft) {
+        setSupportErrorVisible(true);
+        return;
+      }
+
       await Linking.openURL(supportUrl);
     } catch {
       setSupportErrorVisible(true);
