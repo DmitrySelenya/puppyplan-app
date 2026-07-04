@@ -4,7 +4,9 @@ import {
   canTransitionHealthOutboxState,
   createHealthOutboxItem,
   normalizeHealthOutboxFailureForPersistence,
+  processNextHealthOutboxItem,
   replayHealthOutboxItem,
+  type HealthOutboxStoredItem,
 } from '@/lib/queue/health-outbox';
 import type { HealthRecordInsert } from '@/lib/supabase/health-records';
 
@@ -234,5 +236,118 @@ describe('Health outbox replay', () => {
     };
 
     await expect(replayHealthOutboxItem(item, { repository })).rejects.toThrow('health_record_insert_failed');
+  });
+});
+
+describe('Health outbox processor', () => {
+  it('AC-HO-5 claims a ready item, replays it, and marks it confirmed', async () => {
+    const item = createHealthOutboxItem({
+      actor_id: actorId,
+      household_id: householdId,
+      operation: 'create',
+      operation_id: operationId,
+      payload: {
+        insert,
+      },
+      puppy_id: puppyId,
+    }, { now });
+    const sendingItem = applyHealthOutboxTransition(item, {
+      now: '2026-07-04T10:00:01.000Z',
+      type: 'mark_sending',
+    });
+    const storage = {
+      claimNextReadyToSend: jest.fn(async () => sendingItem),
+      markFailedPermanent: jest.fn(),
+      markFailedRetryable: jest.fn(),
+      markServerConfirmed: jest.fn(async () => applyHealthOutboxTransition(sendingItem, {
+        now: '2026-07-04T10:00:02.000Z',
+        type: 'mark_server_confirmed',
+      })),
+    };
+    const repository = {
+      deleteHealthRecord: jest.fn(),
+      insertHealthRecord: jest.fn(async () => healthRecord),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
+    };
+
+    await expect(processNextHealthOutboxItem({
+      now: '2026-07-04T10:00:02.000Z',
+      repository,
+      storage,
+    })).resolves.toMatchObject({
+      outcome: 'sent',
+      operationId,
+      replay: {
+        operation: 'create',
+        record: healthRecord,
+      },
+    });
+    expect(storage.claimNextReadyToSend).toHaveBeenCalledWith({
+      now: '2026-07-04T10:00:02.000Z',
+    });
+    expect(storage.markServerConfirmed).toHaveBeenCalledWith(operationId, {
+      now: '2026-07-04T10:00:02.000Z',
+    });
+    expect(storage.markFailedRetryable).not.toHaveBeenCalled();
+    expect(storage.markFailedPermanent).not.toHaveBeenCalled();
+  });
+
+  it('AC-HO-5 classifies replay failures and records retryable state without fake success', async () => {
+    const sendingItem = applyHealthOutboxTransition(createHealthOutboxItem({
+      actor_id: actorId,
+      household_id: householdId,
+      operation: 'create',
+      operation_id: operationId,
+      payload: {
+        insert,
+      },
+      puppy_id: puppyId,
+    }, { now }), {
+      now: '2026-07-04T10:00:01.000Z',
+      type: 'mark_sending',
+    });
+    const storage = {
+      claimNextReadyToSend: jest.fn(async () => sendingItem),
+      markFailedPermanent: jest.fn(),
+      markFailedRetryable: jest.fn(async (
+        _operationId: string,
+        options: Readonly<{
+          errorCategory: string;
+          retryAfterAt: string | null;
+          now: string;
+        }>,
+      ): Promise<HealthOutboxStoredItem> => applyHealthOutboxTransition(sendingItem, {
+        errorCategory: options.errorCategory,
+        now: options.now,
+        retryAfterAt: options.retryAfterAt,
+        type: 'mark_failed_retryable',
+      })),
+      markServerConfirmed: jest.fn(),
+    };
+    const repository = {
+      deleteHealthRecord: jest.fn(),
+      insertHealthRecord: jest.fn(async () => {
+        throw { kind: 'network_unavailable' };
+      }),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
+    };
+
+    await expect(processNextHealthOutboxItem({
+      now: '2026-07-04T10:00:02.000Z',
+      repository,
+      storage,
+    })).resolves.toMatchObject({
+      category: 'network_unavailable',
+      outcome: 'failed_retryable',
+      operationId,
+    });
+    expect(storage.markFailedRetryable).toHaveBeenCalledWith(operationId, {
+      errorCategory: 'network_unavailable',
+      now: '2026-07-04T10:00:02.000Z',
+      retryAfterAt: null,
+    });
+    expect(storage.markServerConfirmed).not.toHaveBeenCalled();
   });
 });

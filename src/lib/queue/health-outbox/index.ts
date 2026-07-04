@@ -12,6 +12,7 @@ import type {
   HealthRecordUpdate,
   SupabaseHealthRecordRepository,
 } from '@/lib/supabase/health-records';
+import type { HealthOutboxStorage } from './storage';
 
 export const healthOutboxStates = [
   'pending_local',
@@ -237,6 +238,35 @@ export type HealthOutboxReplayResult =
   | Readonly<{ operation: 'delete' }>
   | Readonly<{ operation: 'restore'; record: HealthRecord }>;
 
+export type HealthOutboxProcessorStorage = Pick<
+  HealthOutboxStorage,
+  | 'claimNextReadyToSend'
+  | 'markFailedPermanent'
+  | 'markFailedRetryable'
+  | 'markServerConfirmed'
+>;
+
+export type HealthOutboxProcessorResult =
+  | Readonly<{ outcome: 'idle' }>
+  | Readonly<{
+    outcome: 'sent';
+    operationId: string;
+    item: HealthOutboxStoredItem;
+    replay: HealthOutboxReplayResult;
+  }>
+  | Readonly<{
+    outcome: 'failed_retryable';
+    operationId: string;
+    category: HealthOutboxErrorCategory;
+    item: HealthOutboxStoredItem;
+  }>
+  | Readonly<{
+    outcome: 'failed_permanent';
+    operationId: string;
+    category: HealthOutboxErrorCategory;
+    item: HealthOutboxStoredItem;
+  }>;
+
 const allowedTransitions = {
   pending_local: ['sending', 'failed_permanent'],
   sending: ['server_confirmed', 'failed_retryable', 'failed_permanent'],
@@ -433,6 +463,70 @@ export async function replayHealthOutboxItem(
   }
 }
 
+export async function processNextHealthOutboxItem(
+  dependencies: Readonly<{
+    now: string;
+    repository: HealthOutboxReplayRepository;
+    storage: HealthOutboxProcessorStorage;
+  }>,
+): Promise<HealthOutboxProcessorResult> {
+  const item = await dependencies.storage.claimNextReadyToSend({
+    now: dependencies.now,
+  });
+
+  if (!item) {
+    return { outcome: 'idle' };
+  }
+
+  try {
+    const replay = await replayHealthOutboxItem(item, {
+      repository: dependencies.repository,
+    });
+    const confirmedItem = await dependencies.storage.markServerConfirmed(item.operation_id, {
+      now: dependencies.now,
+    });
+
+    return {
+      item: confirmedItem,
+      operationId: item.operation_id,
+      outcome: 'sent',
+      replay,
+    };
+  } catch (error) {
+    const decision = normalizeHealthOutboxFailureForPersistence({
+      error,
+      retryCount: item.retry_count,
+    });
+
+    if (decision.decision === 'retryable') {
+      const failedItem = await dependencies.storage.markFailedRetryable(item.operation_id, {
+        errorCategory: decision.category,
+        now: dependencies.now,
+        retryAfterAt: retryAfterAtFromDecision(dependencies.now, decision.retryAfterMs),
+      });
+
+      return {
+        category: decision.category,
+        item: failedItem,
+        operationId: item.operation_id,
+        outcome: 'failed_retryable',
+      };
+    }
+
+    const failedItem = await dependencies.storage.markFailedPermanent(item.operation_id, {
+      errorCategory: decision.category,
+      now: dependencies.now,
+    });
+
+    return {
+      category: decision.category,
+      item: failedItem,
+      operationId: item.operation_id,
+      outcome: 'failed_permanent',
+    };
+  }
+}
+
 function transitionHealthOutboxItem(
   item: HealthOutboxStoredItem,
   nextState: HealthOutboxState,
@@ -495,4 +589,12 @@ function getHealthOutboxRetryAfterMs(error: unknown): number | null {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+function retryAfterAtFromDecision(now: string, retryAfterMs: number | null): string | null {
+  if (retryAfterMs === null) {
+    return null;
+  }
+
+  return new Date(Date.parse(now) + retryAfterMs).toISOString();
 }

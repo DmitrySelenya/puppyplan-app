@@ -6,6 +6,12 @@ import {
 } from '@tanstack/react-query';
 
 import type { HealthRecord } from '@/contracts/supabase';
+import {
+  replayHealthOutboxItem,
+  type HealthOutboxReplayRepository,
+  type HealthOutboxReplayResult,
+  type HealthOutboxStoredItem,
+} from '@/lib/queue/health-outbox';
 import { createSupabaseHealthRecordRepository } from '@/lib/supabase/health-records';
 import type {
   HealthRecordDelete,
@@ -82,6 +88,16 @@ export type HealthRecordRestoreMutationDependencies = Readonly<{
 export type HealthRecordMutationOptions<TDraft = HealthRecordCreateDraft, TResult = HealthRecord> = Readonly<{
   mutationFn(draft: TDraft): Promise<TResult>;
   onSuccess(record: TResult, draft: TDraft): Promise<void>;
+}>;
+
+export type HealthOutboxReplayMutationDependencies = Readonly<{
+  queryClient?: QueryInvalidationClient;
+  repository: HealthOutboxReplayRepository;
+}>;
+
+export type HealthOutboxReplayMutationOptions = Readonly<{
+  mutationFn(item: HealthOutboxStoredItem): Promise<HealthOutboxReplayResult>;
+  onSuccess(result: HealthOutboxReplayResult, item: HealthOutboxStoredItem): Promise<void>;
 }>;
 
 export function useHealthRecordsQuery(
@@ -297,6 +313,24 @@ export function createHealthRecordRestoreMutationOptions(
   };
 }
 
+export function createHealthOutboxReplayOptions(
+  dependencies: HealthOutboxReplayMutationDependencies,
+): HealthOutboxReplayMutationOptions {
+  return {
+    mutationFn: (item) => replayHealthOutboxItem(item, {
+      repository: dependencies.repository,
+    }),
+    onSuccess: async (result, item) => {
+      await invalidateHealthRecordDependents(dependencies.queryClient, {
+        dates: healthOutboxReplayDates(result),
+        householdId: item.household_id,
+        puppyId: item.puppy_id,
+        recordId: healthOutboxReplayRecordId(result),
+      });
+    },
+  };
+}
+
 function optionalTrimmed(value: string): string | null {
   const trimmed = value.trim();
 
@@ -349,4 +383,20 @@ function uniqueHealthRecordDates(dates: readonly (string | undefined)[]): readon
 
 function isHealthRecordDate(date: string | undefined): date is string {
   return date !== undefined && date.length > 0;
+}
+
+function healthOutboxReplayDates(result: HealthOutboxReplayResult): readonly string[] {
+  if (result.operation === 'delete') {
+    return [];
+  }
+
+  return uniqueHealthRecordDates([result.record.scheduled_for ?? undefined]);
+}
+
+function healthOutboxReplayRecordId(result: HealthOutboxReplayResult): string | undefined {
+  if (result.operation === 'delete') {
+    return undefined;
+  }
+
+  return result.record.id;
 }

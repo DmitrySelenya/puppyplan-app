@@ -280,6 +280,11 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
   `npm run test:unit -- --runTestsByPath src/test/quick-log-queue.test.ts`
 - Quick Log result: PASS, 1 suite / 12 tests.
 - Typecheck: `npm run typecheck` passed.
+- Processor follow-up RED:
+  `npm run test:unit -- --runTestsByPath src/test/health-outbox.test.ts` failed as expected with
+  missing `processNextHealthOutboxItem`.
+- Processor GREEN:
+  `npm run test:unit -- --runTestsByPath src/test/health-outbox.test.ts` passed 1 suite / 9 tests.
 
 ---
 
@@ -332,9 +337,20 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
    `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts src/test/health-outbox.test.ts src/test/health-outbox-storage.test.ts`
 
 **Checklist:**
-- [ ] Existing mutation behavior remains compatible.
-- [ ] Replay uses existing typed repository methods.
-- [ ] Errors classify/propagate; no empty catch.
+- [x] Existing mutation behavior remains compatible.
+- [x] Replay uses existing typed repository methods.
+- [x] Errors classify/propagate; no empty catch.
+
+**Evidence - 2026-07-04**
+- RED command:
+  `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts`
+- RED result: failed as expected because `createHealthOutboxReplayOptions` was missing.
+- GREEN command:
+  `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts`
+- GREEN result: PASS, 1 suite / 15 tests.
+- Focused combined gate:
+  `npm run test:unit -- --runTestsByPath src/test/health-outbox.test.ts src/test/health-outbox-storage.test.ts src/test/health-records-query.test.ts src/test/quick-log-queue.test.ts src/test/quick-log-queue-storage.test.ts`
+- Focused combined result: PASS, 5 suites / 60 tests.
 
 ---
 
@@ -382,6 +398,10 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
 
 ## Changelog
 
+- 2026-07-04: Added Health outbox processor and query replay integration. The processor claims one
+  ready row, replays through the typed Health repository, marks success as server-confirmed, and
+  classifies failures into scrubbed retryable/permanent outcomes. Query replay invalidates Health,
+  detail, Today, puppy summary, and sharing projection keys for create replay.
 - 2026-07-04: Added Health outbox storage RED/GREEN coverage and implemented a separate local
   `health_outbox_item` SQLite schema with enqueue/list/get/claim, retry delay gating, and missing
   actor quarantine. Quick Log storage regression remains green.

@@ -6,6 +6,7 @@ import {
 import {
   createHealthRecordMutationOptions,
   createHealthRecordDeleteMutationOptions,
+  createHealthOutboxReplayOptions,
   createHealthRecordRestoreMutationOptions,
   createHealthRecordUpdateMutationOptions,
   toHealthRecordInsert,
@@ -14,6 +15,7 @@ import {
   type HealthRecordDeleteDraft,
   type HealthRecordUpdateDraft,
 } from '@/lib/query/health-records';
+import { createHealthOutboxItem } from '@/lib/queue/health-outbox';
 import { queryKeys } from '@/lib/query/keys';
 
 const puppyId = '00000000-0000-4000-8000-000000003001';
@@ -389,6 +391,91 @@ describe('health record query mutation contract', () => {
 
     await restoreOptions.onSuccess(healthRecord, deleteDraft);
     expectHealthRecordInvalidations(invalidateQueries, ['2026-07-01']);
+  });
+});
+
+describe('health record outbox replay query integration', () => {
+  it('AC-HO-5 replays a queued create and invalidates Health dependents', async () => {
+    const invalidateQueries = jest.fn(async () => undefined);
+    const repository = {
+      deleteHealthRecord: jest.fn(),
+      insertHealthRecord: jest.fn(async () => healthRecord),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
+    };
+    const item = createHealthOutboxItem({
+      actor_id: actorId,
+      household_id: householdId,
+      operation: 'create',
+      operation_id: '00000000-0000-4000-8000-000000004101',
+      payload: {
+        insert: {
+          ...insert,
+          id: recordId,
+        },
+      },
+      puppy_id: puppyId,
+    }, { now });
+    const options = createHealthOutboxReplayOptions({
+      queryClient: { invalidateQueries },
+      repository,
+    });
+
+    await expect(options.mutationFn(item)).resolves.toEqual({
+      operation: 'create',
+      record: healthRecord,
+    });
+    await options.onSuccess({
+      operation: 'create',
+      record: healthRecord,
+    }, item);
+
+    expect(repository.insertHealthRecord).toHaveBeenCalledWith({
+      ...insert,
+      id: recordId,
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.health.records(puppyId),
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.health.record(puppyId, recordId),
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.today.dashboard(householdId, puppyId, '2026-07-02'),
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.puppy.summary(householdId, puppyId),
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.sharing.projectionRoot(householdId, puppyId),
+    });
+  });
+
+  it('AC-HO-5 surfaces replay errors instead of reporting fake success', async () => {
+    const repository = {
+      deleteHealthRecord: jest.fn(),
+      insertHealthRecord: jest.fn(async () => {
+        throw new Error('health_record_insert_failed');
+      }),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
+    };
+    const item = createHealthOutboxItem({
+      actor_id: actorId,
+      household_id: householdId,
+      operation: 'create',
+      operation_id: '00000000-0000-4000-8000-000000004102',
+      payload: {
+        insert: {
+          ...insert,
+          id: recordId,
+        },
+      },
+      puppy_id: puppyId,
+    }, { now });
+    const options = createHealthOutboxReplayOptions({ repository });
+
+    await expect(options.mutationFn(item)).rejects.toThrow('health_record_insert_failed');
   });
 });
 
