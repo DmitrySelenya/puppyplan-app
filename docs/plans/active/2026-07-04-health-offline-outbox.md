@@ -300,10 +300,21 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
    `npm run test:unit -- --runTestsByPath src/test/quick-log-queue-storage.test.ts`
 
 **Checklist:**
-- [ ] Enqueue/list/get/claim behavior covered.
-- [ ] Missing actor legacy row becomes failed-permanent/missing-context and is not returned for send.
-- [ ] Future retry rows are not claimed.
-- [ ] Quick Log storage tests remain green.
+- [x] Enqueue/list/get/claim behavior covered.
+- [x] Missing actor legacy row becomes failed-permanent/missing-context and is not returned for send.
+- [x] Future retry rows are not claimed.
+- [x] Quick Log storage tests remain green.
+
+**Evidence - 2026-07-04**
+- RED command:
+  `npm run test:unit -- --runTestsByPath src/test/health-outbox-storage.test.ts`
+- RED result: failed as expected with 5 failures from `health_outbox_storage_not_implemented`.
+- GREEN command:
+  `npm run test:unit -- --runTestsByPath src/test/health-outbox-storage.test.ts`
+- GREEN result: PASS, 1 suite / 5 tests.
+- Quick Log storage regression:
+  `npm run test:unit -- --runTestsByPath src/test/quick-log-queue-storage.test.ts`
+- Quick Log storage result: PASS, 1 suite / 19 tests.
 
 ---
 
@@ -371,6 +382,9 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
 
 ## Changelog
 
+- 2026-07-04: Added Health outbox storage RED/GREEN coverage and implemented a separate local
+  `health_outbox_item` SQLite schema with enqueue/list/get/claim, retry delay gating, and missing
+  actor quarantine. Quick Log storage regression remains green.
 - 2026-07-04: Added RED/GREEN Health outbox contract, state-machine, scrubbed retry-classification,
   and replay tests. Implemented the first minimal Health outbox module and allowed client-generated
   `health_record.id` on inserts for idempotent offline create replay without a Supabase migration.
