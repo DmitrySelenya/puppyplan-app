@@ -12,7 +12,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
-| Active task plan | [Health Offline Outbox](active/2026-07-04-health-offline-outbox.md) | no-Linear exception | Phase 0 architecture locked; next action is RED health-outbox unit tests, then JS-only Expo SQLite implementation |
+| Active task plan | [Health Offline Outbox](active/2026-07-04-health-offline-outbox.md) | no-Linear exception | Complete locally; final `npm run check` green; no push/PR |
 | Active task plan | [V2 Tombstone RLS Follow-Up](active/2026-07-03-v2-tombstone-rls-follow-up.md) | no-Linear exception | Phase 0 approval gate; next action is exact approval for local RLS migration, then RED pgTAP tombstone tests |
 | Active task plan | [Redesign V2 Intake](active/2026-06-22-redesign-v2-intake.md) | no-Linear exception | Phase 0 locked `docs/design/v2`; next action is Phase 1 foundation sync, then scoped taxonomy propagation only |
 | Active task plan | [Isolated Spec-Driven TDD Workflow](active/2026-06-14-isolated-tdd-workflow.md) | `PUP-25` | Complete locally; deep-review fixes verified in visible review workspace; no push/PR/release action |

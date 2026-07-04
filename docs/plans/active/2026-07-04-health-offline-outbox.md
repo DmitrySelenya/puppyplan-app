@@ -11,7 +11,7 @@ Log queue into a generic outbox.
 
 **Status:** Active.
 
-**Current phase:** Phase 0 - Architecture locked; ready for RED tests.
+**Current phase:** Phase 5 - Complete locally; no push/PR.
 
 **Architecture:** ADR-0019 chooses a separate `src/lib/queue/health-outbox/` local queue using the
 already installed Expo SQLite runtime. Quick Log queue remains ADR-0004 Quick Log-only. Replay uses
@@ -369,19 +369,26 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
 4. Commit final scoped implementation/docs phase.
 
 **Checklist:**
-- [ ] `npm run check` green.
-- [ ] Parent plan Add Record row records Health offline outbox evidence and leaves only native
+- [x] `npm run check` green.
+- [x] Parent plan Add Record row records Health offline outbox evidence and leaves only native
   DatePicker gate if still applicable.
-- [ ] No push/PR.
+- [x] No push/PR.
+
+**Evidence - 2026-07-04**
+- Final gate:
+  `npm run check`
+- Result: PASS. Lint and typecheck passed; Jest passed 84 suites / 685 tests; node tests passed
+  118/118; scaffold, i18n, token drift, privacy scan, and text hygiene passed. Existing non-failing
+  reduced-motion `act(...)` warnings remained in unrelated render suites.
 
 ---
 
 ## Verification Checklist
 
-- [ ] `npm run test:unit -- --runTestsByPath src/test/health-outbox.test.ts`
-- [ ] `npm run test:unit -- --runTestsByPath src/test/health-outbox-storage.test.ts`
-- [ ] `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts src/test/quick-log-queue.test.ts src/test/quick-log-queue-storage.test.ts`
-- [ ] `npm run check`
+- [x] `npm run test:unit -- --runTestsByPath src/test/health-outbox.test.ts`
+- [x] `npm run test:unit -- --runTestsByPath src/test/health-outbox-storage.test.ts`
+- [x] `npm run test:unit -- --runTestsByPath src/test/health-records-query.test.ts src/test/quick-log-queue.test.ts src/test/quick-log-queue-storage.test.ts`
+- [x] `npm run check`
 
 ---
 
@@ -398,6 +405,10 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
 
 ## Changelog
 
+- 2026-07-04: Final verification passed with `npm run check`: lint, typecheck, 84 Jest suites /
+  685 tests, 118 node tests, scaffold/i18n/tokens/privacy/text hygiene. Parent nav-gaps plan now
+  records Health offline outbox as resolved and leaves only the unapproved native DatePicker gate for
+  Add Record full flow.
 - 2026-07-04: Added Health outbox processor and query replay integration. The processor claims one
   ready row, replays through the typed Health repository, marks success as server-confirmed, and
   classifies failures into scrubbed retryable/permanent outcomes. Query replay invalidates Health,

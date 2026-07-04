@@ -248,14 +248,15 @@ from More now that history scroll/filtering lives inside Diary.
       now implemented through the typed health-record repository and query hooks. Durable edit/delete/
       restore data-layer contracts are also implemented; production read-only detail-route wiring is
       implemented at `/pet/health-record/[recordId]`. The authored `DHPP, 12 weeks` template
-      generation is implemented for active puppies with `age_weeks_estimate === 12`; offline queue
-      and native DatePicker remain open. Blocker audit 2026-07-03: the existing SQLite queue is
-      intentionally Quick Log-only and explicitly not a generic offline outbox, while no native
-      DatePicker dependency is installed. Continuing either thread requires an approved architecture
-      or native-dependency slice. Completion audit 2026-07-04: this is an Approval Gate, not a
-      visual-anatomy gap. Required named decisions: (1) approve or reject a Health offline outbox ADR
-      slice; (2) approve or reject adding a real native DatePicker dependency after the native build
-      blocker is addressed.
+      generation is implemented for active puppies with `age_weeks_estimate === 12`. Health offline
+      write architecture is now resolved by ADR-0019 plus the JS-only Health outbox slice: separate
+      local `health_outbox_item` schema, state machine, retry classification, storage claim path,
+      missing-actor quarantine, processor replay, and query invalidation are covered by RED/GREEN
+      tests. Focused evidence: `src/test/health-outbox.test.ts`,
+      `src/test/health-outbox-storage.test.ts`, `src/test/health-records-query.test.ts`, and Quick
+      Log regressions passed together as 5 suites / 60 tests on 2026-07-04. Native DatePicker remains
+      open. Completion audit 2026-07-04: this is still an Approval Gate only for the unapproved real
+      native DatePicker dependency after the native build blocker is addressed.
 - [x] ✅ Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
       Durable edit/delete/restore data-layer contracts are now implemented with source preservation,
@@ -4777,11 +4778,13 @@ remaining pieces require one of the following explicit follow-up decisions befor
   `restoreSyncedQuickLogEvent`. The product history-scroll/fold-in follow-up is also closed by the
   inline `Review history` implementation and Stage 4 screenshot evidence; the remaining stale
   standalone Timeline entry point in More was removed on 2026-07-04.
-- **Pet Health Add Record offline queue:** blocked by architecture scope. `src/lib/queue/README.md`
-  limits the SQLite queue to unsent Quick Log routine events and explicitly excludes a generic
-  offline outbox; Health offline writes need a separate approved outbox design. Completion audit
-  2026-07-04 confirmed this with `docs/architecture/10-quick-log-queue.md` and ADR-0004: the current
-  queue is intentionally not a full outbox.
+- **Pet Health Add Record offline queue:** resolved by ADR-0019 and the JS-only Health outbox slice.
+  `src/lib/queue/README.md` and `docs/architecture/10-quick-log-queue.md` now keep the Quick Log
+  queue routine-event-only while Health uses a separate local outbox under
+  `src/lib/queue/health-outbox/`. RED/GREEN coverage proves Health outbox contracts, state-machine
+  transitions, scrubbed retry classification, local SQLite schema, ready-row claim, retry-delay
+  gating, missing-actor quarantine, processor replay, and query invalidation. Focused combined gate
+  passed 5 suites / 60 tests.
 - **Health Record delete/undo runtime proof:** resolved for this plan's Health scope by
   `20260703181913_fix_tombstone_update_rls.sql`. RED pgTAP failed on current policy for
   owner/caregiver Health soft-delete/restore; GREEN pgTAP passed 104/104 with the migration.
@@ -4803,6 +4806,11 @@ remaining pieces require one of the following explicit follow-up decisions befor
   require Expo Notifications for real local reminder scheduling and permission behavior.
 
 ## Changelog
+- 2026-07-04: Implemented the approved Health offline outbox architecture slice. Added ADR-0019,
+  active implementation plan, separate JS-only `health_outbox_item` SQLite storage, Health outbox
+  contracts/state/retry/replay processor, query replay invalidation, client-generated insert `id`
+  support, and RED/GREEN coverage. The Add Record full-flow row now leaves only the unapproved native
+  DatePicker gate; native DatePicker and `expo-notifications` remain untouched.
 - 2026-07-04: Reclassified the final unchecked top-matrix rows as explicit Approval Gates after
   current-state audit. Health Add Record offline writes require a separate Health offline-outbox ADR
   because the current SQLite queue is Quick Log-only; Puppy Setup / Health Record date fields require
