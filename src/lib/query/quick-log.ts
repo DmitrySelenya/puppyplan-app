@@ -141,7 +141,7 @@ export type QuickLogMutationPortUpdateDetailsRequest = QuickLogMutationPortSynce
 
 export type QuickLogMutationPort = Readonly<{
   deleteLocal: (clientEventId: string) => unknown;
-  deleteSynced: (request: QuickLogMutationPortSyncedDeleteRequest) => unknown;
+  deleteSynced: (request: QuickLogMutationPortSyncedDeleteRequest) => Promise<void>;
   mutate: (request: QuickLogMutationPortRequest) => unknown;
   retry: (
     clientEventId: string,
@@ -584,10 +584,10 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
         });
       },
       deleteSynced: (request) => {
-        void deleteSyncedQuickLogEvent({
+        return deleteSyncedQuickLogEvent({
           ...request,
           queryClient,
-        }).catch(() => undefined);
+        });
       },
       mutate: (request) => {
         requestIdsByVariablesRef.current.set(request.variables, request.requestId);

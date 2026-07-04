@@ -397,11 +397,12 @@ locally with private live-header values redacted:
 
 ## Known-deferred (do NOT pick up from this backlog)
 
-- **Synced-fact delete is functionally broken** (RLS blocks the soft-delete UPDATE, error swallowed
-  by `.catch(() => undefined)` in `src/lib/query/quick-log.ts` `deleteSynced`). Root-caused and
-  tracked separately; requires a **migration** (owner approval) + removing the silent catch. The
-  swipe-to-delete UI is correct and stays. When it IS fixed, the reference contract requires a
-  **snackbar undo** after delete ("Delete: warning + snackbar undo") — implement then, not now.
+- **Synced-fact delete RLS/client blocker resolved 2026-07-04.** Migration
+  `20260703235553_fix_event_log_tombstone_rls.sql` allows owner/caregiver `event_log` tombstone
+  soft-delete/restore while preserving viewer/non-member/anon/trainer-share denial, and the Quick
+  Log synced-delete port no longer swallows rejection with `.catch(() => undefined)`. Remaining
+  follow-up: the reference contract still wants a **snackbar undo** after delete ("Delete: warning +
+  snackbar undo"), which is a separate product/UI slice.
 - **DiaryHeader recap line** ("Since yesterday: …") — primitive supports `recap`, no data source
   yet. Needs a cross-day summary query; separate slice.
 - **"Review history" button + Diary history scroll-back** (atlas 5/5b: DayDivider groups, filter

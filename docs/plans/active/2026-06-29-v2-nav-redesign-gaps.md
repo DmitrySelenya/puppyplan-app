@@ -113,11 +113,13 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       and a date-range control live *inside* Diary; old standalone Events screen is dropped.
 - [ ] 🟡 Item anatomy / edit / delete / undo within Diary history (§2.4.3–2.4.4) — inline
       Clay history, filter chips, FactCard anatomy, edit action, and swipe/accessibility delete
-      are implemented and Stage-4 verified. Durable synced delete + snackbar undo remain deferred
-      with the `event_log` synced-delete blocker in `2026-06-30-v2-screen-polish-backlog.md`.
-      Blocker audit 2026-07-03: this is not a remaining anatomy task. The 2026-07-03 tombstone RLS
-      slice explicitly excluded `event_log` / Diary synced-delete, so Diary remains a separate
-      blocked row and `src/lib/query/quick-log.ts` was not touched.
+      are implemented and Stage-4 verified. Durable synced delete RLS/client failure handling is now
+      implemented by `20260703235553_fix_event_log_tombstone_rls.sql` plus the Quick Log
+      synced-delete port fix. RED pgTAP failed the owner/caregiver `event_log` soft-delete/restore
+      positives while viewer/non-member/anon/trainer-share negatives stayed green; GREEN pgTAP passed
+      116/116 after the migration. Dev smoke returned `event_soft_delete status=200 count=1`,
+      `event_restore status=200 count=1`, and cleanup count 1. Remaining open scope: the reference
+      snackbar undo/history-scroll follow-up is not part of this RLS/client slice.
 
 ### Pet (new tab) — DESIGN.md §4.1 (folded) + §4.4.2
 - [x] ✅ Edit pet profile — Name/Breed/Sex/Current weight/Age (§4.4.2)
@@ -4647,10 +4649,14 @@ The remaining unchecked rows are no longer generic design-fidelity or anatomy ga
 screens have RED/GREEN and Stage 4 evidence where a JS-only route implementation was possible. The
 remaining pieces require one of the following explicit follow-up decisions before code should continue:
 
-- **Diary history durable delete + snackbar undo:** still blocked by the synced-delete follow-up
-  noted in `2026-06-30-v2-screen-polish-backlog.md`. The 2026-07-03 tombstone RLS slice fixed only
-  `health_record` and `reminder`; `event_log` / Diary synced-delete was explicitly excluded and
-  `src/lib/query/quick-log.ts` was not touched.
+- **Diary history durable delete + snackbar undo:** `event_log` tombstone RLS and Quick Log
+  synced-delete error swallowing are resolved by the 2026-07-04 Event Log slice. Migration
+  `20260703235553_fix_event_log_tombstone_rls.sql` passed 116/116 pgTAP assertions after RED failed
+  only owner/caregiver `event_log` tombstone positives; the Quick Log port now returns the
+  synced-delete Promise instead of swallowing rejection with `.catch(() => undefined)`. Supabase Dev
+  authenticated-client smoke returned `event_soft_delete status=200 count=1`,
+  `event_restore status=200 count=1`, and cleanup count 1. Remaining open scope is the product
+  snackbar undo/history-scroll follow-up, not the RLS/client blocker.
 - **Pet Health Add Record offline queue:** blocked by architecture scope. `src/lib/queue/README.md`
   limits the SQLite queue to unsent Quick Log routine events and explicitly excludes a generic
   offline outbox; Health offline writes need a separate approved outbox design.
@@ -4672,6 +4678,13 @@ remaining pieces require one of the following explicit follow-up decisions befor
   handoff and local preference persistence.
 
 ## Changelog
+- 2026-07-04: Implemented the Event Log tombstone RLS/client follow-up. Added pgTAP coverage for
+  owner/caregiver `event_log` soft-delete/restore plus viewer/non-member/anon/trainer-share denials,
+  created migration `20260703235553_fix_event_log_tombstone_rls.sql`, proved GREEN with 116/116
+  assertions, applied the single migration to non-production Supabase Dev for runtime proof, and
+  verified authenticated-client `event_log` soft-delete/restore with synthetic cleanup count 1. Added
+  a focused Quick Log port RED/GREEN test and removed only the synced-delete
+  `.catch(() => undefined)` path so RLS/server errors no longer become fake success.
 - 2026-07-03: Implemented the Health + Reminder tombstone RLS follow-up. Added pgTAP coverage for
   owner/caregiver Health soft-delete/restore and Reminder soft-delete plus viewer/non-member/anon
   denials. Created migration `20260703181913_fix_tombstone_update_rls.sql`, proved GREEN with 104/104
