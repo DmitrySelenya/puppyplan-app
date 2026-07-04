@@ -4,6 +4,7 @@ import {
   TodayScreen,
   createTodayPlanInputFromPuppy,
 } from '@/features/today/screens/TodayScreen';
+import { useSyncedQuickLogDeleteUndo } from '@/features/quick-log/useSyncedQuickLogDeleteUndo';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 import { useQuickLogMutationPort } from '@/lib/query/quick-log';
 
@@ -11,6 +12,7 @@ export default function DiaryRoute() {
   const activeCare = useActiveCareContext();
   const quickLogMutation = useQuickLogMutationPort();
   const mutation = quickLogMutation.mutation;
+  const onDelete = useSyncedQuickLogDeleteUndo(mutation);
   const canWriteQuickLogEvents = mutation !== undefined
     && activeCare.careContext !== null
     && activeCare.careContext.householdRole !== 'viewer';
@@ -20,20 +22,7 @@ export default function DiaryRoute() {
       actions={!canWriteQuickLogEvents
         ? undefined
         : {
-          onDelete: (request) => {
-            if (request.status === 'synced') {
-              mutation.deleteSynced({
-                clientEventId: request.clientEventId,
-                eventType: request.eventType,
-                householdId: request.householdId,
-                puppyId: request.puppyId,
-                todayDate: request.todayDate,
-              });
-              return;
-            }
-
-            mutation.deleteLocal(request.clientEventId);
-          },
+          onDelete,
           onRetry: (clientEventId, recoverySurface, sourceSurface) => {
             mutation.retry(clientEventId, recoverySurface, sourceSurface);
           },

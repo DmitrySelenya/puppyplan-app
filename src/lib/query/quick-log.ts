@@ -148,6 +148,7 @@ export type QuickLogMutationPort = Readonly<{
     recoverySurface: QuickLogRecoverySurface,
     sourceSurface?: QuickLogSourceSurface,
   ) => unknown;
+  restoreSynced: (request: QuickLogMutationPortSyncedDeleteRequest) => Promise<void>;
   updateDetails: (request: QuickLogMutationPortUpdateDetailsRequest) => unknown;
   undo: (request: QuickLogMutationPortUndoRequest) => unknown;
 }>;
@@ -202,7 +203,10 @@ export type QuickLogMutationDependencies = Readonly<{
   queue: QuickLogMutationQueue;
   analytics?: QuickLogAnalyticsClient;
   observability?: ObservabilityReporter;
-  events?: Pick<SupabaseEventLogRepository, 'insertEvent' | 'tombstoneByClientEventId' | 'updatePayloadByClientEventId'>;
+  events?: Pick<
+    SupabaseEventLogRepository,
+    'insertEvent' | 'restoreByClientEventId' | 'tombstoneByClientEventId' | 'updatePayloadByClientEventId'
+  >;
   // Optional only while production Quick Log is gated by the deferred active care context.
   // Production wiring must inject the synchronous session actor instead of using the null default.
   getSessionUserId?: () => string | null;
@@ -602,6 +606,12 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
           sourceSurface,
         });
       },
+      restoreSynced: (request) => {
+        return restoreSyncedQuickLogEvent({
+          ...request,
+          queryClient,
+        });
+      },
       undo: (request) => {
         void removeQuickLogOptimisticEvent({
           clientEventId: request.clientEventId,
@@ -700,6 +710,39 @@ export async function deleteSyncedQuickLogEvent(
   removeCachedEventRow(input.queryClient, {
     timelineRootKey,
     clientEventId: input.clientEventId,
+  });
+  await invalidateAffectedQueries(input.queryClient, {
+    invalidationKeys: getQuickLogInvalidationKeys({
+      eventType: input.eventType,
+      householdId: input.householdId,
+      puppyId: input.puppyId,
+      todayDate: input.todayDate,
+    }),
+    timelineRootKey,
+    includeTimeline: true,
+  });
+}
+
+export async function restoreSyncedQuickLogEvent(
+  input: QuickLogMutationPortSyncedDeleteRequest & Readonly<{
+    events?: Pick<SupabaseEventLogRepository, 'restoreByClientEventId'>;
+    queryClient: QueryClient;
+  }>,
+): Promise<void> {
+  const events = input.events ?? createSupabaseEventLogRepository();
+  const timelineRootKey = queryKeys.events.timelineRoot(input.householdId, input.puppyId);
+  const restoredRow = await events.restoreByClientEventId({
+    clientEventId: input.clientEventId,
+    householdId: input.householdId,
+  });
+
+  upsertCachedEventRow(input.queryClient, {
+    timelineRootKey,
+    calendarDate: restoredRow.occurred_at.slice(0, 10),
+    row: {
+      ...restoredRow,
+      localSync: undefined,
+    },
   });
   await invalidateAffectedQueries(input.queryClient, {
     invalidationKeys: getQuickLogInvalidationKeys({

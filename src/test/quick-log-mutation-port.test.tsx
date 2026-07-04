@@ -37,6 +37,7 @@ jest.mock('@/lib/supabase/events', () => {
     createSupabaseEventLogRepository: () => ({
       insertEvent: jest.fn(),
       listEvents: jest.fn(),
+      restoreByClientEventId: jest.fn(),
       selectExistingEvent: jest.fn(),
       tombstoneByClientEventId: mockTombstoneByClientEventId,
       updatePayloadByClientEventId: jest.fn(),

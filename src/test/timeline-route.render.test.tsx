@@ -1,7 +1,8 @@
-import { render } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
 
 import type { QuickLogEventActionHandlers } from '@/lib/query/quick-log-event-view';
 import { AppProviders } from '@/lib/providers/AppProviders';
+import { i18n } from '@/lib/i18n';
 
 import TimelineRoute from '../../app/(modals)/timeline';
 
@@ -9,6 +10,7 @@ const mockRouterBack = jest.fn();
 const mockRouterCanGoBack = jest.fn();
 const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
+const mockShowSnackbar = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
 let capturedActions: QuickLogEventActionHandlers | undefined;
@@ -46,8 +48,23 @@ jest.mock('@/lib/query/quick-log', () => ({
   useQuickLogMutationPort: () => mockUseQuickLogMutationPort(),
 }));
 
+jest.mock('@/design/primitives/Snackbar', () => {
+  const actual = jest.requireActual<typeof import('@/design/primitives/Snackbar')>(
+    '@/design/primitives/Snackbar',
+  );
+
+  return {
+    ...actual,
+    useSnackbar: () => ({
+      dismissSnackbar: jest.fn(),
+      replaceSnackbar: jest.fn(),
+      showSnackbar: mockShowSnackbar,
+    }),
+  };
+});
+
 describe('TimelineRoute Quick Log recovery wiring', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     capturedActions = undefined;
     capturedCareContext = undefined;
     capturedOnClose = undefined;
@@ -56,6 +73,8 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
     mockRouterCanGoBack.mockReturnValue(true);
     mockRouterPush.mockClear();
     mockRouterReplace.mockClear();
+    mockShowSnackbar.mockReset();
+    await i18n.changeLanguage('en');
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
         authState: 'authenticated',
@@ -77,6 +96,7 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
       deleteSynced: jest.fn(),
       mutate: jest.fn(),
       retry: jest.fn(),
+      restoreSynced: jest.fn(),
       updateDetails: jest.fn(),
       undo: jest.fn(),
     };
@@ -132,12 +152,13 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
     });
   });
 
-  it('routes synced Timeline delete through the server tombstone path', () => {
+  it('routes synced Timeline delete through the server tombstone path', async () => {
     const mutation = {
       deleteLocal: jest.fn(),
-      deleteSynced: jest.fn(),
+      deleteSynced: jest.fn(async () => undefined),
       mutate: jest.fn(),
       retry: jest.fn(),
+      restoreSynced: jest.fn(async () => undefined),
       updateDetails: jest.fn(),
       undo: jest.fn(),
     };
@@ -153,14 +174,14 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
       </AppProviders>,
     );
 
-    capturedActions?.onDelete?.({
+    await Promise.resolve(capturedActions?.onDelete?.({
       clientEventId: 'evt_00000000-0000-4000-8000-000000007301',
       eventType: 'feeding',
       householdId: '00000000-0000-4000-8000-000000007201',
       puppyId: '00000000-0000-4000-8000-000000007202',
       status: 'synced',
       todayDate: '2026-06-09',
-    });
+    }));
 
     expect(mutation.deleteSynced).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000007301',
@@ -170,6 +191,27 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
       todayDate: '2026-06-09',
     });
     expect(mutation.deleteLocal).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      durationMs: 5000,
+      hapticEvent: 'warning',
+      message: i18n.t('timeline.delete-snackbar'),
+      primaryAction: expect.objectContaining({
+        label: i18n.t('quick-log.snackbar.undo'),
+      }),
+      tone: 'warning',
+    })));
+
+    const snackbarMessage = mockShowSnackbar.mock.calls[0]?.[0];
+    snackbarMessage.primaryAction.onPress();
+
+    await waitFor(() => expect(mutation.restoreSynced).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007301',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007201',
+      puppyId: '00000000-0000-4000-8000-000000007202',
+      todayDate: '2026-06-09',
+    }));
   });
 
   it('routes synced Timeline edit to the details modal with validated row context', () => {
@@ -178,6 +220,7 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
       deleteSynced: jest.fn(),
       mutate: jest.fn(),
       retry: jest.fn(),
+      restoreSynced: jest.fn(),
       updateDetails: jest.fn(),
       undo: jest.fn(),
     };

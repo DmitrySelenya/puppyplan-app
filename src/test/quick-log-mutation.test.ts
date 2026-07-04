@@ -5,6 +5,7 @@ import {
   deleteSyncedQuickLogEvent,
   removeQuickLogOptimisticEvent,
   replayQuickLogQueueItemToCache,
+  restoreSyncedQuickLogEvent,
   retryLocalQuickLogEvent,
   saveQuickLogDetailsDraft,
   type QuickLogCachedEventRow,
@@ -745,6 +746,47 @@ describe('Quick Log mutation lifecycle', () => {
       },
     ]);
     expect(readTimelineRows(queryClient)).toEqual([]);
+    expect(invalidations).toEqual([
+      { queryKey: queryKeys.today.dashboard(householdId, puppyId, todayDate), exact: true },
+      { queryKey: queryKeys.events.timelineRoot(householdId, puppyId), exact: false },
+      { queryKey: queryKeys.puppy.summary(householdId, puppyId), exact: true },
+      { queryKey: queryKeys.events.duplicateWarningSource(householdId, puppyId, 'feeding'), exact: true },
+    ]);
+  });
+
+  it('AC-DIARY-DELETE-UNDO-3 restores synced server rows through the typed event repository and invalidates Diary history', async () => {
+    const queryClient = createTestQueryClient();
+    const events = new FakeQuickLogEventsRepository();
+    const invalidations: unknown[] = [];
+
+    jest.spyOn(queryClient, 'invalidateQueries').mockImplementation(async (filters) => {
+      invalidations.push(filters);
+    });
+    queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), []);
+
+    await restoreSyncedQuickLogEvent({
+      clientEventId,
+      eventType: 'feeding',
+      events,
+      householdId,
+      puppyId,
+      queryClient,
+      todayDate,
+    });
+
+    expect(events.restores).toEqual([
+      {
+        clientEventId,
+        householdId,
+      },
+    ]);
+    expect(readTimelineRows(queryClient)).toEqual([
+      {
+        ...serverRow(),
+        localSync: undefined,
+        updated_at: now,
+      },
+    ]);
     expect(invalidations).toEqual([
       { queryKey: queryKeys.today.dashboard(householdId, puppyId, todayDate), exact: true },
       { queryKey: queryKeys.events.timelineRoot(householdId, puppyId), exact: false },
@@ -1539,6 +1581,10 @@ class FakeQuickLogEventsRepository {
     eventType: string;
     payload: Record<string, JsonValue>;
   }[] = [];
+  public readonly restores: {
+    householdId: string;
+    clientEventId: string;
+  }[] = [];
   public insertError: unknown = null;
   public insertGate: Promise<void> | null = null;
   public tombstoneError: unknown = null;
@@ -1579,6 +1625,19 @@ class FakeQuickLogEventsRepository {
     return {
       ...serverRow(),
       deleted_at: input.deletedAt,
+    };
+  }
+
+  public async restoreByClientEventId(input: {
+    householdId: string;
+    clientEventId: string;
+  }): Promise<EventLogRecord> {
+    this.restores.push(input);
+
+    return {
+      ...serverRow(),
+      deleted_at: null,
+      updated_at: now,
     };
   }
 

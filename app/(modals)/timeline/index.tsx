@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 
+import { useSyncedQuickLogDeleteUndo } from '@/features/quick-log/useSyncedQuickLogDeleteUndo';
 import { TimelineScreen } from '@/features/timeline/screens/TimelineScreen';
 import { closeModalRoute } from '@/lib/navigation/modal-close';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
@@ -10,6 +11,7 @@ export default function TimelineRoute() {
   const activeCare = useActiveCareContext();
   const quickLogMutation = useQuickLogMutationPort();
   const mutation = quickLogMutation.mutation;
+  const onDelete = useSyncedQuickLogDeleteUndo(mutation);
   const canWriteQuickLogEvents = mutation !== undefined
     && activeCare.careContext !== null
     && activeCare.careContext.householdRole !== 'viewer';
@@ -19,20 +21,7 @@ export default function TimelineRoute() {
       actions={!canWriteQuickLogEvents
         ? undefined
         : {
-          onDelete: (request) => {
-            if (request.status === 'synced') {
-              mutation.deleteSynced({
-                clientEventId: request.clientEventId,
-                eventType: request.eventType,
-                householdId: request.householdId,
-                puppyId: request.puppyId,
-                todayDate: request.todayDate,
-              });
-              return;
-            }
-
-            mutation.deleteLocal(request.clientEventId);
-          },
+          onDelete,
           onEdit: (request) => {
             router.push(createQuickLogDetailsHref(request));
           },

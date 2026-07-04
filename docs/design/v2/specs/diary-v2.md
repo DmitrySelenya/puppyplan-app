@@ -84,4 +84,5 @@ default/populated (`4`), past (`5`), history (`5b`), cold-start (`6`), empty-wit
 - Sage ramp: DONE (added to `design-tokens.json`).
 - Icon coverage for `AppIcon` (walk/ball/more.h/bell.slash) resolved in Stage 1.
 - Radius-18 / gap-10 / chip-13 token reconciliation resolved in Stage 1 (introduce tokens or record named deviations).
+- Synced logged-fact delete uses warning feedback plus the shared global Snackbar primitive with a 5-second Undo action. The action restores the tombstoned `event_log` row through the typed Quick Log query boundary; failures replace/route to existing calm error feedback rather than leaving a fake success.
 - Evidence root (Stage 4): `output/design-fidelity/v2/diary/`.

@@ -118,8 +118,62 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       synced-delete port fix. RED pgTAP failed the owner/caregiver `event_log` soft-delete/restore
       positives while viewer/non-member/anon/trainer-share negatives stayed green; GREEN pgTAP passed
       116/116 after the migration. Dev smoke returned `event_soft_delete status=200 count=1`,
-      `event_restore status=200 count=1`, and cleanup count 1. Remaining open scope: the reference
-      snackbar undo/history-scroll follow-up is not part of this RLS/client slice.
+      `event_restore status=200 count=1`, and cleanup count 1. Synced delete now shows the shared
+      warning Snackbar after durable success and restores through a typed Quick Log restore path.
+      Remaining open scope: the reference history-scroll/fold-in follow-up.
+
+#### 4.1 Diary synced-delete snackbar undo follow-up
+
+**2026-07-04 next implementation slice:** route-level synced logged-fact delete undo after the
+`event_log` RLS/client blocker was resolved.
+
+**Stage 0 lock**
+- Source canon: `docs/design/v2/specs/diary-v2.md` (`4-diary-populated`, `5b-diary-history`),
+  `docs/design/v2/reference/diary-create.screens.jsx` Feedback + motion contract
+  "Delete: warning + snackbar undo", and `docs/design/v1/specs/03-diary-route.md` item
+  edit/delete/undo row.
+- Device/screenshot target: iPhone SE 3 compact simulator. Existing Diary history / Quick Log
+  snackbar Stage 4 evidence remains valid for anatomy; this slice needs focused route/behavior
+  evidence and a native snackbar capture if runtime seeding is available.
+- Allowed deviations: no new snackbar visual primitive; use the existing global
+  `src/design/primitives/Snackbar` warning tone, 5-second duration, and existing localized Undo
+  label. No new schema, migration, native module, or trainer/share mutation path.
+
+**Acceptance Criteria**
+- AC-DIARY-DELETE-UNDO-1: a successful synced logged-fact delete waits for the typed
+  `deleteSynced` Promise before showing feedback; failed delete must not show an undo snackbar.
+- AC-DIARY-DELETE-UNDO-2: success shows the shared warning Snackbar for 5 seconds with localized
+  delete copy, localized Undo action, warning haptic metadata, and polite Snackbar anatomy.
+- AC-DIARY-DELETE-UNDO-3: pressing Undo calls a typed Quick Log restore path with the same
+  `clientEventId`, `eventType`, `householdId`, `puppyId`, and `todayDate`, then invalidates the same
+  Diary/timeline query families as synced delete.
+- AC-DIARY-DELETE-UNDO-4: restore failure is surfaced through existing calm error feedback and is
+  not converted into fake success.
+- AC-DIARY-DELETE-UNDO-5: viewer care contexts still receive no write handlers; trainer/share
+  projections do not get a base `event_log` mutation path.
+
+**Out of scope**
+- History scroll positioning, new filter UI, event edit details changes, offline queue behavior,
+  new RLS migrations, and native DatePicker work.
+
+**TDD evidence — 2026-07-04**
+- Mode: lightweight; reduced assurance because RED/GREEN/REFACTOR were not context-isolated.
+- RED command:
+  `npm run test:unit -- --runTestsByPath src/test/today-route.render.test.tsx src/test/timeline-route.render.test.tsx src/test/quick-log-mutation.test.ts src/test/supabase-events.test.ts`
+  failed as expected: Diary/Timeline showed zero snackbar calls, `restoreSyncedQuickLogEvent` was
+  not exported, and `repository.restoreByClientEventId` did not exist.
+- GREEN command:
+  `npm run test:unit -- --runTestsByPath src/test/today-route.render.test.tsx src/test/timeline-route.render.test.tsx src/test/quick-log-mutation.test.ts src/test/supabase-events.test.ts`
+  passed: 4 suites, 61 tests.
+- Typecheck: `npm run typecheck` passed.
+- Supabase guardrails: `npm run supabase:guardrails` passed: 30/30 static SQL/RLS/typegen checks.
+- Final gate: `npm run check` passed: lint, typecheck, 82 Jest suites / 669 tests, 118 node tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing reduced-motion `act(...)`
+  warnings remained unchanged.
+- Stage 4: no new snackbar visual primitive or layout anatomy was introduced. This slice reuses the
+  already Stage-4-verified global Snackbar host and Diary/Timeline delete action anatomy; runtime
+  route evidence is focused behavior/unit coverage. A live native snackbar capture remains optional
+  if a seeded synced Diary row is already available in the SE simulator.
 
 ### Pet (new tab) — DESIGN.md §4.1 (folded) + §4.4.2
 - [x] ✅ Edit pet profile — Name/Breed/Sex/Current weight/Age (§4.4.2)
@@ -4655,8 +4709,10 @@ remaining pieces require one of the following explicit follow-up decisions befor
   only owner/caregiver `event_log` tombstone positives; the Quick Log port now returns the
   synced-delete Promise instead of swallowing rejection with `.catch(() => undefined)`. Supabase Dev
   authenticated-client smoke returned `event_soft_delete status=200 count=1`,
-  `event_restore status=200 count=1`, and cleanup count 1. Remaining open scope is the product
-  snackbar undo/history-scroll follow-up, not the RLS/client blocker.
+  `event_restore status=200 count=1`, and cleanup count 1. The follow-up route slice now waits for
+  successful synced delete, shows the shared warning Snackbar with Undo, and restores via
+  `restoreSyncedQuickLogEvent`. Remaining open scope is the product history-scroll/fold-in
+  follow-up, not the RLS/client/snackbar blocker.
 - **Pet Health Add Record offline queue:** blocked by architecture scope. `src/lib/queue/README.md`
   limits the SQLite queue to unsent Quick Log routine events and explicitly excludes a generic
   offline outbox; Health offline writes need a separate approved outbox design.
@@ -4678,6 +4734,12 @@ remaining pieces require one of the following explicit follow-up decisions befor
   handoff and local preference persistence.
 
 ## Changelog
+- 2026-07-04: Implemented the Diary/Timeline synced-delete snackbar undo follow-up. Added RED/GREEN
+  route coverage proving successful synced delete waits for the Promise before showing the shared
+  warning Snackbar, and pressing Undo calls the typed restore path. Added `event_log` restore wrapper
+  coverage and query coverage that restored rows are upserted back into timeline cache while
+  invalidating the same Diary/timeline query families as delete. Focused GREEN: 4 suites / 61 tests;
+  `npm run typecheck` passed.
 - 2026-07-04: Implemented the Event Log tombstone RLS/client follow-up. Added pgTAP coverage for
   owner/caregiver `event_log` soft-delete/restore plus viewer/non-member/anon/trainer-share denials,
   created migration `20260703235553_fix_event_log_tombstone_rls.sql`, proved GREEN with 116/116

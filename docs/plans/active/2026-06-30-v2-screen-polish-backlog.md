@@ -397,12 +397,12 @@ locally with private live-header values redacted:
 
 ## Known-deferred (do NOT pick up from this backlog)
 
-- **Synced-fact delete RLS/client blocker resolved 2026-07-04.** Migration
+- **Synced-fact delete RLS/client/snackbar blocker resolved 2026-07-04.** Migration
   `20260703235553_fix_event_log_tombstone_rls.sql` allows owner/caregiver `event_log` tombstone
   soft-delete/restore while preserving viewer/non-member/anon/trainer-share denial, and the Quick
-  Log synced-delete port no longer swallows rejection with `.catch(() => undefined)`. Remaining
-  follow-up: the reference contract still wants a **snackbar undo** after delete ("Delete: warning +
-  snackbar undo"), which is a separate product/UI slice.
+  Log synced-delete port no longer swallows rejection with `.catch(() => undefined)`. The
+  Diary/Timeline route slice now shows the shared warning Snackbar only after successful durable
+  delete, and Undo restores through the typed Quick Log restore path.
 - **DiaryHeader recap line** ("Since yesterday: …") — primitive supports `recap`, no data source
   yet. Needs a cross-day summary query; separate slice.
 - **"Review history" button + Diary history scroll-back** (atlas 5/5b: DayDivider groups, filter
