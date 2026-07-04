@@ -26,7 +26,9 @@ design-fidelity pipeline (lock artboards → primitives → anatomy tests → at
 
 **Confidence:** freeze coverage is derived from the embed's own authored markers
 (`// PuppyPlan …`, numbered `// N.N …`, `§x.y` refs) + extracted `title`/`subtitle` strings —
-high confidence for *what exists*. Items marked 🟡 need a visual confirm of completeness.
+high confidence for *what exists*. Items marked 🟡 need a visual confirm of completeness; items
+marked ⛔ are not blocked on visual interpretation and require a named architecture/native-dependency
+approval before code.
 
 ### Freeze authored scope (from embed source comments)
 - `// PuppyPlan - Batch 2 Diary / Create surfaces.`
@@ -60,6 +62,8 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 - ➕ **net-new** — required by the new model, absent on both boards
 - 🚫 explicitly **deferred / out-of-batch** by the freeze itself
 - ❓ **open** — scope undecided pending a source check (named inline)
+- ⛔ **approval gate** — visual/JS slices are complete; remaining work requires named
+  architecture/native-dependency approval before implementation
 
 ## 4. Coverage matrix
 
@@ -111,7 +115,7 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
 ### Timeline / history — DESIGN.md §2.4
 - [x] ✅ **Decision: fold history into Diary** (no standalone Events tab). Filters (per-tracker)
       and a date-range control live *inside* Diary; old standalone Events screen is dropped.
-- [ ] 🟡 Item anatomy / edit / delete / undo within Diary history (§2.4.3–2.4.4) — inline
+- [x] ✅ Item anatomy / edit / delete / undo within Diary history (§2.4.3–2.4.4) — inline
       Clay history, filter chips, FactCard anatomy, edit action, and swipe/accessibility delete
       are implemented and Stage-4 verified. Durable synced delete RLS/client failure handling is now
       implemented by `20260703235553_fix_event_log_tombstone_rls.sql` plus the Quick Log
@@ -120,7 +124,9 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       116/116 after the migration. Dev smoke returned `event_soft_delete status=200 count=1`,
       `event_restore status=200 count=1`, and cleanup count 1. Synced delete now shows the shared
       warning Snackbar after durable success and restores through a typed Quick Log restore path.
-      Remaining open scope: the reference history-scroll/fold-in follow-up.
+      History-scroll/fold-in is implemented by the inline `Review history` slice with Stage 4
+      evidence at `output/v2-nav-gaps-stage4/diary-history-inline-stage4.jpg`; the More tab no
+      longer exposes the legacy Timeline entry point.
 
 #### 4.1 Diary synced-delete snackbar undo follow-up
 
@@ -175,6 +181,54 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
   route evidence is focused behavior/unit coverage. A live native snackbar capture remains optional
   if a seeded synced Diary row is already available in the SE simulator.
 
+#### 4.2 More legacy Timeline entry removal
+
+**2026-07-04 next implementation slice:** remove the remaining user-facing `Timeline` entry point
+from More now that history scroll/filtering lives inside Diary.
+
+**Stage 0 lock**
+- Source canon: `DESIGN.md` V2 override ("Standalone `Timeline` removed: history lives inside
+  `Diary`"), §5 decision 1 in this plan, `docs/design/v2/reference/diary-create.screens.jsx`
+  `ScreenDiaryHistory` note "Scrolled history state inside Diary. No Timeline route.", and
+  `docs/design/v1/specs/06-more-privacy-paywall.md` More anatomy, which lists reminders,
+  notifications, privacy/account, support, paywall, and sharing but does not include Timeline as a
+  More row.
+- Allowed deviations: keep the legacy `/timeline` modal route and `TimelineScreen` tests as fallback
+  infrastructure for now; this slice removes the production More entry point only.
+- Device/screenshot target: existing More Stage 4 default-shell screenshot remains valid for row
+  anatomy; this slice is a navigation/IA cleanup proven by structural render tests.
+
+**Acceptance Criteria**
+- AC-MORE-NO-TIMELINE-1: the production More hub does not render a `Timeline`/Events row under
+  Records and notifications.
+- AC-MORE-NO-TIMELINE-2: `app/(tabs)/more/index.tsx` no longer wires an `openTimeline` action to
+  `router.push('/timeline')`.
+- AC-MORE-NO-TIMELINE-3: Reminders and Notifications remain reachable from the same Records and
+  notifications section, preserving existing touch-target/list-row anatomy.
+- AC-MORE-NO-TIMELINE-4: no i18n strings are removed in this slice; legacy Timeline strings remain
+  available while the fallback modal route still exists.
+
+**Out of scope**
+- Deleting `app/(modals)/timeline`, removing `TimelineScreen`, changing Diary inline history
+  implementation, or changing share/export history policy.
+
+**TDD evidence — 2026-07-04**
+- Mode: lightweight; reduced assurance because RED/GREEN/REFACTOR were not context-isolated.
+- RED command: `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx`
+  failed as expected because the More hub still rendered the `Timeline` row under Records and
+  notifications (`Expected: null; Received: <View ...>`).
+- GREEN command:
+  `npm run test:unit -- --runTestsByPath src/test/more-settings.render.test.tsx src/test/app-shell.render.test.tsx`
+  passed: 2 suites / 50 tests.
+- Typecheck: `npm run typecheck` passed.
+- Final gate: `npm run check` passed: lint, typecheck, 82 Jest suites / 669 tests, 118 node tests,
+  scaffold/i18n/tokens/privacy/text hygiene. Existing non-failing reduced-motion `act(...)`
+  warnings remained unchanged.
+- Stage 4: no new UI anatomy, visual primitive, color, typography, or motion state was introduced.
+  This is an IA cleanup that removes a stale entry point while preserving the existing More list-row
+  anatomy for Reminders and Notifications; structural render tests are the route evidence. Existing
+  legacy `/timeline` modal route remains as fallback infrastructure only.
+
 ### Pet (new tab) — DESIGN.md §4.1 (folded) + §4.4.2
 - [x] ✅ Edit pet profile — Name/Breed/Sex/Current weight/Age (§4.4.2)
 - [x] ✅ Lightweight Health in Pet — Vaccinations, Vet visits ("No visit recorded yet"), Add record affordance
@@ -187,7 +241,7 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       `docs/architecture/01-principles-and-scope.md` (Deferred list). MVP = single current pet.
 - [x] 🚫 Standalone Health tab anatomy (§4.1.1) — out-of-batch (folded into Pet)
 - [x] 🚫 Health charts / milestone surfaces — explicitly out-of-batch
-- [ ] 🟡 Add Record full flow (§4.1.3) — native route now opens from Pet, shows record-type
+- [ ] ⛔ Add Record full flow (§4.1.3) — native route now opens from Pet, shows record-type
       chooser, empty form anatomy, and deterministic loading / pending-write / error / offline-read /
       permission-denied state templates. Stage 4 SE native screenshot comparison PASS recorded
       2026-07-02 for chooser + empty form + the new state templates. Durable create/list refresh is
@@ -198,7 +252,10 @@ Bottom nav changed **Today / Health / More** → **Diary · Pet · More** + a ra
       and native DatePicker remain open. Blocker audit 2026-07-03: the existing SQLite queue is
       intentionally Quick Log-only and explicitly not a generic offline outbox, while no native
       DatePicker dependency is installed. Continuing either thread requires an approved architecture
-      or native-dependency slice.
+      or native-dependency slice. Completion audit 2026-07-04: this is an Approval Gate, not a
+      visual-anatomy gap. Required named decisions: (1) approve or reject a Health offline outbox ADR
+      slice; (2) approve or reject adding a real native DatePicker dependency after the native build
+      blocker is addressed.
 - [x] ✅ Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
       Durable edit/delete/restore data-layer contracts are now implemented with source preservation,
@@ -715,22 +772,28 @@ GREEN / regression evidence:
       remains open.
 
 ### Onboarding / intake — DESIGN.md §2.1
-- [ ] 🟡 First-run variants — visual slices are implemented across Welcome, Puppy Setup, Tracker
+- [ ] ⛔ First-run variants — visual slices are implemented across Welcome, Puppy Setup, Tracker
       Selection, Plan Reveal, First Log, and post-value account/notification prompt previews.
       The post-first-value Quick Log source-marker scheduler and 48-hour prompt cadence are now
       implemented; permission probing, native OS permission request, and native DatePicker
       integration remain explicitly deferred/partial under the rows below. Blocker audit 2026-07-03:
       `expo-notifications` is not installed, so real permission probing/request would add a new
-      native dependency; native DatePicker has the same dependency gate.
+      native dependency; native DatePicker has the same dependency gate. Completion audit 2026-07-04:
+      this is an Approval Gate, not a missing visual slice. Required named decisions: (1) approve or
+      reject an `expo-notifications` native-module slice for permission probing/request, token
+      registration, and scheduling; (2) approve or reject the native DatePicker dependency once the
+      native build path is viable.
 - [x] ✅ Welcome (§2.1.1) — native initial `/onboarding` anatomy implemented: decorative warm
       illustration frame, locked H1/subtitle, primary setup CTA, and secondary sign-in action.
       Stage 4 native SE screenshot comparison passed 2026-07-02.
-- [ ] 🟡 Puppy Setup (§2.1.2) — native profile-step chrome/stepper slice implemented: visible
+- [ ] ⛔ Puppy Setup (§2.1.2) — native profile-step chrome/stepper slice implemented: visible
       back/step chrome, age section label, locked age-stepper anatomy, birth-date date-zone wrapper,
       and disabled-until-name CTA behavior. Stage 4 native SE screenshot comparison passed
       2026-07-02; real platform DatePicker replacement remains open. Blocker audit 2026-07-03:
       no native DatePicker package is present, and adding one is a native-dependency decision while
-      the local native rebuild path is blocked.
+      the local native rebuild path is blocked. Completion audit 2026-07-04: this is an Approval
+      Gate, not a remaining Clay anatomy gap; do not replace it with a bespoke JS date picker unless
+      the design spec is explicitly changed.
 - [x] ✅ Age Hint (§2.1.3) — native profile-step inline hint implemented: info icon, status info tint,
       localized age-range copy, and accessible "Hint. …" label before tracker selection. Stage 4
       native SE screenshot comparison passed 2026-07-02.
@@ -915,7 +978,7 @@ Implementation notes:
 2. [x] Create initial Stage-0 lock package: `docs/design/v1/specs/v2-redesign-lock-package.md` plus
    section spec cards for the 88-board Codex Design handoff. Before native code, split any section card
    into route-specific cards when the implementation needs tighter assertions.
-3. [ ] For each ❌/➕/🟡 item kept in scope during native implementation: confirm route-specific artboard
+3. [ ] For each ❌/➕/🟡/⛔ item kept in scope during native implementation: confirm route-specific artboard
    IDs + spec card, per `docs/agents/design-fidelity-pipeline.md`, before code.
 4. [ ] Sequence by tab: **Diary states → Quick Log states → Pet/Health → Reminders forms → Onboarding
    (+ skippable paywall) → More sub-screens → Sharing → paywall + soft-lock states → Shareable Cards**,
@@ -4703,7 +4766,7 @@ The remaining unchecked rows are no longer generic design-fidelity or anatomy ga
 screens have RED/GREEN and Stage 4 evidence where a JS-only route implementation was possible. The
 remaining pieces require one of the following explicit follow-up decisions before code should continue:
 
-- **Diary history durable delete + snackbar undo:** `event_log` tombstone RLS and Quick Log
+- **Diary history durable delete + snackbar undo:** resolved. `event_log` tombstone RLS and Quick Log
   synced-delete error swallowing are resolved by the 2026-07-04 Event Log slice. Migration
   `20260703235553_fix_event_log_tombstone_rls.sql` passed 116/116 pgTAP assertions after RED failed
   only owner/caregiver `event_log` tombstone positives; the Quick Log port now returns the
@@ -4711,11 +4774,14 @@ remaining pieces require one of the following explicit follow-up decisions befor
   authenticated-client smoke returned `event_soft_delete status=200 count=1`,
   `event_restore status=200 count=1`, and cleanup count 1. The follow-up route slice now waits for
   successful synced delete, shows the shared warning Snackbar with Undo, and restores via
-  `restoreSyncedQuickLogEvent`. Remaining open scope is the product history-scroll/fold-in
-  follow-up, not the RLS/client/snackbar blocker.
+  `restoreSyncedQuickLogEvent`. The product history-scroll/fold-in follow-up is also closed by the
+  inline `Review history` implementation and Stage 4 screenshot evidence; the remaining stale
+  standalone Timeline entry point in More was removed on 2026-07-04.
 - **Pet Health Add Record offline queue:** blocked by architecture scope. `src/lib/queue/README.md`
   limits the SQLite queue to unsent Quick Log routine events and explicitly excludes a generic
-  offline outbox; Health offline writes need a separate approved outbox design.
+  offline outbox; Health offline writes need a separate approved outbox design. Completion audit
+  2026-07-04 confirmed this with `docs/architecture/10-quick-log-queue.md` and ADR-0004: the current
+  queue is intentionally not a full outbox.
 - **Health Record delete/undo runtime proof:** resolved for this plan's Health scope by
   `20260703181913_fix_tombstone_update_rls.sql`. RED pgTAP failed on current policy for
   owner/caregiver Health soft-delete/restore; GREEN pgTAP passed 104/104 with the migration.
@@ -4727,13 +4793,27 @@ remaining pieces require one of the following explicit follow-up decisions befor
   `reminder_soft_delete status=200 count=1`, then synthetic cleanup returned count 1.
 - **Puppy Setup / Health Record native DatePicker:** blocked by native dependency scope. No native
   DatePicker package is installed; adding one is a new native dependency while native rebuilds are
-  currently blocked by the known `expo-sqlite` / Xcode 26.2 issue.
+  currently blocked by the known `expo-sqlite` / Xcode 26.2 issue. Completion audit 2026-07-04
+  confirmed `package.json` has no DateTimePicker dependency.
 - **First-run permission probing/request:** blocked by native dependency scope. `expo-notifications`
   is not installed; real permission probing/request, token registration, and scheduling require an
   approved notification native-module slice. Current implemented work is limited to in-app settings
-  handoff and local preference persistence.
+  handoff and local preference persistence. Completion audit 2026-07-04 confirmed `package.json`
+  has no `expo-notifications` dependency, while `docs/architecture/11-notifications.md` and ADR-0012
+  require Expo Notifications for real local reminder scheduling and permission behavior.
 
 ## Changelog
+- 2026-07-04: Reclassified the final unchecked top-matrix rows as explicit Approval Gates after
+  current-state audit. Health Add Record offline writes require a separate Health offline-outbox ADR
+  because the current SQLite queue is Quick Log-only; Puppy Setup / Health Record date fields require
+  a real native DatePicker dependency; First-run notification permission probing/request requires an
+  `expo-notifications` native-module slice. No bespoke JS picker, generic outbox, or notification
+  dependency was added in this pass.
+- 2026-07-04: Removed the legacy user-facing `Timeline` entry point from the More tab now that
+  history lives inside Diary. More no longer renders the Timeline row under Records and
+  notifications, `app/(tabs)/more/index.tsx` no longer routes to `/timeline`, and Reminders /
+  Notifications remain reachable. Legacy `/timeline` modal infrastructure and i18n strings remain
+  intentionally in place as fallback/out-of-scope.
 - 2026-07-04: Implemented the Diary/Timeline synced-delete snackbar undo follow-up. Added RED/GREEN
   route coverage proving successful synced delete waits for the Promise before showing the shared
   warning Snackbar, and pressing Undo calls the typed restore path. Added `event_log` restore wrapper

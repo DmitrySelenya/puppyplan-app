@@ -182,7 +182,6 @@ describe('More settings entries', () => {
             openPrivacy={jest.fn()}
             openReminders={jest.fn()}
             openSitterMode={jest.fn()}
-            openTimeline={jest.fn()}
             puppy={puppy}
           />
         </AuthProvider>
@@ -203,7 +202,7 @@ describe('More settings entries', () => {
     expect(screen.getByRole('button', { name: i18n.t('more.rows.trainer-sitter') })).toBeTruthy();
 
     expect(screen.getByText(i18n.t('more.sections.records'))).toBeTruthy();
-    expect(screen.getByRole('button', { name: i18n.t('more.rows.timeline') })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: i18n.t('more.rows.timeline') })).toBeNull();
     expect(screen.getByRole('button', { name: i18n.t('more.rows.reminders') })).toBeTruthy();
     expect(screen.getByText(i18n.t('more.rows.notifications'))).toBeTruthy();
 
@@ -252,7 +251,6 @@ describe('More settings entries', () => {
             openReminders={openReminders}
             openShareableCards={openShareableCards}
             openSitterMode={openSitterMode}
-            openTimeline={jest.fn()}
           />
         </AuthProvider>
       </AppProviders>,
@@ -322,7 +320,6 @@ describe('More settings entries', () => {
           <MoreScreen
             canManagePuppySettings
             openPetSettings={openPetSettings}
-            openTimeline={jest.fn()}
             puppy={puppy}
           />
         </AuthProvider>
@@ -343,7 +340,6 @@ describe('More settings entries', () => {
           <MoreScreen
             canManagePuppySettings
             openPetSettings={jest.fn()}
-            openTimeline={jest.fn()}
             puppy={{
               ...puppy,
               age_weeks_estimate: null,
@@ -365,7 +361,6 @@ describe('More settings entries', () => {
           <MoreScreen
             canManagePuppySettings={false}
             openPetSettings={jest.fn()}
-            openTimeline={jest.fn()}
           />
         </AuthProvider>
       </AppProviders>,
@@ -391,7 +386,6 @@ describe('More settings entries', () => {
             openNotifications={jest.fn()}
             openPetSettings={jest.fn()}
             openPrivacy={jest.fn()}
-            openTimeline={jest.fn()}
             puppy={puppy}
           />
         </AuthProvider>
@@ -541,7 +535,6 @@ describe('More settings entries', () => {
         <AuthProvider dependencies={authDependencies}>
           <ConnectedMoreScreen
             openPetSettings={jest.fn()}
-            openTimeline={jest.fn()}
           />
         </AuthProvider>
       </AppProviders>,

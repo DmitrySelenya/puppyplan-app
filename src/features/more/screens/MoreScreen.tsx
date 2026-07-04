@@ -32,7 +32,6 @@ export type MoreScreenProps = Readonly<{
   openReminders?: () => void;
   openShareableCards?: () => void;
   openSitterMode?: () => void;
-  openTimeline: () => void;
   puppy?: PuppyProfile | null;
   puppySettingsState?: PuppySettingsAccessState;
 }>;
@@ -60,7 +59,6 @@ export function MoreScreen({
   openReminders,
   openShareableCards,
   openSitterMode,
-  openTimeline,
   puppy = null,
   puppySettingsState,
 }: MoreScreenProps) {
@@ -106,13 +104,6 @@ export function MoreScreen({
         />
       </SettingsSection>
       <SettingsSection title={t('more.sections.records')}>
-        <ListRow
-          accessory="chevron"
-          leading={<AppIcon name="docText" />}
-          onPress={openTimeline}
-          title={t('more.rows.timeline')}
-          variant="settings"
-        />
         <ListRow
           accessory="chevron"
           leading={<AppIcon name="bell" />}

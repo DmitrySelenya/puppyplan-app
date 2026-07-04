@@ -32,9 +32,6 @@ export default function MoreRoute() {
       openReminders={() => {
         router.push('/reminders');
       }}
-      openTimeline={() => {
-        router.push('/timeline');
-      }}
     />
   );
 }

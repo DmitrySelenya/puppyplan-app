@@ -129,7 +129,7 @@ describe('app shell screens', () => {
       <AppProviders>
         <AuthProvider dependencies={stubAuthDependencies}>
           <QuickLogFeedbackProvider>
-            <MoreScreen openTimeline={noop} />
+            <MoreScreen />
           </QuickLogFeedbackProvider>
         </AuthProvider>
       </AppProviders>,
@@ -139,7 +139,7 @@ describe('app shell screens', () => {
     const moreTitleStyle = StyleSheet.flatten(moreTitle.props.style);
 
     expect(moreTitleStyle.fontSize).toBe(tokens.typography.scale.title1.fontSize);
-    expect(screen.getByText(i18n.t('more.rows.timeline'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('more.rows.timeline'))).toBeNull();
     expect(screen.getByText(i18n.t('more.sections.support'))).toBeTruthy();
     expect(screen.getByText(i18n.t('auth.sign-out.cta'))).toBeTruthy();
   });
