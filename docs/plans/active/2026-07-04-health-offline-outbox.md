@@ -239,8 +239,14 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
 3. Expected RED: tests fail because Health outbox contracts/state/replay do not exist.
 
 **Checklist:**
-- [ ] RED test fails for the expected missing behavior, not import typos after minimal stubs.
-- [ ] Record RED output in this plan.
+- [x] RED test fails for the expected missing behavior, not import typos after minimal stubs.
+- [x] Record RED output in this plan.
+
+**Evidence - 2026-07-04**
+- RED command:
+  `npm run test:unit -- --runTestsByPath src/test/health-outbox.test.ts`
+- RED result: failed as expected with 6 failures from `health_outbox_not_implemented`; imports and
+  TypeScript setup were valid.
 
 ---
 
@@ -262,9 +268,18 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
    `npm run test:unit -- --runTestsByPath src/test/quick-log-queue.test.ts`
 
 **Checklist:**
-- [ ] AC-HO-2 and AC-HO-3 green.
-- [ ] Replay failures are not swallowed.
-- [ ] Quick Log state-machine tests remain green.
+- [x] AC-HO-2 and AC-HO-3 green.
+- [x] Replay failures are not swallowed.
+- [x] Quick Log state-machine tests remain green.
+
+**Evidence - 2026-07-04**
+- GREEN command:
+  `npm run test:unit -- --runTestsByPath src/test/health-outbox.test.ts`
+- GREEN result: PASS, 1 suite / 7 tests.
+- Quick Log regression:
+  `npm run test:unit -- --runTestsByPath src/test/quick-log-queue.test.ts`
+- Quick Log result: PASS, 1 suite / 12 tests.
+- Typecheck: `npm run typecheck` passed.
 
 ---
 
@@ -356,5 +371,8 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
 
 ## Changelog
 
+- 2026-07-04: Added RED/GREEN Health outbox contract, state-machine, scrubbed retry-classification,
+  and replay tests. Implemented the first minimal Health outbox module and allowed client-generated
+  `health_record.id` on inserts for idempotent offline create replay without a Supabase migration.
 - 2026-07-04: Created plan and ADR-0019 after explicit user approval for Health offline outbox only.
   Native DatePicker and `expo-notifications` remain unapproved and out of scope.

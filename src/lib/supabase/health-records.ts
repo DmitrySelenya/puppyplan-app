@@ -9,6 +9,7 @@ import { getSupabaseClient } from './client';
 
 export type HealthRecordInsert = Readonly<{
   completed_at: string | null;
+  id?: string;
   notes: string | null;
   provider_name: string | null;
   puppy_id: string;
