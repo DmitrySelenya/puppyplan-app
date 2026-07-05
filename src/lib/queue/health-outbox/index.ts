@@ -364,6 +364,18 @@ export function normalizeHealthOutboxFailureForPersistence(
   });
 }
 
+export const HEALTH_OUTBOX_BASE_RETRY_DELAY_MS = 30_000;
+export const HEALTH_OUTBOX_MAX_RETRY_DELAY_MS = 600_000;
+
+export function getDefaultHealthOutboxRetryDelayMs(retryCount: number): number {
+  const boundedRetryCount = Math.min(Math.max(retryCount, 0), 10);
+
+  return Math.min(
+    HEALTH_OUTBOX_BASE_RETRY_DELAY_MS * 2 ** boundedRetryCount,
+    HEALTH_OUTBOX_MAX_RETRY_DELAY_MS,
+  );
+}
+
 export function classifyHealthOutboxError(
   input: Readonly<{
     kind: HealthOutboxFailureKind;
@@ -371,6 +383,11 @@ export function classifyHealthOutboxError(
     retryAfterMs?: number | null;
   }>,
 ): HealthOutboxRetryDecision {
+  // A null retryAfterMs would persist retry_after_at = NULL, which the claim query treats
+  // as immediately ready — a zero-backoff hot loop. Every retryable decision therefore
+  // carries an explicit delay.
+  const defaultRetryAfterMs = getDefaultHealthOutboxRetryDelayMs(input.retryCount);
+
   switch (input.kind) {
     case 'network_unavailable':
     case 'request_timeout':
@@ -379,14 +396,14 @@ export function classifyHealthOutboxError(
       return {
         category: input.kind,
         decision: 'retryable',
-        retryAfterMs: null,
+        retryAfterMs: defaultRetryAfterMs,
       };
 
     case 'rate_limited':
       return {
         category: 'rate_limited',
         decision: 'retryable',
-        retryAfterMs: input.retryAfterMs ?? null,
+        retryAfterMs: input.retryAfterMs ?? defaultRetryAfterMs,
       };
 
     case 'permission_denied':
@@ -412,7 +429,7 @@ export function classifyHealthOutboxError(
       return {
         category: 'unknown',
         decision: 'retryable',
-        retryAfterMs: null,
+        retryAfterMs: defaultRetryAfterMs,
       };
   }
 }

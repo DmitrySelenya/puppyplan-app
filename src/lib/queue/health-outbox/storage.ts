@@ -215,6 +215,32 @@ async function enqueueHealthOutboxItem(
       rowParamsFromItem(item),
     );
 
+    const storedItem = await getRequiredHealthOutboxItem(transaction, item.operation_id);
+
+    if (storedItem.state !== 'failed_permanent') {
+      return storedItem;
+    }
+
+    // Re-enqueueing over a terminal failure is a fresh user action: replace the dead row
+    // with the new pending item instead of returning an unclaimable stale record.
+    await transaction.runAsync(
+      `INSERT OR REPLACE INTO ${HEALTH_OUTBOX_TABLE_NAME} (
+        operation_id,
+        household_id,
+        puppy_id,
+        actor_id,
+        operation,
+        payload_json,
+        state,
+        retry_count,
+        last_error_category,
+        retry_after_at,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      rowParamsFromItem(item),
+    );
+
     return getRequiredHealthOutboxItem(transaction, item.operation_id);
   });
 }

@@ -59,6 +59,14 @@ class TestHealthOutboxSqlExecutor implements HealthOutboxSqlExecutor {
       return;
     }
 
+    if (/INSERT OR REPLACE INTO health_outbox_item/i.test(sql)) {
+      const row = rowFromParams(params);
+
+      this.rows.set(row.operation_id, row);
+
+      return;
+    }
+
     if (/UPDATE health_outbox_item/i.test(sql)) {
       const operation_id = params[5];
 
@@ -273,6 +281,32 @@ describe('Health outbox SQLite storage boundary', () => {
     })).resolves.toBeNull();
     await expect(storage.claimNextReadyToSend({
       now: '2026-07-04T11:01:00.000Z',
+    })).resolves.toMatchObject({
+      operation_id: operationId,
+      state: 'sending',
+    });
+  });
+
+  it('AC-HO-4 re-activates a permanently failed operation on re-enqueue instead of returning the stale row', async () => {
+    const executor = new TestHealthOutboxSqlExecutor();
+    const storage = createHealthOutboxStorage(executor);
+    await storage.enqueue(enqueueInput(), { now });
+    await storage.markSending(operationId, { now: '2026-07-04T11:00:01.000Z' });
+    await storage.markFailedPermanent(operationId, {
+      errorCategory: 'invalid_payload',
+      now: '2026-07-04T11:00:02.000Z',
+    });
+
+    const requeued = await storage.enqueue(enqueueInput(), { now: '2026-07-04T11:00:03.000Z' });
+
+    expect(requeued).toMatchObject({
+      last_error_category: null,
+      operation_id: operationId,
+      retry_count: 0,
+      state: 'pending_local',
+    });
+    await expect(storage.claimNextReadyToSend({
+      now: '2026-07-04T11:00:04.000Z',
     })).resolves.toMatchObject({
       operation_id: operationId,
       state: 'sending',

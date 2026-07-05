@@ -322,6 +322,9 @@ export function createHealthOutboxReplayOptions(
     }),
     onSuccess: async (result, item) => {
       await invalidateHealthRecordDependents(dependencies.queryClient, {
+        // Delete replays carry no record (and no scheduled date), so fall back to
+        // invalidating every dashboard date for the puppy instead of skipping Today.
+        allDashboardDates: result.operation === 'delete',
         dates: healthOutboxReplayDates(result),
         householdId: item.household_id,
         puppyId: item.puppy_id,
@@ -348,6 +351,7 @@ function healthRecordCompletedAt(status: HealthRecordDraftStatus, scheduledFor: 
 async function invalidateHealthRecordDependents(
   queryClient: QueryInvalidationClient | undefined,
   input: Readonly<{
+    allDashboardDates?: boolean;
     dates: readonly string[];
     householdId: string;
     puppyId: string;
@@ -364,6 +368,9 @@ async function invalidateHealthRecordDependents(
     }),
     ...(input.recordId ? [queryClient.invalidateQueries({
       queryKey: queryKeys.health.record(input.puppyId, input.recordId),
+    })] : []),
+    ...(input.allDashboardDates === true ? [queryClient.invalidateQueries({
+      queryKey: queryKeys.today.dashboardRoot(input.householdId, input.puppyId),
     })] : []),
     ...input.dates.map((date) => queryClient.invalidateQueries({
       queryKey: queryKeys.today.dashboard(input.householdId, input.puppyId, date),

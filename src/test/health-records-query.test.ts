@@ -233,6 +233,43 @@ describe('Supabase health record repository boundary', () => {
     })).rejects.toThrow('health_record_delete_failed');
   });
 
+  it('AC-HO-3 attaches scrubbed failure kinds so the outbox can classify repository errors', async () => {
+    const client = {
+      deleteHealthRecord: jest.fn(async () => ({
+        count: null,
+        data: null,
+        error: { code: '42501', message: 'permission denied' },
+      })),
+      getHealthRecord: jest.fn(),
+      insertHealthRecord: jest.fn(async () => ({
+        data: null,
+        error: { code: '23514', message: 'check constraint violated' },
+      })),
+      listHealthRecords: jest.fn(),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
+    };
+    const repository = createSupabaseHealthRecordRepository(client);
+
+    await expect(repository.deleteHealthRecord({
+      deleted_at: now,
+      id: recordId,
+      puppy_id: puppyId,
+      updated_at: now,
+      updated_by: actorId,
+    })).rejects.toMatchObject({
+      kind: 'permission_denied',
+      message: 'health_record_delete_failed',
+    });
+    await expect(repository.insertHealthRecord({
+      ...insert,
+      id: recordId,
+    })).rejects.toMatchObject({
+      kind: 'invalid_payload',
+      message: 'health_record_insert_failed',
+    });
+  });
+
   it('AC-PET-EDIT-DURABLE-3 restores health records through the typed wrapper', async () => {
     const client = {
       deleteHealthRecord: jest.fn(),
@@ -448,6 +485,45 @@ describe('health record outbox replay query integration', () => {
     });
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: queryKeys.sharing.projectionRoot(householdId, puppyId),
+    });
+  });
+
+  it('AC-HO-5 invalidates every Today dashboard date after a delete replay', async () => {
+    const invalidateQueries = jest.fn(async () => undefined);
+    const repository = {
+      deleteHealthRecord: jest.fn(async () => undefined),
+      insertHealthRecord: jest.fn(),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(),
+    };
+    const item = createHealthOutboxItem({
+      actor_id: actorId,
+      household_id: householdId,
+      operation: 'delete',
+      operation_id: '00000000-0000-4000-8000-000000004103',
+      payload: {
+        delete: {
+          deleted_at: now,
+          id: recordId,
+          puppy_id: puppyId,
+          updated_at: now,
+          updated_by: actorId,
+        },
+      },
+      puppy_id: puppyId,
+    }, { now });
+    const options = createHealthOutboxReplayOptions({
+      queryClient: { invalidateQueries },
+      repository,
+    });
+
+    await expect(options.mutationFn(item)).resolves.toEqual({ operation: 'delete' });
+    await options.onSuccess({ operation: 'delete' }, item);
+
+    // The delete payload carries no scheduled date, so the replay must invalidate the
+    // whole Today dashboard family for the puppy instead of silently skipping it.
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.today.dashboardRoot(householdId, puppyId),
     });
   });
 

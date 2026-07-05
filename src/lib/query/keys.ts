@@ -24,6 +24,8 @@ export const queryKeys = {
   today: {
     dashboard: (householdId: string, puppyId: string, date: string) =>
       ['today', householdId, puppyId, date] as const,
+    dashboardRoot: (householdId: string, puppyId: string) =>
+      ['today', householdId, puppyId] as const,
   },
   events: {
     timelineRoot: getEventsTimelineRootKey,

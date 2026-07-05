@@ -2,6 +2,7 @@ import type { HealthRecord } from '@/contracts/supabase';
 import {
   applyHealthOutboxTransition,
   canTransitionHealthOutboxState,
+  classifyHealthOutboxError,
   createHealthOutboxItem,
   normalizeHealthOutboxFailureForPersistence,
   processNextHealthOutboxItem,
@@ -157,10 +158,44 @@ describe('Health outbox contracts and state machine', () => {
     expect(decision).toEqual({
       category: 'unknown',
       decision: 'retryable',
-      retryAfterMs: null,
+      retryAfterMs: 30_000,
     });
     expect(JSON.stringify(decision)).not.toContain('Example Vet');
     expect(JSON.stringify(decision)).not.toContain('private note');
+  });
+
+  it('AC-HO-3 applies a growing default backoff to retryable failures so retries are never immediate', () => {
+    const firstAttempt = classifyHealthOutboxError({
+      kind: 'network_unavailable',
+      retryCount: 0,
+    });
+    const thirdAttempt = classifyHealthOutboxError({
+      kind: 'request_timeout',
+      retryCount: 2,
+    });
+    const cappedAttempt = classifyHealthOutboxError({
+      kind: 'server_5xx',
+      retryCount: 20,
+    });
+    const serverProvided = classifyHealthOutboxError({
+      kind: 'rate_limited',
+      retryAfterMs: 1_000,
+      retryCount: 0,
+    });
+    const rateLimitedFallback = classifyHealthOutboxError({
+      kind: 'rate_limited',
+      retryCount: 1,
+    });
+
+    expect(firstAttempt).toEqual({
+      category: 'network_unavailable',
+      decision: 'retryable',
+      retryAfterMs: 30_000,
+    });
+    expect(thirdAttempt.retryAfterMs).toBe(120_000);
+    expect(cappedAttempt.retryAfterMs).toBe(600_000);
+    expect(serverProvided.retryAfterMs).toBe(1_000);
+    expect(rateLimitedFallback.retryAfterMs).toBe(60_000);
   });
 });
 
@@ -346,7 +381,7 @@ describe('Health outbox processor', () => {
     expect(storage.markFailedRetryable).toHaveBeenCalledWith(operationId, {
       errorCategory: 'network_unavailable',
       now: '2026-07-04T10:00:02.000Z',
-      retryAfterAt: null,
+      retryAfterAt: '2026-07-04T10:00:32.000Z',
     });
     expect(storage.markServerConfirmed).not.toHaveBeenCalled();
   });

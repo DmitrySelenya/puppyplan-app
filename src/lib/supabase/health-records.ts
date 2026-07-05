@@ -6,6 +6,10 @@ import {
 } from '@/contracts/supabase';
 
 import { getSupabaseClient } from './client';
+import {
+  classifyQuickLogSupabaseError,
+  type QuickLogSupabaseFailure,
+} from './events';
 
 export type HealthRecordInsert = Readonly<{
   completed_at: string | null;
@@ -96,14 +100,14 @@ export function createSupabaseHealthRecordRepository(
       const response = await client.deleteHealthRecord(input);
 
       if (response.error || response.count === 0) {
-        throw new Error('health_record_delete_failed');
+        throw createHealthRecordFailure('health_record_delete_failed', response.error);
       }
     },
     getHealthRecord: async (input) => {
       const response = await client.getHealthRecord(input);
 
       if (response.error || response.data === null) {
-        throw new Error('health_record_get_failed');
+        throw createHealthRecordFailure('health_record_get_failed', response.error);
       }
 
       return healthRecordSchema.parse(response.data);
@@ -112,7 +116,7 @@ export function createSupabaseHealthRecordRepository(
       const response = await client.insertHealthRecord(insert);
 
       if (response.error) {
-        throw new Error('health_record_insert_failed');
+        throw createHealthRecordFailure('health_record_insert_failed', response.error);
       }
 
       return healthRecordSchema.parse(response.data);
@@ -121,7 +125,7 @@ export function createSupabaseHealthRecordRepository(
       const response = await client.listHealthRecords(input);
 
       if (response.error) {
-        throw new Error('health_record_list_failed');
+        throw createHealthRecordFailure('health_record_list_failed', response.error);
       }
 
       return z.array(healthRecordSchema).parse(response.data);
@@ -130,7 +134,7 @@ export function createSupabaseHealthRecordRepository(
       const response = await client.restoreHealthRecord(input);
 
       if (response.error) {
-        throw new Error('health_record_restore_failed');
+        throw createHealthRecordFailure('health_record_restore_failed', response.error);
       }
 
       return healthRecordSchema.parse(response.data);
@@ -139,12 +143,26 @@ export function createSupabaseHealthRecordRepository(
       const response = await client.updateHealthRecord(update);
 
       if (response.error) {
-        throw new Error('health_record_update_failed');
+        throw createHealthRecordFailure('health_record_update_failed', response.error);
       }
 
       return healthRecordSchema.parse(response.data);
     },
   };
+}
+
+// Attaches the shared scrubbed failure kind so downstream consumers (e.g. the Health
+// outbox retry classifier) can distinguish permanent failures from retryable ones while
+// the thrown message stays a stable opaque key. The 'insert' phase only affects the
+// quick-log-specific 23505 special case, which never applies to health records.
+function createHealthRecordFailure(message: string, cause: unknown): QuickLogSupabaseFailure {
+  const classification = classifyQuickLogSupabaseError(cause, { phase: 'insert' });
+  const failure = new Error(message) as QuickLogSupabaseFailure;
+
+  failure.kind = classification.kind;
+  failure.retryAfterMs = classification.retryAfterMs;
+
+  return failure;
 }
 
 const healthRecordSelectColumns = [
