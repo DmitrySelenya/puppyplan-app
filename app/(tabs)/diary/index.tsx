@@ -38,7 +38,7 @@ export default function DiaryRoute() {
         router.push('/quick-log');
       }}
       openTimeline={() => {
-        router.push('/timeline');
+        router.push('/quick-log/schedule');
       }}
       puppyName={activeCare.puppy?.name}
       todayPlanInput={activeCare.careContext === null || activeCare.puppy === null

@@ -487,3 +487,13 @@ Everywhere else — including every normal check-off — uses the warm-but-ordin
 - Reduced Motion is mandatory on every preset (already built into the tokens).
 - Don't stack haptics — one per discrete user action, not one per animated frame.
 - Mockup annotation format suggestion: a small caption on the interactive element, e.g. `haptic: tapConfirm · motion: fade`.
+
+---
+
+## Changelog
+
+- 2026-07-05: Fixed deep-review navigation regression. Diary cold-start/schedule action now opens
+  `/quick-log/schedule`, and the removed standalone `/timeline` route redirects to `/diary` instead
+  of rendering a separate modal. Targeted regression:
+  `npm run test:unit -- --runTestsByPath src/test/today-route.render.test.tsx src/test/timeline-route.render.test.tsx src/test/health-records-query.test.ts src/test/health-outbox-storage.test.ts`
+  passed (33 tests).

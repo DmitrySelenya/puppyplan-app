@@ -406,6 +406,12 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
 
 ## Changelog
 
+- 2026-07-05: Fixed deep-review durability edge cases. Health record update/restore zero-row
+  responses now throw stable scrubbed repository failures instead of leaking Zod parse errors, and
+  Health outbox claim continues after quarantining a legacy missing-actor row so later ready rows are
+  not hidden behind a false idle result. Targeted regression:
+  `npm run test:unit -- --runTestsByPath src/test/today-route.render.test.tsx src/test/timeline-route.render.test.tsx src/test/health-records-query.test.ts src/test/health-outbox-storage.test.ts`
+  passed (33 tests).
 - 2026-07-05: Pre-merge review pass hardened the outbox core and corrected the completion claim.
   Fixes: retryable failures now persist a default exponential backoff (30s base doubling to a 10min
   cap) instead of `retry_after_at = NULL`, which the claim query treated as immediately ready

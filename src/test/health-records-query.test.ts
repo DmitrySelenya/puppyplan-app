@@ -233,6 +233,26 @@ describe('Supabase health record repository boundary', () => {
     })).rejects.toThrow('health_record_delete_failed');
   });
 
+  it('AC-PET-EDIT-DURABLE-2 treats a zero-row update as a failed update', async () => {
+    const client = {
+      deleteHealthRecord: jest.fn(),
+      getHealthRecord: jest.fn(),
+      insertHealthRecord: jest.fn(),
+      listHealthRecords: jest.fn(),
+      restoreHealthRecord: jest.fn(),
+      updateHealthRecord: jest.fn(async () => ({
+        data: null,
+        error: null,
+      })),
+    };
+    const repository = createSupabaseHealthRecordRepository(client);
+
+    await expect(repository.updateHealthRecord(toHealthRecordUpdate(updateDraft))).rejects.toMatchObject({
+      kind: 'unknown',
+      message: 'health_record_update_failed',
+    });
+  });
+
   it('AC-HO-3 attaches scrubbed failure kinds so the outbox can classify repository errors', async () => {
     const client = {
       deleteHealthRecord: jest.fn(async () => ({
@@ -295,6 +315,31 @@ describe('Supabase health record repository boundary', () => {
       puppy_id: puppyId,
       updated_at: now,
       updated_by: actorId,
+    });
+  });
+
+  it('AC-PET-EDIT-DURABLE-3 treats a zero-row restore as a failed restore', async () => {
+    const client = {
+      deleteHealthRecord: jest.fn(),
+      getHealthRecord: jest.fn(),
+      insertHealthRecord: jest.fn(),
+      listHealthRecords: jest.fn(),
+      restoreHealthRecord: jest.fn(async () => ({
+        data: null,
+        error: null,
+      })),
+      updateHealthRecord: jest.fn(),
+    };
+    const repository = createSupabaseHealthRecordRepository(client);
+
+    await expect(repository.restoreHealthRecord({
+      id: recordId,
+      puppy_id: puppyId,
+      updated_at: now,
+      updated_by: actorId,
+    })).rejects.toMatchObject({
+      kind: 'unknown',
+      message: 'health_record_restore_failed',
     });
   });
 });

@@ -250,44 +250,46 @@ async function claimNextReadyHealthOutboxItem(
   options: Readonly<{ now: string }>,
 ): Promise<HealthOutboxStoredItem | null> {
   return runExclusive(executor, async (transaction) => {
-    const readyRow = await transaction.getFirstAsync<HealthOutboxStoredRow>(
-      `SELECT * FROM ${HEALTH_OUTBOX_TABLE_NAME}
-        WHERE (state = ? OR (
-          state = ?
-          AND (retry_after_at IS NULL OR julianday(retry_after_at) <= julianday(?))
-        ))
-        ORDER BY created_at ASC
-        LIMIT 1`,
-      ['pending_local', 'failed_retryable', options.now],
-    );
+    while (true) {
+      const readyRow = await transaction.getFirstAsync<HealthOutboxStoredRow>(
+        `SELECT * FROM ${HEALTH_OUTBOX_TABLE_NAME}
+          WHERE (state = ? OR (
+            state = ?
+            AND (retry_after_at IS NULL OR julianday(retry_after_at) <= julianday(?))
+          ))
+          ORDER BY created_at ASC
+          LIMIT 1`,
+        ['pending_local', 'failed_retryable', options.now],
+      );
 
-    if (!readyRow) {
-      return null;
+      if (!readyRow) {
+        return null;
+      }
+
+      const readyItem = rowToHealthOutboxItem(readyRow);
+
+      if (readyItem.actor_id === null) {
+        await writeHealthOutboxItemState(transaction, createStoredHealthOutboxItem({
+          ...readyItem,
+          last_error_category: 'missing_context',
+          retry_after_at: null,
+          retry_count: readyItem.retry_count + 1,
+          state: 'failed_permanent',
+          updated_at: options.now,
+        }));
+
+        continue;
+      }
+
+      const sendingItem = applyHealthOutboxTransition(readyItem, {
+        now: options.now,
+        type: 'mark_sending',
+      });
+
+      await writeHealthOutboxItemState(transaction, sendingItem);
+
+      return sendingItem;
     }
-
-    const readyItem = rowToHealthOutboxItem(readyRow);
-
-    if (readyItem.actor_id === null) {
-      await writeHealthOutboxItemState(transaction, createStoredHealthOutboxItem({
-        ...readyItem,
-        last_error_category: 'missing_context',
-        retry_after_at: null,
-        retry_count: readyItem.retry_count + 1,
-        state: 'failed_permanent',
-        updated_at: options.now,
-      }));
-
-      return null;
-    }
-
-    const sendingItem = applyHealthOutboxTransition(readyItem, {
-      now: options.now,
-      type: 'mark_sending',
-    });
-
-    await writeHealthOutboxItemState(transaction, sendingItem);
-
-    return sendingItem;
   });
 }
 

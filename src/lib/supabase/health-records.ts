@@ -133,7 +133,7 @@ export function createSupabaseHealthRecordRepository(
     restoreHealthRecord: async (input) => {
       const response = await client.restoreHealthRecord(input);
 
-      if (response.error) {
+      if (response.error || response.data === null) {
         throw createHealthRecordFailure('health_record_restore_failed', response.error);
       }
 
@@ -142,7 +142,7 @@ export function createSupabaseHealthRecordRepository(
     updateHealthRecord: async (update) => {
       const response = await client.updateHealthRecord(update);
 
-      if (response.error) {
+      if (response.error || response.data === null) {
         throw createHealthRecordFailure('health_record_update_failed', response.error);
       }
 

@@ -8,6 +8,7 @@ import { i18n } from '@/lib/i18n';
 import DiaryRoute from '../../app/(tabs)/diary';
 
 const mockRouterPush = jest.fn();
+const mockDismissSnackbar = jest.fn();
 const mockShowSnackbar = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
@@ -50,7 +51,7 @@ jest.mock('@/design/primitives/Snackbar', () => {
   return {
     ...actual,
     useSnackbar: () => ({
-      dismissSnackbar: jest.fn(),
+      dismissSnackbar: mockDismissSnackbar,
       replaceSnackbar: jest.fn(),
       showSnackbar: mockShowSnackbar,
     }),
@@ -62,6 +63,7 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     capturedActions = undefined;
     capturedProps = undefined;
     mockRouterPush.mockClear();
+    mockDismissSnackbar.mockReset();
     mockShowSnackbar.mockReset();
     await i18n.changeLanguage('en');
     mockUseActiveCareContext.mockReturnValue({
@@ -197,6 +199,9 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
       puppyId: '00000000-0000-4000-8000-000000007002',
       todayDate: '2026-06-09',
     }));
+    await waitFor(() => expect(mockDismissSnackbar).toHaveBeenCalledWith(
+      'quick-log-synced-delete:evt_00000000-0000-4000-8000-000000007101',
+    ));
     expect(mutation.deleteLocal).not.toHaveBeenCalled();
   });
 
@@ -234,6 +239,24 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     capturedProps?.openQuickLog?.();
 
     expect(mockRouterPush).toHaveBeenCalledWith('/quick-log');
+  });
+
+  it('AC-DIARY-NAV-1 wires the Diary schedule action to the schedule sheet', () => {
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: undefined,
+      mutationEvents: [],
+      status: 'unavailable',
+    });
+
+    render(
+      <AppProviders>
+        <DiaryRoute />
+      </AppProviders>,
+    );
+
+    capturedProps?.openTimeline?.();
+
+    expect(mockRouterPush).toHaveBeenCalledWith('/quick-log/schedule');
   });
 
   it('does not expose write handlers for viewer care contexts', () => {

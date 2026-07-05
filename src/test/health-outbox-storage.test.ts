@@ -331,4 +331,29 @@ describe('Health outbox SQLite storage boundary', () => {
       state: 'failed_permanent',
     });
   });
+
+  it('AC-HO-4 keeps claiming after quarantining a legacy missing-actor row', async () => {
+    const executor = new TestHealthOutboxSqlExecutor();
+    const storage = createHealthOutboxStorage(executor);
+    await storage.enqueue(enqueueInput(), { now });
+    await storage.enqueue(enqueueInput({
+      operation_id: secondOperationId,
+    }), { now: '2026-07-04T11:00:02.000Z' });
+    executor.rows.set(operationId, {
+      ...executor.rows.get(operationId)!,
+      actor_id: null,
+    });
+
+    await expect(storage.claimNextReadyToSend({
+      now: '2026-07-04T11:00:30.000Z',
+    })).resolves.toMatchObject({
+      operation_id: secondOperationId,
+      state: 'sending',
+    });
+    await expect(storage.getByOperationId(operationId)).resolves.toMatchObject({
+      actor_id: null,
+      last_error_category: 'missing_context',
+      state: 'failed_permanent',
+    });
+  });
 });
