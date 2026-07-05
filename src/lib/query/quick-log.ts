@@ -48,6 +48,7 @@ import {
   type SupabaseEventLogRepository,
 } from '@/lib/supabase/events';
 import { useAuth } from '@/lib/auth';
+import { formatLocalCalendarDate } from '@/lib/i18n/format-date';
 
 import { getQuickLogInvalidationKeys, queryKeys, type TimelineFilters } from './keys';
 
@@ -738,7 +739,9 @@ export async function restoreSyncedQuickLogEvent(
 
   upsertCachedEventRow(input.queryClient, {
     timelineRootKey,
-    calendarDate: restoredRow.occurred_at.slice(0, 10),
+    // Timeline day buckets are keyed by the device-local calendar date (see
+    // useQuickLogTimelineRows), so the restored row must use the same bucketing.
+    calendarDate: formatLocalCalendarDate(restoredRow.occurred_at),
     row: {
       ...restoredRow,
       localSync: undefined,

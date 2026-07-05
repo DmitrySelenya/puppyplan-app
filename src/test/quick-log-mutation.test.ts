@@ -795,6 +795,56 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
+  it('AC-DIARY-DELETE-UNDO-4 buckets restored rows by local calendar date for day-scoped caches', async () => {
+    const queryClient = createTestQueryClient();
+    const events = new FakeQuickLogEventsRepository();
+
+    jest.spyOn(queryClient, 'invalidateQueries').mockImplementation(async () => undefined);
+
+    // Pick an occurred_at whose UTC date differs from the machine-local calendar date so the
+    // regression is observable; on a UTC-offset-zero machine the test degenerates to parity.
+    const localCalendarDate = '2026-05-26';
+    const candidates = [
+      new Date(2026, 4, 26, 0, 30),
+      new Date(2026, 4, 26, 23, 30),
+    ];
+    const divergent = candidates.find((candidate) =>
+      candidate.toISOString().slice(0, 10) !== localCalendarDate) ?? candidates[0];
+    const restoredOccurredAt = divergent.toISOString();
+
+    events.restoreRow = {
+      ...serverRow(),
+      occurred_at: restoredOccurredAt,
+      deleted_at: null,
+      updated_at: now,
+    };
+
+    const localDayKey = queryKeys.events.timeline(householdId, puppyId, {
+      from: localCalendarDate,
+      to: localCalendarDate,
+    });
+
+    queryClient.setQueryData(localDayKey, []);
+    queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), []);
+
+    await restoreSyncedQuickLogEvent({
+      clientEventId,
+      eventType: 'feeding',
+      events,
+      householdId,
+      puppyId,
+      queryClient,
+      todayDate: localCalendarDate,
+    });
+
+    expect(queryClient.getQueryData<QuickLogCachedEventRow[]>(localDayKey)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+        occurred_at: restoredOccurredAt,
+      }),
+    ]);
+  });
+
   it('saves Quick Log detail drafts to the synced event payload and updates cached rows', async () => {
     const queryClient = createTestQueryClient();
     const events = new FakeQuickLogEventsRepository();
@@ -1587,6 +1637,7 @@ class FakeQuickLogEventsRepository {
   }[] = [];
   public insertError: unknown = null;
   public insertGate: Promise<void> | null = null;
+  public restoreRow: EventLogRecord | null = null;
   public tombstoneError: unknown = null;
   public payloadUpdateError: unknown = null;
 
@@ -1634,7 +1685,7 @@ class FakeQuickLogEventsRepository {
   }): Promise<EventLogRecord> {
     this.restores.push(input);
 
-    return {
+    return this.restoreRow ?? {
       ...serverRow(),
       deleted_at: null,
       updated_at: now,

@@ -10,6 +10,7 @@ const mockRouterBack = jest.fn();
 const mockRouterCanGoBack = jest.fn();
 const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
+const mockDismissSnackbar = jest.fn();
 const mockShowSnackbar = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
@@ -56,7 +57,7 @@ jest.mock('@/design/primitives/Snackbar', () => {
   return {
     ...actual,
     useSnackbar: () => ({
-      dismissSnackbar: jest.fn(),
+      dismissSnackbar: mockDismissSnackbar,
       replaceSnackbar: jest.fn(),
       showSnackbar: mockShowSnackbar,
     }),
@@ -73,6 +74,7 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
     mockRouterCanGoBack.mockReturnValue(true);
     mockRouterPush.mockClear();
     mockRouterReplace.mockClear();
+    mockDismissSnackbar.mockReset();
     mockShowSnackbar.mockReset();
     await i18n.changeLanguage('en');
     mockUseActiveCareContext.mockReturnValue({
@@ -212,6 +214,10 @@ describe('TimelineRoute Quick Log recovery wiring', () => {
       puppyId: '00000000-0000-4000-8000-000000007202',
       todayDate: '2026-06-09',
     }));
+
+    await waitFor(() => expect(mockDismissSnackbar).toHaveBeenCalledWith(
+      'quick-log-synced-delete:evt_00000000-0000-4000-8000-000000007301',
+    ));
   });
 
   it('routes synced Timeline edit to the details modal with validated row context', () => {

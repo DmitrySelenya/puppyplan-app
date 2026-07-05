@@ -46,6 +46,9 @@ export function useSyncedQuickLogDeleteUndo(
             label: t('quick-log.snackbar.undo'),
             onPress: () => {
               void mutation.restoreSynced(restoreRequest)
+                .then(() => {
+                  snackbar.dismissSnackbar(snackbarId);
+                })
                 .catch(() => {
                   snackbar.replaceSnackbar({
                     accessibilityLabel: t('quick-log.failed.generic'),
