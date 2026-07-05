@@ -12,6 +12,7 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
+| Active task plan | [Diary WeekStrip Day Selection](active/2026-07-05-diary-week-strip-day-selection.md) | `PUP-26` | Phase 6 review/PR; local gates and SE Maestro evidence complete, next action is review, commit, push, draft PR, CI Verification |
 | Active task plan | [Health Offline Outbox](active/2026-07-04-health-offline-outbox.md) | no-Linear exception | Complete locally; final `npm run check` green; no push/PR |
 | Active task plan | [V2 Tombstone RLS Follow-Up](active/2026-07-03-v2-tombstone-rls-follow-up.md) | no-Linear exception | Phase 0 approval gate; next action is exact approval for local RLS migration, then RED pgTAP tombstone tests |
 | Active task plan | [Redesign V2 Intake](active/2026-06-22-redesign-v2-intake.md) | no-Linear exception | Phase 0 locked `docs/design/v2`; next action is Phase 1 foundation sync, then scoped taxonomy propagation only |

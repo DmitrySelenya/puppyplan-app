@@ -38,9 +38,13 @@ const openQuickLog = jest.fn();
 const testQueryClients: ReturnType<typeof createPuppyPlanQueryClient>[] = [];
 
 function todayTimelineKey() {
+  return selectedDayTimelineKey(todayDate);
+}
+
+function selectedDayTimelineKey(date: string) {
   return queryKeys.events.timeline(householdId, puppyId, {
-    from: todayDate,
-    to: todayDate,
+    from: date,
+    to: date,
   });
 }
 
@@ -241,6 +245,333 @@ describe('Today core card rendering', () => {
     expect(rollingWindowOverflow).toBeNull();
     expect(selectedDay.props.accessibilityState?.selected).toBeUndefined();
     expect(todayMarker.props.accessibilityState?.selected).toBeUndefined();
+  });
+
+  it('AC-1: renders Diary WeekStrip days as buttons with selected state and stable date testIDs', async () => {
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-header')).toBeTruthy();
+    });
+
+    const selectedToday = screen.getByTestId('week-strip-day-2026-06-12');
+    expect(selectedToday.props.accessibilityRole).toBe('button');
+    expect(selectedToday.props.accessibilityState.selected).toBe(true);
+
+    const pastDay = screen.getByTestId('week-strip-day-2026-06-10');
+    expect(pastDay.props.accessibilityRole).toBe('button');
+    expect(pastDay.props.accessibilityState.selected).toBe(false);
+  });
+
+  it('AC-2: tapping a past day renders only rows for that local calendar date', async () => {
+    const pastDate = '2026-06-10';
+    const todayRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002701',
+      event_type: 'feeding',
+      id: '00000000-0000-4000-8000-000000002711',
+      occurred_at: '2026-06-12T08:00:00.000Z',
+      payload: {
+        amount: 'meal',
+      },
+    });
+    const pastRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002702',
+      event_type: 'potty',
+      id: '00000000-0000-4000-8000-000000002712',
+      occurred_at: '2026-06-10T07:15:00.000Z',
+      payload: {
+        subtype: 'outside',
+      },
+    });
+    mockListEvents.mockImplementation(async ({ filters }: { filters?: TimelineFilters }) => {
+      if (filters?.from === pastDate && filters.to === pastDate) {
+        return [pastRow];
+      }
+
+      if (filters?.from === todayDate && filters.to === todayDate) {
+        return [todayRow];
+      }
+
+      return [];
+    });
+
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId(`week-strip-day-${pastDate}`));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-selected-day-timeline')).toBeTruthy();
+      expect(screen.getByText(i18n.t('quick-log.trackers.potty-outside'))).toBeTruthy();
+    });
+    expect(screen.queryByText(i18n.t('quick-log.trackers.feeding'))).toBeNull();
+  });
+
+  it('AC-3: tapping today restores the current Diary plan card and today rows', async () => {
+    const pastDate = '2026-06-10';
+    const todayRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002721',
+      event_type: 'feeding',
+      id: '00000000-0000-4000-8000-000000002731',
+      occurred_at: '2026-06-12T08:00:00.000Z',
+      payload: {
+        amount: 'meal',
+      },
+    });
+    const pastRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002722',
+      event_type: 'sleep',
+      id: '00000000-0000-4000-8000-000000002732',
+      occurred_at: '2026-06-10T07:15:00.000Z',
+      payload: {
+        sleep_kind: 'nap',
+      },
+    });
+    mockListEvents.mockImplementation(async ({ filters }: { filters?: TimelineFilters }) => {
+      if (filters?.from === pastDate && filters.to === pastDate) {
+        return [pastRow];
+      }
+
+      if (filters?.from === todayDate && filters.to === todayDate) {
+        return [todayRow];
+      }
+
+      return [];
+    });
+
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+        todayPlanInput={{
+          dayNumber: 2,
+          suggestedDailyCards: ['quick_log_prompt'],
+          timeOfDay: 'morning',
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-info-hero')).toBeTruthy();
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId(`week-strip-day-${pastDate}`));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.sleep'))).toBeTruthy();
+    });
+    expect(screen.queryByTestId('diary-info-hero')).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId(`week-strip-day-${todayDate}`));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-info-hero')).toBeTruthy();
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
+  });
+
+  it('AC-4: tapping a future day is allowed and shows the stable future empty state', async () => {
+    const futureDate = '2026-06-14';
+    mockListEvents.mockImplementation(async ({ filters }: { filters?: TimelineFilters }) => {
+      if (filters?.from === futureDate && filters.to === futureDate) {
+        return [];
+      }
+
+      return [];
+    });
+
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-header')).toBeTruthy();
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId(`week-strip-day-${futureDate}`));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId(`week-strip-day-${futureDate}`).props.accessibilityState.selected).toBe(true);
+      expect(screen.getByTestId('diary-selected-day-empty-future')).toBeTruthy();
+    });
+    expect(screen.getByText(i18n.t('today.quick-log.empty.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.quick-log.empty.body'))).toBeTruthy();
+  });
+
+  it('AC-5: cached today Quick Log rows do not appear while a past day is selected', async () => {
+    const pastDate = '2026-06-10';
+    const pastRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002741',
+      event_type: 'sleep',
+      id: '00000000-0000-4000-8000-000000002751',
+      occurred_at: '2026-06-10T07:15:00.000Z',
+      payload: {
+        sleep_kind: 'nap',
+      },
+    });
+    const newTodayRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002742',
+      event_type: 'feeding',
+      id: '00000000-0000-4000-8000-000000002752',
+      occurred_at: '2026-06-12T09:30:00.000Z',
+      payload: {
+        amount: 'meal',
+      },
+    });
+    mockListEvents.mockImplementation(async ({ filters }: { filters?: TimelineFilters }) => {
+      if (filters?.from === pastDate && filters.to === pastDate) {
+        return [pastRow];
+      }
+
+      return [];
+    });
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-header')).toBeTruthy();
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId(`week-strip-day-${pastDate}`));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-selected-day-timeline')).toBeTruthy();
+      expect(screen.getByText(i18n.t('quick-log.trackers.sleep'))).toBeTruthy();
+    });
+
+    act(() => {
+      queryClient.setQueryData(selectedDayTimelineKey(todayDate), [newTodayRow]);
+    });
+
+    expect(screen.getByText(i18n.t('quick-log.trackers.sleep'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('quick-log.trackers.feeding'))).toBeNull();
+  });
+
+  it('AC-6: remounting Diary resets the selected day to today', async () => {
+    const pastDate = '2026-06-10';
+    const queryClient = createPuppyPlanQueryClient();
+    testQueryClients.push(queryClient);
+    const view = render(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={queryClient}>
+          <TodayScreen
+            key="first-diary-mount"
+            careContext={careContext}
+            openTimeline={openTimeline}
+          />
+        </QueryClientProvider>
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-header')).toBeTruthy();
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId(`week-strip-day-${pastDate}`));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId(`week-strip-day-${pastDate}`).props.accessibilityState.selected).toBe(true);
+    });
+
+    view.rerender(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={queryClient}>
+          <TodayScreen
+            key="second-diary-mount"
+            careContext={careContext}
+            openTimeline={openTimeline}
+          />
+        </QueryClientProvider>
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId(`week-strip-day-${todayDate}`).props.accessibilityState.selected).toBe(true);
+    });
+    expect(screen.getByTestId(`week-strip-day-${pastDate}`).props.accessibilityState.selected).toBe(false);
+  });
+
+  it('AC-7: care context arrival selects today without issuing an unfiltered timeline query', async () => {
+    const todayRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002761',
+      event_type: 'feeding',
+      id: '00000000-0000-4000-8000-000000002771',
+      occurred_at: '2026-06-12T08:00:00.000Z',
+      payload: {
+        amount: 'meal',
+      },
+    });
+    mockListEvents.mockResolvedValue([todayRow]);
+    const queryClient = createPuppyPlanQueryClient();
+    testQueryClients.push(queryClient);
+    const view = render(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={queryClient}>
+          <TodayScreen
+            careContext={null}
+            openTimeline={openTimeline}
+          />
+        </QueryClientProvider>
+      </I18nextProvider>,
+    );
+
+    expect(screen.getByText(i18n.t('today.quick-log.setup-entry'))).toBeTruthy();
+
+    view.rerender(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={queryClient}>
+          <TodayScreen
+            careContext={careContext}
+            openTimeline={openTimeline}
+          />
+        </QueryClientProvider>
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId(`week-strip-day-${todayDate}`).props.accessibilityState.selected).toBe(true);
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
+
+    expect(mockListEvents.mock.calls.map(([input]) => input.filters)).toEqual([
+      {
+        from: todayDate,
+        to: todayDate,
+      },
+    ]);
   });
 
   it('renders the error state when active care events cannot refresh', async () => {

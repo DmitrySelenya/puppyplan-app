@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
@@ -145,26 +145,43 @@ export function TodayScreen({
   const [diaryHistoryOpen, setDiaryHistoryOpen] = useState(false);
   const [selectedHistoryFilter, setSelectedHistoryFilter] =
     useState<DiaryHistoryFilterValue>('all');
+  const initialSelectedDate = todayPlanInput?.todayDate ?? careContext?.todayDate ?? '';
+  const isSyntheticSelectedDateOverride = careContext !== null
+    && todayPlanInput?.todayDate !== undefined
+    && todayPlanInput.todayDate !== careContext.todayDate;
+  const [selectedDate, setSelectedDate] = useState(() => initialSelectedDate);
+  useEffect(() => {
+    setSelectedDate(initialSelectedDate);
+  }, [initialSelectedDate]);
+  const effectiveSelectedDate = selectedDate === '' && careContext !== null
+    ? careContext.todayDate
+    : selectedDate;
   const historyFilters = useMemo(
     () => createDiaryHistoryFilters(selectedHistoryFilter),
     [selectedHistoryFilter],
   );
-  const timelineRows = useQuickLogTimelineRows(
-    careContext,
-    careContext === null
+  const selectedTimelineFilters = useMemo(
+    () => effectiveSelectedDate === ''
       ? undefined
       : {
-        from: careContext.todayDate,
-        to: careContext.todayDate,
+        from: effectiveSelectedDate,
+        to: effectiveSelectedDate,
       },
+    [effectiveSelectedDate],
   );
+  const timelineRows = useQuickLogTimelineRows(
+    careContext,
+    selectedTimelineFilters,
+  );
+  const isTodaySelected = careContext !== null && effectiveSelectedDate === careContext.todayDate;
+  const showHistoryMode = isTodaySelected && diaryHistoryOpen;
   const historyTimelineRows = useQuickLogTimelineRows(
-    diaryHistoryOpen ? careContext : null,
+    showHistoryMode ? careContext : null,
     historyFilters,
   );
   const rows = timelineRows.rows;
-  const visibleRows = diaryHistoryOpen ? historyTimelineRows.rows : rows;
-  const visibleTimelineStatus = diaryHistoryOpen ? historyTimelineRows.status : timelineRows.status;
+  const visibleRows = showHistoryMode ? historyTimelineRows.rows : rows;
+  const visibleTimelineStatus = showHistoryMode ? historyTimelineRows.status : timelineRows.status;
   const todayPlanSourceInput = useMemo(() => careContext === null
     ? null
     : createTodayPlanInput({
@@ -218,17 +235,26 @@ export function TodayScreen({
     screenState,
     timelineStatus: timelineRows.status,
   });
+  const visibleTodayStatus = isTodaySelected ? todayStatus : null;
   const showTodayPlan = todayPlan !== null
-    && todayStatus !== 'all-done'
+    && isTodaySelected
+    && visibleTodayStatus !== 'all-done'
     && screenState !== 'cold-start'
     && screenState !== 'empty-history'
     && screenState !== 'pending-write'
     && !(timelineRows.status === 'loading' && rows.length === 0);
-  const showQuickLogSection = diaryHistoryOpen
+  const showQuickLogSection = !isTodaySelected
+    || showHistoryMode
     || eventViews.length > 0
     || timelineRows.status === 'error'
     || hasPendingLocalRows(rows)
     || shouldShowQuickLogFailedBanner(rows);
+  const selectedDayTitle = isTodaySelected
+    ? t('today.history.section-title')
+    : formatDiaryHistoryDayLabel(effectiveSelectedDate, careContext.todayDate, locale, t);
+  const selectedDayEmptyTestID = effectiveSelectedDate > careContext.todayDate
+    ? 'diary-selected-day-empty-future'
+    : undefined;
 
   return (
     <Screen contentStyle={styles.content}>
@@ -238,27 +264,35 @@ export function TodayScreen({
         todayDate={careContext.todayDate}
       />
       <DiaryWeekStrip
-        selectedDate={todayPlanSourceInput?.todayDate ?? careContext.todayDate}
+        onSelectDate={isSyntheticSelectedDateOverride
+          ? undefined
+          : (date) => {
+            setSelectedDate(date);
+            if (date !== careContext.todayDate) {
+              setDiaryHistoryOpen(false);
+            }
+          }}
+        selectedDate={effectiveSelectedDate}
         todayDate={careContext.todayDate}
       />
       <DiaryClayState
         onPrimaryAction={openQuickLog ?? openTimeline}
         onSecondaryAction={openTimeline}
-        state={todayStatus}
+        state={visibleTodayStatus}
       />
-      {todayStatus === null
-        || isClayDiaryState(todayStatus)
-        || (todayStatus === 'empty' && todayPlan !== null)
+      {visibleTodayStatus === null
+        || isClayDiaryState(visibleTodayStatus)
+        || (visibleTodayStatus === 'empty' && todayPlan !== null)
         ? null
-        : <TodayStatusCard state={todayStatus} />}
-      {showTodayPlan && todayPlan !== null ? (
+        : <TodayStatusCard state={visibleTodayStatus} />}
+      {showTodayPlan ? (
         <DiaryInfoHero
           hero={todayPlan.hero}
           onPrimaryAction={openQuickLog}
         />
       ) : null}
-      {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
-      {shouldShowQuickLogFailedBanner(rows) ? (
+      {isTodaySelected && hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
+      {isTodaySelected && shouldShowQuickLogFailedBanner(rows) ? (
         <Card
           accessibilityLabel={t('quick-log.failed.persistent-banner')}
           accessibilityLiveRegion="polite"
@@ -267,33 +301,37 @@ export function TodayScreen({
         </Card>
       ) : null}
       {showQuickLogSection ? (
-      <Stack
-        gap="sm"
-        style={styles.historySection}
-        testID="diary-history-section">
+      <View testID="diary-selected-day-timeline">
         <Stack
-          align="flex-start"
-          direction="horizontal"
           gap="sm"
-          justify="space-between"
-          wrap>
-          <AppText
-            style={styles.sectionTitle}
-            variant="title3">
-            {t('today.history.section-title')}
-          </AppText>
-          <Button
-            label={t('today.history.open-action')}
-            labelMaxFontSizeMultiplier={2}
-            labelVariant="label"
-            onPress={() => {
-              setDiaryHistoryOpen(true);
-            }}
-            style={styles.timelineEntry}
-            variant="tertiary"
-          />
-        </Stack>
-        {diaryHistoryOpen ? (
+          style={styles.historySection}
+          testID="diary-history-section">
+          <Stack
+            align="flex-start"
+            direction="horizontal"
+            gap="sm"
+            justify="space-between"
+            wrap>
+            <AppText
+              style={styles.sectionTitle}
+              testID="diary-selected-day-heading"
+              variant="title3">
+              {selectedDayTitle}
+            </AppText>
+            {isTodaySelected ? (
+              <Button
+                label={t('today.history.open-action')}
+                labelMaxFontSizeMultiplier={2}
+                labelVariant="label"
+                onPress={() => {
+                  setDiaryHistoryOpen(true);
+                }}
+                style={styles.timelineEntry}
+                variant="tertiary"
+              />
+            ) : null}
+          </Stack>
+          {showHistoryMode ? (
           <>
             <DiaryHistoryFilterBar
               selectedFilter={selectedHistoryFilter}
@@ -337,14 +375,15 @@ export function TodayScreen({
             <AppText>{t('errors.load-failed')}</AppText>
           </Card>
         ) : (
-          <Card>
+          <Card testID={selectedDayEmptyTestID}>
             <Stack gap="sm">
               <AppText variant="bodyEmph">{t('today.quick-log.empty.title')}</AppText>
               <AppText tone="secondary">{t('today.quick-log.empty.body')}</AppText>
             </Stack>
           </Card>
         )}
-      </Stack>
+        </Stack>
+      </View>
       ) : null}
     </Screen>
   );
@@ -555,9 +594,11 @@ function DiaryAllDoneCard() {
 }
 
 function DiaryWeekStrip({
+  onSelectDate,
   selectedDate,
   todayDate,
 }: Readonly<{
+  onSelectDate?: (date: string) => void;
   selectedDate: string;
   todayDate: string;
 }>) {
@@ -584,6 +625,15 @@ function DiaryWeekStrip({
     <WeekStrip
       accessibilityLabel={t('today.week-strip.label')}
       days={weekDays}
+      onSelectDay={onSelectDate === undefined
+        ? undefined
+        : (index) => {
+          const day = days[index];
+
+          if (day !== undefined) {
+            onSelectDate(day.date);
+          }
+        }}
       selectedIndex={selectedIndex === -1 ? 0 : selectedIndex}
       testID="today-week-strip"
       todayIndex={todayIndex === -1 ? undefined : todayIndex}

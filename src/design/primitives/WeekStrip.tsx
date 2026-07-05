@@ -54,7 +54,8 @@ export function WeekStrip({
             key={entry.key}
             minTarget="none"
             onPress={onSelectDay ? () => onSelectDay(index) : undefined}
-            style={styles.day}>
+            style={styles.day}
+            testID={getWeekStripDayTestID(entry.key)}>
             <AppText tone={isSelected ? 'primary' : 'secondary'} variant="caption">
               {entry.dow}
             </AppText>
@@ -77,6 +78,10 @@ export function WeekStrip({
       })}
     </View>
   );
+}
+
+function getWeekStripDayTestID(key: string): string | undefined {
+  return /^\d{4}-\d{2}-\d{2}$/.test(key) ? `week-strip-day-${key}` : undefined;
 }
 
 const styles = StyleSheet.create({

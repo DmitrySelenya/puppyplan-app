@@ -127,6 +127,34 @@ describe('WeekStrip', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Mon 11' }));
     expect(onSelectDay).toHaveBeenCalledWith(0);
   });
+
+  it('AC-1: renders interactive day buttons with selected state and stable date testIDs', () => {
+    const onSelectDay = jest.fn();
+    const days = WEEK_DAYS.map((day, index) => ({
+      ...day,
+      key: `2026-06-${String(8 + index).padStart(2, '0')}`,
+    }));
+
+    render(
+      <WeekStrip
+        accessibilityLabel="Week"
+        days={days}
+        onSelectDay={onSelectDay}
+        selectedIndex={2}
+      />,
+    );
+
+    const selectedDay = screen.getByTestId('week-strip-day-2026-06-10');
+    expect(selectedDay.props.accessibilityRole).toBe('button');
+    expect(selectedDay.props.accessibilityState.selected).toBe(true);
+
+    const unselectedDay = screen.getByTestId('week-strip-day-2026-06-09');
+    expect(unselectedDay.props.accessibilityRole).toBe('button');
+    expect(unselectedDay.props.accessibilityState.selected).toBe(false);
+
+    fireEvent.press(unselectedDay);
+    expect(onSelectDay).toHaveBeenCalledWith(1);
+  });
 });
 
 describe('InfoHero', () => {
