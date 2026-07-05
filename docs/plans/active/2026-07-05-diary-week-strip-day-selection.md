@@ -6,7 +6,7 @@
 
 **Status:** Active.
 
-**Current phase:** Phase 6 - Review, Commit, Push, Draft PR, CI.
+**Current phase:** In Review - Draft PR open, CI Verification green.
 
 **Plan type:** Active task plan.
 
@@ -434,11 +434,11 @@ npm run check
 
 **Checklist:**
 - [x] Before commit/PR, offer/run code review + security review capability per `~/.claude/CAPABILITIES.md`.
-- [ ] Stage only task-scoped files.
-- [ ] Commit with `PUP-26` in message.
-- [ ] Push `dimaselenya/pup-26-diary-weekstrip-day-selection`.
-- [ ] Open draft PR with Work Tracking referencing `PUP-26`, plan, and verification.
-- [ ] Wait for CI Verification green.
+- [x] Stage only task-scoped files.
+- [x] Commit with `PUP-26` in message.
+- [x] Push `dimaselenya/pup-26-diary-weekstrip-day-selection`.
+- [x] Open draft PR with Work Tracking referencing `PUP-26`, plan, and verification.
+- [x] Wait for CI Verification green.
 - [ ] Move Linear to `In Review` only after local + Maestro + CI evidence is recorded.
 
 Forbidden:
@@ -623,7 +623,12 @@ Design fidelity:
 
 ### Linear / PR / CI
 
-Linear updated through GREEN/local gates, Maestro evidence, and AC-7 review fix. PR/CI pending until commit, push, draft PR, and CI Verification.
+Linear updated through GREEN/local gates, Maestro evidence, and AC-7 review fix. Draft PR opened: https://github.com/DmitrySelenya/puppyplan-app/pull/28. CI Verification is green:
+- Local Gate: pass, 2m45s.
+- Work Tracking: pass, 7s.
+- Work Tracking Auto Fill: pass, 7s.
+- GitGuardian Security Checks: pass.
+- Supabase Preview: skipped.
 
 ### Review / Security
 
@@ -643,3 +648,4 @@ Linear updated through GREEN/local gates, Maestro evidence, and AC-7 review fix.
 - 2026-07-05: SE simulator/Maestro verification completed, 10/10 flows passed with screenshots and selected-state hierarchy evidence; current phase moved to review/commit/PR/CI.
 - 2026-07-05: Pre-commit review found and fixed care-context arrival unfiltered-query gap with AC-7; targeted tests, `npm run check`, and final Maestro rerun are green.
 - 2026-07-05: Review and security/privacy pass completed; no remaining findings before staging.
+- 2026-07-05: Commit `08422ac` pushed, draft PR #28 opened, and CI Verification passed.
