@@ -104,10 +104,13 @@ Required properties:
 
 ## Action Items
 
-- [ ] Create `docs/plans/active/2026-07-04-health-offline-outbox.md`.
-- [ ] Add TDD coverage for Health outbox contracts, state transitions, claim/retry, and missing actor
+- [x] Create `docs/plans/active/2026-07-04-health-offline-outbox.md`.
+- [x] Add TDD coverage for Health outbox contracts, state transitions, claim/retry, and missing actor
   quarantine.
-- [ ] Implement a JS-only Health outbox using existing Expo SQLite.
-- [ ] Wire Health create/update/delete/restore replay through the existing typed repository/query
+- [x] Implement a JS-only Health outbox using existing Expo SQLite.
+- [x] Wire Health create/update/delete/restore replay through the existing typed repository/query
   boundary.
-- [ ] Update `docs/plans/active/2026-06-29-v2-nav-redesign-gaps.md` with verification evidence.
+- [x] Update `docs/plans/active/2026-06-29-v2-nav-redesign-gaps.md` with verification evidence.
+- [ ] Wire the mutation path end-to-end: enqueue failed Health mutations into the outbox and add a
+  reconnect/startup drain trigger that calls the processor. Until this lands, the outbox core is
+  implemented and tested but provides no runtime durability (2026-07-05 review audit).

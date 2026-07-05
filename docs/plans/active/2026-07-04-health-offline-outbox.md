@@ -11,7 +11,8 @@ Log queue into a generic outbox.
 
 **Status:** Active.
 
-**Current phase:** Phase 5 - Complete locally; no push/PR.
+**Current phase:** Phase 5 - Core complete locally; mutation-path wiring (enqueue-on-failure +
+drain trigger) deferred to a follow-up slice; no push/PR.
 
 **Architecture:** ADR-0019 chooses a separate `src/lib/queue/health-outbox/` local queue using the
 already installed Expo SQLite runtime. Quick Log queue remains ADR-0004 Quick Log-only. Replay uses
@@ -405,6 +406,19 @@ events and rejects missing actors for legacy rows. It is not a generic outbox.
 
 ## Changelog
 
+- 2026-07-05: Pre-merge review pass hardened the outbox core and corrected the completion claim.
+  Fixes: retryable failures now persist a default exponential backoff (30s base doubling to a 10min
+  cap) instead of `retry_after_at = NULL`, which the claim query treated as immediately ready
+  (zero-backoff hot loop); re-enqueueing an operation over a terminal `failed_permanent` row now
+  re-activates it as a fresh `pending_local` item instead of returning the stale unclaimable row;
+  `createSupabaseHealthRecordRepository` now attaches shared scrubbed failure kinds
+  (`permission_denied`, `invalid_payload`, ...) so the outbox classifier stops treating every
+  repository failure as retryable `unknown`; delete replays invalidate the whole Today dashboard
+  family via `queryKeys.today.dashboardRoot` because the delete payload carries no scheduled date.
+  Status correction: the outbox CORE is implemented and tested, but it is not yet wired into the
+  production mutation path — no production caller enqueues failed Health mutations and nothing
+  drains the queue on reconnect/startup. Enqueue-on-failure + drain-trigger wiring is the remaining
+  follow-up slice before the outbox provides runtime durability.
 - 2026-07-04: Final verification passed with `npm run check`: lint, typecheck, 84 Jest suites /
   685 tests, 118 node tests, scaffold/i18n/tokens/privacy/text hygiene. Parent nav-gaps plan now
   records Health offline outbox as resolved and leaves only the unapproved native DatePicker gate for

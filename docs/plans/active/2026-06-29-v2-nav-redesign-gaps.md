@@ -249,14 +249,18 @@ from More now that history scroll/filtering lives inside Diary.
       restore data-layer contracts are also implemented; production read-only detail-route wiring is
       implemented at `/pet/health-record/[recordId]`. The authored `DHPP, 12 weeks` template
       generation is implemented for active puppies with `age_weeks_estimate === 12`. Health offline
-      write architecture is now resolved by ADR-0019 plus the JS-only Health outbox slice: separate
-      local `health_outbox_item` schema, state machine, retry classification, storage claim path,
-      missing-actor quarantine, processor replay, and query invalidation are covered by RED/GREEN
-      tests. Focused evidence: `src/test/health-outbox.test.ts`,
-      `src/test/health-outbox-storage.test.ts`, `src/test/health-records-query.test.ts`, and Quick
-      Log regressions passed together as 5 suites / 60 tests on 2026-07-04. Native DatePicker remains
-      open. Completion audit 2026-07-04: this is still an Approval Gate only for the unapproved real
-      native DatePicker dependency after the native build blocker is addressed.
+      write architecture is decided by ADR-0019 and the JS-only Health outbox CORE is implemented:
+      separate local `health_outbox_item` schema, state machine, retry classification with default
+      exponential backoff, storage claim path, terminal-row re-enqueue re-activation, missing-actor
+      quarantine, processor replay, and query invalidation are covered by RED/GREEN tests. Focused
+      evidence: `src/test/health-outbox.test.ts`, `src/test/health-outbox-storage.test.ts`,
+      `src/test/health-records-query.test.ts`. Review audit 2026-07-05: the outbox is NOT yet wired
+      into the production mutation path — no production code calls `enqueue` on a failed Health
+      mutation and nothing calls `processNextHealthOutboxItem` on reconnect/startup, so failed
+      offline Health writes are not yet durably buffered at runtime. Mutation-path wiring
+      (enqueue-on-failure + drain trigger) is a deferred follow-up slice. Native DatePicker also
+      remains open behind the unapproved native dependency gate after the native build blocker is
+      addressed.
 - [x] ✅ Edit record / delete (undo) (§4.1.4) — native detail/delete confirm/undo-toast
       anatomy implemented. Stage 4 SE native screenshot comparison PASS recorded 2026-07-02.
       Durable edit/delete/restore data-layer contracts are now implemented with source preservation,
@@ -4778,13 +4782,16 @@ remaining pieces require one of the following explicit follow-up decisions befor
   `restoreSyncedQuickLogEvent`. The product history-scroll/fold-in follow-up is also closed by the
   inline `Review history` implementation and Stage 4 screenshot evidence; the remaining stale
   standalone Timeline entry point in More was removed on 2026-07-04.
-- **Pet Health Add Record offline queue:** resolved by ADR-0019 and the JS-only Health outbox slice.
-  `src/lib/queue/README.md` and `docs/architecture/10-quick-log-queue.md` now keep the Quick Log
-  queue routine-event-only while Health uses a separate local outbox under
-  `src/lib/queue/health-outbox/`. RED/GREEN coverage proves Health outbox contracts, state-machine
-  transitions, scrubbed retry classification, local SQLite schema, ready-row claim, retry-delay
-  gating, missing-actor quarantine, processor replay, and query invalidation. Focused combined gate
-  passed 5 suites / 60 tests.
+- **Pet Health Add Record offline queue:** architecture decided by ADR-0019; the JS-only Health
+  outbox CORE is implemented and tested, but runtime wiring is still open. `src/lib/queue/README.md`
+  and `docs/architecture/10-quick-log-queue.md` keep the Quick Log queue routine-event-only while
+  Health uses a separate local outbox under `src/lib/queue/health-outbox/`. RED/GREEN coverage
+  proves Health outbox contracts, state-machine transitions, scrubbed retry classification with
+  default exponential backoff, local SQLite schema, ready-row claim, terminal-row re-enqueue
+  re-activation, retry-delay gating, missing-actor quarantine, processor replay, and query
+  invalidation. Review audit 2026-07-05: no production caller enqueues failed Health mutations and
+  no drain trigger invokes `processNextHealthOutboxItem`, so the durability path is not active at
+  runtime yet — enqueue-on-failure + drain wiring is a deferred follow-up slice.
 - **Health Record delete/undo runtime proof:** resolved for this plan's Health scope by
   `20260703181913_fix_tombstone_update_rls.sql`. RED pgTAP failed on current policy for
   owner/caregiver Health soft-delete/restore; GREEN pgTAP passed 104/104 with the migration.
@@ -4806,6 +4813,22 @@ remaining pieces require one of the following explicit follow-up decisions befor
   require Expo Notifications for real local reminder scheduling and permission behavior.
 
 ## Changelog
+- 2026-07-05: Pre-merge review fix pass. (1) Synced Quick Log delete snackbar now dismisses after a
+  successful Undo restore instead of staying visible over the restored row. (2) Restored synced rows
+  are re-bucketed by the device-local calendar date (matching insert/timeline grouping) instead of
+  the UTC date slice, fixing undo appearing to do nothing for negative UTC offsets. (3) The
+  production `/settings/household` screen no longer renders a fabricated member roster or a phantom
+  pending invite: it shows the current member with their real role, live invites only, and a
+  localized empty-invites row (new `member-you` / `invites-empty` i18n keys in en/es/ru). (4) Health
+  outbox hardening: retryable failures now persist a default exponential backoff (30s base, 10min
+  cap) instead of a NULL retry_after_at zero-backoff hot loop; re-enqueueing over a terminal
+  `failed_permanent` row re-activates it as fresh `pending_local` instead of returning the stale
+  unclaimable row; the health-record repository attaches shared scrubbed failure kinds so
+  permission/validation errors classify as permanent instead of retried `unknown`; delete replays
+  invalidate the whole Today dashboard family via `queryKeys.today.dashboardRoot`. (5) Corrected the
+  outbox status rows above: the outbox core is implemented and tested but NOT wired into the
+  production mutation path — enqueue-on-failure and a drain trigger remain a deferred follow-up
+  slice.
 - 2026-07-04: Implemented the approved Health offline outbox architecture slice. Added ADR-0019,
   active implementation plan, separate JS-only `health_outbox_item` SQLite storage, Health outbox
   contracts/state/retry/replay processor, query replay invalidation, client-generated insert `id`
