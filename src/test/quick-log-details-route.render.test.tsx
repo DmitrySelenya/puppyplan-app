@@ -194,6 +194,71 @@ describe('QuickLogDetailsRoute', () => {
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
   });
 
+  it('AC-QL-DETAIL-STATES shows loading while active care context loads', () => {
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: null,
+      puppy: null,
+      status: 'loading',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogDetailsRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    expect(screen.getByTestId('quick-log-details-state-loading')).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.loading.title'))).toBeTruthy();
+  });
+
+  it('AC-QL-DETAIL-STATES shows view-only access for viewer care contexts', () => {
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: '00000000-0000-4000-8000-000000007902',
+        householdRole: 'viewer',
+        puppyId: '00000000-0000-4000-8000-000000007903',
+        selectedTrackerIds: ['feeding'],
+        todayDate: '2026-06-09',
+        userId: '00000000-0000-4000-8000-000000007904',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogDetailsRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    expect(screen.getByTestId('quick-log-details-state-permission-denied')).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.permission-denied.title'))).toBeTruthy();
+  });
+
+  it('AC-QL-DETAIL-STATES shows pending write while the local queue opens', () => {
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: undefined,
+      mutationEvents: [],
+      status: 'loading',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogDetailsRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    expect(screen.getByTestId('quick-log-details-state-pending-write')).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.pending-write.title'))).toBeTruthy();
+  });
+
   it.each([
     ['householdId', '00000000-0000-4000-8000-000000007912'],
     ['puppyId', '00000000-0000-4000-8000-000000007913'],

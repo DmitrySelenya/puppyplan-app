@@ -842,7 +842,7 @@ describe('design primitives', () => {
         <AppIcon name="vaccine" testID="icon-vaccine" />
         <AppIcon name="weight" testID="icon-weight" />
         <AppIcon name="pottyInside" testID="icon-potty-inside" />
-        <AppIcon name="today" filled testID="icon-today-filled" />
+        <AppIcon name="book" filled testID="icon-book-filled" />
       </>,
     );
 
@@ -875,11 +875,11 @@ describe('design primitives', () => {
     expect(pottyInside.props.fill).toBe('none');
     expect(pottyInside.props.accessibilityElementsHidden).toBe(true);
 
-    const todayFilled = screen.getByTestId('icon-today-filled', { includeHiddenElements: true });
+    const bookFilled = screen.getByTestId('icon-book-filled', { includeHiddenElements: true });
 
-    expect(todayFilled.props.fill).toBe(tokens.color.text.primary);
-    expect(todayFilled.props.stroke).toBe('none');
-    expect(todayFilled.props.accessibilityElementsHidden).toBe(true);
+    expect(bookFilled.props.fill).toBe(tokens.color.text.primary);
+    expect(bookFilled.props.stroke).toBe('none');
+    expect(bookFilled.props.accessibilityElementsHidden).toBe(true);
   });
 
   it('renders Stack layout spacing through the design boundary', () => {
@@ -1064,6 +1064,17 @@ describe('design primitives', () => {
     expect(onMutedPress).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps labelled static Card containers from collapsing nested controls', () => {
+    render(
+      <Card accessibilityLabel="Form section" testID="labelled-static-card">
+        <Button label="Nested action" onPress={jest.fn()} />
+      </Card>,
+    );
+
+    expect(screen.getByTestId('labelled-static-card').props.accessible).not.toBe(true);
+    expect(screen.getByRole('button', { name: 'Nested action' })).toBeTruthy();
+  });
+
   it('renders IconButton with hitSlop, disabled state, and token targets', () => {
     const onPress = jest.fn();
 
@@ -1156,7 +1167,7 @@ describe('design primitives', () => {
     expect(baseStyle.width).toBeGreaterThanOrEqual(56);
     expect(baseStyle.height).toBe(tokens.component.fab.size);
     expect(baseStyle.elevation).toBe(tokens.elevation[2].androidElevation);
-    expect(baseStyle.shadowColor).toBe(tokens.color.text.primary);
+    expect(baseStyle.shadowColor).toBe(tokens.elevation[2].color);
     expect(baseStyle.shadowOffset).toEqual({
       height: tokens.elevation[2].y,
       width: tokens.elevation[2].x,
@@ -1217,6 +1228,89 @@ describe('design primitives', () => {
     await user.press(screen.getByRole('button', { name: 'Undo' }));
 
     expect(onUndo).toHaveBeenCalledTimes(1);
+  });
+
+  it('anchors snackbar overlays in a full-height provider root', () => {
+    let snackbar: SnackbarController | null = null;
+
+    render(
+      <SnackbarProvider>
+        <SnackbarControllerProbe onReady={(controller) => {
+          snackbar = controller;
+        }} />
+      </SnackbarProvider>,
+    );
+
+    act(() => {
+      snackbar?.showSnackbar({
+        accessibilityLabel: 'Logged: feeding.',
+        id: 'quick-log:evt_00000000-0000-4000-8000-000000000301',
+        message: 'Logged · Feeding',
+        tone: 'success',
+      });
+    });
+
+    const providerRootStyle = StyleSheet.flatten(screen.getByTestId('snackbar-provider-root').props.style);
+
+    expect(providerRootStyle.flex).toBe(1);
+    expect(screen.getByTestId('snackbar-host')).toBeTruthy();
+  });
+
+  it('renders snackbar host inside a full-window overlay above native-stack screens', () => {
+    let snackbar: SnackbarController | null = null;
+
+    render(
+      <SnackbarProvider>
+        <SnackbarControllerProbe onReady={(controller) => {
+          snackbar = controller;
+        }} />
+      </SnackbarProvider>,
+    );
+
+    act(() => {
+      snackbar?.showSnackbar({
+        accessibilityLabel: 'Logged: feeding.',
+        id: 'quick-log:evt_00000000-0000-4000-8000-000000000301',
+        message: 'Logged · Feeding',
+        tone: 'success',
+      });
+    });
+
+    expect(screen.getByTestId('snackbar-window-overlay')).toBeTruthy();
+    expect(screen.getByTestId('snackbar-host')).toBeTruthy();
+  });
+
+  it('triggers the snackbar haptic feedback contract when a message is shown', async () => {
+    const hapticAdapter = jest.fn();
+    let snackbar: SnackbarController | null = null;
+
+    configureDesignHaptics(hapticAdapter);
+
+    render(
+      <SnackbarProvider>
+        <SnackbarControllerProbe onReady={(controller) => {
+          snackbar = controller;
+        }} />
+      </SnackbarProvider>,
+    );
+
+    const messageWithHaptic = {
+      accessibilityLabel: 'Logged: feeding.',
+      hapticEvent: 'saveSuccess',
+      id: 'quick-log:evt_00000000-0000-4000-8000-000000000301',
+      message: 'Logged · Feeding',
+      tone: 'success',
+    } satisfies Parameters<SnackbarController['showSnackbar']>[0] & {
+      hapticEvent: 'saveSuccess';
+    };
+
+    act(() => {
+      snackbar?.showSnackbar(messageWithHaptic);
+    });
+
+    await waitFor(() => {
+      expect(hapticAdapter).toHaveBeenCalledWith('success', tokens.haptic.success);
+    });
   });
 
   it('replaces snackbar messages by id instead of stacking stale status', () => {

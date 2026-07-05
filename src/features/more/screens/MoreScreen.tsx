@@ -9,6 +9,7 @@ import { Card } from '@/design/primitives/Card';
 import { ListGroup } from '@/design/primitives/ListGroup';
 import { ListRow } from '@/design/primitives/ListRow';
 import { Screen } from '@/design/primitives/Screen';
+import { ScreenHeader } from '@/design/primitives/ScreenHeader';
 import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { Stack } from '@/design/primitives/Stack';
 import { tokens } from '@/design/tokens';
@@ -22,9 +23,15 @@ type PuppySettingsAccessState = 'loading' | 'owner' | 'nonOwner' | 'empty' | 'er
 
 export type MoreScreenProps = Readonly<{
   canManagePuppySettings?: boolean;
-  openPuppyProfile?: () => void;
-  openQuickTrackers?: () => void;
-  openTimeline: () => void;
+  openHousehold?: () => void;
+  openHelp?: () => void;
+  openNotifications?: () => void;
+  openPetSettings?: () => void;
+  openPlus?: () => void;
+  openPrivacy?: () => void;
+  openReminders?: () => void;
+  openShareableCards?: () => void;
+  openSitterMode?: () => void;
   puppy?: PuppyProfile | null;
   puppySettingsState?: PuppySettingsAccessState;
 }>;
@@ -43,9 +50,15 @@ export function ConnectedMoreScreen(props: Omit<MoreScreenProps, 'canManagePuppy
 
 export function MoreScreen({
   canManagePuppySettings = true,
-  openPuppyProfile,
-  openQuickTrackers,
-  openTimeline,
+  openHousehold,
+  openHelp,
+  openNotifications,
+  openPetSettings,
+  openPlus,
+  openPrivacy,
+  openReminders,
+  openShareableCards,
+  openSitterMode,
   puppy = null,
   puppySettingsState,
 }: MoreScreenProps) {
@@ -54,60 +67,91 @@ export function MoreScreen({
 
   return (
     <Screen contentStyle={styles.content}>
-      <AppText variant="title">{t('more.screen-title')}</AppText>
+      <ScreenHeader title={t('more.screen-title')} />
       {puppy ? (
         <PuppySummaryCard
           locale={locale}
-          onPress={openPuppyProfile}
+          onPress={openPetSettings}
           puppy={puppy}
           t={t}
         />
       ) : null}
       <PuppySettingsSection
-        openPuppyProfile={openPuppyProfile}
-        openQuickTrackers={openQuickTrackers}
-        puppy={puppy}
+        openPetSettings={openPetSettings}
         state={settingsState}
       />
       <SettingsSection title={t('more.sections.sharing')}>
-        <DeferredListRow icon="personCluster" title={t('more.rows.family')} />
-        <DeferredListRow icon="lock" title={t('more.rows.trainer-sitter')} />
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="personCluster" />}
+          onPress={openHousehold}
+          title={t('more.rows.family')}
+          variant="settings"
+        />
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="personCluster" />}
+          onPress={openSitterMode}
+          title={t('more.rows.trainer-sitter')}
+          variant="settings"
+        />
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="docText" />}
+          onPress={openShareableCards}
+          title={t('more.rows.shareable-cards')}
+          variant="settings"
+        />
       </SettingsSection>
       <SettingsSection title={t('more.sections.records')}>
         <ListRow
           accessory="chevron"
-          leading={<AppIcon name="docText" />}
-          onPress={openTimeline}
-          title={t('more.rows.timeline')}
+          leading={<AppIcon name="bell" />}
+          onPress={openReminders}
+          title={t('more.rows.reminders')}
           variant="settings"
         />
-        <DeferredListRow icon="bell" title={t('more.rows.reminders')} />
-        <DeferredListRow
-          icon="gear"
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="gear" />}
+          onPress={openNotifications}
           subtitle={t('more.notifications.push-hint')}
           title={t('more.rows.notifications')}
+          variant="settings"
         />
       </SettingsSection>
       <SettingsSection title={t('more.sections.privacy')}>
-        <DeferredListRow
-          icon="lock"
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="lock" />}
+          onPress={openPrivacy}
           subtitle={t('more.privacy.section-account-removal')}
           title={t('more.rows.data-account')}
+          variant="settings"
         />
       </SettingsSection>
       <SettingsSection title={t('more.sections.support')}>
-        <DeferredListRow icon="infoCircle" title={t('more.rows.help')} />
-        <DeferredListRow
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="infoCircle" />}
+          onPress={openHelp}
+          title={t('more.rows.help')}
+          variant="settings"
+        />
+        <StaticInfoListRow
           icon="infoCircle"
           subtitle={t('more.about.version')}
           title={t('more.rows.about')}
         />
       </SettingsSection>
       <ListGroup>
-        <DeferredListRow
-          icon="paw"
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="paw" />}
+          onPress={openPlus}
           subtitle={t('more.plus.subtitle')}
           title={t('more.rows.puppyplan-plus')}
+          variant="settings"
         />
       </ListGroup>
       <SignOutButton />
@@ -172,14 +216,10 @@ const styles = StyleSheet.create({
 });
 
 function PuppySettingsSection({
-  openPuppyProfile,
-  openQuickTrackers,
+  openPetSettings,
   state,
-  puppy,
 }: Readonly<{
-  openPuppyProfile?: () => void;
-  openQuickTrackers?: () => void;
-  puppy: PuppyProfile | null;
+  openPetSettings?: () => void;
   state: PuppySettingsAccessState;
 }>) {
   const { t } = useAppTranslation();
@@ -204,26 +244,13 @@ function PuppySettingsSection({
         </Card>
       ) : null}
       {state === 'owner' ? (
-        <>
-          <ListRow
-            accessory="chevron"
-            leading={<AppIcon name="paw" />}
-            onPress={openPuppyProfile}
-            title={t('more.rows.puppy-profile')}
-            variant="settings"
-          />
-          <ListRow
-            accessory="chevron"
-            leading={<AppIcon name="plus" />}
-            meta={t('more.quick-trackers.selected-count', {
-              count: puppy?.quick_tracker_ids?.length ?? 0,
-              max: 5,
-            })}
-            onPress={openQuickTrackers}
-            title={t('more.rows.quick-trackers')}
-            variant="settings"
-          />
-        </>
+        <ListRow
+          accessory="chevron"
+          leading={<AppIcon name="paw" />}
+          onPress={openPetSettings}
+          title={t('more.rows.pet-settings')}
+          variant="settings"
+        />
       ) : null}
     </SettingsSection>
   );
@@ -244,7 +271,7 @@ function SettingsSection({
   );
 }
 
-function DeferredListRow({
+function StaticInfoListRow({
   icon,
   subtitle,
   title,
@@ -253,14 +280,9 @@ function DeferredListRow({
   subtitle?: string;
   title: string;
 }>) {
-  const { t } = useAppTranslation();
-
   return (
     <ListRow
-      accessory="chevron"
-      disabled
       leading={<AppIcon name={icon} />}
-      meta={t('more.rows.deferred')}
       subtitle={subtitle}
       title={title}
       variant="settings"

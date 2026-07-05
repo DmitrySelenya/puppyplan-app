@@ -52,6 +52,7 @@ export type QuickLogShellProps = Readonly<{
   mutationEvents?: readonly QuickLogMutationEvent[];
   localEvents?: readonly QuickLogLocalEventView[];
   now?: () => Date;
+  onQuickLogSaved?: () => void;
   openDetails?: (request: QuickLogEventEditRequest) => void;
   recentEvent?: QuickLogRecentEvent | null;
   recentEvents?: readonly QuickLogRecentEvent[];
@@ -112,6 +113,55 @@ export function createQuickLogRecentEvents(
       trackerId,
     }];
   }).sort((left, right) => right.occurredAtMs - left.occurredAtMs);
+}
+
+function createQuickLogMutationLocalEventViews(
+  mutationEvents: readonly QuickLogMutationEvent[],
+  input: Readonly<{
+    careContext: QuickLogCareContext | null;
+    t: AppTranslate;
+  }>,
+): readonly QuickLogLocalEventView[] {
+  if (input.careContext === null || mutationEvents.length === 0) {
+    return [];
+  }
+
+  const eventsByClientEventId = new Map<string, QuickLogLocalEventView>();
+
+  for (const event of mutationEvents) {
+    eventsByClientEventId.set(event.clientEventId, {
+      clientEventId: event.clientEventId,
+      eventType: event.eventType,
+      householdId: input.careContext.householdId,
+      puppyId: input.careContext.puppyId,
+      state: event.type === 'failed' ? event.state : 'pending_local',
+      todayDate: input.careContext.todayDate,
+      trackerName: input.t(getQuickLogTrackerLabelKey(event.trackerId)),
+    });
+  }
+
+  return [...eventsByClientEventId.values()];
+}
+
+function mergeQuickLogLocalEventViews(
+  localEvents: readonly QuickLogLocalEventView[],
+  mutationLocalEvents: readonly QuickLogLocalEventView[],
+): readonly QuickLogLocalEventView[] {
+  if (mutationLocalEvents.length === 0) {
+    return localEvents;
+  }
+
+  const eventsByClientEventId = new Map<string, QuickLogLocalEventView>();
+
+  for (const event of localEvents) {
+    eventsByClientEventId.set(event.clientEventId, event);
+  }
+
+  for (const event of mutationLocalEvents) {
+    eventsByClientEventId.set(event.clientEventId, event);
+  }
+
+  return [...eventsByClientEventId.values()];
 }
 
 function createRecentEventPayload(
@@ -181,6 +231,7 @@ function QuickLogShellContent({
   mutation,
   mutationEvents = [],
   now,
+  onQuickLogSaved,
   openDetails,
   recentEvent = null,
   recentEvents = [],
@@ -201,6 +252,7 @@ function QuickLogShellContent({
     mutation: mutation ?? unavailableMutation,
     mutationEvents,
     now,
+    onQuickLogSaved,
     openDetails,
     recentEvent,
     recentEvents,
@@ -208,6 +260,17 @@ function QuickLogShellContent({
   const selectedTrackerIds = readyCareContext?.selectedTrackerIds?.length
     ? readyCareContext.selectedTrackerIds
     : defaultQuickLogTrackerIds;
+  const mutationLocalEvents = useMemo(
+    () => createQuickLogMutationLocalEventViews(mutationEvents, {
+      careContext: readyCareContext,
+      t,
+    }),
+    [mutationEvents, readyCareContext, t],
+  );
+  const visibleLocalEvents = useMemo(
+    () => mergeQuickLogLocalEventViews(localEvents, mutationLocalEvents),
+    [localEvents, mutationLocalEvents],
+  );
 
   if (isViewOnly) {
     return (
@@ -333,7 +396,7 @@ function QuickLogShellContent({
               ))}
             </Stack>
             <QuickLogLocalEvents
-              events={localEvents}
+              events={visibleLocalEvents}
               onDelete={controller.deleteLocal}
               onRetry={controller.retry}
               onUndo={controller.undoLocal}
@@ -442,9 +505,27 @@ function DuplicateWarning({
     <Card
       accessibilityLabel={t('quick-log.duplicate-warning.title')}
       accessibilityLiveRegion="polite"
-      accessibilityRole="alert">
+      accessibilityRole="alert"
+      style={styles.duplicateWarningCard}
+      testID="quick-log-duplicate-warning-card">
       <Stack gap="md">
-        <AppText variant="headline">{t('quick-log.duplicate-warning.title')}</AppText>
+        <Stack align="center" direction="horizontal" gap="sm">
+          <View
+            style={styles.duplicateWarningIcon}
+            testID="quick-log-duplicate-warning-icon">
+            <AppIcon
+              color={tokens.color.status.warning}
+              name="warningTriangle"
+              size={22}
+              testID="quick-log-duplicate-warning-icon-warningTriangle"
+            />
+          </View>
+          <AppText
+            style={styles.duplicateWarningTitle}
+            variant="headline">
+            {t('quick-log.duplicate-warning.title')}
+          </AppText>
+        </Stack>
         <AppText tone="secondary">{t('quick-log.duplicate-warning.question')}</AppText>
         <Stack direction="horizontal" gap="sm" wrap>
           <Button
@@ -471,6 +552,22 @@ const unavailableMutation: QuickLogMutationPort = {
 };
 
 const styles = StyleSheet.create({
+  duplicateWarningCard: {
+    backgroundColor: tokens.color.status.warningTint,
+    borderColor: tokens.color.status.warning,
+  },
+  duplicateWarningIcon: {
+    alignItems: 'center',
+    backgroundColor: tokens.color.surface.raised,
+    borderRadius: tokens.radius.sm,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  duplicateWarningTitle: {
+    flex: 1,
+    minWidth: 0,
+  },
   editTrackersButton: {
     alignSelf: 'flex-start',
   },

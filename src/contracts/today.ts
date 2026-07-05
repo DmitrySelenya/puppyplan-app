@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 import {
   STARTER_GUIDANCE_CONTENT_VERSION,
-  getStarterGuidanceForDay,
   starterGuidanceTopicIdSchema,
 } from './guidance';
 import {
@@ -132,24 +131,11 @@ export function buildTodayPlan(input: TodayPlanInput): TodayPlan {
   const parsedInput = todayPlanInputSchema.parse(input);
   const deferredProductionFeatures = createDeferredProductionFeatures(parsedInput);
   const hero = buildHero(parsedInput);
-  const guidanceTopic = hero.variant === 'first_day'
-    ? null
-    : getStarterGuidanceForDay({
-      completedTopicIds: parsedInput.completedGuidanceTopicIds,
-      dayNumber: parsedInput.dayNumber,
-    });
 
   return todayPlanSchema.parse({
     dailyCards: buildDailyCards(parsedInput),
     deferredProductionFeatures,
-    guidanceCard: guidanceTopic === null
-      ? null
-      : {
-        contentVersion: STARTER_GUIDANCE_CONTENT_VERSION,
-        dayNumber: guidanceTopic.dayNumber,
-        slot: 'guidance',
-        topicId: guidanceTopic.id,
-      },
+    guidanceCard: null,
     hero,
     todayDate: parsedInput.todayDate,
   });

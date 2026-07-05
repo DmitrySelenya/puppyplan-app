@@ -27,6 +27,7 @@ const SKIPPED_PATHS = [
   /^\.expo\//,
   /^coverage\//,
   /^docs\/design\/v1\/raw\//,
+  /^docs\/design\/v2\/reference\//,
   /(^|\/)package-lock\.json$/,
 ];
 

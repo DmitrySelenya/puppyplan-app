@@ -4,11 +4,11 @@
 export const tokens = {
   "business": {
     "noStreaksDays": 14,
-    "quickLogPosition": "persistent bottom action / FAB, NOT a tab",
+    "quickLogPosition": "persistent central Add action opening a Quick Log / Schedule chooser, NOT a tab",
     "quickLogTrackersMax": 5,
     "tabs": [
-      "today",
-      "health",
+      "diary",
+      "pet",
       "more"
     ],
     "timing": {
@@ -19,83 +19,89 @@ export const tokens = {
   },
   "color": {
     "surface": {
-      "base": "#FBFAF7",
-      "raised": "#FFFFFF",
-      "sunken": "#F1ECE3",
-      "overlay": "rgba(255,255,255,0.96)",
-      "scrim": "rgba(26,26,24,0.32)"
+      "base": "#F6EFE3",
+      "raised": "#FFFCF6",
+      "sunken": "#ECE3D4",
+      "overlay": "rgba(255,252,246,0.96)",
+      "scrim": "rgba(40,30,22,0.34)"
     },
     "text": {
-      "primary": "#1C1F1B",
-      "secondary": "#4A4E48",
-      "tertiary": "#72756A",
-      "disabled": "#A6A89F",
-      "onPrimary": "#FFFFFF",
-      "onAccent": "#1C1F1B",
-      "link": "#0E7490"
+      "primary": "#2C2824",
+      "secondary": "#6B6256",
+      "tertiary": "#766C5A",
+      "disabled": "#A99E8C",
+      "onPrimary": "#FFF7EF",
+      "onAccent": "#2C2824",
+      "link": "#B26A3C"
     },
     "primary": {
-      "50": "#ECFEFF",
-      "100": "#CFFAFE",
-      "200": "#A5F3FC",
-      "300": "#67E8F9",
-      "400": "#22D3EE",
-      "500": "#0891B2",
-      "600": "#0E7490",
-      "700": "#155E75",
-      "800": "#164E63",
-      "900": "#083344"
+      "50": "#FBF2EA",
+      "100": "#F4DCC6",
+      "200": "#ECC09C",
+      "300": "#E0A271",
+      "400": "#D08851",
+      "500": "#C77F4F",
+      "600": "#B26A3C",
+      "700": "#8C5028",
+      "800": "#5E3318",
+      "900": "#4C2117"
     },
     "accent": {
-      "100": "#FBEBE0",
-      "300": "#F4B89A",
-      "500": "#E07A4F",
-      "700": "#A14B26"
+      "100": "#FBEFD9",
+      "300": "#F2D196",
+      "500": "#E3A53C",
+      "700": "#B07A1E"
+    },
+    "sage": {
+      "100": "#E8EEDD",
+      "300": "#BCD0A0",
+      "500": "#84A06A",
+      "700": "#5E7A3E"
     },
     "status": {
-      "success": "#3F7A57",
-      "successTint": "#E6EFE8",
-      "warning": "#A06A1F",
-      "warningTint": "#F6ECD8",
-      "danger": "#9A3B2E",
-      "dangerTint": "#F4DDD8",
+      "success": "#5C7A45",
+      "successTint": "#E7EEDB",
+      "warning": "#A87A2A",
+      "warningTint": "#F7EAD2",
+      "danger": "#A24A3C",
+      "dangerTint": "#F4E4E0",
       "info": "#6E5862",
       "infoTint": "#ECE4E6"
     },
     "stroke": {
-      "default": "#E2DDD2",
-      "strong": "#C9C3B5",
-      "dividerHairline": "rgba(226,221,210,0.6)",
-      "focusRing": "#0E7490"
+      "default": "#E4D9C8",
+      "strong": "#C9BBA6",
+      "dividerHairline": "rgba(228,217,200,0.6)",
+      "focusRing": "#C77F4F"
     },
     "pill": {
       "template": {
-        "fill": "#F1ECE3",
-        "text": "#4A4E48"
+        "fill": "#EFE6D7",
+        "text": "#6B6256"
       },
       "needsVetReview": {
-        "fill": "#F6ECD8",
-        "text": "#7A4F12"
+        "fill": "#F7EAD2",
+        "text": "#7E5A18"
       },
       "confirmed": {
-        "fill": "#E6EFE8",
-        "text": "#2F5E41"
+        "fill": "#E7EEDB",
+        "text": "#44602E"
       },
       "completed": {
-        "fill": "#EAF3F3",
-        "text": "#175255"
+        "fill": "#E8E2D7",
+        "text": "#6B6256"
       },
       "pending": {
-        "fill": "#F1ECE3",
-        "text": "#4A4E48"
+        "fill": "#EFE6D7",
+        "text": "#6B6256"
       },
       "failed": {
-        "fill": "#F4DDD8",
-        "text": "#7A2A20"
+        "fill": "#F3E2DE",
+        "text": "#7E3328"
       },
       "urgent": {
-        "fill": "#F4DDD8",
-        "text": "#7A2A20"
+        "fill": "#F7EAD2",
+        "text": "#7E5A18"
       }
     }
   },
@@ -157,22 +163,22 @@ export const tokens = {
   "elevation": {
     "0": {
       "shadow": "none",
-      "border": "1px solid #E2DDD2",
+      "border": "1px solid #E4D9C8",
       "androidElevation": 0
     },
     "1": {
       "x": 0,
       "y": 2,
       "blur": 8,
-      "color": "#1C1F1B",
-      "opacity": 0.06,
+      "color": "#46321E",
+      "opacity": 0.07,
       "androidElevation": 2
     },
     "2": {
       "x": 0,
       "y": -4,
       "blur": 16,
-      "color": "#1C1F1B",
+      "color": "#46321E",
       "opacity": 0.1,
       "androidElevation": 6
     },
@@ -180,7 +186,7 @@ export const tokens = {
       "x": 0,
       "y": 8,
       "blur": 24,
-      "color": "#1C1F1B",
+      "color": "#46321E",
       "opacity": 0.14,
       "androidElevation": 12
     }
@@ -323,6 +329,9 @@ export const tokens = {
     "sm": 8,
     "md": 12,
     "lg": 16,
+    "card": 18,
+    "chip": 13,
+    "hero": 20,
     "full": 999
   },
   "space": {

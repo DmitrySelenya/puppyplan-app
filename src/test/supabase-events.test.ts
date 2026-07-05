@@ -270,6 +270,35 @@ describe('Quick Log Supabase event wrappers', () => {
     ]);
   });
 
+  it('AC-DIARY-DELETE-UNDO-3 selects a server row by composite id before restoring by row id', async () => {
+    const client = new RecordingEventLogClient([
+      { data: { ...serverRow, deleted_at: '2026-05-26T08:00:04.000Z' }, error: null, status: 200 },
+      { data: serverRow, error: null, status: 200 },
+    ]);
+    const repository = createSupabaseEventLogRepository(client);
+
+    await expect(repository.restoreByClientEventId({
+      householdId,
+      clientEventId,
+    })).resolves.toMatchObject({
+      id: serverRow.id,
+      deleted_at: null,
+    });
+
+    expect(client.calls).toEqual([
+      'from:event_log',
+      'select:*',
+      `eq:household_id:${householdId}`,
+      `eq:client_event_id:${clientEventId}`,
+      'maybeSingle',
+      'from:event_log',
+      'update:deleted_at',
+      `eq:id:${serverRow.id}`,
+      'select:*',
+      'maybeSingle',
+    ]);
+  });
+
   it('selects a server row by composite id before updating a validated payload by row id', async () => {
     const client = new RecordingEventLogClient([
       { data: serverRow, error: null, status: 200 },
@@ -411,6 +440,18 @@ class RecordingEventLogClient {
     return this.from('event_log')
       .update({
         deleted_at: input.deletedAt,
+      })
+      .eq('id', input.id)
+      .select('*')
+      .maybeSingle();
+  }
+
+  public async restoreEventLogById(input: {
+    id: string;
+  }): Promise<EventLogClientResponse> {
+    return this.from('event_log')
+      .update({
+        deleted_at: null,
       })
       .eq('id', input.id)
       .select('*')

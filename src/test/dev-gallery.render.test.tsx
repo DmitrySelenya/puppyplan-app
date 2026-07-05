@@ -6,12 +6,25 @@ import { AccessibilityInfo } from 'react-native';
 
 import {
   DesignGalleryScreen,
+  SyntheticHelpSupportStatesShell,
   SyntheticHealthShell,
+  SyntheticHouseholdAccessStatesShell,
+  SyntheticInviteAcceptStatesShell,
+  SyntheticShareablePuppyCardStatesShell,
+  SyntheticSitterModeStatesShell,
+  SyntheticPaywallStatesShell,
   SyntheticQuickLogDetailsShell,
   SyntheticQuickLogSheetShell,
+  SyntheticRemindersHubStatesShell,
+  SyntheticRemindersHubShell,
+  SyntheticReminderEditShell,
+  SyntheticNotificationPreferencesShell,
   SyntheticOnboardingShell,
   SyntheticMoreSettingsShell,
+  SyntheticPrivacyAccountStatesShell,
   SyntheticPuppyProfileSettingsShell,
+  SyntheticPuppyProfileSettingsStatesShell,
+  SyntheticQuickTrackersStatesShell,
   SyntheticQuickTrackersSettingsShell,
   SyntheticTodayShell,
 } from '@/features/_dev/design-gallery/DesignGalleryScreen';
@@ -73,12 +86,22 @@ describe('development-only design gallery', () => {
   it('renders synthetic gallery sections with typed i18n strings', () => {
     render(<DesignGalleryScreen />);
 
-    expect(screen.getByText(i18n.t('dev.gallery.title'))).toBeTruthy();
-    expect(screen.getAllByText(i18n.t('dev.gallery.synthetic-badge')).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(i18n.t('onboarding.welcome.title')).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(i18n.t('more.puppy-profile.screen-title')).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.title'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('dev.gallery.synthetic-badge'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('onboarding.welcome.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.puppy-profile.screen-title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
     expect(
-      screen.getAllByText(i18n.t('more.quick-trackers.screen-title-template', { n: 5 })).length,
+      screen.getAllByText(i18n.t('more.quick-trackers.screen-title-template', { n: 5 }), {
+        includeHiddenElements: true,
+      }).length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('dev.gallery.states.more-settings'), {
       includeHiddenElements: true,
@@ -89,10 +112,27 @@ describe('development-only design gallery', () => {
     expect(screen.getAllByText(i18n.t('dev.gallery.states.health-v2'), {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(i18n.t('tabs.today')).length).toBeGreaterThan(0);
-    expect(screen.getByText(i18n.t('dev.gallery.today.synthetic-note'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('dev.gallery.today.day-seven'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('dev.gallery.today.state-fixtures'))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('tabs.diary'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByTestId('gallery-swipe-delete', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByTestId('gallery-empty-illustration', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.today.synthetic-note'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.today.day-seven'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.today.state-fixtures'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.states.error.title'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
   });
 
   it('renders route-shell preview states without production actions', () => {
@@ -100,10 +140,23 @@ describe('development-only design gallery', () => {
       <>
         <SyntheticOnboardingShell />
         <SyntheticPuppyProfileSettingsShell />
+        <SyntheticPuppyProfileSettingsStatesShell />
         <SyntheticQuickTrackersSettingsShell />
+        <SyntheticQuickTrackersStatesShell />
         <SyntheticMoreSettingsShell />
         <SyntheticQuickLogSheetShell />
         <SyntheticHealthShell />
+        <SyntheticRemindersHubShell />
+        <SyntheticRemindersHubStatesShell />
+        <SyntheticReminderEditShell />
+        <SyntheticHelpSupportStatesShell />
+        <SyntheticNotificationPreferencesShell />
+        <SyntheticPrivacyAccountStatesShell />
+        <SyntheticHouseholdAccessStatesShell />
+        <SyntheticPaywallStatesShell />
+        <SyntheticInviteAcceptStatesShell />
+        <SyntheticShareablePuppyCardStatesShell />
+        <SyntheticSitterModeStatesShell />
         <SyntheticTodayShell />
         <SyntheticQuickLogDetailsShell />
       </>,
@@ -113,6 +166,7 @@ describe('development-only design gallery', () => {
     expect(screen.getAllByText(i18n.t('onboarding.tracker-picker.counter', { n: 5 })).length)
       .toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('more.puppy-profile.hint'))).toBeTruthy();
+    expect(screen.getAllByTestId('puppy-profile-state-loading').length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('more.quick-trackers.max-reached-hint'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.about.version'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.privacy.section-account-removal'))).toBeTruthy();
@@ -120,18 +174,214 @@ describe('development-only design gallery', () => {
     expect(screen.getByText(i18n.t('dev.gallery.states.quick-log-sheet'), {
       includeHiddenElements: true,
     })).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.states.quick-trackers-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByTestId('household-state-loading')).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.potty-subtype.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.duplicate-warning.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.failed.pill'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('health.rows.parasite-review-title'))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('health.rows.parasite-review-title')).length)
+      .toBeGreaterThan(0);
     expect(screen.getAllByText(i18n.t('health.pills.needs-vet-review')).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('health.add-record.states.loading.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.add-record.states.error.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('health.add-record.states.permission-denied.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.weight-entry.title'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('today.deferred.synthetic-badge')).length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('today.deferred.family-invite'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.deferred.reminders'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('quick-log.details.states.saving.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.loading.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.pending-write.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.details.states.error.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.offline-read.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.permission-denied.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.states.reminder-edit'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('reminders.form.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.form.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.form.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.form.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.queryByTestId('reminder-edit-time-picker-row', {
+      includeHiddenElements: true,
+    })).toBeNull();
+    expect(screen.getByText('Morning feeding', {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('reminders.sections.feeding'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.reminders-hub-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('reminders.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('reminders.states.empty.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.notification-preferences'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('more.notifications.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.notifications.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.notifications.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.notifications.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.privacy-account-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('more.privacy.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.privacy.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.privacy.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.privacy.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.privacy.states.permission-denied.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.help-support-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('more.help.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.help.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.help.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.help.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.quick-trackers.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.quick-trackers.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.quick-trackers.states.empty.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('more.quick-trackers.states.non-owner.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.paywall-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('paywall.states.loading-products.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('paywall.states.pending-purchase.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('paywall.states.purchase-error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('paywall.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('paywall.states.active-subscription.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.invite-accept-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('sharing.family.accepted.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.family.accepted.states.load-error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.family.accepted.states.expired.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.family.accepted.states.already-member.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getByText(i18n.t('dev.gallery.states.shareable-card-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getByText(i18n.t('dev.gallery.states.sitter-mode-states'), {
+      includeHiddenElements: true,
+    })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('sharing.sitter.states.no-caregiver.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.sitter.states.pending.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.sitter.states.active.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.sitter.states.exit-confirm.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.empty-builder.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.health-on.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.share-options.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.loading.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.pending-write.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.error.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(i18n.t('sharing.card-management.states.offline-read.title'), {
+      includeHiddenElements: true,
+    }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/supabase|production write|token/i)).toBeNull();
+  });
+
+  it('AC-PROFILE-STATES renders profile state templates inside the visible profile shell', () => {
+    render(<SyntheticPuppyProfileSettingsShell />);
+
+    expect(screen.getByText(i18n.t('more.puppy-profile.hint'))).toBeTruthy();
+    expect(screen.getByTestId('puppy-profile-state-loading')).toBeTruthy();
+    expect(screen.getByTestId('puppy-profile-state-pending-write')).toBeTruthy();
+    expect(screen.getByTestId('puppy-profile-state-error')).toBeTruthy();
+    expect(screen.getByTestId('puppy-profile-state-offline-read')).toBeTruthy();
+    expect(screen.getByTestId('puppy-profile-state-permission-denied')).toBeTruthy();
   });
 
   it('adds only synthetic route files for the planned route shells', () => {

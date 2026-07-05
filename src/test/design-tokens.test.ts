@@ -30,12 +30,15 @@ function contrastRatio(foreground: string, background: string) {
 
 describe('generated design tokens', () => {
   it('exports corrected color, spacing, radius, motion, and haptic values', () => {
-    expect(tokens.color.surface.base).toBe('#FBFAF7');
-    expect(tokens.color.text.tertiary).toBe('#72756A');
+    expect(tokens.color.surface.base).toBe('#F6EFE3');
+    expect(tokens.color.text.tertiary).toBe('#766C5A');
     expect(tokens.space[4]).toBe(16);
     expect(tokens.space[10]).toBe(40);
     expect(tokens.layout.screenPaddingY).toBe(24);
+    expect(tokens.radius.card).toBe(18);
+    expect(tokens.radius.chip).toBe(13);
     expect(tokens.radius.full).toBe(999);
+    expect(tokens.radius.hero).toBe(20);
     expect(tokens.elevation[1].androidElevation).toBe(2);
     expect(tokens.elevation[2].androidElevation).toBe(6);
     expect(tokens.elevation[3].androidElevation).toBe(12);
@@ -50,6 +53,17 @@ describe('generated design tokens', () => {
     expect(
       contrastRatio(tokens.color.text.tertiary, tokens.color.surface.raised),
     ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('keeps the completed health pill out of the retired Calm Teal palette', () => {
+    const completed = tokens.color.pill.completed;
+    const retiredCalmTeal = new Set(['#175255', '#EAF3F3']);
+
+    expect(retiredCalmTeal.has(completed.fill)).toBe(false);
+    expect(retiredCalmTeal.has(completed.text)).toBe(false);
+    expect(completed.fill).not.toBe(tokens.color.pill.confirmed.fill);
+    expect(completed.text).not.toBe(tokens.color.pill.confirmed.text);
+    expect(contrastRatio(completed.text, completed.fill)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('keeps every typography style at zero letter spacing', () => {

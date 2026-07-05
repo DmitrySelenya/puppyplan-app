@@ -5,14 +5,32 @@ import { ConnectedMoreScreen } from '@/features/more/screens/MoreScreen';
 export default function MoreRoute() {
   return (
     <ConnectedMoreScreen
-      openPuppyProfile={() => {
-        router.push('/settings/puppy-profile');
+      openPetSettings={() => {
+        router.push('/pet');
       }}
-      openQuickTrackers={() => {
-        router.push('/settings/quick-trackers');
+      openHousehold={() => {
+        router.push('/settings/household');
       }}
-      openTimeline={() => {
-        router.push('/timeline');
+      openSitterMode={() => {
+        router.push('/settings/sitter-mode');
+      }}
+      openShareableCards={() => {
+        router.push('/sharing/puppy-card');
+      }}
+      openHelp={() => {
+        router.push('/settings/help');
+      }}
+      openNotifications={() => {
+        router.push('/settings/notifications');
+      }}
+      openPrivacy={() => {
+        router.push('/settings/privacy-account');
+      }}
+      openPlus={() => {
+        router.push('/paywall');
+      }}
+      openReminders={() => {
+        router.push('/reminders');
       }}
     />
   );

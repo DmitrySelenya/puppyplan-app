@@ -1,7 +1,8 @@
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { QuickLogLocalEvents } from '@/features/quick-log/components/QuickLogLocalEvents';
+import { tokens } from '@/design/tokens';
 import { i18n } from '@/lib/i18n';
 
 const clientEventId = 'evt_00000000-0000-4000-8000-000000000601';
@@ -55,6 +56,12 @@ describe('QuickLogLocalEvents', () => {
 
     expect(screen.getByText(i18n.t('quick-log.pending.label'))).toBeTruthy();
     expect(screen.getByText(i18n.t('quick-log.failed.pill'))).toBeTruthy();
+    const pendingCardStyle = StyleSheet.flatten(screen.getByTestId('quick-log-local-event-pending-card').props.style);
+    const failedCardStyle = StyleSheet.flatten(screen.getByTestId('quick-log-local-event-failed-card').props.style);
+
+    expect(pendingCardStyle?.backgroundColor).not.toBe(tokens.color.status.dangerTint);
+    expect(failedCardStyle.backgroundColor).toBe(tokens.color.status.dangerTint);
+    expect(failedCardStyle.borderColor).toBe(tokens.color.status.danger);
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.snackbar.undo'),

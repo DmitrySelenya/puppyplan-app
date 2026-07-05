@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(92);
+SELECT plan(116);
 
 CREATE SCHEMA IF NOT EXISTS tests;
 
@@ -261,6 +261,94 @@ EXCEPTION
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION tests.try_soft_delete_event_log(
+  target_event_id uuid,
+  target_household_id uuid,
+  target_puppy_id uuid,
+  target_deleted_at timestamptz
+)
+RETURNS boolean
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  touched_count integer;
+BEGIN
+  UPDATE public.event_log
+  SET deleted_at = target_deleted_at
+  WHERE id = target_event_id
+    AND household_id = target_household_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at IS NULL;
+
+  GET DIAGNOSTICS touched_count = ROW_COUNT;
+
+  IF touched_count <> 1 THEN
+    RETURN false;
+  END IF;
+
+  PERFORM 1
+  FROM public.event_log
+  WHERE id = target_event_id
+    AND household_id = target_household_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at = target_deleted_at;
+
+  RETURN FOUND;
+EXCEPTION
+  WHEN insufficient_privilege OR check_violation OR with_check_option_violation THEN
+    RETURN false;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION tests.try_restore_event_log(
+  target_event_id uuid,
+  target_household_id uuid,
+  target_puppy_id uuid
+)
+RETURNS boolean
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  touched_count integer;
+BEGIN
+  PERFORM 1
+  FROM public.event_log
+  WHERE id = target_event_id
+    AND household_id = target_household_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at IS NOT NULL;
+
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  UPDATE public.event_log
+  SET deleted_at = null
+  WHERE id = target_event_id
+    AND household_id = target_household_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at IS NOT NULL;
+
+  GET DIAGNOSTICS touched_count = ROW_COUNT;
+
+  IF touched_count <> 1 THEN
+    RETURN false;
+  END IF;
+
+  PERFORM 1
+  FROM public.event_log
+  WHERE id = target_event_id
+    AND household_id = target_household_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at IS NULL;
+
+  RETURN FOUND;
+EXCEPTION
+  WHEN insufficient_privilege OR check_violation OR with_check_option_violation THEN
+    RETURN false;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION tests.try_update_puppy_quick_tracker_ids(
   target_puppy_id uuid,
   tracker_ids text[]
@@ -340,6 +428,129 @@ BEGIN
   );
 
   RETURN true;
+EXCEPTION
+  WHEN insufficient_privilege OR check_violation OR with_check_option_violation THEN
+    RETURN false;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION tests.try_soft_delete_health_record(
+  target_record_id uuid,
+  target_puppy_id uuid,
+  target_deleted_at timestamptz,
+  target_user_id uuid
+)
+RETURNS boolean
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  touched_count integer;
+BEGIN
+  UPDATE public.health_record
+  SET
+    deleted_at = target_deleted_at,
+    updated_by = target_user_id
+  WHERE id = target_record_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at IS NULL;
+
+  GET DIAGNOSTICS touched_count = ROW_COUNT;
+
+  IF touched_count <> 1 THEN
+    RETURN false;
+  END IF;
+
+  PERFORM 1
+  FROM public.health_record
+  WHERE id = target_record_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at = target_deleted_at;
+
+  RETURN FOUND;
+EXCEPTION
+  WHEN insufficient_privilege OR check_violation OR with_check_option_violation THEN
+    RETURN false;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION tests.try_restore_health_record(
+  target_record_id uuid,
+  target_puppy_id uuid,
+  target_user_id uuid
+)
+RETURNS boolean
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  touched_count integer;
+BEGIN
+  PERFORM 1
+  FROM public.health_record
+  WHERE id = target_record_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at IS NOT NULL;
+
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  UPDATE public.health_record
+  SET
+    deleted_at = null,
+    updated_by = target_user_id
+  WHERE id = target_record_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at IS NOT NULL;
+
+  GET DIAGNOSTICS touched_count = ROW_COUNT;
+
+  IF touched_count <> 1 THEN
+    RETURN false;
+  END IF;
+
+  PERFORM 1
+  FROM public.health_record
+  WHERE id = target_record_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at IS NULL;
+
+  RETURN FOUND;
+EXCEPTION
+  WHEN insufficient_privilege OR check_violation OR with_check_option_violation THEN
+    RETURN false;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION tests.try_soft_delete_reminder(
+  target_reminder_id uuid,
+  target_puppy_id uuid,
+  target_deleted_at timestamptz
+)
+RETURNS boolean
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  touched_count integer;
+BEGIN
+  UPDATE public.reminder
+  SET deleted_at = target_deleted_at
+  WHERE id = target_reminder_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at IS NULL;
+
+  GET DIAGNOSTICS touched_count = ROW_COUNT;
+
+  IF touched_count <> 1 THEN
+    RETURN false;
+  END IF;
+
+  PERFORM 1
+  FROM public.reminder
+  WHERE id = target_reminder_id
+    AND puppy_id = target_puppy_id
+    AND deleted_at = target_deleted_at;
+
+  RETURN FOUND;
 EXCEPTION
   WHEN insufficient_privilege OR check_violation OR with_check_option_violation THEN
     RETURN false;
@@ -1502,6 +1713,346 @@ SELECT is(
   false,
   'viewer cannot write health records'
 );
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
+SELECT is(
+  tests.try_soft_delete_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-04T10:00:00Z'::timestamptz
+  ),
+  true,
+  'owner can soft-delete household event_log rows and observe the tombstone transition'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.event_log
+SET deleted_at = null
+WHERE id = '00000000-0000-4000-8000-000000000501';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
+SELECT is(
+  tests.try_soft_delete_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-04T10:01:00Z'::timestamptz
+  ),
+  true,
+  'caregiver can soft-delete household event_log rows and observe the tombstone transition'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.event_log
+SET deleted_at = '2026-07-04T10:02:00Z'::timestamptz
+WHERE id = '00000000-0000-4000-8000-000000000501';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
+SELECT is(
+  tests.try_restore_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401'
+  ),
+  true,
+  'owner can restore tombstoned household event_log rows for undo'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.event_log
+SET deleted_at = '2026-07-04T10:03:00Z'::timestamptz
+WHERE id = '00000000-0000-4000-8000-000000000501';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
+SELECT is(
+  tests.try_restore_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401'
+  ),
+  true,
+  'caregiver can restore tombstoned household event_log rows for undo'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.event_log
+SET deleted_at = null
+WHERE id = '00000000-0000-4000-8000-000000000501';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000103');
+SELECT is(
+  tests.try_soft_delete_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-04T10:04:00Z'::timestamptz
+  ),
+  false,
+  'viewer cannot soft-delete event_log rows'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000104');
+SELECT is(
+  tests.try_soft_delete_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-04T10:05:00Z'::timestamptz
+  ),
+  false,
+  'non-member cannot soft-delete event_log rows'
+);
+
+SELECT tests.as_anon();
+SELECT is(
+  tests.try_soft_delete_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-04T10:06:00Z'::timestamptz
+  ),
+  false,
+  'anonymous role cannot soft-delete event_log rows'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000106');
+SELECT is(
+  tests.try_soft_delete_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-04T10:07:00Z'::timestamptz
+  ),
+  false,
+  'accepted trainer share user cannot soft-delete base event_log rows'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.event_log
+SET deleted_at = '2026-07-04T10:08:00Z'::timestamptz
+WHERE id = '00000000-0000-4000-8000-000000000501';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000103');
+SELECT is(
+  tests.try_restore_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401'
+  ),
+  false,
+  'viewer cannot restore event_log rows'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000104');
+SELECT is(
+  tests.try_restore_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401'
+  ),
+  false,
+  'non-member cannot restore event_log rows'
+);
+
+SELECT tests.as_anon();
+SELECT is(
+  tests.try_restore_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401'
+  ),
+  false,
+  'anonymous role cannot restore event_log rows'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000106');
+SELECT is(
+  tests.try_restore_event_log(
+    '00000000-0000-4000-8000-000000000501',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401'
+  ),
+  false,
+  'accepted trainer share user cannot restore base event_log rows'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.event_log
+SET deleted_at = null
+WHERE id = '00000000-0000-4000-8000-000000000501';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
+SELECT is(
+  tests.try_soft_delete_health_record(
+    '00000000-0000-4000-8000-000000000601',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-03T12:00:00Z'::timestamptz,
+    '00000000-0000-4000-8000-000000000101'
+  ),
+  true,
+  'owner can soft-delete household health records and observe the tombstone transition'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.health_record
+SET deleted_at = null
+WHERE id = '00000000-0000-4000-8000-000000000601';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
+SELECT is(
+  tests.try_soft_delete_health_record(
+    '00000000-0000-4000-8000-000000000601',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-03T12:01:00Z'::timestamptz,
+    '00000000-0000-4000-8000-000000000102'
+  ),
+  true,
+  'caregiver can soft-delete household health records and observe the tombstone transition'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.health_record
+SET deleted_at = '2026-07-03T12:02:00Z'::timestamptz
+WHERE id = '00000000-0000-4000-8000-000000000601';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
+SELECT is(
+  tests.try_restore_health_record(
+    '00000000-0000-4000-8000-000000000601',
+    '00000000-0000-4000-8000-000000000401',
+    '00000000-0000-4000-8000-000000000101'
+  ),
+  true,
+  'owner can restore tombstoned household health records for undo'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.health_record
+SET deleted_at = '2026-07-03T12:03:00Z'::timestamptz
+WHERE id = '00000000-0000-4000-8000-000000000601';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
+SELECT is(
+  tests.try_restore_health_record(
+    '00000000-0000-4000-8000-000000000601',
+    '00000000-0000-4000-8000-000000000401',
+    '00000000-0000-4000-8000-000000000102'
+  ),
+  true,
+  'caregiver can restore tombstoned household health records for undo'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.health_record
+SET deleted_at = null
+WHERE id = '00000000-0000-4000-8000-000000000601';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000103');
+SELECT is(
+  tests.try_soft_delete_health_record(
+    '00000000-0000-4000-8000-000000000601',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-03T12:04:00Z'::timestamptz,
+    '00000000-0000-4000-8000-000000000103'
+  ),
+  false,
+  'viewer cannot soft-delete health records'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000104');
+SELECT is(
+  tests.try_soft_delete_health_record(
+    '00000000-0000-4000-8000-000000000601',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-03T12:05:00Z'::timestamptz,
+    '00000000-0000-4000-8000-000000000104'
+  ),
+  false,
+  'non-member cannot soft-delete health records'
+);
+
+SELECT tests.as_anon();
+SELECT is(
+  tests.try_soft_delete_health_record(
+    '00000000-0000-4000-8000-000000000601',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-03T12:06:00Z'::timestamptz,
+    '00000000-0000-4000-8000-000000000101'
+  ),
+  false,
+  'anonymous role cannot soft-delete health records'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
+SELECT is(
+  tests.try_soft_delete_reminder(
+    '00000000-0000-4000-8000-000000001001',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-03T13:00:00Z'::timestamptz
+  ),
+  true,
+  'owner can soft-delete household reminders and observe the tombstone transition'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.reminder
+SET deleted_at = null
+WHERE id = '00000000-0000-4000-8000-000000001001';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
+SELECT is(
+  tests.try_soft_delete_reminder(
+    '00000000-0000-4000-8000-000000001001',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-03T13:01:00Z'::timestamptz
+  ),
+  true,
+  'caregiver can soft-delete household reminders and observe the tombstone transition'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.reminder
+SET deleted_at = null
+WHERE id = '00000000-0000-4000-8000-000000001001';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000103');
+SELECT is(
+  tests.try_soft_delete_reminder(
+    '00000000-0000-4000-8000-000000001001',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-03T13:02:00Z'::timestamptz
+  ),
+  false,
+  'viewer cannot soft-delete reminders'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000104');
+SELECT is(
+  tests.try_soft_delete_reminder(
+    '00000000-0000-4000-8000-000000001001',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-03T13:03:00Z'::timestamptz
+  ),
+  false,
+  'non-member cannot soft-delete reminders'
+);
+
+SELECT tests.as_anon();
+SELECT is(
+  tests.try_soft_delete_reminder(
+    '00000000-0000-4000-8000-000000001001',
+    '00000000-0000-4000-8000-000000000401',
+    '2026-07-03T13:04:00Z'::timestamptz
+  ),
+  false,
+  'anonymous role cannot soft-delete reminders'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.reminder
+SET deleted_at = null
+WHERE id = '00000000-0000-4000-8000-000000001001';
 
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
 SELECT is(

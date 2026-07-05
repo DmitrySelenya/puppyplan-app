@@ -7,6 +7,7 @@ import { AppProviders } from '@/lib/providers/AppProviders';
 import { AuthProvider, type AuthProviderDependencies } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
 import { AccessUnavailableScreen } from '@/features/linking/screens/AccessUnavailableScreen';
+import { InviteAcceptScreen } from '@/features/linking/screens/InviteAcceptScreen';
 import { HealthScreen } from '@/features/health/screens/HealthScreen';
 import { MoreScreen } from '@/features/more/screens/MoreScreen';
 import { QuickLogShell } from '@/features/quick-log/screens/QuickLogShell';
@@ -65,18 +66,22 @@ describe('app shell screens', () => {
     reduceMotionProbe.mockRestore();
   });
 
-  it('renders the Today shell with localized empty-state copy', () => {
+  it('renders the Diary shell with localized empty-state copy', () => {
     renderWithProviders(<TodayScreen openTimeline={noop} />);
 
-    expect(screen.getByText(i18n.t('tabs.today'))).toBeTruthy();
+    expect(screen.getByTestId('diary-header')).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.unavailable.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.states.unavailable.body'))).toBeTruthy();
   });
 
-  it('renders the Health shell as an honest empty deferred state by default', () => {
-    const result = renderWithProviders(<HealthScreen />);
+  it('renders the Pet shell as an honest empty state with an Add Record route action', () => {
+    const openAddRecord = jest.fn();
+    const result = renderWithProviders(<HealthScreen onOpenAddRecord={openAddRecord} />);
 
-    expect(screen.getByText(i18n.t('tabs.health'))).toBeTruthy();
+    const petTitle = screen.getByRole('header', { name: i18n.t('tabs.pet') });
+    const petTitleStyle = StyleSheet.flatten(petTitle.props.style);
+
+    expect(petTitleStyle.fontSize).toBe(tokens.typography.scale.title1.fontSize);
     expect(screen.getByText(i18n.t('health.segments.0'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.segments.1'))).toBeTruthy();
     expect(screen.getByText(i18n.t('health.filter-chips.0'))).toBeTruthy();
@@ -84,9 +89,12 @@ describe('app shell screens', () => {
     expect(screen.queryByText(i18n.t('health.rows.dhpp-title'))).toBeNull();
     expect(screen.queryByText(i18n.t('health.rows.parasite-review-title'))).toBeNull();
     expect(screen.queryByText(i18n.t('health.rows.vet-visit-title'))).toBeNull();
-    expect(screen.getByRole('button', {
+    const addRecordButton = screen.getByRole('button', {
       name: i18n.t('health.empty.primary'),
-    }).props.accessibilityState.disabled).toBe(true);
+    });
+    expect(addRecordButton.props.accessibilityState.disabled).toBe(false);
+    fireEvent.press(addRecordButton);
+    expect(openAddRecord).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', {
       name: i18n.t('health.empty.secondary'),
     }).props.accessibilityState.disabled).toBe(true);
@@ -99,7 +107,7 @@ describe('app shell screens', () => {
     expect(contentStyle.paddingBottom).toBeGreaterThanOrEqual(tokens.layout.bottomInsetFab);
   });
 
-  it('renders the Health review mixed-list fixture only when explicitly requested', () => {
+  it('renders the Pet review mixed-list fixture only when explicitly requested', () => {
     renderWithProviders(<HealthScreen reviewState="mixed-list" />);
 
     expect(screen.getByText(i18n.t('health.rows.dhpp-title'))).toBeTruthy();
@@ -121,14 +129,17 @@ describe('app shell screens', () => {
       <AppProviders>
         <AuthProvider dependencies={stubAuthDependencies}>
           <QuickLogFeedbackProvider>
-            <MoreScreen openTimeline={noop} />
+            <MoreScreen />
           </QuickLogFeedbackProvider>
         </AuthProvider>
       </AppProviders>,
     );
 
-    expect(screen.getByText(i18n.t('more.screen-title'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('more.rows.timeline'))).toBeTruthy();
+    const moreTitle = screen.getByRole('header', { name: i18n.t('more.screen-title') });
+    const moreTitleStyle = StyleSheet.flatten(moreTitle.props.style);
+
+    expect(moreTitleStyle.fontSize).toBe(tokens.typography.scale.title1.fontSize);
+    expect(screen.queryByText(i18n.t('more.rows.timeline'))).toBeNull();
     expect(screen.getByText(i18n.t('more.sections.support'))).toBeTruthy();
     expect(screen.getByText(i18n.t('auth.sign-out.cta'))).toBeTruthy();
   });
@@ -159,6 +170,69 @@ describe('app shell screens', () => {
 
     expect(screen.getByText(i18n.t('states.revoked-or-expired.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('states.revoked-or-expired.body-long'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('states.revoked-or-expired.status'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('states.revoked-or-expired.safety-label'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('states.revoked-or-expired.safety-body'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('states.revoked-or-expired.next-step-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('states.revoked-or-expired.next-step-body'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('states.revoked-or-expired.action') })).toBeTruthy();
     expect(screen.queryByText(/\[[^\]]*token[^\]]*\]/i)).toBeNull();
+  });
+
+  it('renders caregiver-side accept invite anatomy without exposing the token', () => {
+    renderWithProviders(
+      <InviteAcceptScreen
+        inviteToken="raw-invite-token-for-test"
+        ownerName="Owner"
+        puppyName="Puppy"
+      />,
+    );
+
+    expect(screen.getByText(i18n.t('sharing.family.accepted.header', {
+      ownerName: 'Owner',
+      puppyName: 'Puppy',
+    }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.role-caregiver'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.what-included'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.caregiver-included-bullets.0', {
+      puppyName: 'Puppy',
+    }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.caregiver-included-bullets.1'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.caregiver-included-bullets.2'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.what-excluded'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.caregiver-excluded-bullets.0'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.caregiver-excluded-bullets.1'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.disclosure', {
+      ownerName: 'Owner',
+    }))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('sharing.family.accepted.accept') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('sharing.family.accepted.decline') })).toBeTruthy();
+    expect(screen.queryByText(/raw-invite-token-for-test/i)).toBeNull();
+  });
+
+  it('AC-SHARE-ACCEPT-STATES renders deterministic invite loading, error, expired, and already-member states', () => {
+    renderWithProviders(
+      <>
+        <InviteAcceptScreen inviteToken="raw-loading-token" reviewState="loading" />
+        <InviteAcceptScreen inviteToken="raw-error-token" reviewState="load-error" />
+        <InviteAcceptScreen inviteToken="raw-expired-token" reviewState="expired" />
+        <InviteAcceptScreen inviteToken="raw-member-token" reviewState="already-member" />
+      </>,
+    );
+
+    for (const state of ['loading', 'load-error', 'expired', 'already-member'] as const) {
+      expect(screen.getByTestId(`invite-accept-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`sharing.family.accepted.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`sharing.family.accepted.states.${state}.body`))).toBeTruthy();
+    }
+
+    expect(screen.getByTestId('invite-accept-state-load-error').props.accessibilityRole)
+      .toBe('alert');
+    expect(screen.getByTestId('invite-accept-state-loading').props.accessibilityLiveRegion)
+      .toBe('polite');
+    expect(screen.getAllByRole('button', {
+      name: i18n.t('sharing.family.accepted.accept'),
+    }).some((button) => button.props.accessibilityState.busy)).toBe(true);
+    expect(screen.queryByText(/raw-(loading|error|expired|member)-token/i)).toBeNull();
   });
 });

@@ -1,7 +1,7 @@
 # PuppyPlan
 
 Native iOS/Android app for adults managing the first 90 days with a puppy.
-The beta must make one operational habit work: create a puppy profile, log routine events quickly, understand Today, coordinate care, and share selected context safely.
+The beta must make one operational habit work: create a puppy profile, log routine events quickly, understand Diary, coordinate care, and share selected context safely.
 
 This repo is optimized for AI-coding-first delivery. Architecture must be enforced by files, types, lint, tests, CI, and review checklists rather than memory.
 
@@ -62,8 +62,8 @@ PuppyPlan TDD is spec-driven and repo-local:
 
 ## Non-Negotiables
 
-- `Today | Health | More` are the only primary tabs.
-- Quick Log is a persistent FAB/action, not a tab.
+- `Diary | Pet | More` are the canonical primary tabs after the 2026-06-27 redesign brief; legacy Today/Health route names are migration targets, not design source of truth.
+- Quick Log/Add is a persistent FAB/action, not a tab.
 - Supabase Postgres is the durable source of truth.
 - Realtime is an enhancement, not a correctness dependency.
 - RLS and Edge Functions enforce access; UI guards are convenience only.

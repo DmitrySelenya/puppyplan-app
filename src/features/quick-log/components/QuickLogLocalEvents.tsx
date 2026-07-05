@@ -1,8 +1,11 @@
+import { StyleSheet } from 'react-native';
+
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
+import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 import type { QuickLogQueueState } from '@/lib/queue';
 
@@ -50,7 +53,9 @@ export function QuickLogLocalEvents({
             accessibilityLabel={`${event.trackerName}. ${accessibilityStatus}`}
             accessibilityLiveRegion="polite"
             accessibilityRole={failed ? 'alert' : undefined}
-            key={event.clientEventId}>
+            key={event.clientEventId}
+            style={failed ? styles.failedCard : undefined}
+            testID={failed ? 'quick-log-local-event-failed-card' : 'quick-log-local-event-pending-card'}>
             <Stack gap="md">
               <Stack
                 align="center"
@@ -128,3 +133,10 @@ export function QuickLogLocalEvents({
     </Stack>
   );
 }
+
+const styles = StyleSheet.create({
+  failedCard: {
+    backgroundColor: tokens.color.status.dangerTint,
+    borderColor: tokens.color.status.danger,
+  },
+});

@@ -12,8 +12,8 @@ describe('resolveAuthLanding', () => {
     expect(resolveAuthLanding('signedOut')).toBe('/sign-in');
   });
 
-  it('routes signed-in users to Today', () => {
-    expect(resolveAuthLanding('signedIn')).toBe('/today');
+  it('routes signed-in users to Diary', () => {
+    expect(resolveAuthLanding('signedIn')).toBe('/diary');
   });
 });
 
@@ -35,11 +35,11 @@ describe('resolveAuthRouteRedirect', () => {
   });
 
   it('moves signed-in users away from sign-in', () => {
-    expect(resolveAuthRouteRedirect('signedIn', ['sign-in'])).toBe('/today');
+    expect(resolveAuthRouteRedirect('signedIn', ['sign-in'])).toBe('/diary');
   });
 
   it('allows signed-in users to stay on app surfaces', () => {
-    expect(resolveAuthRouteRedirect('signedIn', ['(tabs)', 'today'])).toBeNull();
+    expect(resolveAuthRouteRedirect('signedIn', ['(tabs)', 'diary'])).toBeNull();
     expect(resolveAuthRouteRedirect('signedIn', ['invite', '[token]'])).toBeNull();
   });
 });

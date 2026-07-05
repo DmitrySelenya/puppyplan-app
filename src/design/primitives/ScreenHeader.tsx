@@ -61,9 +61,11 @@ export function ScreenHeader({
       </View>
       <AppText
         accessibilityRole="header"
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
         numberOfLines={1}
         style={styles.title}
-        variant="headline">
+        variant="title1">
         {title}
       </AppText>
       <View style={[styles.side, styles.trailingSide]}>
@@ -104,7 +106,7 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET,
   },
   title: {
-    flex: 1,
+    flex: 3,
     fontWeight: '600',
     textAlign: 'center',
   },

@@ -24,6 +24,8 @@ export const queryKeys = {
   today: {
     dashboard: (householdId: string, puppyId: string, date: string) =>
       ['today', householdId, puppyId, date] as const,
+    dashboardRoot: (householdId: string, puppyId: string) =>
+      ['today', householdId, puppyId] as const,
   },
   events: {
     timelineRoot: getEventsTimelineRootKey,
@@ -36,7 +38,26 @@ export const queryKeys = {
     list: (householdId: string, puppyId: string) =>
       ['reminders', householdId, puppyId] as const,
   },
+  notifications: {
+    preferences: (userId: string, householdId: string) => [
+      'notifications',
+      'preferences',
+      uuidSchema.parse(userId),
+      uuidSchema.parse(householdId),
+    ] as const,
+  },
+  health: {
+    record: (puppyId: string, recordId: string) => [
+      'health',
+      'records',
+      uuidSchema.parse(puppyId),
+      uuidSchema.parse(recordId),
+    ] as const,
+    records: (puppyId: string) => ['health', 'records', uuidSchema.parse(puppyId)] as const,
+  },
   sharing: {
+    householdInvites: (householdId: string) =>
+      ['sharing', uuidSchema.parse(householdId), 'household-invites'] as const,
     list: (householdId: string, puppyId: string) =>
       ['sharing', householdId, puppyId, 'list'] as const,
     preview: (shareLinkId: string) => [
@@ -47,6 +68,8 @@ export const queryKeys = {
     ] as const,
     projection: (householdId: string, puppyId: string, scope: ShareScope) =>
       ['sharing', householdId, puppyId, 'projection', scope] as const,
+    projectionRoot: (householdId: string, puppyId: string) =>
+      ['sharing', householdId, puppyId, 'projection'] as const,
   },
 } as const;
 

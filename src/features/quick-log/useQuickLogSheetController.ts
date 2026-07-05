@@ -34,6 +34,7 @@ import {
   createQuickLogClientEventId,
   type QuickLogMutationVariables,
 } from '@/lib/query/quick-log';
+import type { DesignHapticEvent } from '@/design/haptics';
 
 export type QuickLogCareContext = QuickLogSurfaceCareContext;
 
@@ -70,6 +71,7 @@ export type QuickLogSnackbarMessage = Readonly<{
   accessibilityOptionKeys?: Readonly<Record<string, I18nKey>>;
   accessibilityOptions?: I18nTOptions;
   clientEventId?: string;
+  hapticEvent?: DesignHapticEvent;
   id: string;
   messageKey: I18nKey;
   messageOptionKeys?: Readonly<Record<string, I18nKey>>;
@@ -159,6 +161,7 @@ export type UseQuickLogSheetControllerInput = Readonly<{
   mutation: QuickLogMutationPort;
   mutationEvents?: readonly QuickLogMutationEvent[];
   now?: () => Date;
+  onQuickLogSaved?: () => void;
   openDetails?: (request: QuickLogEventEditRequest) => void;
   recentEvent?: QuickLogRecentEvent | null;
   recentEvents?: readonly QuickLogRecentEvent[];
@@ -176,6 +179,7 @@ export function useQuickLogSheetController({
   mutation,
   mutationEvents = [],
   now = () => new Date(),
+  onQuickLogSaved,
   openDetails,
   recentEvent = null,
   recentEvents = [],
@@ -234,6 +238,7 @@ export function useQuickLogSheetController({
         trackerName: getQuickLogTrackerLabelKey(trackerId),
       },
       clientEventId,
+      hapticEvent: 'saveSuccess',
       id: requestId,
       messageKey: 'quick-log.snackbar.saved-template',
       messageOptionKeys: {
@@ -275,6 +280,7 @@ export function useQuickLogSheetController({
       requestId,
       variables,
     });
+    onQuickLogSaved?.();
   }, [
     careContext,
     closeSheet,
@@ -283,6 +289,7 @@ export function useQuickLogSheetController({
     feedback,
     mutation,
     now,
+    onQuickLogSaved,
     openDetails,
     undoRequest,
   ]);

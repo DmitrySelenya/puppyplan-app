@@ -18,7 +18,8 @@ type AssertFalse<T extends false> = T;
 type IsAssignable<T, U> = [T] extends [U] ? true : false;
 
 type I18nKeyTypeAssertions = [
-  AssertTrue<IsAssignable<'tabs.today', I18nKey>>,
+  AssertTrue<IsAssignable<'tabs.diary', I18nKey>>,
+  AssertTrue<IsAssignable<'tabs.pet', I18nKey>>,
   AssertTrue<IsAssignable<'reminders.push-notification.actions.0', I18nKey>>,
   AssertFalse<IsAssignable<'tabs.typo', I18nKey>>,
   AssertFalse<IsAssignable<'states.offline-read._comment', I18nKey>>,
@@ -110,7 +111,7 @@ describe('i18n scaffold resources', () => {
   it('exposes a typed translation helper backed by the react-i18next runtime', async () => {
     await i18n.changeLanguage('en');
 
-    const key: I18nKey = 'tabs.today';
+    const key: I18nKey = 'tabs.diary';
 
     expect(typedT(key)).toBe(i18n.t(key));
   });
@@ -139,6 +140,25 @@ describe('i18n scaffold resources', () => {
 
         expect(localizedValue).toBeDefined();
         expect(placeholderNames(localizedValue ?? '')).toEqual(englishPlaceholders);
+      }
+    }
+  });
+
+  it('keeps Pet hub quick tracker copy user-facing instead of implementation-facing', () => {
+    const implementationLeakPattern = /add buttons|five|botones de Add|cinco|кнопок Add|пять/iu;
+
+    for (const locale of supportedLocales) {
+      const petHubEntries = userFacingStringEntries(locale)
+        .filter(([key]) => key.startsWith('health.pet-hub.'));
+
+      for (const [key, value] of petHubEntries) {
+        expect({
+          key,
+          locale,
+          value,
+        }).not.toEqual(expect.objectContaining({
+          value: expect.stringMatching(implementationLeakPattern),
+        }));
       }
     }
   });

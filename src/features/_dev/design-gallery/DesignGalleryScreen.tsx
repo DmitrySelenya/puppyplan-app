@@ -1,31 +1,85 @@
 import type { ReactNode } from 'react';
 
+import type { Reminder } from '@/contracts/supabase';
 import {
   AppText,
   Button,
   Card,
+  CheckCircle,
+  DayDivider,
+  EmptyIllustration,
   EmptyState,
   AppIcon,
+  FactCard,
+  IconChip,
+  InfoHero,
   ListGroup,
   ListRow,
+  RoutineCard,
   Screen,
   SegmentedControl,
   SectionHeader,
   SheetSurface,
+  SnackbarProvider,
   Stack,
   StatusPill,
+  SwipeToDelete,
   TextField,
   TrackerTile,
+  WeekStrip,
+  type WeekStripDay,
 } from '@/design/primitives';
 import {
+  HealthMainStatePreview,
   HealthRecordDetailPreview,
   HealthRecordEditPreview,
   HealthScreen,
   HealthWeightEntryPreview,
 } from '@/features/health/screens/HealthScreen';
-import { OnboardingFirstLogPreview } from '@/features/onboarding/screens/OnboardingScreen';
+import {
+  InviteAcceptStatePreview,
+} from '@/features/linking/screens/InviteAcceptScreen';
+import {
+  HouseholdAccessStatePreview,
+} from '@/features/more/screens/HouseholdAccessScreen';
+import {
+  HelpSupportStatePreview,
+} from '@/features/more/screens/HelpSupportScreen';
+import {
+  ShareablePuppyCardStatePreview,
+} from '@/features/more/screens/ShareablePuppyCardScreen';
+import {
+  SitterModeStatePreview,
+} from '@/features/more/screens/SitterModeScreen';
+import {
+  NotificationPreferencesStatePreview,
+} from '@/features/more/screens/NotificationPreferencesScreen';
+import {
+  PrivacyAccountStatePreview,
+} from '@/features/more/screens/PrivacyAccountScreen';
+import {
+  PuppyPlanPlusStatePreview,
+} from '@/features/more/screens/PuppyPlanPlusScreen';
+import {
+  OnboardingAccountPromptPreview,
+  OnboardingFirstLogPreview,
+  OnboardingNotificationsPromptPreview,
+} from '@/features/onboarding/screens/OnboardingScreen';
+import {
+  PuppyProfileSettingsStatePreview,
+} from '@/features/profile/screens/PuppyProfileSettingsScreen';
 import { QuickLogLocalEvents } from '@/features/quick-log/components/QuickLogLocalEvents';
 import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
+import {
+  RemindersHubScreen,
+  RemindersHubStatePreview,
+} from '@/features/reminders/screens/RemindersHubScreen';
+import {
+  ReminderEditStatePreview,
+} from '@/features/reminders/screens/ReminderEditScreen';
+import {
+  QuickTrackersStatePreview,
+} from '@/features/settings/quick-trackers/screens/QuickTrackersSettingsScreen';
 import {
   SyntheticTodayPreview,
   TodayStatusCard,
@@ -41,6 +95,47 @@ import {
 
 const noop = () => undefined;
 
+const syntheticReminders: readonly Reminder[] = [
+  {
+    assigned_to: null,
+    created_at: '2026-07-02T10:00:00.000Z',
+    created_by: '00000000-0000-4000-8000-000000006001',
+    deleted_at: null,
+    enabled: true,
+    id: '00000000-0000-4000-8000-000000006101',
+    puppy_id: '00000000-0000-4000-8000-000000006002',
+    quiet_hours: null,
+    reminder_type: 'Morning feeding',
+    schedule_rule: {
+      repeat: 'daily',
+      time: '7:30',
+    },
+    timezone: 'UTC',
+    trusted_sitter_visible: false,
+    updated_at: '2026-07-02T10:05:00.000Z',
+    version: 1,
+  },
+  {
+    assigned_to: null,
+    created_at: '2026-07-02T10:00:00.000Z',
+    created_by: '00000000-0000-4000-8000-000000006001',
+    deleted_at: null,
+    enabled: true,
+    id: '00000000-0000-4000-8000-000000006102',
+    puppy_id: '00000000-0000-4000-8000-000000006002',
+    quiet_hours: null,
+    reminder_type: 'DHPP booster',
+    schedule_rule: {
+      repeat: 'daily',
+      time: '9:00',
+    },
+    timezone: 'UTC',
+    trusted_sitter_visible: false,
+    updated_at: '2026-07-02T10:05:00.000Z',
+    version: 1,
+  },
+];
+
 export function DesignGalleryScreen() {
   const { t } = useAppTranslation();
 
@@ -51,6 +146,19 @@ export function DesignGalleryScreen() {
           <AppText variant="title">{t('dev.gallery.title')}</AppText>
           <AppText tone="secondary">{t('dev.gallery.subtitle')}</AppText>
         </Stack>
+
+        <SyntheticPaywallStatesShell />
+        <SyntheticInviteAcceptStatesShell />
+        <SyntheticShareablePuppyCardStatesShell />
+        <SyntheticSitterModeStatesShell />
+        <SyntheticHouseholdAccessStatesShell />
+        <SyntheticQuickTrackersStatesShell />
+        <SyntheticHelpSupportStatesShell />
+        <SyntheticNotificationPreferencesShell />
+        <SyntheticPrivacyAccountStatesShell />
+        <SyntheticRemindersHubShell />
+        <SyntheticRemindersHubStatesShell />
+        <SyntheticReminderEditShell />
 
         {gallerySections.map((section) => (
           <Card key={section.id}>
@@ -70,7 +178,11 @@ export function DesignGalleryScreen() {
         ))}
 
         <SyntheticOnboardingShell />
-        <OnboardingFirstLogPreview />
+        <SnackbarProvider>
+          <OnboardingFirstLogPreview />
+        </SnackbarProvider>
+        <OnboardingAccountPromptPreview />
+        <OnboardingNotificationsPromptPreview />
         <SyntheticPuppyProfileSettingsShell />
         <SyntheticQuickTrackersSettingsShell />
         <SyntheticMoreSettingsShell />
@@ -79,10 +191,153 @@ export function DesignGalleryScreen() {
         <SyntheticHealthShell />
         <SyntheticTimelineShell />
         <SyntheticTodayShell />
+        <SyntheticDiaryClayShell />
       </Stack>
     </Screen>
   );
 }
+
+export function SyntheticDiaryClayShell() {
+  const { t } = useAppTranslation();
+
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.diary-clay"
+          titleKey="tabs.diary"
+        />
+        <WeekStrip
+          accessibilityLabel={t('today.week-strip.label')}
+          days={diaryGalleryWeekDays}
+          selectedIndex={3}
+          todayIndex={3}
+        />
+        <InfoHero message={t('today.hero.steady-day.body')} />
+        <Stack gap="xs">
+          <FactCard
+            accent="clay"
+            accessibilityLabel={t('today.history.fact-a11y-label', {
+              caption: t('timeline.actor-you'),
+              time: '7:15 am',
+              title: t('quick-log.trackers.feeding'),
+            })}
+            caption={t('timeline.actor-you')}
+            icon="bowl"
+            time="7:15 am"
+            title={t('quick-log.trackers.feeding')}
+          />
+          <FactCard
+            accent="mauve"
+            accessibilityLabel={t('today.history.fact-a11y-label', {
+              caption: t('timeline.actor-you'),
+              time: '9:30 am',
+              title: t('quick-log.trackers.sleep'),
+            })}
+            caption={t('timeline.actor-you')}
+            icon="moon"
+            time="9:30 am"
+            title={t('quick-log.trackers.sleep')}
+          />
+          <FactCard
+            accent="honey"
+            accessibilityLabel={t('today.history.fact-a11y-label', {
+              caption: t('timeline.actor-you'),
+              time: '11:00 am',
+              title: t('quick-log.trackers.zoomies'),
+            })}
+            caption={t('timeline.actor-you')}
+            icon="ball"
+            time="11:00 am"
+            title={t('quick-log.trackers.zoomies')}
+          />
+          <SwipeToDelete
+            deleteLabel={t('today.history.delete-action')}
+            onDelete={noop}
+            testID="gallery-swipe-delete">
+            <FactCard
+              accent="sage"
+              accessibilityLabel={t('today.history.fact-a11y-label', {
+                caption: t('timeline.actor-you'),
+                time: '12:30 pm',
+                title: t('quick-log.trackers.potty'),
+              })}
+              caption={t('timeline.actor-you')}
+              icon="pottyInside"
+              time="12:30 pm"
+              title={t('quick-log.trackers.potty')}
+            />
+          </SwipeToDelete>
+        </Stack>
+        <Stack gap="xs">
+          <AppText tone="secondary" variant="footnote">
+            {t('dev.gallery.diary.routine-note')}
+          </AppText>
+          <Stack align="center">
+            <EmptyIllustration testID="gallery-empty-illustration" />
+          </Stack>
+          <RoutineCard
+            accent="clay"
+            accessibilityLabel={t('quick-log.trackers.walk')}
+            checkboxLabel={t('quick-log.trackers.walk')}
+            icon="walk"
+            onOverflow={noop}
+            onToggleDone={noop}
+            overflowLabel={t('today.history.item-actions')}
+            state="upcoming"
+            testID="gallery-routine-upcoming"
+            time="2:00 pm"
+            title={t('quick-log.trackers.walk')}
+          />
+          <RoutineCard
+            accent="clay"
+            accessibilityLabel={t('quick-log.trackers.feeding')}
+            checkboxLabel={t('quick-log.trackers.feeding')}
+            icon="bowl"
+            onOverflow={noop}
+            onToggleDone={noop}
+            overflowLabel={t('today.history.item-actions')}
+            state="done"
+            testID="gallery-routine-done"
+            time="7:15 am"
+            title={t('quick-log.trackers.feeding')}
+          />
+          <RoutineCard
+            accent="clay"
+            accessibilityLabel={t('quick-log.trackers.potty')}
+            checkboxLabel={t('quick-log.trackers.potty')}
+            icon="pottyInside"
+            onOverflow={noop}
+            onToggleDone={noop}
+            overflowLabel={t('today.history.item-actions')}
+            state="past"
+            testID="gallery-routine-past"
+            time="6:00 am"
+            title={t('quick-log.trackers.potty')}
+          />
+        </Stack>
+        <DayDivider label={t('dev.gallery.today.day-one')} />
+        <Stack align="center" direction="horizontal" gap="sm">
+          <CheckCircle accessibilityLabel={t('quick-log.trackers.feeding')} checked={false} />
+          <CheckCircle accessibilityLabel={t('quick-log.trackers.feeding')} checked />
+          <IconChip accent="sage" icon="check" />
+          <IconChip accent="honey" icon="spark" />
+          <IconChip accent="mauve" icon="moon" />
+        </Stack>
+      </Stack>
+    </Card>
+  );
+}
+
+const diaryGalleryWeekDays: WeekStripDay[] = [
+  { accessibilityLabel: 'Monday, Jun 8', day: 8, dow: 'Mon', key: '2026-06-08' },
+  { accessibilityLabel: 'Tuesday, Jun 9', day: 9, dow: 'Tue', key: '2026-06-09' },
+  { accessibilityLabel: 'Wednesday, Jun 10', day: 10, dow: 'Wed', key: '2026-06-10' },
+  { accessibilityLabel: 'Thursday, Jun 11', day: 11, dow: 'Thu', key: '2026-06-11' },
+  { accessibilityLabel: 'Friday, Jun 12, today, selected', day: 12, dow: 'Fri', key: '2026-06-12' },
+  { accessibilityLabel: 'Saturday, Jun 13', day: 13, dow: 'Sat', key: '2026-06-13' },
+  { accessibilityLabel: 'Sunday, Jun 14', day: 14, dow: 'Sun', key: '2026-06-14' },
+];
 
 export function SyntheticOnboardingShell() {
   const { t } = useAppTranslation();
@@ -166,6 +421,47 @@ export function SyntheticPuppyProfileSettingsShell() {
           title={t('more.puppy-profile.field-breed')}
         />
         <Button label={t('more.puppy-profile.save')} onPress={noop} />
+        <PuppyProfileSettingsStatePreview state="loading" />
+        <PuppyProfileSettingsStatePreview state="pending-write" />
+        <PuppyProfileSettingsStatePreview state="error" />
+        <PuppyProfileSettingsStatePreview state="offline-read" />
+        <PuppyProfileSettingsStatePreview state="permission-denied" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticPuppyProfileSettingsStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.profile-states"
+          titleKey="more.puppy-profile.screen-title"
+        />
+        <PuppyProfileSettingsStatePreview state="loading" />
+        <PuppyProfileSettingsStatePreview state="pending-write" />
+        <PuppyProfileSettingsStatePreview state="error" />
+        <PuppyProfileSettingsStatePreview state="offline-read" />
+        <PuppyProfileSettingsStatePreview state="permission-denied" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticPrivacyAccountStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.privacy-account-states"
+          titleKey="more.privacy.screen-title"
+        />
+        <PrivacyAccountStatePreview state="loading" />
+        <PrivacyAccountStatePreview state="pending-write" />
+        <PrivacyAccountStatePreview state="error" />
+        <PrivacyAccountStatePreview state="offline-read" />
+        <PrivacyAccountStatePreview state="permission-denied" />
       </Stack>
     </Card>
   );
@@ -190,6 +486,23 @@ export function SyntheticQuickTrackersSettingsShell() {
             title={t(tracker.labelKey)}
           />
         ))}
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticQuickTrackersStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.quick-trackers-states"
+          titleKey="more.quick-trackers.screen-title"
+        />
+        <QuickTrackersStatePreview state="loading" />
+        <QuickTrackersStatePreview state="error" />
+        <QuickTrackersStatePreview state="empty" />
+        <QuickTrackersStatePreview state="nonOwner" />
       </Stack>
     </Card>
   );
@@ -417,14 +730,203 @@ export function SyntheticQuickLogDetailsShell() {
           bodyKey="dev.gallery.states.quick-log-details"
           titleKey="quick-log.details.title"
         />
+        <QuickLogDetailsScreen initialTrackerId="sleep" />
         <QuickLogDetailsScreen
-          initialTrackerId="sleep"
-          status="saving"
+          initialTrackerId="feeding"
+          status="loading"
+        />
+        <QuickLogDetailsScreen
+          initialTrackerId="feeding"
+          status="pending-write"
         />
         <QuickLogDetailsScreen
           initialTrackerId="zoomies"
           status="error"
         />
+        <QuickLogDetailsScreen
+          initialTrackerId="sleep"
+          status="offline-read"
+        />
+        <QuickLogDetailsScreen
+          initialTrackerId="feeding"
+          status="permission-denied"
+        />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticReminderEditShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.reminder-edit"
+          titleKey="reminders.form.title-new"
+        />
+        <ReminderEditStatePreview state="loading" />
+        <ReminderEditStatePreview state="pending-write" />
+        <ReminderEditStatePreview state="error" />
+        <ReminderEditStatePreview state="offline-read" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticRemindersHubShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.reminders-hub"
+          titleKey="reminders.screen-title"
+        />
+        <RemindersHubScreen
+          onAddReminder={noop}
+          onBack={noop}
+          reminders={syntheticReminders}
+        />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticRemindersHubStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.reminders-hub-states"
+          titleKey="reminders.screen-title"
+        />
+        <RemindersHubStatePreview state="loading" />
+        <RemindersHubStatePreview state="pending-write" />
+        <RemindersHubStatePreview state="error" />
+        <RemindersHubStatePreview state="offline-read" />
+        <RemindersHubStatePreview state="empty" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticNotificationPreferencesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.notification-preferences"
+          titleKey="more.notifications.screen-title"
+        />
+        <NotificationPreferencesStatePreview state="loading" />
+        <NotificationPreferencesStatePreview state="pending-write" />
+        <NotificationPreferencesStatePreview state="error" />
+        <NotificationPreferencesStatePreview state="offline-read" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticHelpSupportStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.help-support-states"
+          titleKey="more.help.screen-title"
+        />
+        <HelpSupportStatePreview state="loading" />
+        <HelpSupportStatePreview state="pending-write" />
+        <HelpSupportStatePreview state="error" />
+        <HelpSupportStatePreview state="offline-read" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticHouseholdAccessStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.household-states"
+          titleKey="sharing.family.manage.screen-title"
+        />
+        <HouseholdAccessStatePreview state="loading" />
+        <HouseholdAccessStatePreview state="pending-write" />
+        <HouseholdAccessStatePreview state="error" />
+        <HouseholdAccessStatePreview state="offline-read" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticPaywallStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.paywall-states"
+          titleKey="paywall.title"
+        />
+        <PuppyPlanPlusStatePreview state="loading-products" />
+        <PuppyPlanPlusStatePreview state="pending-purchase" />
+        <PuppyPlanPlusStatePreview state="purchase-error" />
+        <PuppyPlanPlusStatePreview state="offline-read" />
+        <PuppyPlanPlusStatePreview state="active-subscription" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticInviteAcceptStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.invite-accept-states"
+          titleKey="sharing.family.accepted.accept"
+        />
+        <InviteAcceptStatePreview state="loading" />
+        <InviteAcceptStatePreview state="load-error" />
+        <InviteAcceptStatePreview state="expired" />
+        <InviteAcceptStatePreview state="already-member" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticShareablePuppyCardStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.shareable-card-states"
+          titleKey="sharing.card-management.screen-title"
+        />
+        <ShareablePuppyCardStatePreview state="empty-builder" />
+        <ShareablePuppyCardStatePreview state="health-on" />
+        <ShareablePuppyCardStatePreview state="share-options" />
+        <ShareablePuppyCardStatePreview state="loading" />
+        <ShareablePuppyCardStatePreview state="pending-write" />
+        <ShareablePuppyCardStatePreview state="error" />
+        <ShareablePuppyCardStatePreview state="offline-read" />
+      </Stack>
+    </Card>
+  );
+}
+
+export function SyntheticSitterModeStatesShell() {
+  return (
+    <Card>
+      <Stack gap="md">
+        <GalleryShellHeader
+          bodyKey="dev.gallery.states.sitter-mode-states"
+          titleKey="sharing.sitter.screen-title"
+        />
+        <SitterModeStatePreview state="no-caregiver" />
+        <SitterModeStatePreview state="pending" />
+        <SitterModeStatePreview state="active" />
+        <SitterModeStatePreview state="exit-confirm" />
       </Stack>
     </Card>
   );
@@ -436,12 +938,20 @@ export function SyntheticHealthShell() {
       <Stack gap="md">
         <GalleryShellHeader
           bodyKey="dev.gallery.states.health-v2"
-          titleKey="tabs.health"
+          titleKey="tabs.pet"
         />
         <HealthScreen reviewState="mixed-list" />
         <HealthScreen />
+        <HealthMainStatePreview state="loading" />
+        <HealthMainStatePreview state="error" />
+        <HealthMainStatePreview state="offline-read" />
+        <HealthRecordEditPreview reviewState="loading" />
         <HealthRecordEditPreview />
         <HealthRecordEditPreview filled />
+        <HealthRecordEditPreview reviewState="pending-write" />
+        <HealthRecordEditPreview reviewState="error" />
+        <HealthRecordEditPreview reviewState="offline-read" />
+        <HealthRecordEditPreview reviewState="permission-denied" />
         <HealthRecordDetailPreview />
         <HealthRecordDetailPreview status="needsVetReview" deletePending />
         <HealthWeightEntryPreview />
@@ -510,7 +1020,7 @@ export function SyntheticTimelineShell() {
               t('timeline.actor-you'),
               t('timeline.pills.failed'),
             ].join(', ')}
-            leading={<AppIcon name="today" size={22} />}
+            leading={<AppIcon name="paw" size={22} />}
             meta="20:10"
             subtitle={t('timeline.actor-you')}
             title={t('quick-log.trackers.walk')}
@@ -613,6 +1123,7 @@ export function SyntheticTodayShell() {
     'loading',
     'offline-read',
     'pending-write',
+    'error',
   ] as const satisfies readonly TodayStatusState[];
 
   return (
@@ -620,7 +1131,7 @@ export function SyntheticTodayShell() {
       <Stack gap="md">
         <GalleryShellHeader
           bodyKey="dev.gallery.states.today-core"
-          titleKey="tabs.today"
+          titleKey="tabs.diary"
         />
         <AppText tone="secondary">{t('dev.gallery.today.synthetic-note')}</AppText>
         {syntheticTodayPlans.map((fixture) => (

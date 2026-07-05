@@ -1,8 +1,9 @@
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { QuickLogFeedbackProvider } from '@/features/quick-log/QuickLogFeedbackProvider';
 import type { QuickLogMutationPort } from '@/features/quick-log/useQuickLogSheetController';
+import { tokens } from '@/design/tokens';
 import { i18n } from '@/lib/i18n';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -13,6 +14,7 @@ const mockRouterBack = jest.fn();
 const mockRouterCanGoBack = jest.fn();
 const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
+const mockUseLocalSearchParams = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogCachedRows = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
@@ -56,6 +58,7 @@ jest.mock('expo-router', () => ({
     push: (href: string) => mockRouterPush(href),
     replace: (href: string) => mockRouterReplace(href),
   },
+  useLocalSearchParams: () => mockUseLocalSearchParams(),
 }));
 
 jest.mock('@/lib/query/active-care-context', () => ({
@@ -80,6 +83,8 @@ describe('QuickLogRoute', () => {
     mockRouterCanGoBack.mockReturnValue(true);
     mockRouterPush.mockClear();
     mockRouterReplace.mockClear();
+    mockUseLocalSearchParams.mockReset();
+    mockUseLocalSearchParams.mockReturnValue({});
     mockUseActiveCareContext.mockReturnValue({
       careContext: null,
       puppy: null,
@@ -118,7 +123,7 @@ describe('QuickLogRoute', () => {
     expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
-  it('closes the unavailable Quick Log route through Today fallback when no previous route exists', () => {
+  it('closes the unavailable Quick Log route through Diary fallback when no previous route exists', () => {
     mockRouterCanGoBack.mockReturnValue(false);
 
     render(
@@ -134,7 +139,7 @@ describe('QuickLogRoute', () => {
     }));
 
     expect(mockRouterBack).not.toHaveBeenCalled();
-    expect(mockRouterReplace).toHaveBeenCalledWith('/today');
+    expect(mockRouterReplace).toHaveBeenCalledWith('/diary');
   });
 
   it('opens with active selected trackers and sends the selected tracker through the route mutation', () => {
@@ -191,6 +196,46 @@ describe('QuickLogRoute', () => {
     }));
   });
 
+  it('AC-OB-PROMPT-RUNTIME returns to the onboarding account prompt after a first-value Quick Log save', () => {
+    const mutation = createMutationPort();
+    mockUseLocalSearchParams.mockReturnValue({
+      source: 'onboarding-first-value',
+    });
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: '00000000-0000-4000-8000-000000003001',
+        householdRole: 'owner',
+        puppyId: '00000000-0000-4000-8000-000000003002',
+        selectedTrackerIds: ['walk', 'feeding'],
+        todayDate: '2026-06-09',
+        userId: '00000000-0000-4000-8000-000000003003',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.walk'),
+    }));
+
+    expect(mutation.mutate).toHaveBeenCalledTimes(1);
+    expect(mockRouterReplace).toHaveBeenCalledWith('/onboarding?postFirstValuePrompt=account');
+  });
+
   it('derives duplicate warning context from cached rows before mutating', () => {
     const mutation = createMutationPort();
     mockUseActiveCareContext.mockReturnValue({
@@ -225,12 +270,24 @@ describe('QuickLogRoute', () => {
       name: i18n.t('quick-log.trackers.feeding'),
     }));
 
+    const warningCardStyle = StyleSheet.flatten(screen.getByTestId('quick-log-duplicate-warning-card').props.style);
+    const warningIconStyle = StyleSheet.flatten(screen.getByTestId('quick-log-duplicate-warning-icon').props.style);
+
+    expect(warningCardStyle.backgroundColor).toBe(tokens.color.status.warningTint);
+    expect(warningIconStyle.backgroundColor).toBe(tokens.color.surface.raised);
     expect(screen.getByText(i18n.t('quick-log.duplicate-warning.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.duplicate-warning.question'))).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.duplicate-warning.primary-alt'),
+    })).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.duplicate-warning.secondary'),
+    })).toBeTruthy();
     expect(mutation.mutate).not.toHaveBeenCalled();
     expect(mockRouterBack).not.toHaveBeenCalled();
   });
 
-  it('closes the active Quick Log route through Today fallback after logging when no previous route exists', () => {
+  it('closes the active Quick Log route through Diary fallback after logging when no previous route exists', () => {
     const mutation = createMutationPort();
     mockRouterCanGoBack.mockReturnValue(false);
     mockUseActiveCareContext.mockReturnValue({
@@ -266,7 +323,7 @@ describe('QuickLogRoute', () => {
 
     expect(mutation.mutate).toHaveBeenCalledTimes(1);
     expect(mockRouterBack).not.toHaveBeenCalled();
-    expect(mockRouterReplace).toHaveBeenCalledWith('/today');
+    expect(mockRouterReplace).toHaveBeenCalledWith('/diary');
   });
 
   it('opens the Quick Trackers settings route from the active sheet edit-trackers action', () => {
@@ -305,6 +362,58 @@ describe('QuickLogRoute', () => {
     expect(mockRouterPush).toHaveBeenCalledWith('/settings/quick-trackers');
     expect(mockRouterBack).not.toHaveBeenCalled();
     expect(mutation.mutate).not.toHaveBeenCalled();
+  });
+
+  it('renders pending mutation events as inline Quick Log rows before cached rows refresh', () => {
+    const mutation = createMutationPort();
+    const clientEventId = 'evt_00000000-0000-4000-8000-000000003901';
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: '00000000-0000-4000-8000-000000003001',
+        householdRole: 'owner',
+        puppyId: '00000000-0000-4000-8000-000000003002',
+        selectedTrackerIds: ['walk', 'feeding'],
+        todayDate: '2026-06-09',
+        userId: '00000000-0000-4000-8000-000000003003',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [{
+        clientEventId,
+        eventType: 'feeding',
+        requestId: 'quick-log:2026-06-09:pending-route',
+        trackerId: 'feeding',
+        type: 'started',
+      }],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    expect(screen.getByTestId('quick-log-local-event-pending-card')).toBeTruthy();
+    expect(screen.getByLabelText(`${i18n.t('quick-log.trackers.feeding')}. ${i18n.t('quick-log.pending.label')}`)).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.snackbar.undo'),
+    }));
+
+    expect(mutation.undo).toHaveBeenCalledWith({
+      clientEventId,
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000003001',
+      puppyId: '00000000-0000-4000-8000-000000003002',
+      todayDate: '2026-06-09',
+    });
   });
 
   it('blocks viewer care contexts before an optimistic Quick Log write can be queued', () => {

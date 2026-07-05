@@ -6,6 +6,10 @@ Minimal Durable Quick Log Queue protects the most important beta action: logging
 
 It is not a full outbox, local-first store, sync engine, or conflict resolver.
 
+ADR-0019 adds a separate, narrow Health Record outbox for Health create/update/delete/restore
+operations. That decision does not widen this Quick Log queue table: `queue_item` remains
+routine-event-only, while Health uses its own local schema under `src/lib/queue/health-outbox/`.
+
 ## Storage
 
 Use Expo SQLite.

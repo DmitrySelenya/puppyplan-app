@@ -7,7 +7,11 @@ import {
   createQuickLogDetailDraft,
   quickLogDetailDraftSchema,
 } from '@/contracts/quick-log';
-import { QuickLogDetailsScreen } from '@/features/quick-log/screens/QuickLogDetailsScreen';
+import {
+  QuickLogDetailsScreen,
+  QuickLogDetailsStatePreview,
+  type QuickLogDetailsReviewState,
+} from '@/features/quick-log/screens/QuickLogDetailsScreen';
 import { i18n } from '@/lib/i18n';
 
 function renderDetails(
@@ -136,15 +140,15 @@ describe('Quick Log details', () => {
     });
   });
 
-  it('renders the synthetic slow-saving state for dev review', () => {
+  it('renders the synthetic pending-write state for dev review', () => {
     renderDetails(
       <QuickLogDetailsScreen
         initialTrackerId="feeding"
-        status="saving"
+        status="pending-write"
       />,
     );
 
-    expect(screen.getByText(i18n.t('quick-log.details.states.saving.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.states.pending-write.title'))).toBeTruthy();
   });
 
   it('renders the synthetic error state for dev review', () => {
@@ -157,4 +161,22 @@ describe('Quick Log details', () => {
 
     expect(screen.getByText(i18n.t('quick-log.details.states.error.title'))).toBeTruthy();
   });
+
+  it.each([
+    'loading',
+    'pending-write',
+    'error',
+    'offline-read',
+    'permission-denied',
+  ] as const satisfies readonly QuickLogDetailsReviewState[])(
+    'AC-QL-DETAIL-STATES renders the %s state template',
+    (state) => {
+      renderDetails(<QuickLogDetailsStatePreview state={state} />);
+
+      expect(screen.getByTestId(`quick-log-details-state-${state}`)).toBeTruthy();
+      expect(screen.getByText(i18n.t(`quick-log.details.states.${state}.status`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`quick-log.details.states.${state}.title`))).toBeTruthy();
+      expect(screen.getByText(i18n.t(`quick-log.details.states.${state}.body`))).toBeTruthy();
+    },
+  );
 });

@@ -46,3 +46,5 @@ export {
   type QuickLogQueueSqlValue,
   type QuickLogQueueStorage,
 } from './storage';
+export * from './health-outbox';
+export * from './health-outbox/storage';

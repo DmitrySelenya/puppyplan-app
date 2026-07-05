@@ -526,6 +526,7 @@ export type EventPayloadSchemas = typeof eventPayloadSchemas;
 export type EventLogRecord = z.infer<typeof eventLogRecordSchema>;
 export type EventLogInsert = z.infer<typeof eventLogInsertSchema>;
 export type MinimalQuickLogQueueItem = z.infer<typeof minimalQuickLogQueueItemSchema>;
+export type InviteRecord = z.infer<typeof inviteRecordSchema>;
 export type CreateInviteRequest = z.infer<typeof createInviteRequestSchema>;
 export type CreateShareLinkRequest = z.infer<typeof createShareLinkRequestSchema>;
 export type ShareScopeInput = z.infer<typeof shareScopeInputSchema>;

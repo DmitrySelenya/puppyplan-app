@@ -13,7 +13,9 @@ import { getSupabaseClient } from './client';
 export type QuickLogSupabaseErrorPhase =
   | 'insert'
   | 'list'
+  | 'restore'
   | 'select_existing_after_23505'
+  | 'select_for_restore'
   | 'select_for_update_payload'
   | 'select_for_tombstone'
   | 'tombstone'
@@ -56,6 +58,10 @@ export type SupabaseEventLogRepository = Readonly<{
     clientEventId: string;
     deletedAt: string;
   }>): Promise<EventLogRecord>;
+  restoreByClientEventId(input: Readonly<{
+    householdId: string;
+    clientEventId: string;
+  }>): Promise<EventLogRecord>;
   updatePayloadByClientEventId(input: Readonly<{
     householdId: string;
     clientEventId: string;
@@ -78,6 +84,9 @@ type EventLogClient = Readonly<{
   tombstoneEventLogById(input: Readonly<{
     id: string;
     deletedAt: string;
+  }>): PromiseLike<EventLogClientResponse>;
+  restoreEventLogById(input: Readonly<{
+    id: string;
   }>): PromiseLike<EventLogClientResponse>;
   updateEventLogPayloadById(input: Readonly<{
     id: string;
@@ -190,6 +199,37 @@ export function createSupabaseEventLogRepository(
 
       return parseEventLogRecord(tombstoneResponse.data, 'tombstone');
     },
+    restoreByClientEventId: async (input) => {
+      const existing = await selectExistingEvent(client, {
+        householdId: input.householdId,
+        clientEventId: input.clientEventId,
+        signals: options.signals,
+        phase: 'select_for_restore',
+      });
+
+      if (existing === null) {
+        throw createQuickLogSupabaseFailure({
+          code: 'PGRST116',
+          status: 406,
+        }, {
+          phase: 'select_for_restore',
+          signals: options.signals,
+        });
+      }
+
+      const restoreResponse = await client.restoreEventLogById({
+        id: existing.id,
+      });
+
+      if (restoreResponse.error) {
+        throw createQuickLogSupabaseFailure(restoreResponse.error, {
+          phase: 'restore',
+          signals: options.signals,
+        });
+      }
+
+      return parseEventLogRecord(restoreResponse.data, 'restore');
+    },
     updatePayloadByClientEventId: async (input) => {
       const payload = parseEventPayload(input.eventType, input.payload, 'update_payload');
       const existing = await selectExistingEvent(client, {
@@ -272,6 +312,14 @@ function createDefaultEventLogClient(): EventLogClient {
       .from('event_log')
       .update({
         deleted_at: input.deletedAt,
+      })
+      .eq('id', input.id)
+      .select('*')
+      .maybeSingle(),
+    restoreEventLogById: (input) => getSupabaseClient()
+      .from('event_log')
+      .update({
+        deleted_at: null,
       })
       .eq('id', input.id)
       .select('*')

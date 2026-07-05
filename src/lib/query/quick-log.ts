@@ -48,6 +48,7 @@ import {
   type SupabaseEventLogRepository,
 } from '@/lib/supabase/events';
 import { useAuth } from '@/lib/auth';
+import { formatLocalCalendarDate } from '@/lib/i18n/format-date';
 
 import { getQuickLogInvalidationKeys, queryKeys, type TimelineFilters } from './keys';
 
@@ -141,13 +142,14 @@ export type QuickLogMutationPortUpdateDetailsRequest = QuickLogMutationPortSynce
 
 export type QuickLogMutationPort = Readonly<{
   deleteLocal: (clientEventId: string) => unknown;
-  deleteSynced: (request: QuickLogMutationPortSyncedDeleteRequest) => unknown;
+  deleteSynced: (request: QuickLogMutationPortSyncedDeleteRequest) => Promise<void>;
   mutate: (request: QuickLogMutationPortRequest) => unknown;
   retry: (
     clientEventId: string,
     recoverySurface: QuickLogRecoverySurface,
     sourceSurface?: QuickLogSourceSurface,
   ) => unknown;
+  restoreSynced: (request: QuickLogMutationPortSyncedDeleteRequest) => Promise<void>;
   updateDetails: (request: QuickLogMutationPortUpdateDetailsRequest) => unknown;
   undo: (request: QuickLogMutationPortUndoRequest) => unknown;
 }>;
@@ -202,7 +204,10 @@ export type QuickLogMutationDependencies = Readonly<{
   queue: QuickLogMutationQueue;
   analytics?: QuickLogAnalyticsClient;
   observability?: ObservabilityReporter;
-  events?: Pick<SupabaseEventLogRepository, 'insertEvent' | 'tombstoneByClientEventId' | 'updatePayloadByClientEventId'>;
+  events?: Pick<
+    SupabaseEventLogRepository,
+    'insertEvent' | 'restoreByClientEventId' | 'tombstoneByClientEventId' | 'updatePayloadByClientEventId'
+  >;
   // Optional only while production Quick Log is gated by the deferred active care context.
   // Production wiring must inject the synchronous session actor instead of using the null default.
   getSessionUserId?: () => string | null;
@@ -584,10 +589,10 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
         });
       },
       deleteSynced: (request) => {
-        void deleteSyncedQuickLogEvent({
+        return deleteSyncedQuickLogEvent({
           ...request,
           queryClient,
-        }).catch(() => undefined);
+        });
       },
       mutate: (request) => {
         requestIdsByVariablesRef.current.set(request.variables, request.requestId);
@@ -600,6 +605,12 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
           queueRef,
           recoverySurface,
           sourceSurface,
+        });
+      },
+      restoreSynced: (request) => {
+        return restoreSyncedQuickLogEvent({
+          ...request,
+          queryClient,
         });
       },
       undo: (request) => {
@@ -700,6 +711,41 @@ export async function deleteSyncedQuickLogEvent(
   removeCachedEventRow(input.queryClient, {
     timelineRootKey,
     clientEventId: input.clientEventId,
+  });
+  await invalidateAffectedQueries(input.queryClient, {
+    invalidationKeys: getQuickLogInvalidationKeys({
+      eventType: input.eventType,
+      householdId: input.householdId,
+      puppyId: input.puppyId,
+      todayDate: input.todayDate,
+    }),
+    timelineRootKey,
+    includeTimeline: true,
+  });
+}
+
+export async function restoreSyncedQuickLogEvent(
+  input: QuickLogMutationPortSyncedDeleteRequest & Readonly<{
+    events?: Pick<SupabaseEventLogRepository, 'restoreByClientEventId'>;
+    queryClient: QueryClient;
+  }>,
+): Promise<void> {
+  const events = input.events ?? createSupabaseEventLogRepository();
+  const timelineRootKey = queryKeys.events.timelineRoot(input.householdId, input.puppyId);
+  const restoredRow = await events.restoreByClientEventId({
+    clientEventId: input.clientEventId,
+    householdId: input.householdId,
+  });
+
+  upsertCachedEventRow(input.queryClient, {
+    timelineRootKey,
+    // Timeline day buckets are keyed by the device-local calendar date (see
+    // useQuickLogTimelineRows), so the restored row must use the same bucketing.
+    calendarDate: formatLocalCalendarDate(restoredRow.occurred_at),
+    row: {
+      ...restoredRow,
+      localSync: undefined,
+    },
   });
   await invalidateAffectedQueries(input.queryClient, {
     invalidationKeys: getQuickLogInvalidationKeys({

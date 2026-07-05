@@ -31,7 +31,7 @@ export const compactStringBudgets = [
   {
     category: 'tabs',
     limit: 10,
-    keyPattern: /^tabs\.(today|health|more)$/,
+    keyPattern: /^tabs\.(diary|pet|more)$/,
   },
   {
     category: 'fab-labels',

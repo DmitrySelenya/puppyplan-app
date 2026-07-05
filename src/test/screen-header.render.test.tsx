@@ -15,8 +15,26 @@ describe('ScreenHeader primitive', () => {
 
     expect(title).toBeTruthy();
     expect(titleStyle.textAlign).toBe('center');
-    expect(titleStyle.fontSize).toBe(tokens.typography.scale.headline.fontSize);
+    expect(titleStyle.fontSize).toBe(tokens.typography.scale.title1.fontSize);
     expect(titleStyle.fontWeight).toBe('600');
+  });
+
+  it('reserves a wide center lane for compact modal titles with side controls', () => {
+    render(
+      <ScreenHeader
+        backLabel="More"
+        onBack={jest.fn()}
+        title="Data and account"
+      />,
+    );
+
+    const title = screen.getByRole('header', { name: 'Data and account' });
+    const titleStyle = StyleSheet.flatten(title.props.style);
+
+    expect(title.props.numberOfLines).toBe(1);
+    expect(title.props.adjustsFontSizeToFit).toBe(true);
+    expect(title.props.minimumFontScale).toBe(0.8);
+    expect(titleStyle.flex).toBe(3);
   });
 
   it('renders a back control that fires onBack and exposes an accessible label', () => {

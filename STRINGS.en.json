@@ -49,15 +49,29 @@
       "states": {
         "onboarding": "Welcome, profile, age hint, tracker picker, and plan reveal.",
         "profile": "Saved and editing states for the puppy profile settings route.",
+        "profile-states": "Puppy profile loading, saving, error, offline, and owner-only states.",
         "quick-trackers": "Selected tracker count, limit state, and reorder-ready rows.",
+        "quick-trackers-states": "Quick Tracker settings loading, error, empty, and owner-only states.",
         "more-settings": "More hub, profile entry, tracker settings, notification note, privacy, account removal, and Plus placeholder.",
         "quick-log-sheet": "Quick Log sheet, subtype choices, duplicate warning, local pending, failed retry, and access states.",
-        "quick-log-details": "Quick Log details route with synthetic slow-saving and error states.",
+                "quick-log-details": "Quick Log details loading, saving, error, offline, and view-only states.",
         "health-v2": "Health list, empty, edit, detail, review, delete, and weight entry states.",
+        "reminders-hub": "Reminders hub route with active durable rows for native handoff.",
+        "reminders-hub-states": "Reminders hub loading, saving, error, offline, and empty states.",
+        "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
+      "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
+      "privacy-account-states": "Privacy and account loading, saving, error, offline, and sign-in-required states.",
+      "help-support-states": "Help and support loading, pending note, error, and offline read states.",
+        "household-states": "Manage household loading, pending access, error, and offline read states.",
+        "paywall-states": "PuppyPlan Plus loading, pending purchase, error, offline, and active subscription states.",
+        "invite-accept-states": "Accept invite loading, unavailable, retry, and already-member states.",
+        "shareable-card-states": "Shareable Puppy Card empty builder, health disclosure, share options, loading, pending, error, and offline states.",
+        "sitter-mode-states": "Trusted sitter no-caregiver, pending, active, and exit-confirm states.",
         "timeline-v2": "Timeline default, filtered, empty, pending, failed, and delete-confirm states.",
         "today-core": "Today hero, daily cards, guidance, and data states.",
         "guidance": "Starter guidance read, tried, and skipped states.",
         "today-deferrals": "Synthetic-only family invite and reminder slots for review.",
+        "diary-clay": "Clay Diary primitives: week strip, info hero, fact list, and a deferred routine-row preview.",
         "global": "Loading, empty, error, offline, pending, and permission states."
       },
       "today": {
@@ -65,9 +79,12 @@
         "day-two-morning": "Today · day two morning",
         "day-seven": "Today · day seven",
         "after-invite": "Today · after invite slot",
-        "missed-reminder": "Today · missed reminder slot",
-        "state-fixtures": "Today · loading, offline, and pending",
+        "missed-reminder": "Diary · past routine slot",
+        "state-fixtures": "Today · loading, offline, pending, and error",
         "synthetic-note": "These states do not write reminders, invites, or household activity."
+      },
+      "diary": {
+        "routine-note": "Routine rows preview the Clay anatomy only — no schedule data model is wired up yet."
       }
     }
   },
@@ -77,7 +94,7 @@
     "subtitle": "We keep your puppy's data private to your household.",
     "email": {
       "label": "Email",
-      "placeholder": "you@example.com",
+      "placeholder": "you@example.test",
       "cta": "Send code"
     },
     "code": {
@@ -151,6 +168,11 @@
       "title": "This access is no longer available",
       "body": "Contact the owner if you need new access.",
       "body-long": "Contact the owner if you need up-to-date information.",
+      "status": "Access closed",
+      "safety-label": "Private details stay hidden",
+      "safety-body": "PuppyPlan uses the same message for every closed link, so it never reveals whether access changed or when.",
+      "next-step-title": "Ask the owner for a new link",
+      "next-step-body": "They can share a fresh invite or card if they want you to view the latest puppy care details.",
       "action": "Got it",
       "_comment": "Canonical wording from §3.3.6 — one phrasing for both revoked and expired. Don't use \"revoked\", \"expired\", \"deleted\", \"closed by owner\"."
     }
@@ -221,12 +243,23 @@
   },
 
   "tabs": {
-    "today": "Today",
-    "today-hint": "Open the Today screen",
-    "health": "Health",
+    "diary": "Diary",
+    "diary-hint": "Open the Diary screen",
+    "pet": "Pet",
+    "pet-hint": "Open the Pet screen",
     "more": "More",
+    "add": "Add",
+    "add-close": "Close",
     "quick-log-fab-label": "Quick Log",
     "quick-log-fab-hint": "Opens a list of things you can log"
+  },
+
+  "nav": {
+    "quick-log-slab": "Quick Log",
+    "quick-log-slab-subtitle": "Log what already happened",
+    "schedule-slab": "Schedule",
+    "schedule-slab-subtitle": "A routine or one-time reminder",
+    "schedule-fab-hint": "Opens scheduling options"
   },
 
   "onboarding": {
@@ -240,12 +273,18 @@
     "puppy-profile": {
       "title": "What's your puppy's name?",
       "helper": "You can change this later.",
+      "step-label": "Step 2 of 5",
+      "back-a11y": "Back",
       "name-field-label": "Name",
       "name-field-hint": "Puppy's name, required to continue",
       "birth-date-placeholder": "YYYY-MM-DD",
+      "age-section-label": "Age",
       "age-toggle-age": "Age",
       "age-toggle-date": "Birth date",
       "age-weeks-field-label": "Age in weeks",
+      "age-weeks-value": "{count} weeks",
+      "age-decrement-a11y": "Decrease age",
+      "age-increment-a11y": "Increase age",
       "cta": "Continue",
       "error-required": "Add a name and age or date of birth to continue.",
       "error-name-required": "Add a name to continue.",
@@ -253,7 +292,7 @@
       "error-birth-date-required": "Enter a birth date in YYYY-MM-DD format.",
       "error-future-date": "That date is in the future — please double-check",
       "a11y-toggle": "Age entry method. Selected: age in weeks.",
-      "a11y-stepper": "Age 8 weeks. Swipe up to increase."
+      "a11y-stepper": "Age {count} weeks. Swipe up to increase."
     },
     "age-hint": {
       "6-8-weeks": "At 8 weeks, puppies often sleep 18–20 hours a day.",
@@ -262,38 +301,49 @@
       "fallback": "Every puppy is different. We'll set a calm pace."
     },
     "tracker-picker": {
+      "back-a11y": "Back",
       "title": "What to track",
       "helper": "Up to 5 actions. You can change them later.",
+      "step-label": "Step 3 of 5",
       "counter": "{n} of 5 selected",
       "_comment": "{n} — integer 0..5",
       "limit-snackbar": "Up to 5. Remove one to add a new tracker.",
       "min-required-snackbar": "Keep at least one tracker selected.",
-      "zero-state-cta": "Skip for now",
+      "zero-state-cta": "Skip selection",
       "cta": "Continue",
-      "tile-feeding-a11y": "Feeding. Selected. Double tap to remove."
+      "tile-selected-a11y": "{label}. Selected. Double tap to remove.",
+      "tile-unselected-a11y": "{label}. Not selected. Double tap to add."
     },
     "plan-reveal": {
       "title": "Your plan for today",
       "subtitle": "You can start with the first item.",
+      "summary": "{name} · {age} · You",
+      "summary-a11y": "{name}, {age}, you",
+      "avatar-label": "You",
+      "birth-date-summary": "Birth date set",
       "hero": "Log your first event — it takes about five seconds.",
+      "hero-a11y": "First item. {hero}",
       "starter-card-1": "Watch the feeding pattern",
       "starter-card-2": "Short potty breaks every 1–2 hours",
       "starter-card-3": "A quiet spot for sleep",
+      "starter-card-a11y": "Starter action. {action}",
       "cta": "Start your first log"
     },
     "first-log": {
       "hero-after-first": "First event saved. From here, a calm rhythm.",
-      "body-after-first": "Today now shows the saved event, the next step, and the same Quick Log action.",
+      "body-after-first": "Diary now shows the saved event, the next step, and the same Quick Log action.",
       "eyebrow": "First Today",
       "today-title": "Your first event",
       "event-title": "Pee outside · 9:42",
       "event-meta": "Saved just now",
-      "celebration-snackbar": "Done. You can keep going."
+      "celebration-snackbar": "Done. You can keep going.",
+      "celebration-snackbar-a11y": "First event saved. You can keep going."
     },
     "preview": {
       "name-value": "Puppy"
     },
     "account-wall": {
+      "sheet-a11y": "Save progress options",
       "title": "Save your progress",
       "body": "This lets you share with family and see your data on other devices.",
       "apple": "Continue with Apple",
@@ -302,10 +352,14 @@
       "secondary": "Not now"
     },
     "notifications-prompt": {
+      "sheet-a11y": "Quiet reminders prompt",
       "title": "Want quiet reminders?",
       "body": "We'll only send what you choose. No noise.",
       "primary": "Turn on",
-      "secondary": "Not now"
+      "secondary": "Not now",
+      "error-status": "Settings unavailable",
+      "error-title": "Could not open Settings",
+      "error-body": "You can keep going and turn reminders on later from your device settings."
     }
   },
 
@@ -318,6 +372,23 @@
     "weekly-lead": "Over 7 days:",
     "weekly-insight-prefix": "Clearer now: ",
     "weekly-cta": "See details",
+    "header": {
+      "greeting-morning": "Good morning, {name}",
+      "greeting-midday": "Good afternoon, {name}",
+      "greeting-evening": "Good evening, {name}",
+      "greeting-morning-no-name": "Good morning",
+      "greeting-midday-no-name": "Good afternoon",
+      "greeting-evening-no-name": "Good evening"
+    },
+    "week-strip": {
+      "label": "Diary week",
+      "day-label": "{weekday}, {date}. {state}",
+      "_comment-day-label": "{weekday} — long weekday, e.g. Wednesday; {date} — short date, e.g. Jun 10; {state} — one of the state-* labels below.",
+      "state-default": "Diary day",
+      "state-selected": "Selected day",
+      "state-today": "Today",
+      "state-selected-today": "Selected day, today"
+    },
     "hero": {
       "day1": "Log your first event — it takes about five seconds.",
       "day1-cta": "Start",
@@ -329,7 +400,7 @@
       "_comment-potty-time-meta": "{duration} — e.g. \"1 hr 40 min\"",
       "potty-time-primary": "Log it",
       "potty-time-tertiary": "Later",
-      "eyebrow": "Today",
+      "eyebrow": "Diary",
       "first-day": {
         "eyebrow": "Start",
         "title": "Log your first event — it takes about five seconds.",
@@ -347,8 +418,8 @@
         "primary": "Plan the next break"
       },
       "missed-reminder": {
-        "title": "Reminder slot preview",
-        "body": "This synthetic card shows where a missed reminder will sit after reminders ship.",
+        "title": "Past routine slot preview",
+        "body": "This synthetic card shows where a past unchecked routine will sit after reminders ship.",
         "primary": "Preview only"
       },
       "day-7-weekly-rhythm": {
@@ -358,7 +429,7 @@
       },
       "steady-day": {
         "title": "Keep the rhythm visible",
-        "body": "Today stays quiet when logs are current and no urgent care pattern stands out."
+        "body": "Diary stays quiet when logs are current and no urgent care pattern stands out."
       }
     },
     "starter-guidance": {
@@ -431,6 +502,13 @@
         "body": "Use Quick Log when something happens, and the latest events will stay visible here."
       }
     },
+    "history": {
+      "section-title": "Today",
+      "open-action": "Review history",
+      "delete-action": "Delete entry",
+      "item-actions": "Diary item actions",
+      "fact-a11y-label": "{title}, {time}, {caption}"
+    },
     "daily-cards": {
       "first-day-banner": "The first day is about observing, not results.",
       "starter-section-title": "What to do now",
@@ -452,15 +530,15 @@
       },
       "feeding-pattern": {
         "title": "Feeding pattern noticed",
-        "body": "Today will keep meals near the top while the pattern is forming."
+        "body": "Diary keeps meals near the top while the pattern is forming."
       },
       "after-invite": {
         "title": "Caregiver activity slot",
-        "body": "A synthetic preview of how new household activity will appear in Today."
+        "body": "A synthetic preview of how new household activity will appear in Diary."
       },
       "quick-log-prompt": {
         "title": "Log what just happened",
-        "body": "A single recent event keeps the rest of Today grounded."
+        "body": "A single recent event keeps the rest of Diary grounded."
       },
       "sleep-rhythm": {
         "title": "Sleep rhythm",
@@ -468,11 +546,11 @@
       },
       "potty-rhythm": {
         "title": "Potty rhythm",
-        "body": "Recent potty logs help Today keep outside breaks timely."
+        "body": "Recent potty logs keep outside breaks timely in Diary."
       },
       "timeline-review": {
         "title": "Recent care is saved",
-        "body": "Timeline keeps the durable record when the Today card stays brief."
+        "body": "Diary history keeps the durable record when the day card stays brief."
       },
       "health-calm-check": {
         "title": "Calm health check",
@@ -484,6 +562,16 @@
       }
     },
     "states": {
+      "all-done": {
+        "status": "Done",
+        "title": "Everything for this Diary day is handled",
+        "body": "Routine slots are complete. New events can still be added from Quick Log."
+      },
+      "cold-start": {
+        "status": "Start",
+        "title": "Start this Diary with the first routine",
+        "body": "Use Add for Quick Log or Schedule so the first day has a clear place to begin."
+      },
       "loading": {
         "status": "Loading",
         "title": "Refreshing Today",
@@ -493,6 +581,11 @@
         "status": "Empty",
         "title": "Nothing logged today",
         "body": "Today will fill in after the first routine event."
+      },
+      "empty-history": {
+        "status": "Quiet day",
+        "title": "No entries on this Diary day",
+        "body": "Diary history stays available while this day has no new logs."
       },
       "error": {
         "status": "Saved view",
@@ -649,17 +742,38 @@
           "high": "High"
         }
       },
-      "states": {
-        "saving": {
-          "title": "Saving details",
-          "body": "The routine event is already logged; this optional detail is catching up."
+            "states": {
+                "loading": {
+                    "status": "Checking",
+                    "title": "Loading details",
+                    "body": "We are checking the current care context before details are saved."
+                },
+                "pending-write": {
+                    "status": "Saving",
+                    "title": "Saving details",
+                    "body": "The routine event is already logged; this optional detail is catching up."
+                },
+                "saving": {
+                    "title": "Saving details",
+                    "body": "The routine event is already logged; this optional detail is catching up."
+                },
+                "error": {
+                    "status": "Needs attention",
+                    "title": "Details did not save",
+                    "body": "The original Quick Log entry stays saved. Try the details again later."
+                },
+                "offline-read": {
+                    "status": "Offline",
+                    "title": "Showing saved details",
+                    "body": "You can review the detail form. Saving waits until the connection is back."
+                },
+                "permission-denied": {
+                    "status": "View only",
+                    "title": "Details are not editable",
+                    "body": "Ask the household owner for caregiver access before changing Quick Log details."
+                }
+            }
         },
-        "error": {
-          "title": "Details did not save",
-          "body": "The original Quick Log entry stays saved. Try the details again later."
-        }
-      }
-    },
     "pending": {
       "label": "Saving"
     },
@@ -816,7 +930,29 @@
         "already-member": "You're already in {puppyName}'s household.",
         "already-member-cta": "Open",
         "load-error": "Couldn't load the invite. Check your connection.",
-        "neutral-unavailable": "This invite is no longer available. Ask {ownerName} to send a new one."
+        "neutral-unavailable": "This invite is no longer available. Ask {ownerName} to send a new one.",
+        "states": {
+          "loading": {
+            "status": "Checking",
+            "title": "Checking invite",
+            "body": "We are checking whether this invite is still available."
+          },
+          "load-error": {
+            "status": "Needs attention",
+            "title": "Invite did not load",
+            "body": "Keep this screen open and try again when your connection is back."
+          },
+          "expired": {
+            "status": "Unavailable",
+            "title": "Invite is no longer available",
+            "body": "Ask the owner to send a new invite if you still need access."
+          },
+          "already-member": {
+            "status": "Already joined",
+            "title": "You are already in this household",
+            "body": "Open PuppyPlan to continue helping with care."
+          }
+        }
       },
       "shared-today-viewer": {
         "read-only-hint": "View only",
@@ -829,8 +965,12 @@
         "screen-title": "Family and access",
         "section-members": "Members",
         "section-invites": "Invites",
+        "member-you": "You",
+        "invites-empty": "No pending invites",
         "active-ago": "Active {timeAgo}",
         "pending-until": "Active through {date}",
+        "pending-invite-caregiver": "Pending caregiver",
+        "pending-invite-viewer": "Pending viewer",
         "invite-cta": "Invite",
         "badge-owner": "Owner",
         "badge-caregiver": "Caregiver",
@@ -846,7 +986,29 @@
           "destructive": "Close access",
           "cancel": "Cancel"
         },
-        "revoked-toast": "Access for {name} is closed."
+        "revoked-toast": "Access for {name} is closed.",
+        "states": {
+          "loading": {
+            "status": "Checking",
+            "title": "Loading household access",
+            "body": "We are checking the saved family access view."
+          },
+          "pending-write": {
+            "status": "Saving",
+            "title": "Updating access",
+            "body": "Keep this screen open while the access change is prepared."
+          },
+          "error": {
+            "status": "Needs attention",
+            "title": "Could not load access",
+            "body": "Keep the current household view and try again in a moment."
+          },
+          "offline-read": {
+            "status": "Offline",
+            "title": "Showing saved access",
+            "body": "You can review the last saved household view while offline."
+          }
+        }
       }
     },
 
@@ -857,7 +1019,9 @@
       "section-who": "Who",
       "section-period": "Window",
       "period-start": "Start",
+      "period-start-example": "17 May, 6:00 PM",
       "period-end": "End",
+      "period-end-example": "19 May, 9:00 AM",
       "section-checklist": "Checklist",
       "checklist-feeding": "Feedings (3/day)",
       "checklist-walks": "Walks (3/day)",
@@ -876,6 +1040,28 @@
       "no-caregiver": "First invite a caregiver. Sitter mode extends an existing caregiver.",
       "no-caregiver-cta": "Invite a caregiver",
       "pending-hint": "Waiting for {name} to accept the invite.",
+      "states": {
+        "no-caregiver": {
+          "status": "Setup",
+          "title": "Choose a caregiver",
+          "body": "Sitter mode stays off until a caregiver and time window are selected."
+        },
+        "pending": {
+          "status": "Sending",
+          "title": "Sending sitter access",
+          "body": "Keep this screen open while the sitter window is prepared."
+        },
+        "active": {
+          "status": "Active",
+          "title": "Sitter mode is active",
+          "body": "The sitter can see only the checklist and care context you selected."
+        },
+        "exit-confirm": {
+          "status": "Confirm",
+          "title": "End sitter access?",
+          "body": "Ending access stops the sitter view. Diary entries stay in your household."
+        }
+      },
       "checklist-view": {
         "role-chip": "sitter",
         "deadline-strip": "Sitter mode through {date}, {time}",
@@ -1025,6 +1211,7 @@
     "card-preview": {
       "screen-title": "Preview",
       "footer": "This is everything the recipient will see.",
+      "a11y": "{title}. {footer}",
       "edit": "Edit",
       "share": "Share"
     },
@@ -1046,6 +1233,12 @@
       "row-status-active": "Active through {date}",
       "row-status-expiring": "Expires in {n} days",
       "row-status-revoked": "Access closed {date}",
+      "sample-puppy-name": "Puppy",
+      "sample-breed-age": "Labrador · 4 months",
+      "sample-vaccine-1": "DHPP — 12 April",
+      "sample-vaccine-2": "Rabies — 5 May",
+      "sample-active-date": "24 May",
+      "sample-recipient": "vet visit",
       "overflow": ["Copy link", "Extend expiry", "Close access"],
       "revoke-confirm": {
         "title": "Close access to this card?",
@@ -1053,7 +1246,44 @@
         "destructive": "Close access",
         "cancel": "Cancel"
       },
-      "public-link-disclosure": "Anyone with the link sees the fields you picked. An expiry and the ability to close access are required."
+      "public-link-disclosure": "Anyone with the link sees the fields you picked. An expiry and the ability to close access are required.",
+      "states": {
+        "empty-builder": {
+          "status": "Empty",
+          "title": "No fields selected yet",
+          "body": "Preview stays unavailable until at least one card field is selected."
+        },
+        "health-on": {
+          "status": "Health included",
+          "title": "Health details need a disclosure",
+          "body": "Only statuses and dates are included. Private notes and clinic contacts stay out."
+        },
+        "share-options": {
+          "status": "Share choices",
+          "title": "Choose link or snapshot",
+          "body": "Links can be closed later. Snapshots cannot be revoked after sending."
+        },
+        "loading": {
+          "status": "Loading",
+          "title": "Loading card settings",
+          "body": "Keeping the current card private while settings load."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving card changes",
+          "body": "The card stays visible with the last saved settings while changes sync."
+        },
+        "error": {
+          "status": "Needs review",
+          "title": "Card settings did not update",
+          "body": "Review the fields and save when ready."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Showing the last saved card",
+          "body": "Sharing changes can wait until the connection is back."
+        }
+      }
     },
 
     "revoked-or-expired-screen": {
@@ -1068,6 +1298,17 @@
   "health": {
     "tab-title": "Health",
     "footer-hint": "This is a record of entries, not medical advice.",
+    "pet-hub": {
+      "a11y": "{title}. Age: {age}. Breed: {breed}. Weight: {weight}.",
+      "edit-profile": "Edit profile",
+      "age-label": "Age",
+      "breed-label": "Breed",
+      "weight-label": "Weight",
+      "add-weight": "Add weight",
+      "quick-trackers-title": "Quick trackers",
+      "quick-trackers-meta": "Pick up to 5 for Today and Quick Log",
+      "quick-trackers-a11y": "Quick trackers. Pick up to 5 for Today and Quick Log."
+    },
     "segments": ["All", "Vaccinations", "Treatments", "Visits"],
     "filter-chips": ["Templates", "Confirmed", "Done"],
     "rows": {
@@ -1086,6 +1327,23 @@
       "vet-visit-meta": "Done · April 28 · Added by you"
     },
     "error-card": "Couldn't load entries. Try refreshing.",
+    "states": {
+      "loading": {
+        "status": "Loading",
+        "title": "Loading health entries",
+        "body": "We are checking the latest saved records for this puppy."
+      },
+      "error": {
+        "status": "Could not load",
+        "title": "Could not load health entries",
+        "body": "Check your connection and try again. No health details were changed."
+      },
+      "offline-read": {
+        "status": "Offline",
+        "title": "Showing the last saved health entries",
+        "body": "Showing the last saved data. New changes can wait until you are back online."
+      }
+    },
     "refresh": "Refresh",
     "pills": {
       "template": "Template",
@@ -1125,7 +1383,34 @@
       "privacy-hint": "Notes are visible only to you and invited family members.",
       "save-toast": "Entry saved",
       "offline-banner": "We'll save this as soon as you're back online",
-      "error-date": "Please check the date"
+      "error-date": "Please check the date",
+      "states": {
+        "loading": {
+          "status": "Loading",
+          "title": "Preparing the form",
+          "body": "We are checking the current puppy context before you add a record."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving health entry",
+          "body": "Keep this screen open while the entry is saved."
+        },
+        "error": {
+          "status": "Could not save",
+          "title": "Could not save this entry",
+          "body": "Check your connection and try again. No health details were sent."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "No connection",
+          "body": "You can review the form. Saving waits until you are back online."
+        },
+        "permission-denied": {
+          "status": "Owner only",
+          "title": "Only an owner can add health records",
+          "body": "You can still view shared health context."
+        }
+      }
     },
     "edit-record": {
       "screen-title": "Entry",
@@ -1169,7 +1454,30 @@
       "note-label": "Note",
       "note-value": "Mild post-visit note, resolved within 24 hours.",
       "stage-section": "Stage",
-      "history-date": "May 12, 2026"
+      "history-date": "May 12, 2026",
+      "empty-value": "Not added",
+      "states": {
+        "loading": {
+          "status": "Loading",
+          "title": "Opening entry",
+          "body": "We are loading this health entry."
+        },
+        "unavailable": {
+          "status": "Unavailable",
+          "title": "No active puppy context",
+          "body": "Return to Pet and try opening the entry again."
+        },
+        "not-found": {
+          "status": "Not found",
+          "title": "Entry is not available",
+          "body": "It may have been deleted or is no longer shared with you."
+        },
+        "error": {
+          "status": "Could not load",
+          "title": "Could not load this entry",
+          "body": "Check your connection and try again."
+        }
+      }
     },
     "weight-entry": {
       "title": "Weight entry",
@@ -1180,6 +1488,8 @@
     "vet-prep": {
       "title": "Getting ready for the visit",
       "subtitle": "Visit on {date}, {time}",
+      "sample-date": "May 18",
+      "sample-time": "10:00 AM",
       "checklist": [
         "Bring previous vaccination records",
         "List of questions for the vet",
@@ -1222,14 +1532,48 @@
   "reminders": {
     "screen-title": "Reminders",
     "segments": ["Active", "Off"],
+    "segments-a11y": "Reminder status",
+    "actions": {
+      "add": "Add reminder"
+    },
     "sections": {
       "feeding": "Feeding",
       "health": "Health",
       "sitter": "Trusted sitter",
+      "other": "Other",
       "missed-today": "Not logged today"
     },
     "footer-quiet-hours": "Quiet hours — in Notification settings.",
     "empty": "Your reminders will show up here",
+    "row-subtitle-daily-template": "Every day · {time}",
+    "row-pending": "Syncing",
+    "states": {
+      "loading": {
+        "status": "Loading",
+        "title": "Loading reminders",
+        "body": "We are checking the reminders saved for this puppy."
+      },
+      "empty": {
+        "status": "Empty",
+        "title": "No reminders here yet",
+        "body": "Use the plus button to add the first reminder."
+      },
+      "error": {
+        "status": "Could not load",
+        "title": "Could not load reminders",
+        "body": "Check your connection and try again."
+      },
+      "pending-write": {
+        "status": "Saving",
+        "title": "Saving reminder changes",
+        "body": "Keep this screen open while the reminder list updates."
+      },
+      "offline-read": {
+        "status": "Offline",
+        "title": "Showing saved reminders",
+        "body": "You can review the last saved reminders while offline."
+      }
+    },
     "form": {
       "cancel": "Cancel",
       "title-new": "New reminder",
@@ -1254,7 +1598,29 @@
       "toggle-sound": "Sound",
       "hint": "This reminder runs locally on this device. Turn on push in Settings to get it even when the app is closed.",
       "error-no-days": "Pick at least one day",
-      "permission-banner": "Notifications are off. The reminder will be saved, but it won't make a sound"
+      "permission-banner": "Notifications are off. The reminder will be saved, but it won't make a sound",
+      "states": {
+        "loading": {
+          "status": "Loading",
+          "title": "Preparing reminder options",
+          "body": "We are checking categories, quiet hours, and notification settings."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving reminder",
+          "body": "Keep this screen open while the reminder is saved."
+        },
+        "error": {
+          "status": "Could not save",
+          "title": "Could not save this reminder",
+          "body": "Check your connection and try again. No reminder was scheduled."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "No connection",
+          "body": "You can review the reminder. Saving waits until you are back online."
+        }
+      }
     },
     "quiet-hours": {
       "title": "Quiet hours",
@@ -1286,7 +1652,8 @@
     "sitter-card": {
       "title-example": "Evening checklist · 7:00 pm",
       "subtitle-template": "{n} items · sitter: {name}",
-      "actions": ["Open checklist", "Snooze"],
+      "progress-a11y-template": "{completed} of {total} checklist items complete",
+      "actions": ["Open checklist", "Mark all done", "Skip"],
       "completed-summary": "Done · {time} · {name}"
     },
     "permission-denied": {
@@ -1426,6 +1793,7 @@
       "subscription": "Subscription"
     },
     "rows": {
+      "pet-settings": "Pet settings",
       "puppy-profile": "Puppy profile",
       "quick-trackers": "Quick trackers",
       "family": "Family",
@@ -1436,6 +1804,7 @@
       "data-account": "Data and account",
       "help": "Help",
       "about": "About",
+      "shareable-cards": "Shared cards",
       "puppyplan-plus": "PuppyPlan Plus",
       "deferred": "Deferred"
     },
@@ -1476,7 +1845,34 @@
         "Take a photo",
         "Pick from your library",
         "Use an illustration"
-      ]
+      ],
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading profile",
+          "body": "We are checking the saved profile view."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving profile",
+          "body": "Keep this screen open while profile changes are saved."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Could not load profile",
+          "body": "Keep the current profile view and try again in a moment."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Showing saved profile",
+          "body": "You can review the last saved profile view while offline."
+        },
+        "permission-denied": {
+          "status": "Owner only",
+          "title": "Only the owner can edit",
+          "body": "You can keep viewing care details without changing this profile."
+        }
+      }
     },
     "quick-trackers": {
       "screen-title": "Quick trackers",
@@ -1493,6 +1889,28 @@
       "move-down": "Move down",
       "max-reached-hint": "Turn off one of the selected first",
       "min-required-hint": "Keep at least one tracker selected",
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading quick trackers",
+          "body": "We are checking the trackers saved for this puppy."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Could not load quick trackers",
+          "body": "Keep the current setup and try again in a moment."
+        },
+        "empty": {
+          "status": "Setup needed",
+          "title": "Create a puppy profile first",
+          "body": "Quick trackers are ready after the puppy profile is available."
+        },
+        "non-owner": {
+          "status": "Owner only",
+          "title": "Only the owner can change trackers",
+          "body": "You can keep viewing shared care details without changing this setup."
+        }
+      },
       "items": ["Feeding", "Potty", "Sleep", "Walk", "Weight", "Play", "Biting"]
     },
     "notifications": {
@@ -1507,7 +1925,29 @@
       "section-quiet-hours": "Quiet hours",
       "quiet-hours-example": "10:00 pm – 7:00 am",
       "section-tz": "Time zone",
-      "tz-example": "Europe/Berlin (auto)"
+      "tz-example": "Europe/Berlin (auto)",
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading notification settings",
+          "body": "We are checking the settings saved on this device."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Updating preferences",
+          "body": "Your changes are saved locally first and will finish when the device is ready."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Could not update notifications",
+          "body": "Keep your current settings and try again in a moment."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Showing saved preferences",
+          "body": "You can review the last saved settings while this device is offline."
+        }
+      }
     },
     "privacy": {
       "screen-title": "Data and account",
@@ -1529,10 +1969,78 @@
         "confirm-input-prompt": "type the word \"DELETE\"",
         "confirm-input-word": "DELETE"
       },
-      "delete-toast": "Deletion request received. We'll send a confirmation to your email"
+      "delete-toast": "Deletion request received. We'll send a confirmation to your email",
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading privacy controls",
+          "body": "We are checking saved privacy and account controls."
+        },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving privacy choice",
+          "body": "Keep this screen open while the privacy request is saved."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Could not update privacy controls",
+          "body": "Keep the current settings and try again in a moment."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Showing saved privacy controls",
+          "body": "You can review the last saved privacy controls while offline."
+        },
+        "permission-denied": {
+          "status": "Sign in required",
+          "title": "Account access required",
+          "body": "Sign in again before changing account data or export requests."
+        }
+      }
     },
     "help": {
       "screen-title": "Help",
+      "intro-title": "How can we help?",
+      "intro-body": "Pick a topic or prepare a short support note. Keep private puppy details out unless support asks for them.",
+      "sections": {
+        "topics": "Help topics",
+        "diagnostics": "Support details"
+      },
+      "topic-quick-log": "Quick Log and routines",
+      "topic-sharing": "Family and sharing",
+      "topic-privacy": "Data and privacy",
+      "version-row": "App version",
+      "support-code-row": "Support code",
+      "support-code-value": "Local build",
+      "contact-row": "Prepare support note",
+      "contact-hint": "Opens an email draft. Nothing is sent automatically.",
+      "support-draft-subject": "PuppyPlan support request",
+      "support-draft-body": "Please describe what happened. Do not include names, notes, emails, providers, photos, or tokens in a support note.",
+      "support-error-title": "Could not open email",
+      "support-error-body": "Open your email app and write to support when you are ready.",
+      "privacy-note": "Do not include names, notes, emails, providers, photos, or tokens in a support note.",
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading support options",
+          "body": "We are checking the help topics and local app details."
+        },
+        "pending-write": {
+          "status": "Preparing",
+          "title": "Preparing support note",
+          "body": "The draft is being prepared locally. Nothing is sent automatically."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Support handoff did not open",
+          "body": "Keep the screen open and try again when your email app is available."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Saved help is still available",
+          "body": "You can read help topics now. Contact handoff can wait until you are back online."
+        }
+      },
       "section-contact": "Contact",
       "row-support": "Contact support",
       "support-email": "support@puppyplan.app",
@@ -1548,39 +2056,77 @@
 
   "paywall": {
     "title": "PuppyPlan Plus",
-    "subtitle": "Extended features for the first 90 days.",
+    "subtitle": "Full access for the first 90 days with your puppy.",
+    "sections": {
+      "features": "Included",
+      "plans": "Plans"
+    },
     "features": [
-      "Unlimited shared links",
-      "Extended health export",
-      "Multiple puppies in one account"
+      "Full Diary, Pet, routines, and sharing",
+      "Keep adding after your 30-day access period",
+      "Export and privacy controls always stay available"
     ],
-    "plan-monthly": "Monthly · €8.99",
-    "plan-yearly": "Yearly · €49.99 (save 53%)",
-    "primary": "Subscribe",
+    "plan-monthly": "Monthly · $8.99/month",
+    "plan-yearly": "Annual · $39.99/year · $3.33/mo",
+    "plan-yearly-a11y": "Annual plan, 39 dollars 99 cents per year, selected",
+    "plan-lifetime": "Lifetime puppyhood pass · $79-99 once",
+    "primary": "Choose plan",
     "secondary": "Restore purchases",
     "legal": "Auto-renews. You can cancel in the App Store.",
+    "trial-status": "{count} days left",
+    "trial-note": "Full access now. First paywall stays skippable.",
+    "soft-lock-banner-title": "Subscribe to add new entries",
+    "soft-lock-banner-body": "Diary, Pet, export, privacy, and existing trainer links stay available in read-only mode.",
+    "export-action": "Export my data",
+    "soft-lock-title": "After the full-access period",
+    "soft-lock-note": "Viewing, export, privacy controls, restore purchases, sign out, and existing trainer links stay available.",
     "free-vs-plus": {
       "free": [
-        "Today + Timeline",
-        "1 shared access",
-        "Basic export",
-        "1 puppy"
+        "Days 0-30: full access",
+        "No card up front",
+        "Read-only after trial",
+        "Export always available"
       ],
       "plus": [
-        "Everything in Free",
-        "Unlimited shared access",
-        "Extended health export",
-        "Multiple puppies"
+        "Everything in trial",
+        "Keep adding entries",
+        "Create routines and shares",
+        "Restore anytime"
       ],
-      "header-free": "Free",
+      "header-free": "Trial",
       "header-plus": "Plus"
     },
     "states": {
       "offline": "We'll load the plans once you're back online",
       "error": "Couldn't load the plans. Try refreshing",
-      "active-until": "Subscription active through {date}. Managed in the App Store"
+      "active-until": "Subscription active through {date}. Managed in the App Store",
+      "loading-products": {
+        "status": "Checking",
+        "title": "Loading Plus plans",
+        "body": "We are checking the plans available for this device."
+      },
+      "pending-purchase": {
+        "status": "Processing",
+        "title": "Finishing purchase",
+        "body": "Keep this screen open while the purchase finishes."
+      },
+      "purchase-error": {
+        "status": "Needs attention",
+        "title": "Purchase did not finish",
+        "body": "No changes were made. Keep access as it is and try again."
+      },
+      "offline-read": {
+        "status": "Offline",
+        "title": "Showing saved Plus details",
+        "body": "Plan details will refresh when this device is back online."
+      },
+      "active-subscription": {
+        "status": "Active",
+        "title": "Plus is active",
+        "body": "You can keep adding entries. Manage billing in the App Store."
+      }
     },
-    "a11y-price-example": "Yearly, 49 euros 99 cents, save 53 percent"
+    "a11y-price-example": "Annual, 39 dollars 99 cents per year"
   },
 
   "permission-denied-patterns": {

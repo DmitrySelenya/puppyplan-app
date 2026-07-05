@@ -48,15 +48,29 @@
       "states": {
         "onboarding": "Bienvenida, perfil, pista de edad, selección de trackers y plan.",
         "profile": "Estados guardado y edición para la ruta de perfil del cachorro.",
+        "profile-states": "Estados del perfil: carga, guardado, error, offline y solo propietario.",
         "quick-trackers": "Conteo de trackers elegidos, límite y filas listas para reordenar.",
+        "quick-trackers-states": "Estados de ajustes de rastreadores rápidos: carga, error, vacío y solo propietario.",
         "more-settings": "Hub Más, entrada de perfil, ajustes de trackers, nota de notificaciones, privacidad, eliminación de cuenta y marcador Plus.",
         "quick-log-sheet": "Hoja de Quick Log, subtipos, aviso de duplicado, pendiente local, reintento fallido y estados de acceso.",
-        "quick-log-details": "Ruta de detalles de Quick Log con estados sintéticos de guardado lento y error.",
+      "quick-log-details": "Detalles de Quick Log con estados de carga, guardado, error, sin conexión y solo lectura.",
         "health-v2": "Lista de salud, vacío, edición, detalle, revisión, eliminación y entrada de peso.",
+        "reminders-hub": "Ruta del centro de recordatorios con filas durables activas para entrega nativa.",
+        "reminders-hub-states": "Estados del centro de recordatorios: carga, guardado, error, offline y vacío.",
+        "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
+      "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
+      "privacy-account-states": "Estados de privacidad y cuenta: carga, guardado, error, offline e inicio requerido.",
+      "help-support-states": "Estados de ayuda y soporte: carga, nota pendiente, error y lectura offline.",
+        "household-states": "Estados de acceso familiar: carga, guardado, error y lectura offline.",
+        "paywall-states": "Estados de PuppyPlan Plus: carga, compra pendiente, error, offline y suscripción activa.",
+        "invite-accept-states": "Estados de aceptar invitación: carga, no disponible, reintento y ya eres miembro.",
+        "shareable-card-states": "Estados de tarjeta compartible: selección vacía, salud incluida, opciones para compartir, carga, guardado, revisión y offline.",
+        "sitter-mode-states": "Estados de modo cuidador: sin cuidador, pendiente, activo y confirmación de salida.",
         "timeline-v2": "Timeline predeterminado, filtrado, vacío, pendiente, error y confirmación de borrado.",
         "today-core": "Hero de Hoy, tarjetas diarias, guía y estados de datos.",
         "guidance": "Estados de guía inicial: leído, probado y omitido.",
         "today-deferrals": "Espacios sintéticos de invitación familiar y recordatorios para revisión.",
+        "diary-clay": "Primitivos Clay de Diary: week strip, info hero, lista de hechos y una vista previa de fila de rutina diferida.",
         "global": "Estados de carga, vacío, error, offline, pendiente y permisos."
       },
       "today": {
@@ -64,9 +78,12 @@
         "day-two-morning": "Hoy · mañana del día dos",
         "day-seven": "Hoy · día siete",
         "after-invite": "Hoy · espacio tras invitación",
-        "missed-reminder": "Hoy · espacio de recordatorio pendiente",
-        "state-fixtures": "Hoy · carga, offline y pendiente",
+        "missed-reminder": "Diary · espacio de rutina pendiente",
+        "state-fixtures": "Hoy · carga, offline, pendiente y error",
         "synthetic-note": "Estos estados no escriben recordatorios, invitaciones ni actividad del hogar."
+      },
+      "diary": {
+        "routine-note": "Las filas de rutina solo muestran la anatomía Clay: aún no hay un modelo de horario conectado."
       }
     }
   },
@@ -75,7 +92,7 @@
     "subtitle": "Los datos de tu cachorro son privados para tu hogar.",
     "email": {
       "label": "Correo",
-      "placeholder": "you@example.com",
+      "placeholder": "you@example.test",
       "cta": "Enviar código"
     },
     "code": {
@@ -148,6 +165,11 @@
       "title": "Este acceso ya no está disponible",
       "body": "Contacta al propietario si necesitas un nuevo acceso.",
       "body-long": "Contacta al propietario si necesitas información actualizada.",
+      "status": "Acceso cerrado",
+      "safety-label": "Los detalles privados permanecen ocultos",
+      "safety-body": "PuppyPlan muestra el mismo mensaje para cada enlace cerrado, así que nunca revela si el acceso cambió ni cuándo.",
+      "next-step-title": "Pide al propietario un enlace nuevo",
+      "next-step-body": "Puede compartir una nueva invitación o tarjeta si quiere que veas los datos de cuidado más recientes.",
       "action": "Entiendo",
       "_comment": "Redacción canónica de §3.3.6: una frase tanto para revocados como para vencidos. No utilice \"revocado\", \"caducado\", \"eliminado\", \"cerrado por el propietario\"."
     }
@@ -216,12 +238,22 @@
     ]
   },
   "tabs": {
-    "today": "Hoy",
-    "today-hint": "Abre la pantalla Hoy",
-    "health": "Salud",
+    "diary": "Diario",
+    "diary-hint": "Abre la pantalla Diario",
+    "pet": "Mascota",
+    "pet-hint": "Abre la pantalla Mascota",
     "more": "Más",
+    "add": "Agregar",
+    "add-close": "Cerrar",
     "quick-log-fab-label": "Registro rápido",
     "quick-log-fab-hint": "Abre una lista de cosas que puedes registrar"
+  },
+  "nav": {
+    "quick-log-slab": "Registro rápido",
+    "quick-log-slab-subtitle": "Registra lo que ya pasó",
+    "schedule-slab": "Programar",
+    "schedule-slab-subtitle": "Una rutina o un recordatorio único",
+    "schedule-fab-hint": "Abre opciones de programación"
   },
   "onboarding": {
     "welcome": {
@@ -234,12 +266,18 @@
     "puppy-profile": {
       "title": "¿Cómo se llama tu cachorro?",
       "helper": "Puedes cambiar esto más tarde.",
+      "step-label": "Paso 2 de 5",
+      "back-a11y": "Atrás",
       "name-field-label": "Nombre",
       "name-field-hint": "Nombre del cachorro, requerido para continuar",
       "birth-date-placeholder": "AAAA-MM-DD",
+      "age-section-label": "Edad",
       "age-toggle-age": "Edad",
       "age-toggle-date": "Fecha de nacimiento",
       "age-weeks-field-label": "Edad en semanas",
+      "age-weeks-value": "{count} semanas",
+      "age-decrement-a11y": "Disminuir edad",
+      "age-increment-a11y": "Aumentar edad",
       "cta": "Continuar",
       "error-required": "Agrega un nombre y edad o fecha de nacimiento para continuar.",
       "error-name-required": "Agrega un nombre para continuar.",
@@ -247,7 +285,7 @@
       "error-birth-date-required": "Ingresa la fecha con formato AAAA-MM-DD.",
       "error-future-date": "Esa fecha es en el futuro; verifíquela dos veces",
       "a11y-toggle": "Método de entrada de edad. Seleccionado: edad en semanas.",
-      "a11y-stepper": "Edad 8 semanas. Desliza hacia arriba para aumentar."
+      "a11y-stepper": "Edad {count} semanas. Desliza hacia arriba para aumentar."
     },
     "age-hint": {
       "6-8-weeks": "A las 8 semanas, los cachorros suelen dormir entre 18 y 20 horas al día.",
@@ -256,38 +294,49 @@
       "fallback": "Cada cachorro es diferente. Mantendremos un ritmo tranquilo."
     },
     "tracker-picker": {
+      "back-a11y": "Atrás",
       "title": "Qué rastrear",
       "helper": "Hasta 5 acciones. Puedes cambiarlos más tarde.",
+      "step-label": "Paso 3 de 5",
       "counter": "{n} de 5 seleccionados",
       "_comment": "{n}: entero 0..5",
       "limit-snackbar": "Hasta 5. Elimina uno para agregar un nuevo rastreador.",
       "min-required-snackbar": "Mantén al menos un rastreador seleccionado.",
-      "zero-state-cta": "Saltar por ahora",
+      "zero-state-cta": "Saltar selección",
       "cta": "Continuar",
-      "tile-feeding-a11y": "Alimentación. Seleccionado. Toca dos veces para eliminar."
+      "tile-selected-a11y": "{label}. Seleccionado. Toca dos veces para eliminar.",
+      "tile-unselected-a11y": "{label}. No seleccionado. Toca dos veces para agregar."
     },
     "plan-reveal": {
       "title": "Tu plan para hoy",
       "subtitle": "Puedes comenzar con el primer elemento.",
+      "summary": "{name} · {age} · tú",
+      "summary-a11y": "{name}, {age}, tú",
+      "avatar-label": "Tú",
+      "birth-date-summary": "Fecha de nacimiento indicada",
       "hero": "Registra tu primer evento; tardará unos cinco segundos.",
+      "hero-a11y": "Primer elemento. {hero}",
       "starter-card-1": "Observa el patrón de alimentación",
       "starter-card-2": "Descansos breves para ir al baño cada 1 o 2 horas",
       "starter-card-3": "Un lugar tranquilo para dormir.",
+      "starter-card-a11y": "Acción inicial. {action}",
       "cta": "Empieza tu primer registro"
     },
     "first-log": {
       "hero-after-first": "Primer evento guardado. A partir de aquí, un ritmo tranquilo.",
-      "body-after-first": "Hoy ahora muestra el evento guardado, el siguiente paso y la misma acción de registro rápido.",
+      "body-after-first": "Diario ahora muestra el evento guardado, el siguiente paso y la misma acción de registro rápido.",
       "eyebrow": "Primer Today",
       "today-title": "Tu primer evento",
       "event-title": "Pis afuera · 9:42",
       "event-meta": "Guardado ahora",
-      "celebration-snackbar": "Hecho. Puedes seguir adelante."
+      "celebration-snackbar": "Hecho. Puedes seguir adelante.",
+      "celebration-snackbar-a11y": "Primer evento guardado. Puedes seguir adelante."
     },
     "preview": {
       "name-value": "Cachorro"
     },
     "account-wall": {
+      "sheet-a11y": "Opciones para guardar el progreso",
       "title": "Guarda tu progreso",
       "body": "Esto te permite compartir con tu familia y ver tus datos en otros dispositivos.",
       "apple": "Continuar con Apple",
@@ -296,10 +345,14 @@
       "secondary": "Ahora no"
     },
     "notifications-prompt": {
+      "sheet-a11y": "Solicitud de recordatorios silenciosos",
       "title": "¿Quieres recordatorios silenciosos?",
       "body": "Sólo enviaremos lo que elijas. Sin ruido.",
       "primary": "Encender",
-      "secondary": "Ahora no"
+      "secondary": "Ahora no",
+      "error-status": "Ajustes no disponibles",
+      "error-title": "No se pudo abrir Ajustes",
+      "error-body": "Puedes seguir y activar los recordatorios más tarde desde los ajustes del dispositivo."
     }
   },
   "today": {
@@ -311,6 +364,23 @@
     "weekly-lead": "Más de 7 días:",
     "weekly-insight-prefix": "Más claro ahora:",
     "weekly-cta": "Ver detalles",
+    "header": {
+      "greeting-morning": "Buenos días, {name}",
+      "greeting-midday": "Buenas tardes, {name}",
+      "greeting-evening": "Buenas noches, {name}",
+      "greeting-morning-no-name": "Buenos días",
+      "greeting-midday-no-name": "Buenas tardes",
+      "greeting-evening-no-name": "Buenas noches"
+    },
+    "week-strip": {
+      "label": "Semana del diario",
+      "day-label": "{weekday}, {date}. {state}",
+      "_comment-day-label": "{weekday} — día completo de la semana; {date} — fecha corta; {state} — una de las etiquetas state-* siguientes.",
+      "state-default": "Día del diario",
+      "state-selected": "Día seleccionado",
+      "state-today": "Hoy",
+      "state-selected-today": "Día seleccionado, hoy"
+    },
     "hero": {
       "day1": "Registra tu primer evento; tardará unos cinco segundos.",
       "day1-cta": "Comenzar",
@@ -322,7 +392,7 @@
       "_comment-potty-time-meta": "{duration} — p.ej. \"1 hora 40 minutos\"",
       "potty-time-primary": "Regístrelo",
       "potty-time-tertiary": "Más tarde",
-      "eyebrow": "Hoy",
+      "eyebrow": "Diario",
       "first-day": {
         "eyebrow": "Inicio",
         "title": "Registra tu primer evento: toma unos cinco segundos.",
@@ -340,8 +410,8 @@
         "primary": "Planificar la salida"
       },
       "missed-reminder": {
-        "title": "Vista previa del recordatorio",
-        "body": "Esta tarjeta sintética muestra dónde aparecerá un recordatorio pendiente cuando se lance recordatorios.",
+        "title": "Vista previa de rutina pendiente",
+        "body": "Esta tarjeta sintética muestra dónde aparecerá una rutina aún sin marcar cuando se lancen los recordatorios.",
         "primary": "Solo vista previa"
       },
       "day-7-weekly-rhythm": {
@@ -351,7 +421,7 @@
       },
       "steady-day": {
         "title": "Mantén visible el ritmo",
-        "body": "Hoy se mantiene tranquilo cuando los registros están al día y no destaca ningún patrón urgente."
+        "body": "El diario se mantiene tranquilo cuando los registros están al día y no destaca ningún patrón urgente."
       }
     },
     "starter-guidance": {
@@ -434,6 +504,13 @@
         "body": "Usa Quick Log cuando ocurra algo y los eventos recientes quedarán visibles aquí."
       }
     },
+    "history": {
+      "section-title": "Hoy",
+      "open-action": "Revisar historial",
+      "delete-action": "Eliminar registro",
+      "item-actions": "Acciones del registro del diario",
+      "fact-a11y-label": "{title}, {time}, {caption}"
+    },
     "daily-cards": {
       "first-day-banner": "El primer día se trata de observar, no de resultados.",
       "starter-section-title": "Qué hacer ahora",
@@ -455,15 +532,15 @@
       },
       "feeding-pattern": {
         "title": "Patrón de comida visto",
-        "body": "Hoy mantendrá las comidas arriba mientras se forma el patrón."
+        "body": "El diario mantiene las comidas arriba mientras se forma el patrón."
       },
       "after-invite": {
         "title": "Espacio de actividad del cuidador",
-        "body": "Una vista previa sintética de cómo aparecerá nueva actividad del hogar en Hoy."
+        "body": "Una vista previa sintética de cómo aparecerá nueva actividad del hogar en el diario."
       },
       "quick-log-prompt": {
         "title": "Registra lo que acaba de pasar",
-        "body": "Un evento reciente mantiene el resto de Hoy con contexto."
+        "body": "Un evento reciente mantiene el resto del diario con contexto."
       },
       "sleep-rhythm": {
         "title": "Ritmo de sueño",
@@ -475,7 +552,7 @@
       },
       "timeline-review": {
         "title": "El cuidado reciente está guardado",
-        "body": "Timeline conserva el registro duradero cuando la tarjeta de Hoy se mantiene breve."
+        "body": "El historial del diario conserva el registro duradero cuando la tarjeta del día se mantiene breve."
       },
       "health-calm-check": {
         "title": "Revisión tranquila de salud",
@@ -487,6 +564,16 @@
       }
     },
     "states": {
+      "all-done": {
+        "status": "Listo",
+        "title": "Todo está cubierto para este día del diario",
+        "body": "Las rutinas están completas. Aún puedes añadir nuevos eventos desde Registro rápido."
+      },
+      "cold-start": {
+        "status": "Inicio",
+        "title": "Empieza este diario con la primera rutina",
+        "body": "Usa Añadir para Registro rápido o Programar, así el primer día tiene un punto claro de inicio."
+      },
       "loading": {
         "status": "Cargando",
         "title": "Actualizando Hoy",
@@ -496,6 +583,11 @@
         "status": "Vacío",
         "title": "Nada registrado hoy",
         "body": "Hoy se llenará después del primer evento de rutina."
+      },
+      "empty-history": {
+        "status": "Día tranquilo",
+        "title": "No hay entradas en este día del diario",
+        "body": "El historial del diario sigue disponible aunque este día no tenga registros nuevos."
       },
       "error": {
         "status": "Vista guardada",
@@ -667,13 +759,34 @@
         }
       },
       "states": {
+        "loading": {
+          "status": "Comprobando",
+          "title": "Cargando detalles",
+          "body": "Estamos comprobando el contexto de cuidado actual antes de guardar los detalles."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando detalles",
+          "body": "El evento de rutina ya está registrado; este detalle opcional se está poniendo al día."
+        },
         "saving": {
           "title": "Guardando detalles",
           "body": "El evento de rutina ya está registrado; este detalle opcional se está poniendo al día."
         },
         "error": {
+          "status": "Revisar",
           "title": "Los detalles no se guardaron",
           "body": "La entrada original de Quick Log sigue guardada. Prueba los detalles más tarde."
+        },
+        "offline-read": {
+          "status": "Sin conexión",
+          "title": "Mostrando detalles guardados",
+          "body": "Puedes revisar el formulario de detalles. El guardado esperará hasta que vuelva la conexión."
+        },
+        "permission-denied": {
+          "status": "Solo lectura",
+          "title": "Los detalles no se pueden editar",
+          "body": "Pide al propietario del hogar acceso de cuidador antes de cambiar detalles de Quick Log."
         }
       }
     },
@@ -862,7 +975,29 @@
         "already-member": "Ya estás en la casa de {puppyName}.",
         "already-member-cta": "Abierto",
         "load-error": "No se pudo cargar la invitación. Comprueba tu conexión.",
-        "neutral-unavailable": "Esta invitación ya no está disponible. Pídele a {ownerName} que envíe una nueva."
+        "neutral-unavailable": "Esta invitación ya no está disponible. Pídele a {ownerName} que envíe una nueva.",
+        "states": {
+          "loading": {
+            "status": "Comprobando",
+            "title": "Comprobando invitación",
+            "body": "Estamos comprobando si esta invitación sigue disponible."
+          },
+          "load-error": {
+            "status": "Requiere atención",
+            "title": "La invitación no cargó",
+            "body": "Mantén esta pantalla abierta e inténtalo de nuevo cuando vuelva la conexión."
+          },
+          "expired": {
+            "status": "No disponible",
+            "title": "La invitación ya no está disponible",
+            "body": "Pide al propietario que envíe una nueva invitación si aún necesitas acceso."
+          },
+          "already-member": {
+            "status": "Ya te uniste",
+            "title": "Ya estás en esta familia",
+            "body": "Abre PuppyPlan para seguir ayudando con el cuidado."
+          }
+        }
       },
       "shared-today-viewer": {
         "read-only-hint": "Ver sólo",
@@ -875,8 +1010,12 @@
         "screen-title": "Familia y acceso",
         "section-members": "Miembros",
         "section-invites": "invita",
+        "member-you": "Tú",
+        "invites-empty": "No hay invitaciones pendientes",
         "active-ago": "Activo {timeAgo}",
         "pending-until": "Activo a través de {date}",
+        "pending-invite-caregiver": "Cuidador pendiente",
+        "pending-invite-viewer": "Observador pendiente",
         "invite-cta": "Invitar",
         "badge-owner": "Dueño",
         "badge-caregiver": "cuidador",
@@ -899,7 +1038,29 @@
           "destructive": "Cerrar acceso",
           "cancel": "Cancelar"
         },
-        "revoked-toast": "El acceso para {name} está cerrado."
+        "revoked-toast": "El acceso para {name} está cerrado.",
+        "states": {
+          "loading": {
+            "status": "Comprobando",
+            "title": "Cargando acceso familiar",
+            "body": "Estamos comprobando la vista guardada de acceso familiar."
+          },
+          "pending-write": {
+            "status": "Guardando",
+            "title": "Actualizando acceso",
+            "body": "Mantén esta pantalla abierta mientras se prepara el cambio de acceso."
+          },
+          "error": {
+            "status": "Requiere atención",
+            "title": "No se pudo cargar el acceso",
+            "body": "Conserva la vista familiar actual e inténtalo de nuevo en un momento."
+          },
+          "offline-read": {
+            "status": "Offline",
+            "title": "Mostrando acceso guardado",
+            "body": "Puedes revisar la última vista familiar guardada mientras estás offline."
+          }
+        }
       }
     },
     "sitter": {
@@ -909,7 +1070,9 @@
       "section-who": "Quién",
       "section-period": "Ventana",
       "period-start": "Comenzar",
+      "period-start-example": "17 mayo, 18:00",
       "period-end": "Fin",
+      "period-end-example": "19 mayo, 9:00",
       "section-checklist": "Lista de verificación",
       "checklist-feeding": "Tomas (3/día)",
       "checklist-walks": "Paseos (3/día)",
@@ -928,6 +1091,28 @@
       "no-caregiver": "Primero invite a un cuidador. El modo cuidador amplía a un cuidador existente.",
       "no-caregiver-cta": "Invitar a un cuidador",
       "pending-hint": "Esperando a que {name} acepte la invitación.",
+      "states": {
+        "no-caregiver": {
+          "status": "Configurar",
+          "title": "Elige un cuidador",
+          "body": "El modo cuidador permanece apagado hasta elegir un cuidador y una ventana de tiempo."
+        },
+        "pending": {
+          "status": "Enviando",
+          "title": "Enviando acceso al cuidador",
+          "body": "Mantén esta pantalla abierta mientras se prepara la ventana de cuidado."
+        },
+        "active": {
+          "status": "Activo",
+          "title": "El modo cuidador está activo",
+          "body": "El cuidador solo ve la lista y el contexto de cuidado que seleccionaste."
+        },
+        "exit-confirm": {
+          "status": "Confirmar",
+          "title": "¿Finalizar el acceso del cuidador?",
+          "body": "Al finalizar el acceso, se cierra la vista del cuidador. Las entradas de Diary permanecen en tu hogar."
+        }
+      },
       "checklist-view": {
         "role-chip": "cuidador",
         "deadline-strip": "Modo cuidador hasta {date}, {time}",
@@ -1074,6 +1259,7 @@
     "card-preview": {
       "screen-title": "Avance",
       "footer": "Esto es todo lo que verá el destinatario.",
+      "a11y": "{title}. {footer}",
       "edit": "Editar",
       "share": "Compartir"
     },
@@ -1093,6 +1279,12 @@
       "row-status-active": "Activo a través de {date}",
       "row-status-expiring": "Vence en {n} días",
       "row-status-revoked": "Acceso cerrado {date}",
+      "sample-puppy-name": "Cachorro",
+      "sample-breed-age": "Labrador · 4 meses",
+      "sample-vaccine-1": "DHPP — 12 de abril",
+      "sample-vaccine-2": "Rabia — 5 de mayo",
+      "sample-active-date": "24 de mayo",
+      "sample-recipient": "visita al veterinario",
       "overflow": [
         "Copiar enlace",
         "Extender el vencimiento",
@@ -1104,7 +1296,44 @@
         "destructive": "Cerrar acceso",
         "cancel": "Cancelar"
       },
-      "public-link-disclosure": "Cualquiera que tenga el enlace verá los campos que seleccionaste. Se requiere una caducidad y la capacidad de cerrar el acceso."
+      "public-link-disclosure": "Cualquiera que tenga el enlace verá los campos que seleccionaste. Se requiere una caducidad y la capacidad de cerrar el acceso.",
+      "states": {
+        "empty-builder": {
+          "status": "Vacío",
+          "title": "Aún no hay campos seleccionados",
+          "body": "La vista previa no está disponible hasta elegir al menos un campo."
+        },
+        "health-on": {
+          "status": "Salud incluida",
+          "title": "Los datos de salud necesitan aviso claro",
+          "body": "Sólo se incluyen estados y fechas. Las notas privadas y contactos de clínica quedan fuera."
+        },
+        "share-options": {
+          "status": "Opciones",
+          "title": "Elige enlace o captura",
+          "body": "Los enlaces pueden cerrarse después. Las capturas no se pueden retirar tras enviarlas."
+        },
+        "loading": {
+          "status": "Cargando",
+          "title": "Cargando ajustes de tarjeta",
+          "body": "La tarjeta actual sigue privada mientras se cargan los ajustes."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando cambios de tarjeta",
+          "body": "La tarjeta sigue visible con los últimos ajustes guardados mientras se sincronizan los cambios."
+        },
+        "error": {
+          "status": "Revisar",
+          "title": "Los ajustes de tarjeta no se actualizaron",
+          "body": "Revisa los campos y guarda cuando esté listo."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Mostrando la última tarjeta guardada",
+          "body": "Los cambios para compartir pueden esperar hasta que vuelva la conexión."
+        }
+      }
     },
     "revoked-or-expired-screen": {
       "title": "Este acceso ya no está disponible",
@@ -1117,6 +1346,17 @@
   "health": {
     "tab-title": "Salud",
     "footer-hint": "Este es un registro de entradas, no un consejo médico.",
+    "pet-hub": {
+      "a11y": "{title}. Edad: {age}. Raza: {breed}. Peso: {weight}.",
+      "edit-profile": "Editar perfil",
+      "age-label": "Edad",
+      "breed-label": "Raza",
+      "weight-label": "Peso",
+      "add-weight": "Agregar peso",
+      "quick-trackers-title": "Rastreadores rápidos",
+      "quick-trackers-meta": "Elige hasta 5 para Hoy y Registro rápido",
+      "quick-trackers-a11y": "Rastreadores rápidos. Elige hasta 5 para Hoy y Registro rápido."
+    },
     "segments": [
       "Todo",
       "Vacunas",
@@ -1144,6 +1384,23 @@
       "vet-visit-meta": "Hecho · 28 de abril · Agregado por ti"
     },
     "error-card": "No se pudieron cargar las entradas. Intenta actualizar.",
+    "states": {
+      "loading": {
+        "status": "Cargando",
+        "title": "Cargando entradas de salud",
+        "body": "Estamos revisando los últimos registros guardados de este cachorro."
+      },
+      "error": {
+        "status": "No se pudo cargar",
+        "title": "No se pudieron cargar las entradas de salud",
+        "body": "Revisa tu conexión e inténtalo de nuevo. No se cambiaron datos de salud."
+      },
+      "offline-read": {
+        "status": "Offline",
+        "title": "Mostrando las últimas entradas de salud guardadas",
+        "body": "Se muestran los últimos datos guardados. Los cambios nuevos pueden esperar hasta que vuelvas a estar online."
+      }
+    },
     "refresh": "Refrescar",
     "pills": {
       "template": "Plantilla",
@@ -1187,7 +1444,34 @@
       "privacy-hint": "Las notas solo son visibles para ti y los familiares invitados.",
       "save-toast": "Entrada guardada",
       "offline-banner": "Guardaremos esto tan pronto como vuelvas a estar en línea.",
-      "error-date": "Por favor revisa la fecha"
+      "error-date": "Por favor revisa la fecha",
+      "states": {
+        "loading": {
+          "status": "Cargando",
+          "title": "Preparando el formulario",
+          "body": "Estamos revisando el contexto actual del cachorro antes de agregar el registro."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando entrada de salud",
+          "body": "Mantén esta pantalla abierta mientras se guarda la entrada."
+        },
+        "error": {
+          "status": "No se guardó",
+          "title": "No pudimos guardar esta entrada",
+          "body": "Revisa tu conexión e inténtalo de nuevo. No se enviaron datos de salud."
+        },
+        "offline-read": {
+          "status": "Sin conexión",
+          "title": "No hay conexión",
+          "body": "Puedes revisar el formulario. Guardar esperará hasta que vuelvas a estar en línea."
+        },
+        "permission-denied": {
+          "status": "Solo propietario",
+          "title": "Solo un propietario puede agregar registros de salud",
+          "body": "Aún puedes ver el contexto de salud compartido."
+        }
+      }
     },
     "edit-record": {
       "screen-title": "Entrada",
@@ -1236,7 +1520,30 @@
       "note-label": "Nota",
       "note-value": "Nota leve después de la visita, resuelta en 24 horas.",
       "stage-section": "Etapa",
-      "history-date": "12 de mayo de 2026"
+      "history-date": "12 de mayo de 2026",
+      "empty-value": "No agregado",
+      "states": {
+        "loading": {
+          "status": "Cargando",
+          "title": "Abriendo entrada",
+          "body": "Estamos cargando esta entrada de salud."
+        },
+        "unavailable": {
+          "status": "No disponible",
+          "title": "No hay contexto activo del cachorro",
+          "body": "Vuelve a Pet e intenta abrir la entrada de nuevo."
+        },
+        "not-found": {
+          "status": "No encontrada",
+          "title": "La entrada no está disponible",
+          "body": "Puede haberse eliminado o ya no estar compartida contigo."
+        },
+        "error": {
+          "status": "No se pudo cargar",
+          "title": "No pudimos cargar esta entrada",
+          "body": "Revisa tu conexión e inténtalo de nuevo."
+        }
+      }
     },
     "weight-entry": {
       "title": "Entrada de peso",
@@ -1247,6 +1554,8 @@
     "vet-prep": {
       "title": "Preparándose para la visita",
       "subtitle": "Visita en {date}, {time}",
+      "sample-date": "18 de mayo",
+      "sample-time": "10:00",
       "checklist": [
         "Traer cartilla de vacunación previa",
         "Lista de preguntas para el veterinario",
@@ -1291,14 +1600,48 @@
       "Activo",
       "Apagado"
     ],
+    "segments-a11y": "Estado de recordatorios",
+    "actions": {
+      "add": "Agregar recordatorio"
+    },
     "sections": {
       "feeding": "Alimentación",
       "health": "Salud",
       "sitter": "cuidador de confianza",
+      "other": "Otro",
       "missed-today": "No registrado hoy"
     },
     "footer-quiet-hours": "Horas de silencio: en la configuración de notificaciones.",
     "empty": "Tus recordatorios aparecerán aquí",
+    "row-subtitle-daily-template": "Cada día · {time}",
+    "row-pending": "Sincronizando",
+    "states": {
+      "loading": {
+        "status": "Cargando",
+        "title": "Cargando recordatorios",
+        "body": "Estamos revisando los recordatorios guardados para este cachorro."
+      },
+      "empty": {
+        "status": "Vacío",
+        "title": "Aún no hay recordatorios aquí",
+        "body": "Usa el botón más para agregar el primer recordatorio."
+      },
+      "error": {
+        "status": "No se pudo cargar",
+        "title": "No se pudieron cargar los recordatorios",
+        "body": "Revisa tu conexión e inténtalo de nuevo."
+      },
+      "pending-write": {
+        "status": "Guardando",
+        "title": "Guardando cambios de recordatorios",
+        "body": "Mantén esta pantalla abierta mientras se actualiza la lista."
+      },
+      "offline-read": {
+        "status": "Offline",
+        "title": "Mostrando recordatorios guardados",
+        "body": "Puedes revisar los últimos recordatorios guardados sin conexión."
+      }
+    },
     "form": {
       "cancel": "Cancelar",
       "title-new": "Nuevo recordatorio",
@@ -1327,7 +1670,29 @@
       "toggle-sound": "Sonido",
       "hint": "Este recordatorio se ejecuta localmente en este dispositivo. Activa Push en Configuración para recibirlo incluso cuando la aplicación esté cerrada.",
       "error-no-days": "Elige al menos un día",
-      "permission-banner": "Las notificaciones están desactivadas. El recordatorio se guardará, pero no emitirá ningún sonido."
+      "permission-banner": "Las notificaciones están desactivadas. El recordatorio se guardará, pero no emitirá ningún sonido.",
+      "states": {
+        "loading": {
+          "status": "Cargando",
+          "title": "Preparando opciones del recordatorio",
+          "body": "Estamos revisando categorías, horas tranquilas y ajustes de notificaciones."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando recordatorio",
+          "body": "Mantén esta pantalla abierta mientras se guarda el recordatorio."
+        },
+        "error": {
+          "status": "No se pudo guardar",
+          "title": "No se pudo guardar este recordatorio",
+          "body": "Revisa tu conexión e inténtalo de nuevo. No se programó ningún recordatorio."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Sin conexión",
+          "body": "Puedes revisar el recordatorio. El guardado esperará hasta que vuelvas a estar online."
+        }
+      }
     },
     "quiet-hours": {
       "title": "Horas tranquilas",
@@ -1369,9 +1734,11 @@
     "sitter-card": {
       "title-example": "Lista de verificación nocturna · 7:00 pm",
       "subtitle-template": "{n} elementos · cuidador: {name}",
+      "progress-a11y-template": "{completed} de {total} elementos de la lista completados",
       "actions": [
         "Abrir lista",
-        "Posponer"
+        "Marcar todo hecho",
+        "Saltar"
       ],
       "completed-summary": "Hecho · {time} · {name}"
     },
@@ -1517,6 +1884,7 @@
       "subscription": "Suscripción"
     },
     "rows": {
+      "pet-settings": "Ajustes del cachorro",
       "puppy-profile": "Perfil de cachorro",
       "quick-trackers": "rastreadores rápidos",
       "family": "Familia",
@@ -1527,6 +1895,7 @@
       "data-account": "Datos y cuenta",
       "help": "Ayuda",
       "about": "Acerca de",
+      "shareable-cards": "Tarjetas compartidas",
       "puppyplan-plus": "PuppyPlan Plus",
       "deferred": "Diferido"
     },
@@ -1567,7 +1936,34 @@
         "tomar una foto",
         "Elige de tu biblioteca",
         "Usa una ilustración"
-      ]
+      ],
+      "states": {
+        "loading": {
+          "status": "Comprobando",
+          "title": "Cargando perfil",
+          "body": "Estamos comprobando la vista guardada del perfil."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando perfil",
+          "body": "Mantén esta pantalla abierta mientras se guardan los cambios."
+        },
+        "error": {
+          "status": "Requiere atención",
+          "title": "No se pudo cargar el perfil",
+          "body": "Conserva la vista actual del perfil e inténtalo de nuevo en un momento."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Mostrando perfil guardado",
+          "body": "Puedes revisar la última vista guardada del perfil mientras estás offline."
+        },
+        "permission-denied": {
+          "status": "Solo propietario",
+          "title": "Solo el propietario puede editar",
+          "body": "Puedes seguir viendo los cuidados sin cambiar este perfil."
+        }
+      }
     },
     "quick-trackers": {
       "screen-title": "Rastreadores rápidos",
@@ -1584,6 +1980,28 @@
       "move-down": "Mover abajo",
       "max-reached-hint": "Desactiva uno de los primeros seleccionados",
       "min-required-hint": "Mantén al menos un rastreador seleccionado",
+      "states": {
+        "loading": {
+          "status": "Comprobando",
+          "title": "Cargando rastreadores rápidos",
+          "body": "Estamos comprobando los rastreadores guardados para este cachorro."
+        },
+        "error": {
+          "status": "Necesita atención",
+          "title": "No se pudieron cargar los rastreadores rápidos",
+          "body": "Mantén la configuración actual e inténtalo de nuevo en un momento."
+        },
+        "empty": {
+          "status": "Configuración necesaria",
+          "title": "Crea primero un perfil de cachorro",
+          "body": "Los rastreadores rápidos estarán listos cuando el perfil del cachorro esté disponible."
+        },
+        "non-owner": {
+          "status": "Solo propietario",
+          "title": "Solo el propietario puede cambiar rastreadores",
+          "body": "Puedes seguir viendo los cuidados compartidos sin cambiar esta configuración."
+        }
+      },
       "items": [
         "Alimentación",
         "Baño",
@@ -1606,7 +2024,29 @@
       "section-quiet-hours": "Horas tranquilas",
       "quiet-hours-example": "10:00 pm – 7:00 am",
       "section-tz": "Huso horario",
-      "tz-example": "Europa/Berlín (automático)"
+      "tz-example": "Europa/Berlín (automático)",
+      "states": {
+        "loading": {
+          "status": "Comprobando",
+          "title": "Cargando ajustes de notificaciones",
+          "body": "Estamos comprobando los ajustes guardados en este dispositivo."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Actualizando preferencias",
+          "body": "Los cambios se guardan primero localmente y terminarán cuando el dispositivo esté listo."
+        },
+        "error": {
+          "status": "Requiere atención",
+          "title": "No se pudieron actualizar las notificaciones",
+          "body": "Conserva tus ajustes actuales e inténtalo de nuevo en un momento."
+        },
+        "offline-read": {
+          "status": "Sin conexión",
+          "title": "Mostrando preferencias guardadas",
+          "body": "Puedes revisar los últimos ajustes guardados mientras este dispositivo está sin conexión."
+        }
+      }
     },
     "privacy": {
       "screen-title": "Datos y cuenta",
@@ -1628,10 +2068,78 @@
         "confirm-input-prompt": "escribe la palabra \"ELIMINAR\"",
         "confirm-input-word": "ELIMINAR"
       },
-      "delete-toast": "Solicitud de eliminación recibida. Te enviaremos una confirmación a tu correo electrónico."
+      "delete-toast": "Solicitud de eliminación recibida. Te enviaremos una confirmación a tu correo electrónico.",
+      "states": {
+        "loading": {
+          "status": "Comprobando",
+          "title": "Cargando controles de privacidad",
+          "body": "Estamos revisando los controles guardados de privacidad y cuenta."
+        },
+        "pending-write": {
+          "status": "Guardando",
+          "title": "Guardando elección de privacidad",
+          "body": "Mantén esta pantalla abierta mientras se guarda la solicitud."
+        },
+        "error": {
+          "status": "Revisar",
+          "title": "No se pudieron actualizar los controles",
+          "body": "Mantén la configuración actual e inténtalo de nuevo en un momento."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Mostrando controles guardados",
+          "body": "Puedes revisar los últimos controles de privacidad guardados sin conexión."
+        },
+        "permission-denied": {
+          "status": "Inicia sesión",
+          "title": "Se requiere acceso a la cuenta",
+          "body": "Vuelve a iniciar sesión antes de cambiar datos de cuenta o pedir exportación."
+        }
+      }
     },
     "help": {
       "screen-title": "Ayuda",
+      "intro-title": "¿Cómo podemos ayudar?",
+      "intro-body": "Elige un tema o prepara una nota breve para soporte. No añadas datos privados del cachorro salvo que soporte los pida.",
+      "sections": {
+        "topics": "Temas de ayuda",
+        "diagnostics": "Detalles de soporte"
+      },
+      "topic-quick-log": "Quick Log y rutinas",
+      "topic-sharing": "Familia y acceso compartido",
+      "topic-privacy": "Datos y privacidad",
+      "version-row": "Versión de la app",
+      "support-code-row": "Código de soporte",
+      "support-code-value": "Compilación local",
+      "contact-row": "Preparar nota para soporte",
+      "contact-hint": "Abre un borrador de email. No se envía nada automáticamente.",
+      "support-draft-subject": "Solicitud de soporte de PuppyPlan",
+      "support-draft-body": "Describe qué ocurrió. No incluyas nombres, notas, emails, proveedores, fotos ni tokens en una nota de soporte.",
+      "support-error-title": "No se pudo abrir el email",
+      "support-error-body": "Abre tu app de email y escribe a soporte cuando quieras.",
+      "privacy-note": "No incluyas nombres, notas, emails, proveedores, fotos ni tokens en una nota de soporte.",
+      "states": {
+        "loading": {
+          "status": "Comprobando",
+          "title": "Cargando opciones de ayuda",
+          "body": "Estamos comprobando los temas de ayuda y los datos locales de la app."
+        },
+        "pending-write": {
+          "status": "Preparando",
+          "title": "Preparando nota de soporte",
+          "body": "El borrador se prepara localmente. Nada se envía automáticamente."
+        },
+        "error": {
+          "status": "Necesita atención",
+          "title": "No se abrió el contacto con soporte",
+          "body": "Mantén la pantalla abierta e inténtalo de nuevo cuando tu app de email esté disponible."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "La ayuda guardada sigue disponible",
+          "body": "Puedes leer los temas de ayuda ahora. El contacto con soporte puede esperar a que vuelva la conexión."
+        }
+      },
       "section-contact": "Contacto",
       "row-support": "Contactar con soporte",
       "support-email": "support@puppyplan.app",
@@ -1646,39 +2154,77 @@
   },
   "paywall": {
     "title": "PuppyPlan Plus",
-    "subtitle": "Funciones ampliadas durante los primeros 90 días.",
+    "subtitle": "Acceso completo durante los primeros 90 días con tu cachorro.",
+    "sections": {
+      "features": "Incluido",
+      "plans": "Planes"
+    },
     "features": [
-      "Enlaces compartidos ilimitados",
-      "Exportación sanitaria ampliada",
-      "Varios cachorros en una cuenta"
+      "Diario, mascota, rutinas y acceso compartido",
+      "Sigue añadiendo después de los 30 días",
+      "Exportación y privacidad siempre disponibles"
     ],
-    "plan-monthly": "Mensual · 8,99 €",
-    "plan-yearly": "Anual · 49,99 € (ahorra 53%)",
-    "primary": "Suscribirse",
+    "plan-monthly": "Mensual · 8,99 $",
+    "plan-yearly": "Anual · 39,99 $",
+    "plan-yearly-a11y": "Plan anual, 39 dólares 99 céntimos al año, seleccionado",
+    "plan-lifetime": "Pase puppyhood de por vida · 79-99 $ una vez",
+    "primary": "Elegir plan",
     "secondary": "Restaurar compras",
     "legal": "Renovación automática. Puedes cancelar en la App Store.",
+    "trial-status": "Quedan {count} días",
+    "trial-note": "Acceso completo ahora. El primer paywall se puede cerrar.",
+    "soft-lock-banner-title": "Suscríbete para añadir entradas",
+    "soft-lock-banner-body": "Diario, mascota, exportación, privacidad y enlaces existentes de trainer siguen disponibles en solo lectura.",
+    "export-action": "Exportar mis datos",
+    "soft-lock-title": "Después del periodo de acceso completo",
+    "soft-lock-note": "La lectura, exportación, privacidad, restaurar compras, cerrar sesión y enlaces existentes de trainer siguen disponibles.",
     "free-vs-plus": {
       "free": [
-        "Hoy + Cronología",
-        "1 acceso compartido",
-        "Exportación básica",
-        "1 cachorro"
+        "Días 0-30: acceso completo",
+        "Sin tarjeta por adelantado",
+        "Solo lectura tras la prueba",
+        "Exportación siempre disponible"
       ],
       "plus": [
-        "Todo lo de Free",
-        "Acceso compartido ilimitado",
-        "Exportación sanitaria ampliada",
-        "Varios cachorros"
+        "Todo lo de la prueba",
+        "Sigue añadiendo entradas",
+        "Crea rutinas y accesos",
+        "Restaura cuando quieras"
       ],
-      "header-free": "Gratis",
+      "header-free": "Prueba",
       "header-plus": "Más"
     },
     "states": {
       "offline": "Cargaremos los planes una vez que vuelvas a estar en línea.",
       "error": "No se pudieron cargar los planes. Intenta actualizar.",
-      "active-until": "Suscripción activa hasta {date}. Gestionada en la App Store."
+      "active-until": "Suscripción activa hasta {date}. Gestionada en la App Store.",
+      "loading-products": {
+        "status": "Comprobando",
+        "title": "Cargando planes Plus",
+        "body": "Estamos comprobando los planes disponibles en este dispositivo."
+      },
+      "pending-purchase": {
+        "status": "Procesando",
+        "title": "Terminando la compra",
+        "body": "Mantén esta pantalla abierta mientras termina la compra."
+      },
+      "purchase-error": {
+        "status": "Requiere atención",
+        "title": "La compra no terminó",
+        "body": "No se hizo ningún cambio. Mantén el acceso actual e inténtalo de nuevo."
+      },
+      "offline-read": {
+        "status": "Sin conexión",
+        "title": "Mostrando detalles Plus guardados",
+        "body": "Los detalles del plan se actualizarán cuando este dispositivo vuelva a estar online."
+      },
+      "active-subscription": {
+        "status": "Activo",
+        "title": "Plus está activo",
+        "body": "Puedes seguir añadiendo entradas. Gestiona el pago en la App Store."
+      }
     },
-    "a11y-price-example": "Anualmente, 49 euros 99 céntimos, ahorra un 53 por ciento"
+    "a11y-price-example": "Anual, 39 dólares 99 céntimos al año"
   },
   "permission-denied-patterns": {
     "notifications-body": "Puedes seguir adelante sin ellos. Los recordatorios son visibles dentro de la aplicación.",

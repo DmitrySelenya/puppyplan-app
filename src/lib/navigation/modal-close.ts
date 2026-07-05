@@ -1,7 +1,7 @@
 type ModalRouter = Readonly<{
   back: () => void;
   canGoBack?: () => boolean;
-  replace: (href: '/today') => void;
+  replace: (href: '/diary') => void;
 }>;
 
 export function closeModalRoute(router: ModalRouter) {
@@ -10,5 +10,5 @@ export function closeModalRoute(router: ModalRouter) {
     return;
   }
 
-  router.replace('/today');
+  router.replace('/diary');
 }

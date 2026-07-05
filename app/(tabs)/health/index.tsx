@@ -1,3 +1,5 @@
-import { HealthScreen } from '@/features/health/screens/HealthScreen';
+import { Redirect } from 'expo-router';
 
-export default HealthScreen;
+export default function HealthLegacyRoute() {
+  return <Redirect href="/pet" />;
+}

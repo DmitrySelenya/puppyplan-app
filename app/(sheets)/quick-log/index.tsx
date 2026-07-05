@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
 import {
   createQuickLogLocalEventViews,
@@ -12,6 +12,7 @@ import { useQuickLogCachedRows } from '@/lib/query/useQuickLogCachedRows';
 import { useAppTranslation } from '@/lib/i18n';
 
 export default function QuickLogRoute() {
+  const params = useLocalSearchParams();
   const activeCare = useActiveCareContext();
   const quickLogMutation = useQuickLogMutationPort();
   const rows = useQuickLogCachedRows(activeCare.careContext);
@@ -28,9 +29,15 @@ export default function QuickLogRoute() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/today');
+      router.replace('/diary');
     }
   };
+  const source = getQuickLogSource(params.source);
+  const onQuickLogSaved = source === 'onboarding-first-value'
+    ? () => {
+        router.replace('/onboarding?postFirstValuePrompt=account');
+      }
+    : undefined;
 
   return (
     <QuickLogShell
@@ -42,12 +49,19 @@ export default function QuickLogRoute() {
       localEvents={localEvents}
       mutation={quickLogMutation.mutation}
       mutationEvents={quickLogMutation.mutationEvents}
+      onQuickLogSaved={onQuickLogSaved}
       openDetails={(request) => {
         router.push(createQuickLogDetailsHref(request));
       }}
       recentEvents={recentEvents}
     />
   );
+}
+
+function getQuickLogSource(value: string | string[] | undefined): 'onboarding-first-value' | null {
+  const source = Array.isArray(value) ? value[0] : value;
+
+  return source === 'onboarding-first-value' ? source : null;
 }
 
 function createQuickLogDetailsHref(

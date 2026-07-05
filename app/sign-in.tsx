@@ -7,7 +7,7 @@ export default function SignInRoute() {
   const { status } = useAuth();
 
   if (status === 'signedIn') {
-    return <Redirect href="/today" />;
+    return <Redirect href="/diary" />;
   }
 
   return <SignInScreen />;
