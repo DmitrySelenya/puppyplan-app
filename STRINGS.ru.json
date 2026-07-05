@@ -961,6 +961,8 @@
         "screen-title": "Семья и доступ",
         "section-members": "Участники",
         "section-invites": "Приглашения",
+        "member-you": "Вы",
+        "invites-empty": "Нет ожидающих приглашений",
         "active-ago": "Активна {timeAgo}",
         "pending-until": "Действует до {date}",
         "pending-invite-caregiver": "Ожидает опекун",

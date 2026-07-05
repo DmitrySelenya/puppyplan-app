@@ -82,10 +82,29 @@ const householdAccessStateMeta: Record<
   },
 };
 
-const ownerName = 'Owner';
-const caregiverName = 'Caregiver';
-const caregiverLastActive = '8 min ago';
-const pendingExpiryDate = '24 May';
+type HouseholdRole = 'owner' | 'caregiver' | 'viewer';
+
+const householdRoleBadge: Record<HouseholdRole, Readonly<{
+  iconName: 'home' | 'personCluster';
+  labelKey: I18nKey;
+  tone: 'completed' | 'pending';
+}>> = {
+  caregiver: {
+    iconName: 'personCluster',
+    labelKey: 'sharing.family.manage.badge-caregiver',
+    tone: 'pending',
+  },
+  owner: {
+    iconName: 'home',
+    labelKey: 'sharing.family.manage.badge-owner',
+    tone: 'completed',
+  },
+  viewer: {
+    iconName: 'personCluster',
+    labelKey: 'sharing.family.manage.badge-viewer',
+    tone: 'pending',
+  },
+};
 
 export function HouseholdAccessScreen({
   onBack,
@@ -97,17 +116,13 @@ export function HouseholdAccessScreen({
   const visibleReviewState = reviewState
     ?? getHouseholdAccessReviewState(activeCare.status, householdInvites.isLoading, householdInvites.isError);
   const livePendingInvites: readonly InviteRecord[] = householdInvites.data ?? [];
-  const pendingInviteRows = livePendingInvites.length > 0
-    ? livePendingInvites.map((invite) => ({
-        date: formatInviteExpiryDate(invite.expires_at, locale),
-        id: invite.id,
-        title: getPendingInviteTitle(invite, t),
-      }))
-    : [{
-        date: pendingExpiryDate,
-        id: 'static-pending-caregiver',
-        title: t('sharing.family.manage.pending-invite-caregiver'),
-      }];
+  const pendingInviteRows = livePendingInvites.map((invite) => ({
+    date: formatInviteExpiryDate(invite.expires_at, locale),
+    id: invite.id,
+    title: getPendingInviteTitle(invite, t),
+  }));
+  const currentMemberRole: HouseholdRole = activeCare.careContext?.householdRole ?? 'owner';
+  const currentMemberBadge = householdRoleBadge[currentMemberRole];
 
   return (
     <Screen contentStyle={styles.content}>
@@ -140,37 +155,25 @@ export function HouseholdAccessScreen({
       <HouseholdSection title={t('sharing.family.manage.section-members')}>
         <MemberRow
           avatarTone="accent"
-          name={ownerName}
+          name={t('sharing.family.manage.member-you')}
           subtitle={t('sharing.common.disclosure-can-close')}
           trailing={(
             <HouseholdStatusPill
-              iconName="home"
-              label={t('sharing.family.manage.badge-owner')}
-              tone="completed"
+              iconName={currentMemberBadge.iconName}
+              label={t(currentMemberBadge.labelKey)}
+              tone={currentMemberBadge.tone}
             />
-          )}
-        />
-        <MemberRow
-          avatarTone="auto"
-          name={caregiverName}
-          subtitle={t('sharing.family.manage.active-ago', {
-            timeAgo: caregiverLastActive,
-          })}
-          trailing={(
-            <Stack gap="sm" style={styles.trailingCluster}>
-              <HouseholdStatusPill
-                iconName="personCluster"
-                label={t('sharing.family.manage.badge-caregiver')}
-                tone="pending"
-              />
-              <OverflowButton />
-            </Stack>
           )}
         />
       </HouseholdSection>
 
       <HouseholdSection title={t('sharing.family.manage.section-invites')}>
-        {pendingInviteRows.map((invite) => (
+        {pendingInviteRows.length === 0 ? (
+          <ListRow
+            title={t('sharing.family.manage.invites-empty')}
+            variant="settings"
+          />
+        ) : pendingInviteRows.map((invite) => (
           <MemberRow
             avatarTone="auto"
             key={invite.id}

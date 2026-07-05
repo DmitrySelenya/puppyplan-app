@@ -1010,6 +1010,8 @@
         "screen-title": "Familia y acceso",
         "section-members": "Miembros",
         "section-invites": "invita",
+        "member-you": "Tú",
+        "invites-empty": "No hay invitaciones pendientes",
         "active-ago": "Activo {timeAgo}",
         "pending-until": "Activo a través de {date}",
         "pending-invite-caregiver": "Cuidador pendiente",

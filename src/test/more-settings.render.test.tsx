@@ -969,7 +969,7 @@ describe('More settings entries', () => {
     });
   });
 
-  it('renders the Manage household shell anatomy without private invite data', () => {
+  it('renders the Manage household shell anatomy without fabricated member or invite data', () => {
     render(
       <AppProviders>
         <HouseholdAccessScreen />
@@ -979,23 +979,20 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('sharing.family.manage.screen-title'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.title')).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(i18n.t('sharing.family.manage.section-members'))).toBeTruthy();
-    expect(screen.getAllByText('Owner').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(i18n.t('sharing.family.manage.member-you'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('sharing.family.manage.badge-owner')).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('Caregiver').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(i18n.t('sharing.family.manage.badge-caregiver')).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(i18n.t('sharing.family.manage.active-ago', {
+
+    // No fabricated roster: no phantom caregiver activity, no static pending invite.
+    expect(screen.queryByText(i18n.t('sharing.family.manage.active-ago', {
       timeAgo: '8 min ago',
-    }))).toBeTruthy();
-    expect(screen.getAllByRole('button', {
-      name: i18n.t('today.history.item-actions'),
-    }).length).toBeGreaterThanOrEqual(2);
+    }))).toBeNull();
+    expect(screen.queryByText(i18n.t('sharing.family.manage.pending-until', {
+      date: '24 May',
+    }))).toBeNull();
+    expect(screen.queryByText(i18n.t('sharing.family.manage.badge-pending'))).toBeNull();
 
     expect(screen.getByText(i18n.t('sharing.family.manage.section-invites'))).toBeTruthy();
-    expect(screen.getAllByText('Pending caregiver').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(i18n.t('sharing.family.manage.badge-pending'))).toBeTruthy();
-    expect(screen.getByText(i18n.t('sharing.family.manage.pending-until', {
-      date: '24 May',
-    }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.manage.invites-empty'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.body')).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('button', { name: i18n.t('sharing.family.manage.invite-cta') })).toBeTruthy();
     expect(screen.queryByText(/@/)).toBeNull();

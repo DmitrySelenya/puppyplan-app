@@ -965,6 +965,8 @@
         "screen-title": "Family and access",
         "section-members": "Members",
         "section-invites": "Invites",
+        "member-you": "You",
+        "invites-empty": "No pending invites",
         "active-ago": "Active {timeAgo}",
         "pending-until": "Active through {date}",
         "pending-invite-caregiver": "Pending caregiver",
