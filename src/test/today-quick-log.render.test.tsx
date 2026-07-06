@@ -6,7 +6,7 @@ import { I18nextProvider } from 'react-i18next';
 
 import { i18n } from '@/lib/i18n';
 import { createPuppyPlanQueryClient } from '@/lib/query/client';
-import { queryKeys } from '@/lib/query/keys';
+import { queryKeys, type TimelineFilters } from '@/lib/query/keys';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { TodayScreen } from '@/features/today/screens/TodayScreen';
 import { IconChip } from '@/design/primitives/IconChip';
@@ -475,5 +475,42 @@ describe('Today Quick Log state integration', () => {
       householdId,
       puppyId,
     });
+  });
+
+  it('PUP-27 I5 does not show a today Quick Log row while viewing a selected past day', async () => {
+    const todayRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001551',
+      occurred_at: '2026-05-27T08:00:00.000Z',
+    });
+    const pastDate = '2026-05-26';
+    mockListEvents.mockImplementation((request: { filters?: TimelineFilters }) => {
+      if (request.filters?.from === todayDate) {
+        return Promise.resolve([todayRow]);
+      }
+
+      return Promise.resolve([]);
+    });
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [todayRow]);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByTestId(`week-strip-day-${pastDate}`));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-selected-day-empty-state')).toBeTruthy();
+    });
+    expect(screen.queryByText(i18n.t('quick-log.trackers.feeding'))).toBeNull();
+    expect(queryClient.getQueryData(todayTimelineKey())).toEqual([todayRow]);
   });
 });

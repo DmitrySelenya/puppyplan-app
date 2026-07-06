@@ -111,7 +111,7 @@ describe('SignInScreenView', () => {
     };
     render(<SignInScreenView actions={actions} />);
 
-    fireEvent.press(screen.getByText(i18n.t('auth.debug.cta')));
+    fireEvent.press(screen.getByTestId('auth-debug-sign-in-button'));
 
     await waitFor(() => expect(actions.signInWithDebugAccount).toHaveBeenCalledTimes(1));
   });
