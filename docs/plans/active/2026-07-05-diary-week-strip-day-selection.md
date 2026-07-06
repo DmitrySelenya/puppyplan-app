@@ -1,6 +1,6 @@
 # Diary WeekStrip Day Selection
 
-**Status:** Active; implementation, local verification, Maestro, commit/push, and draft PR complete; CI Verification pending rerun after test-race fix.
+**Status:** Active; implementation, local verification, Maestro, commit/push, draft PR, and CI Verification complete; awaiting human review/merge.
 
 **Linear:** `PUP-27` - https://linear.app/dmitryselenya/issue/PUP-27/diary-weekstrip-day-selection
 
@@ -73,7 +73,7 @@
 - [x] Maestro ad-hoc YAML outside repo under `/tmp/pup-27-maestro`; id selectors only.
 - [x] Screenshots and PASS/FAIL report saved under `output/pup-27-maestro`.
 - [x] Commit, push, draft PR.
-- [ ] CI Verification green; no merge.
+- [x] CI Verification green; no merge.
 
 ## Verification Evidence
 
@@ -82,7 +82,7 @@
 - GREEN: same command passed; 2 suites, 34 tests.
 - Auth id guard: `npm run test:unit -- --runTestsByPath src/test/sign-in-screen.render.test.tsx` passed; 6 tests.
 - Local gate: `npm run check` passed after implementation and again after CI test-race fix; 84 Jest suites / 693 tests plus node/scaffold/i18n/tokens/privacy/text hygiene. Existing reduced-motion React `act(...)` warnings remain unrelated and non-failing.
-- CI rerun fix: GitHub `Local Gate` failed at `src/test/today-core.render.test.tsx:294`; root cause reproduced locally as an async race in the test, which waited for the selected-day container before rows finished loading. Test now waits for the selected-day event row.
+- CI rerun fix: GitHub `Local Gate` failed at `src/test/today-core.render.test.tsx:294`; root cause reproduced locally as an async race in the test, which waited for the selected-day container before rows finished loading. Test now waits for the selected-day event row; PR #29 CI rerun passed (`Local Gate`, `Work Tracking`, `Work Tracking Auto Fill`, `GitGuardian`; Supabase Preview skipped).
 - Simulator: current `Grith iPhone SE 3 iOS 26.3` (`5C46B6CC-9CC2-4326-84A3-2603E0F0F3C6`).
 - Build/run note: existing installed dev build on current SE was used with Metro `pid 92686`; JS-only changes loaded through Metro. An attempted fresh `ios/PuppyPlan.xcworkspace` Debug build via XcodeBuildMCP timed out during first native compile and was cancelled to keep the current simulator workflow moving.
 - Synthetic data: dev Supabase debug account, synthetic puppy name `Demo Pup`, routine events on 2026-07-06, 2026-07-07, and 2026-07-10; no secrets or private user content recorded.
