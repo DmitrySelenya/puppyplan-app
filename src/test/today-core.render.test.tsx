@@ -291,7 +291,9 @@ describe('Today core card rendering', () => {
       expect(screen.getByTestId('diary-selected-day-timeline')).toBeTruthy();
     });
     expect(screen.getByTestId('diary-selected-day-header')).toBeTruthy();
-    expect(screen.getByText(i18n.t('quick-log.trackers.potty-outside'))).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.potty-outside'))).toBeTruthy();
+    });
     expect(screen.queryByText(i18n.t('quick-log.trackers.feeding'))).toBeNull();
     expect(screen.queryByTestId('diary-info-hero')).toBeNull();
     expect(screen.queryByTestId('diary-history-filter-bar')).toBeNull();
