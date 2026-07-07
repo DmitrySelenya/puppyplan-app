@@ -513,4 +513,54 @@ describe('Today Quick Log state integration', () => {
     expect(screen.queryByText(i18n.t('quick-log.trackers.feeding'))).toBeNull();
     expect(queryClient.getQueryData(todayTimelineKey())).toEqual([todayRow]);
   });
+
+  it('PUP-27 keeps a selected-day delete request scoped to the real today', async () => {
+    const pastDate = '2026-05-26';
+    const pastRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001561',
+      id: '00000000-0000-4000-8000-000000001571',
+      occurred_at: '2026-05-26T08:00:00.000Z',
+      created_at: '2026-05-26T08:00:01.000Z',
+      updated_at: '2026-05-26T08:00:01.000Z',
+    });
+    mockListEvents.mockImplementation((request: { filters?: TimelineFilters }) => {
+      if (request.filters?.from === pastDate) {
+        return Promise.resolve([pastRow]);
+      }
+
+      return Promise.resolve([]);
+    });
+    const actions = {
+      onDelete: jest.fn(),
+    };
+    renderWithQuery(
+      <TodayScreen
+        actions={actions}
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('today-week-strip')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByTestId(`week-strip-day-${pastDate}`));
+
+    const factCard = await screen.findByTestId('diary-history-logged-fact-card');
+    fireEvent(factCard, 'accessibilityAction', {
+      nativeEvent: { actionName: 'delete' },
+    });
+
+    // Invalidation is keyed off todayDate (queryKeys.today.dashboard); a
+    // selected past/future day must not leak into the today-scoped request.
+    expect(actions.onDelete).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000001561',
+      eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'synced',
+      todayDate,
+    });
+  });
 });

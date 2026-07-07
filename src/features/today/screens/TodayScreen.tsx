@@ -204,12 +204,11 @@ export function TodayScreen({
     );
   }
 
-  const eventViewDate = selectedCalendarDate ?? careContext.todayDate;
   const todayEventRows = rows.flatMap((row) => {
     const event = createQuickLogEventView(row, {
       locale,
       t,
-      todayDate: eventViewDate,
+      todayDate: careContext.todayDate,
     });
 
     return event === null ? [] : [{ event, row }];
@@ -218,7 +217,7 @@ export function TodayScreen({
     const event = createQuickLogEventView(row, {
       locale,
       t,
-      todayDate: eventViewDate,
+      todayDate: careContext.todayDate,
     });
 
     return event === null ? [] : [{ event, row }];
@@ -510,7 +509,7 @@ function DiarySelectedDayTimeline({
           accessibilityRole="alert">
           <AppText>{t('errors.load-failed')}</AppText>
         </Card>
-      ) : (
+      ) : status === 'loading' ? null : (
         <Card testID="diary-selected-day-empty-state">
           <Stack gap="sm">
             <AppText variant="bodyEmph">{t('today.quick-log.empty.title')}</AppText>
@@ -661,32 +660,32 @@ function DiaryWeekStrip({
     todayDate,
   }), [locale, selectedDate, t, todayDate]);
   const weekDays = useMemo<WeekStripDay[]>(
-	    () => days.map((day) => ({
-	      accessibilityLabel: day.accessibilityLabel,
-	      day: day.dayNumber,
-	      dow: day.shortWeekday,
-	      key: day.date,
-	      testID: `week-strip-day-${day.date}`,
-	    })),
-	    [days],
-	  );
+    () => days.map((day) => ({
+      accessibilityLabel: day.accessibilityLabel,
+      day: day.dayNumber,
+      dow: day.shortWeekday,
+      key: day.date,
+      testID: `week-strip-day-${day.date}`,
+    })),
+    [days],
+  );
   const selectedIndex = days.findIndex((day) => day.isSelected);
   const todayIndex = days.findIndex((day) => day.isToday);
 
   return (
-	    <WeekStrip
-	      accessibilityLabel={t('today.week-strip.label')}
-	      days={weekDays}
-	      onSelectDay={onSelectDate === undefined ? undefined : (index) => {
-	        const day = days[index];
+    <WeekStrip
+      accessibilityLabel={t('today.week-strip.label')}
+      days={weekDays}
+      onSelectDay={onSelectDate === undefined ? undefined : (index) => {
+        const day = days[index];
 
-	        if (day !== undefined) {
-	          onSelectDate(day.date);
-	        }
-	      }}
-	      selectedIndex={selectedIndex === -1 ? 0 : selectedIndex}
-	      testID="today-week-strip"
-	      todayIndex={todayIndex === -1 ? undefined : todayIndex}
+        if (day !== undefined) {
+          onSelectDate(day.date);
+        }
+      }}
+      selectedIndex={selectedIndex === -1 ? 0 : selectedIndex}
+      testID="today-week-strip"
+      todayIndex={todayIndex === -1 ? undefined : todayIndex}
     />
   );
 }
