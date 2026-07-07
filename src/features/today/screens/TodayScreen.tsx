@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
@@ -145,33 +145,46 @@ export function TodayScreen({
   const [diaryHistoryOpen, setDiaryHistoryOpen] = useState(false);
   const [selectedHistoryFilter, setSelectedHistoryFilter] =
     useState<DiaryHistoryFilterValue>('all');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const selectedCalendarDate = careContext === null
+    ? null
+    : selectedDate ?? careContext.todayDate;
+  const isViewingToday = careContext !== null
+    && selectedCalendarDate === careContext.todayDate;
+
+  useEffect(() => {
+    setSelectedDate(careContext?.todayDate ?? null);
+    setDiaryHistoryOpen(false);
+    setSelectedHistoryFilter('all');
+  }, [careContext?.householdId, careContext?.puppyId, careContext?.todayDate]);
+
   const historyFilters = useMemo(
     () => createDiaryHistoryFilters(selectedHistoryFilter),
     [selectedHistoryFilter],
   );
   const timelineRows = useQuickLogTimelineRows(
     careContext,
-    careContext === null
+    careContext === null || selectedCalendarDate === null
       ? undefined
       : {
-        from: careContext.todayDate,
-        to: careContext.todayDate,
+        from: selectedCalendarDate,
+        to: selectedCalendarDate,
       },
   );
   const historyTimelineRows = useQuickLogTimelineRows(
-    diaryHistoryOpen ? careContext : null,
+    diaryHistoryOpen && isViewingToday ? careContext : null,
     historyFilters,
   );
   const rows = timelineRows.rows;
   const visibleRows = diaryHistoryOpen ? historyTimelineRows.rows : rows;
   const visibleTimelineStatus = diaryHistoryOpen ? historyTimelineRows.status : timelineRows.status;
-  const todayPlanSourceInput = useMemo(() => careContext === null
+  const todayPlanSourceInput = useMemo(() => careContext === null || !isViewingToday
     ? null
     : createTodayPlanInput({
       careContext,
       overrides: todayPlanInput,
       rows,
-    }), [careContext, rows, todayPlanInput]);
+    }), [careContext, isViewingToday, rows, todayPlanInput]);
   const todayPlan = useMemo(
     () => todayPlanSourceInput === null ? null : buildTodayPlan(todayPlanSourceInput),
     [todayPlanSourceInput],
@@ -238,75 +251,104 @@ export function TodayScreen({
         todayDate={careContext.todayDate}
       />
       <DiaryWeekStrip
-        selectedDate={todayPlanSourceInput?.todayDate ?? careContext.todayDate}
+        onSelectDate={(date) => {
+          setSelectedDate(date);
+          setDiaryHistoryOpen(false);
+          setSelectedHistoryFilter('all');
+        }}
+        selectedDate={selectedCalendarDate ?? careContext.todayDate}
         todayDate={careContext.todayDate}
       />
-      <DiaryClayState
-        onPrimaryAction={openQuickLog ?? openTimeline}
-        onSecondaryAction={openTimeline}
-        state={todayStatus}
-      />
-      {todayStatus === null
-        || isClayDiaryState(todayStatus)
-        || (todayStatus === 'empty' && todayPlan !== null)
-        ? null
-        : <TodayStatusCard state={todayStatus} />}
-      {showTodayPlan && todayPlan !== null ? (
-        <DiaryInfoHero
-          hero={todayPlan.hero}
-          onPrimaryAction={openQuickLog}
-        />
-      ) : null}
-      {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
-      {shouldShowQuickLogFailedBanner(rows) ? (
-        <Card
-          accessibilityLabel={t('quick-log.failed.persistent-banner')}
-          accessibilityLiveRegion="polite"
-          accessibilityRole="alert">
-          <AppText variant="headline">{t('quick-log.failed.persistent-banner')}</AppText>
-        </Card>
-      ) : null}
-      {showQuickLogSection ? (
-      <Stack
-        gap="sm"
-        style={styles.historySection}
-        testID="diary-history-section">
-        <Stack
-          align="flex-start"
-          direction="horizontal"
-          gap="sm"
-          justify="space-between"
-          wrap>
-          <AppText
-            style={styles.sectionTitle}
-            variant="title3">
-            {t('today.history.section-title')}
-          </AppText>
-          <Button
-            label={t('today.history.open-action')}
-            labelMaxFontSizeMultiplier={2}
-            labelVariant="label"
-            onPress={() => {
-              setDiaryHistoryOpen(true);
-            }}
-            style={styles.timelineEntry}
-            variant="tertiary"
+      {isViewingToday ? (
+        <>
+          <DiaryClayState
+            onPrimaryAction={openQuickLog ?? openTimeline}
+            onSecondaryAction={openTimeline}
+            state={todayStatus}
           />
-        </Stack>
-        {diaryHistoryOpen ? (
-          <>
-            <DiaryHistoryFilterBar
-              selectedFilter={selectedHistoryFilter}
-              setSelectedFilter={setSelectedHistoryFilter}
+          {todayStatus === null
+            || isClayDiaryState(todayStatus)
+            || (todayStatus === 'empty' && todayPlan !== null)
+            ? null
+            : <TodayStatusCard state={todayStatus} />}
+          {showTodayPlan && todayPlan !== null ? (
+            <DiaryInfoHero
+              hero={todayPlan.hero}
+              onPrimaryAction={openQuickLog}
             />
-            {eventViews.length > 0 ? (
-              <DiaryHistoryDayGroups
-                actions={actions}
-                eventRows={eventRows}
-                locale={locale}
-                t={t}
-                todayDate={careContext.todayDate}
+          ) : null}
+          {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
+          {shouldShowQuickLogFailedBanner(rows) ? (
+            <Card
+              accessibilityLabel={t('quick-log.failed.persistent-banner')}
+              accessibilityLiveRegion="polite"
+              accessibilityRole="alert">
+              <AppText variant="headline">{t('quick-log.failed.persistent-banner')}</AppText>
+            </Card>
+          ) : null}
+          {showQuickLogSection ? (
+          <Stack
+            gap="sm"
+            style={styles.historySection}
+            testID="diary-history-section">
+            <Stack
+              align="flex-start"
+              direction="horizontal"
+              gap="sm"
+              justify="space-between"
+              wrap>
+              <AppText
+                style={styles.sectionTitle}
+                variant="title3">
+                {t('today.history.section-title')}
+              </AppText>
+              <Button
+                label={t('today.history.open-action')}
+                labelMaxFontSizeMultiplier={2}
+                labelVariant="label"
+                onPress={() => {
+                  setDiaryHistoryOpen(true);
+                }}
+                style={styles.timelineEntry}
+                variant="tertiary"
               />
+            </Stack>
+            {diaryHistoryOpen ? (
+              <>
+                <DiaryHistoryFilterBar
+                  selectedFilter={selectedHistoryFilter}
+                  setSelectedFilter={setSelectedHistoryFilter}
+                />
+                {eventViews.length > 0 ? (
+                  <DiaryHistoryDayGroups
+                    actions={actions}
+                    eventRows={eventRows}
+                    locale={locale}
+                    t={t}
+                    todayDate={careContext.todayDate}
+                  />
+                ) : visibleTimelineStatus === 'error' ? (
+                  <Card
+                    accessibilityLabel={t('errors.load-failed')}
+                    accessibilityLiveRegion="polite"
+                    accessibilityRole="alert">
+                    <AppText>{t('errors.load-failed')}</AppText>
+                  </Card>
+                ) : (
+                  <Card>
+                    <AppText tone="secondary">{t('timeline.empty-filter')}</AppText>
+                  </Card>
+                )}
+              </>
+            ) : eventViews.length > 0 ? (
+              eventRows.map(({ event, row }) => (
+                <DiaryFactRow
+                  actions={actions}
+                  event={event}
+                  key={event.clientEventId}
+                  row={row}
+                />
+              ))
             ) : visibleTimelineStatus === 'error' ? (
               <Card
                 accessibilityLabel={t('errors.load-failed')}
@@ -316,36 +358,26 @@ export function TodayScreen({
               </Card>
             ) : (
               <Card>
-                <AppText tone="secondary">{t('timeline.empty-filter')}</AppText>
+                <Stack gap="sm">
+                  <AppText variant="bodyEmph">{t('today.quick-log.empty.title')}</AppText>
+                  <AppText tone="secondary">{t('today.quick-log.empty.body')}</AppText>
+                </Stack>
               </Card>
             )}
-          </>
-        ) : eventViews.length > 0 ? (
-          eventRows.map(({ event, row }) => (
-            <DiaryFactRow
-              actions={actions}
-              event={event}
-              key={event.clientEventId}
-              row={row}
-            />
-          ))
-        ) : visibleTimelineStatus === 'error' ? (
-          <Card
-            accessibilityLabel={t('errors.load-failed')}
-            accessibilityLiveRegion="polite"
-            accessibilityRole="alert">
-            <AppText>{t('errors.load-failed')}</AppText>
-          </Card>
-        ) : (
-          <Card>
-            <Stack gap="sm">
-              <AppText variant="bodyEmph">{t('today.quick-log.empty.title')}</AppText>
-              <AppText tone="secondary">{t('today.quick-log.empty.body')}</AppText>
-            </Stack>
-          </Card>
-        )}
-      </Stack>
-      ) : null}
+          </Stack>
+          ) : null}
+        </>
+      ) : (
+        <DiarySelectedDayTimeline
+          actions={actions}
+          eventRows={eventRows}
+          locale={locale}
+          selectedDate={selectedCalendarDate}
+          status={visibleTimelineStatus}
+          t={t}
+          todayDate={careContext.todayDate}
+        />
+      )}
     </Screen>
   );
 }
@@ -428,6 +460,63 @@ function DiaryHistoryDayGroups({
           ))}
         </Stack>
       ))}
+    </Stack>
+  );
+}
+
+function DiarySelectedDayTimeline({
+  actions,
+  eventRows,
+  locale,
+  selectedDate,
+  status,
+  t,
+  todayDate,
+}: Readonly<{
+  actions: QuickLogEventActionHandlers;
+  eventRows: readonly DiaryEventRow[];
+  locale: string;
+  selectedDate: string | null;
+  status: 'error' | 'loading' | 'ready' | 'unavailable';
+  t: ReturnType<typeof useAppTranslation>['t'];
+  todayDate: string;
+}>) {
+  const date = selectedDate ?? todayDate;
+  const label = formatDiaryHistoryDayLabel(date, todayDate, locale, t);
+
+  return (
+    <Stack
+      gap="sm"
+      style={styles.historySection}
+      testID="diary-selected-day-timeline">
+      <DayDivider
+        label={label}
+        testID="diary-selected-day-header"
+      />
+      {eventRows.length > 0 ? (
+        eventRows.map(({ event, row }) => (
+          <DiaryFactRow
+            actions={actions}
+            event={event}
+            key={event.clientEventId}
+            row={row}
+          />
+        ))
+      ) : status === 'error' ? (
+        <Card
+          accessibilityLabel={t('errors.load-failed')}
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert">
+          <AppText>{t('errors.load-failed')}</AppText>
+        </Card>
+      ) : status === 'loading' ? null : (
+        <Card testID="diary-selected-day-empty-state">
+          <Stack gap="sm">
+            <AppText variant="bodyEmph">{t('today.quick-log.empty.title')}</AppText>
+            <AppText tone="secondary">{t('today.quick-log.empty.body')}</AppText>
+          </Stack>
+        </Card>
+      )}
     </Stack>
   );
 }
@@ -555,9 +644,11 @@ function DiaryAllDoneCard() {
 }
 
 function DiaryWeekStrip({
+  onSelectDate,
   selectedDate,
   todayDate,
 }: Readonly<{
+  onSelectDate?: (date: string) => void;
   selectedDate: string;
   todayDate: string;
 }>) {
@@ -574,6 +665,7 @@ function DiaryWeekStrip({
       day: day.dayNumber,
       dow: day.shortWeekday,
       key: day.date,
+      testID: `week-strip-day-${day.date}`,
     })),
     [days],
   );
@@ -584,6 +676,13 @@ function DiaryWeekStrip({
     <WeekStrip
       accessibilityLabel={t('today.week-strip.label')}
       days={weekDays}
+      onSelectDay={onSelectDate === undefined ? undefined : (index) => {
+        const day = days[index];
+
+        if (day !== undefined) {
+          onSelectDate(day.date);
+        }
+      }}
       selectedIndex={selectedIndex === -1 ? 0 : selectedIndex}
       testID="today-week-strip"
       todayIndex={todayIndex === -1 ? undefined : todayIndex}

@@ -17,6 +17,7 @@ export type WeekStripDay = {
   /** Localized weekday abbreviation, e.g. "Thu". */
   dow: string;
   key: string;
+  testID?: string;
 };
 
 export type WeekStripProps = {
@@ -54,7 +55,8 @@ export function WeekStrip({
             key={entry.key}
             minTarget="none"
             onPress={onSelectDay ? () => onSelectDay(index) : undefined}
-            style={styles.day}>
+            style={styles.day}
+            testID={entry.testID}>
             <AppText tone={isSelected ? 'primary' : 'secondary'} variant="caption">
               {entry.dow}
             </AppText>

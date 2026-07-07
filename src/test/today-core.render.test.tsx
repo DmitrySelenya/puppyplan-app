@@ -44,6 +44,13 @@ function todayTimelineKey() {
   });
 }
 
+function timelineKeyForDate(date: string) {
+  return queryKeys.events.timeline(householdId, puppyId, {
+    from: date,
+    to: date,
+  });
+}
+
 function diaryHistoryTimelineKey(filters: TimelineFilters = {}) {
   return queryKeys.events.timeline(householdId, puppyId, filters);
 }
@@ -195,16 +202,17 @@ describe('Today core card rendering', () => {
     expect(screen.queryByText(i18n.t('today.states.empty.title'))).toBeNull();
   });
 
-  it('renders a Diary week strip with selected day and today marker separated', async () => {
-    renderWithQuery(
+  it('PUP-27 I1 renders a selectable Diary week strip with per-day testIDs and selected state', async () => {
+    const { queryClient } = renderWithQuery(
       <TodayScreen
         careContext={careContext}
         openTimeline={openTimeline}
-        todayPlanInput={{
-          todayDate: '2026-06-10',
-        }}
       />,
     );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [createRow()]);
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId('diary-header')).toBeTruthy();
@@ -214,14 +222,9 @@ describe('Today core card rendering', () => {
     expect(weekStrip.props.accessibilityRole).toBeUndefined();
     expect(screen.queryAllByRole('tab')).toHaveLength(0);
 
-    const selectedDay = screen.getByLabelText(i18n.t('today.week-strip.day-label', {
-      date: 'Jun 10',
-      state: i18n.t('today.week-strip.state-selected'),
-      weekday: 'Wednesday',
-    }));
-    const todayMarker = screen.getByLabelText(i18n.t('today.week-strip.day-label', {
+    const selectedToday = screen.getByLabelText(i18n.t('today.week-strip.day-label', {
       date: 'Jun 12',
-      state: i18n.t('today.week-strip.state-today'),
+      state: i18n.t('today.week-strip.state-selected-today'),
       weekday: 'Friday',
     }));
     const calendarWeekStart = screen.getByLabelText(i18n.t('today.week-strip.day-label', {
@@ -235,12 +238,136 @@ describe('Today core card rendering', () => {
       weekday: 'Monday',
     }));
 
-    expect(selectedDay.props.accessibilityRole).toBe('text');
-    expect(todayMarker.props.accessibilityRole).toBe('text');
-    expect(calendarWeekStart.props.accessibilityRole).toBe('text');
+    expect(screen.getByTestId('week-strip-day-2026-06-12')).toBeTruthy();
+    expect(screen.getByTestId('week-strip-day-2026-06-08')).toBeTruthy();
+    expect(selectedToday.props.accessibilityRole).toBe('button');
+    expect(calendarWeekStart.props.accessibilityRole).toBe('button');
     expect(rollingWindowOverflow).toBeNull();
-    expect(selectedDay.props.accessibilityState?.selected).toBeUndefined();
-    expect(todayMarker.props.accessibilityState?.selected).toBeUndefined();
+    expect(selectedToday.props.accessibilityState?.selected).toBe(true);
+    expect(calendarWeekStart.props.accessibilityState?.selected).toBe(false);
+  });
+
+  it('PUP-27 I2 selects a past WeekStrip day and renders only that day timeline', async () => {
+    const todayRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002621',
+      event_type: 'feeding',
+      id: '00000000-0000-4000-8000-000000002631',
+      occurred_at: '2026-06-12T08:00:00.000Z',
+      payload: { amount: 'meal' },
+    });
+    const pastRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002622',
+      event_type: 'potty',
+      id: '00000000-0000-4000-8000-000000002632',
+      occurred_at: '2026-06-11T07:15:00.000Z',
+      payload: { subtype: 'outside' },
+    });
+    mockListEvents.mockImplementation((request: { filters?: TimelineFilters }) => {
+      if (request.filters?.from === '2026-06-11') {
+        return Promise.resolve([pastRow]);
+      }
+
+      if (request.filters?.from === todayDate) {
+        return Promise.resolve([todayRow]);
+      }
+
+      return Promise.resolve([]);
+    });
+
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByTestId('week-strip-day-2026-06-11'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-selected-day-timeline')).toBeTruthy();
+    });
+    expect(screen.getByTestId('diary-selected-day-header')).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.potty-outside'))).toBeTruthy();
+    });
+    expect(screen.queryByText(i18n.t('quick-log.trackers.feeding'))).toBeNull();
+    expect(screen.queryByTestId('diary-info-hero')).toBeNull();
+    expect(screen.queryByTestId('diary-history-filter-bar')).toBeNull();
+  });
+
+  it('PUP-27 I3 returns to today behavior when today is tapped after another day', async () => {
+    mockListEvents.mockImplementation((request: { filters?: TimelineFilters }) => {
+      if (request.filters?.from === todayDate) {
+        return Promise.resolve([createRow()]);
+      }
+
+      return Promise.resolve([]);
+    });
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [createRow()]);
+      queryClient.setQueryData(timelineKeyForDate('2026-06-11'), []);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-info-hero')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByTestId('week-strip-day-2026-06-11'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('diary-info-hero')).toBeNull();
+    });
+
+    fireEvent.press(screen.getByTestId('week-strip-day-2026-06-12'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-info-hero')).toBeTruthy();
+    });
+    expect(screen.getByRole('button', {
+      name: i18n.t('today.history.open-action'),
+    })).toBeTruthy();
+  });
+
+  it('PUP-27 I4 shows the existing empty style for a future selected day without today-only content', async () => {
+    mockListEvents.mockImplementation((request: { filters?: TimelineFilters }) => {
+      if (request.filters?.from === todayDate) {
+        return Promise.resolve([createRow()]);
+      }
+
+      return Promise.resolve([]);
+    });
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByTestId('week-strip-day-2026-06-14'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-selected-day-empty-state')).toBeTruthy();
+    });
+    expect(screen.getByText(i18n.t('today.quick-log.empty.title'))).toBeTruthy();
+    expect(screen.queryByTestId('diary-info-hero')).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('today.history.open-action'),
+    })).toBeNull();
   });
 
   it('renders the error state when active care events cannot refresh', async () => {

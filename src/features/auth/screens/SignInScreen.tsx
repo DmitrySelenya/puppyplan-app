@@ -127,6 +127,7 @@ export function SignInScreenView({ actions }: SignInScreenViewProps) {
                 onPress={() => {
                   void submitDebugSignIn();
                 }}
+                testID="auth-debug-sign-in-button"
                 variant="tertiary"
               />
             ) : null}
