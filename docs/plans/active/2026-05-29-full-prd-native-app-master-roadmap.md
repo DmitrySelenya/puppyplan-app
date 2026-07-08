@@ -3,13 +3,15 @@
 > For implementation agents: do not execute this roadmap as one task. Use repo `AGENTS.md`, the relevant PuppyPlan skills, and a scoped Linear issue plus a feature plan for each implementation slice.
 > Living document: update this roadmap when PRD scope, design atlas coverage, architecture gates, Linear split, or verification evidence changes.
 
+> **2026-07-07 V2 redesign override:** this roadmap predates the 2026-06 V2 redesign and is superseded wherever it conflicts with the V2 canon. Specifically: Locked Decision 3 (`Today | Health | More` tabs, corner FAB) is superseded by ADR-0020 (`Diary | Pet | More` + central Add; Timeline folds into Diary, Health folds into Pet); Milestone C and the "Design Atlas Coverage" table target the historical v1 atlas — V2 coverage is tracked in `docs/plans/active/2026-06-29-v2-nav-redesign-gaps.md`; execution order for the remaining PUP-26..PUP-32 slices is amended by `docs/plans/active/2026-06-17-redesign-resequencing.md` (trust layers now, redesign-exposed UI against the V2 atlas). Phase scopes, invariants, trust-first rules, monetization/release boundaries, and the approvals/risk register remain valid. Deferred release gates are aggregated in `docs/plans/active/2026-07-07-release-readiness.md`.
+
 **Goal:** Build a working Expo native PuppyPlan app across the full closed-beta PRD, accepted architecture, and the complete current design atlas before moving into release submission work.
 
 **Status:** Active.
 
 **Plan type:** Master roadmap. This is a reviewable execution map, not a single implementation contract.
 
-**Current execution:** `PUP-17` roadmap/docs hygiene is merged via PR #17. `PUP-18` auth, identity, session persistence, and new-user bootstrap is complete: PR #18 merged on 2026-05-31, manual email OTP smoke passed on 2026-06-08, and final evidence is mirrored in Linear. The next batch executed from `docs/plans/active/2026-06-08-post-pup-18-next-batch.md`: `PUP-19` route/coverage/storage decision and `PUP-20` synthetic dev-gallery work are complete locally, and `PUP-21` production onboarding, puppy profile, tracker setup, selected tracker persistence, and active care context are implemented locally after explicit `public.puppy.quick_tracker_ids` approval. `PUP-21` development schema gates passed on `PuppyPlan Dev`: both selected-tracker migrations were applied, repeat dry-run is no-op, runtime pgTAP/direct constraint checks passed, and remote typegen completed. `PUP-22` Today core/guidance is locally committed on its Linear branch, and `PUP-23` Quick Log details plus Timeline completion are locally committed on the stacked PUP-23 branch; final local command gates passed, while approved-SE simulator smoke and Dynamic Type screenshots are blocked by XcodeBuildMCP build launch failure. Production Supabase setup and production migration verification are deferred until release readiness after exact production Supabase approval; production was not touched.
+**Current execution:** `PUP-17` roadmap/docs hygiene is merged via PR #17. `PUP-18` auth, identity, session persistence, and new-user bootstrap is complete: PR #18 merged on 2026-05-31, manual email OTP smoke passed on 2026-06-08, and final evidence is mirrored in Linear. The next batch executed from `docs/plans/completed/2026-06-08-post-pup-18-next-batch.md`: `PUP-19` route/coverage/storage decision and `PUP-20` synthetic dev-gallery work are complete locally, and `PUP-21` production onboarding, puppy profile, tracker setup, selected tracker persistence, and active care context are implemented locally after explicit `public.puppy.quick_tracker_ids` approval. `PUP-21` development schema gates passed on `PuppyPlan Dev`: both selected-tracker migrations were applied, repeat dry-run is no-op, runtime pgTAP/direct constraint checks passed, and remote typegen completed. `PUP-22` Today core/guidance is locally committed on its Linear branch, and `PUP-23` Quick Log details plus Timeline completion are locally committed on the stacked PUP-23 branch; final local command gates passed, while approved-SE simulator smoke and Dynamic Type screenshots are blocked by XcodeBuildMCP build launch failure. Production Supabase setup and production migration verification are deferred until release readiness after exact production Supabase approval; production was not touched.
 
 **Architecture:** Future work stays Supabase-first, identity-first, contracts-first, and trust-first: Supabase Auth session identity must exist before durable user flows, Zod contracts and business rules define payloads, Supabase/RLS/Edge Functions enforce access, TanStack Query owns server state, Expo SQLite remains the only durable local-write exception for Quick Log, feature UI uses `src/design` primitives, and all visible strings go through typed EN/RU/ES i18n.
 
@@ -23,7 +25,7 @@
 - Design atlas: `docs/design/v1/README.md`, `docs/design/v1/manifest.json`, `docs/design/v1/screenshots/index.md`, `docs/design/v1/raw/screens/*.jsx`.
 - Architecture: `docs/architecture/00-overview.md`, `02-repo-structure-and-ownership.md`, `03-client-data-layer.md`, `04-state-management.md`, `05-navigation-and-deeplinks.md`, `06-design-system-and-ui-contracts.md`, `07-backend-topology.md`, `08-data-model-and-rls.md`, `09-sharing-and-permissions.md`, `10-quick-log-queue.md`, `11-notifications.md`, `12-i18n-and-content.md`, `13-observability-error-handling-performance.md`, `14-feature-flags-and-entitlements.md`, `15-ios-runtime-and-compliance.md`, `16-android-platform-and-play-gates.md`, `17-testing-ci-release.md`, `18-ai-agent-guide.md`, `19-future-roadmap.md`, and `screen-states-matrix.md`.
 - ADRs: `docs/architecture/adr/0001-multi-file-architecture-docs.md`, `0002-single-expo-app-structure.md`, `0003-state-ownership-matrix.md`, `0004-quick-log-queue-sqlite.md`, `0005-universal-links-and-app-links.md`, `0006-supabase-migrations-and-pgtap.md`, `0007-prd-schema-baseline.md`, `0008-privacy-safe-analytics.md`, `0009-sharing-projections.md`, `0010-react-i18next-typed-keys.md`, `0011-design-system-runtime.md`, `0012-notification-architecture.md`, `0013-feature-flags-and-entitlements.md`, `0014-ota-disabled-for-mvp.md`, `0015-ios-compliance-gates.md`, and `0016-android-compliance-and-exact-alarms.md`.
-- Active plans: `docs/plans/active/2026-05-21-phase-0-architecture-cleanup.md`, `docs/plans/active/2026-05-21-design-handoff-agent-gallery.md`.
+- Active plans: `docs/plans/completed/2026-05-21-phase-0-architecture-cleanup.md`, `docs/plans/completed/2026-05-21-design-handoff-agent-gallery.md`.
 
 ---
 
@@ -44,8 +46,8 @@ The current runnable app is still a partial shell:
 
 Two existing documents are still active:
 
-- `docs/plans/active/2026-05-21-phase-0-architecture-cleanup.md` remains the foundation dependency map. It now treats the Quick Log implementation chain as complete and keeps release/privacy plus non-Quick Log invalidation follow-ups open.
-- `docs/plans/active/2026-05-21-design-handoff-agent-gallery.md` remains the design package follow-up plan. It now treats completed design-package, primitive, typed i18n, and Quick Log contract guardrails as closed; the major remaining items are Dynamic Type screenshots and the development-only native design/gallery route.
+- `docs/plans/completed/2026-05-21-phase-0-architecture-cleanup.md` remains the foundation dependency map. It now treats the Quick Log implementation chain as complete and keeps release/privacy plus non-Quick Log invalidation follow-ups open.
+- `docs/plans/completed/2026-05-21-design-handoff-agent-gallery.md` remains the design package follow-up plan. It now treats completed design-package, primitive, typed i18n, and Quick Log contract guardrails as closed; the major remaining items are Dynamic Type screenshots and the development-only native design/gallery route.
 
 ---
 
@@ -459,7 +461,7 @@ Each future task plan must map these invariants to automated tests or named manu
 
 ## Suggested Linear Split After Review
 
-`PUP-18` has landed and is complete as the first critical-path slice. The next-batch implementation contract is `docs/plans/active/2026-06-08-post-pup-18-next-batch.md`; `PUP-19`, `PUP-20`, and `PUP-21` were created from that plan on 2026-06-08 and use their Linear-generated branch names.
+`PUP-18` has landed and is complete as the first critical-path slice. The next-batch implementation contract is `docs/plans/completed/2026-06-08-post-pup-18-next-batch.md`; `PUP-19`, `PUP-20`, and `PUP-21` were created from that plan on 2026-06-08 and use their Linear-generated branch names.
 
 | Proposed issue | Purpose | Labels |
 | --- | --- | --- |
@@ -537,7 +539,7 @@ The full app is complete when:
 ## Changelog
 
 - 2026-06-08: Closed PUP-18 as complete after manual email OTP smoke passed on `Grith iPhone SE 3 iOS 26.3`, final evidence was mirrored to Linear, and the PUP-18 plan moved to `docs/plans/completed/`.
-- 2026-06-08: Added `docs/plans/active/2026-06-08-post-pup-18-next-batch.md` as the current next-batch contract for `PUP-19`/`PUP-20`/`PUP-21`, with production care context split from synthetic route/gallery work and selected tracker persistence marked as a storage decision gate.
+- 2026-06-08: Added `docs/plans/completed/2026-06-08-post-pup-18-next-batch.md` as the current next-batch contract for `PUP-19`/`PUP-20`/`PUP-21`, with production care context split from synthetic route/gallery work and selected tracker persistence marked as a storage decision gate.
 - 2026-06-08: Created Linear `PUP-19`, `PUP-20`, and `PUP-21`; completed the local `PUP-19` route/settings/storage preflight with `docs/design/v1/native-coverage.md`. `PUP-20` became ready after the coverage map; `PUP-21` was initially held before durable selected tracker save behavior until exact ADR-0007/CTO schema approval was received later that day.
 - 2026-06-09: Reconciled post-approval `PUP-21` status: `public.puppy.quick_tracker_ids` was approved on 2026-06-08 and implemented locally; remaining gates are Docker-capable pgTAP and remote/non-production typegen before release/durability claims.
 - 2026-06-09: Updated `PUP-21` schema gate status after non-production verification on `PuppyPlan Dev`: approved migration `20260608212607_puppy_quick_tracker_ids.sql` applied, migration history/dry-run/lint/schema shape verified, focused runtime pgTAP returned plan `1..11` with `ok_count=11` and no failures, and `src/contracts/database.types.ts` was regenerated from the remote dev project. Production remains untouched.

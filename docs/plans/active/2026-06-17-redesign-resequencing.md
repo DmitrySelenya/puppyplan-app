@@ -8,7 +8,7 @@
 
 **Plan type:** Roadmap (sequencing amendment).
 
-**Current phase:** Phase 0 - Confirm split and freeze fidelity plans.
+**Current phase:** Phase 3 - Redesign intake (V2 design landed 2026-06-22; intake and re-skin run via `2026-06-22-redesign-v2-intake.md` and the design-fidelity pipeline).
 
 **Architecture:** Leans entirely on the canonical trust-first phase order (`.agents/skills/plan/SKILL.md`): 1) contracts/business rules → 2) storage/migrations/RLS → 3) Edge Functions/privileged logic → 4) query hooks/cache → 5) feature UI → 6) routes/providers → 7) observability/release. A redesign that changes components/patterns/screen-logic/buttons hits layers **5–6 only**. Layers 1–4 and most of 7 are redesign-proof. The design system (`src/design/tokens` + `src/design/primitives`) is the absorption layer: the stricter features consume it (no raw colors/spacing/Pressable/haptics), the more the redesign becomes a re-skin rather than a rewrite.
 
@@ -23,7 +23,7 @@
 - Workflow: `.agents/skills/plan/SKILL.md` (trust-first order)
 - Architecture: `docs/architecture/06-design-system-and-ui-contracts.md`
 - Pipeline: `docs/agents/design-fidelity-pipeline.md`
-- Frozen: `docs/plans/active/2026-06-13-design-fidelity-recovery.md`, `docs/plans/active/2026-06-13-design-fidelity-ux-audit.md`
+- Frozen: `docs/plans/completed/2026-06-13-design-fidelity-recovery.md`, `docs/plans/completed/2026-06-13-design-fidelity-ux-audit.md`
 
 ---
 
@@ -120,10 +120,10 @@ Low-cost, high-leverage, do now in parallel with the NOW lane:
 
 ### Phase 0 - Confirm split and freeze fidelity plans
 **Checklist:**
-- [ ] User confirms the NOW/DEFER split in the Resequencing Map.
-- [ ] Set `Status: Paused (redesign pending)` + pointer to this plan on `2026-06-13-design-fidelity-recovery.md` and `2026-06-13-design-fidelity-ux-audit.md`.
-- [ ] Update `docs/plans/README.md` current-plans table to reflect the freeze and this plan.
-**Acceptance:** No active plan still targets the v1 atlas as an acceptance gate.
+- [x] User confirms the NOW/DEFER split in the Resequencing Map. (Confirmed in practice: V2 intake proceeded on this split.)
+- [x] Freeze the v1 fidelity plans: `2026-06-13-design-fidelity-recovery.md` and `2026-06-13-design-fidelity-ux-audit.md` were retargeted to V2 intake (stronger than the planned pause) and closed as historical evidence on 2026-07-07.
+- [x] Update `docs/plans/README.md` current-plans table to reflect the freeze and this plan. (Done in the 2026-07-07 plans-index hygiene pass.)
+**Acceptance:** No active plan still targets the v1 atlas as an acceptance gate. ✅
 
 ### Phase 1 - Stand up the NOW lane
 **Checklist:**
@@ -132,19 +132,20 @@ Low-cost, high-leverage, do now in parallel with the NOW lane:
 - [ ] PUP-31 route-namespace reconciliation + nav doc update; PUP-32 entitlement no-op interface.
 - [ ] Each per-feature plan marks its UI/flow sections `Deferred: pending redesign`.
 **Acceptance:** Trust core of P5–P8 is shippable independent of the new design.
+**Note (2026-07-07):** Phase 1 and Phase 3 now interleave — the V2 design landed before the full NOW lane completed, so per-feature trust work and V2 re-skin proceed together (health outbox ADR-0019, tombstone RLS follow-up, V2 screen re-skin are examples). This is consistent with the plan's intent: trust layers keep full assurance regardless of order.
 
 ### Phase 2 - Redesign-prep (parallel)
 **Checklist:**
-- [ ] Run the design-system boundary audit; file fixes for any raw-style leaks in `src/features/*`.
-- [ ] Produce the primitive stability inventory.
+- [x] Run the design-system boundary audit; V2 re-skin (intake Phase 3) enforced primitive-only consumption on migrated screens.
+- [ ] Produce the primitive stability inventory. (Partially superseded: the V2 freeze authored its own component contracts — TabBar+Add, StatusPill, ListRow, TrackerTile, TimePicker.)
 **Acceptance:** Feature layer consumes only `src/design`; redesign deltas are concentrated in tokens + primitives.
 
 ### Phase 3 - Redesign intake (when new design lands)
 **Checklist:**
-- [ ] New atlas/tokens trigger a normal `design-fidelity-pipeline` pass.
-- [ ] Unfreeze/replace the fidelity plans against the new atlas.
-- [ ] Execute the DEFER lane (screen verstka + flow/button logic) on top of the already-shipped trust core.
-- [ ] Run P9 visual/a11y/E2E gates against the new design.
+- [x] New atlas/tokens trigger a normal `design-fidelity-pipeline` pass (`2026-06-22-redesign-v2-intake.md`; Stage-0 locks tracked in `2026-06-29-v2-nav-redesign-gaps.md`).
+- [x] Unfreeze/replace the fidelity plans against the new atlas (v1 fidelity plans closed as historical; V2 gaps doc is the live coverage tracker).
+- [ ] Execute the DEFER lane (screen verstka + flow/button logic) on top of the already-shipped trust core. (In progress via the gaps-doc coverage matrix and `2026-06-30-v2-screen-polish-backlog.md`.)
+- [ ] Run P9 visual/a11y/E2E gates against the new design. (Aggregated in `docs/plans/active/2026-07-07-release-readiness.md`.)
 **Acceptance:** Screens are built once, against the final design, over verified logic.
 
 ---
@@ -164,3 +165,4 @@ Low-cost, high-leverage, do now in parallel with the NOW lane:
 ## Changelog
 
 - 2026-06-17: Initial resequencing plan created after user confirmed the redesign changes components/patterns and screen/button logic. NOW/DEFER split defined across PUP-26..PUP-32; fidelity plans slated for freeze; design-system boundary audit added as prep.
+- 2026-07-07: Hygiene pass — reconciled checkboxes with reality: Phase 0 complete (v1 fidelity plans retargeted/closed, plans index updated), Phase 3 intake underway via the V2 intake plan and gaps doc; noted Phase 1/3 interleave. Current phase moved to Phase 3.

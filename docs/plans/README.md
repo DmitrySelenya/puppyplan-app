@@ -8,49 +8,42 @@ Use this directory as the implementation-plan index for PuppyPlan.
 
 Blocked or paused work stays in `active/` with a clear `Status` and next action. Move a plan to `completed/` only when a new agent should not continue from it.
 
+Every file in `active/` must have a row in the Current Plans table below (enforced by `scripts/checks/check-plans-index.mjs` via `npm run check`).
+
 ## Current Plans
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
-| Active task plan | [Health Offline Outbox](active/2026-07-04-health-offline-outbox.md) | no-Linear exception | Complete locally; final `npm run check` green; no push/PR |
-| Active task plan | [V2 Tombstone RLS Follow-Up](active/2026-07-03-v2-tombstone-rls-follow-up.md) | no-Linear exception | Phase 0 approval gate; next action is exact approval for local RLS migration, then RED pgTAP tombstone tests |
-| Active task plan | [Redesign V2 Intake](active/2026-06-22-redesign-v2-intake.md) | no-Linear exception | Phase 0 locked `docs/design/v2`; next action is Phase 1 foundation sync, then scoped taxonomy propagation only |
-| Active task plan | [Isolated Spec-Driven TDD Workflow](active/2026-06-14-isolated-tdd-workflow.md) | `PUP-25` | Complete locally; deep-review fixes verified in visible review workspace; no push/PR/release action |
-| Active follow-up plan | [Design Fidelity UX Audit](active/2026-06-13-design-fidelity-ux-audit.md) | `PUP-22`, `PUP-23` | Retargeted to V2 intake; H1-H7 triaged against `docs/design/v2`, with full re-skin work out of this branch |
-| Active task plan | [PUP-22/PUP-23 Today, Quick Log Details, Timeline](active/2026-06-12-pup-22-23-today-quicklog-timeline.md) | `PUP-22`, `PUP-23` | PUP-22 and PUP-23 locally committed; final local gates passed, with approved-SE simulator smoke/Dynamic Type blocked by XcodeBuildMCP build launch failure |
-| Active task plan | [Post-PUP-18 Next Batch](active/2026-06-08-post-pup-18-next-batch.md) | `PUP-19`, `PUP-20`, `PUP-21` | `PUP-19` and `PUP-20` are locally complete/in review. `PUP-21` local implementation, both development selected-tracker migrations, runtime RLS/constraint verification, remote typegen, and SE emulator repair flow are complete on `PuppyPlan Dev` after approved `quick_tracker_ids`; production database setup/migration verification is deferred until release readiness after exact production Supabase approval, and native generated warnings remain a release-signoff decision |
-| Active roadmap | [Full PRD Native App Master Roadmap](active/2026-05-29-full-prd-native-app-master-roadmap.md) | `PUP-17` | Merged via PR #17; use the Post-PUP-18 Next Batch plan for the current `PUP-19`/`PUP-20`/`PUP-21` split |
-| Active roadmap | [Architecture Foundation Roadmap](active/2026-05-21-phase-0-architecture-cleanup.md) | Split through `PUP-2`, `PUP-3`, `PUP-4`, `PUP-5`, and follow-up issues | Do not assign directly; scaffold, Supabase/RLS, local/CI gates, design runtime, typed i18n, and the Quick Log implementation chain are complete; keep only release/privacy follow-ups active |
-| Active follow-up plan | [Design Handoff And Agent Gallery](active/2026-05-21-design-handoff-agent-gallery.md) | `PUP-7`, `PUP-8`, `PUP-9`, `PUP-10` | Phases 1-5 and 6A are complete; only EN/RU/ES Dynamic Type screenshots and the dev-only design gallery remain as scoped follow-up work |
-| Completed | [Agent Infra: design-fidelity skill + docs/INDEX.md](completed/2026-06-14-agent-design-fidelity-skill-docs-index.md) | no-Linear exception | Repo-local `design-fidelity` skill, Claude adapter, and docs task router are complete; `npm run check` passed locally on 2026-06-14 |
-| Completed | [PUP-18 Auth, Identity, Session Persistence, And New-User Bootstrap](completed/2026-05-30-pup-18-auth-identity-session.md) | `PUP-18` | Merged via PR #18; manual email OTP smoke passed on `Grith iPhone SE 3 iOS 26.3` on 2026-06-08; final evidence mirrored to Linear comment `4f5f0f99-ba46-47cf-b86d-342d7e128b26` |
-| Completed | [PUP-16 Quick Log Privacy-Safe Analytics And Observability](completed/2026-05-28-pup-16-quick-log-privacy-safe-analytics-observability.md) | `PUP-16` | Merged via PR #16; Quick Log privacy-safe analytics and observability are complete |
-| Completed | [PUP-15 Today/Timeline Quick Log State Integration](completed/2026-05-27-pup-15-today-timeline-quick-log-state-integration.md) | `PUP-15` | Merged via PR #15; Today and Timeline Quick Log pending/failed state integration is complete |
-| Completed | [PUP-14 Quick Log Sheet UI And Interaction States](completed/2026-05-27-pup-14-quick-log-sheet-ui.md) | `PUP-14` | Merged via PR #12; Quick Log sheet UI, interaction states, global Snackbar, and CI guardrails are complete |
-| Completed | [PUP-13 Quick Log Mutation Cache Lifecycle](completed/2026-05-26-pup-13-quick-log-mutation-cache.md) | `PUP-13` | Merged via PR #11; mutation/cache lifecycle and deep-review follow-ups implemented and verified |
-| Completed | [PUP-12 Quick Log Queue Core](completed/2026-05-26-pup-12-quick-log-queue-core.md) | `PUP-12` | Merged via PR #10; local queue core implemented and verified |
-| Completed | [PUP-5 Quick Log MVP](completed/2026-05-25-quick-log-mvp.md) | `PUP-5` | Planning-only contract completed; implementation finished through `PUP-11` to `PUP-16` |
-| Completed | [PUP-3 Supabase Contracts And RLS Baseline](completed/2026-05-24-pup-3-supabase-contracts-rls-baseline.md) | `PUP-3` | Merged via PR #7; Supabase contracts, RLS baseline, non-production dev migrations, generated DB types, local checks, and GitHub remote Supabase gate are complete |
-| Completed | [PUP-4 Test Harness And Local Gates](completed/2026-05-23-pup-4-test-harness-local-gates.md) | `PUP-4` | Merged via PR #3; local harness, PR metadata CI, `npm run check`, privacy scan, text hygiene, i18n placeholders, tab-layout coverage, and deep-review fixes are in `main` |
-| Completed | [Scaffold Expo App Baseline](completed/2026-05-22-scaffold-expo-app-baseline.md) | `PUP-2` | Merged via PR #2; local scaffold implemented and verified |
-| Completed | [Agent Company Setup](completed/2026-05-21-agent-company-setup.md) | `PUP-1` | Closed; `PUP-6` later verified Linear/GitHub integration through PR #5 |
+| Active follow-up plan | [Release Readiness — Deferred Gates Aggregator](active/2026-07-07-release-readiness.md) | no-Linear exception (aggregator) | Owns all deferred release/production/verification gates; each executed item gets its own issue |
+| Active task plan | [Health Offline Outbox](active/2026-07-04-health-offline-outbox.md) | no-Linear exception | Phase 5 — core complete locally; mutation-path wiring (enqueue-on-failure) in progress |
+| Active task plan | [V2 Tombstone RLS Follow-Up](active/2026-07-03-v2-tombstone-rls-follow-up.md) | no-Linear exception | Event Log follow-up complete locally; commit pending |
+| Active task plan | [V2 Nav Capsule + Morphing Add](active/2026-06-30-v2-nav-capsule.md) | Codex plan | CapsuleTabBar merged; 3 checklist items remain — verify and close |
+| Active follow-up plan | [V2 Screen Polish Backlog](active/2026-06-30-v2-screen-polish-backlog.md) | Codex backlog | Screen-level P1/P2 fixes from the 2026-06-30 simulator walkthrough; execute after nav-capsule |
+| Active follow-up plan | [V2 Nav Redesign — Coverage & Gaps](active/2026-06-29-v2-nav-redesign-gaps.md) | no-Linear exception | Live V2 coverage matrix + decisions; 3 open items; per-route evidence lives in the companion log |
+| Active reference | [V2 Nav Redesign — Evidence Log](active/2026-06-29-v2-nav-redesign-gaps-evidence.md) | — | Append-only Stage-0 lock/handoff evidence (§8–§26), split from the gaps doc on 2026-07-07 |
+| Active reference | [Diary/Pet Nav Design Brief](active/2026-06-27-diary-pet-nav-design-brief.md) | no-Linear exception | Design freeze (rev. 4); canonical V2 IA source together with ADR-0020 |
+| Active reference | [Diary + Plan/Log Redesign Spec](active/2026-06-25-diary-plan-log-redesign.md) | no-Linear exception | Design locked (brainstorm); plan/fact model source for Diary work |
+| Active reference | [Diary Cloud Design Prompt](active/2026-06-25-diary-cloud-design-prompt.md) | — | Prompt + Clay token extract for generating V2 screens in Claude Design |
+| Active task plan | [Redesign V2 Intake](active/2026-06-22-redesign-v2-intake.md) | no-Linear exception | Phase 3 re-skin complete, Phase 7 hardening evidence recorded; all plan-owned checkboxes checked — review for closure |
+| Active roadmap | [Redesign Resequencing](active/2026-06-17-redesign-resequencing.md) | no-Linear exception | Phase 3 — V2 intake underway; DEFER lane executes via the gaps coverage matrix and polish backlog |
+| Active roadmap | [Full PRD Native App Master Roadmap](active/2026-05-29-full-prd-native-app-master-roadmap.md) | `PUP-17` | Superseded in part by the 2026-07-07 V2 override (ADR-0020, resequencing, gaps doc); phase scopes/invariants/approvals remain valid |
+
+Completed plans live in [`completed/`](completed/) with their final status and merge evidence in each file's header; see the folder listing rather than a duplicated table here. Recent closures (2026-07-07 hygiene pass): phase-0 architecture cleanup, design handoff/gallery (PUP-7), post-PUP-18 next batch (PUP-19/20/21), PUP-22/23 Today+QuickLog+Timeline, both V1 design-fidelity plans, isolated TDD workflow (PUP-25), and Diary week-strip day selection (PR #29). Their deferred tails moved to the Release Readiness aggregator.
 
 ## Execution Order
 
-1. Execute foundation roadmap items only through scoped Linear issues. `PUP-2`, `PUP-3`, `PUP-4`, and `PUP-5` are complete.
-2. Treat `PUP-11` through `PUP-16` as the completed Quick Log implementation chain.
-3. Treat `PUP-18` as the completed auth/session foundation; downstream production work may consume the real session actor.
-4. Use [Post-PUP-18 Next Batch](active/2026-06-08-post-pup-18-next-batch.md) for `PUP-21` local/dev review handoff. `PUP-19` created the Linear split and route/state coverage map, `PUP-20` added the synthetic dev-gallery lane, and `PUP-21` has local care-context implementation plus development schema verification and SE emulator repair evidence after approved `quick_tracker_ids`. The follow-up non-empty selected-tracker migration was applied to `PuppyPlan Dev` after exact dev apply approval and focused runtime evidence passed. Production Supabase setup is a future release-readiness task after exact production Supabase approval, not a current development prerequisite; native generated warnings remain tracked in the plan evidence.
-5. Keep the remaining `PUP-7` design follow-ups separate: EN/RU/ES Dynamic Type screenshots and the in-app design gallery.
-6. Re-run `PUP-7` screenshot/package checks whenever the raw design export changes.
-7. Release/privacy gates that are not already covered by `PUP-4`/`PUP-3` should become separate Linear issues, not part of feature implementation.
+1. Foundation (`PUP-1`..`PUP-18`), the Quick Log chain (`PUP-11`..`PUP-16`), onboarding/care context (`PUP-19`..`PUP-21`), Today/Quick Log/Timeline (`PUP-22`/`PUP-23`), and Health (`PUP-25`) are complete; see `completed/`.
+2. The V2 redesign governs current work: IA per ADR-0020 (`Diary | Pet | More` + central Add), execution order per the Redesign Resequencing plan, coverage per the V2 gaps doc.
+3. Remaining feature slices (`PUP-26`..`PUP-32`: reminders, family/sitter, trainer/cards, More/settings, paywall shell) follow the resequencing NOW/DEFER split — trust layers first, screen work against the V2 atlas.
+4. Release/production/verification debts are tracked exclusively in the Release Readiness aggregator; execute them only near release with exact approvals.
 
 ## Maintenance Rules
 
 - New implementation plans go in `docs/plans/active/YYYY-MM-DD-<topic>.md`.
 - Each plan must include a top-level `**Status:** Active` or `**Status:** Completed` line.
 - Use `**Plan type:** ...` when an active document is a roadmap, task plan, or reference plan.
-- Current-plan table status labels are intentionally limited to: `Active task plan`, `Active roadmap`, `Active follow-up plan`, and `Completed`.
+- Current-plan table status labels are intentionally limited to: `Active task plan`, `Active roadmap`, `Active follow-up plan`, `Active reference` (briefs, evidence logs, prompts), and `Completed`.
 - Each active task plan should include a top-level `**Current phase:** ...` line when it has multiple phases. Active roadmaps should include `**Current execution:** ...` instead.
 - When the final plan-owned checklist item is done, move the file from `active/` to `completed/`, update `Status`, and update this index.
-- If only a follow-up remains and it is tracked by a different Linear issue or plan, record that handoff before moving the original plan to `completed/`.
+- If only a follow-up remains and it is tracked by a different Linear issue or plan, record that handoff before moving the original plan to `completed/`. Release-relevant tails go to `active/2026-07-07-release-readiness.md`.
+- Every file added to `active/` must be registered in the Current Plans table in the same change (`check-plans-index.mjs` fails `npm run check` otherwise).

@@ -19,7 +19,7 @@ Start here:
 - `DESIGN.md` - product and UI design direction.
 - `docs/architecture/00-overview.md` - architecture entry point.
 - `docs/plans/README.md` - active/completed plan index.
-- `docs/plans/active/2026-05-21-phase-0-architecture-cleanup.md` - current setup/cleanup plan.
+- `docs/plans/completed/2026-05-21-phase-0-architecture-cleanup.md` - current setup/cleanup plan.
 
 ## Local Setup
 

@@ -2,6 +2,14 @@
 
 This package preserves the delivered `Puppy app_V2` export as a repo-native design reference for the redesign intake. Treat raw files as source artifacts, not production React Native code.
 
+## Design Source-Of-Truth Chain (read in this order)
+
+1. **IA decision:** `docs/architecture/adr/0020-v2-ia-diary-pet-more-navigation.md` — `Diary | Pet | More` + central Add.
+2. **Design brief (freeze):** `docs/plans/active/2026-06-27-diary-pet-nav-design-brief.md` — supersedes `DESIGN.md` v1 sections where they conflict.
+3. **This directory:** `manifest.json`, `screenshots/`, `reference/` (Clay tokens + recovered screens), `specs/`, `decisions/`.
+4. **V2 lock package:** `docs/design/v1/specs/v2-redesign-lock-package.md` — note: historically located under `v1/specs/`, but it locks **V2** artboards; treat it as part of this chain.
+5. **Coverage/status:** `docs/plans/active/2026-06-29-v2-nav-redesign-gaps.md` (matrix) + its evidence companion.
+
 ## Current Source Of Truth
 
 For V2 intake work, the repo-native design source is `docs/design/v2/raw/PuppyPlan.html`, its support files, `manifest.json`, and the screenshot atlas under `docs/design/v2/screenshots/`.

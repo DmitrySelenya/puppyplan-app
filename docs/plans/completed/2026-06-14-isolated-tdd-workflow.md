@@ -5,7 +5,7 @@
 
 **Goal:** Adopt a PuppyPlan-owned isolated, spec-driven TDD workflow that prevents global Grith skill leakage, treats upstream material as untrusted until reviewed, halts on contradictory specs before tests/code, and documents heavy vs lightweight assurance.
 
-**Status:** Active.
+**Status:** Completed (2026-07-07). Workflow shipped (`.agents/skills/tdd` is canonical, PUP-25 evidence recorded); no plan-owned checklist items remain.
 
 **Plan type:** Active task plan.
 

@@ -4,7 +4,7 @@
 
 **Goal:** Bring production-visible PuppyPlan native screens back into close visual and interaction alignment with the approved Claude Design / design atlas while preserving architecture boundaries and future design-editability.
 
-**Status:** Retargeted to V2 intake; V1 recovery remains historical evidence.
+**Status:** Completed (2026-07-07) as historical V1 evidence. Superseded by `2026-06-22-redesign-v2-intake.md` and the V2 gaps coverage doc; do not continue work from this plan.
 
 **Current phase:** V1 Phase 6 complete; continue new work from `2026-06-22-redesign-v2-intake.md` and the V2 atlas.
 

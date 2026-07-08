@@ -5,7 +5,7 @@
 
 **Goal:** Turn the architecture review findings into enforceable contracts before the Expo/Supabase scaffold grows enough to drift.
 
-**Status:** Active.
+**Status:** Completed (2026-07-07). Foundation dependency map fully executed through PUP-2..PUP-16; remaining release/privacy tails moved to `docs/plans/active/2026-07-07-release-readiness.md` §5/§7.
 
 **Plan type:** Foundation roadmap. This is a dependency map, not a single agent-ready Linear task.
 

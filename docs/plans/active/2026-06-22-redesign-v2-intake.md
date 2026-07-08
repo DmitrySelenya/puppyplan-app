@@ -27,7 +27,7 @@
 - Schema governance: `docs/architecture/adr/0007-prd-schema-baseline.md` + migration `supabase/migrations/20260608212607_puppy_quick_tracker_ids.sql` (the `puppy.quick_tracker_ids` allowed-id constraint to amend)
 - Design system: `docs/architecture/06-design-system-and-ui-contracts.md`, ADR-0011
 - Pipeline + atlas template: `docs/agents/design-fidelity-pipeline.md`, `docs/design/v2/manifest.json`, `docs/design/v1/manifest.json`
-- Frozen-then-retargeted: `docs/plans/active/2026-06-13-design-fidelity-recovery.md`, `docs/plans/active/2026-06-13-design-fidelity-ux-audit.md`
+- Frozen-then-retargeted: `docs/plans/completed/2026-06-13-design-fidelity-recovery.md`, `docs/plans/completed/2026-06-13-design-fidelity-ux-audit.md`
 
 ---
 
