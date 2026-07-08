@@ -1,6 +1,6 @@
 # Diary WeekStrip Day Selection
 
-**Status:** Active; implementation, local verification, Maestro, commit/push, draft PR, and CI Verification complete; awaiting human review/merge.
+**Status:** Completed (2026-07-07). Merged to main via PR #29 (`c56cd2c`).
 
 **Linear:** `PUP-27` - https://linear.app/dmitryselenya/issue/PUP-27/diary-weekstrip-day-selection
 

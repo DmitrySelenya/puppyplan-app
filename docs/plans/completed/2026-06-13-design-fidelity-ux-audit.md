@@ -1,7 +1,7 @@
 # Design Fidelity UX Audit - Subagent Pass
 
 **Date:** 2026-06-13
-**Status:** Retargeted to V2 intake; V1 audit remains historical evidence.
+**Status:** Completed (2026-07-07) as historical V1 evidence. H1-H7 findings were triaged against V2; re-validation happens against the V2 atlas via the gaps coverage doc, not this plan.
 **Plan type:** Active follow-up audit.
 **Current phase:** H1-H7 triaged against V2 intake; continue from `2026-06-22-redesign-v2-intake.md`.
 **Related plan:** `docs/plans/active/2026-06-13-design-fidelity-recovery.md`

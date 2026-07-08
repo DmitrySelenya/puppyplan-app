@@ -6,7 +6,7 @@
 
 ## Why this exists
 
-The repo already had a complete Design Fidelity Gate and a screenshot atlas, yet a long, manual design-recovery pass was still needed (see `docs/plans/active/2026-06-13-design-fidelity-recovery.md` and `...-ux-audit.md`). The problem was never missing rules. The problem was **when and how** the gate fired:
+The repo already had a complete Design Fidelity Gate and a screenshot atlas, yet a long, manual design-recovery pass was still needed (see `docs/plans/completed/2026-06-13-design-fidelity-recovery.md` and `...-ux-audit.md`). The problem was never missing rules. The problem was **when and how** the gate fired:
 
 - It fired **after** a whole batch, not per screen.
 - It was **fully manual / eyeballed**, so interpretation gaps slipped through (missing chevrons, outline vs filled icons, wrong toggle anatomy, ungrouped lists, wrong snackbar style).

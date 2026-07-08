@@ -5,7 +5,7 @@
 
 **Goal:** Complete master-roadmap Phase 3 for Milestone B: Today becomes a useful daily hub with deterministic guidance, Quick Log gains detail/slow-save variants, and Timeline becomes filterable/editable without expanding durable offline behavior beyond the existing Quick Log queue.
 
-**Status:** Active.
+**Status:** Completed (2026-07-07). PUP-22/PUP-23 merged via PR #21; the blocked SE simulator smoke / Dynamic Type screenshots moved to `docs/plans/active/2026-07-07-release-readiness.md` §2/§3; V1 design-fidelity gate superseded by V2 intake.
 
 **Current phase:** Phase 9 - Design Fidelity Recovery Gate.
 

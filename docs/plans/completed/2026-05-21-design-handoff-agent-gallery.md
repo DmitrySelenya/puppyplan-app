@@ -5,7 +5,7 @@
 
 **Goal:** Make the pre-final Cloud Design package usable as a repo-native, agent-friendly design source without a full Figma migration.
 
-**Status:** Active.
+**Status:** Completed (2026-07-07). Phases 1-6A done; the two remaining follow-ups (EN/RU/ES Dynamic Type screenshots, dev-only design gallery) moved to `docs/plans/active/2026-07-07-release-readiness.md` §3/§8 and must target the V2 atlas, not v1.
 
 **Plan type:** Linear task plan for `PUP-7`.
 

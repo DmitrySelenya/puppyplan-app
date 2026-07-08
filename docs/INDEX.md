@@ -10,7 +10,7 @@ Always start with `AGENTS.md`, then `docs/agents/context-engineering.md`, then t
 
 | You are doing… | Read first | Skill |
 |---|---|---|
-| Any screen / layout / component / вёрстка | `docs/agents/design-fidelity-pipeline.md`, `DESIGN.md`, `docs/design/v1/manifest.json` + `docs/design/v1/screenshots/index.md`, `docs/architecture/06-design-system-and-ui-contracts.md` | `design-fidelity` |
+| Any screen / layout / component / вёрстка | `docs/agents/design-fidelity-pipeline.md`, ADR-0020 (V2 IA), `docs/plans/active/2026-06-27-diary-pet-nav-design-brief.md`, `docs/design/v2/README.md` + `docs/design/v2/manifest.json` + `docs/design/v2/screenshots/index.md`, `docs/design/v1/specs/v2-redesign-lock-package.md` (V2 lock package — lives under v1/specs), `docs/architecture/06-design-system-and-ui-contracts.md` | `design-fidelity` |
 | Contracts / data shapes | `src/contracts/`, `docs/architecture/03-client-data-layer.md`, `docs/architecture/adr/0007-prd-schema-baseline.md` | `plan` |
 | Supabase / schema / migrations / RLS | `docs/architecture/08-data-model-and-rls.md`, `docs/architecture/adr/0006-supabase-migrations-and-pgtap.md`, `docs/architecture/adr/0007-prd-schema-baseline.md` | `plan` |
 | Backend topology / Edge Functions | `docs/architecture/07-backend-topology.md` | `plan` |
@@ -33,6 +33,7 @@ Architecture entry point: `docs/architecture/00-overview.md` · ADR index: `docs
 
 ## Canonical vs not
 
-- **Canonical:** `puppyplan-prd-v2.md`, `DESIGN.md`, `docs/architecture/*` + `docs/architecture/adr/*`, `docs/agents/*`, the atlas under `docs/design/v1/screenshots/` (+ `manifest.json`, `index.md`), and active `docs/plans/active/*`.
-- **Visual intent only (do not copy into native):** `docs/design/v1/raw/*` (web JSX/CSS).
+- **Canonical:** `puppyplan-prd-v2.md`, `DESIGN.md` (with its 2026-06-28 V2 override note), `docs/architecture/*` + `docs/architecture/adr/*` (ADR-0020 fixes the V2 IA), `docs/agents/*`, the **V2** design source under `docs/design/v2/` (`README.md`, `manifest.json`, `screenshots/`, `reference/`) plus the V2 lock package `docs/design/v1/specs/v2-redesign-lock-package.md`, and active `docs/plans/active/*`.
+- **Historical evidence / comparison baseline only:** the V1 atlas under `docs/design/v1/screenshots/` (+ `manifest.json`); superseded by V2 for all new design-fidelity acceptance.
+- **Visual intent only (do not copy into native):** `docs/design/v1/raw/*` and `docs/design/v2/raw/*` (web JSX/CSS/HTML).
 - **Not a source of truth on their own:** Linear documents, chat history, and graph/`project-graph-context` output (advisory — always read the real files).
