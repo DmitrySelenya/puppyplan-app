@@ -55,7 +55,7 @@ PuppyPlan TDD is spec-driven and repo-local:
 - TanStack Query for server state
 - Zustand only for UI/workflow state
 - Zod for runtime contracts
-- Expo SQLite only for the Minimal Durable Quick Log Queue
+- Expo SQLite for durable local writes per ADR-0021: today the Quick Log queue (ADR-0004) and the Health outbox (ADR-0019); no third bespoke queue — new domains wait for the shared outbox engine extraction (ADR-0021, Вариант A)
 - `react-i18next` with typed keys and string-budget checks
 - PostHog for product/UI flags
 - Sentry or equivalent through shared observability wrappers only

@@ -1,8 +1,8 @@
 # ADR-0021: Durable Local-Write Strategy — Shared Outbox Engine vs Capped Exceptions
 
-- **Статус:** Proposed (draft for owner decision; recommendation is Option A)
+- **Статус:** Accepted (Вариант A chosen by the owner on 2026-07-08)
 - **Дата:** 2026-07-08
-- **Авторы:** Claude (draft) + Product/Engineering decision pending
+- **Авторы:** Claude (draft) + Product owner decision
 - **Связанные:** ADR-0004 (Quick Log queue; explicitly says "Broader outbox behavior requires a future ADR" — this is that ADR), ADR-0019 (Health outbox), `docs/plans/active/2026-07-04-health-offline-outbox.md`, master roadmap offline invariant
 - **Влияет на workstreams:** Data Access | Today/Quick Log | Health/Guidance | Sharing/Reminders | QA/Release
 
@@ -59,7 +59,7 @@ failure loses user data; rejected.
 
 ## Решение
 
-**Proposed: Вариант A**, with sequencing guardrails:
+**Accepted: Вариант A**, with sequencing guardrails:
 
 1. **Decision now, migration later.** Accepting this ADR does not start the refactor. The active
    health-outbox plan finishes its current scope (enqueue-on-failure + drain wiring) against the
@@ -87,9 +87,9 @@ failure loses user data; rejected.
 
 ## Action items
 
-- [ ] Owner decision: accept Вариант A (or choose B) — update Статус and this checklist.
-- [ ] After acceptance: create the engine-extraction Linear issue + feature plan (heavy TDD,
-      behavior-preserving, Health first, Quick Log last).
-- [ ] Update `AGENTS.md` tech-stack line ("Expo SQLite only for the Minimal Durable Quick Log
-      Queue") to reference this ADR's strategy once accepted.
+- [x] Owner decision: Вариант A accepted 2026-07-08.
+- [ ] Create the engine-extraction Linear issue + feature plan (heavy TDD, behavior-preserving,
+      Health first, Quick Log last); execute after health-outbox wiring stabilizes and before
+      the first PUP-26 slice needing durable reminder writes.
+- [x] Update `AGENTS.md` tech-stack line to reference this ADR's strategy (2026-07-08).
 - [ ] PUP-26 planning must consult this ADR before promising any offline reminder behavior.

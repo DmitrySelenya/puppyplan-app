@@ -22,10 +22,7 @@ Accepted ADRs for the closed-beta baseline:
 - `adr/0018-sharing-surface-split-web-trainer-app-sitter.md`
 - `adr/0019-health-offline-outbox.md`
 - `adr/0020-v2-ia-diary-pet-more-navigation.md`
-
-Proposed (decision pending):
-
-- `adr/0021-durable-local-write-strategy.md` — shared outbox engine vs capped exceptions; owner decision required before PUP-26 offline scope.
+- `adr/0021-durable-local-write-strategy.md`
 
 ## Decisions Captured Outside Dedicated ADRs
 

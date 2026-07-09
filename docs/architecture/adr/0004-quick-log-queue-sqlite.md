@@ -17,4 +17,4 @@ Rejected storage options: AsyncStorage, SecureStore, and TanStack Query persiste
 - The queue stores only routine-event payloads needed for Quick Log.
 - `client_event_id` is generated before optimistic UI and queue insert.
 - Server idempotency is enforced with `UNIQUE (household_id, client_event_id)`.
-- Broader outbox behavior requires a future ADR.
+- Broader outbox behavior requires a future ADR. (Resolved: ADR-0021 accepts a shared outbox engine with per-domain schemas; ADR-0019 added the Health outbox.)
