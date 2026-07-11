@@ -10,6 +10,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: 'light',
   ios: {
     ...config.ios,
+    appleTeamId: 'JK68NGR7WD',
     bundleIdentifier: 'com.dmitry-selenya.puppyplan-app',
     supportsTablet: false,
   },

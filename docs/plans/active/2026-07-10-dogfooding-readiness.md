@@ -767,3 +767,11 @@ Dependency order: PUP-28 → PUP-29 → PUP-30 (30 also gated on dependency appr
   PUP-32): `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo run:ios --device` → sign in (shared debug
   account) → create an enabled reminder a couple minutes out → confirm the banner → disable it →
   confirm no further banner. PUP-30 stays In Progress until that evidence lands.
+- 2026-07-11 (4b-device, local run gotchas for the PUP-32 runbook): (a) fresh Mac needs Xcode →
+  Settings → Accounts → Apple ID + an Apple Development certificate, then Team selection in
+  Signing & Capabilities (free personal team OK for dogfood; 7-day signing validity) — otherwise
+  `expo run:ios --device` fails with "No code signing certificates are available"; (b) an
+  interrupted/killed build leaves a stale `ios/build` that makes ReactCodegen fail with
+  `ENOENT ... unlink .../ShadowNodes.cpp` (xcodebuild exit 65) — fix: `rm -rf ios/build` and rebuild
+  (escalation: clear `~/Library/Developer/Xcode/DerivedData/PuppyPlan-*`); (c) the
+  `SDWebImage iOS@9.0 deployment version mismatch` warning is harmless pod noise.
