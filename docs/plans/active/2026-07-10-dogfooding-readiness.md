@@ -471,15 +471,45 @@ realistic data; design fidelity evidence recorded (deviations named).
 ---
 
 ### Phase 4 - Local Notifications (PUP-30) — gated on dependency approval
-**Files:** `src/lib/notifications/` (new), `app/_layout.tsx` wiring, settings screen alignment,
-tests per Invariant 5.
+
+**Sub-slice 4a — pure scheduling engine (IN PROGRESS 2026-07-11):** the reschedule-all core
+(`computeScheduleSet` + `reconcileSchedule` over an injected adapter port) is built and tested
+against a fake adapter first — no `expo-notifications` import, no native module, no UI, so it needs
+no install and keeps `tsc` green. The concrete expo adapter + provider wiring + physical-device
+verification (4b) follow, since they require the native module and a real iPhone.
+
+> **Spec lock (sub-slice 4a).**
+> - **AC-1:** `computeScheduleSet({reminders, nowMs, timeZone, horizonMs?})` returns, for every
+>   enabled non-deleted reminder, each planned slot whose instant is in `(nowMs, nowMs+horizon]`
+>   (default horizon 72h), sorted ascending by instant, deduped by `(reminderId, scheduledFor)`.
+> - **AC-2:** the result is a pure deterministic function of its inputs (same in → deep-equal out),
+>   DST transitions included (reuses `expandOccurrencesForDay`).
+> - **AC-3:** `reconcileSchedule(adapter, desired)` cancels all app-owned pending notifications,
+>   then schedules each desired item; returns the scheduled handles. Running it twice with the same
+>   desired set leaves the same owned pending set (idempotent).
+> - **EC-1:** a slot exactly at `nowMs` is excluded (strictly future); a slot exactly at
+>   `nowMs+horizon` is included (inclusive upper bound).
+> - **EC-2:** disabled or soft-deleted reminders contribute zero items; empty `desired` (logout)
+>   cancels everything owned and schedules nothing.
+> - **EC-3:** `reconcileSchedule` cancels only app-owned notifications; a foreign pending item is
+>   left untouched.
+> - **ERR-1:** if the adapter's `schedule` rejects, `reconcileSchedule` rejects (fail-loud, no
+>   silent catch) — surfaced to the caller for observability, not swallowed.
+> - **Constraints:** no `expo-notifications` import in 4a; engine carries no `note`/puppy-name text
+>   (privacy Invariant 7) — only `reminderId/trackerId/scheduledFor/time/amount`; no new dep.
+> - **Out of scope (→ 4b):** permission staging, category registration, the concrete expo adapter,
+>   provider/foreground wiring, denied-fallback UI, device verification.
 
 **Checklist:**
-- [ ] Record explicit user approval for `expo-notifications` (and `expo-device` if required).
+- [x] Record explicit user approval for `expo-notifications` (and `expo-device` if required).
+      Approved 2026-07-10 ("одобряю expo-notifications"); install deferred to 4b (device work).
 - [ ] Adapter: permission (staged/provisional per `11-notifications.md`), categories, schedule,
-      cancel-all-owned; all side effects behind the adapter for testability.
-- [ ] Pure scheduling engine: enabled reminders → next-72h schedule set; reschedule triggers
-      (foreground, auth change, reminder mutation, timezone change); logout cancels.
+      cancel-all-owned; all side effects behind the adapter for testability. **(4b)**
+- [x] Pure scheduling engine (**4a, DONE 2026-07-11**): enabled reminders → next-72h desired set
+      (`computeScheduleSet`) + idempotent `reconcileSchedule(port, desired)` over an injected
+      `NotificationSchedulerPort`. Reschedule *triggers* (foreground/auth/mutation/timezone) and
+      logout-cancels are the caller's job in 4b, but the engine already makes them correct: any
+      trigger just recomputes + reconciles, and logout is `reconcileSchedule(port, [])`.
 - [ ] Denied fallback card + Settings link; notification actions v1 = open app (Done/Snooze
       actions deferred; record deviation vs `11-notifications.md`).
 - [ ] iOS behavior verified on SE simulator + at least one physical iPhone; record evidence.
@@ -685,3 +715,17 @@ Dependency order: PUP-28 → PUP-29 → PUP-30 (30 also gated on dependency appr
   `quick-log-mutation` (+1); **full unit suite 754 passing, `tsc` 0, eslint clean**. Invariant 3 met;
   the occurrence-insert-denied invariant untouched. No migration; dev untouched. PUP-28 core complete;
   UI wiring handed to PUP-29. Still no git commit (awaiting approval).
+- 2026-07-11: PUP-28 (Phase 1+2) committed to the branch (`970d805`) after user approval; full
+  `npm run check` green. PUP-28 stays "In Review".
+- 2026-07-11 (PUP-30 sub-slice 4a DONE — pure engine, lightweight TDD): added
+  `src/lib/notifications/scheduler.ts` — `computeScheduleSet` (enabled reminders → strictly-future
+  72h desired set over `expandOccurrencesForDay`, deduped/sorted, DST-correct, no `note`/PII) and
+  `reconcileSchedule` (cancel-all-owned → schedule desired, idempotent, fail-loud). No
+  `expo-notifications` import, no native, no UI → no install needed; `tsc` stays green. Test:
+  `src/test/notifications-scheduler.test.ts` (14: AC-1/2/3, EC-1/2/3, weekdays/one-off horizon,
+  privacy, ERR-1 fail-loud). `npm run check` exit 0. **TDD mode: lightweight; reduced assurance
+  because RED/GREEN/REFACTOR were not context-isolated** — mitigated by property/negative/idempotence
+  cases on a pure module (worst-case failure per Decision 5 is a duplicate banner, not lost data).
+  Sub-slice 4b (concrete expo adapter + provider/trigger wiring + physical-iPhone verification +
+  `expo-notifications` install) is deferred — it needs the native module and a real device.
+  Linear PUP-30 status not updated this session: the Linear MCP is unauthenticated (non-interactive).
