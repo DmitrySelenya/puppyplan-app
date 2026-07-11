@@ -21,6 +21,7 @@ import {
   type QuickLogPottySubtype,
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
+import type { ReminderLink } from '@/contracts/reminders';
 import {
   eventLogInsertSchema,
   eventLogRecordSchema,
@@ -66,6 +67,9 @@ type QuickLogMutationVariablesBase = Readonly<{
   occurredAt: string;
   puppyId: string;
   recoverySurface?: QuickLogRecoverySurface;
+  // Present only when this log is a routine check-off (PUP-28). Callers derive a deterministic
+  // clientEventId via createReminderCheckOffClientEventId so re-checking dedupes.
+  reminderLink?: ReminderLink;
   todayDate: string;
 }>;
 
@@ -250,6 +254,14 @@ export function createQuickLogMutationOptions(
         tracker_id: variables.trackerId,
         occurred_at: variables.occurredAt,
         ...(variables.trackerId === 'potty' ? { subtype: variables.pottySubtype } : {}),
+        ...(variables.reminderLink !== undefined
+          ? {
+            reminder_link: {
+              reminder_id: variables.reminderLink.reminderId,
+              scheduled_for: variables.reminderLink.scheduledFor,
+            },
+          }
+          : {}),
       });
       const timestamp = now();
       const invalidationKeys = getQuickLogInvalidationKeys({

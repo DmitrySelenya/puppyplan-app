@@ -14,6 +14,7 @@ Every file in `active/` must have a row in the Current Plans table below (enforc
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
+| Active task plan | [Dogfooding Readiness — Schedule, Notifications, Backdating, Install](active/2026-07-10-dogfooding-readiness.md) | `PUP-28`..`PUP-32` | Phase 0 — confirm expo-notifications approval (unblocks PUP-30), design lock, then PUP-28 |
 | Active follow-up plan | [Release Readiness — Deferred Gates Aggregator](active/2026-07-07-release-readiness.md) | no-Linear exception (aggregator) | Owns all deferred release/production/verification gates; each executed item gets its own issue |
 | Active task plan | [Health Offline Outbox](active/2026-07-04-health-offline-outbox.md) | no-Linear exception | Phase 5 — core complete locally; mutation-path wiring (enqueue-on-failure) in progress |
 | Active task plan | [V2 Tombstone RLS Follow-Up](active/2026-07-03-v2-tombstone-rls-follow-up.md) | no-Linear exception | Event Log follow-up complete locally; commit pending |

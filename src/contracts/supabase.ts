@@ -142,25 +142,37 @@ export const puppyQuickTrackerIdsSchema = z.array(puppyQuickTrackerIdSchema)
     });
   });
 
+// Present when the event is a routine check-off: links the fact to its planned slot.
+// One nested object (not loose keys) so the linkage is atomic; absence = spontaneous log.
+export const reminderLinkPayloadSchema = z.object({
+  reminder_id: uuidSchema,
+  scheduled_for: timestampSchema,
+}).strict();
+
 export const pottyEventPayloadSchema = z.object({
   subtype: z.enum(['outside', 'inside', 'poop']),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 }).strict();
 
 export const feedingEventPayloadSchema = z.object({
   amount: z.enum(['meal', 'snack', 'water']),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 }).strict();
 
 export const sleepEventPayloadSchema = z.object({
   sleep_kind: z.enum(['nap', 'overnight']),
   duration_minutes: z.number().int().min(1).max(1440).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 }).strict();
 
 export const walkEventPayloadSchema = z.object({
   duration_minutes: z.number().int().min(1).max(1440).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 }).strict();
 
 export const zoomiesEventPayloadSchema = z.object({
   intensity: z.enum(['low', 'medium', 'high']).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 }).strict();
 
 export const trainingEventPayloadSchema = z.object({

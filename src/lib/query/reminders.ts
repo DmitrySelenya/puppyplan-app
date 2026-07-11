@@ -5,6 +5,10 @@ import {
   type QueryClient,
 } from '@tanstack/react-query';
 
+import {
+  reminderScheduleDraftSchema,
+  type ReminderScheduleDraft,
+} from '@/contracts/reminders';
 import type { Reminder } from '@/contracts/supabase';
 import { createSupabaseReminderRepository } from '@/lib/supabase/reminders';
 import type {
@@ -12,6 +16,7 @@ import type {
   ReminderEnabledUpdate,
   ReminderInsert,
   ReminderQuietHours,
+  ReminderScheduleUpdate,
   SupabaseReminderRepository,
 } from '@/lib/supabase/reminders';
 
@@ -32,8 +37,26 @@ export type ReminderCreateDraft = Readonly<{
   puppyId: string;
   reminderName: string;
   respectQuietHours?: boolean;
+  // Full-contract path (PUP-28): when present, reminder_type = schedule.trackerId and
+  // schedule_rule = schedule.rule; timezone becomes required (no silent UTC).
+  schedule?: ReminderScheduleDraft;
+  timezone?: string;
   todayDate: string;
   userId: string;
+}>;
+
+export type ReminderScheduleUpdateDraft = Readonly<{
+  householdId: string;
+  puppyId: string;
+  reminderId: string;
+  schedule: ReminderScheduleDraft;
+  timezone: string;
+  todayDate: string;
+}>;
+
+export type ReminderScheduleUpdateMutationOptions = Readonly<{
+  mutationFn(draft: ReminderScheduleUpdateDraft): Promise<Reminder>;
+  onSuccess(record: Reminder, draft: ReminderScheduleUpdateDraft): Promise<void>;
 }>;
 
 export type ReminderCreateMutationOptions = Readonly<{
@@ -159,20 +182,70 @@ export function useDeleteReminderMutation(
   });
 }
 
+export function useUpdateReminderScheduleMutation(
+  repository: Pick<SupabaseReminderRepository, 'updateReminderSchedule'> =
+  createSupabaseReminderRepository(),
+) {
+  const queryClient = useQueryClient();
+  const options = createReminderScheduleUpdateMutationOptions({
+    queryClient,
+    repository,
+  });
+
+  return useMutation({
+    mutationFn: options.mutationFn,
+    onSuccess: options.onSuccess,
+  });
+}
+
 export function toReminderInsert(draft: ReminderCreateDraft): ReminderInsert {
-  return {
+  const base = {
     assigned_to: null,
     created_by: draft.userId,
     enabled: true,
     puppy_id: draft.puppyId,
     quiet_hours: draft.respectQuietHours ? defaultQuietHours : null,
-    reminder_type: draft.reminderName.trim(),
-    schedule_rule: {
-      repeat: 'daily',
-      time: defaultReminderTime,
-    },
-    timezone: defaultReminderTimezone,
     trusted_sitter_visible: false,
+  } as const;
+
+  if (draft.schedule === undefined) {
+    // Legacy static-form path (pre-PUP-29 callers).
+    return {
+      ...base,
+      reminder_type: draft.reminderName.trim(),
+      schedule_rule: {
+        repeat: 'daily',
+        time: defaultReminderTime,
+      },
+      timezone: defaultReminderTimezone,
+    };
+  }
+
+  if (draft.timezone === undefined) {
+    throw new Error('reminder_schedule_requires_timezone');
+  }
+
+  const schedule = reminderScheduleDraftSchema.parse(draft.schedule);
+
+  return {
+    ...base,
+    reminder_type: schedule.trackerId,
+    schedule_rule: schedule.rule,
+    timezone: draft.timezone,
+  };
+}
+
+export function toReminderScheduleUpdate(
+  draft: ReminderScheduleUpdateDraft,
+): ReminderScheduleUpdate {
+  const schedule = reminderScheduleDraftSchema.parse(draft.schedule);
+
+  return {
+    id: draft.reminderId,
+    puppy_id: draft.puppyId,
+    reminder_type: schedule.trackerId,
+    schedule_rule: schedule.rule,
+    timezone: draft.timezone,
   };
 }
 
@@ -222,6 +295,28 @@ export function createReminderDeleteMutationOptions(
   return {
     mutationFn: (draft) => dependencies.repository.deleteReminder(toReminderDeleteUpdate(draft)),
     onSuccess: async (_result, draft) => {
+      await Promise.all([
+        dependencies.queryClient?.invalidateQueries({
+          queryKey: queryKeys.reminders.list(draft.householdId, draft.puppyId),
+        }),
+        dependencies.queryClient?.invalidateQueries({
+          queryKey: queryKeys.today.dashboard(draft.householdId, draft.puppyId, draft.todayDate),
+        }),
+      ]);
+    },
+  };
+}
+
+export function createReminderScheduleUpdateMutationOptions(
+  dependencies: Readonly<{
+    queryClient?: ReminderInvalidationClient;
+    repository: Pick<SupabaseReminderRepository, 'updateReminderSchedule'>;
+  }>,
+): ReminderScheduleUpdateMutationOptions {
+  return {
+    mutationFn: (draft) =>
+      dependencies.repository.updateReminderSchedule(toReminderScheduleUpdate(draft)),
+    onSuccess: async (_record, draft) => {
       await Promise.all([
         dependencies.queryClient?.invalidateQueries({
           queryKey: queryKeys.reminders.list(draft.householdId, draft.puppyId),

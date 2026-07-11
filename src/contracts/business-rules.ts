@@ -5,10 +5,17 @@ export const QUICK_LOG_DUPLICATE_CARE_WARNING_WINDOW_SECONDS = 60;
 export const QUICK_LOG_OPTIMISTIC_VISIBLE_TARGET_MS = 100;
 export const QUICK_LOG_FAILED_BANNER_RETRY_COUNT_THRESHOLD = 3;
 
+// Backdating bound: an event may be logged at `now` or up to this many days earlier, never
+// in the future. The 3s double-tap window stays keyed to submission time; the 60s duplicate-care
+// window keeps comparing occurred_at values (see quick-log-backdating.test.ts).
+export const QUICK_LOG_BACKDATE_MAX_DAYS = 7;
+
 export const QUICK_LOG_ACCIDENTAL_DOUBLE_TAP_WINDOW_MS =
   QUICK_LOG_ACCIDENTAL_DOUBLE_TAP_WINDOW_SECONDS * 1000;
 export const QUICK_LOG_DUPLICATE_CARE_WARNING_WINDOW_MS =
   QUICK_LOG_DUPLICATE_CARE_WARNING_WINDOW_SECONDS * 1000;
+export const QUICK_LOG_BACKDATE_MAX_MS =
+  QUICK_LOG_BACKDATE_MAX_DAYS * 24 * 60 * 60 * 1000;
 
 export const quickLogTiming = {
   accidentalDoubleTapWindowSeconds: QUICK_LOG_ACCIDENTAL_DOUBLE_TAP_WINDOW_SECONDS,
@@ -72,6 +79,23 @@ export function shouldShowQuickLogDuplicateCareWarning(
       input.nextOccurredAtMs,
       QUICK_LOG_DUPLICATE_CARE_WARNING_WINDOW_MS,
     );
+}
+
+export type QuickLogOccurredAtBoundsInput = Readonly<{
+  occurredAtMs: number;
+  nowMs: number;
+}>;
+
+export function isQuickLogOccurredAtWithinBackdateWindow(
+  input: QuickLogOccurredAtBoundsInput,
+): boolean {
+  const { occurredAtMs, nowMs } = input;
+
+  if (!Number.isFinite(occurredAtMs) || !Number.isFinite(nowMs)) {
+    return false;
+  }
+
+  return occurredAtMs <= nowMs && occurredAtMs >= nowMs - QUICK_LOG_BACKDATE_MAX_MS;
 }
 
 export function shouldShowQuickLogFailedBanner(

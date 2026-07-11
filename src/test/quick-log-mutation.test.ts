@@ -86,6 +86,40 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
+  it('threads a routine check-off link into the enqueued and inserted event payload (PUP-28)', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const reminderId = '00000000-0000-4000-8000-000000000301';
+    const scheduledFor = '2026-05-26T08:00:00.000Z';
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+    const variables = {
+      householdId,
+      puppyId,
+      trackerId: 'feeding' as const,
+      occurredAt,
+      todayDate,
+      reminderLink: { reminderId, scheduledFor },
+    };
+
+    await options.onMutate?.(variables);
+    await options.mutationFn?.(variables);
+
+    const expectedLink = { reminder_id: reminderId, scheduled_for: scheduledFor };
+    expect(queue.items.get(clientEventId)?.payload).toMatchObject({ reminder_link: expectedLink });
+    expect(events.inserts[0]?.payload).toMatchObject({
+      amount: 'meal',
+      reminder_link: expectedLink,
+    });
+  });
+
   it('uses a caller-provided client id when the sheet needs an immediate details target', async () => {
     const queryClient = createTestQueryClient();
     const queue = new FakeQuickLogQueueStorage();

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   eventLogInsertSchema,
   minimalQuickLogQueueItemSchema,
+  reminderLinkPayloadSchema,
   timestampSchema,
   uuidSchema,
   walkEventPayloadSchema,
@@ -128,6 +129,8 @@ const quickLogCommandBaseSchema = {
   puppy_id: uuidSchema,
   created_by: uuidSchema,
   occurred_at: timestampSchema,
+  // Present only for routine check-off facts (PUP-28): copied into the event payload.
+  reminder_link: reminderLinkPayloadSchema.optional(),
 } as const;
 
 export const quickLogCommandSchema = z.discriminatedUnion('tracker_id', [
@@ -187,11 +190,14 @@ export type QuickLogQueueItem = z.infer<typeof quickLogQueueItemSchema>;
 export function createQuickLogEventInsert(command: unknown): QuickLogEventInsert {
   const parsedCommand = quickLogCommandSchema.parse(command);
   const definition = quickLogTrackerDefinitions[parsedCommand.tracker_id];
-  const payload = parsedCommand.tracker_id === 'potty'
+  const basePayload = parsedCommand.tracker_id === 'potty'
     ? { subtype: parsedCommand.subtype }
     : parsedCommand.tracker_id === 'walk'
       ? { ...definition.payload, ...(parsedCommand.payload ?? {}) }
       : { ...definition.payload };
+  const payload = parsedCommand.reminder_link === undefined
+    ? basePayload
+    : { ...basePayload, reminder_link: parsedCommand.reminder_link };
 
   return eventLogInsertSchema.parse({
     puppy_id: parsedCommand.puppy_id,
