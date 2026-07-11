@@ -754,3 +754,16 @@ Dependency order: PUP-28 → PUP-29 → PUP-30 (30 also gated on dependency appr
   (v1 non-goal). Provider isolated from jest (root layout is not rendered in tests → native module never
   loaded). **Remaining: 4b-device** — `npx expo run:ios --device` native build + on-device banner
   evidence (needs the physical iPhone; may need interactive Xcode signing).
+- 2026-07-11 (4b native config VALIDATED; device build handed off): set explicit
+  `ios.bundleIdentifier` / `android.package` (`90448b9`) — required because the dynamic
+  `app.config.ts` blocks prebuild auto-write. `npx expo prebuild -p ios --clean` then regenerates the
+  iOS project cleanly WITH the expo-notifications config plugin, and `pod install` integrates
+  `ExpoNotifications 55.0.24` (Podfile.lock verified). Runbook gotcha (PUP-32): CocoaPods fails with
+  `Encoding::CompatibilityError` unless the shell is UTF-8 — run pods/build with
+  `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`. The full simulator build (`expo run:ios`) was killed
+  mid-native-compilation in this environment (during pod C++ compile, before app JS — a sandbox
+  resource limit, not a code error; no compile error emitted). 4b-device is therefore handed to a
+  local Mac run (also the natural home for device signing + the authed banner smoke, overlapping
+  PUP-32): `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo run:ios --device` → sign in (shared debug
+  account) → create an enabled reminder a couple minutes out → confirm the banner → disable it →
+  confirm no further banner. PUP-30 stays In Progress until that evidence lands.
