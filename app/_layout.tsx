@@ -9,6 +9,7 @@ import { DesignFontGate } from '@/design/fonts';
 import { resolveAuthRouteRedirect } from '@/features/auth';
 import { QuickLogFeedbackProvider } from '@/features/quick-log/QuickLogFeedbackProvider';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { LocalReminderSync } from '@/lib/notifications/LocalReminderSyncProvider';
 import { AppProviders } from '@/lib/providers/AppProviders';
 
 export default function RootLayout() {
@@ -18,6 +19,7 @@ export default function RootLayout() {
         <DesignFontGate>
           <AuthProvider>
             <AuthRouteGate />
+            <LocalReminderSync />
             <QuickLogFeedbackProvider>
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />

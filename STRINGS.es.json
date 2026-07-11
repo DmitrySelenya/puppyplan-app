@@ -1596,6 +1596,10 @@
   },
   "reminders": {
     "screen-title": "Recordatorios",
+    "local-notification": {
+      "title": "Rutina del cachorro",
+      "body": "Hora de {{activity}}"
+    },
     "segments": [
       "Activo",
       "Apagado"

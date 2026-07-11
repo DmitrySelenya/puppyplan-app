@@ -16,7 +16,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ...config.android,
     predictiveBackGestureEnabled: true,
   },
-  plugins: ['expo-router', 'expo-splash-screen', 'expo-sqlite', 'expo-secure-store', './plugins/with-ios-privacy-manifest'],
+  plugins: ['expo-router', 'expo-splash-screen', 'expo-sqlite', 'expo-secure-store', 'expo-notifications', './plugins/with-ios-privacy-manifest'],
   experiments: {
     typedRoutes: true,
   },

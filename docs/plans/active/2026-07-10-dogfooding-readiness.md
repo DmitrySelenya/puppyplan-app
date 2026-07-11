@@ -503,8 +503,18 @@ verification (4b) follow, since they require the native module and a real iPhone
 **Checklist:**
 - [x] Record explicit user approval for `expo-notifications` (and `expo-device` if required).
       Approved 2026-07-10 ("одобряю expo-notifications"); install deferred to 4b (device work).
-- [ ] Adapter: permission (staged/provisional per `11-notifications.md`), categories, schedule,
-      cancel-all-owned; all side effects behind the adapter for testability. **(4b)**
+- [x] Adapter + runtime wiring (**4b code core, DONE 2026-07-11**): `createExpoReminderNotificationAdapter`
+      (permission, foreground handler, schedule, cancel-all-owned) behind the `NotificationSchedulerPort`;
+      `toReminderForExpansion` (row → expansion, skips legacy/invalid), `syncLocalReminders` (pref/permission
+      gate → reconcile, fail-loud to observability), `collectDesiredNotifications` (per-reminder-tz grouping),
+      `buildReminderNotificationContent` (typed i18n, tracker-labelled, no PII); `LocalReminderSyncProvider`
+      wired in the root `app/_layout.tsx` (mount + reminders/context/preference change + foreground triggers);
+      `expo-notifications` config plugin added. **Named deviations (recorded):** (a) `ensurePermission`
+      requests **full** authorization, not provisional-first — the provisional+in-app-primer flow is deferred
+      to **4c** with the primer UI; (b) the **denied-fallback card** (Settings deep link) is deferred to the
+      UI/design pass (permission is requested and, if denied, sync simply schedules nothing — no crash);
+      (c) Done/Snooze notification **actions** remain a v1 non-goal (open-app only). Device banner
+      verification is **4b-device** (below).
 - [x] Pure scheduling engine (**4a, DONE 2026-07-11**): enabled reminders → next-72h desired set
       (`computeScheduleSet`) + idempotent `reconcileSchedule(port, desired)` over an injected
       `NotificationSchedulerPort`. Reschedule *triggers* (foreground/auth/mutation/timezone) and
@@ -729,3 +739,18 @@ Dependency order: PUP-28 → PUP-29 → PUP-30 (30 also gated on dependency appr
   Sub-slice 4b (concrete expo adapter + provider/trigger wiring + physical-iPhone verification +
   `expo-notifications` install) is deferred — it needs the native module and a real device.
   Linear PUP-30 status not updated this session: the Linear MCP is unauthenticated (non-interactive).
+- 2026-07-11: branch hygiene — PUP-30 work moved to its own branch
+  `dimaselenya/pup-30-local-notifications-from-reminders-ios-first` (4a commit `71eca13` rides on the
+  PUP-28 base, stacked); the PUP-28 branch was reset to its own commit `970d805`. Linear reconnected;
+  PUP-30 set to In Progress.
+- 2026-07-11 (PUP-30 sub-slice 4b code core DONE — lightweight TDD): installed `expo-notifications`
+  `~55.0.24` (approved). Added the concrete adapter, `localReminderSync` orchestration
+  (`toReminderForExpansion` / `syncLocalReminders` / `collectDesiredNotifications`),
+  `reminderNotificationContent` (typed i18n copy `reminders.local-notification.title/body`, EN/RU/ES),
+  the `LocalReminderSyncProvider` (root-layout wiring), and the `expo-notifications` config plugin.
+  Test: `src/test/local-reminder-notifications.test.ts` (10 — content, row mapping, tz grouping,
+  pref/permission gating, ERR fail-loud). `npm run check` exit 0. Named deviations recorded in Phase 4:
+  full-permission (provisional-first primer → 4c), denied-fallback card → UI pass, Done/Snooze actions
+  (v1 non-goal). Provider isolated from jest (root layout is not rendered in tests → native module never
+  loaded). **Remaining: 4b-device** — `npx expo run:ios --device` native build + on-device banner
+  evidence (needs the physical iPhone; may need interactive Xcode signing).

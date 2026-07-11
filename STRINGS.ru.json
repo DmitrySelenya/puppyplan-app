@@ -1527,6 +1527,10 @@
 
   "reminders": {
     "screen-title": "Напоминания",
+    "local-notification": {
+      "title": "Режим щенка",
+      "body": "Пора: {{activity}}"
+    },
     "segments": ["Активные", "Выключенные"],
     "segments-a11y": "Статус напоминаний",
     "actions": {

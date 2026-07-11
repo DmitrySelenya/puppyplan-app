@@ -1531,6 +1531,10 @@
 
   "reminders": {
     "screen-title": "Reminders",
+    "local-notification": {
+      "title": "Puppy routine",
+      "body": "Time for {{activity}}"
+    },
     "segments": ["Active", "Off"],
     "segments-a11y": "Reminder status",
     "actions": {
