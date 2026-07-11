@@ -10,10 +10,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: 'light',
   ios: {
     ...config.ios,
+    bundleIdentifier: 'com.dmitry-selenya.puppyplan-app',
     supportsTablet: false,
   },
   android: {
     ...config.android,
+    package: 'com.dmitry_selenya.puppyplan_app',
     predictiveBackGestureEnabled: true,
   },
   plugins: ['expo-router', 'expo-splash-screen', 'expo-sqlite', 'expo-secure-store', 'expo-notifications', './plugins/with-ios-privacy-manifest'],
