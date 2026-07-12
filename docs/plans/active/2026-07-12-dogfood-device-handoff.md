@@ -11,9 +11,9 @@
 core loop, signed into the shared dogfood account, with the owner-executed physical acceptance
 checklist in `docs/dogfood/local-ios-build.md` completed and recorded.
 
-**Status:** Blocked in Phase 3 — the third authorized correction and repeated sweep completed with a remaining in-scope Diary FAIL.
+**Status:** Awaiting owner execution in Phase 4 — Phase 3 standalone smoke and full Dynamic Type sweep pass.
 
-**Current phase:** Phase 3 — repeat chips pass, but AC-DT-2 still fails because Diary time chrome destructively ellipsizes; owner decision required before any further correction/sweep.
+**Current phase:** Phase 4 — owner installs the same local Release on two physical iPhones and records the open 8-item checklist; no item is agent-certified.
 
 **Plan type:** Active task plan.
 
@@ -128,7 +128,7 @@ changelog. *(Done 2026-07-12: app revision `3916b8b`.)*
 - [x] Capture synthetic evidence screenshots (headless `simctl`/`idb` driving works when the Mac
   is locked; relaunch the app between edit deep links — same-route remount does not re-read
   `initialDraft`).
-- [ ] Run the deferred manual sweeps in the same Release build: Dynamic Type XXXL and long-text on
+- [x] Run the deferred manual sweeps in the same Release build: Dynamic Type XXXL and long-text on
   Quick Log composer, routine editor, Diary; record results in `phase4-stage4-rebuilt.md`.
 
 **Acceptance:** Release app completes the loop with Metro stopped; evidence recorded.
@@ -420,6 +420,51 @@ Execution result (2026-07-12):
   `7:30` as `7:…`, destroying meaning. AC-DT-2 and AC-DT-2G remain failed; Phase 3 stays open.
   Content size was restored to `large`.
 
+#### Authorized correction — fourth AC-DT-2 iteration (owner, 2026-07-12)
+
+Owner authorization received for one correction limited to Diary `TimeGutter`, one repeated
+standalone Release XXXL + long-text sweep, and one local commit. Push, PR, dependency, schema,
+production, and native-project changes remain forbidden.
+
+Root-cause evidence: the third iteration constrained the clock to one line but left the gutter at
+46 pt. Its 9 pt right padding leaves only 37 pt for the capped/scaled Lora clock, so native iOS
+correctly truncates `7:30` to `7:…`. The defect is container geometry, not the stored value or text
+ceiling.
+
+Locked regression criteria:
+
+- **AC-DT-2K:** below `fontScale=2`, TimeGutter retains its 46 pt default width; at
+  `fontScale>=2`, it uses a minimally wider 62 pt gutter so complete `7:30`/`7:30 AM` clock text
+  remains on one line with the existing `1.3` ceiling and no ellipsis.
+- **AC-DT-2L:** the adaptive gutter retains right alignment, full time children, font scaling,
+  numeric styling, and default Diary row semantics; no clock value is shortened or replaced.
+- **AC-DT-2M:** render tests prove both sides of the exact `1.999`/`2.0` threshold before production
+  changes, and the rebuilt SE Release visually proves the complete clock while preserving the
+  first-viewport WeekStrip and first day-list row.
+- **AC-DT-2N:** after focused/broader tests and `npm run check` pass, exactly one rebuilt standalone
+  Release is launched with no TCP 8081 listener and the full named XXXL + long-Cyrillic sweep is
+  repeated once with fresh per-surface side-by-side PNG evidence and honest PASS/FAIL recording.
+
+TDD mode remains heavy/full-isolated RED, GREEN, REFACTOR. A failure outside Dynamic Type scope
+stops execution; an in-scope failure is recorded and prevents Phase 3 completion without a fifth
+fix-forward iteration.
+
+Execution result (2026-07-12):
+
+- **RED:** exact-threshold regression coverage failed only at `fontScale=2` (1 failed / 20 passed):
+  TimeGutter remained 46 pt instead of the locked 62 pt; the 1.999/default case already passed.
+- **GREEN:** TimeGutter retained 46 pt below the threshold and applied 62 pt at `fontScale>=2`;
+  the focused suite passed 21/21.
+- **REFACTOR:** no change; the one conditional width override was already minimal. Focused 21/21
+  and the broader Dynamic Type set 187/187 remained green.
+- **Full gate:** `npm run check` exited 0 (95 Jest suites / 861 tests plus node/scaffold/i18n/
+  privacy/token gates). Existing React `act()` and Expo notification warnings were not suppressed.
+- **Release:** the exact Release/SE/`--no-bundler` build succeeded with 0 errors / 4 known warnings.
+  With no TCP 8081 listener, terminate + plain `simctl launch` started PID 68089.
+- **Repeated full sweep:** ran exactly once with fresh default/XXXL captures per named surface.
+  Diary now shows complete `7:30 AM`; all six surfaces pass and no outside-scope defect was found.
+  AC-DT-1..4 hold, the Phase 3 sweep checkbox is complete, and content size returned to `large`.
+
 ### Phase 4 — Two physical iPhones (user-executed, agent-guided)
 
 - [ ] Owner opens the Xcode workspace, selects Release + own signing team, and installs the frozen
@@ -454,6 +499,15 @@ cancellation); XXXL/long-text sweeps are recorded; plans/Linear reflect the outc
 anyone claim "the household can track the puppy in PuppyPlan".
 
 ## Changelog
+
+- 2026-07-12: Owner authorized a fourth TimeGutter-only Dynamic Type iteration, one repeated full
+  Release sweep, and a local commit. Root cause was fixed 46 pt geometry leaving only 37 pt after
+  padding. Heavy isolated TDD added the exact 1.999/2.0 boundary and an adaptive 62 pt AX gutter;
+  focused tests passed 21/21, broader Dynamic Type tests 187/187, and `npm run check` passed
+  (95 suites / 861 tests). The standalone Release built with 0 errors / 4 known warnings and
+  launched without Metro. Fresh per-surface evidence records PASS across Diary, Quick Log fast
+  lane/details, RoutineEditor, reminders, and Capsule chooser. Phase 3 is complete; Phase 4 awaits
+  the owner's two-iPhone install and open 8-item checklist, none agent-certified.
 
 - 2026-07-12: Owner authorized a third narrow Dynamic Type iteration for Diary TimeGutter and
   RoutineEditor repeat chips, one repeated full Release sweep, and a local commit. Heavy isolated

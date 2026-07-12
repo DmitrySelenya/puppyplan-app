@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { designFontFamilies } from '@/design/fonts';
 import { AppText } from '@/design/primitives/AppText';
@@ -13,11 +13,14 @@ export type TimeGutterProps = {
 
 /** Right-aligned time column that anchors a Diary event row. */
 export function TimeGutter({ time, testID }: TimeGutterProps) {
+  const { fontScale } = useWindowDimensions();
   const normalizedTime = time.trim().replaceAll('\u00a0', ' ').replaceAll('\u202f', ' ');
   const [clock, meridiem] = normalizedTime.split(/\s+/, 2);
 
   return (
-    <View style={styles.gutter} testID={testID}>
+    <View
+      style={[styles.gutter, fontScale >= 2 ? styles.accessibilityGutter : null]}
+      testID={testID}>
       <AppText
         maxFontSizeMultiplier={1.3}
         numeric
@@ -42,6 +45,9 @@ export function TimeGutter({ time, testID }: TimeGutterProps) {
 }
 
 const styles = StyleSheet.create({
+  accessibilityGutter: {
+    width: 62,
+  },
   clock: {
     fontFamily: designFontFamilies.display.semibold,
     fontWeight: '700',

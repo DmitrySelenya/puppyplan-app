@@ -145,3 +145,26 @@ XXXL captures below are fresh 750 × 1334 simulator PNGs; content size was resto
 
 The authorized repeated sweep ran once. The Diary failure is in Dynamic Type scope, so it is
 recorded honestly without a fourth fix-forward iteration. The Phase 3 sweep checkbox remains open.
+
+## Fourth authorized AC-DT-2 correction — repeated full sweep
+
+**Result:** PASS — AC-DT-1..4 hold across the complete named sweep
+
+**Build:** rebuilt local Release, embedded JS bundle, terminate + plain `simctl launch`, no TCP
+8081 listener
+
+**Target:** `Grith iPhone SE 3 iOS 26.3` (`750x1334`)
+
+**Content size:** `accessibility-extra-extra-extra-large` (restored to `large` after capture)
+
+| Surface | Fresh default vs XXXL evidence | Result |
+| --- | --- | --- |
+| Diary header, WeekStrip, planned/actual rows, resting capsule | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt4-diary-side-by-side.png) | **PASS** — adaptive 62 pt time chrome shows complete `7:30 AM` without wrapping or ellipsis; the complete long Cyrillic greeting, WeekStrip, and first day-list row remain in the first viewport. |
+| Quick Log fast lane | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt4-quick-log-side-by-side.png) · [XXXL scrolled action](phase4-stage4-rebuilt/release-sweeps/dt4-quick-log-bottom-xxxl.png) | **PASS** — tracker labels remain whole and the detailed-log action remains reachable. |
+| Quick Log detailed composer | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt4-quick-log-details-side-by-side.png) · [XXXL fields/actions](phase4-stage4-rebuilt/release-sweeps/dt4-quick-log-details-bottom-xxxl.png) | **PASS** — detail labels remain whole; native date/time, private note, Save, and Skip remain reachable. |
+| Routine editor | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt4-routine-editor-side-by-side.png) · [XXXL repeat section](phase4-stage4-rebuilt/release-sweeps/dt4-routine-editor-repeat-xxxl.png) | **PASS** — event controls and all repeat choices remain full width, complete, and reachable. |
+| Reminders hub | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt4-reminders-side-by-side.png) · [long Cyrillic row](phase4-stage4-rebuilt/release-sweeps/dt4-reminders-long-row-xxxl.png) | **PASS** — header controls remain separated; complete long Cyrillic title, schedule, and toggle remain reachable without ellipsis. |
+| Capsule Add chooser | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt4-capsule-chooser-side-by-side.png) | **PASS** — icon-only tabs, both complete chooser actions, and the close FAB remain visible and reachable. |
+
+The repeated sweep ran exactly once with the existing synthetic long-text values. No finding outside
+Dynamic Type scope was observed. Phase 3's deferred XXXL/long-text sweep is complete.

@@ -18,6 +18,16 @@ import {
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
 
+let mockFontScale = 1;
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({ fontScale: mockFontScale, height: 667, scale: 2, width: 375 }),
+  });
+});
+
 function flatten(node: { props: { style?: unknown } }) {
   return StyleSheet.flatten(node.props.style as never) as Record<string, unknown>;
 }
@@ -60,6 +70,41 @@ describe('IconChip', () => {
 });
 
 describe('TimeGutter', () => {
+  beforeEach(() => {
+    mockFontScale = 1;
+  });
+
+  it.each([
+    { expectedWidth: 46, fontScale: 1.999 },
+    { expectedWidth: 62, fontScale: 2 },
+  ])('AC-DT-2K AC-DT-2L AC-DT-2M adapts the complete time gutter at fontScale $fontScale', ({
+    expectedWidth,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(<TimeGutter time="7:30 AM" testID="adaptive-time-gutter" />);
+
+    const gutterStyle = flatten(screen.getByTestId('adaptive-time-gutter'));
+    const clock = screen.getByText('7:30');
+    const meridiem = screen.getByText('AM');
+
+    expect(gutterStyle.width).toBe(expectedWidth);
+    expect(gutterStyle.alignItems).toBe('flex-end');
+    expect(clock.props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      children: '7:30',
+      maxFontSizeMultiplier: 1.3,
+      numberOfLines: 1,
+    }));
+    expect(StyleSheet.flatten(clock.props.style).fontVariant).toEqual(['tabular-nums']);
+    expect(meridiem.props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      children: 'AM',
+      maxFontSizeMultiplier: 1.3,
+      numberOfLines: 1,
+    }));
+  });
+
   it('AC-DT-2 AC-DT-3 AC-DT-4 keeps full fixed-gutter clock text scalable within 1.3', () => {
     render(<TimeGutter time="7:15 am" />);
     expect(screen.getByText('7:15').props).toEqual(expect.objectContaining({
