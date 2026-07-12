@@ -65,18 +65,18 @@ guardrails, and the per-state Stage 4 comparison.
 
 **Why:** two phones must run one known revision; rollback needs a commit to return to.
 
-- [ ] Re-run the full gate on the exact tree being frozen: `npm run typecheck`, `npm run check`,
+- [x] Re-run the full gate on the exact tree being frozen: `npm run typecheck`, `npm run check`,
   `npx jest` — all must be green with zero new warnings.
-- [ ] Review `git status`/`git diff` for stray files (scratch captures, `.env`, secrets, private
+- [x] Review `git status`/`git diff` for stray files (scratch captures, `.env`, secrets, private
   data). Evidence PNGs under `docs/design/v2/screenshots/` are intentional and synthetic-only.
-- [ ] Propose a commit plan to the user (single commit or the PUP-31/29/30/32 stack split named in
+- [x] Propose a commit plan to the user (single commit or the PUP-31/29/30/32 stack split named in
   the core-loop plan — recommend whichever the user prefers; a single reviewed commit on the
   current branch is acceptable for dogfood).
-- [ ] **STOP: obtain exact user approval, then commit.** No push/rebase/merge/PR without its own
+- [x] **STOP: obtain exact user approval, then commit.** No push/rebase/merge/PR without its own
   separate exact approval.
 
 **Acceptance:** `git status` is clean; the frozen revision hash is recorded in this plan's
-changelog.
+changelog. *(Done 2026-07-12: app revision `3916b8b`.)*
 
 ### Phase 2 — Disk gate (user-executed)
 
@@ -138,6 +138,10 @@ anyone claim "the household can track the puppy in PuppyPlan".
 
 ## Changelog
 
+- 2026-07-12: Phase 1 revision freeze complete. Full gate re-run green on the exact tree
+  (typecheck, `npm run check` exit 0, 95 suites / 835 tests); tree reviewed for strays; owner
+  approved a single commit on the current branch. Frozen app revision: `3916b8b` (114 files).
+  Push/PR remain unapproved. Phases 3–5 are handed to the follow-up agent.
 - 2026-07-12: Phase 2 disk gate passed. With the owner's "clean safe junk" approval, regenerable
   caches were deleted: Xcode DerivedData (7.4 GiB incl. the PuppyPlan build dir and module caches
   — next build is a cold build), npm cache (2.7 GiB), CocoaPods cache (1.5 GiB), pip cache,
