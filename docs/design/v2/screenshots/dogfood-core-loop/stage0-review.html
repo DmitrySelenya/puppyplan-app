@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PuppyPlan Dogfood Core Loop — Stage 0 Review</title>
+  <style>
+    :root { --canvas:#f6efe3; --raised:#fffcf6; --sunken:#ece3d4; --ink:#2c2824; --muted:#6b6256; --tertiary:#8a7e6c; --clay:#b26a3c; --clay-tint:#fbf2ea; --sage:#5e7a3e; --sage-tint:#e8eedd; --honey:#b07a1e; --honey-tint:#fbefd9; --line:#dfd4c5; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:var(--ink); font-family:Nunito, -apple-system, BlinkMacSystemFont, sans-serif; }
+    .board { width:1440px; min-height:900px; padding:56px 64px 64px; }
+    .eyebrow { color:var(--clay); font-weight:800; letter-spacing:.12em; text-transform:uppercase; font-size:14px; }
+    h1 { margin:10px 0 8px; font:600 42px/1.1 Lora, Georgia, serif; letter-spacing:-.02em; }
+    .lede { max-width:720px; color:var(--muted); font-size:18px; line-height:1.5; }
+    .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:28px; margin-top:42px; }
+    .panel { min-height:650px; background:var(--raised); border:1px solid var(--line); border-radius:28px; padding:20px; box-shadow:0 16px 40px rgba(72,50,31,.10); }
+    .panel h2 { margin:4px 0 4px; font:600 22px/1.2 Lora, Georgia, serif; }
+    .caption { color:var(--muted); font-size:13px; line-height:1.45; }
+    .phone { margin-top:18px; background:var(--canvas); border:8px solid #3d3934; border-radius:30px; padding:14px 13px 16px; min-height:505px; box-shadow:0 10px 20px rgba(44,40,36,.18); }
+    .status { display:flex; justify-content:space-between; color:var(--tertiary); font-size:11px; font-weight:800; }
+    .nav { display:flex; justify-content:space-between; align-items:center; margin:14px 0 18px; }
+    .nav strong { font:600 21px Lora, Georgia, serif; }
+    .button { min-height:44px; border-radius:14px; border:0; padding:0 16px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff7ef; background:var(--clay); }
+    .button.secondary { color:var(--clay); background:var(--clay-tint); }
+    .label { margin:18px 0 8px; color:var(--tertiary); font-size:11px; letter-spacing:.1em; text-transform:uppercase; font-weight:800; }
+    .chips { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .chip { min-height:54px; border:1px solid var(--line); border-radius:14px; background:var(--raised); padding:8px; font-size:12px; font-weight:800; }
+    .chip.selected { border-color:var(--clay); background:var(--clay-tint); color:var(--clay); }
+    .row { min-height:52px; border:1px solid var(--line); border-radius:14px; background:var(--raised); display:flex; align-items:center; justify-content:space-between; padding:0 13px; margin-top:8px; }
+    .row small { display:block; color:var(--muted); font-size:11px; margin-top:3px; }
+    .field { min-height:74px; border:1px solid var(--line); border-radius:14px; background:var(--raised); padding:12px 14px; color:var(--muted); }
+    .field strong { display:block; color:var(--ink); font-size:14px; margin-bottom:4px; }
+    .note { background:var(--honey-tint); border-radius:14px; padding:12px 14px; color:var(--honey); font-size:12px; line-height:1.45; }
+    .permission { margin-top:130px; background:var(--raised); border-radius:24px; padding:20px; box-shadow:0 10px 28px rgba(72,50,31,.14); }
+    .permission .icon { width:44px; height:44px; border-radius:14px; background:var(--clay-tint); color:var(--clay); display:grid; place-items:center; font-size:21px; }
+    .permission h3 { margin:16px 0 7px; font:600 23px Lora, Georgia, serif; }
+    .permission p { margin:0 0 16px; color:var(--muted); line-height:1.45; font-size:13px; }
+    .denied { background:#f6e8e4; border-radius:14px; padding:12px 14px; color:#7d3d32; font-size:12px; line-height:1.45; }
+    .footer { display:flex; gap:10px; align-items:center; margin-top:24px; color:var(--muted); font-size:13px; }
+    .dot { width:9px; height:9px; border-radius:50%; background:var(--sage); }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <div class="eyebrow">PuppyPlan · Dogfood Core Loop</div>
+    <h1>Quiet confidence for the first 90 days.</h1>
+    <p class="lede">Stage 0 review: one coherent native language across capture, permission, and recovery. Warm Clay gives action a human pulse; Sage marks care completed; every state stays useful and calm.</p>
+    <section class="grid">
+      <article class="panel">
+        <h2>Detailed capture</h2><div class="caption">Fast lane stays fast; details appear only when requested.</div>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ◇</span></div>
+          <div class="nav"><strong>Log an event</strong><span aria-label="Close">×</span></div>
+          <div class="label">What happened?</div>
+          <div class="chips"><div class="chip selected">Potty</div><div class="chip">Feeding</div><div class="chip">Sleep</div><div class="chip">Walk</div><div class="chip">Training</div><div class="chip">Observation</div></div>
+          <div class="label">When</div><div class="row"><div><b>Now</b><small>Today · 9:41 AM</small></div><span>›</span></div>
+          <div class="label">Private context <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></div>
+          <div class="field"><strong>Add a note</strong><span>Only you can see this.</span></div>
+          <div style="height:16px"></div><div class="button">Save event</div>
+        </div>
+      </article>
+      <article class="panel">
+        <h2>Permission, before prompt</h2><div class="caption">Scheduling stays independent from permission; intent comes first.</div>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ◇</span></div>
+          <div class="permission"><div class="icon">⌁</div><h3>Keep the useful moments close</h3><p>Allow reminders for routines you choose. We never put private notes or puppy names in notifications.</p><div class="button">Allow reminders</div><div style="height:8px"></div><div class="button secondary">Not now</div></div>
+        </div>
+      </article>
+      <article class="panel">
+        <h2>Permission, after denial</h2><div class="caption">The care loop remains fully usable; Settings is an optional repair path.</div>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮ ◇</span></div>
+          <div class="nav"><strong>Today</strong><span style="color:var(--clay)">L</span></div>
+          <div class="denied"><strong>Reminders are off</strong><br>Routines and Diary still work. Turn reminders on in Settings whenever you’re ready.</div>
+          <div class="label">Today</div>
+          <div class="row"><div><b>Walk</b><small>7:15 AM · Planned · 20 min</small></div><span style="color:var(--sage)">✓</span></div>
+          <div class="row"><div><b>Feeding</b><small>7:30 AM · Planned · 60 g</small></div><span style="color:var(--clay)">○</span></div>
+          <div style="height:16px"></div><div class="button secondary">Open Settings</div>
+          <div style="height:18px"></div><div class="note">Privacy promise · lock-screen content stays generic and private.</div>
+        </div>
+      </article>
+    </section>
+    <div class="footer"><span class="dot"></span><span>Approved direction: Clay / Sage / Honey · native controls · calm recovery · synthetic data only</span></div>
+  </main>
+</body>
+</html>

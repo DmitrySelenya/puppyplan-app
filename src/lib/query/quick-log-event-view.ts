@@ -9,7 +9,12 @@ import type {
   QuickLogRecoverySurface,
   QuickLogSourceSurface,
 } from '@/contracts/analytics';
-import { eventPayloadSchemas, jsonObjectSchema, type HouseholdMembershipRole } from '@/contracts/supabase';
+import {
+  eventPayloadSchemas,
+  eventPayloadSchemasV2,
+  jsonObjectSchema,
+  type HouseholdMembershipRole,
+} from '@/contracts/supabase';
 import type { AppTranslate, I18nKey } from '@/lib/i18n';
 
 import type { QuickLogCachedEventRow } from './quick-log';
@@ -74,7 +79,11 @@ export type QuickLogEventView = Readonly<{
   todayDate: string;
 }>;
 
-export function getQuickLogTrackerLabelKey(trackerId: QuickLogTrackerId): I18nKey {
+export function getQuickLogTrackerLabelKey(trackerId: QuickLogDetailTrackerId): I18nKey {
+  if (trackerId === 'training' || trackerId === 'observation') {
+    return `quick-log.details.tabs.${trackerId}`;
+  }
+
   return trackerLabelKeys[trackerId];
 }
 
@@ -122,7 +131,7 @@ export function getQuickLogTrackerIdForEventRow(
   }
 
   if (row.event_type === 'potty') {
-    const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
+    const payloadResult = getPayloadSchema(row).potty.safeParse(row.payload);
 
     if (payloadResult.success) {
       return 'potty';
@@ -138,29 +147,32 @@ export function getQuickLogTrackerIdForEventRow(
   }
 
   if (row.event_type === 'sleep') {
-    const payloadResult = eventPayloadSchemas.sleep.safeParse(row.payload);
+    const payloadResult = getPayloadSchema(row).sleep.safeParse(row.payload);
 
-    if (!payloadResult.success || payloadResult.data.sleep_kind !== 'nap') {
+    if (!payloadResult.success) {
       return null;
     }
+
+    if (row.payload_version === 1 && !('sleep_kind' in payloadResult.data
+      && payloadResult.data.sleep_kind === 'nap')) return null;
 
     return 'sleep';
   }
 
   if (row.event_type === 'walk') {
-    const payloadResult = eventPayloadSchemas.walk.safeParse(row.payload);
+    const payloadResult = getPayloadSchema(row).walk.safeParse(row.payload);
 
     return payloadResult.success ? 'walk' : null;
   }
 
   if (row.event_type === 'zoomies') {
-    const payloadResult = eventPayloadSchemas.zoomies.safeParse(row.payload);
+    const payloadResult = getPayloadSchema(row).zoomies.safeParse(row.payload);
 
     return payloadResult.success ? 'zoomies' : null;
   }
 
   if (row.event_type === 'feeding') {
-    const payloadResult = eventPayloadSchemas.feeding.safeParse(row.payload);
+    const payloadResult = getPayloadSchema(row).feeding.safeParse(row.payload);
 
     return payloadResult.success ? 'feeding' : null;
   }
@@ -238,7 +250,7 @@ function getQuickLogStatusLabel(
 
 function getQuickLogEventLabelKey(row: QuickLogCachedEventRow): I18nKey | null {
   if (row.event_type === 'potty') {
-    const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
+    const payloadResult = getPayloadSchema(row).potty.safeParse(row.payload);
 
     if (payloadResult.success) {
       return pottySubtypeLabelKeys[payloadResult.data.subtype];
@@ -255,9 +267,27 @@ function getQuickLogEventLabelKey(row: QuickLogCachedEventRow): I18nKey | null {
     }
   }
 
+  if (row.event_type === 'training') {
+    return row.payload_version === 2
+      && eventPayloadSchemasV2.training.safeParse(row.payload).success
+      ? 'quick-log.details.tabs.training'
+      : null;
+  }
+
+  if (row.event_type === 'observation') {
+    return row.payload_version === 2
+      && eventPayloadSchemasV2.observation.safeParse(row.payload).success
+      ? 'quick-log.details.tabs.observation'
+      : null;
+  }
+
   const trackerId = getQuickLogTrackerIdForEventRow(row);
 
   return trackerId === null ? null : trackerLabelKeys[trackerId];
+}
+
+function getPayloadSchema(row: QuickLogCachedEventRow) {
+  return row.payload_version === 2 ? eventPayloadSchemasV2 : eventPayloadSchemas;
 }
 
 function formatEventTime(occurredAt: string, locale?: string): string {

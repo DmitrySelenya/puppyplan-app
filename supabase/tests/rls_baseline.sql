@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(116);
+SELECT plan(118);
 
 CREATE SCHEMA IF NOT EXISTS tests;
 
@@ -749,6 +749,17 @@ VALUES
     now() - interval '20 minutes',
     1,
     '{"amount":"meal"}'::jsonb
+  ),
+  (
+    '00000000-0000-4000-8000-000000000506',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000401',
+    '00000000-0000-4000-8000-000000000101',
+    'evt_seed_observation_001',
+    'observation',
+    now() - interval '10 minutes',
+    2,
+    '{"title":"Synthetic observation","note":"Private synthetic context"}'::jsonb
   );
 
 INSERT INTO public.health_record (
@@ -1368,6 +1379,22 @@ SELECT results_eq(
   'SELECT count(*)::int FROM public.share_training_notes',
   ARRAY[1],
   'accepted trainer share can read sanitized training notes projection rows'
+);
+
+SELECT results_eq(
+  $$SELECT coalesce(sum(event_count), 0)::int
+    FROM public.share_routine_summary
+    WHERE event_type = 'observation'$$,
+  ARRAY[0],
+  'accepted trainer broad routine summary excludes observation rows'
+);
+
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.share_training_notes
+    WHERE training_topic = 'Synthetic observation'$$,
+  ARRAY[0],
+  'accepted trainer training notes exclude observation rows'
 );
 
 SELECT results_eq(

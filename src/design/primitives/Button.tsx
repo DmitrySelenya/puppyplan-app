@@ -27,6 +27,7 @@ export type ButtonProps = Omit<PressableProps, 'children' | 'onPress' | 'style'>
 export function Button({
   accessibilityHint,
   accessibilityLabel,
+  accessibilityState,
   disabled = false,
   label,
   labelMaxFontSizeMultiplier,
@@ -51,7 +52,7 @@ export function Button({
       accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="button"
-      accessibilityState={{ busy: loading, disabled: isDisabled }}
+      accessibilityState={{ ...accessibilityState, busy: loading, disabled: isDisabled }}
       blockPresses={loading}
       disabled={isDisabled}
       onPress={blocksPress ? undefined : onPress}

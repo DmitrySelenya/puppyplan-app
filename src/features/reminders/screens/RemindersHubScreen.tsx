@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
+import { reminderScheduleDraftSchema } from '@/contracts/reminders';
 import type { Reminder } from '@/contracts/supabase';
 import {
   AppIcon,
@@ -37,6 +38,25 @@ export type ReminderHubState =
   | 'offline-read'
   | 'pending-write';
 type ReminderSection = 'feeding' | 'health' | 'sitter' | 'other';
+
+const trackerLabelKeys = {
+  potty: 'quick-log.details.tabs.potty',
+  feeding: 'quick-log.details.tabs.feeding',
+  sleep: 'quick-log.details.tabs.sleep',
+  walk: 'quick-log.details.tabs.walk',
+  zoomies: 'quick-log.details.tabs.zoomies',
+  training: 'quick-log.details.tabs.training',
+  observation: 'quick-log.details.tabs.observation',
+} as const;
+const weekdayLabelKeys = [
+  'reminders.form.routine.weekdays.0',
+  'reminders.form.routine.weekdays.1',
+  'reminders.form.routine.weekdays.2',
+  'reminders.form.routine.weekdays.3',
+  'reminders.form.routine.weekdays.4',
+  'reminders.form.routine.weekdays.5',
+  'reminders.form.routine.weekdays.6',
+] as const;
 
 type ReminderStateMeta = Readonly<{
   bodyKey: I18nKey;
@@ -100,6 +120,7 @@ export type RemindersHubScreenProps = Readonly<{
   onAddReminder: () => void;
   onBack: () => void;
   onDeleteReminder?: (reminderId: string) => void;
+  onEditReminder?: (reminderId: string) => void;
   onToggleReminder?: (reminderId: string, enabled: boolean) => void;
   pendingDeleteReminderId?: string;
   pendingToggleReminderId?: string;
@@ -110,9 +131,11 @@ export type RemindersHubScreenProps = Readonly<{
 export function ConnectedRemindersHubScreen({
   onAddReminder,
   onBack,
+  onEditReminder,
 }: Readonly<{
   onAddReminder: () => void;
   onBack: () => void;
+  onEditReminder?: (reminderId: string) => void;
 }>) {
   const activeCare = useActiveCareContext();
   const remindersQuery = useRemindersQuery(
@@ -143,6 +166,7 @@ export function ConnectedRemindersHubScreen({
   }
 
   const careContext = activeCare.careContext;
+  const canManage = careContext.householdRole !== 'viewer';
 
   if (remindersQuery.isLoading) {
     return (
@@ -168,7 +192,7 @@ export function ConnectedRemindersHubScreen({
     <RemindersHubScreen
       onAddReminder={onAddReminder}
       onBack={onBack}
-      onDeleteReminder={(reminderId) => {
+      onDeleteReminder={canManage ? (reminderId) => {
         deleteReminderMutation.mutate({
           deletedAt: new Date().toISOString(),
           householdId: careContext.householdId,
@@ -176,8 +200,9 @@ export function ConnectedRemindersHubScreen({
           reminderId,
           todayDate: careContext.todayDate,
         });
-      }}
-      onToggleReminder={(reminderId, enabled) => {
+      } : undefined}
+      onEditReminder={canManage ? onEditReminder : undefined}
+      onToggleReminder={canManage ? (reminderId, enabled) => {
         toggleReminderMutation.mutate({
           enabled,
           householdId: careContext.householdId,
@@ -185,7 +210,7 @@ export function ConnectedRemindersHubScreen({
           reminderId,
           todayDate: careContext.todayDate,
         });
-      }}
+      } : undefined}
       pendingDeleteReminderId={deleteReminderMutation.isPending
         ? deleteReminderMutation.variables?.reminderId
         : undefined}
@@ -201,6 +226,7 @@ export function RemindersHubScreen({
   onAddReminder,
   onBack,
   onDeleteReminder,
+  onEditReminder,
   onToggleReminder,
   pendingDeleteReminderId,
   pendingToggleReminderId,
@@ -261,6 +287,7 @@ export function RemindersHubScreen({
                     <ReminderRow
                       key={reminder.id}
                       onDeleteReminder={onDeleteReminder}
+                      onEditReminder={onEditReminder}
                       onToggleReminder={onToggleReminder}
                       pending={pendingToggleReminderId === reminder.id
                         || pendingDeleteReminderId === reminder.id}
@@ -320,33 +347,44 @@ export function RemindersHubStatePreview({ state }: Readonly<{ state: ReminderHu
 
 function ReminderRow({
   onDeleteReminder,
+  onEditReminder,
   onToggleReminder,
   pending,
   reminder,
   section,
 }: Readonly<{
   onDeleteReminder?: (reminderId: string) => void;
+  onEditReminder?: (reminderId: string) => void;
   onToggleReminder?: (reminderId: string, enabled: boolean) => void;
   pending: boolean;
   reminder: Reminder;
   section: ReminderSection;
 }>) {
   const { t } = useAppTranslation();
-  const subtitle = t('reminders.row-subtitle-daily-template', {
-    time: getReminderTime(reminder),
+  const canonicalResult = reminderScheduleDraftSchema.safeParse({
+    trackerId: reminder.reminder_type,
+    rule: reminder.schedule_rule,
   });
+  const isCanonical = canonicalResult.success;
+  const title = canonicalResult.success
+    ? canonicalResult.data.rule.title ?? t(trackerLabelKeys[canonicalResult.data.trackerId])
+    : reminder.reminder_type;
+  const subtitle = canonicalResult.success
+    ? formatCanonicalSubtitle(canonicalResult.data.rule, t)
+    : t('reminders.form.legacy-unsupported');
   const row = (
     <ListRow
       accessibilityActions={onDeleteReminder && !pending ? [{ name: 'delete' }] : undefined}
-      accessibilityLabel={`${reminder.reminder_type}. ${subtitle}`}
+      accessibilityLabel={`${title}. ${subtitle}`}
       leading={<AppIcon color={tokens.color.text.secondary} name={sectionIcon[section]} />}
+      onPress={isCanonical && onEditReminder ? () => onEditReminder(reminder.id) : undefined}
       onAccessibilityAction={(event) => {
         if (event.nativeEvent.actionName === 'delete' && !pending) {
           onDeleteReminder?.(reminder.id);
         }
       }}
       subtitle={subtitle}
-      title={reminder.reminder_type}
+      title={title}
       titleNumberOfLines={2}
       trailing={(
         <Stack align="center" direction="horizontal" gap="xs">
@@ -361,8 +399,8 @@ function ReminderRow({
             </Stack>
           ) : null}
           <Toggle
-            accessibilityLabel={reminder.reminder_type}
-            disabled={pending}
+            accessibilityLabel={title}
+            disabled={pending || onToggleReminder === undefined}
             onValueChange={(enabled) => {
               onToggleReminder?.(reminder.id, enabled);
             }}
@@ -389,6 +427,26 @@ function ReminderRow({
       {row}
     </SwipeToDelete>
   );
+}
+
+function formatCanonicalSubtitle(
+  rule: ReturnType<typeof reminderScheduleDraftSchema.parse>['rule'],
+  t: ReturnType<typeof useAppTranslation>['t'],
+): string {
+  if (rule.repeat === 'daily') {
+    return t('reminders.row-subtitle-daily-template', { time: rule.time });
+  }
+  if (rule.repeat === 'weekdays') {
+    return t('reminders.row-subtitle-weekdays-template', { time: rule.time });
+  }
+  if (rule.repeat === 'never') {
+    return t('reminders.row-subtitle-once-template', { date: rule.date ?? '', time: rule.time });
+  }
+
+  const days = rule.repeat.days
+    .map((day) => t(weekdayLabelKeys[day - 1]).slice(0, 2))
+    .join(', ');
+  return t('reminders.row-subtitle-custom-template', { days, time: rule.time });
 }
 
 function groupReminders(reminders: readonly Reminder[]): Record<ReminderSection, Reminder[]> {
@@ -425,11 +483,6 @@ function getReminderSection(reminder: Reminder): ReminderSection {
   }
 
   return 'other';
-}
-
-function getReminderTime(reminder: Reminder): string {
-  const time = reminder.schedule_rule.time;
-  return typeof time === 'string' ? time : '7:30';
 }
 
 function getSectionTitleKey(section: ReminderSection): I18nKey {

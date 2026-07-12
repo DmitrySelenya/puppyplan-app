@@ -74,20 +74,24 @@ export function useLocalReminderPreference(
 ): LocalReminderPreferenceState {
   const [enabled, setEnabledState] = useState(true);
   const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
     setIsError(false);
+    setIsLoading(true);
     void controller.read()
       .then((storedEnabled) => {
         if (isMounted) {
           setEnabledState(storedEnabled);
+          setIsLoading(false);
         }
       })
       .catch(() => {
         if (isMounted) {
           setIsError(true);
+          setIsLoading(false);
         }
       });
 
@@ -113,7 +117,7 @@ export function useLocalReminderPreference(
   return {
     enabled,
     isError,
-    isLoading: false,
+    isLoading,
     setEnabled,
   };
 }

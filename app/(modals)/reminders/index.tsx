@@ -11,6 +11,9 @@ export default function RemindersHubRoute() {
       onBack={() => {
         router.back();
       }}
+      onEditReminder={(reminderId) => {
+        router.push({ pathname: '/reminders/edit', params: { reminderId } });
+      }}
     />
   );
 }

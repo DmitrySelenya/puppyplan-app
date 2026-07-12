@@ -10,6 +10,10 @@ const mockOpenQuickLogQueueStorage = jest.fn<Promise<QuickLogQueueStorage>, []>(
 const mockTombstoneByClientEventId = jest.fn(async () => {
   throw syncedDeleteFailure;
 });
+const updateDetailsFailure = new Error('Synthetic detail update failure');
+const mockUpdatePayloadByClientEventId = jest.fn(async () => {
+  throw updateDetailsFailure;
+});
 
 jest.mock('@/lib/auth', () => ({
   useAuth: () => ({
@@ -40,15 +44,16 @@ jest.mock('@/lib/supabase/events', () => {
       restoreByClientEventId: jest.fn(),
       selectExistingEvent: jest.fn(),
       tombstoneByClientEventId: mockTombstoneByClientEventId,
-      updatePayloadByClientEventId: jest.fn(),
+      updatePayloadByClientEventId: mockUpdatePayloadByClientEventId,
     }),
   };
 });
 
-describe('useQuickLogMutationPort synced delete', () => {
+describe('useQuickLogMutationPort async failures', () => {
   afterEach(() => {
     mockOpenQuickLogQueueStorage.mockReset();
     mockTombstoneByClientEventId.mockClear();
+    mockUpdatePayloadByClientEventId.mockClear();
   });
 
   it('AC-EVENT-CLIENT-1 returns the synced-delete promise so RLS failures are not swallowed', async () => {
@@ -86,6 +91,29 @@ describe('useQuickLogMutationPort synced delete', () => {
       deletedAt: expect.any(String),
       householdId: '00000000-0000-4000-8000-000000000201',
     });
+  });
+
+  it('AC-6 returns the detail-update promise so persistence failures are not swallowed', async () => {
+    mockOpenQuickLogQueueStorage.mockResolvedValue(createUnusedQuickLogQueue());
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const hook = renderHook(() => useQuickLogMutationPort(), {
+      wrapper: createQueryClientWrapper(queryClient),
+    });
+
+    await waitFor(() => expect(hook.result.current.status).toBe('ready'));
+
+    const result = hook.result.current.mutation?.updateDetails({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000000204',
+      draft: { amount: 'snack', trackerId: 'feeding' },
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000000201',
+      puppyId: '00000000-0000-4000-8000-000000000202',
+      todayDate: '2026-05-26',
+    });
+
+    expect(isPromiseLike(result)).toBe(true);
+    if (!isPromiseLike(result)) return;
+    await expect(result).rejects.toBe(updateDetailsFailure);
   });
 });
 

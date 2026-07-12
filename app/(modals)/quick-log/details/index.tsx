@@ -30,6 +30,7 @@ type QuickLogDetailsRouteParams = Readonly<{
   puppyId?: string | string[];
   todayDate?: string | string[];
   trackerId?: string | string[];
+  sleepAction?: string | string[];
 }>;
 
 type QuickLogDetailsRouteContext = Readonly<{
@@ -55,29 +56,55 @@ export default function QuickLogDetailsRoute() {
   const close = () => {
     closeModalRoute(router);
   };
-  const save = (draft: QuickLogDetailDraft) => {
-    if (
-      detailContext !== null
-      && mutation !== undefined
-      && draft.trackerId === detailContext.trackerId
-      && canUpdateQuickLogDetails(activeCare.careContext, detailContext)
-    ) {
-      mutation.updateDetails({
+  const save = (draft: QuickLogDetailDraft): Promise<void> | void => {
+    if (detailContext !== null) {
+      if (
+        mutation !== undefined
+        && draft.trackerId === detailContext.trackerId
+        && canUpdateQuickLogDetails(activeCare.careContext, detailContext)
+      ) {
+        const result = mutation.updateDetails({
         clientEventId: detailContext.clientEventId,
         draft,
         eventType: detailContext.eventType,
         householdId: detailContext.householdId,
         puppyId: detailContext.puppyId,
         todayDate: detailContext.todayDate,
-      });
+        });
+        if (isPromiseLike(result)) {
+          return result.then(close);
+        }
+        close();
+        return;
+      }
+
+      if (activeCare.careContext?.householdRole !== 'viewer') {
+        close();
+      }
+      return;
     }
 
-    close();
+    if (
+      detailContext === null
+      && mutation?.createDetailed !== undefined
+      && activeCare.careContext?.householdRole === 'owner'
+    ) {
+      const careContext = activeCare.careContext;
+      return mutation.createDetailed({
+        detailDraft: draft,
+        householdId: careContext.householdId,
+        occurredAt: draft.occurredAt ?? new Date().toISOString(),
+        puppyId: careContext.puppyId,
+        trackerId: draft.trackerId,
+        todayDate: careContext.todayDate,
+      }).then(close);
+    }
   };
 
   return (
     <QuickLogDetailsScreen
       initialTrackerId={initialTrackerId}
+      initialSleepAction={parseSleepAction(params.sleepAction)}
       onClose={close}
       onSave={save}
       status={status}
@@ -167,4 +194,15 @@ function canUpdateQuickLogDetails(
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function parseSleepAction(value: string | string[] | undefined): 'start' | 'wake' | 'retrospective' | undefined {
+  const action = firstParam(value);
+  return action === 'start' || action === 'wake' || action === 'retrospective' ? action : undefined;
+}
+
+function isPromiseLike(value: unknown): value is Promise<void> {
+  return typeof value === 'object'
+    && value !== null
+    && typeof (value as Readonly<{ then?: unknown }>).then === 'function';
 }

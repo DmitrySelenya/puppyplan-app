@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 
 import { tokens } from '@/design/tokens';
+import type { DiaryDayModel, DiaryPlannedItem } from '@/contracts/diary-day';
 import { i18n } from '@/lib/i18n';
 import { createPuppyPlanQueryClient } from '@/lib/query/client';
 import { queryKeys, type TimelineFilters } from '@/lib/query/keys';
@@ -92,6 +93,26 @@ function createRow(
     updated_at: '2026-06-12T08:00:01.000Z',
     ...overrides,
   };
+}
+
+function createPlannedItem(
+  overrides: Partial<DiaryPlannedItem> = {},
+): DiaryPlannedItem {
+  return {
+    displayAt: '2026-06-12T08:00:00.000Z',
+    kind: 'planned',
+    plannedAt: '2026-06-12T08:00:00.000Z',
+    reminderId: '00000000-0000-4000-8000-000000002701',
+    scheduledFor: '2026-06-12T08:00:00.000Z',
+    status: 'upcoming',
+    time: '08:00',
+    trackerId: 'feeding',
+    ...overrides,
+  };
+}
+
+function createDayModel(items: readonly DiaryDayModel['items'][number][]): DiaryDayModel {
+  return { day: todayDate, items, timeZone: 'UTC' };
 }
 
 describe('Today core card rendering', () => {
@@ -723,5 +744,96 @@ describe('Today core card rendering', () => {
       expect(screen.getAllByTestId('diary-history-logged-fact')).toHaveLength(1);
     });
     expect(screen.queryByTestId('diary-history-day-2026-06-11')).toBeNull();
+  });
+
+  it('AC-P5-UI renders upcoming, neutral past-unmarked, and done planned rows', async () => {
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem(),
+          createPlannedItem({
+            displayAt: '2026-06-12T09:00:00.000Z',
+            plannedAt: '2026-06-12T09:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002702',
+            scheduledFor: '2026-06-12T09:00:00.000Z',
+            status: 'past-unmarked',
+            time: '09:00',
+            trackerId: 'sleep',
+          }),
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002703',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('diary-mixed-day-list')).toBeTruthy());
+    expect(screen.getByTestId('diary-planned-upcoming')).toBeTruthy();
+    expect(screen.getByTestId('diary-planned-past-unmarked')).toBeTruthy();
+    expect(screen.getByTestId('diary-planned-done')).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.plan.past-unmarked'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.plan.actual-template', { time: '10:12 AM' }))).toBeTruthy();
+  });
+
+  it('AC-P5-POTTY asks subtype before checking off a generic potty routine', async () => {
+    const onCheckOff = jest.fn().mockResolvedValue(undefined);
+    const potty = createPlannedItem({ trackerId: 'potty' });
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([potty])}
+        dayModelStatus="ready"
+        onCheckOff={onCheckOff}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    fireEvent.press(await screen.findByTestId(`diary-check-off-${potty.reminderId}`));
+    expect(screen.getByTestId('diary-potty-subtype')).toBeTruthy();
+    expect(onCheckOff).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('today.plan.potty-outside') }));
+    await waitFor(() => expect(onCheckOff).toHaveBeenCalledWith(potty, 'outside'));
+  });
+
+  it('AC-P5-RECOVERY keeps viewer read-only and exposes a retry after check-off failure', async () => {
+    const item = createPlannedItem();
+    const failing = jest.fn().mockRejectedValue(new Error('offline'));
+    const first = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([item])}
+        dayModelStatus="ready"
+        onCheckOff={failing}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    fireEvent.press(await screen.findByTestId(`diary-check-off-${item.reminderId}`));
+    await waitFor(() => expect(screen.getByTestId('diary-check-off-error-persistence')).toBeTruthy());
+    expect(screen.getByTestId('diary-check-off-error-persistence').props.accessibilityRole)
+      .toBe('alert');
+    first.unmount();
+
+    renderWithQuery(
+      <TodayScreen
+        careContext={{ ...careContext, householdRole: 'viewer' }}
+        dayModel={createDayModel([item])}
+        dayModelStatus="ready"
+        openTimeline={openTimeline}
+      />,
+    );
+    expect(screen.queryByTestId(`diary-check-off-${item.reminderId}`)).toBeNull();
   });
 });

@@ -15,11 +15,12 @@ export type RoutineCardProps = {
   accent?: EventAccent;
   accessibilityLabel: string;
   checkboxLabel: string;
+  checkboxTestID?: string;
   icon: AppIconName;
   meta?: string;
   onOverflow?: () => void;
   onToggleDone?: () => void;
-  overflowLabel: string;
+  overflowLabel?: string;
   reminderOff?: boolean;
   reminderOffLabel?: string;
   state?: RoutineCardState;
@@ -33,6 +34,7 @@ export function RoutineCard({
   accent = 'clay',
   accessibilityLabel,
   checkboxLabel,
+  checkboxTestID,
   icon,
   meta,
   onOverflow,
@@ -63,6 +65,7 @@ export function RoutineCard({
           checked={done}
           onPress={onToggleDone}
           quiet={past}
+          testID={checkboxTestID}
         />
         <IconChip accent={done ? 'sage' : accent} icon={icon} quiet={past} />
         <View accessibilityLabel={accessibilityLabel} accessible style={styles.copy}>
@@ -79,14 +82,16 @@ export function RoutineCard({
             </View>
           ) : null}
         </View>
-        <Touchable
-          accessibilityLabel={overflowLabel}
-          accessibilityRole="button"
-          minTarget="none"
-          onPress={onOverflow}
-          style={styles.overflow}>
-          <AppIcon color={tokens.color.text.secondary} name="more" size={22} />
-        </Touchable>
+        {overflowLabel !== undefined ? (
+          <Touchable
+            accessibilityLabel={overflowLabel}
+            accessibilityRole="button"
+            minTarget="none"
+            onPress={onOverflow}
+            style={styles.overflow}>
+            <AppIcon color={tokens.color.text.secondary} name="more" size={22} />
+          </Touchable>
+        ) : null}
       </View>
     </View>
   );

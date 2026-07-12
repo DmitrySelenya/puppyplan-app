@@ -22,6 +22,7 @@ import {
 } from './state-machine';
 import { createManualQuickLogRetry, type QuickLogManualRetry } from './retry';
 import type { QuickLogRecoverySurface } from '@/contracts/analytics';
+import type { JsonValue } from '@/contracts/supabase';
 
 export type QuickLogQueueSqlValue = string | number | null;
 export type QuickLogQueueSqlParams = QuickLogQueueSqlValue[];
@@ -74,11 +75,17 @@ export type QuickLogQueueStorage = Readonly<{
     options: Readonly<{ now: string }>,
   ): Promise<QuickLogInFlightSuccessResolution>;
   remove(clientEventId: string): Promise<void>;
+  updateDetails?(clientEventId: string, options: Readonly<{
+    now: string;
+    occurredAt: string;
+    payload: Record<string, JsonValue>;
+    payloadVersion: 1 | 2;
+  }>): Promise<QuickLogStoredQueueItem>;
 }>;
 
 export function createQuickLogQueueStorage(
   executor: QuickLogQueueSqlExecutor,
-): QuickLogQueueStorage {
+): QuickLogQueueStorage & Required<Pick<QuickLogQueueStorage, 'updateDetails'>> {
   return {
     initialize: () => applyQuickLogQueueMigrations(executor),
     enqueue: (input, options) => enqueueQueueItem(executor, input, options),
@@ -152,8 +159,46 @@ export function createQuickLogQueueStorage(
         [clientEventId],
       );
     }),
+    updateDetails: (clientEventId, options) => runExclusive(executor, async (transaction) => {
+      const item = await getRequiredQueueItem(transaction, clientEventId);
+      if (!editableDetailStates.has(item.state)) {
+        throw new Error(`Quick Log queue details cannot be edited in state: ${item.state}`);
+      }
+
+      const updatedItem = createStoredQuickLogQueueItem({
+        ...item,
+        occurred_at: options.occurredAt,
+        payload: options.payload,
+        payload_version: options.payloadVersion,
+        updated_at: options.now,
+      });
+
+      await transaction.runAsync(
+        `UPDATE ${QUICK_LOG_QUEUE_TABLE_NAME}
+          SET payload_version = ?,
+              payload_json = ?,
+              occurred_at = ?,
+              updated_at = ?
+          WHERE client_event_id = ?`,
+        [
+          updatedItem.payload_version,
+          serializeQuickLogQueuePayload(updatedItem.payload),
+          updatedItem.occurred_at,
+          updatedItem.updated_at,
+          updatedItem.client_event_id,
+        ],
+      );
+
+      return getRequiredQueueItem(transaction, clientEventId);
+    }),
   };
 }
+
+const editableDetailStates = new Set<QuickLogQueueState>([
+  'pending_local',
+  'failed_retryable',
+  'failed_permanent',
+]);
 
 export function createExpoSQLiteQueueExecutor(
   database: SQLiteDatabase,

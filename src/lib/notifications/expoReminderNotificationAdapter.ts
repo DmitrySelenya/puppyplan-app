@@ -19,12 +19,16 @@ import type { NotificationPermissionStatus } from './localReminderSync';
 export type ReminderNotificationAdapter = NotificationSchedulerPort &
   Readonly<{
     configureForegroundHandler(): void;
-    ensurePermission(): Promise<NotificationPermissionStatus>;
+    getPermission(): Promise<NotificationPermissionStatus>;
+    requestPermission(): Promise<NotificationPermissionStatus>;
   }>;
 
 function mapPermission(
-  response: Notifications.NotificationPermissionsStatus,
+  response: Notifications.NotificationPermissionsStatus | undefined,
 ): NotificationPermissionStatus {
+  if (response === undefined) {
+    return 'undetermined';
+  }
   if (response.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL) {
     return 'provisional';
   }
@@ -55,22 +59,12 @@ export function createExpoReminderNotificationAdapter(
       });
     },
 
-    ensurePermission: async () => {
-      const current = mapPermission(await Notifications.getPermissionsAsync());
-
-      if (current !== 'undetermined') {
-        return current;
-      }
-
-      // NOTE (deferred 4c): the design calls for a provisional-first request behind an in-app
-      // primer. Until that primer UI ships we request full authorization so dogfood banners are
-      // visible; recorded as a named deviation in the plan.
-      return mapPermission(
-        await Notifications.requestPermissionsAsync({
+    getPermission: async () => mapPermission(await Notifications.getPermissionsAsync()),
+    requestPermission: async () => mapPermission(
+      await Notifications.requestPermissionsAsync({
           ios: { allowAlert: true, allowBadge: true, allowSound: true },
-        }),
-      );
-    },
+      }),
+    ),
 
     cancelAllOwned: () => Notifications.cancelAllScheduledNotificationsAsync(),
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 import {
   createQuickLogDetailDraft,
@@ -18,6 +19,7 @@ import {
   SheetSurface,
   Stack,
   StatusPill,
+  TextField,
   type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
@@ -34,19 +36,25 @@ export type QuickLogDetailsStatus = QuickLogDetailsReviewState | 'ready';
 
 export type QuickLogDetailsScreenProps = Readonly<{
   initialTrackerId?: QuickLogDetailTrackerId | string;
+  initialSleepAction?: SleepActionValue;
   onClose?: () => void;
-  onSave?: (draft: QuickLogDetailDraft) => void;
+  onSave?: (draft: QuickLogDetailDraft) => Promise<void> | void;
   status?: QuickLogDetailsStatus;
 }>;
 
 type FeedingAmountValue = 'meal' | 'snack' | 'water';
+type PottySubtypeValue = 'outside' | 'inside' | 'poop';
+type SleepActionValue = 'start' | 'wake' | 'retrospective';
 type SleepDurationValue = 'none' | '15' | '30' | '60';
+type TrainingDurationValue = 'short' | 'medium' | 'long';
+type TrainingTopicValue = 'recall' | 'sit' | 'crate' | 'leash' | 'settling' | 'other';
 type ZoomiesIntensityValue = 'none' | 'low' | 'medium' | 'high';
 
 const noop = () => undefined;
 
 export function QuickLogDetailsScreen({
   initialTrackerId = 'feeding',
+  initialSleepAction,
   onClose = noop,
   onSave = noop,
   status = 'ready',
@@ -56,16 +64,75 @@ export function QuickLogDetailsScreen({
   const [trackerId, setTrackerId] = useState<QuickLogDetailTrackerId>(() =>
     normalizeDetailTrackerId(initialTrackerId));
   const [feedingAmount, setFeedingAmount] = useState<FeedingAmountValue>('meal');
+  const [pottySubtype, setPottySubtype] = useState<PottySubtypeValue>('outside');
+  const [sleepAction, setSleepAction] = useState<SleepActionValue>(initialSleepAction ?? 'start');
+  const [sleepActionTouched, setSleepActionTouched] = useState(initialSleepAction !== undefined);
   const [sleepDuration, setSleepDuration] = useState<SleepDurationValue>('none');
+  const [trainingDuration, setTrainingDuration] = useState<TrainingDurationValue>('medium');
+  const [trainingTopic, setTrainingTopic] = useState<TrainingTopicValue>('other');
   const [zoomiesIntensity, setZoomiesIntensity] = useState<ZoomiesIntensityValue>('none');
+  const [occurredAt, setOccurredAt] = useState(() => new Date());
+  const [occurredAtEdited, setOccurredAtEdited] = useState(false);
+  const [timeError, setTimeError] = useState<string>();
+  const [note, setNote] = useState('');
+  const [observationTitle, setObservationTitle] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [persistenceError, setPersistenceError] = useState(false);
+  const [observationError, setObservationError] = useState(false);
 
-  const submit = () => {
-    onSave(createQuickLogDetailDraft(createDraftInput({
-      feedingAmount,
-      sleepDuration,
-      trackerId,
-      zoomiesIntensity,
-    })));
+  const updateOccurredAt = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    const timestamp = selectedDate?.getTime() ?? event.nativeEvent.timestamp;
+    if (timestamp === undefined) {
+      return;
+    }
+
+    const next = new Date(timestamp);
+    setOccurredAt(next);
+    setOccurredAtEdited(true);
+    setTimeError(validateOccurredAt(next, new Date(), t));
+  };
+
+  const submit = async () => {
+    const validationError = validateOccurredAt(occurredAt, new Date(), t);
+    if (validationError) {
+      setTimeError(validationError);
+      return;
+    }
+
+    if (trackerId === 'observation'
+      && observationTitle.trim() === ''
+      && note.trim() === '') {
+      setObservationError(true);
+      setPersistenceError(false);
+      return;
+    }
+
+    setPersistenceError(false);
+    setIsSaving(true);
+    try {
+      const result = onSave(createQuickLogDetailDraft(createDraftInput({
+        feedingAmount,
+        note,
+        observationTitle,
+        occurredAt,
+        occurredAtEdited,
+        pottySubtype,
+        sleepAction,
+        sleepActionTouched,
+        sleepDuration,
+        trainingDuration,
+        trainingTopic,
+        trackerId,
+        zoomiesIntensity,
+      })));
+      if (isPromiseLike(result)) {
+        await result;
+      }
+    } catch {
+      setPersistenceError(true);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -93,16 +160,30 @@ export function QuickLogDetailsScreen({
               variant="tertiary"
             />
           </Stack>
-          <SegmentedControl
-            accessibilityLabel={t('quick-log.details.variant-label')}
-            onValueChange={setTrackerId}
-            options={detailTrackerOptions.map((option) => ({
-              label: t(option.labelKey),
-              value: option.value,
-            }))}
-            value={trackerId}
-          />
+          <Card>
+            <Stack gap="sm">
+              <AppText variant="headline">{t('quick-log.details.variant-label')}</AppText>
+              <Stack direction="horizontal" gap="sm" wrap>
+                {detailTrackerOptions.map((option) => {
+                  const selected = trackerId === option.value;
+                  return (
+                    <Button
+                      accessibilityState={{ selected }}
+                      key={option.value}
+                      label={t(option.labelKey)}
+                      onPress={() => setTrackerId(option.value)}
+                      style={styles.eventSelectorButton}
+                      variant={selected ? 'primary' : 'secondary'}
+                    />
+                  );
+                })}
+              </Stack>
+            </Stack>
+          </Card>
           {reviewState ? <QuickLogDetailsStatePreview state={reviewState} /> : null}
+          {trackerId === 'potty' ? (
+            <PottyDetailsFields value={pottySubtype} onValueChange={setPottySubtype} />
+          ) : null}
           {trackerId === 'feeding' ? (
             <FeedingDetailsFields
               value={feedingAmount}
@@ -111,8 +192,21 @@ export function QuickLogDetailsScreen({
           ) : null}
           {trackerId === 'sleep' ? (
             <SleepDetailsFields
+              action={sleepAction}
+              onActionChange={(action) => {
+                setSleepAction(action);
+                setSleepActionTouched(true);
+              }}
               value={sleepDuration}
               onValueChange={setSleepDuration}
+            />
+          ) : null}
+          {trackerId === 'training' ? (
+            <TrainingDetailsFields
+              duration={trainingDuration}
+              onDurationChange={setTrainingDuration}
+              onTopicChange={setTrainingTopic}
+              topic={trainingTopic}
             />
           ) : null}
           {trackerId === 'zoomies' ? (
@@ -121,9 +215,64 @@ export function QuickLogDetailsScreen({
               onValueChange={setZoomiesIntensity}
             />
           ) : null}
+          {trackerId === 'observation' ? (
+            <TextField
+              label={t('quick-log.details.observation.title-label')}
+              maxLength={80}
+              onChangeText={(value) => {
+                setObservationTitle(value);
+                setObservationError(false);
+              }}
+              value={observationTitle}
+            />
+          ) : null}
+          <Card>
+            <Stack gap="sm">
+              <AppText variant="headline">{t('quick-log.details.when.label')}</AppText>
+              <DateTimePicker
+                accessibilityLabel={t('quick-log.details.when.label')}
+                maximumDate={new Date()}
+                minimumDate={new Date(Date.now() - 7 * 24 * 60 * 60 * 1_000)}
+                mode="datetime"
+                display="compact"
+                onChange={updateOccurredAt}
+                style={styles.dateTimePicker}
+                testID="quick-log-details-occurred-at"
+                value={occurredAt}
+              />
+              {timeError ? (
+                <AppText style={styles.errorText} variant="footnote">{timeError}</AppText>
+              ) : null}
+            </Stack>
+          </Card>
+          <TextField
+            label={t('quick-log.details.note.label')}
+            maxLength={500}
+            multiline
+            onChangeText={(value) => {
+              setNote(value);
+              setObservationError(false);
+            }}
+            value={note}
+          />
+          <AppText tone="secondary" variant="footnote">
+            {t('quick-log.details.note.helper', { count: note.length })}
+          </AppText>
+          {observationError ? (
+            <AppText accessibilityRole="alert" style={styles.errorText} variant="footnote">
+              {t('quick-log.details.observation.required-error')}
+            </AppText>
+          ) : null}
+          {persistenceError ? (
+            <AppText accessibilityRole="alert" style={styles.errorText} variant="footnote">
+              {t('quick-log.details.persistence-error')}
+            </AppText>
+          ) : null}
           <Stack direction="horizontal" gap="sm" wrap>
             <Button
+              disabled={status === 'permission-denied' || isSaving}
               label={t('quick-log.details.save')}
+              loading={isSaving}
               onPress={submit}
               variant="primary"
             />
@@ -166,10 +315,41 @@ function FeedingDetailsFields({
   );
 }
 
-function SleepDetailsFields({
+function PottyDetailsFields({
   onValueChange,
   value,
 }: Readonly<{
+  onValueChange: (value: PottySubtypeValue) => void;
+  value: PottySubtypeValue;
+}>) {
+  const { t } = useAppTranslation();
+
+  return (
+    <Card>
+      <Stack gap="sm">
+        <AppText variant="headline">{t('quick-log.details.potty.subtype-label')}</AppText>
+        <SegmentedControl
+          accessibilityLabel={t('quick-log.details.potty.subtype-label')}
+          onValueChange={onValueChange}
+          options={pottySubtypeOptions.map((option) => ({
+            label: t(option.labelKey),
+            value: option.value,
+          }))}
+          value={value}
+        />
+      </Stack>
+    </Card>
+  );
+}
+
+function SleepDetailsFields({
+  action,
+  onActionChange,
+  onValueChange,
+  value,
+}: Readonly<{
+  action: SleepActionValue;
+  onActionChange: (value: SleepActionValue) => void;
   onValueChange: (value: SleepDurationValue) => void;
   value: SleepDurationValue;
 }>) {
@@ -178,6 +358,16 @@ function SleepDetailsFields({
   return (
     <Card>
       <Stack gap="sm">
+        <AppText variant="headline">{t('quick-log.details.sleep.action-label')}</AppText>
+        <SegmentedControl
+          accessibilityLabel={t('quick-log.details.sleep.action-label')}
+          onValueChange={onActionChange}
+          options={sleepActionOptions.map((option) => ({
+            label: t(option.labelKey),
+            value: option.value,
+          }))}
+          value={action}
+        />
         <AppText variant="headline">{t('quick-log.details.sleep.duration-label')}</AppText>
         <SegmentedControl
           accessibilityLabel={t('quick-log.details.sleep.duration-label')}
@@ -187,6 +377,47 @@ function SleepDetailsFields({
             value: option.value,
           }))}
           value={value}
+        />
+      </Stack>
+    </Card>
+  );
+}
+
+function TrainingDetailsFields({
+  duration,
+  onDurationChange,
+  onTopicChange,
+  topic,
+}: Readonly<{
+  duration: TrainingDurationValue;
+  onDurationChange: (value: TrainingDurationValue) => void;
+  onTopicChange: (value: TrainingTopicValue) => void;
+  topic: TrainingTopicValue;
+}>) {
+  const { t } = useAppTranslation();
+
+  return (
+    <Card>
+      <Stack gap="sm">
+        <AppText variant="headline">{t('quick-log.details.training.topic-label')}</AppText>
+        <SegmentedControl
+          accessibilityLabel={t('quick-log.details.training.topic-label')}
+          onValueChange={onTopicChange}
+          options={trainingTopicOptions.map((option) => ({
+            label: t(option.labelKey),
+            value: option.value,
+          }))}
+          value={topic}
+        />
+        <AppText variant="headline">{t('quick-log.details.training.duration-label')}</AppText>
+        <SegmentedControl
+          accessibilityLabel={t('quick-log.details.training.duration-label')}
+          onValueChange={onDurationChange}
+          options={trainingDurationOptions.map((option) => ({
+            label: t(option.labelKey),
+            value: option.value,
+          }))}
+          value={duration}
         />
       </Stack>
     </Card>
@@ -266,35 +497,115 @@ function normalizeDetailTrackerId(trackerId: string): QuickLogDetailTrackerId {
 
 function createDraftInput(input: Readonly<{
   feedingAmount: FeedingAmountValue;
+  note: string;
+  observationTitle: string;
+  occurredAt: Date;
+  occurredAtEdited: boolean;
+  pottySubtype: PottySubtypeValue;
+  sleepAction: SleepActionValue;
+  sleepActionTouched: boolean;
   sleepDuration: SleepDurationValue;
+  trainingDuration: TrainingDurationValue;
+  trainingTopic: TrainingTopicValue;
   trackerId: QuickLogDetailTrackerId;
   zoomiesIntensity: ZoomiesIntensityValue;
 }>): QuickLogDetailDraft {
+  const note = input.note.trim() || undefined;
+  const occurredAt = input.occurredAt.toISOString();
+  const optionalCommon = {
+    ...(note === undefined ? {} : { note }),
+    ...(input.occurredAtEdited ? { occurredAt } : {}),
+  };
+
   if (input.trackerId === 'feeding') {
     return {
       amount: input.feedingAmount,
+      ...optionalCommon,
+      trackerId: input.trackerId,
+    };
+  }
+
+  if (input.trackerId === 'potty') {
+    return {
+      note,
+      occurredAt,
+      subtype: input.pottySubtype,
       trackerId: input.trackerId,
     };
   }
 
   if (input.trackerId === 'sleep') {
+    if (!input.sleepActionTouched && input.sleepDuration !== 'none') {
+      return {
+        durationMinutes: Number(input.sleepDuration),
+        trackerId: input.trackerId,
+      };
+    }
+
     return {
-      durationMinutes: input.sleepDuration === 'none'
-        ? undefined
-        : Number(input.sleepDuration),
+      action: input.sleepAction,
+      ...(input.sleepAction === 'retrospective' && input.sleepDuration !== 'none'
+        ? { durationMinutes: Number(input.sleepDuration) }
+        : {}),
+      note,
+      occurredAt,
       trackerId: input.trackerId,
     };
   }
 
-  return {
-    intensity: input.zoomiesIntensity === 'none'
-      ? undefined
-      : input.zoomiesIntensity,
-    trackerId: input.trackerId,
-  };
+  if (input.trackerId === 'zoomies') {
+    return {
+      intensity: input.zoomiesIntensity === 'none' ? undefined : input.zoomiesIntensity,
+      ...optionalCommon,
+      trackerId: input.trackerId,
+    };
+  }
+
+  if (input.trackerId === 'observation') {
+    return {
+      note,
+      occurredAt,
+      title: input.observationTitle.trim() || undefined,
+      trackerId: input.trackerId,
+    };
+  }
+
+  if (input.trackerId === 'training') {
+    return {
+      durationBucket: input.trainingDuration,
+      note,
+      occurredAt,
+      topic: input.trainingTopic,
+      trackerId: input.trackerId,
+    };
+  }
+
+  return { note, occurredAt, trackerId: input.trackerId };
+}
+
+function validateOccurredAt(date: Date, now: Date, t: (key: I18nKey) => string): string | undefined {
+  if (date.getTime() > now.getTime()) {
+    return t('quick-log.details.when.future-error');
+  }
+
+  if (date.getTime() < now.getTime() - 7 * 24 * 60 * 60 * 1_000) {
+    return t('quick-log.details.when.too-old-error');
+  }
+
+  return undefined;
+}
+
+function isPromiseLike(value: unknown): value is Promise<void> {
+  return typeof value === 'object'
+    && value !== null
+    && typeof (value as Readonly<{ then?: unknown }>).then === 'function';
 }
 
 const detailTrackerOptions = [
+  {
+    labelKey: 'quick-log.details.tabs.potty',
+    value: 'potty',
+  },
   {
     labelKey: 'quick-log.details.tabs.feeding',
     value: 'feeding',
@@ -304,13 +615,52 @@ const detailTrackerOptions = [
     value: 'sleep',
   },
   {
+    labelKey: 'quick-log.details.tabs.walk',
+    value: 'walk',
+  },
+  {
     labelKey: 'quick-log.details.tabs.zoomies',
     value: 'zoomies',
+  },
+  {
+    labelKey: 'quick-log.details.tabs.training',
+    value: 'training',
+  },
+  {
+    labelKey: 'quick-log.details.tabs.observation',
+    value: 'observation',
   },
 ] as const satisfies readonly {
   labelKey: I18nKey;
   value: QuickLogDetailTrackerId;
 }[];
+
+const pottySubtypeOptions = [
+  { labelKey: 'quick-log.details.potty.subtype.outside', value: 'outside' },
+  { labelKey: 'quick-log.details.potty.subtype.inside', value: 'inside' },
+  { labelKey: 'quick-log.details.potty.subtype.poop', value: 'poop' },
+] as const satisfies readonly { labelKey: I18nKey; value: PottySubtypeValue }[];
+
+const sleepActionOptions = [
+  { labelKey: 'quick-log.details.sleep.action.start', value: 'start' },
+  { labelKey: 'quick-log.details.sleep.action.wake', value: 'wake' },
+  { labelKey: 'quick-log.details.sleep.action.retrospective', value: 'retrospective' },
+] as const satisfies readonly { labelKey: I18nKey; value: SleepActionValue }[];
+
+const trainingTopicOptions = [
+  { labelKey: 'quick-log.details.training.topic.recall', value: 'recall' },
+  { labelKey: 'quick-log.details.training.topic.sit', value: 'sit' },
+  { labelKey: 'quick-log.details.training.topic.crate', value: 'crate' },
+  { labelKey: 'quick-log.details.training.topic.leash', value: 'leash' },
+  { labelKey: 'quick-log.details.training.topic.settling', value: 'settling' },
+  { labelKey: 'quick-log.details.training.topic.other', value: 'other' },
+] as const satisfies readonly { labelKey: I18nKey; value: TrainingTopicValue }[];
+
+const trainingDurationOptions = [
+  { labelKey: 'quick-log.details.training.duration.short', value: 'short' },
+  { labelKey: 'quick-log.details.training.duration.medium', value: 'medium' },
+  { labelKey: 'quick-log.details.training.duration.long', value: 'long' },
+] as const satisfies readonly { labelKey: I18nKey; value: TrainingDurationValue }[];
 
 const feedingAmountOptions = [
   {
@@ -429,6 +779,19 @@ const detailStateMeta: Record<QuickLogDetailsReviewState, QuickLogDetailsStateMe
 const styles = StyleSheet.create({
   closeButton: {
     alignSelf: 'flex-start',
+  },
+  errorText: {
+    color: tokens.color.status.danger,
+  },
+  dateTimePicker: {
+    alignSelf: 'flex-start',
+    height: 44,
+    minWidth: 180,
+  },
+  eventSelectorButton: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    minHeight: 44,
   },
   sheetContent: {
     flexGrow: 1,

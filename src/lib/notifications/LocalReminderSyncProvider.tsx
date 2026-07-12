@@ -36,7 +36,7 @@ export function LocalReminderSync(): null {
 
   const { careContext, status } = useActiveCareContext();
   const remindersQuery = useRemindersQuery(careContext?.householdId, careContext?.puppyId);
-  const { enabled: preferenceEnabled } = useLocalReminderPreference();
+  const { enabled: preferenceEnabled, isLoading: preferenceIsLoading } = useLocalReminderPreference();
   const reminders = remindersQuery.data;
 
   useEffect(() => {
@@ -44,16 +44,24 @@ export function LocalReminderSync(): null {
   }, [adapter]);
 
   const runSync = useCallback(async (): Promise<void> => {
-    if (status !== 'ready' || reminders === undefined) {
+    if (preferenceIsLoading || status !== 'ready') {
       return;
     }
 
-    const entries = reminders
-      .map(toReminderForExpansion)
-      .filter((entry): entry is ReminderScheduleEntry => entry !== null);
-
     try {
-      const permission = await adapter.ensurePermission();
+      if (careContext === null) {
+        await adapter.cancelAllOwned();
+        return;
+      }
+
+      if (reminders === undefined) {
+        return;
+      }
+
+      const entries = reminders
+        .map(toReminderForExpansion)
+        .filter((entry): entry is ReminderScheduleEntry => entry !== null);
+      const permission = await adapter.getPermission();
 
       await syncLocalReminders({
         entries,
@@ -69,7 +77,7 @@ export function LocalReminderSync(): null {
         operation: 'local_reminder_sync_trigger',
       });
     }
-  }, [adapter, preferenceEnabled, reminders, status]);
+  }, [adapter, careContext, preferenceEnabled, preferenceIsLoading, reminders, status]);
 
   useEffect(() => {
     void runSync();

@@ -140,6 +140,146 @@ describe('Quick Log details', () => {
     });
   });
 
+  it('AC-QL-DETAIL-ALL-KINDS renders all seven event selector buttons', () => {
+    renderDetails(<QuickLogDetailsScreen />);
+
+    for (const label of [
+      'Potty',
+      'Feeding',
+      'Sleep',
+      'Walk',
+      'Zoomies',
+      'Training',
+      'Observation',
+    ]) {
+      expect(screen.getByRole('button', { name: label })).toBeTruthy();
+    }
+  });
+
+  it('AC-QL-DETAIL-OBSERVATION saves title, note, and occurredAt', () => {
+    const onSave = jest.fn();
+    const occurredAt = new Date(Date.now() - 60_000);
+
+    renderDetails(<QuickLogDetailsScreen onSave={onSave} />);
+
+    fireEvent.press(screen.getByRole('button', { name: 'Observation' }));
+    fireEvent.changeText(screen.getByLabelText('Title'), 'Calm greeting');
+    fireEvent.changeText(screen.getByLabelText('Private note'), 'Settled after a minute');
+    fireEvent(screen.getByTestId('quick-log-details-occurred-at'), 'onChange', {
+      nativeEvent: { timestamp: occurredAt.getTime() },
+    });
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.details.save'),
+    }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      note: 'Settled after a minute',
+      occurredAt: occurredAt.toISOString(),
+      title: 'Calm greeting',
+      trackerId: 'observation',
+    }));
+  });
+
+  it('AC-QL-DETAIL-TIME rejects a future time inline and preserves the note', () => {
+    const onSave = jest.fn();
+    const future = new Date(Date.now() + 60 * 60 * 1_000);
+
+    renderDetails(<QuickLogDetailsScreen initialTrackerId="observation" onSave={onSave} />);
+
+    const note = screen.getByLabelText('Private note');
+    fireEvent.changeText(note, 'Keep this draft');
+    fireEvent(screen.getByTestId('quick-log-details-occurred-at'), 'onChange', {
+      nativeEvent: { timestamp: future.getTime() },
+    });
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.details.save'),
+    }));
+
+    expect(screen.getByText(/future/i)).toBeTruthy();
+    expect(screen.getByLabelText('Private note')).toHaveProp('value', 'Keep this draft');
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('AC-2 saves potty subtype and exact time in the typed draft', () => {
+    const onSave = jest.fn();
+    renderDetails(<QuickLogDetailsScreen initialTrackerId="potty" onSave={onSave} />);
+
+    fireEvent.press(screen.getByRole('tab', {
+      name: i18n.t('quick-log.details.potty.subtype.inside'),
+    }));
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      occurredAt: expect.any(String),
+      subtype: 'inside',
+      trackerId: 'potty',
+    }));
+  });
+
+  it.each([
+    ['start', undefined],
+    ['wake', undefined],
+    ['retrospective', 30],
+  ] as const)('AC-4 saves distinguishable sleep %s drafts', (action, durationMinutes) => {
+    const onSave = jest.fn();
+    renderDetails(<QuickLogDetailsScreen initialTrackerId="sleep" onSave={onSave} />);
+
+    fireEvent.press(screen.getByRole('tab', {
+      name: i18n.t(`quick-log.details.sleep.action.${action}`),
+    }));
+    if (action === 'retrospective') {
+      fireEvent.press(screen.getByRole('tab', {
+        name: i18n.t('quick-log.details.sleep.duration.30'),
+      }));
+    }
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      action,
+      ...(durationMinutes === undefined ? {} : { durationMinutes }),
+      occurredAt: expect.any(String),
+      trackerId: 'sleep',
+    }));
+  });
+
+  it('AC-2 saves typed training topic and duration', () => {
+    const onSave = jest.fn();
+    renderDetails(<QuickLogDetailsScreen initialTrackerId="training" onSave={onSave} />);
+
+    fireEvent.press(screen.getByRole('tab', {
+      name: i18n.t('quick-log.details.training.topic.settling'),
+    }));
+    fireEvent.press(screen.getByRole('tab', {
+      name: i18n.t('quick-log.details.training.duration.short'),
+    }));
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      durationBucket: 'short',
+      occurredAt: expect.any(String),
+      topic: 'settling',
+      trackerId: 'training',
+    }));
+  });
+
+  it('AC-2 validates an empty observation inline without dropping the draft', () => {
+    const onSave = jest.fn();
+    renderDetails(<QuickLogDetailsScreen initialTrackerId="observation" onSave={onSave} />);
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+    expect(screen.getByText(i18n.t('quick-log.details.observation.required-error'))).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('AC-QL-DETAIL-PERMISSION disables Save when permission is denied', () => {
+    renderDetails(<QuickLogDetailsScreen status="permission-denied" />);
+
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.details.save'),
+    })).toBeDisabled();
+  });
+
   it('renders the synthetic pending-write state for dev review', () => {
     renderDetails(
       <QuickLogDetailsScreen

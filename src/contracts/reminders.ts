@@ -18,8 +18,16 @@ import {
  * never be copied into logs or analytics.
  */
 
-// Canonical tracker taxonomy, shared with Quick Log (potty/feeding/sleep/walk/zoomies).
-export const reminderTrackerIds = ['potty', 'feeding', 'sleep', 'walk', 'zoomies'] as const;
+// Canonical routine taxonomy, shared with detailed Quick Log.
+export const reminderTrackerIds = [
+  'potty',
+  'feeding',
+  'sleep',
+  'walk',
+  'zoomies',
+  'training',
+  'observation',
+] as const;
 export const reminderTrackerIdSchema = z.enum(reminderTrackerIds);
 export type ReminderTrackerId = z.infer<typeof reminderTrackerIdSchema>;
 
@@ -30,7 +38,29 @@ export const reminderAmountUnitByTracker = {
   sleep: 'min',
   walk: 'min',
   zoomies: null,
+  training: null,
+  observation: null,
 } as const satisfies Record<ReminderTrackerId, 'g' | 'min' | null>;
+
+export const reminderVariantIds = [
+  'outside',
+  'inside',
+  'poop',
+  'play',
+  'training',
+] as const;
+export const reminderVariantSchema = z.enum(reminderVariantIds);
+export type ReminderVariant = z.infer<typeof reminderVariantSchema>;
+
+const reminderVariantsByTracker: Record<ReminderTrackerId, readonly ReminderVariant[]> = {
+  potty: ['outside', 'inside', 'poop'],
+  feeding: [],
+  sleep: [],
+  walk: [],
+  zoomies: [],
+  training: ['play', 'training'],
+  observation: [],
+};
 
 export const reminderAmountUnits = ['g', 'min'] as const;
 export const reminderAmountUnitSchema = z.enum(reminderAmountUnits);
@@ -78,6 +108,7 @@ export const reminderAmountSchema = z
 export type ReminderAmount = z.infer<typeof reminderAmountSchema>;
 
 export const REMINDER_NOTE_MAX_LENGTH = 500;
+export const REMINDER_TITLE_MAX_LENGTH = 80;
 
 export const scheduleRuleSchema = z
   .object({
@@ -86,6 +117,8 @@ export const scheduleRuleSchema = z
     date: dateSchema.optional(),
     amount: reminderAmountSchema.optional(),
     note: z.string().trim().min(1).max(REMINDER_NOTE_MAX_LENGTH).optional(),
+    title: z.string().trim().min(1).max(REMINDER_TITLE_MAX_LENGTH).optional(),
+    variant: reminderVariantSchema.optional(),
   })
   .strict()
   .superRefine((rule, context) => {
@@ -125,26 +158,44 @@ export const reminderScheduleDraftSchema = z
     const amount = draft.rule.amount;
 
     if (amount === undefined) {
-      return;
+      // Variant validation is independent from optional amount validation.
+    } else {
+      const expectedUnit = reminderAmountUnitByTracker[draft.trackerId];
+
+      if (expectedUnit === null) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `amount is not meaningful for the ${draft.trackerId} tracker`,
+          path: ['rule', 'amount'],
+        });
+      } else if (amount.unit !== expectedUnit) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `amount unit for ${draft.trackerId} must be ${expectedUnit}`,
+          path: ['rule', 'amount', 'unit'],
+        });
+      }
     }
 
-    const expectedUnit = reminderAmountUnitByTracker[draft.trackerId];
-
-    if (expectedUnit === null) {
+    const variant = draft.rule.variant;
+    if (variant !== undefined && !reminderVariantsByTracker[draft.trackerId].includes(variant)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `amount is not meaningful for the ${draft.trackerId} tracker`,
-        path: ['rule', 'amount'],
+        message: `variant ${variant} is not meaningful for the ${draft.trackerId} tracker`,
+        path: ['rule', 'variant'],
       });
-
-      return;
     }
 
-    if (amount.unit !== expectedUnit) {
+    // Diary check-off materializes an observation fact, whose payload requires a title or note.
+    if (
+      draft.trackerId === 'observation'
+      && draft.rule.title === undefined
+      && draft.rule.note === undefined
+    ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `amount unit for ${draft.trackerId} must be ${expectedUnit}`,
-        path: ['rule', 'amount', 'unit'],
+        message: 'an observation routine requires a title or note',
+        path: ['rule', 'title'],
       });
     }
   });
@@ -170,6 +221,8 @@ export type PlannedSlot = Readonly<{
   time: string;
   amount?: ReminderAmount;
   note?: string;
+  title?: string;
+  variant?: ReminderVariant;
 }>;
 
 export type ExpandOccurrencesInput = Readonly<{
@@ -206,6 +259,8 @@ export function expandOccurrencesForDay(input: ExpandOccurrencesInput): PlannedS
       time: reminder.rule.time,
       ...(reminder.rule.amount !== undefined ? { amount: reminder.rule.amount } : {}),
       ...(reminder.rule.note !== undefined ? { note: reminder.rule.note } : {}),
+      ...(reminder.rule.title !== undefined ? { title: reminder.rule.title } : {}),
+      ...(reminder.rule.variant !== undefined ? { variant: reminder.rule.variant } : {}),
     });
   }
 
@@ -275,7 +330,49 @@ function zonedWallTimeToUtc(wall: WallTimeParts, timeZone: string): Date {
   const adjustedMs = guessUtcMs - firstOffsetMs;
   const secondOffsetMs = getTimeZoneOffsetMs(adjustedMs, timeZone);
 
-  return new Date(guessUtcMs - secondOffsetMs);
+  const candidateMs = guessUtcMs - secondOffsetMs;
+
+  if (wallTimeMatches(candidateMs, wall, timeZone)) {
+    return new Date(candidateMs);
+  }
+
+  // A spring-forward gap has no exact instant. Select the first later real local wall time
+  // (02:30 -> 03:00 for a one-hour gap), never an earlier occurrence.
+  for (let deltaMinutes = 1; deltaMinutes <= 180; deltaMinutes += 1) {
+    const shiftedMs = candidateMs + deltaMinutes * 60_000;
+    const local = getWallTimeParts(shiftedMs, timeZone);
+
+    if (
+      local.year === wall.year
+      && local.month === wall.month
+      && local.day === wall.day
+      && (local.hour > wall.hour || (local.hour === wall.hour && local.minute >= wall.minute))
+    ) {
+      return new Date(shiftedMs);
+    }
+  }
+
+  return new Date(candidateMs);
+}
+
+function wallTimeMatches(utcMs: number, wall: WallTimeParts, timeZone: string): boolean {
+  const local = getWallTimeParts(utcMs, timeZone);
+  return local.year === wall.year
+    && local.month === wall.month
+    && local.day === wall.day
+    && local.hour === wall.hour
+    && local.minute === wall.minute;
+}
+
+function getWallTimeParts(utcMs: number, timeZone: string): WallTimeParts {
+  const lookup: Record<string, string> = {};
+  for (const part of getOffsetFormatter(timeZone).formatToParts(new Date(utcMs))) {
+    if (part.type !== 'literal') lookup[part.type] = part.value;
+  }
+  return {
+    year: Number(lookup.year), month: Number(lookup.month), day: Number(lookup.day),
+    hour: Number(lookup.hour), minute: Number(lookup.minute),
+  };
 }
 
 // ---------------------------------------------------------------------------

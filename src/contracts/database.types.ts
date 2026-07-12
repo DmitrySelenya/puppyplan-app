@@ -999,6 +999,7 @@ export type Database = {
         | "potty"
         | "feeding"
         | "sleep"
+        | "observation"
         | "walk"
         | "zoomies"
         | "training"
@@ -1163,6 +1164,7 @@ export const Constants = {
         "potty",
         "feeding",
         "sleep",
+        "observation",
         "walk",
         "zoomies",
         "training",

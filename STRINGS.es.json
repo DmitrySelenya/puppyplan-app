@@ -53,14 +53,14 @@
         "quick-trackers-states": "Estados de ajustes de rastreadores rápidos: carga, error, vacío y solo propietario.",
         "more-settings": "Hub Más, entrada de perfil, ajustes de trackers, nota de notificaciones, privacidad, eliminación de cuenta y marcador Plus.",
         "quick-log-sheet": "Hoja de Quick Log, subtipos, aviso de duplicado, pendiente local, reintento fallido y estados de acceso.",
-      "quick-log-details": "Detalles de Quick Log con estados de carga, guardado, error, sin conexión y solo lectura.",
+        "quick-log-details": "Detalles de Quick Log con estados de carga, guardado, error, sin conexión y solo lectura.",
         "health-v2": "Lista de salud, vacío, edición, detalle, revisión, eliminación y entrada de peso.",
         "reminders-hub": "Ruta del centro de recordatorios con filas durables activas para entrega nativa.",
         "reminders-hub-states": "Estados del centro de recordatorios: carga, guardado, error, offline y vacío.",
         "reminder-edit": "Ruta de edición de recordatorio con estados de carga, guardado pendiente, error y lectura offline.",
-      "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
-      "privacy-account-states": "Estados de privacidad y cuenta: carga, guardado, error, offline e inicio requerido.",
-      "help-support-states": "Estados de ayuda y soporte: carga, nota pendiente, error y lectura offline.",
+        "notification-preferences": "Ruta de preferencias de notificaciones con estados de carga, guardado pendiente, error y lectura offline.",
+        "privacy-account-states": "Estados de privacidad y cuenta: carga, guardado, error, offline e inicio requerido.",
+        "help-support-states": "Estados de ayuda y soporte: carga, nota pendiente, error y lectura offline.",
         "household-states": "Estados de acceso familiar: carga, guardado, error y lectura offline.",
         "paywall-states": "Estados de PuppyPlan Plus: carga, compra pendiente, error, offline y suscripción activa.",
         "invite-accept-states": "Estados de aceptar invitación: carga, no disponible, reintento y ya eres miembro.",
@@ -356,6 +356,18 @@
     }
   },
   "today": {
+    "plan": {
+      "check-off": "Marcar como hecho",
+      "planned-template": "Planificado {time}",
+      "actual-template": "Hecho {time}",
+      "past-unmarked": "Sin registrar",
+      "upcoming": "Próximo",
+      "choose-potty": "¿Qué pasó?",
+      "potty-outside": "Pipí fuera",
+      "potty-inside": "Pipí dentro",
+      "potty-poop": "Caca",
+      "check-failed": "No se pudo marcar. Inténtalo de nuevo."
+    },
     "section-now": "Ahora",
     "section-next": "Próximo",
     "section-yesterday-recap": "Lo que aprendimos ayer",
@@ -634,6 +646,7 @@
       "title": "¿Qué pasó?",
       "dismiss": "Cerrar registro rápido",
       "edit-trackers": "Editar rastreadores",
+      "log-with-details": "Registrar con detalles",
       "edit-screen-title": "Tus rastreadores rápidos",
       "edit-helper": "Hasta 5 rastreadores. Cámbialos desde Más.",
       "permission-denied": {
@@ -650,6 +663,13 @@
     "potty-subtype": {
       "title": "Elige el tipo de baño",
       "body": "Elige el evento exacto antes de guardar."
+    },
+    "sleep-action": {
+      "title": "Sueño",
+      "body": "Elige qué ocurrió.",
+      "start": "Empezar sueño",
+      "wake": "Despertar",
+      "retrospective": "Registrar sueño anterior"
     },
     "trackers": {
       "potty": "Baño",
@@ -726,11 +746,54 @@
       "title": "Agregar detalles",
       "variant-label": "Tipo de detalle",
       "save": "Guardar detalles",
+      "persistence-error": "No se pudieron guardar los detalles. El borrador sigue aquí. Inténtalo de nuevo.",
       "skip": "Omitir detalles",
       "tabs": {
+        "potty": "Baño",
         "feeding": "Alimentación",
         "sleep": "Sueño",
-        "zoomies": "Zoomies"
+        "walk": "Paseo",
+        "zoomies": "Zoomies",
+        "training": "Entrenamiento",
+        "observation": "Observación"
+      },
+      "when": {
+        "label": "Cuándo",
+        "future-error": "La hora no puede estar en el futuro.",
+        "too-old-error": "La hora debe estar dentro de los últimos 7 días."
+      },
+      "note": {
+        "label": "Nota privada",
+        "helper": "Privada · {count} / 500"
+      },
+      "observation": {
+        "title-label": "Título",
+        "required-error": "Añade un título o una nota privada."
+      },
+      "potty": {
+        "subtype-label": "¿Qué pasó?",
+        "subtype": {
+          "outside": "Fuera",
+          "inside": "Dentro",
+          "poop": "Caca"
+        }
+      },
+      "training": {
+        "topic-label": "Tema de entrenamiento",
+        "topic": {
+          "recall": "Llamada",
+          "sit": "Sentarse",
+          "crate": "Transportín",
+          "leash": "Correa",
+          "settling": "Calma",
+          "other": "Otro"
+        },
+        "duration-label": "Duración de la sesión",
+        "duration": {
+          "short": "Corta",
+          "medium": "Media",
+          "long": "Larga"
+        }
       },
       "feeding": {
         "amount-label": "¿Qué ofreciste?",
@@ -741,6 +804,12 @@
         }
       },
       "sleep": {
+        "action-label": "Evento de sueño",
+        "action": {
+          "start": "Empezar sueño",
+          "wake": "Despertar",
+          "retrospective": "Añadir sueño terminado"
+        },
         "duration-label": "¿Cuánto duró?",
         "duration": {
           "none": "No estoy seguro",
@@ -1618,6 +1687,9 @@
     "footer-quiet-hours": "Horas de silencio: en la configuración de notificaciones.",
     "empty": "Tus recordatorios aparecerán aquí",
     "row-subtitle-daily-template": "Cada día · {time}",
+    "row-subtitle-weekdays-template": "Entre semana · {time}",
+    "row-subtitle-custom-template": "{days} · {time}",
+    "row-subtitle-once-template": "Una vez · {date} · {time}",
     "row-pending": "Sincronizando",
     "states": {
       "loading": {
@@ -1674,6 +1746,46 @@
       "toggle-sound": "Sonido",
       "hint": "Este recordatorio se ejecuta localmente en este dispositivo. Activa Push en Configuración para recibirlo incluso cuando la aplicación esté cerrada.",
       "error-no-days": "Elige al menos un día",
+      "routine": {
+        "title": "Rutina",
+        "optional-title": "Título opcional",
+        "observation-title": "Título",
+        "private-note": "Nota privada",
+        "event": "Evento",
+        "event-required": "Elige un evento para continuar.",
+        "invalid-details": "Revisa los detalles de la rutina.",
+        "observation-required": "Añade un título corto o una nota para la observación.",
+        "repeat-never": "Una vez",
+        "repeat-daily": "Cada día",
+        "repeat-weekdays": "Entre semana",
+        "repeat-custom": "Personalizado",
+        "weekdays": [
+          "Lunes",
+          "Martes",
+          "Miércoles",
+          "Jueves",
+          "Viernes",
+          "Sábado",
+          "Domingo"
+        ],
+        "variant": "Tipo de evento",
+        "variants": {
+          "outside": "Pipí fuera",
+          "inside": "Pipí dentro",
+          "poop": "Caca",
+          "play": "Juego",
+          "training": "Entrenamiento"
+        },
+        "date": "Fecha",
+        "amount": "Cantidad (g)",
+        "duration": "Duración (min)",
+        "save-error": "No se pudo guardar. Tu rutina sigue aquí.",
+        "retry": "Reintentar",
+        "saved-title": "Rutina guardada",
+        "saved-body": "La rutina está activa. Activa las notificaciones cuando quieras.",
+        "not-now": "Ahora no"
+      },
+      "legacy-unsupported": "Formato antiguo · notificaciones desactivadas",
       "permission-banner": "Las notificaciones están desactivadas. El recordatorio se guardará, pero no emitirá ningún sonido.",
       "states": {
         "loading": {

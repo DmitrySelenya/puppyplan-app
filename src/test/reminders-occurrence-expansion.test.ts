@@ -137,4 +137,14 @@ describe('expandOccurrencesForDay', () => {
 
     expect(expandOccurrencesForDay(input)).toEqual(expandOccurrencesForDay(input));
   });
+
+  it('moves a nonexistent spring-forward wall time to the next valid local instant', () => {
+    const slots = expandOccurrencesForDay({
+      reminders: [reminder({ rule: { repeat: 'daily', time: '02:30' } })],
+      day: '2026-03-08',
+      timeZone: 'America/New_York',
+    });
+
+    expect(slots[0]?.scheduledFor).toBe('2026-03-08T07:00:00.000Z');
+  });
 });

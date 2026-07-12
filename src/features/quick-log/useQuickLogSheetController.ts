@@ -17,6 +17,7 @@ import type {
 import {
   getQuickLogDetailTrackerIdForEventType,
   quickLogTrackerDefinitions,
+  type QuickLogDetailTrackerId,
   type QuickLogEventType,
   type QuickLogNonPottyTrackerId,
   type QuickLogPottySubtype,
@@ -112,7 +113,7 @@ export type QuickLogMutationEvent =
     clientEventId: string;
     eventType: QuickLogEventType;
     requestId: string;
-    trackerId: QuickLogTrackerId;
+    trackerId: QuickLogDetailTrackerId;
     type: 'started';
   }>
   | Readonly<{
@@ -120,7 +121,7 @@ export type QuickLogMutationEvent =
     eventType: QuickLogEventType;
     requestId: string;
     state: 'failed_retryable' | 'failed_permanent';
-    trackerId: QuickLogTrackerId;
+    trackerId: QuickLogDetailTrackerId;
     type: 'failed';
   }>;
 
@@ -135,6 +136,10 @@ export type QuickLogTrackerLogRequest =
   }>
   | Readonly<{
     trackerId: QuickLogNonPottyTrackerId;
+  }>
+  | Readonly<{
+    sleepAction: 'start' | 'wake';
+    trackerId: 'sleep';
   }>;
 
 export type QuickLogSheetController = Readonly<{
@@ -257,7 +262,21 @@ export function useQuickLogSheetController({
       tone: 'success',
     });
     closeSheet();
-    const variables: QuickLogMutationVariables = trackerId === 'potty'
+    const variables: QuickLogMutationVariables = 'sleepAction' in request
+      ? {
+          clientEventId,
+          detailDraft: {
+            action: request.sleepAction,
+            occurredAt,
+            trackerId: 'sleep',
+          },
+          householdId: careContext.householdId,
+          occurredAt,
+          puppyId: careContext.puppyId,
+          todayDate: careContext.todayDate,
+          trackerId: 'sleep',
+        }
+      : trackerId === 'potty'
       ? {
           clientEventId,
           householdId: careContext.householdId,

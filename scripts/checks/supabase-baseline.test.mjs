@@ -16,6 +16,8 @@ const puppyQuickTrackerMigrationPath =
   'supabase/migrations/20260608212607_puppy_quick_tracker_ids.sql';
 const puppyQuickTrackerNonEmptyMigrationPath =
   'supabase/migrations/20260609120000_puppy_quick_tracker_ids_non_empty.sql';
+const eventObservationPayloadV2MigrationPath =
+  'supabase/migrations/20260711180000_event_observation_payload_v2.sql';
 const rlsTestPath = 'supabase/tests/rls_baseline.sql';
 const remoteCliPath = 'scripts/supabase/run-remote-cli.mjs';
 const supabaseContractPath = 'src/contracts/supabase.ts';
@@ -181,6 +183,29 @@ describe('Supabase baseline migration guardrails', () => {
     const contract = readFileSync(supabaseContractPath, 'utf8');
 
     assert.match(contract, /export type \{ Database \} from '\.\/database\.types';/u);
+  });
+
+  it('keeps payload v2 additive and excludes observation from broad/training share projections', () => {
+    const migration = readFileSync(eventObservationPayloadV2MigrationPath, 'utf8');
+    const source = allMigrationSource();
+
+    assert.match(
+      migration,
+      /ALTER TYPE public\.event_type ADD VALUE IF NOT EXISTS 'observation' BEFORE 'walk'/u,
+    );
+    assert.match(
+      latestConstraintBlock(source, 'event_log_payload_version_check'),
+      /payload_version IN \(1, 2\)/u,
+    );
+    assert.match(
+      functionBlock(source, 'current_share_routine_summary'),
+      /event_log\.event_type::text <> 'observation'/u,
+    );
+    assert.match(
+      functionBlock(source, 'current_share_training_notes'),
+      /event_log\.event_type = 'training'/u,
+    );
+    assert.doesNotMatch(migration, /CREATE TABLE|CREATE TYPE|DROP TABLE/u);
   });
 
   it('scopes event-backed share projections to the shared puppy', () => {
@@ -447,6 +472,8 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
       'accepted trainer share can read sanitized routine summary projection rows',
       'accepted trainer share can read sanitized selected timeline projection rows',
       'accepted trainer share can read sanitized training notes projection rows',
+      'accepted trainer broad routine summary excludes observation rows',
+      'accepted trainer training notes exclude observation rows',
       'accepted trainer share can read sanitized health summary projection rows',
       'accepted trainer share can read sanitized puppy profile projection rows',
       'accepted trainer routine summary has no sibling feeding rows',

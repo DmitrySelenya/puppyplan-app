@@ -16,6 +16,8 @@ export const reminderTrackerLabelKey: Record<ReminderTrackerId, I18nKey> = {
   sleep: 'quick-log.trackers.sleep',
   walk: 'quick-log.trackers.walk',
   zoomies: 'quick-log.trackers.zoomies',
+  training: 'quick-log.details.tabs.training',
+  observation: 'quick-log.details.tabs.observation',
 };
 
 export type ReminderNotificationData = Readonly<{

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
-import { Linking, StyleSheet } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { AppState, Linking, StyleSheet } from 'react-native';
 
 import {
   AppIcon,
@@ -30,6 +30,11 @@ import {
   type LocalReminderPreferenceController,
   useLocalReminderPreference,
 } from '@/lib/notifications/localReminderPreference';
+import { createExpoReminderNotificationAdapter } from '@/lib/notifications/expoReminderNotificationAdapter';
+import type { NotificationPermissionStatus } from '@/lib/notifications/localReminderSync';
+import { createObservabilityReporter } from '@/lib/observability';
+
+const notificationObservability = createObservabilityReporter();
 
 export type NotificationPreferencesReviewState =
   | 'loading'
@@ -92,6 +97,7 @@ export type NotificationPreferencesScreenProps = Readonly<{
   onBack?: () => void;
   preferences?: NotificationPreferenceView;
   reviewState?: NotificationPreferencesReviewState;
+  permissionStatus?: NotificationPermissionStatus;
 }>;
 
 export function NotificationPreferencesScreen({
@@ -102,6 +108,7 @@ export function NotificationPreferencesScreen({
   onBack,
   preferences,
   reviewState,
+  permissionStatus = 'undetermined',
 }: NotificationPreferencesScreenProps) {
   const { t } = useAppTranslation();
   const [localReviewState, setLocalReviewState] = useState<
@@ -155,6 +162,21 @@ export function NotificationPreferencesScreen({
 
       {visibleReviewState ? (
         <NotificationPreferencesStatePreview state={visibleReviewState} />
+      ) : null}
+
+      {permissionStatus === 'denied' ? (
+        <Card testID="notifications-permission-denied">
+          <Stack gap="sm">
+            <AppText variant="bodyEmph">{t('reminders.permission-denied.title')}</AppText>
+            <AppText tone="secondary">{t('reminders.permission-denied.body')}</AppText>
+            <ListRow
+              accessibilityLabel={t('reminders.permission-denied.how-to-enable')}
+              onPress={() => { void Linking.openSettings(); }}
+              title={t('reminders.permission-denied.how-to-enable')}
+              variant="settings"
+            />
+          </Stack>
+        </Card>
       ) : null}
 
       <NotificationSection title={t('more.notifications.section-local')}>
@@ -252,10 +274,36 @@ export function ConnectedNotificationPreferencesScreen({
   localReminderPreference?: LocalReminderPreferenceController;
   onBack?: () => void;
 }>) {
+  const { t } = useAppTranslation();
+  const notificationAdapter = useMemo(
+    () => createExpoReminderNotificationAdapter(t),
+    [t],
+  );
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermissionStatus>(
+    'undetermined',
+  );
   const activeCare = useActiveCareContext();
   const preferenceQuery = useNotificationPreferenceQuery(activeCare.careContext);
   const updatePreferenceMutation = useUpdateNotificationPreferenceMutation();
   const localReminderPreferenceState = useLocalReminderPreference(localReminderPreference);
+
+  useEffect(() => {
+    const refresh = () => {
+      void notificationAdapter.getPermission()
+        .then(setPermissionStatus)
+        .catch((error) => {
+          notificationObservability.captureException(error, {
+            area: 'notifications',
+            operation: 'permission_refresh',
+          });
+        });
+    };
+    refresh();
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next === 'active') refresh();
+    });
+    return () => subscription.remove();
+  }, [notificationAdapter]);
 
   if (
     activeCare.status === 'loading'
@@ -294,8 +342,14 @@ export function ConnectedNotificationPreferencesScreen({
   return (
     <NotificationPreferencesScreen
       localRemindersEnabled={localReminderPreferenceState.enabled}
+      permissionStatus={permissionStatus}
       onBack={onBack}
-      onChangeLocalReminders={localReminderPreferenceState.setEnabled}
+      onChangeLocalReminders={async (enabled) => {
+        await localReminderPreferenceState.setEnabled(enabled);
+        if (enabled) {
+          setPermissionStatus(await notificationAdapter.requestPermission());
+        }
+      }}
       onChangeReminderPush={async (enabled) => {
         await updatePreferenceMutation.mutateAsync({
           householdId: careContext.householdId,

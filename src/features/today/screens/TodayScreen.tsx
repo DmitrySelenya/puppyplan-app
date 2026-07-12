@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
+import type { DiaryDayModel, DiaryPlannedItem } from '@/contracts/diary-day';
+import type { QuickLogPottySubtype } from '@/contracts/quick-log';
 import {
   buildTodayPlan,
   type TodayPlan,
@@ -21,6 +23,7 @@ import { FactCard } from '@/design/primitives/FactCard';
 import { IconButton } from '@/design/primitives/IconButton';
 import { type EventAccent } from '@/design/primitives/IconChip';
 import { InfoHero } from '@/design/primitives/InfoHero';
+import { RoutineCard } from '@/design/primitives/RoutineCard';
 import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
@@ -29,6 +32,7 @@ import { Touchable } from '@/design/primitives/Touchable';
 import { WeekStrip, type WeekStripDay } from '@/design/primitives/WeekStrip';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation, type I18nKey } from '@/lib/i18n';
+import { createObservabilityReporter } from '@/lib/observability';
 import {
   calendarDateToUtc,
   formatLocalCalendarDate,
@@ -65,6 +69,12 @@ export type TodayScreenStateOverride =
 export type TodayScreenProps = Readonly<{
   actions?: QuickLogEventActionHandlers;
   careContext?: QuickLogSurfaceCareContext | null;
+  dayModel?: DiaryDayModel | null;
+  dayModelStatus?: 'error' | 'loading' | 'ready' | 'unavailable';
+  onCheckOff?: (
+    item: DiaryPlannedItem,
+    pottySubtype?: QuickLogPottySubtype,
+  ) => Promise<void>;
   openOnboarding?: () => void;
   openQuickLog?: () => void;
   openTimeline: () => void;
@@ -130,10 +140,14 @@ const diaryHistoryFilterSpecs = [
     value: 'sleep',
   },
 ] as const satisfies readonly DiaryHistoryFilterSpec[];
+const diaryObservability = createObservabilityReporter();
 
 export function TodayScreen({
   actions = emptyActions,
   careContext = null,
+  dayModel = null,
+  dayModelStatus = 'unavailable',
+  onCheckOff,
   openOnboarding,
   openQuickLog,
   openTimeline,
@@ -238,6 +252,7 @@ export function TodayScreen({
     && screenState !== 'pending-write'
     && !(timelineRows.status === 'loading' && rows.length === 0);
   const showQuickLogSection = diaryHistoryOpen
+    || (dayModel?.items.length ?? 0) > 0
     || eventViews.length > 0
     || timelineRows.status === 'error'
     || hasPendingLocalRows(rows)
@@ -340,6 +355,14 @@ export function TodayScreen({
                   </Card>
                 )}
               </>
+            ) : dayModel !== null && dayModel.items.length > 0 ? (
+              <DiaryMixedDayRows
+                actions={actions}
+                eventRows={eventRows}
+                locale={locale}
+                model={dayModel}
+                onCheckOff={onCheckOff}
+              />
             ) : eventViews.length > 0 ? (
               eventRows.map(({ event, row }) => (
                 <DiaryFactRow
@@ -349,7 +372,7 @@ export function TodayScreen({
                   row={row}
                 />
               ))
-            ) : visibleTimelineStatus === 'error' ? (
+            ) : visibleTimelineStatus === 'error' || dayModelStatus === 'error' ? (
               <Card
                 accessibilityLabel={t('errors.load-failed')}
                 accessibilityLiveRegion="polite"
@@ -380,6 +403,202 @@ export function TodayScreen({
       )}
     </Screen>
   );
+}
+
+const plannedTrackerLabelKeys = {
+  potty: 'quick-log.details.tabs.potty',
+  feeding: 'quick-log.details.tabs.feeding',
+  sleep: 'quick-log.details.tabs.sleep',
+  walk: 'quick-log.details.tabs.walk',
+  zoomies: 'quick-log.details.tabs.zoomies',
+  training: 'quick-log.details.tabs.training',
+  observation: 'quick-log.details.tabs.observation',
+} as const;
+
+function DiaryMixedDayRows({
+  actions,
+  eventRows,
+  locale,
+  model,
+  onCheckOff,
+}: Readonly<{
+  actions: QuickLogEventActionHandlers;
+  eventRows: readonly DiaryEventRow[];
+  locale: string;
+  model: DiaryDayModel;
+  onCheckOff?: (
+    item: DiaryPlannedItem,
+    pottySubtype?: QuickLogPottySubtype,
+  ) => Promise<void>;
+}>) {
+  const { t } = useAppTranslation();
+  const [checkingKey, setCheckingKey] = useState<string | null>(null);
+  const [checkOffError, setCheckOffError] = useState<Readonly<{
+    category: 'auth' | 'queue' | 'validation' | 'persistence';
+    key: string;
+  }> | null>(null);
+  const [pottyItem, setPottyItem] = useState<DiaryPlannedItem | null>(null);
+  const eventRowsById = new Map(
+    eventRows.map((eventRow) => [eventRow.event.clientEventId, eventRow]),
+  );
+
+  const complete = async (item: DiaryPlannedItem, subtype?: QuickLogPottySubtype) => {
+    if (onCheckOff === undefined) {
+      return;
+    }
+
+    const key = `${item.reminderId}|${item.scheduledFor}`;
+    setCheckingKey(key);
+    setCheckOffError(null);
+    setPottyItem(null);
+
+    try {
+      await onCheckOff(item, subtype);
+    } catch (error) {
+      diaryObservability.captureException(error, {
+        area: 'quick_log',
+        errorCategory: classifyDiaryCheckOffError(error) === 'validation'
+          ? 'invalid_payload'
+          : 'unknown',
+        operation: 'diary_routine_checkoff',
+      });
+      setCheckOffError({ category: classifyDiaryCheckOffError(error), key });
+    } finally {
+      setCheckingKey(null);
+    }
+  };
+
+  return (
+    <Stack gap="sm" testID="diary-mixed-day-list">
+      {model.items.map((item) => {
+        if (item.kind === 'fact') {
+          const eventRow = eventRowsById.get(item.clientEventId);
+          return eventRow === undefined ? null : (
+            <DiaryFactRow
+              actions={actions}
+              event={eventRow.event}
+              key={`fact-${item.clientEventId}`}
+              row={eventRow.row}
+            />
+          );
+        }
+
+        const key = `${item.reminderId}|${item.scheduledFor}`;
+        const title = item.title ?? t(plannedTrackerLabelKeys[item.trackerId]);
+        const plannedTime = formatDiaryInstant(item.plannedAt, locale, model.timeZone);
+        const actualTime = item.actualAt === undefined
+          ? null
+          : formatDiaryInstant(item.actualAt, locale, model.timeZone);
+        const statusLabel = item.status === 'done' && actualTime !== null
+          ? t('today.plan.actual-template', { time: actualTime })
+          : item.status === 'past-unmarked'
+            ? t('today.plan.past-unmarked')
+            : t('today.plan.upcoming');
+        const isGenericPotty = item.trackerId === 'potty'
+          && item.variant !== 'outside'
+          && item.variant !== 'inside'
+          && item.variant !== 'poop';
+        const canCheckOff = item.status !== 'done'
+          && onCheckOff !== undefined
+          && checkingKey !== key;
+        const visual = getPlannedCardVisual(item);
+
+        return (
+          <Stack gap="xs" key={`planned-${key}`}>
+            <View testID={`diary-planned-${item.status}`}>
+              <RoutineCard
+                accent={visual.accent}
+                accessibilityLabel={`${title}. ${t('today.plan.planned-template', {
+                  time: plannedTime,
+                })}. ${statusLabel}`}
+                checkboxLabel={t('today.plan.check-off')}
+                checkboxTestID={onCheckOff !== undefined && item.status !== 'done'
+                  ? `diary-check-off-${item.reminderId}`
+                  : undefined}
+                icon={visual.icon}
+                meta={item.status === 'upcoming' ? undefined : statusLabel}
+                onToggleDone={canCheckOff ? () => {
+                  if (isGenericPotty) {
+                    setPottyItem(item);
+                  } else {
+                    void complete(item);
+                  }
+                } : undefined}
+                state={item.status === 'done'
+                  ? 'done'
+                  : item.status === 'past-unmarked' ? 'past' : 'upcoming'}
+                time={plannedTime}
+                title={title}
+              />
+            </View>
+            {pottyItem?.reminderId === item.reminderId
+              && pottyItem.scheduledFor === item.scheduledFor ? (
+              <Stack gap="sm" testID="diary-potty-subtype">
+                <AppText variant="bodyEmph">{t('today.plan.choose-potty')}</AppText>
+                <Stack direction="horizontal" gap="sm" wrap>
+                  <Button
+                    label={t('today.plan.potty-outside')}
+                    onPress={() => { void complete(item, 'outside'); }}
+                    variant="secondary"
+                  />
+                  <Button
+                    label={t('today.plan.potty-inside')}
+                    onPress={() => { void complete(item, 'inside'); }}
+                    variant="secondary"
+                  />
+                  <Button
+                    label={t('today.plan.potty-poop')}
+                    onPress={() => { void complete(item, 'poop'); }}
+                    variant="secondary"
+                  />
+                </Stack>
+              </Stack>
+            ) : null}
+            {checkOffError?.key === key ? (
+              <View
+                accessibilityRole="alert"
+                testID={`diary-check-off-error-${checkOffError.category}`}>
+                <Stack gap="sm">
+                  <AppText>{t('today.plan.check-failed')}</AppText>
+                  <Button
+                    label={t('quick-log.failed.primary')}
+                    onPress={() => { void complete(item); }}
+                    variant="secondary"
+                  />
+                </Stack>
+              </View>
+            ) : null}
+          </Stack>
+        );
+      })}
+    </Stack>
+  );
+}
+
+function classifyDiaryCheckOffError(
+  error: unknown,
+): 'auth' | 'queue' | 'validation' | 'persistence' {
+  if (!(error instanceof Error)) {
+    return 'persistence';
+  }
+  if (error.message === 'Quick Log requires an authenticated session') {
+    return 'auth';
+  }
+  if (error.message === 'Quick Log queue is not ready') {
+    return 'queue';
+  }
+  if (error.name === 'ZodError' || error.message.startsWith('reminder_')) {
+    return 'validation';
+  }
+  return 'persistence';
+}
+
+function formatDiaryInstant(timestamp: string, locale: string, timeZone: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone,
+  }).format(new Date(timestamp));
 }
 
 function DiaryHistoryFilterBar({
@@ -1259,6 +1478,44 @@ function DiaryFactRow({
       ) : null}
     </Stack>
   );
+}
+
+function getPlannedCardVisual(
+  item: DiaryPlannedItem,
+): { accent: EventAccent; icon: AppIconName } {
+  if (item.trackerId === 'feeding') {
+    return { accent: 'clay', icon: 'bowl' };
+  }
+
+  if (item.trackerId === 'walk') {
+    return { accent: 'clay', icon: 'walk' };
+  }
+
+  if (item.trackerId === 'sleep') {
+    return { accent: 'mauve', icon: 'moon' };
+  }
+
+  if (item.trackerId === 'zoomies') {
+    return { accent: 'honey', icon: 'ball' };
+  }
+
+  if (item.trackerId === 'training') {
+    return { accent: 'clay', icon: 'trainingPaw' };
+  }
+
+  if (item.trackerId === 'potty') {
+    if (item.variant === 'outside') {
+      return { accent: 'honey', icon: 'water' };
+    }
+
+    if (item.variant === 'poop') {
+      return { accent: 'honey', icon: 'poop' };
+    }
+
+    return { accent: 'honey', icon: 'pottyInside' };
+  }
+
+  return { accent: 'honey', icon: 'paw' };
 }
 
 function getFactCardVisual(

@@ -53,6 +53,11 @@ export default function QuickLogRoute() {
       openDetails={(request) => {
         router.push(createQuickLogDetailsHref(request));
       }}
+      openCreateDetails={(request) => {
+        const params = new URLSearchParams({ trackerId: request.trackerId });
+        if (request.sleepAction !== undefined) params.set('sleepAction', request.sleepAction);
+        router.push(`/quick-log/details?${params.toString()}` as `/quick-log/details?${string}`);
+      }}
       recentEvents={recentEvents}
     />
   );

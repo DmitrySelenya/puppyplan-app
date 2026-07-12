@@ -35,6 +35,7 @@ describe('Supabase contract vocabulary', () => {
       'potty',
       'feeding',
       'sleep',
+      'observation',
       'walk',
       'zoomies',
       'training',
@@ -82,7 +83,7 @@ describe('event log contracts', () => {
     expect(eventLogRecordSchema.safeParse(record).success).toBe(true);
   });
 
-  it('rejects missing idempotency key and unsupported payload versions', () => {
+  it('rejects missing idempotency key and accepts the version-2 boundary', () => {
     expect(
       eventLogInsertSchema.safeParse({
         ...validEvent,
@@ -90,12 +91,11 @@ describe('event log contracts', () => {
       }).success,
     ).toBe(false);
 
-    expect(
-      eventLogInsertSchema.safeParse({
-        ...validEvent,
-        payload_version: 2,
-      }).success,
-    ).toBe(false);
+    expect(eventLogInsertSchema.safeParse({
+      ...validEvent,
+      payload_version: 2,
+      payload: { subtype: 'outside' },
+    }).success).toBe(true);
   });
 
   it('rejects event types outside the PRD MVP enum', () => {

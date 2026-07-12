@@ -19,7 +19,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: 'com.dmitry_selenya.puppyplan_app',
     predictiveBackGestureEnabled: true,
   },
-  plugins: ['expo-router', 'expo-splash-screen', 'expo-sqlite', 'expo-secure-store', 'expo-notifications', './plugins/with-ios-privacy-manifest'],
+  plugins: [
+    'expo-router',
+    'expo-splash-screen',
+    'expo-sqlite',
+    'expo-secure-store',
+    'expo-notifications',
+    '@react-native-community/datetimepicker',
+    './plugins/with-ios-privacy-manifest',
+  ],
   experiments: {
     typedRoutes: true,
   },

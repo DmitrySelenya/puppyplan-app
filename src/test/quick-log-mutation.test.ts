@@ -203,6 +203,54 @@ describe('Quick Log mutation lifecycle', () => {
     });
   });
 
+  it('AC-2/AC-5 enqueues a backdated detailed observation unchanged before send', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+    const variables = {
+      detailDraft: {
+        note: 'Synthetic private context',
+        occurredAt,
+        title: 'Calm greeting',
+        trackerId: 'observation' as const,
+      },
+      householdId,
+      occurredAt,
+      puppyId,
+      trackerId: 'observation' as const,
+      todayDate,
+    };
+
+    const context = await options.onMutate(variables);
+    await expect(options.mutationFn(variables)).resolves.toMatchObject({
+      event_type: 'observation',
+      occurred_at: occurredAt,
+      payload_version: 2,
+      payload: {
+        note: 'Synthetic private context',
+        title: 'Calm greeting',
+      },
+    });
+
+    expect(context.queuedItem).toMatchObject({
+      event_type: 'observation',
+      occurred_at: occurredAt,
+      payload_version: 2,
+      payload: {
+        note: 'Synthetic private context',
+        title: 'Calm greeting',
+      },
+    });
+  });
+
   it('generates client ids in native runtimes without crypto.randomUUID', async () => {
     const originalCryptoDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
     const queryClient = createTestQueryClient();
@@ -879,7 +927,7 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
-  it('saves Quick Log detail drafts to the synced event payload and updates cached rows', async () => {
+  it('AC-6 saves synced details with payload version and occurred time, then updates cache', async () => {
     const queryClient = createTestQueryClient();
     const events = new FakeQuickLogEventsRepository();
     const invalidations: unknown[] = [];
@@ -895,6 +943,8 @@ describe('Quick Log mutation lifecycle', () => {
       clientEventId,
       draft: {
         amount: 'water',
+        note: 'Synthetic private context',
+        occurredAt: '2026-05-26T07:40:00.000Z',
         trackerId: 'feeding',
       },
       eventType: 'feeding',
@@ -910,9 +960,12 @@ describe('Quick Log mutation lifecycle', () => {
         clientEventId,
         eventType: 'feeding',
         householdId,
+        occurredAt: '2026-05-26T07:40:00.000Z',
         payload: {
           amount: 'water',
+          note: 'Synthetic private context',
         },
+        payloadVersion: 2,
       },
     ]);
     expect(readTimelineRows(queryClient)).toEqual([
@@ -920,7 +973,10 @@ describe('Quick Log mutation lifecycle', () => {
         client_event_id: clientEventId,
         payload: {
           amount: 'water',
+          note: 'Synthetic private context',
         },
+        payload_version: 2,
+        occurred_at: '2026-05-26T07:40:00.000Z',
       }),
     ]);
     expect(invalidations).toEqual([
@@ -928,6 +984,58 @@ describe('Quick Log mutation lifecycle', () => {
       { queryKey: queryKeys.events.timelineRoot(householdId, puppyId), exact: false },
       { queryKey: queryKeys.puppy.summary(householdId, puppyId), exact: true },
       { queryKey: queryKeys.events.duplicateWarningSource(householdId, puppyId, 'feeding'), exact: true },
+    ]);
+  });
+
+  it('AC-6 updates pending-local details through the same contract without a server write', async () => {
+    const queryClient = createTestQueryClient();
+    const events = new FakeQuickLogEventsRepository();
+    const queue = new FakeQuickLogQueueStorage();
+    queue.items.set(clientEventId, createQueueItem({
+      client_event_id: clientEventId,
+      state: 'pending_local',
+    }));
+    queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), [
+      {
+        ...serverRow(),
+        localSync: {
+          category: null,
+          retryCount: 0,
+          state: 'pending_local' as const,
+        },
+      },
+    ]);
+
+    await saveQuickLogDetailsDraft({
+      clientEventId,
+      draft: {
+        amount: 'water',
+        note: 'Synthetic pending context',
+        occurredAt: '2026-05-26T07:40:00.000Z',
+        trackerId: 'feeding',
+      },
+      eventType: 'feeding',
+      events,
+      householdId,
+      puppyId,
+      queryClient,
+      queue,
+      todayDate,
+    });
+
+    expect(events.payloadUpdates).toEqual([]);
+    expect(queue.items.get(clientEventId)).toMatchObject({
+      occurred_at: '2026-05-26T07:40:00.000Z',
+      payload: { amount: 'water', note: 'Synthetic pending context' },
+      payload_version: 2,
+      state: 'pending_local',
+    });
+    expect(readTimelineRows(queryClient)).toEqual([
+      expect.objectContaining({
+        occurred_at: '2026-05-26T07:40:00.000Z',
+        payload: { amount: 'water', note: 'Synthetic pending context' },
+        payload_version: 2,
+      }),
     ]);
   });
 
@@ -1663,7 +1771,9 @@ class FakeQuickLogEventsRepository {
     householdId: string;
     clientEventId: string;
     eventType: string;
+    occurredAt?: string;
     payload: Record<string, JsonValue>;
+    payloadVersion?: 1 | 2;
   }[] = [];
   public readonly restores: {
     householdId: string;
@@ -1730,7 +1840,9 @@ class FakeQuickLogEventsRepository {
     householdId: string;
     clientEventId: string;
     eventType: string;
+    occurredAt?: string;
     payload: Record<string, JsonValue>;
+    payloadVersion?: 1 | 2;
   }): Promise<EventLogRecord> {
     this.payloadUpdates.push(input);
 
@@ -1741,7 +1853,9 @@ class FakeQuickLogEventsRepository {
     return {
       ...serverRow(),
       event_type: input.eventType as EventLogRecord['event_type'],
+      occurred_at: input.occurredAt ?? serverRow().occurred_at,
       payload: input.payload,
+      payload_version: input.payloadVersion ?? 1,
       updated_at: now,
     };
   }
@@ -1750,7 +1864,7 @@ class FakeQuickLogEventsRepository {
 class FakeQuickLogQueueStorage implements Pick<
   QuickLogQueueStorage,
   'enqueue' | 'getByClientEventId' | 'markSending' | 'markFailedRetryable' | 'markFailedPermanent'
-  | 'markDeletedBeforeSync' | 'manualRetry' | 'resolveInFlightSuccess' | 'remove'
+  | 'markDeletedBeforeSync' | 'manualRetry' | 'resolveInFlightSuccess' | 'remove' | 'updateDetails'
 > {
   public readonly items = new Map<string, QuickLogStoredQueueItem>();
   public readonly manualRetryCalls: {
@@ -1778,6 +1892,24 @@ class FakeQuickLogQueueStorage implements Pick<
 
   public async getByClientEventId(clientEventIdValue: string): Promise<QuickLogStoredQueueItem | null> {
     return this.items.get(clientEventIdValue) ?? null;
+  }
+
+  public async updateDetails(
+    clientEventIdValue: string,
+    options: {
+      now: string;
+      occurredAt: string;
+      payload: Record<string, JsonValue>;
+      payloadVersion: 1 | 2;
+    },
+  ): Promise<QuickLogStoredQueueItem> {
+    return this.write(clientEventIdValue, (item) => ({
+      ...item,
+      occurred_at: options.occurredAt,
+      payload: options.payload,
+      payload_version: options.payloadVersion,
+      updated_at: options.now,
+    }));
   }
 
   public async markSending(

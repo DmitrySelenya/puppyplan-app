@@ -70,3 +70,32 @@ The screenshots are design references for Expo native implementation and must be
 | --- | --- | --- | --- |
 | `v2.overview.01` | reference | 924x540 | ![Standalone overview](standalone-overview.png) |
 | `v2.print.01` | reference | 924x540 | ![Print top](print-top.png) |
+
+## Dogfood Core Loop — Stage 0 Review (2026-07-11)
+
+These are fresh local rerenders of the preserved synthetic Miro reference boards. They are review
+inputs, not approval. Named deviations and missing variants are tracked in
+`../specs/dogfood-core-loop-stage0.md`.
+
+| Stable ID | State | Screenshot |
+| --- | --- | --- |
+| `dogfood.schedule.01` | create baseline | ![Schedule form reference](dogfood-core-loop/schedule-form-reference.png) |
+| `dogfood.diary.01` | mixed plan/fact baseline | ![Diary plan and fact reference](dogfood-core-loop/diary-plan-fact-reference.png) |
+| `dogfood.permission.01` | permission primer | ![Permission primer reference](dogfood-core-loop/permission-primer-reference.png) |
+| `dogfood.stage0.variants.01` | detailed capture + permission before/after states | ![Stage 0 variants](dogfood-core-loop/stage0-variants-reference.png) |
+
+## Dogfood Core Loop — Stage 4 Native Evidence (2026-07-11)
+
+Detailed Quick Capture passes native-vs-reference review on the locked iPhone SE simulator. See
+[the comparison record](dogfood-core-loop/phase3-stage4-comparison.md) and its five synthetic native
+captures.
+
+The Canonical Routine Editor's 2026-07-11 PASS was retracted after owner review
+([audit record](dogfood-core-loop/phase4-stage4-comparison.md)); the editor was rebuilt on
+2026-07-12 and re-passed with named deviations. See
+[the rebuilt comparison record](dogfood-core-loop/phase4-stage4-rebuilt.md) and its synthetic
+native captures, which also cover the reworked Diary `RoutineCard` planned rows.
+
+The Diary plan/fact merge passes the locked-SE Stage 4 review. See
+[the Diary comparison record](dogfood-core-loop/phase5-stage4-comparison.md), including neutral
+past-plan and planned-versus-actual evidence.

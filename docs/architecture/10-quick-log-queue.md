@@ -47,7 +47,10 @@ CREATE TABLE queue_item (
 
 `created_by` is nullable only for legacy local rows created before queue schema v2. New enqueue calls must provide the original authenticated actor. Legacy rows with `created_by IS NULL` become `failed_permanent/missing_context` and must not be replayed as the current session user.
 
-No notes/photos/free text unless a future ADR explicitly expands the queue.
+ADR-0022 permits one bounded free-text field: an optional validated event note of at most 500
+characters inside a strict payload-version-2 Quick Log command. Photos and all other free-text
+expansions remain forbidden. The queue must never log `payload_json`; retry preserves the exact
+validated note, and server confirmation removes the queue copy.
 
 ## State Machine
 

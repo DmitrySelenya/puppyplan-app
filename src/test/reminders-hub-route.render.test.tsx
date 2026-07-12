@@ -113,13 +113,43 @@ describe('RemindersHubRoute', () => {
       .toEqual(expect.objectContaining({ selected: true }));
     expect(screen.getByText(i18n.t('reminders.sections.feeding'))).toBeTruthy();
     expect(screen.getByText('Morning feeding')).toBeTruthy();
-    expect(screen.getByText(i18n.t('reminders.row-subtitle-daily-template', {
-      time: '7:30',
-    }))).toBeTruthy();
+    expect(screen.getByText(i18n.t('reminders.form.legacy-unsupported'))).toBeTruthy();
     expect(screen.getByTestId('reminder-row-toggle-00000000-0000-4000-8000-000000005101').props.value)
       .toBe(true);
 
     expect(screen.queryByText('DHPP booster')).toBeNull();
+  });
+
+  it('AC-P4-ROUNDTRIP labels canonical daily, custom-day, and one-off rows accurately', () => {
+    mockUseRemindersQuery.mockReturnValue({
+      data: [
+        createReminder({
+          id: '00000000-0000-4000-8000-000000005111',
+          reminder_type: 'feeding',
+          schedule_rule: { repeat: 'daily', time: '07:30', title: 'Morning meal' },
+        }),
+        createReminder({
+          id: '00000000-0000-4000-8000-000000005112',
+          reminder_type: 'observation',
+          // An observation routine must carry a title or note (see reminderScheduleDraftSchema).
+          schedule_rule: { repeat: { days: [1, 3, 5] }, time: '18:30', title: 'Evening check' },
+        }),
+        createReminder({
+          id: '00000000-0000-4000-8000-000000005113',
+          reminder_type: 'sleep',
+          schedule_rule: { date: '2026-07-12', repeat: 'never', time: '14:00' },
+        }),
+      ],
+      isError: false,
+      isLoading: false,
+    });
+
+    render(<RemindersHubRoute />, { wrapper: AppProviders });
+
+    expect(screen.getByText('Morning meal')).toBeTruthy();
+    expect(screen.getByText('Every day · 07:30')).toBeTruthy();
+    expect(screen.getByText('Mo, We, Fr · 18:30')).toBeTruthy();
+    expect(screen.getByText('Once · 2026-07-12 · 14:00')).toBeTruthy();
   });
 
   it('AC-REM-HUB-3 switches to disabled reminders without rendering active rows', () => {
@@ -227,7 +257,9 @@ describe('RemindersHubRoute', () => {
     try {
       render(<RemindersHubRoute />, { wrapper: AppProviders });
 
-      fireEvent(screen.getByLabelText('Morning feeding. Every day · 7:30'), 'accessibilityAction', {
+      fireEvent(screen.getByLabelText(
+        `Morning feeding. ${i18n.t('reminders.form.legacy-unsupported')}`,
+      ), 'accessibilityAction', {
         nativeEvent: {
           actionName: 'delete',
         },
@@ -349,17 +381,17 @@ describe('RemindersHubRoute', () => {
 });
 
 function createReminder(overrides: Readonly<{
-  enabled: boolean;
+  enabled?: boolean;
   id: string;
   reminder_type: string;
-  schedule_rule: Record<string, string>;
+  schedule_rule: Reminder['schedule_rule'];
 }>): Reminder {
   return {
     assigned_to: null,
     created_at: '2026-07-02T10:00:00.000Z',
     created_by: userId,
     deleted_at: null,
-    enabled: overrides.enabled,
+    enabled: overrides.enabled ?? true,
     id: overrides.id,
     puppy_id: puppyId,
     quiet_hours: null,

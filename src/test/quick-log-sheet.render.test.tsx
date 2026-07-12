@@ -147,6 +147,72 @@ describe('QuickLogShell', () => {
       MAX_VISIBLE_QUICK_LOG_TRACKERS,
     );
     expect(screen.queryByText(i18n.t('common.close'))).toBeNull();
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.log-with-details'),
+    })).toBeTruthy();
+  });
+
+  it('AC-1 opens a sleep second step and logs start/wake in the second tap', () => {
+    const mutation = createMutationPort();
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={mutation}
+        now={() => new Date('2026-05-27T08:30:00.000Z')}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.sleep'),
+    }));
+    expect(screen.getByText(i18n.t('quick-log.sleep-action.title'))).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sleep-action.start'),
+    }));
+
+    expect(mutation.mutate).toHaveBeenCalledWith(expect.objectContaining({
+      variables: expect.objectContaining({
+        detailDraft: expect.objectContaining({
+          action: 'start',
+          occurredAt: '2026-05-27T08:30:00.000Z',
+          trackerId: 'sleep',
+        }),
+        trackerId: 'sleep',
+      }),
+    }));
+  });
+
+  it('AC-1 sends retrospective sleep and the visible detailed lane to the composer', () => {
+    const mutation = createMutationPort();
+    const openCreateDetails = jest.fn();
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={mutation}
+        openCreateDetails={openCreateDetails}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.sleep'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sleep-action.retrospective'),
+    }));
+    expect(openCreateDetails).toHaveBeenCalledWith({
+      sleepAction: 'retrospective',
+      trackerId: 'sleep',
+    });
+    expect(mutation.mutate).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('common.back') }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.log-with-details'),
+    }));
+    expect(openCreateDetails).toHaveBeenCalledWith({ trackerId: 'feeding' });
   });
 
   it('maps canonical tracker ids to their glyphs', () => {

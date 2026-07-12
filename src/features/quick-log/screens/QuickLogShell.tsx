@@ -54,6 +54,10 @@ export type QuickLogShellProps = Readonly<{
   now?: () => Date;
   onQuickLogSaved?: () => void;
   openDetails?: (request: QuickLogEventEditRequest) => void;
+  openCreateDetails?: (request: Readonly<{
+    sleepAction?: 'retrospective';
+    trackerId: 'potty' | 'feeding' | 'sleep' | 'walk' | 'zoomies' | 'training' | 'observation';
+  }>) => void;
   recentEvent?: QuickLogRecentEvent | null;
   recentEvents?: readonly QuickLogRecentEvent[];
   snackbar?: QuickLogSnackbarPort;
@@ -233,6 +237,7 @@ function QuickLogShellContent({
   now,
   onQuickLogSaved,
   openDetails,
+  openCreateDetails,
   recentEvent = null,
   recentEvents = [],
 }: QuickLogShellProps & {
@@ -240,6 +245,7 @@ function QuickLogShellContent({
 }) {
   const { t } = useAppTranslation();
   const [pottySubtypePickerOpen, setPottySubtypePickerOpen] = useState(false);
+  const [sleepActionPickerOpen, setSleepActionPickerOpen] = useState(false);
   const isViewOnly = careContext?.householdRole === 'viewer';
   const readyCareContext = mutation === undefined || isViewOnly
     ? null
@@ -324,6 +330,8 @@ function QuickLogShellContent({
           ? controller.cancelDuplicate
           : pottySubtypePickerOpen
             ? () => setPottySubtypePickerOpen(false)
+            : sleepActionPickerOpen
+              ? () => setSleepActionPickerOpen(false)
             : closeSheet
       }>
       <SheetSurface
@@ -332,6 +340,8 @@ function QuickLogShellContent({
             ? t('quick-log.duplicate-warning.title')
             : pottySubtypePickerOpen
               ? t('quick-log.potty-subtype.title')
+              : sleepActionPickerOpen
+                ? t('quick-log.sleep-action.title')
             : t('quick-log.sheet.title')
         }>
         {controller.duplicateWarning ? (
@@ -348,6 +358,18 @@ function QuickLogShellContent({
                 pottySubtype,
                 trackerId: 'potty',
               });
+            }}
+          />
+        ) : sleepActionPickerOpen ? (
+          <SleepActionPicker
+            onBack={() => setSleepActionPickerOpen(false)}
+            onRetrospective={() => openCreateDetails?.({
+              sleepAction: 'retrospective',
+              trackerId: 'sleep',
+            })}
+            onSelect={(sleepAction) => {
+              setSleepActionPickerOpen(false);
+              controller.logTracker({ sleepAction, trackerId: 'sleep' });
             }}
           />
         ) : (
@@ -389,12 +411,22 @@ function QuickLogShellContent({
                       return;
                     }
 
+                    if (trackerId === 'sleep') {
+                      setSleepActionPickerOpen(true);
+                      return;
+                    }
+
                     controller.logTracker({ trackerId });
                   }}
                   testID="quick-log-tracker-tile"
                 />
               ))}
             </Stack>
+            <Button
+              label={t('quick-log.sheet.log-with-details')}
+              onPress={() => openCreateDetails?.({ trackerId: 'feeding' })}
+              variant="secondary"
+            />
             <QuickLogLocalEvents
               events={visibleLocalEvents}
               onDelete={controller.deleteLocal}
@@ -405,6 +437,37 @@ function QuickLogShellContent({
         )}
       </SheetSurface>
     </QuickLogSheetFrame>
+  );
+}
+
+function SleepActionPicker({
+  onBack,
+  onRetrospective,
+  onSelect,
+}: Readonly<{
+  onBack: () => void;
+  onRetrospective: () => void;
+  onSelect: (action: 'start' | 'wake') => void;
+}>) {
+  const { t } = useAppTranslation();
+
+  return (
+    <Stack gap="md">
+      <Stack align="flex-start" direction="horizontal" gap="sm" justify="space-between" wrap>
+        <SheetHeader style={styles.title} title={t('quick-log.sleep-action.title')} />
+        <Button label={t('common.back')} onPress={onBack} variant="tertiary" />
+      </Stack>
+      <AppText tone="secondary">{t('quick-log.sleep-action.body')}</AppText>
+      <Stack gap="sm">
+        <Button label={t('quick-log.sleep-action.start')} onPress={() => onSelect('start')} />
+        <Button label={t('quick-log.sleep-action.wake')} onPress={() => onSelect('wake')} />
+        <Button
+          label={t('quick-log.sleep-action.retrospective')}
+          onPress={onRetrospective}
+          variant="secondary"
+        />
+      </Stack>
+    </Stack>
   );
 }
 

@@ -1,5 +1,5 @@
 import { AccessibilityInfo } from 'react-native';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { QuickLogFeedbackProvider } from '@/features/quick-log/QuickLogFeedbackProvider';
 import { i18n } from '@/lib/i18n';
@@ -142,7 +142,99 @@ describe('QuickLogDetailsRoute', () => {
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
   });
 
-  it('does not persist detail drafts for viewer care contexts', () => {
+  it('AC-2/AC-5 creates a standalone detailed observation and closes only after persistence', async () => {
+    const createDetailed = jest.fn(async () => undefined);
+    const mutation = {
+      createDetailed,
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseLocalSearchParams.mockReturnValue({ trackerId: 'observation' });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogDetailsRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('quick-log.details.observation.title-label')),
+      'Calm greeting',
+    );
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('quick-log.details.note.label')),
+      'Synthetic private context',
+    );
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.details.save'),
+    }));
+
+    await waitFor(() => expect(createDetailed).toHaveBeenCalledWith(expect.objectContaining({
+      detailDraft: expect.objectContaining({
+        note: 'Synthetic private context',
+        title: 'Calm greeting',
+        trackerId: 'observation',
+      }),
+      householdId: '00000000-0000-4000-8000-000000007902',
+      puppyId: '00000000-0000-4000-8000-000000007903',
+      trackerId: 'observation',
+      todayDate: '2026-06-09',
+    })));
+    expect(mockRouterBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-2/AC-6 keeps a rejected standalone draft open and visible', async () => {
+    const createDetailed = jest.fn(async () => {
+      throw new Error('Synthetic persistence failure');
+    });
+    mockUseLocalSearchParams.mockReturnValue({ trackerId: 'observation' });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: {
+        createDetailed,
+        deleteLocal: jest.fn(),
+        deleteSynced: jest.fn(),
+        mutate: jest.fn(),
+        retry: jest.fn(),
+        updateDetails: jest.fn(),
+        undo: jest.fn(),
+      },
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogDetailsRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    const note = screen.getByLabelText(i18n.t('quick-log.details.note.label'));
+    fireEvent.changeText(note, 'Keep synthetic draft');
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.details.save'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.details.persistence-error'))).toBeTruthy();
+    });
+    expect(note).toHaveProp('value', 'Keep synthetic draft');
+    expect(mockRouterBack).not.toHaveBeenCalled();
+  });
+
+  it('AC-QL-DETAIL-PERMISSION does not persist or close for viewer care contexts', () => {
     const mutation = {
       deleteLocal: jest.fn(),
       deleteSynced: jest.fn(),
@@ -191,7 +283,7 @@ describe('QuickLogDetailsRoute', () => {
     }));
 
     expect(mutation.updateDetails).not.toHaveBeenCalled();
-    expect(mockRouterBack).toHaveBeenCalledTimes(1);
+    expect(mockRouterBack).not.toHaveBeenCalled();
   });
 
   it('AC-QL-DETAIL-STATES shows loading while active care context loads', () => {

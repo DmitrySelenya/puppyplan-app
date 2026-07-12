@@ -1,5 +1,12 @@
 # Dogfooding Readiness — Schedule, Local Notifications, Backdating, Device Install
 
+> **Execution handoff (2026-07-11):** this document remains the historical record for completed
+> PUP-28 and PUP-30 foundation work. Its unfinished execution order and Phase 3 scope are
+> superseded by `docs/plans/active/2026-07-11-dogfood-core-loop.md`, which incorporates the
+> simulator audit and the missing exact-time, private-note, sleep/wake, training/observation,
+> routine, and planned-vs-actual Diary requirements. Do not continue unfinished UI/device work
+> from this older phase list.
+
 > For implementation agents: use the repo `AGENTS.md`, relevant Codex/superpowers skills, and this plan task-by-task. Do not skip the failing-test step for behavior changes.
 > Living document: update this file as implementation changes contracts, schema, RLS, UX, routes, data flow, or verification evidence.
 

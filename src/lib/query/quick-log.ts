@@ -12,14 +12,15 @@ import type {
 } from '@/contracts/analytics';
 import {
   createQuickLogDetailPayload,
+  createQuickLogDetailDraft,
   createQuickLogEventInsert,
   isQuickLogEventType,
   type QuickLogDetailDraft,
+  type QuickLogDetailTrackerId,
   type QuickLogEventInsert,
   type QuickLogEventType,
   type QuickLogNonPottyTrackerId,
   type QuickLogPottySubtype,
-  type QuickLogTrackerId,
 } from '@/contracts/quick-log';
 import type { ReminderLink } from '@/contracts/reminders';
 import {
@@ -75,10 +76,17 @@ type QuickLogMutationVariablesBase = Readonly<{
 
 export type QuickLogMutationVariables =
   | (QuickLogMutationVariablesBase & Readonly<{
+    detailDraft: QuickLogDetailDraft;
+    pottySubtype?: never;
+    trackerId: QuickLogDetailTrackerId;
+  }>)
+  | (QuickLogMutationVariablesBase & Readonly<{
+    detailDraft?: never;
     pottySubtype: QuickLogPottySubtype;
     trackerId: 'potty';
   }>)
   | (QuickLogMutationVariablesBase & Readonly<{
+    detailDraft?: never;
     pottySubtype?: never;
     trackerId: QuickLogNonPottyTrackerId;
   }>);
@@ -145,6 +153,7 @@ export type QuickLogMutationPortUpdateDetailsRequest = QuickLogMutationPortSynce
 }>;
 
 export type QuickLogMutationPort = Readonly<{
+  createDetailed?: (variables: QuickLogDetailedMutationVariables) => Promise<EventLogRecord>;
   deleteLocal: (clientEventId: string) => unknown;
   deleteSynced: (request: QuickLogMutationPortSyncedDeleteRequest) => Promise<void>;
   mutate: (request: QuickLogMutationPortRequest) => unknown;
@@ -154,7 +163,7 @@ export type QuickLogMutationPort = Readonly<{
     sourceSurface?: QuickLogSourceSurface,
   ) => unknown;
   restoreSynced: (request: QuickLogMutationPortSyncedDeleteRequest) => Promise<void>;
-  updateDetails: (request: QuickLogMutationPortUpdateDetailsRequest) => unknown;
+  updateDetails: (request: QuickLogMutationPortUpdateDetailsRequest) => Promise<void>;
   undo: (request: QuickLogMutationPortUndoRequest) => unknown;
 }>;
 
@@ -163,7 +172,7 @@ export type QuickLogMutationEvent =
     clientEventId: string;
     eventType: QuickLogEventType;
     requestId: string;
-    trackerId: QuickLogTrackerId;
+    trackerId: QuickLogDetailTrackerId;
     type: 'started';
   }>
   | Readonly<{
@@ -171,7 +180,7 @@ export type QuickLogMutationEvent =
     eventType: QuickLogEventType;
     requestId: string;
     state: 'failed_retryable' | 'failed_permanent';
-    trackerId: QuickLogTrackerId;
+    trackerId: QuickLogDetailTrackerId;
     type: 'failed';
   }>;
 
@@ -227,6 +236,101 @@ const mutationContextByVariables = new WeakMap<
 >();
 const contextsSkippingAllInvalidation = new WeakSet<QuickLogMutationContext>();
 
+export type QuickLogDetailedMutationVariables = Extract<
+  QuickLogMutationVariables,
+  Readonly<{ detailDraft: QuickLogDetailDraft }>
+>;
+
+function createDetailedQuickLogEventInsert(
+  variables: QuickLogDetailedMutationVariables,
+  actorId: string,
+  clientEventId: string,
+): QuickLogEventInsert {
+  const draft = createQuickLogDetailDraft(variables.detailDraft);
+  if (draft.trackerId !== variables.trackerId) {
+    throw new Error('Quick Log detail draft does not match the selected tracker');
+  }
+
+  const common = {
+    client_event_id: clientEventId,
+    household_id: variables.householdId,
+    puppy_id: variables.puppyId,
+    created_by: actorId,
+    occurred_at: draft.occurredAt ?? variables.occurredAt,
+    ...(variables.reminderLink === undefined
+      ? {}
+      : {
+        reminder_link: {
+          reminder_id: variables.reminderLink.reminderId,
+          scheduled_for: variables.reminderLink.scheduledFor,
+        },
+      }),
+  };
+
+  if (draft.trackerId === 'potty') {
+    return createQuickLogEventInsert({
+      ...common,
+      note: draft.note,
+      subtype: draft.subtype,
+      tracker_id: draft.trackerId,
+    });
+  }
+
+  if (draft.trackerId === 'feeding') {
+    return createQuickLogEventInsert({
+      ...common,
+      amount: draft.amount,
+      note: draft.note,
+      tracker_id: draft.trackerId,
+    });
+  }
+
+  if (draft.trackerId === 'sleep') {
+    return createQuickLogEventInsert({
+      ...common,
+      action: draft.action,
+      duration_minutes: draft.durationMinutes,
+      note: draft.note,
+      tracker_id: draft.trackerId,
+    });
+  }
+
+  if (draft.trackerId === 'walk') {
+    return createQuickLogEventInsert({
+      ...common,
+      duration_minutes: draft.durationMinutes,
+      note: draft.note,
+      tracker_id: draft.trackerId,
+    });
+  }
+
+  if (draft.trackerId === 'zoomies') {
+    return createQuickLogEventInsert({
+      ...common,
+      intensity: draft.intensity,
+      note: draft.note,
+      tracker_id: draft.trackerId,
+    });
+  }
+
+  if (draft.trackerId === 'training') {
+    return createQuickLogEventInsert({
+      ...common,
+      duration_bucket: draft.durationBucket,
+      note: draft.note,
+      topic: draft.topic,
+      tracker_id: draft.trackerId,
+    });
+  }
+
+  return createQuickLogEventInsert({
+    ...common,
+    note: draft.note,
+    title: draft.title,
+    tracker_id: draft.trackerId,
+  });
+}
+
 export function createQuickLogMutationOptions(
   dependencies: QuickLogMutationDependencies,
 ): QuickLogMutationOptions {
@@ -246,23 +350,25 @@ export function createQuickLogMutationOptions(
       }
 
       const clientEventId = variables.clientEventId ?? createClientEventId();
-      const insert = createQuickLogEventInsert({
-        client_event_id: clientEventId,
-        household_id: variables.householdId,
-        puppy_id: variables.puppyId,
-        created_by: actorId,
-        tracker_id: variables.trackerId,
-        occurred_at: variables.occurredAt,
-        ...(variables.trackerId === 'potty' ? { subtype: variables.pottySubtype } : {}),
-        ...(variables.reminderLink !== undefined
-          ? {
-            reminder_link: {
-              reminder_id: variables.reminderLink.reminderId,
-              scheduled_for: variables.reminderLink.scheduledFor,
-            },
-          }
-          : {}),
-      });
+      const insert = 'detailDraft' in variables && variables.detailDraft !== undefined
+        ? createDetailedQuickLogEventInsert(variables, actorId, clientEventId)
+        : createQuickLogEventInsert({
+          client_event_id: clientEventId,
+          household_id: variables.householdId,
+          puppy_id: variables.puppyId,
+          created_by: actorId,
+          tracker_id: variables.trackerId,
+          occurred_at: variables.occurredAt,
+          ...(variables.trackerId === 'potty' ? { subtype: variables.pottySubtype } : {}),
+          ...(variables.reminderLink !== undefined
+            ? {
+              reminder_link: {
+                reminder_id: variables.reminderLink.reminderId,
+                scheduled_for: variables.reminderLink.scheduledFor,
+              },
+            }
+            : {}),
+        });
       const timestamp = now();
       const invalidationKeys = getQuickLogInvalidationKeys({
         householdId: insert.household_id,
@@ -593,6 +699,7 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
     }
 
     return {
+      createDetailed: (variables) => quickLogMutation.mutateAsync(variables),
       deleteLocal: (clientEventId) => {
         void deleteLocalQuickLogEvent({
           clientEventId,
@@ -638,10 +745,11 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
         }).catch(() => undefined);
       },
       updateDetails: (request) => {
-        void saveQuickLogDetailsDraft({
+        return saveQuickLogDetailsDraft({
           ...request,
           queryClient,
-        }).catch(() => undefined);
+          queue: createQuickLogDetailsQueueProxy(queueRef),
+        });
       },
     };
   }, [auth.status, auth.user, queue, queueReady, queueUnavailable, queryClient, quickLogMutation]);
@@ -775,6 +883,7 @@ export async function saveQuickLogDetailsDraft(
   input: QuickLogMutationPortUpdateDetailsRequest & Readonly<{
     events?: Pick<SupabaseEventLogRepository, 'updatePayloadByClientEventId'>;
     queryClient: QueryClient;
+    queue?: QuickLogDetailsQueue;
   }>,
 ): Promise<void> {
   const events = input.events ?? createSupabaseEventLogRepository();
@@ -783,11 +892,51 @@ export async function saveQuickLogDetailsDraft(
     draft: input.draft,
     eventType: input.eventType,
   });
+  const localItem = await input.queue?.getByClientEventId(input.clientEventId) ?? null;
+
+  if (localItem !== null) {
+    if (
+      localItem.event_type !== input.eventType
+      || localItem.household_id !== input.householdId
+      || localItem.puppy_id !== input.puppyId
+    ) {
+      throw new Error('Quick Log local detail target does not match the requested event');
+    }
+
+    if (localItem.state === 'sending') {
+      throw new Error('Quick Log details cannot be edited while the event is sending');
+    }
+
+    if (editableLocalDetailStates.has(localItem.state) && input.queue !== undefined) {
+      const updatedItem = await input.queue.updateDetails(input.clientEventId, {
+        now: new Date().toISOString(),
+        occurredAt: input.draft.occurredAt ?? localItem.occurred_at,
+        payload,
+        payloadVersion: 2,
+      });
+
+      updateMatchingCachedRows(input.queryClient, timelineRootKey, (rows) => rows.map((row) =>
+        row.client_event_id === input.clientEventId
+          ? {
+            ...row,
+            occurred_at: updatedItem.occurred_at,
+            payload: updatedItem.payload,
+            payload_version: updatedItem.payload_version,
+            updated_at: updatedItem.updated_at,
+          }
+          : row));
+      await invalidateQuickLogDetailQueries(input, timelineRootKey);
+      return;
+    }
+  }
+
   const updatedRow = await events.updatePayloadByClientEventId({
     clientEventId: input.clientEventId,
     eventType: input.eventType,
     householdId: input.householdId,
+    occurredAt: input.draft.occurredAt,
     payload,
+    payloadVersion: 2,
   });
 
   replaceCachedEventRow(input.queryClient, {
@@ -798,6 +947,24 @@ export async function saveQuickLogDetailsDraft(
       localSync: undefined,
     },
   });
+  await invalidateQuickLogDetailQueries(input, timelineRootKey);
+}
+
+type QuickLogDetailsQueue = Readonly<{
+  getByClientEventId: QuickLogQueueStorage['getByClientEventId'];
+  updateDetails: NonNullable<QuickLogQueueStorage['updateDetails']>;
+}>;
+
+const editableLocalDetailStates = new Set<QuickLogQueueState>([
+  'pending_local',
+  'failed_retryable',
+  'failed_permanent',
+]);
+
+async function invalidateQuickLogDetailQueries(
+  input: QuickLogMutationPortUpdateDetailsRequest & Readonly<{ queryClient: QueryClient }>,
+  timelineRootKey: QueryKey,
+): Promise<void> {
   await invalidateAffectedQueries(input.queryClient, {
     invalidationKeys: getQuickLogInvalidationKeys({
       eventType: input.eventType,
@@ -808,6 +975,22 @@ export async function saveQuickLogDetailsDraft(
     timelineRootKey,
     includeTimeline: true,
   });
+}
+
+function createQuickLogDetailsQueueProxy(
+  queueRef: Readonly<{ current: QuickLogQueueStorage | null }>,
+): QuickLogDetailsQueue {
+  return {
+    getByClientEventId: (clientEventId) =>
+      requireQuickLogQueue(queueRef).getByClientEventId(clientEventId),
+    updateDetails: (clientEventId, options) => {
+      const storage = requireQuickLogQueue(queueRef);
+      if (storage.updateDetails === undefined) {
+        throw new Error('Quick Log queue detail updates are unavailable');
+      }
+      return storage.updateDetails(clientEventId, options);
+    },
+  };
 }
 
 function createRequiredQuickLogQueueProxy(

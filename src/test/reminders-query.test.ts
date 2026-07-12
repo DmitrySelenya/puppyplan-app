@@ -348,6 +348,31 @@ describe('full schedule contract create/update (PUP-28 Phase 2)', () => {
     });
   });
 
+  it('AC-P4-4 persists one-off observation title and note in schedule_rule', () => {
+    expect(toReminderInsert({
+      ...scheduleDraft,
+      schedule: {
+        trackerId: 'observation',
+        rule: {
+          date: '2026-07-12',
+          note: 'Synthetic private context',
+          repeat: 'never',
+          time: '18:30',
+          title: 'Check calm greeting',
+        },
+      },
+    })).toEqual(expect.objectContaining({
+      reminder_type: 'observation',
+      schedule_rule: {
+        date: '2026-07-12',
+        note: 'Synthetic private context',
+        repeat: 'never',
+        time: '18:30',
+        title: 'Check calm greeting',
+      },
+    }));
+  });
+
   it('AC-REM-SCHED-1 rejects an invalid schedule draft instead of inserting it', () => {
     expect(() => toReminderInsert({
       ...scheduleDraft,

@@ -135,4 +135,67 @@ describe('reminderScheduleDraftSchema (tracker + rule)', () => {
   it('keeps the amount-unit map aligned with the tracker taxonomy', () => {
     expect(Object.keys(reminderAmountUnitByTracker).sort()).toEqual([...reminderTrackerIds].sort());
   });
+
+  it('AC-P4-1 accepts canonical training and observation routines', () => {
+    expect(reminderTrackerIds).toEqual([
+      'potty',
+      'feeding',
+      'sleep',
+      'walk',
+      'zoomies',
+      'training',
+      'observation',
+    ]);
+
+    expect(reminderScheduleDraftSchema.safeParse({
+      trackerId: 'observation',
+      rule: {
+        date: '2026-07-12',
+        repeat: 'never',
+        time: '18:30',
+        title: 'Check calm greeting',
+      },
+    }).success).toBe(true);
+  });
+
+  it('AC-P4-2 round-trips optional title, private note, and compatible variants', () => {
+    expect(reminderScheduleDraftSchema.parse({
+      trackerId: 'potty',
+      rule: {
+        note: 'Synthetic private context',
+        repeat: { days: [1, 3, 5] },
+        time: '07:15',
+        title: 'Garden break',
+        variant: 'outside',
+      },
+    })).toEqual({
+      trackerId: 'potty',
+      rule: {
+        note: 'Synthetic private context',
+        repeat: { days: [1, 3, 5] },
+        time: '07:15',
+        title: 'Garden break',
+        variant: 'outside',
+      },
+    });
+  });
+
+  it('AC-P4-3 rejects variants that do not belong to the selected event', () => {
+    expect(reminderScheduleDraftSchema.safeParse({
+      trackerId: 'feeding',
+      rule: { repeat: 'daily', time: '08:00', variant: 'outside' },
+    }).success).toBe(false);
+  });
+
+  it('AC-P4-4 requires a title or note for an observation routine', () => {
+    expect(reminderScheduleDraftSchema.safeParse({
+      trackerId: 'observation',
+      rule: { repeat: 'daily', time: '18:30' },
+    }).success).toBe(false);
+
+    expect(reminderScheduleDraftSchema.safeParse({
+      trackerId: 'observation',
+      rule: { note: 'Synthetic private context', repeat: 'daily', time: '18:30' },
+    }).success).toBe(true);
+  });
 });

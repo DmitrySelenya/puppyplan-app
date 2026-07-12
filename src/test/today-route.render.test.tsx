@@ -148,6 +148,46 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     });
   });
 
+  it('AC-P5-CHECKOFF wires an actual-time linked fact through createDetailed', async () => {
+    const createDetailed = jest.fn().mockResolvedValue({ id: 'synthetic-event' });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: {
+        createDetailed,
+        deleteLocal: jest.fn(),
+        deleteSynced: jest.fn(),
+        mutate: jest.fn(),
+        retry: jest.fn(),
+        restoreSynced: jest.fn(),
+        updateDetails: jest.fn(),
+        undo: jest.fn(),
+      },
+      mutationEvents: [],
+      status: 'ready',
+    });
+    render(<AppProviders><DiaryRoute /></AppProviders>);
+
+    await capturedProps?.onCheckOff?.({
+      displayAt: '2026-06-09T08:00:00.000Z',
+      kind: 'planned',
+      plannedAt: '2026-06-09T08:00:00.000Z',
+      reminderId: '00000000-0000-4000-8000-000000007301',
+      scheduledFor: '2026-06-09T08:00:00.000Z',
+      status: 'upcoming',
+      time: '08:00',
+      trackerId: 'sleep',
+    });
+
+    expect(createDetailed).toHaveBeenCalledWith(expect.objectContaining({
+      detailDraft: expect.objectContaining({ trackerId: 'sleep' }),
+      householdId: '00000000-0000-4000-8000-000000007001',
+      occurredAt: expect.not.stringMatching('2026-06-09T08:00:00.000Z'),
+      reminderLink: {
+        reminderId: '00000000-0000-4000-8000-000000007301',
+        scheduledFor: '2026-06-09T08:00:00.000Z',
+      },
+    }));
+  });
+
   it('AC-DIARY-DELETE-UNDO-1 AC-DIARY-DELETE-UNDO-2 AC-DIARY-DELETE-UNDO-3 shows undo snackbar after synced Diary delete and restores from it', async () => {
     const mutation = {
       deleteLocal: jest.fn(),

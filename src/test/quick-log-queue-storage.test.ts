@@ -107,6 +107,36 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
       return;
     }
 
+    if (/UPDATE queue_item\s+SET payload_version = \?/i.test(sql)) {
+      const payload_version = params[0];
+      const payload_json = params[1];
+      const nextOccurredAt = params[2];
+      const updated_at = params[3];
+      const client_event_id = params[4];
+
+      if (
+        typeof payload_version !== 'number'
+        || typeof payload_json !== 'string'
+        || typeof nextOccurredAt !== 'string'
+        || typeof updated_at !== 'string'
+        || typeof client_event_id !== 'string'
+      ) {
+        throw new Error('Missing detail update parameters');
+      }
+
+      const existing = this.rows.get(client_event_id);
+      if (existing) {
+        this.rows.set(client_event_id, {
+          ...existing,
+          occurred_at: nextOccurredAt,
+          payload_json,
+          payload_version,
+          updated_at,
+        });
+      }
+      return;
+    }
+
     if (/UPDATE queue_item\s+SET state = \?,\s+retry_count = retry_count \+ 1/i.test(sql)) {
       const state = params[0];
       const last_error_category = params[1];
@@ -651,6 +681,65 @@ describe('Quick Log queue SQLite storage boundary', () => {
     expect(JSON.stringify(row)).not.toContain('notes');
     expect(JSON.stringify(row)).not.toContain('puppy_name');
     expect(JSON.stringify(row)).not.toContain('private-contact-marker');
+  });
+
+  it('AC-3/AC-4: persists and retries a v2 observation without changing its note or time', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    const observationId = 'evt_00000000-0000-4000-8000-000000000024';
+    const observationInput = enqueueInput({
+      client_event_id: observationId,
+      event_type: 'observation',
+      payload_version: 2,
+      payload: {
+        title: 'Settled after walk',
+        note: 'Synthetic context retained exactly',
+      },
+    });
+
+    await expect(storage.enqueue(observationInput, { now: createdAt })).resolves.toMatchObject({
+      client_event_id: observationId,
+      payload_version: 2,
+      occurred_at: occurredAt,
+      payload: observationInput.payload,
+      state: 'pending_local',
+    });
+    await storage.markSending(observationId, { now: '2026-05-26T08:00:02.000Z' });
+    await storage.markFailedRetryable(observationId, {
+      errorCategory: 'network_unavailable',
+      retryAfterAt: null,
+      now: '2026-05-26T08:00:03.000Z',
+    });
+
+    await expect(storage.manualRetry(observationId, {
+      now: '2026-05-26T08:00:04.000Z',
+    })).resolves.toMatchObject({
+      item: {
+        client_event_id: observationId,
+        payload_version: 2,
+        occurred_at: occurredAt,
+        payload: observationInput.payload,
+        state: 'sending',
+      },
+    });
+  });
+
+  it('AC-6 atomically updates pending-local details without changing queue state', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    await storage.enqueue(enqueueInput(), { now: createdAt });
+
+    await expect(storage.updateDetails(clientEventId, {
+      now: '2026-05-26T08:00:02.000Z',
+      occurredAt: '2026-05-26T07:40:00.000Z',
+      payload: { amount: 'water', note: 'Synthetic private context' },
+      payloadVersion: 2,
+    })).resolves.toMatchObject({
+      occurred_at: '2026-05-26T07:40:00.000Z',
+      payload: { amount: 'water', note: 'Synthetic private context' },
+      payload_version: 2,
+      state: 'pending_local',
+    });
   });
 
   it('rejects new enqueue attempts without an original actor before writing a row', async () => {

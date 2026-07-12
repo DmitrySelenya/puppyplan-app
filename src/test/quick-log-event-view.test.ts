@@ -87,6 +87,42 @@ describe('Quick Log event view model', () => {
       });
     }
   });
+
+  it.each([
+    ['sleep', { action: 'start', note: 'Synthetic sleep note' }, 'quick-log.details.tabs.sleep'],
+    ['sleep', { action: 'wake', note: 'Synthetic wake note' }, 'quick-log.details.tabs.sleep'],
+    [
+      'sleep',
+      { action: 'retrospective', duration_minutes: 90, note: 'Synthetic retrospective note' },
+      'quick-log.details.tabs.sleep',
+    ],
+    [
+      'training',
+      { topic: 'settling', duration_bucket: 'short', note: 'Synthetic training note' },
+      'quick-log.details.tabs.training',
+    ],
+    [
+      'observation',
+      { title: 'Calm greeting', note: 'Synthetic observation note' },
+      'quick-log.details.tabs.observation',
+    ],
+  ] as const)('AC-4/AC-5 keeps v2 %s facts visible without exposing private note text', (
+    eventType,
+    payload,
+    titleKey,
+  ) => {
+    const event = createQuickLogEventView(createRow({
+      event_type: eventType,
+      payload_version: 2,
+      payload,
+    }), { t, todayDate });
+
+    expect(event).toMatchObject({
+      eventType,
+      title: i18n.t(titleKey),
+    });
+    expect(JSON.stringify(event)).not.toContain(payload.note);
+  });
 });
 
 function createRow(

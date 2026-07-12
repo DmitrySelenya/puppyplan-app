@@ -97,6 +97,19 @@ describe('buildReminderNotificationContent', () => {
       trackerId: 'feeding',
     });
   });
+
+  it('AC-P4-PRIVACY supports observation without copying routine title or note', () => {
+    const content = buildReminderNotificationContent({
+      ...desired,
+      trackerId: 'observation',
+    }, fakeTranslate);
+
+    expect(content.body).toBe(
+      'reminders.local-notification.body:quick-log.details.tabs.observation',
+    );
+    expect(JSON.stringify(content)).not.toContain('title text');
+    expect(JSON.stringify(content)).not.toContain('private note');
+  });
 });
 
 // --- toReminderForExpansion -------------------------------------------------
