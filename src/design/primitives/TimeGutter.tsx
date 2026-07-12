@@ -18,11 +18,20 @@ export function TimeGutter({ time, testID }: TimeGutterProps) {
 
   return (
     <View style={styles.gutter} testID={testID}>
-      <AppText numeric style={styles.clock} tone="secondary" variant="footnote">
+      <AppText
+        maxFontSizeMultiplier={1.3}
+        numeric
+        style={styles.clock}
+        tone="secondary"
+        variant="footnote">
         {clock}
       </AppText>
       {meridiem ? (
-        <AppText style={styles.meridiem} tone="secondary" variant="caption">
+        <AppText
+          maxFontSizeMultiplier={1.3}
+          style={styles.meridiem}
+          tone="secondary"
+          variant="caption">
           {meridiem}
         </AppText>
       ) : null}

@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { render, screen } from '@testing-library/react-native';
 
 import { DiaryHeader } from '@/features/today/components/DiaryHeader';
@@ -29,7 +31,7 @@ describe('DiaryHeader', () => {
     expect(screen.getByTestId('diary-header')).toBeTruthy();
   });
 
-  it('AC-AX-1 AC-AX-4: caps the scalable Diary greeting at exactly 1.8', () => {
+  it('AC-DT-1 AC-DT-4: gets the Diary greeting ceiling from the title1 variant policy', () => {
     renderHeader(
       <DiaryHeader puppyName={SYNTHETIC_NAME} timeOfDay="morning" todayDate="2026-05-14" />,
     );
@@ -38,6 +40,12 @@ describe('DiaryHeader', () => {
       screen.getByText(i18n.t('today.header.greeting-morning', { name: SYNTHETIC_NAME })).props
         .maxFontSizeMultiplier,
     ).toBe(1.8);
+
+    const source = readFileSync(
+      join(process.cwd(), 'src/features/today/components/DiaryHeader.tsx'),
+      'utf8',
+    );
+    expect(source).not.toContain('maxFontSizeMultiplier');
   });
 
   it('switches greeting copy by time of day', () => {

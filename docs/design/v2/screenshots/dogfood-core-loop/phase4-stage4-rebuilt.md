@@ -65,6 +65,34 @@ The new WeekStrip/InfoHero failures are outside the owner's authorized two-part 
 sweep stopped again without fix-forward. Quick Log composer, routine editor, and long-text captures
 remain unrun. Content size was restored to `large`; all evidence is synthetic.
 
+### System-level Dynamic Type correction — full sweep
+
+**Result:** FAIL — the single authorized full sweep completed, but AC-DT-2 does not hold
+
+**Build:** local Release, embedded JS bundle, plain `simctl launch`, no TCP 8081 listener
+**Target:** `Grith iPhone SE 3 iOS 26.3` (`750x1334`)
+**Content size:** `accessibility-extra-extra-extra-large` (restored to `large` after capture)
+
+| Surface | Default vs XXXL evidence | Result |
+| --- | --- | --- |
+| Diary header, WeekStrip, planned/actual rows, resting capsule | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt-diary-side-by-side.png) | **FAIL** — WeekStrip no longer overlaps and the first planned row is visible, but the fixed time gutter still wrapped in the captured final pass and the long-name case below consumes most of the first viewport. Capsule correctly remains icon-only with labels retained by render-tested a11y semantics. |
+| Quick Log fast lane | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt-quick-log-fast-lane-side-by-side.png) | **FAIL** — tracker labels wrap mid-word inside fixed two-column tiles (`Feeding`, `Zoomies`), so the grid is not usable at XXXL. |
+| Quick Log detailed composer | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt-quick-log-details-side-by-side.png) | **FAIL** — detail-type controls wrap labels mid-word and the oversized header/controls push the form fields below the first reachable view. |
+| Routine editor | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt-routine-editor-side-by-side.png) | **FAIL** — event tile labels wrap mid-word inside fixed three-column geometry. |
+| Reminders hub | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt-reminders-hub-side-by-side.png) | **FAIL** — back label and centered header overlap; rows grow substantially and long labels truncate as shown below. |
+| Capsule Add chooser | [Side by side](phase4-stage4-rebuilt/release-sweeps/dt-capsule-chooser-side-by-side.png) | **PASS** — the two chooser actions remain visible, readable, and reachable; the close FAB remains distinct. |
+
+Long-text sweep used only synthetic Cyrillic values:
+`СверхдлинноеИмяЩенка` and `ОченьДлинноеНазваниеРутиныДляЩенка`.
+
+| Long-text surface | Evidence | Result |
+| --- | --- | --- |
+| Diary greeting | [XXXL capture](phase4-stage4-rebuilt/release-sweeps/dt-long-cyrillic-diary-xxxl.png) | **FAIL** — the complete name remains visible, but the greeting consumes most of the first viewport and crowds the first row. |
+| Reminder row | [XXXL scrolled row](phase4-stage4-rebuilt/release-sweeps/dt-long-cyrillic-reminders-row-xxxl.png) | **FAIL** — the routine title is ellipsized, destroying required meaning. |
+
+The full sweep was run once as authorized and is recorded as FAIL rather than being repeated after
+additional code changes. No Phase 3 PASS or checklist completion is claimed.
+
 ## Notes
 
 - Captures were driven headlessly (`simctl openurl` deep links + `idb` tap/swipe); the app was

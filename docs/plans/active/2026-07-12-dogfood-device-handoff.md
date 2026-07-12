@@ -11,9 +11,9 @@
 core loop, signed into the shared dogfood account, with the owner-executed physical acceptance
 checklist in `docs/dogfood/local-ios-build.md` completed and recorded.
 
-**Status:** Active — Phase 3 unblocked by the 2026-07-12 system-level Dynamic Type authorization.
+**Status:** Blocked in Phase 3 — the authorized full Dynamic Type sweep completed with in-scope FAILs.
 
-**Current phase:** Phase 3 — execute the authorized system-level Dynamic Type correction, then run the full XXXL + long-text sweep once.
+**Current phase:** Phase 3 — AC-DT-2 failed on Quick Log, routine editor, reminders, and long-text states; owner decision required before another correction/sweep.
 
 **Plan type:** Active task plan.
 
@@ -299,6 +299,24 @@ Commit authorization: the owner authorizes committing, on the current branch onl
 currently uncommitted Diary/CapsuleTabBar XXXL work and (b) the system-level fix with its evidence,
 as normal commits. Push, PR, and any remote mutation remain unapproved.
 
+Execution result (2026-07-12):
+
+- **RED:** variant/default/override, Diary inheritance, WeekStrip, InfoHero, adaptive hero order,
+  Button inheritance, and TimeGutter fixed-chrome tests failed for the expected missing behavior.
+- **GREEN:** exact variant policy, fixed WeekStrip/TimeGutter ceilings, Diary hero reordering at the
+  AX threshold, and removal of the screen-local greeting override passed targeted suites.
+- **REFACTOR:** removed the proven-dead global `3.0` export; later reviews made no behavior changes.
+  Targeted evidence ended at 4 suites / 89 tests, Today core 25/25, and Diary primitives 19/19.
+- **Release:** final incremental Release build succeeded with 0 errors / 4 known warnings. With no
+  TCP 8081 listener, terminate + plain `simctl launch` started the embedded app.
+- **Full sweep:** completed once and recorded in
+  `docs/design/v2/screenshots/dogfood-core-loop/phase4-stage4-rebuilt.md`. Capsule Add chooser passed;
+  Diary long-name, Quick Log fast lane/details, routine editor, and reminders hub failed AC-DT-2.
+  The open Phase 3 sweep checkbox therefore remains unchecked. Content size was restored to `large`.
+- **Final gate:** `npm run check` exited 0 (95 Jest suites / 845 tests; node, scaffold,
+  privacy, tokens, i18n, and text-hygiene gates passed). Existing React `act()` and Expo Go
+  notification warnings remain visible and were not suppressed.
+
 ### Phase 4 — Two physical iPhones (user-executed, agent-guided)
 
 - [ ] Owner opens the Xcode workspace, selects Release + own signing team, and installs the frozen
@@ -333,6 +351,15 @@ cancellation); XXXL/long-text sweeps are recorded; plans/Linear reflect the outc
 anyone claim "the household can track the puppy in PuppyPlan".
 
 ## Changelog
+
+- 2026-07-12: Local commit `20dfdb8` froze the previously authorized Diary/CapsuleTabBar XXXL
+  correction and evidence (no push). Heavy isolated TDD then replaced the global text ceiling with
+  per-variant ceilings, folded Diary into the policy, capped WeekStrip/TimeGutter fixed chrome, and
+  moved the full InfoHero after day rows at the AX threshold. The final Release build succeeded and
+  launched without Metro, but the one full XXXL + Cyrillic long-text sweep produced honest FAILs on
+  Quick Log grids/details, routine-editor tiles, reminders header/rows, and the long Diary greeting.
+  `npm run check` passed (95 suites / 845 tests). AC-DT-2 and the Phase 3 sweep checkbox remain
+  open; no Phase 4/5 work was claimed.
 
 - 2026-07-12: Owner authorized the narrow Diary XXXL correction and a local commit of the prior
   Release-env/evidence work. Commit `7cf17a2` was created locally (no push). Heavy isolated TDD

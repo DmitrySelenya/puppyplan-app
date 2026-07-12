@@ -13,6 +13,20 @@ import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { TodayScreen } from '@/features/today/screens/TodayScreen';
 
 const mockListEvents = jest.fn();
+let mockFontScale = 1;
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({
+      fontScale: mockFontScale,
+      height: 667,
+      scale: 2,
+      width: 375,
+    }),
+  });
+});
 
 jest.mock('@/lib/supabase/events', () => ({
   ...jest.requireActual('@/lib/supabase/events'),
@@ -119,6 +133,7 @@ describe('Today core card rendering', () => {
   let reduceMotionProbe: jest.SpyInstance;
 
   beforeEach(async () => {
+    mockFontScale = 1;
     mockListEvents.mockReset();
     mockListEvents.mockResolvedValue([]);
     openQuickLog.mockClear();
@@ -174,6 +189,45 @@ describe('Today core card rendering', () => {
       name: i18n.t('guidance.action-labels.read'),
     })).toBeNull();
     expect(JSON.stringify(toJSON())).toContain(i18n.t('today.hero.day-2-morning.title'));
+  });
+
+  it.each([
+    { fontScale: 1.999, heroAfterDayList: false },
+    { fontScale: 2, heroAfterDayList: true },
+  ])('AC-DT-2 AC-DT-3 AC-DT-4 places the full Diary hero around the day list at fontScale $fontScale', async ({
+    fontScale,
+    heroAfterDayList,
+  }) => {
+    mockFontScale = fontScale;
+    const { toJSON } = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem()])}
+        dayModelStatus="ready"
+        openQuickLog={openQuickLog}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-info-hero')).toBeTruthy();
+      expect(screen.getByTestId('diary-history-section')).toBeTruthy();
+    });
+
+    const hero = screen.getByTestId('diary-info-hero');
+    expect(hero.props.accessibilityRole).toBe('summary');
+    expect(screen.getAllByTestId('diary-info-hero')).toHaveLength(1);
+    expect(screen.getByText(i18n.t('today.hero.first-day.title'))).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('today.hero.first-day.primary'),
+    })).toBeTruthy();
+
+    const tree = JSON.stringify(toJSON());
+    const heroIndex = tree.indexOf('diary-info-hero');
+    const dayListIndex = tree.indexOf('diary-history-section');
+    expect(heroIndex).toBeGreaterThanOrEqual(0);
+    expect(dayListIndex).toBeGreaterThanOrEqual(0);
+    expect(heroAfterDayList ? heroIndex > dayListIndex : heroIndex < dayListIndex).toBe(true);
   });
 
   it('renders the loading state while active care events load', () => {

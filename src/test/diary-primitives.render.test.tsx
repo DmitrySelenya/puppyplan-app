@@ -60,10 +60,18 @@ describe('IconChip', () => {
 });
 
 describe('TimeGutter', () => {
-  it('splits a clock time into number and meridiem', () => {
+  it('AC-DT-2 AC-DT-3 AC-DT-4 keeps full fixed-gutter clock text scalable within 1.3', () => {
     render(<TimeGutter time="7:15 am" />);
-    expect(screen.getByText('7:15')).toBeTruthy();
-    expect(screen.getByText('am')).toBeTruthy();
+    expect(screen.getByText('7:15').props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      children: '7:15',
+      maxFontSizeMultiplier: 1.3,
+    }));
+    expect(screen.getByText('am').props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      children: 'am',
+      maxFontSizeMultiplier: 1.3,
+    }));
   });
 
   it('renders the clock in the display (Lora) family', () => {
@@ -110,6 +118,16 @@ describe('WeekStrip', () => {
     expect(screen.queryAllByRole('tab')).toHaveLength(0);
     expect(screen.queryAllByRole('button')).toHaveLength(0);
     expect(screen.getByLabelText('Thu 14').props.accessibilityState?.selected).toBeUndefined();
+    for (const day of WEEK_DAYS) {
+      expect(screen.getByText(day.dow).props).toEqual(expect.objectContaining({
+        allowFontScaling: true,
+        maxFontSizeMultiplier: 1.5,
+      }));
+      expect(screen.getByText(String(day.day)).props).toEqual(expect.objectContaining({
+        allowFontScaling: true,
+        maxFontSizeMultiplier: 1.5,
+      }));
+    }
     // Selected day number is rendered on the clay fill (on-primary text).
     expect(flatten(screen.getByText('14')).color).toBe(tokens.color.text.onPrimary);
   });
@@ -133,6 +151,9 @@ describe('InfoHero', () => {
   it('renders the guidance message with a summary role', () => {
     render(<InfoHero message="Puppies around 9 weeks sleep 18-20 hours." testID="hero" />);
     expect(screen.getByText('Puppies around 9 weeks sleep 18-20 hours.')).toBeTruthy();
+    expect(screen.getByText('Puppies around 9 weeks sleep 18-20 hours.').props).toEqual(
+      expect.objectContaining({ allowFontScaling: true, maxFontSizeMultiplier: 2 }),
+    );
     expect(screen.getByTestId('hero').props.accessibilityRole).toBe('summary');
     expect(flatten(screen.getByTestId('hero')).borderRadius).toBe(tokens.radius.hero);
   });

@@ -77,8 +77,11 @@ Required extended components:
 
 Dynamic Type:
 
-- `AppText` default `maxFontSizeMultiplier=3.0` so XXL/XXXL accessibility review remains possible.
-- Callers may lower a specific text ceiling only with screen-specific evidence and without hiding required content.
+- `AppText` owns a per-variant ceiling policy: `display`, `title`, `title1`, `title2`, `title3`,
+  and `headline` use `1.8`; `body`, `bodyEmph`, `callout`, and `subheadline` use `2.0`;
+  `footnote`, `caption`, `label`, and `code` use `1.5`.
+- Explicit caller ceilings remain available for fixed chrome with component evidence; they must not
+  disable scaling or hide required meaning.
 - no fixed heights on touchable controls.
 
 ## Motion

@@ -45,7 +45,7 @@ export function DiaryHeader({
     <View style={styles.header} testID="diary-header">
       <View style={styles.row}>
         <View style={styles.copy}>
-          <AppText maxFontSizeMultiplier={1.8} variant="title1">{greeting}</AppText>
+          <AppText variant="title1">{greeting}</AppText>
           {date ? (
             <AppText style={styles.date} tone="secondary" variant="footnote">
               {date}

@@ -1,6 +1,5 @@
 export {
   AppText,
-  APP_TEXT_MAX_FONT_SIZE_MULTIPLIER,
   type AppTextProps,
   type AppTextTone,
   type AppTextVariant,

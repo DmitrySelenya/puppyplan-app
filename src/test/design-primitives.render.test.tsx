@@ -7,7 +7,7 @@ import EventEmitter from 'react-native/Libraries/vendor/emitter/EventEmitter';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
-import { AppText } from '@/design/primitives/AppText';
+import { AppText, type AppTextVariant } from '@/design/primitives/AppText';
 import { AppIcon } from '@/design/primitives/AppIcon';
 import { Avatar } from '@/design/primitives/Avatar';
 import { Button } from '@/design/primitives/Button';
@@ -125,14 +125,65 @@ describe('design primitives', () => {
     configureDesignHaptics(null);
   });
 
-  it('keeps AppText scalable for Dynamic Type readiness', () => {
+  it('AC-DT-1 AC-DT-3 AC-DT-4 applies the exact scalable ceiling policy to every text variant', () => {
+    const expectedCeilings: Record<AppTextVariant, number> = {
+      body: 2,
+      bodyEmph: 2,
+      callout: 2,
+      caption: 1.5,
+      code: 1.5,
+      display: 1.8,
+      footnote: 1.5,
+      headline: 1.8,
+      label: 1.5,
+      subheadline: 2,
+      title: 1.8,
+      title1: 1.8,
+      title2: 1.8,
+      title3: 1.8,
+    };
+
+    render(
+      <>
+        {Object.entries(expectedCeilings).map(([variant]) => (
+          <AppText key={variant} variant={variant as AppTextVariant}>{variant}</AppText>
+        ))}
+      </>,
+    );
+
+    for (const [variant, ceiling] of Object.entries(expectedCeilings)) {
+      const text = screen.getByText(variant);
+      expect(text.props.allowFontScaling).toBe(true);
+      expect(text.props.maxFontSizeMultiplier).toBe(ceiling);
+    }
+  });
+
+  it('AC-DT-1 AC-DT-3 preserves an explicit ceiling override without disabling scaling', () => {
+    render(<AppText maxFontSizeMultiplier={1.6}>Fixed chrome override</AppText>);
+
+    expect(screen.getByText('Fixed chrome override').props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      maxFontSizeMultiplier: 1.6,
+    }));
+  });
+
+  it('AC-DT-1 AC-DT-3 applies the body policy to the default variant', () => {
+    render(<AppText>Default body copy</AppText>);
+
+    expect(screen.getByText('Default body copy').props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      maxFontSizeMultiplier: 2,
+    }));
+  });
+
+  it('keeps AppText token styling for Dynamic Type readiness', () => {
     render(<AppText variant="title">Shell title</AppText>);
 
     const title = screen.getByText('Shell title');
     const style = StyleSheet.flatten(title.props.style);
 
     expect(title.props.allowFontScaling).toBe(true);
-    expect(title.props.maxFontSizeMultiplier).toBe(3);
+    expect(title.props.maxFontSizeMultiplier).toBe(1.8);
     expect(style.color).toBe(tokens.color.text.primary);
     expect(style.fontSize).toBe(tokens.typography.scale.title1.fontSize);
     expect(style.letterSpacing).toBe(0);
@@ -577,7 +628,7 @@ describe('design primitives', () => {
     const trackerStyle = flattenViewStyle(tracker.props.style);
 
     expect(buttonLabel.props.numberOfLines).toBeUndefined();
-    expect(buttonLabel.props.maxFontSizeMultiplier).toBe(3);
+    expect(buttonLabel.props.maxFontSizeMultiplier).toBe(1.8);
     expect(trackerStyle.height).toBeUndefined();
     expect(trackerStyle.minHeight).toBe(tokens.component.trackerTile.threeCol.height);
     expect(trackerStyle.width).toBe(tokens.component.trackerTile.threeCol.width);

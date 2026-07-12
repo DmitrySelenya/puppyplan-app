@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
 import type { DiaryDayModel, DiaryPlannedItem } from '@/contracts/diary-day';
@@ -156,6 +156,7 @@ export function TodayScreen({
   todayPlanInput,
 }: TodayScreenProps) {
   const { locale, t } = useAppTranslation();
+  const { fontScale } = useWindowDimensions();
   const [diaryHistoryOpen, setDiaryHistoryOpen] = useState(false);
   const [selectedHistoryFilter, setSelectedHistoryFilter] =
     useState<DiaryHistoryFilterValue>('all');
@@ -257,6 +258,12 @@ export function TodayScreen({
     || timelineRows.status === 'error'
     || hasPendingLocalRows(rows)
     || shouldShowQuickLogFailedBanner(rows);
+  const infoHero = showTodayPlan && todayPlan !== null ? (
+    <DiaryInfoHero
+      hero={todayPlan.hero}
+      onPrimaryAction={openQuickLog}
+    />
+  ) : null;
 
   return (
     <Screen contentStyle={styles.content}>
@@ -286,12 +293,7 @@ export function TodayScreen({
             || (todayStatus === 'empty' && todayPlan !== null)
             ? null
             : <TodayStatusCard state={todayStatus} />}
-          {showTodayPlan && todayPlan !== null ? (
-            <DiaryInfoHero
-              hero={todayPlan.hero}
-              onPrimaryAction={openQuickLog}
-            />
-          ) : null}
+          {fontScale < 2 ? infoHero : null}
           {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
           {shouldShowQuickLogFailedBanner(rows) ? (
             <Card
@@ -389,6 +391,7 @@ export function TodayScreen({
             )}
           </Stack>
           ) : null}
+          {fontScale >= 2 ? infoHero : null}
         </>
       ) : (
         <DiarySelectedDayTimeline

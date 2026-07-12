@@ -67,6 +67,7 @@ export function WeekStrip({
                   isSelected ? styles.circleSelected : styles.circleDefault,
                 ]}>
                 <AppText
+                  maxFontSizeMultiplier={1.5}
                   numeric
                   style={[styles.circleNum, isSelected ? styles.circleNumSelected : null]}>
                   {entry.day}
