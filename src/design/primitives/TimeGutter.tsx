@@ -21,6 +21,7 @@ export function TimeGutter({ time, testID }: TimeGutterProps) {
       <AppText
         maxFontSizeMultiplier={1.3}
         numeric
+        numberOfLines={1}
         style={styles.clock}
         tone="secondary"
         variant="footnote">
@@ -29,6 +30,7 @@ export function TimeGutter({ time, testID }: TimeGutterProps) {
       {meridiem ? (
         <AppText
           maxFontSizeMultiplier={1.3}
+          numberOfLines={1}
           style={styles.meridiem}
           tone="secondary"
           variant="caption">

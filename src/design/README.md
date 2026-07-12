@@ -8,7 +8,10 @@ Current primitive coverage includes text, scroll/fixed screens, touchable wrappe
 
 `Screen` remains scroll-first for placeholder shell content, defaults safe-area handling to the top edge only, and has a design-owned non-scrolling variant for future fixed-height flows. Do not bypass `src/design` to import raw `Pressable`, raw colors, raw spacing, direct haptics, or business-error alerts from feature code.
 
-`AppText` defaults `maxFontSizeMultiplier` to `3.0` for all variants so XXL/XXXL Dynamic Type review remains possible. Use a lower per-call ceiling only with screen-specific evidence and without fixed-height touchable controls.
+`AppText` owns the documented per-variant Dynamic Type ceilings: display/title/headline variants
+use `1.8`, body/callout variants use `2.0`, and footnote/caption/label/code variants use `1.5`.
+Explicit fixed-chrome ceilings require component evidence and must never disable scaling or hide
+meaning. Layout primitives may switch to their tested accessibility anatomy at `fontScale >= 2`.
 
 `Touchable` enforces platform touch targets through the design boundary: iOS/default 44pt, Android 48dp, and Quick Log/thumb actions 56pt+. Use `blockPresses` for transient busy/loading states that must ignore taps while remaining `busy`, not `disabled`, for assistive tech.
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 import {
@@ -59,6 +59,7 @@ export function QuickLogDetailsScreen({
   onSave = noop,
   status = 'ready',
 }: QuickLogDetailsScreenProps) {
+  const { fontScale } = useWindowDimensions();
   const { t } = useAppTranslation();
   const reviewState = status === 'ready' ? undefined : status;
   const [trackerId, setTrackerId] = useState<QuickLogDetailTrackerId>(() =>
@@ -172,7 +173,10 @@ export function QuickLogDetailsScreen({
                       key={option.value}
                       label={t(option.labelKey)}
                       onPress={() => setTrackerId(option.value)}
-                      style={styles.eventSelectorButton}
+                      style={[
+                        styles.eventSelectorButton,
+                        fontScale >= 2 ? styles.accessibilityEventSelectorButton : null,
+                      ]}
                       variant={selected ? 'primary' : 'secondary'}
                     />
                   );
@@ -777,6 +781,10 @@ const detailStateMeta: Record<QuickLogDetailsReviewState, QuickLogDetailsStateMe
 };
 
 const styles = StyleSheet.create({
+  accessibilityEventSelectorButton: {
+    flexBasis: '100%',
+    width: '100%',
+  },
   closeButton: {
     alignSelf: 'flex-start',
   },

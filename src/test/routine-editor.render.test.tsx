@@ -1,11 +1,97 @@
+import { StyleSheet } from 'react-native';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { RoutineEditorScreen } from '@/features/reminders/screens/RoutineEditorScreen';
 import { i18n } from '@/lib/i18n';
 
+let mockFontScale = 1;
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({ fontScale: mockFontScale, height: 667, scale: 2, width: 375 }),
+  });
+});
+
 describe('RoutineEditorScreen', () => {
   beforeEach(async () => {
+    mockFontScale = 1;
     await i18n.changeLanguage('en');
+  });
+
+  it.each([
+    { fontScale: 1.999, expectedFlexBasis: '30%', expectedWidth: undefined },
+    { fontScale: 2, expectedFlexBasis: '100%', expectedWidth: '100%' },
+  ])('AC-DT-2B AC-DT-2E keeps actual routine event choices usable at fontScale $fontScale', ({
+    expectedFlexBasis,
+    expectedWidth,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(<RoutineEditorScreen onCancel={jest.fn()} onSave={jest.fn()} />);
+
+    const feeding = screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.feeding'),
+    });
+    fireEvent.press(feeding);
+
+    const tile = screen.getByTestId('routine-event-feeding');
+    const style = StyleSheet.flatten(
+      typeof tile.props.style === 'function' ? tile.props.style({ pressed: false }) : tile.props.style,
+    );
+    expect(style.flexBasis).toBe(expectedFlexBasis);
+    expect(style.width).toBe(expectedWidth);
+    expect(screen.getByText(i18n.t('quick-log.trackers.feeding')).props.children)
+      .toBe(i18n.t('quick-log.trackers.feeding'));
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.feeding'),
+    }).props.accessibilityState).toEqual(expect.objectContaining({
+      disabled: false,
+      selected: true,
+    }));
+    expect(screen.getByRole('button', { name: i18n.t('reminders.form.save') }))
+      .toBeTruthy();
+  });
+
+  it.each([
+    { fontScale: 1.999, expectedFlexBasis: '47%', expectedWidth: undefined },
+    { fontScale: 2, expectedFlexBasis: '100%', expectedWidth: '100%' },
+  ])('AC-DT-2H AC-DT-2I adapts actual repeat choices at fontScale $fontScale', ({
+    expectedFlexBasis,
+    expectedWidth,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(<RoutineEditorScreen onCancel={jest.fn()} onSave={jest.fn()} />);
+
+    const repeatCases = [
+      ['never', 'reminders.form.routine.repeat-never'],
+      ['daily', 'reminders.form.routine.repeat-daily'],
+      ['weekdays', 'reminders.form.routine.repeat-weekdays'],
+      ['custom', 'reminders.form.routine.repeat-custom'],
+    ] as const;
+
+    for (const [choice, labelKey] of repeatCases) {
+      const label = i18n.t(labelKey);
+      const control = screen.getByTestId(`routine-repeat-${choice}`);
+      const style = StyleSheet.flatten(
+        typeof control.props.style === 'function'
+          ? control.props.style({ pressed: false })
+          : control.props.style,
+      );
+      expect(style.flexBasis).toBe(expectedFlexBasis);
+      expect(style.width).toBe(expectedWidth);
+      expect(screen.getByText(label).props.children).toBe(label);
+      expect(screen.getByRole('button', { name: label }).props.accessibilityState)
+        .toEqual(expect.objectContaining({
+          disabled: false,
+          selected: choice === 'daily',
+        }));
+    }
+
+    expect(screen.getByRole('button', { name: i18n.t('reminders.form.save') }))
+      .toBeTruthy();
   });
 
   it('AC-P4-UI-1 requires an event and exposes the canonical repeat controls', () => {

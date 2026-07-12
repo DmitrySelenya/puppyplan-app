@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { AccessibilityRole, PressableProps, StyleProp, ViewStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { pressedScaleStyle, useReducedMotion } from '@/design/motion';
 import { AppIcon } from '@/design/primitives/AppIcon';
@@ -48,9 +48,12 @@ export function ListRow({
   trailing,
   variant = 'default',
 }: ListRowProps) {
+  const { fontScale } = useWindowDimensions();
+  const usesAccessibilityLayout = fontScale >= 2;
   const reducedMotion = useReducedMotion();
   const rowStyle = [
     styles.root,
+    usesAccessibilityLayout ? styles.accessibilityRoot : null,
     variantStyles[variant],
     selected ? styles.selected : null,
     disabled ? styles.disabled : null,
@@ -70,7 +73,9 @@ export function ListRow({
     <>
       {leading ? <View style={styles.slot}>{leading}</View> : null}
       <View style={styles.copy}>
-        <AppText numberOfLines={titleNumberOfLines} variant="headline">
+        <AppText
+          numberOfLines={usesAccessibilityLayout ? undefined : titleNumberOfLines}
+          variant="headline">
           {title}
         </AppText>
         {subtitle ? (
@@ -126,6 +131,10 @@ export function ListRow({
 }
 
 const styles = StyleSheet.create({
+  accessibilityRoot: {
+    alignItems: 'stretch',
+    flexDirection: 'column',
+  },
   copy: {
     flex: 1,
     flexShrink: 1,

@@ -1,6 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import {
   REMINDER_NOTE_MAX_LENGTH,
@@ -93,6 +93,7 @@ export function RoutineEditorScreen({
   onRequestNotifications,
 }: RoutineEditorScreenProps) {
   const { locale, t } = useAppTranslation();
+  const { fontScale } = useWindowDimensions();
   const initialRule = initialDraft?.rule;
   const [trackerId, setTrackerId] = useState<ReminderTrackerId | undefined>(initialDraft?.trackerId);
   const [title, setTitle] = useState(initialRule?.title ?? '');
@@ -242,7 +243,10 @@ export function RoutineEditorScreen({
                   }}
                   selected={trackerId === id}
                   size="compact"
-                  style={styles.eventTile}
+                  style={[
+                    styles.eventTile,
+                    fontScale >= 2 ? styles.accessibilityFullWidthChoice : null,
+                  ]}
                   testID={`routine-event-${id}`}
                 />
               ))}
@@ -313,7 +317,10 @@ export function RoutineEditorScreen({
                   disabled={isViewer}
                   label={t(repeatLabelKeys[choice])}
                   onPress={() => setRepeatChoice(choice)}
-                  style={styles.choice}
+                  style={[
+                    styles.choice,
+                    fontScale >= 2 ? styles.accessibilityFullWidthChoice : null,
+                  ]}
                   testID={`routine-repeat-${choice}`}
                   variant={repeatChoice === choice ? 'primary' : 'secondary'}
                 />
@@ -511,6 +518,10 @@ function withTime(current: Date, next: Date): Date {
 }
 
 const styles = StyleSheet.create({
+  accessibilityFullWidthChoice: {
+    flexBasis: '100%',
+    width: '100%',
+  },
   choice: {
     flexBasis: '47%',
     flexGrow: 1,

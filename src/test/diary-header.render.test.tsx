@@ -1,13 +1,25 @@
 import * as React from 'react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { StyleSheet } from 'react-native';
 import { render, screen } from '@testing-library/react-native';
 
 import { DiaryHeader } from '@/features/today/components/DiaryHeader';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
+import { tokens } from '@/design/tokens';
 
 const SYNTHETIC_NAME = 'Mochi';
+const SYNTHETIC_LONG_NAME = 'СверхдлинноеИмяЩенка';
+let mockFontScale = 1;
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({ fontScale: mockFontScale, height: 667, scale: 2, width: 375 }),
+  });
+});
 
 function renderHeader(node: React.ReactElement) {
   return render(<AppProviders>{node}</AppProviders>);
@@ -15,6 +27,7 @@ function renderHeader(node: React.ReactElement) {
 
 describe('DiaryHeader', () => {
   beforeEach(async () => {
+    mockFontScale = 1;
     await i18n.changeLanguage('en');
   });
 
@@ -46,6 +59,26 @@ describe('DiaryHeader', () => {
       'utf8',
     );
     expect(source).not.toContain('maxFontSizeMultiplier');
+  });
+
+  it.each([
+    { fontScale: 1.999, expectedFontSize: tokens.typography.scale.title1.fontSize },
+    { fontScale: 2, expectedFontSize: tokens.typography.scale.title2.fontSize },
+  ])('AC-DT-2D AC-DT-2E keeps the complete long greeting with adaptive title anatomy at fontScale $fontScale', ({
+    expectedFontSize,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    renderHeader(<DiaryHeader puppyName={SYNTHETIC_LONG_NAME} timeOfDay="morning" />);
+
+    const greetingCopy = i18n.t('today.header.greeting-morning', { name: SYNTHETIC_LONG_NAME });
+    const greeting = screen.getByText(greetingCopy);
+    expect(greeting.props.children).toBe(greetingCopy);
+    expect(greeting.props.numberOfLines).toBeUndefined();
+    expect(greeting.props.allowFontScaling).toBe(true);
+    expect(greeting.props.maxFontSizeMultiplier).toBe(1.8);
+    expect(StyleSheet.flatten(greeting.props.style).fontSize).toBe(expectedFontSize);
+    expect(screen.getByLabelText(SYNTHETIC_LONG_NAME)).toBeTruthy();
   });
 
   it('switches greeting copy by time of day', () => {

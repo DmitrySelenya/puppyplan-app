@@ -20,6 +20,7 @@ import { ListGroup } from '@/design/primitives/ListGroup';
 import { ListRow } from '@/design/primitives/ListRow';
 import { PendingDot } from '@/design/primitives/PendingDot';
 import { Screen } from '@/design/primitives/Screen';
+import { ScreenHeader } from '@/design/primitives/ScreenHeader';
 import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { SheetHeader } from '@/design/primitives/SheetHeader';
@@ -45,6 +46,16 @@ import {
 import { configureDesignHaptics, haptic } from '@/design/haptics';
 import { motionPresets, pressedScaleStyle, useReducedMotion } from '@/design/motion';
 import { tokens } from '@/design/tokens';
+
+let mockFontScale = 1;
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({ fontScale: mockFontScale, height: 667, scale: 2, width: 375 }),
+  });
+});
 
 function primitiveTypeContractChecks() {
   return (
@@ -121,6 +132,10 @@ function SnackbarControllerProbe({
 }
 
 describe('design primitives', () => {
+  beforeEach(() => {
+    mockFontScale = 1;
+  });
+
   afterEach(() => {
     configureDesignHaptics(null);
   });
@@ -632,6 +647,120 @@ describe('design primitives', () => {
     expect(trackerStyle.height).toBeUndefined();
     expect(trackerStyle.minHeight).toBe(tokens.component.trackerTile.threeCol.height);
     expect(trackerStyle.width).toBe(tokens.component.trackerTile.threeCol.width);
+  });
+
+  it.each([
+    { fontScale: 1.999, expectedCompactWidth: undefined, expectedLines: 3, expectedThreeColumnWidth: tokens.component.trackerTile.threeCol.width },
+    { fontScale: 2, expectedCompactWidth: '100%', expectedLines: undefined, expectedThreeColumnWidth: '100%' },
+  ])('AC-DT-2A AC-DT-2B AC-DT-2E adapts tracker choices at fontScale $fontScale', ({
+    expectedCompactWidth,
+    expectedLines,
+    expectedThreeColumnWidth,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(
+      <>
+        <TrackerTile
+          accessibilityLabel="Feeding choice"
+          label="Feeding"
+          onPress={jest.fn()}
+          selected
+          size="threeColumn"
+          testID="fast-lane-choice"
+        />
+        <TrackerTile
+          accessibilityLabel="Observation routine choice"
+          label="Observation"
+          onPress={jest.fn()}
+          selected={false}
+          size="compact"
+          testID="routine-choice"
+        />
+      </>,
+    );
+
+    expect(flattenViewStyle(screen.getByTestId('fast-lane-choice').props.style).width)
+      .toBe(expectedThreeColumnWidth);
+    expect(flattenViewStyle(screen.getByTestId('routine-choice').props.style).width)
+      .toBe(expectedCompactWidth);
+    expect(screen.getByText('Feeding').props.numberOfLines).toBe(expectedLines);
+    expect(screen.getByText('Observation').props.numberOfLines).toBe(expectedLines);
+    expect(screen.getByRole('button', { name: 'Feeding choice' }).props.accessibilityState)
+      .toEqual(expect.objectContaining({ disabled: false, selected: true }));
+    expect(screen.getByRole('button', { name: 'Observation routine choice' }).props.accessibilityState)
+      .toEqual(expect.objectContaining({ disabled: false, selected: false }));
+  });
+
+  it.each([
+    { fontScale: 1.999, expectedDirection: 'row', expectedTitleLines: 1 },
+    { fontScale: 2, expectedDirection: 'column', expectedTitleLines: undefined },
+  ])('AC-DT-2C AC-DT-2E adapts ScreenHeader without losing controls at fontScale $fontScale', ({
+    expectedDirection,
+    expectedTitleLines,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(
+      <ScreenHeader
+        backLabel="More"
+        onBack={jest.fn()}
+        testID="adaptive-header"
+        title="Reminders"
+        trailing={<IconButton accessibilityLabel="Add reminder" icon={<View />} onPress={jest.fn()} />}
+      />,
+    );
+
+    expect(StyleSheet.flatten(screen.getByTestId('adaptive-header').props.style).flexDirection)
+      .toBe(expectedDirection);
+    expect(screen.getByRole('header', { name: 'Reminders' }).props.numberOfLines)
+      .toBe(expectedTitleLines);
+    expect(screen.getByRole('button', { name: 'More' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add reminder' })).toBeTruthy();
+  });
+
+  it.each([
+    { fontScale: 1.999, expectedDirection: 'row', expectedTitleLines: 2 },
+    { fontScale: 2, expectedDirection: 'column', expectedTitleLines: undefined },
+  ])('AC-DT-2C AC-DT-2E preserves a complete reminder row at fontScale $fontScale', ({
+    expectedDirection,
+    expectedTitleLines,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    const title = 'ОченьДлинноеНазваниеРутиныДляЩенка';
+    render(
+      <ListRow
+        accessibilityActions={[{ name: 'delete' }]}
+        accessibilityLabel={`${title}. Every day`}
+        onAccessibilityAction={jest.fn()}
+        onPress={jest.fn()}
+        subtitle="Every day"
+        title={title}
+        titleNumberOfLines={2}
+        trailing={(
+          <View
+            accessibilityLabel="Toggle routine"
+            accessibilityRole="switch"
+            accessibilityState={{ checked: true }}
+            testID="toggle-routine"
+          />
+        )}
+        variant="settings"
+      />,
+    );
+
+    const row = screen.getByRole('button', { name: `${title}. Every day` });
+    expect(flattenViewStyle(row.props.style).flexDirection).toBe(expectedDirection);
+    expect(screen.getByText(title).props.children).toBe(title);
+    expect(screen.getByText(title).props.numberOfLines).toBe(expectedTitleLines);
+    expect(row.props.accessibilityActions).toEqual([{ name: 'delete' }]);
+    expect(screen.getByTestId('toggle-routine', { includeHiddenElements: true }).props)
+      .toEqual(expect.objectContaining({
+        accessibilityLabel: 'Toggle routine',
+        accessibilityRole: 'switch',
+        accessibilityState: { checked: true },
+      }));
   });
 
   it('renders card, list row, tracker, status, segmented, and sheet surfaces from tokens', () => {

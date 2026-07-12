@@ -1,4 +1,4 @@
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { QuickLogFeedbackProvider } from '@/features/quick-log/QuickLogFeedbackProvider';
@@ -13,6 +13,15 @@ const mockRouterReplace = jest.fn();
 const mockUseLocalSearchParams = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
+let mockFontScale = 1;
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({ fontScale: mockFontScale, height: 667, scale: 2, width: 375 }),
+  });
+});
 
 jest.mock('expo-router', () => ({
   router: {
@@ -36,6 +45,7 @@ describe('QuickLogDetailsRoute', () => {
   let reduceMotionProbe: jest.SpyInstance;
 
   beforeEach(async () => {
+    mockFontScale = 1;
     mockRouterBack.mockClear();
     mockRouterCanGoBack.mockReset();
     mockRouterCanGoBack.mockReturnValue(true);
@@ -88,6 +98,40 @@ describe('QuickLogDetailsRoute', () => {
 
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
     expect(mockRouterReplace).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { fontScale: 1.999, expectedFlexBasis: '47%', expectedWidth: undefined },
+    { fontScale: 2, expectedFlexBasis: '100%', expectedWidth: '100%' },
+  ])('AC-DT-2A AC-DT-2E adapts detail choices without losing tab semantics at fontScale $fontScale', ({
+    expectedFlexBasis,
+    expectedWidth,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogDetailsRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    const sleep = screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.sleep'),
+    });
+    const style = StyleSheet.flatten(
+      typeof sleep.props.style === 'function' ? sleep.props.style({ pressed: false }) : sleep.props.style,
+    );
+
+    expect(style.flexBasis).toBe(expectedFlexBasis);
+    expect(style.width).toBe(expectedWidth);
+    expect(sleep.props.accessibilityState).toEqual(expect.objectContaining({
+      disabled: false,
+      selected: true,
+    }));
+    expect(screen.getByText(i18n.t('quick-log.trackers.sleep')).props.children)
+      .toBe(i18n.t('quick-log.trackers.sleep'));
   });
 
   it('persists a validated detail draft when event context is present', () => {

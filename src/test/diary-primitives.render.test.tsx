@@ -66,11 +66,13 @@ describe('TimeGutter', () => {
       allowFontScaling: true,
       children: '7:15',
       maxFontSizeMultiplier: 1.3,
+      numberOfLines: 1,
     }));
     expect(screen.getByText('am').props).toEqual(expect.objectContaining({
       allowFontScaling: true,
       children: 'am',
       maxFontSizeMultiplier: 1.3,
+      numberOfLines: 1,
     }));
   });
 

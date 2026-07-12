@@ -11,9 +11,9 @@
 core loop, signed into the shared dogfood account, with the owner-executed physical acceptance
 checklist in `docs/dogfood/local-ios-build.md` completed and recorded.
 
-**Status:** Blocked in Phase 3 — the authorized full Dynamic Type sweep completed with in-scope FAILs.
+**Status:** Blocked in Phase 3 — the third authorized correction and repeated sweep completed with a remaining in-scope Diary FAIL.
 
-**Current phase:** Phase 3 — AC-DT-2 failed on Quick Log, routine editor, reminders, and long-text states; owner decision required before another correction/sweep.
+**Current phase:** Phase 3 — repeat chips pass, but AC-DT-2 still fails because Diary time chrome destructively ellipsizes; owner decision required before any further correction/sweep.
 
 **Plan type:** Active task plan.
 
@@ -317,6 +317,109 @@ Execution result (2026-07-12):
   privacy, tokens, i18n, and text-hygiene gates passed). Existing React `act()` and Expo Go
   notification warnings remain visible and were not suppressed.
 
+#### Authorized correction — second AC-DT-2 iteration (owner, 2026-07-12)
+
+Owner authorization received after the first full sweep's recorded in-scope FAILs. This is the
+single second Dynamic Type correction iteration and authorizes one repeated full Release XXXL +
+long-text sweep. It does not widen the original system-level scope or relax AC-DT-1..4.
+
+Stage 0 lock remains the V2 redesign package plus the route-specific Diary, Quick Log/routines,
+and reminders spec cards. Target is the mandated SE simulator. Allowed deviations are limited to
+adaptive Dynamic Type layout at `fontScale >= 2`: fixed grids may reduce columns or become a
+vertical list; header actions may move without changing their labels/actions; trailing row controls
+may move below primary text; and Diary chrome may reflow while preserving full content and the
+required first-viewport week strip + first day-list row. Default-size anatomy remains unchanged.
+
+Locked regression criteria:
+
+- **AC-DT-2A:** Quick Log fast-lane and detail choices never wrap labels mid-word at XXXL; every
+  tracker/control remains fully reachable and retains its localized button label/state.
+- **AC-DT-2B:** routine-editor event choices never wrap labels mid-word at XXXL; all choices and
+  the save path remain reachable without changing event semantics.
+- **AC-DT-2C:** reminders header back/title/add controls do not overlap at XXXL, and reminder rows
+  preserve the complete long Cyrillic routine title without destructive ellipsis; the toggle and
+  row actions remain reachable with their original accessibility semantics.
+- **AC-DT-2D:** Diary time chrome does not wrap or clip, the long Cyrillic greeting remains complete,
+  and the first viewport still contains the week strip plus at least the first day-list row.
+- **AC-DT-2E:** render tests prove both sides of every `fontScale >= 2` adaptive threshold and
+  preserve default anatomy, localized accessibility labels/roles/states, and body scaling to 2.0.
+- **AC-DT-2F:** after targeted suites and `npm run check` pass, one Metro-independent Release build
+  is launched with no TCP 8081 listener and the entire named XXXL + long-text sweep is repeated once;
+  each surface receives real default-vs-XXXL side-by-side PNG evidence and an honest PASS/FAIL.
+
+Constraints and stop conditions remain unchanged: no dependency, schema, native-project, EAS,
+push, PR, or production changes; synthetic data only; no truncation that destroys meaning; findings
+outside Dynamic Type scope are recorded and stop execution. TDD mode remains heavy/full-isolated.
+
+Execution result (2026-07-12):
+
+- **RED:** behavior-first render tests locked the exact `1.999`/`2.0` threshold for TrackerTile,
+  the real RoutineEditor caller-composed tile, Quick Log detail choices, ScreenHeader, ListRow, and
+  the complete long Cyrillic Diary greeting. The final RED was 6 expected behavior failures; no
+  production code changed in RED.
+- **GREEN:** at `fontScale >= 2`, tracker/event/detail choices become full width, ScreenHeader and
+  ListRow use vertical accessibility anatomy, and Diary greeting uses the smaller `title2` base
+  while retaining the system `1.8` ceiling and complete text. Focused suites passed 83/83; the
+  broader eight-surface set passed 159/159.
+- **REFACTOR:** no change. A shared threshold abstraction would increase coupling without removing
+  meaningful component-local behavior; focused 83/83 and broader 159/159 remained green.
+- **Full gate:** the first `npm run check` exposed a real test-harness default-fontScale omission in
+  the pre-existing ScreenHeader suite. The suite was made explicit about its default-size fixture;
+  a fresh full gate then exited 0 (95 Jest suites / 857 tests plus node/scaffold/i18n/privacy/token
+  gates). Existing React `act()` and Expo notification warnings were not suppressed.
+- **Release:** the exact Release/SE/`--no-bundler` build succeeded with 0 errors / 4 known warnings.
+  After install, no TCP 8081 listener existed and terminate + plain `simctl launch` started PID
+  33623 from the embedded bundle.
+- **Repeated full sweep:** completed once with synthetic long Cyrillic names and recorded in
+  `phase4-stage4-rebuilt.md`. Quick Log fast lane/details, reminders header/long row, and Capsule Add
+  chooser passed their recorded failures. Diary still wraps `7:30` inside the 46pt time gutter, and
+  RoutineEditor repeat chips still split `Weekdays`/`Custom` mid-word. AC-DT-2 and AC-DT-2D remain
+  failed; the Phase 3 checkbox remains open. Content size was restored to `large`.
+
+#### Authorized correction — third AC-DT-2 iteration (owner, 2026-07-12)
+
+Owner authorization received for one final narrow Dynamic Type correction iteration covering only
+the two remaining recorded failures: Diary `TimeGutter` and RoutineEditor repeat chips. The owner
+also authorized one repeated Metro-independent Release XXXL + long-text sweep and one local commit
+of the result. Push, PR, dependency, schema, production, and native-project changes remain forbidden.
+
+Locked regression criteria:
+
+- **AC-DT-2G:** Diary `TimeGutter` renders the complete clock on one line at the AX threshold while
+  preserving the fixed-chrome `1.3` text ceiling, default-size anatomy, and full time semantics.
+- **AC-DT-2H:** at `fontScale >= 2`, RoutineEditor repeat choices use full-width adaptive rows so
+  `Never`, `Daily`, `Weekdays`, and `Custom` do not split mid-word; at `fontScale < 2`, the existing
+  wrapped horizontal anatomy remains unchanged. Labels, selected state, actions, and save semantics
+  remain unchanged.
+- **AC-DT-2I:** render tests prove both sides of the repeat-choice threshold and the TimeGutter
+  single-line contract before production code changes; focused and broader Dynamic Type suites pass.
+- **AC-DT-2J:** after `npm run check` passes, exactly one rebuilt standalone Release is launched
+  with no TCP 8081 listener and the complete named XXXL + long-Cyrillic sweep is repeated once with
+  fresh per-surface default-vs-XXXL PNG evidence and honest PASS/FAIL recording.
+
+TDD mode remains heavy/full-isolated RED, GREEN, REFACTOR. Findings outside Dynamic Type scope
+still stop execution; in-scope FAILs are recorded honestly and prevent Phase 3 completion.
+
+Execution result (2026-07-12):
+
+- **RED:** production-unchanged render tests failed exactly the two missing behaviors (2 failed /
+  28 passed): TimeGutter lacked a single-line contract and repeat controls retained `47%` width at
+  the exact AX threshold.
+- **GREEN:** TimeGutter received the locked single-line props and repeat choices became full width
+  at `fontScale >= 2`; focused suites passed 30/30.
+- **REFACTOR:** deduplicated two byte-identical local full-width styles without behavior change;
+  focused suites remained 30/30 and the broader Dynamic Type set passed 185/185.
+- **Full gate before Release:** `npm run check` exited 0 (95 Jest suites / 859 tests plus all
+  node/scaffold/i18n/privacy/token gates). Existing React `act()` and Expo notification warnings
+  remained visible and were not suppressed.
+- **Release:** the exact Release/SE/`--no-bundler` command built and installed with 0 errors /
+  4 known warnings. With no TCP 8081 listener, terminate + plain `simctl launch` started PID 50754.
+- **Repeated full sweep:** completed once and recorded per surface in
+  `phase4-stage4-rebuilt.md`. RoutineEditor repeat choices now pass, and previously passing Quick
+  Log, reminders, and Capsule surfaces remain pass. Diary is still **FAIL**: iOS renders stored
+  `7:30` as `7:…`, destroying meaning. AC-DT-2 and AC-DT-2G remain failed; Phase 3 stays open.
+  Content size was restored to `large`.
+
 ### Phase 4 — Two physical iPhones (user-executed, agent-guided)
 
 - [ ] Owner opens the Xcode workspace, selects Release + own signing team, and installs the frozen
@@ -351,6 +454,22 @@ cancellation); XXXL/long-text sweeps are recorded; plans/Linear reflect the outc
 anyone claim "the household can track the puppy in PuppyPlan".
 
 ## Changelog
+
+- 2026-07-12: Owner authorized a third narrow Dynamic Type iteration for Diary TimeGutter and
+  RoutineEditor repeat chips, one repeated full Release sweep, and a local commit. Heavy isolated
+  TDD ended at focused 30/30 and broader 185/185; `npm run check` passed before Release (95 suites /
+  859 tests). The standalone Release built with 0 errors / 4 known warnings and launched with no
+  TCP 8081 listener. Fresh evidence records PASS for repeat choices and all previously passing
+  surfaces, but honest FAIL for Diary because the single-line time renders `7:30` as destructive
+  `7:…`. Phase 3 remains open; Phases 4–5 remain unstarted.
+
+- 2026-07-12: Owner authorized one second AC-DT-2 correction and one repeated full sweep. Heavy
+  isolated TDD corrected the recorded tracker/detail/event grids, reminders header/long-row layout,
+  and long Diary greeting; a fresh full gate passed (95 suites / 857 tests). The rebuilt standalone
+  Release launched with no TCP 8081 listener. Real default-vs-XXXL evidence records PASS for Quick
+  Log fast lane/details, reminders, and Capsule chooser, but honest FAIL for the still-wrapping Diary
+  time gutter and RoutineEditor repeat chips. Content size returned to `large`; Phase 3 remains open,
+  Phases 4–5 remain unstarted, and this second-iteration working tree is not claimed committed.
 
 - 2026-07-12: Local commit `20dfdb8` froze the previously authorized Diary/CapsuleTabBar XXXL
   correction and evidence (no push). Heavy isolated TDD then replaced the global text ceiling with

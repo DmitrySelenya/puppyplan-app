@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { PressableProps, StyleProp, TextStyle, ViewStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { decorativeViewProps } from '@/design/a11y';
 import { haptic } from '@/design/haptics';
@@ -36,6 +36,8 @@ export function TrackerTile({
   style,
   ...props
 }: TrackerTileProps) {
+  const { fontScale } = useWindowDimensions();
+  const usesAccessibilityLayout = fontScale >= 2;
   const isDisabled = Boolean(disabled);
   const reducedMotion = useReducedMotion();
   const handlePress: PressableProps['onPress'] = (event) => {
@@ -55,6 +57,7 @@ export function TrackerTile({
       style={({ pressed }) => [
         styles.root,
         sizeStyles[size],
+        usesAccessibilityLayout ? styles.accessibilityLayout : null,
         recent ? styles.recent : null,
         selected ? styles.selected : null,
         isDisabled ? styles.disabled : null,
@@ -83,7 +86,7 @@ export function TrackerTile({
       ) : null}
       <AppText
         maxFontSizeMultiplier={2}
-        numberOfLines={3}
+        numberOfLines={usesAccessibilityLayout ? undefined : 3}
         style={styles.label}
         variant="label">
         {label}
@@ -93,6 +96,9 @@ export function TrackerTile({
 }
 
 const styles = StyleSheet.create({
+  accessibilityLayout: {
+    width: '100%',
+  },
   disabled: {
     opacity: 0.4,
   },
