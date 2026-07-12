@@ -59,6 +59,34 @@ guardrails, and the per-state Stage 4 comparison.
 
 ---
 
+## Execution notes for the follow-up agent
+
+Read before Phase 3; these are session lessons, not optional style advice.
+
+1. **Inherited state — do not re-derive or redo.** App revision `3916b8b` (plus docs commit
+   `e52c1af`) on `dimaselenya/pup-30-local-notifications-from-reminders-ios-first`; clean tree;
+   full gate green at freeze (typecheck, `npm run check` exit 0, 95 suites / 835 tests); ~15 GiB
+   free. DerivedData was purged on 2026-07-12, so the first Release build is a **cold build** —
+   slow is not broken. Never rewrite history.
+2. **A written PASS is a claim, not evidence.** The 2026-07-11 routine-editor "Stage 4 PASS" was
+   false and was retracted by owner review. For every visual claim you record, open the actual
+   evidence PNG next to the atlas reference / spec card. Record FAIL honestly; a truthful FAIL is
+   acceptable output, a false PASS is not.
+3. **Primitives first.** Before touching any screen, read the `src/design/primitives/` inventory
+   (`TrackerTile`, `RoutineCard`, `CheckCircle`, `SectionHeader`, `IconChip`, …). Never build
+   choice grids from raw `Card`+`Button`; selected chips are
+   `variant={selected ? 'primary' : 'secondary'}`, never `tertiary`.
+4. **Defects stop, they don't fix-forward.** If the Release smoke or owner checklist surfaces a
+   defect or visual drift, record it here with evidence and stop for the owner's decision. Never
+   weaken a check, test, or config to go green.
+5. **Headless driving works while the Mac is locked.** `simctl openurl` deep links +
+   `idb ui tap/swipe` + `simctl io booted screenshot`. Relaunch the app between edit deep links —
+   remounting the same route does not re-read `initialDraft`.
+6. **Hard limits.** No git push/PR/rebase/merge, no EAS/TestFlight/OTA/production, no schema or
+   dependency changes, no deleting simulators/user files, no real puppy data in evidence. Owner
+   actions (signing, device install, physical checklist, Linear approval) are never
+   self-certified.
+
 ## Phases
 
 ### Phase 1 — Freeze the revision (agent + user approval)
