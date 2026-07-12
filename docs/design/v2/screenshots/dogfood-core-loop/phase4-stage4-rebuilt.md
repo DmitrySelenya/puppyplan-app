@@ -37,6 +37,21 @@ Save-error/retry (AC-P4-UI-3), viewer read-only (AC-P4-UI-4), empty custom-day e
 (AC-P4-UI-6), observation title label swap (AC-P4-UI-7) in `src/test/routine-editor.render.test.tsx`.
 Dynamic Type XXXL and long-text sweeps remain for the next manual device pass.
 
+## Release sweep — accessibility XXXL / long text (2026-07-12)
+
+**Result:** FAIL — stopped on the first required surface
+**Build:** local Release, embedded JS bundle, Metro stopped
+**Target:** `Grith iPhone SE 3 iOS 26.3` (`750x1334` capture)
+**Content size:** `accessibility-extra-extra-extra-large`
+
+| Surface | Native evidence | Result |
+| --- | --- | --- |
+| Diary | [Reference vs accessibility XXXL](phase4-stage4-rebuilt/release-sweeps/diary-ax-xxxl-side-by-side.png) · [raw XXXL capture](phase4-stage4-rebuilt/release-sweeps/diary-ax-xxxl.png) | **FAIL** — the greeting grows to occupy almost the entire viewport, pushing the week strip and diary rows below the first screen. The bottom capsule keeps large `Diary / Pet / More` labels instead of the specified icon-only fallback and crowds the separate FAB. |
+
+The sweep stopped immediately under the device-handoff plan's defect rule. Quick Log composer,
+routine editor, and long-text device captures were **not run** and are not claimed. The simulator
+content size was restored to `large` after capture. All visible data in the evidence is synthetic.
+
 ## Notes
 
 - Captures were driven headlessly (`simctl openurl` deep links + `idb` tap/swipe); the app was
