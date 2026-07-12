@@ -56,6 +56,8 @@ a redirect alias only. Legacy atlas `today/*` and `timeline/*` are fallback refe
 ## Accessibility
 
 - Route title and tab label say `Diary` in EN/RU/ES.
+- The large greeting is allowed a `1.8` font-size multiplier ceiling on the SE so accessibility
+  XXXL does not consume the full first viewport; greeting text remains complete and scalable.
 - Week day controls expose selected/today state without relying on color alone.
 - Mark-done, overflow/edit, and Quick Log/Add are separate 44pt+ touch targets.
 - Each event row label distinguishes planned routine from logged fact and includes time/source context.

@@ -37,6 +37,8 @@ Closing (tap `×`, tap the scrim, or drag the sheet down) reverses all four: sla
 - Capsule is one `tablist` containing exactly three tabs.
 - Add is a separate button outside the tablist — never a fourth tab. Label `Add` when resting, `Close` (or localized equivalent) when the chooser is open.
 - Resting focus order: Diary, Pet, More, Add.
+- At `fontScale >= 2`, the three tabs switch to icon-only visual chrome; each localized tab name
+  remains on its tab through `accessibilityLabel`, with selected state and focus order unchanged.
 - When the chooser is open: the capsule is removed from the accessibility tree, focus moves into the sheet, and the two slabs are buttons. Closing returns focus to the Add button.
 
 ## Reduced motion

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -68,6 +68,7 @@ export type CapsuleTabBarProps = {
 export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
   const { t } = useAppTranslation();
   const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   const [open, setOpen] = React.useState(false);
   const focusedRouteName = state.routes[state.index]?.name;
   const reducedMotion = motion.useReducedMotion();
@@ -143,12 +144,14 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
                     name={TAB_ICON[tab.routeName]}
                     size={tokens.component.tabBar.icon}
                   />
-                  <AppText
-                    style={selected ? styles.activeLabel : undefined}
-                    tone={tone}
-                    variant="caption">
-                    {t(tab.labelKey)}
-                  </AppText>
+                  {fontScale < 2 ? (
+                    <AppText
+                      style={selected ? styles.activeLabel : undefined}
+                      tone={tone}
+                      variant="caption">
+                      {t(tab.labelKey)}
+                    </AppText>
+                  ) : null}
                 </Touchable>
               );
             })}

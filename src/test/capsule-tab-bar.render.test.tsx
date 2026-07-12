@@ -16,6 +16,20 @@ import {
 
 const mockNavigate = jest.fn();
 const mockRouterPush = jest.fn();
+let mockFontScale = 1;
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({
+      fontScale: mockFontScale,
+      height: 667,
+      scale: 2,
+      width: 375,
+    }),
+  });
+});
 
 jest.mock('react-native-reanimated', () => {
   const ReactNative = jest.requireActual<typeof import('react-native')>('react-native');
@@ -76,6 +90,7 @@ function renderBar(focusedIndex = 0) {
 
 describe('CapsuleTabBar', () => {
   beforeEach(async () => {
+    mockFontScale = 1;
     mockNavigate.mockClear();
     mockRouterPush.mockClear();
     jest.mocked(motion.useReducedMotion).mockReturnValue(false);
@@ -101,6 +116,46 @@ describe('CapsuleTabBar', () => {
     const add = screen.getByRole('button', { name: i18n.t('tabs.add') });
     expect(add).toBeTruthy();
     expect(add.props.accessibilityRole).not.toBe('tab');
+  });
+
+  it('AC-AX-2 AC-AX-4: keeps localized visual labels below font scale 2', () => {
+    mockFontScale = 1.999;
+
+    renderBar();
+
+    expect(primaryTabs.map((tab) => screen.getByText(i18n.t(tab.labelKey)).props.children)).toEqual(
+      primaryTabs.map((tab) => i18n.t(tab.labelKey)),
+    );
+  });
+
+  it('AC-AX-2 AC-AX-4: visually removes tab labels at exact font scale 2', () => {
+    mockFontScale = 2;
+
+    renderBar();
+
+    for (const tab of primaryTabs) {
+      expect(screen.queryByText(i18n.t(tab.labelKey))).toBeNull();
+    }
+  });
+
+  it('AC-AX-3: preserves localized tab semantics, order, selection, and navigation at font scale 2', () => {
+    mockFontScale = 2;
+
+    renderBar(1);
+
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.map((tab) => tab.props.accessibilityLabel)).toEqual(
+      primaryTabs.map((tab) => i18n.t(tab.labelKey)),
+    );
+    expect(tabs.map((tab) => tab.props.accessibilityState?.selected)).toEqual([
+      false,
+      true,
+      false,
+    ]);
+    expect(screen.getByRole('button', { name: i18n.t('tabs.add') })).toBeTruthy();
+
+    fireEvent.press(tabs[2]);
+    expect(mockNavigate).toHaveBeenCalledWith(primaryTabs[2].routeName);
   });
 
   it('marks the active tab with a structural tint pill, not color-only', () => {

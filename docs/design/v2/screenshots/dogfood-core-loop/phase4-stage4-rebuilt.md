@@ -52,6 +52,19 @@ The sweep stopped immediately under the device-handoff plan's defect rule. Quick
 routine editor, and long-text device captures were **not run** and are not claimed. The simulator
 content size was restored to `large` after capture. All visible data in the evidence is synthetic.
 
+### Authorized Diary retry after the narrow XXXL fix
+
+**Result:** FAIL — the two authorized symptoms improved, but the surface still does not pass
+
+| Surface | Native evidence | Result |
+| --- | --- | --- |
+| Diary retry | [Default vs accessibility XXXL after fix](phase4-stage4-rebuilt/release-sweeps/diary-ax-xxxl-after-fix-side-by-side.png) · [default](phase4-stage4-rebuilt/release-sweeps/diary-default-after-ax-fix.png) · [raw XXXL](phase4-stage4-rebuilt/release-sweeps/diary-ax-xxxl-after-fix.png) | **FAIL** — the greeting now respects its `1.8` ceiling and the capsule correctly becomes icon-only, but the week-strip labels/dates overlap and clip at XXXL, while the InfoHero text expands across the remainder of the first viewport. |
+
+This retry used a freshly rebuilt local Release with an embedded bundle and no TCP 8081 listener.
+The new WeekStrip/InfoHero failures are outside the owner's authorized two-part correction, so the
+sweep stopped again without fix-forward. Quick Log composer, routine editor, and long-text captures
+remain unrun. Content size was restored to `large`; all evidence is synthetic.
+
 ## Notes
 
 - Captures were driven headlessly (`simctl openurl` deep links + `idb` tap/swipe); the app was

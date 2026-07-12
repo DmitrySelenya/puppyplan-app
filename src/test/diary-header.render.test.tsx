@@ -29,6 +29,17 @@ describe('DiaryHeader', () => {
     expect(screen.getByTestId('diary-header')).toBeTruthy();
   });
 
+  it('AC-AX-1 AC-AX-4: caps the scalable Diary greeting at exactly 1.8', () => {
+    renderHeader(
+      <DiaryHeader puppyName={SYNTHETIC_NAME} timeOfDay="morning" todayDate="2026-05-14" />,
+    );
+
+    expect(
+      screen.getByText(i18n.t('today.header.greeting-morning', { name: SYNTHETIC_NAME })).props
+        .maxFontSizeMultiplier,
+    ).toBe(1.8);
+  });
+
   it('switches greeting copy by time of day', () => {
     renderHeader(<DiaryHeader puppyName={SYNTHETIC_NAME} timeOfDay="evening" />);
     expect(
