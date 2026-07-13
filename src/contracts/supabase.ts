@@ -240,7 +240,13 @@ export const observationEventPayloadSchema = z.object({
 }).strict().refine((payload) => payload.title !== undefined || payload.note !== undefined, {
   message: 'Observation requires a title or note.',
 });
-export const observationEventPayloadSchemaV2 = observationEventPayloadSchema;
+export const observationEventPayloadSchemaV2 = z.object({
+  title: eventTitleSchema.optional(),
+  note: eventNoteSchema.optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
+}).strict().refine((payload) => payload.title !== undefined || payload.note !== undefined, {
+  message: 'Observation requires a title or note.',
+});
 export const healthRecordReferenceEventPayloadSchemaV2 = healthRecordReferenceEventPayloadSchema;
 
 export const eventPayloadSchemas = {

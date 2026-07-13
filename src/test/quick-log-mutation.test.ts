@@ -19,9 +19,11 @@ import type {
 } from '@/lib/queue';
 import {
   applyQuickLogQueueTransition,
+  createManualQuickLogRetry,
   resolveQuickLogInFlightSuccess,
 } from '@/lib/queue';
 import type { EventLogInsert, EventLogRecord, JsonValue } from '@/contracts/supabase';
+import { createReminderCheckOffClientEventId } from '@/contracts/reminders';
 
 const householdId = '00000000-0000-4000-8000-000000000201';
 const puppyId = '00000000-0000-4000-8000-000000000202';
@@ -1512,22 +1514,49 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
-  it('manual retry resends the existing queued event and emits recovery telemetry', async () => {
+  it('AC-F1-4: manual retry replaces a permanent local failure with the first writer row', async () => {
     const queryClient = createTestQueryClient();
     const queue = new FakeQuickLogQueueStorage();
     const events = new FakeQuickLogEventsRepository();
+    const reminderId = '00000000-0000-4000-8000-000000000301';
+    const scheduledFor = '2026-05-26T07:45:00.000Z';
+    const observationClientEventId = createReminderCheckOffClientEventId({
+      reminderId,
+      scheduledFor,
+    });
+    const observationPayload = {
+      title: 'Synthetic routine',
+      reminder_link: {
+        reminder_id: reminderId,
+        scheduled_for: scheduledFor,
+      },
+    };
+    const firstWriterRow = {
+      ...serverRow(),
+      client_event_id: observationClientEventId,
+      event_type: 'observation' as const,
+      id: '00000000-0000-4000-8000-000000000208',
+      occurred_at: '2026-05-26T07:59:00.000Z',
+      payload: observationPayload,
+      payload_version: 2 as const,
+    };
     const analytics = {
       trackQuickLogEvent: jest.fn(),
     };
 
-    queue.items.set(clientEventId, createQueueItem({
-      state: 'failed_retryable',
-      last_error_category: 'network_unavailable',
-      retry_count: 1,
+    events.insertRow = firstWriterRow;
+    queue.items.set(observationClientEventId, createQueueItem({
+      client_event_id: observationClientEventId,
+      event_type: 'observation',
+      state: 'failed_permanent',
+      last_error_category: 'invalid_payload',
+      payload: observationPayload,
+      payload_version: 2,
+      retry_count: 3,
     }));
 
     await retryLocalQuickLogEvent({
-      clientEventId,
+      clientEventId: observationClientEventId,
       events,
       analytics,
       now: () => now,
@@ -1543,7 +1572,7 @@ describe('Quick Log mutation lifecycle', () => {
 
     expect(queue.manualRetryCalls).toEqual([
       {
-        clientEventId,
+        clientEventId: observationClientEventId,
         options: expect.objectContaining({
           recoverySurface: 'manual_retry',
         }),
@@ -1551,31 +1580,33 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
     expect(events.inserts).toEqual([
       expect.objectContaining({
-        client_event_id: clientEventId,
+        client_event_id: observationClientEventId,
         created_by: createdBy,
-        event_type: 'feeding',
+        event_type: 'observation',
+        payload: observationPayload,
+        payload_version: 2,
       }),
     ]);
-    expect(queue.items.has(clientEventId)).toBe(false);
+    expect(queue.items.has(observationClientEventId)).toBe(false);
     expect(readTimelineRows(queryClient)).toEqual([
-      expect.objectContaining({
-        client_event_id: clientEventId,
+      {
+        ...firstWriterRow,
         localSync: undefined,
-      }),
+      },
     ]);
     expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
       name: 'offline_or_failed_log_recovered',
       properties: {
-        event_type: 'feeding',
+        event_type: 'observation',
         recovery_surface: 'manual_retry',
-        retry_count_bucket: 'one',
+        retry_count_bucket: 'three_or_more',
       },
     });
     expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
       name: 'event_logged',
       properties: {
         connection_state: 'unknown',
-        event_type: 'feeding',
+        event_type: 'observation',
         save_result: 'server_confirmed',
         source_surface: 'timeline',
       },
@@ -1781,6 +1812,7 @@ class FakeQuickLogEventsRepository {
   }[] = [];
   public insertError: unknown = null;
   public insertGate: Promise<void> | null = null;
+  public insertRow: EventLogRecord | null = null;
   public restoreRow: EventLogRecord | null = null;
   public tombstoneError: unknown = null;
   public payloadUpdateError: unknown = null;
@@ -1796,7 +1828,7 @@ class FakeQuickLogEventsRepository {
       throw this.insertError;
     }
 
-	    return {
+	    return this.insertRow ?? {
 	      ...serverRow(),
 	      ...insert,
 	      version: 1,
@@ -1976,12 +2008,15 @@ class FakeQuickLogQueueStorage implements Pick<
       options,
     });
 
-    return {
-      client_event_id: clientEventIdValue,
-      bypasses_delay: true as const,
-      recovery_surface: options.recoverySurface,
-      item: await this.markSending(clientEventIdValue, options),
-    };
+    const item = this.items.get(clientEventIdValue);
+    if (!item) {
+      throw new Error('Missing queue item');
+    }
+
+    const retry = createManualQuickLogRetry(item, options);
+    this.items.set(clientEventIdValue, retry.item);
+
+    return retry;
   }
 
   public async resolveInFlightSuccess(

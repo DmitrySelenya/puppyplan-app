@@ -122,7 +122,17 @@ Supabase enforces `UNIQUE (household_id, client_event_id)`. Retry with the same 
 
 Successful retry, duplicate/idempotent success, Undo cleanup, and permanent failure all invalidate the affected query keys listed in `03-client-data-layer.md`.
 
-Duplicate/idempotent success compares routing identity only: `household_id`, `client_event_id`, `created_by`, `puppy_id`, `event_type`, `payload_version`, and `occurred_at`. JSON payload comparison is intentionally avoided; the server row replaces local cache once identity matches.
+Duplicate/idempotent success never accepts a tombstoned server row. Spontaneous logs compare the
+full routing identity: `household_id`, `client_event_id`, `created_by`, `puppy_id`, `event_type`,
+`payload_version`, and `occurred_at`. JSON payload comparison is intentionally avoided.
+
+Reminder check-offs are the narrow exception for actual confirmation time. When both rows have the
+same valid structured `payload.reminder_link` (`reminder_id` plus `scheduled_for`) and the other
+routing fields match, `occurred_at` may differ because two household devices can confirm the same
+planned occurrence at different instants. Observation v2 must preserve `reminder_link` through the
+Quick Log factory and durable queue just like other check-off event types. The first writer's live
+server row replaces local cache. A missing or different reminder link, actor/schema mismatch, or a
+tombstoned row fails visibly instead of being treated as idempotent success.
 
 ## Duplicate Detection
 

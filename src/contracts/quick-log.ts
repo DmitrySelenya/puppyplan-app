@@ -337,6 +337,9 @@ export function createQuickLogEventInsert(command: unknown): QuickLogEventInsert
     return createV2Insert('observation', {
       ...(parsedCommand.title === undefined ? {} : { title: parsedCommand.title }),
       ...(parsedCommand.note === undefined ? {} : { note: parsedCommand.note }),
+      ...(parsedCommand.reminder_link === undefined
+        ? {}
+        : { reminder_link: parsedCommand.reminder_link }),
     });
   }
 

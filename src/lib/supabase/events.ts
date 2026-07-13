@@ -7,6 +7,7 @@ import {
   type EventLogRecord,
   type JsonValue,
 } from '@/contracts/supabase';
+import { getReminderLinkFromPayload } from '@/contracts/reminders';
 import type { QuickLogQueueFailureKind } from '@/lib/queue';
 
 import { getSupabaseClient } from './client';
@@ -354,13 +355,32 @@ export function isQuickLogIdempotentDuplicate(
   insert: EventLogInsert,
   existing: EventLogRecord,
 ): boolean {
-  return insert.household_id === existing.household_id
+  if (existing.deleted_at !== null) {
+    return false;
+  }
+
+  const hasMatchingRoutingIdentity = insert.household_id === existing.household_id
     && insert.client_event_id === existing.client_event_id
     && insert.created_by === existing.created_by
     && insert.puppy_id === existing.puppy_id
     && insert.event_type === existing.event_type
-    && insert.payload_version === existing.payload_version
-    && insert.occurred_at === existing.occurred_at;
+    && insert.payload_version === existing.payload_version;
+
+  if (!hasMatchingRoutingIdentity) {
+    return false;
+  }
+
+  const insertReminderLink = getReminderLinkFromPayload(insert.payload);
+  const existingReminderLink = getReminderLinkFromPayload(existing.payload);
+
+  if (insertReminderLink !== null || existingReminderLink !== null) {
+    return insertReminderLink !== null
+      && existingReminderLink !== null
+      && insertReminderLink.reminderId === existingReminderLink.reminderId
+      && insertReminderLink.scheduledFor === existingReminderLink.scheduledFor;
+  }
+
+  return insert.occurred_at === existing.occurred_at;
 }
 
 export function classifyQuickLogSupabaseError(
