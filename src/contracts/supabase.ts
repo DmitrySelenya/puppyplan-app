@@ -233,6 +233,7 @@ export const zoomiesEventPayloadSchemaV2 = withEventNote({
 export const trainingEventPayloadSchemaV2 = withEventNote({
   topic: z.enum(['recall', 'sit', 'crate', 'leash', 'settling', 'other']),
   duration_bucket: z.enum(['short', 'medium', 'long']).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 });
 export const observationEventPayloadSchema = z.object({
   title: eventTitleSchema.optional(),

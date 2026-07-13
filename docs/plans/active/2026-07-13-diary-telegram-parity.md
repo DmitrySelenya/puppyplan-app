@@ -212,6 +212,21 @@ chat speed (Phases 1d + 3). Each phase's evidence is recorded here with honest P
 
 ## Changelog
 
+- 2026-07-13 (review of Codex Phase 0 + training parity): independent review confirmed the scoped
+  comparator/Observation-v2 fix is correct and green (comparator logic, tests↔AC mapping, docs, and
+  `npm run check` re-run by the reviewer). Two findings recorded and the first fixed in this slice:
+  (1) the identical `reminder_link`-drop bug still lived in the **training** v2 path — both
+  `trainingEventPayloadSchemaV2` and the `createV2Insert('training')` factory omitted the link while
+  every other tracker preserved it, so a training routine check-off across two devices would fail
+  the same way. Fixed with parity (schema + factory) and a canonical threading test now covering
+  training and observation in `reminders-checkoff.test.ts` (RED on training / GREEN after). (2) The
+  already-stuck legacy occurrence `evt_ce1c3216` is a live server row written by a pre-fix build
+  *without* a `reminder_link`, so a same-occurrence re-check-off cannot converge under the (correct)
+  strict comparator — the routine is already saved server-side; the device path is Discard + rely on
+  foreground refresh, and convergence applies to occurrences newly written by the fixed build. Server
+  logs since the prior session show no new `23505` failures. AC-F1-5 now holds for training as well
+  as observation.
+
 - 2026-07-13 (review correction): deep review found the first Phase 0 draft relaxed every Quick
   Log `23505` collision and could silently accept ordinary reused ids or tombstoned facts. The
   replacement keeps actor/schema/routing strict, allows a different confirmation time only for an

@@ -84,6 +84,20 @@ describe('reminder_link payload threading through createQuickLogEventInsert', ()
     });
   });
 
+  it('carries the link on training and observation completion facts', () => {
+    const training = createQuickLogEventInsert({ ...base, tracker_id: 'training', topic: 'recall' });
+    const observation = createQuickLogEventInsert({ ...base, tracker_id: 'observation', title: 'Routine' });
+
+    expect(training.payload).toMatchObject({
+      topic: 'recall',
+      reminder_link: { reminder_id: reminderId, scheduled_for: scheduledFor },
+    });
+    expect(observation.payload).toMatchObject({
+      title: 'Routine',
+      reminder_link: { reminder_id: reminderId, scheduled_for: scheduledFor },
+    });
+  });
+
   it('leaves spontaneous logs unchanged when no link is supplied', () => {
     const insert = createQuickLogEventInsert({
       client_event_id: 'evt_00000000-0000-4000-8000-000000000004',
