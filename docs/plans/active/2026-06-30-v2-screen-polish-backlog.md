@@ -395,6 +395,130 @@ locally with private live-header values redacted:
 `output/v2-screen-polish-screenshots/item12-after-redacted.png`, and synthetic gallery evidence
 `output/v2-screen-polish-screenshots/item12-gallery-after.png`.
 
+---
+
+# Items 13–20: Dogfood build design review (added 2026-07-13)
+
+> Source: full UX/UI review of the standalone Release dogfood build (`e72770c` + follow-ups) on the
+> SE simulator, 2026-07-13, against the Apple-Design-Award quality bar. Two findings from the same
+> review were already fixed and committed (`bf9ab9d`): the duplicate Reminders screen title and the
+> snackbar that floated mid-list instead of hugging the nav capsule. The items below are the
+> remainder, ranked P1 (real defects) → P3 (tone/polish). Read the relevant spec card before each.
+
+## P1 — Item 13: Add-chooser FAB overlaps the "Schedule" slab
+
+**What's wrong:** When the "+" chooser is open, the morphed FAB (now "×") sits at its normal
+bottom-right position and overlaps the second slab ("Schedule / A routine or one-time reminder…"),
+clipping the slab subtitle on the SE. Reproduced in every open of the chooser.
+
+**Location:** `src/design/primitives/CapsuleTabBar.tsx` — the chooser slab list and the FAB share
+the bottom region; the slab row has no right inset reserved for the FAB, and the "Schedule" slab is
+vertically level with it.
+
+**Target:** Reserve horizontal space for the FAB in the chooser slabs (right padding ≥ FAB width +
+gap), or lift the slab stack above the FAB. The Quick Log slab is clear; only the lower slab
+collides — verify both slabs keep their full subtitle at default and XXXL.
+
+**Acceptance:** Neither slab's title or subtitle is overlapped/clipped by the FAB at default and
+XXXL; simulator screenshot per state.
+
+## P1 — Item 14: Pet hub shows generic "Puppy profile" instead of the puppy's identity
+
+**What's wrong:** The Pet hub profile card renders the literal title "Puppy profile" with initials
+"PP", even though the puppy has a name (the More card correctly shows the name + "8 weeks"). The
+first screen about the animal should name it. Compounding it, three "not set" fields stack
+vertically ("Age not set" also redundantly repeats the "Age" label above it).
+
+**Location:** `src/features/health/screens/HealthScreen.tsx` — the profile card header (title +
+avatar initials) and the Age/Breed/Weight field group.
+
+**Target:** Title = the puppy's name with real initials in the avatar (match the More card). Collapse
+unset fields into a single soft "Complete profile" CTA rather than three "not set" rows; show fields
+only once they have values. Keep it consistent with the More card's identity treatment.
+
+**Acceptance:** Pet hub names the puppy; no "not set" repetition; consistent with More; screenshot.
+
+## P2 — Item 15: Quick Log and "Add details" use two different visual lexicons for one taxonomy
+
+**What's wrong:** Quick Log fast lane uses `TrackerTile` (raised tile + icon + label) for the
+trackers, but the "Add details" composer renders the same taxonomy (Potty/Feeding/Sleep/Walk/…) as
+plain text `Button` chips with no icons. Identical entities should read identically, and the icons
+also speed recognition.
+
+**Location:** `src/features/quick-log/screens/QuickLogDetailsScreen.tsx` — the "Detail type" chip
+grid — vs the fast-lane `TrackerTile` grid.
+
+**Target:** Unify on the icon-bearing tracker representation (icons + label) across both surfaces,
+or record an explicit named deviation in the Quick Log spec card explaining why the composer stays
+text-only. Do not leave it undecided.
+
+**Acceptance:** Both surfaces present the tracker taxonomy consistently (or a recorded deviation);
+render test locks the chosen anatomy; `npm run check` green.
+
+## P2 — Item 16: Section-header casing differs between More and Diary
+
+**What's wrong:** More renders section headers in CAPS sans ("PUPPY", "SHARING", "RECORDS AND
+NOTIFICATIONS"); Diary uses serif sentence-case ("Today"). Two casings for the same structural role.
+
+**Location:** the More section-header component vs the Diary "Today" section title; the
+`SectionHeader` primitive if shared.
+
+**Target:** Pick one section-header treatment and apply it across hubs (decision recorded in the
+foundation/typography spec). Likely the warmer serif sentence-case to match the brand voice.
+
+**Acceptance:** One section-header token/treatment across More and Diary; spec updated; screenshot.
+
+## P3 — Item 17: InfoHero meta-copy is always present on Diary
+
+**What's wrong:** The mauve InfoHero banner ("Keep the rhythm visible / Diary stays quiet when logs
+are current…") sits on Diary every day, including when it is explaining that the screen is
+intentionally calm. Copy about the interface itself shouldn't be permanent chrome.
+
+**Location:** `src/features/today/screens/TodayScreen.tsx` (InfoHero placement) +
+`src/design/primitives/InfoHero.tsx`.
+
+**Target:** Show the meta-guidance for the first N sessions (or make it dismissible/swipe-away and
+remember dismissal). Keep genuinely actionable info (urgent care patterns) as the banner's job.
+
+**Acceptance:** The reassurance banner is not permanent; decision + mechanism recorded; screenshot.
+
+## P3 — Item 18: "Legacy routine" jargon + indistinguishable reminder rows
+
+**What's wrong:** A reminder subtitle reads "Legacy routine · notifications off" — "legacy" is our
+internal term, not the owner's language. Separately, two rows read identically as
+"Feeding · Every day · 07:30" with no differentiator.
+
+**Location:** `STRINGS.*` for the reminder subtitle copy; `src/features/reminders/...` row rendering
+(and `ReminderRow`).
+
+**Target:** Replace "legacy" with user-facing phrasing (e.g. "Notifications off"). When a routine
+has no distinct title, mix in a differentiator (variant/target) so duplicate rows are separable.
+
+**Acceptance:** No internal jargon in reminder copy; duplicate reminders are visually distinguishable;
+i18n parity green.
+
+## P3 — Item 19: Diary empty-state "Start" button lacks context and floats
+
+**What's wrong:** The cold-start CTA label is just "Start" ("start" what?), and it visually floats
+between the InfoHero banner and the day list rather than anchoring to a clear empty composition.
+
+**Location:** `src/features/today/screens/TodayScreen.tsx` cold-start composition (see Item 10's
+`EmptyIllustration` work) + the CTA label string.
+
+**Target:** Label the primary action concretely (e.g. "Log an event" / "Quick Log"); ensure the CTA
+belongs to a coherent centered empty composition (Item 10 built `EmptyIllustration` — reuse it) so
+it doesn't float between unrelated blocks.
+
+**Acceptance:** Concrete CTA label; CTA anchored within the empty composition; screenshot; check green.
+
+## Item 13–19 ground rules & verification
+
+Same non-negotiables as the rest of this backlog: tokens/primitives/typed-i18n only; never weaken a
+check; one commit per item; `npm run check` before each commit; synthetic data only in evidence (no
+real puppy name/notes/photos). Items 14, 15, 16, 17 carry a design/IA decision — record it in the
+relevant spec card before writing code. Verify on a standalone Release build on the SE simulator
+(`e72770c`+ lineage), Metro stopped, at both default and XXXL where layout is touched.
+
 ## Known-deferred (do NOT pick up from this backlog)
 
 - **Synced-fact delete RLS/client/snackbar blocker resolved 2026-07-04.** Migration
