@@ -467,8 +467,11 @@ Execution result (2026-07-12):
 
 ### Phase 4 — Two physical iPhones (user-executed, agent-guided)
 
-- [ ] Owner opens the Xcode workspace, selects Release + own signing team, and installs the frozen
-  revision on each explicitly selected iPhone (Developer Mode / trust prompts are owner actions).
+- [x] **Phone A build + install + launch (agent, 2026-07-13).** With the owner's connected device,
+  the agent built and installed the Release binary on phone A. Developer Mode was already enabled
+  and the developer certificate already trusted, so no manual Xcode/trust step was needed.
+- [ ] Phone B: connect the second household iPhone and repeat the install (agent can drive the
+  build/install; on-device trust/permission taps are owner actions).
 - [ ] Both phones sign into the same development account per `docs/dogfood/shared-account.md`.
 - [ ] Owner executes the 8-item acceptance checklist in `docs/dogfood/local-ios-build.md`,
   including the physical notification banner and logout cancellation.
@@ -477,6 +480,15 @@ Execution result (2026-07-12):
 
 **Acceptance:** all checklist items recorded; any failure becomes a named finding, not a silent
 retry.
+
+**Phone A install evidence (2026-07-13):** revision `99dfa4a` (Phase 3 Dynamic Type work plus the
+two dogfood-review fixes in `bf9ab9d`). Disk gate 11 GiB free; no TCP 8081 listener. Device
+`iPhone Dmitry Selenya` (iOS 26.5, `00008110-001E11181EA3801E`), team `JK68NGR7WD`, bundle
+`com.dmitry-selenya.puppyplan-app`. `expo run:ios --configuration Release --device … --no-bundler`
+built with 0 errors / 3 warnings, auto-signed, installed to 100%, and
+`devicectl … process launch` started the app cleanly (no untrusted-developer block). The agent
+cannot see or tap the physical screen, so the interactive loop and the 8-item checklist remain
+owner-executed. Phone B is not yet connected.
 
 ### Phase 5 — Housekeeping (agent)
 
