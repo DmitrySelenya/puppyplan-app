@@ -107,6 +107,7 @@ describe('RemindersHubRoute', () => {
 
     expect(mockUseRemindersQuery).toHaveBeenCalledWith(householdId, puppyId);
     expect(screen.getByRole('header', { name: i18n.t('reminders.screen-title') })).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('reminders.screen-title'))).toHaveLength(1);
     expect(screen.getByRole('button', { name: i18n.t('more.screen-title') })).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('reminders.actions.add') })).toBeTruthy();
     expect(screen.getByRole('tab', { name: i18n.t('reminders.segments.0') }).props.accessibilityState)

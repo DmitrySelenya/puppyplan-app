@@ -345,6 +345,9 @@ describe('design primitives', () => {
     expect(MIN_TOUCH_TARGET_BY_PLATFORM.android).toBe(48);
     expect(THUMB_TOUCH_TARGET).toBe(tokens.layout.tapTargetThumbZone);
     expect(tokens.layout.bottomInsetFab).toBe(120);
+    expect(SNACKBAR_BOTTOM_OFFSET_WITH_FAB).toBe(
+      tokens.space[2] + tokens.component.fab.size + tokens.space[4],
+    );
     expect(DEFAULT_HIT_SLOP).toEqual({ bottom: 10, left: 10, right: 10, top: 10 });
     expect(getHitSlopForVisualSize(tokens.icon.specs.size)).toEqual(DEFAULT_HIT_SLOP);
     expect(motionPresets.tap.durationMs).toBe(tokens.motion.duration.fast);

@@ -254,10 +254,6 @@ export function RemindersHubScreen({
         )}
       />
 
-      <AppText style={styles.pageTitle} variant="title1">
-        {t('reminders.screen-title')}
-      </AppText>
-
       <SegmentedControl<ReminderSegment>
         accessibilityLabel={t('reminders.segments-a11y')}
         onValueChange={setSegment}
@@ -492,8 +488,5 @@ function getSectionTitleKey(section: ReminderSection): I18nKey {
 const styles = StyleSheet.create({
   content: {
     paddingBottom: tokens.layout.tabBarHeight + tokens.space[6],
-  },
-  pageTitle: {
-    marginTop: tokens.space[1],
   },
 });
