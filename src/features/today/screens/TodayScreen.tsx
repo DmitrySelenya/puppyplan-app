@@ -11,6 +11,7 @@ import {
 } from '@/contracts/today';
 import {
   eventPayloadSchemas,
+  eventPayloadSchemasV2,
   type EventType,
 } from '@/contracts/supabase';
 import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
@@ -1333,11 +1334,18 @@ function getTodayTimeOfDay(now: Date): NonNullable<TodayPlanInput['timeOfDay']> 
   return 'evening';
 }
 
+/**
+ * v1 payload schemas are strict, so a v2 payload (which may carry a note) fails to parse against
+ * them and silently degrades to 'other' — an outside pee then reads as an indoor accident. Parse
+ * against the schema family the row was actually written with.
+ */
 function getTodayQuickAction(
   row: QuickLogCachedEventRow,
 ): NonNullable<TodayPlanInput['lastEvents']>[number]['quickAction'] {
+  const schemas = row.payload_version === 1 ? eventPayloadSchemas : eventPayloadSchemasV2;
+
   if (row.event_type === 'potty') {
-    const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
+    const payloadResult = schemas.potty.safeParse(row.payload);
 
     if (!payloadResult.success) {
       return 'other';
@@ -1355,7 +1363,7 @@ function getTodayQuickAction(
   }
 
   if (row.event_type === 'feeding') {
-    const payloadResult = eventPayloadSchemas.feeding.safeParse(row.payload);
+    const payloadResult = schemas.feeding.safeParse(row.payload);
 
     return payloadResult.success && payloadResult.data.amount === 'meal'
       ? 'meal'
@@ -1363,9 +1371,18 @@ function getTodayQuickAction(
   }
 
   if (row.event_type === 'sleep') {
-    const payloadResult = eventPayloadSchemas.sleep.safeParse(row.payload);
+    // v1 modelled a nap as sleep_kind; v2 replaced it with a start/wake/retrospective action.
+    if (row.payload_version === 1) {
+      const payloadResult = eventPayloadSchemas.sleep.safeParse(row.payload);
 
-    return payloadResult.success && payloadResult.data.sleep_kind === 'nap'
+      return payloadResult.success && payloadResult.data.sleep_kind === 'nap'
+        ? 'nap'
+        : 'other';
+    }
+
+    const payloadResult = eventPayloadSchemasV2.sleep.safeParse(row.payload);
+
+    return payloadResult.success && payloadResult.data.action === 'retrospective'
       ? 'nap'
       : 'other';
   }

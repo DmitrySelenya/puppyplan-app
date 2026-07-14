@@ -280,8 +280,9 @@ describe('QuickLogDetailsRoute', () => {
     expect(screen.getByLabelText(i18n.t('quick-log.details.observation.title-label')))
       .toHaveProp('value', 'Calm greeting');
 
+    // Editing an existing fact, so the sheet offers Save changes rather than Save details.
     fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('quick-log.details.save'),
+      name: i18n.t('quick-log.details.edit-save'),
     }));
 
     expect(updateDetails).toHaveBeenCalledWith(expect.objectContaining({

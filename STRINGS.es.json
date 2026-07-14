@@ -654,6 +654,8 @@
       "dismiss": "Cerrar registro rápido",
       "edit-trackers": "Editar rastreadores",
       "log-with-details": "Registrar con detalles",
+      "details-action": "Registrar con detalles",
+      "details-hint": "Registra ahora. Mantén pulsado para añadir detalles.",
       "edit-screen-title": "Tus rastreadores rápidos",
       "edit-helper": "Hasta 5 rastreadores. Cámbialos desde Más.",
       "permission-denied": {
@@ -751,6 +753,8 @@
     },
     "details": {
       "title": "Agregar detalles",
+      "edit-title": "Editar entrada",
+      "edit-save": "Guardar cambios",
       "variant-label": "Tipo de detalle",
       "save": "Guardar detalles",
       "persistence-error": "No se pudieron guardar los detalles. El borrador sigue aquí. Inténtalo de nuevo.",

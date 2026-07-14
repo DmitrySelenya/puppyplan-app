@@ -580,6 +580,61 @@ describe('Today Quick Log state integration', () => {
     },
   );
 
+  const factCardV2AccentCases: readonly {
+    accent: 'honey' | 'mauve';
+    eventType: 'potty' | 'sleep';
+    icon: string;
+    payload: Record<string, string>;
+  }[] = [
+    {
+      accent: 'honey',
+      eventType: 'potty',
+      icon: 'water',
+      payload: { note: 'Synthetic private context', subtype: 'outside' },
+    },
+    {
+      accent: 'honey',
+      eventType: 'potty',
+      icon: 'poop',
+      payload: { note: 'Synthetic private context', subtype: 'poop' },
+    },
+    {
+      accent: 'mauve',
+      eventType: 'sleep',
+      icon: 'moon',
+      payload: { action: 'start', note: 'Synthetic private context' },
+    },
+  ];
+
+  it.each(factCardV2AccentCases)(
+    'AC-QN-POLISH reads a noted v2 $eventType payload for its icon ($icon/$accent)',
+    async ({ accent, eventType, icon, payload }) => {
+      // A v2 payload carrying a note fails the strict v1 schema. Parsing version-blind made the
+      // fact fall back to the wrong icon — an outside pee read as an indoor accident.
+      mockListEvents.mockResolvedValue([
+        createRow({
+          event_type: eventType,
+          payload,
+          payload_version: 2,
+        }),
+      ]);
+      renderWithQuery(
+        <TodayScreen
+          careContext={careContext}
+          openTimeline={openTimeline}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('diary-history-logged-fact')).toBeTruthy();
+      });
+
+      const chip = screen.UNSAFE_getByType(IconChip);
+      expect(chip.props.accent).toBe(accent);
+      expect(chip.props.icon).toBe(icon);
+    },
+  );
+
   it('fetches same-day durable rows when Today opens with an empty cache', async () => {
     mockListEvents.mockResolvedValue([createRow()]);
 

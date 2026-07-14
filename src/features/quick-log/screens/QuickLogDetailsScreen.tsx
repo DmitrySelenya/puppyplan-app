@@ -84,6 +84,11 @@ export function QuickLogDetailsScreen({
   const { fontScale } = useWindowDimensions();
   const { locale, t } = useAppTranslation();
   const reviewState = status === 'ready' ? undefined : status;
+  // An existing fact arrives with its tracker locked; capturing a new one never does.
+  const isEditing = trackerLocked && initialDraft !== undefined;
+  const sheetTitleKey: I18nKey = isEditing
+    ? 'quick-log.details.edit-title'
+    : 'quick-log.details.title';
   const backdateBounds = getBackdateBounds();
   const initialOccurredAt = getInitialOccurredAt(initialDraft);
   const [trackerId, setTrackerId] = useState<QuickLogDetailTrackerId>(() =>
@@ -210,7 +215,7 @@ export function QuickLogDetailsScreen({
 
   return (
     <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
-      <SheetSurface accessibilityLabel={t('quick-log.details.title')}>
+      <SheetSurface accessibilityLabel={t(sheetTitleKey)}>
         <Stack gap="md">
           <Stack
             align="flex-start"
@@ -222,7 +227,7 @@ export function QuickLogDetailsScreen({
               maxFontSizeMultiplier={2}
               style={styles.title}
               variant="title">
-              {t('quick-log.details.title')}
+              {t(sheetTitleKey)}
             </AppText>
             <Button
               label={t('common.close')}
@@ -377,13 +382,13 @@ export function QuickLogDetailsScreen({
           <Stack direction="horizontal" gap="sm" wrap>
             <Button
               disabled={status === 'permission-denied' || isSaving}
-              label={t('quick-log.details.save')}
+              label={t(isEditing ? 'quick-log.details.edit-save' : 'quick-log.details.save')}
               loading={isSaving}
               onPress={submit}
               variant="primary"
             />
             <Button
-              label={t('quick-log.details.skip')}
+              label={t(isEditing ? 'common.cancel' : 'quick-log.details.skip')}
               onPress={onClose}
               variant="tertiary"
             />

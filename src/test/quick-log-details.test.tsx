@@ -282,6 +282,34 @@ describe('Quick Log details', () => {
     expect(screen.getByText(i18n.t('quick-log.details.sleep.duration-error'))).toBeTruthy();
   });
 
+  it('AC-QN-POLISH titles the sheet as an edit when an existing fact is opened', () => {
+    renderDetails(
+      <QuickLogDetailsScreen
+        initialDraft={{
+          note: 'Synthetic private context',
+          occurredAt: '2026-07-13T08:35:00.000Z',
+          trackerId: 'observation',
+        }}
+        trackerLocked
+      />,
+    );
+
+    expect(screen.getByText(i18n.t('quick-log.details.edit-title'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('quick-log.details.edit-save') }))
+      .toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('common.cancel') })).toBeTruthy();
+    expect(screen.queryByText(i18n.t('quick-log.details.title'))).toBeNull();
+    expect(screen.queryByRole('button', { name: i18n.t('quick-log.details.skip') })).toBeNull();
+  });
+
+  it('AC-QN-POLISH keeps the add-titled strings when a new fact is captured', () => {
+    renderDetails(<QuickLogDetailsScreen initialTrackerId="feeding" />);
+
+    expect(screen.getByText(i18n.t('quick-log.details.title'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('quick-log.details.save') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('quick-log.details.skip') })).toBeTruthy();
+  });
+
   it('AC-QN-WHEN backdates last night from midday without a future-time error', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date(2026, 6, 14, 12, 56, 0));

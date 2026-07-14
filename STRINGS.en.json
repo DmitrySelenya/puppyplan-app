@@ -663,6 +663,8 @@
       "dismiss": "Dismiss Quick Log",
       "edit-trackers": "Edit trackers",
       "log-with-details": "Log with details",
+      "details-action": "Log with details",
+      "details-hint": "Logs now. Long press to add details.",
       "edit-screen-title": "Your quick trackers",
       "edit-helper": "Up to 5 trackers. Change them from More.",
       "permission-denied": {
@@ -760,6 +762,8 @@
     },
     "details": {
       "title": "Add details",
+      "edit-title": "Edit entry",
+      "edit-save": "Save changes",
       "variant-label": "Detail type",
       "save": "Save details",
       "persistence-error": "Details could not be saved. Your draft is still here. Try again.",

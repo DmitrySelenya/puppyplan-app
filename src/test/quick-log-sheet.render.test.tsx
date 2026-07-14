@@ -212,7 +212,66 @@ describe('QuickLogShell', () => {
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.sheet.log-with-details'),
     }));
-    expect(openCreateDetails).toHaveBeenCalledWith({ trackerId: 'feeding' });
+    expect(openCreateDetails).toHaveBeenCalledWith({ trackerId: 'potty' });
+  });
+
+  it('AC-QN-POLISH carries the long-pressed tracker into the details form', () => {
+    const openCreateDetails = jest.fn();
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={createMutationPort()}
+        openCreateDetails={openCreateDetails}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent(screen.getByRole('button', { name: i18n.t('quick-log.trackers.walk') }), 'longPress');
+
+    expect(openCreateDetails).toHaveBeenCalledWith({ trackerId: 'walk' });
+  });
+
+  it('AC-QN-POLISH exposes the details shortcut as an accessibility action, not long-press only', () => {
+    const openCreateDetails = jest.fn();
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={createMutationPort()}
+        openCreateDetails={openCreateDetails}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    const walkTile = screen.getByRole('button', { name: i18n.t('quick-log.trackers.walk') });
+
+    expect(walkTile.props.accessibilityActions).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'details' })]),
+    );
+
+    fireEvent(walkTile, 'accessibilityAction', { nativeEvent: { actionName: 'details' } });
+
+    expect(openCreateDetails).toHaveBeenCalledWith({ trackerId: 'walk' });
+  });
+
+  it('AC-QN-POLISH opens details on a tracker the household actually uses', () => {
+    const openCreateDetails = jest.fn();
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={{
+          ...careContext,
+          selectedTrackerIds: ['walk', 'zoomies'],
+        }}
+        mutation={createMutationPort()}
+        openCreateDetails={openCreateDetails}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.log-with-details'),
+    }));
+
+    expect(openCreateDetails).toHaveBeenCalledWith({ trackerId: 'walk' });
   });
 
   it('maps canonical tracker ids to their glyphs', () => {

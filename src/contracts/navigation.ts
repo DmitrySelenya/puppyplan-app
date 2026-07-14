@@ -598,6 +598,8 @@ export const shellI18nKeys = [
   'quick-log.sheet.edit-trackers',
   'quick-log.sheet.edit-helper',
   'quick-log.sheet.log-with-details',
+  'quick-log.sheet.details-action',
+  'quick-log.sheet.details-hint',
   'quick-log.sheet.unavailable.title',
   'quick-log.sheet.unavailable.body',
   'quick-log.sheet.unavailable.close',

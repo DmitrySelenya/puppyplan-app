@@ -395,6 +395,13 @@ function QuickLogShellContent({
             <Stack direction="horizontal" gap="sm" wrap>
               {selectedTrackerIds.map((trackerId) => (
                 <TrackerTile
+                  accessibilityActions={openCreateDetails === undefined ? undefined : [{
+                    label: t('quick-log.sheet.details-action'),
+                    name: 'details',
+                  }]}
+                  accessibilityHint={openCreateDetails === undefined
+                    ? undefined
+                    : t('quick-log.sheet.details-hint')}
                   accessibilityLabel={t(getQuickLogTrackerLabelKey(trackerId))}
                   icon={(
                     <AppIcon
@@ -405,6 +412,12 @@ function QuickLogShellContent({
                   )}
                   key={trackerId}
                   label={t(getQuickLogTrackerLabelKey(trackerId))}
+                  onAccessibilityAction={(event) => {
+                    if (event.nativeEvent.actionName === 'details') {
+                      openCreateDetails?.({ trackerId });
+                    }
+                  }}
+                  onLongPress={() => openCreateDetails?.({ trackerId })}
                   onPress={() => {
                     if (trackerId === 'potty') {
                       setPottySubtypePickerOpen(true);
@@ -424,7 +437,11 @@ function QuickLogShellContent({
             </Stack>
             <Button
               label={t('quick-log.sheet.log-with-details')}
-              onPress={() => openCreateDetails?.({ trackerId: 'feeding' })}
+              onPress={() => openCreateDetails?.({
+                // Open on a tracker this household actually uses; 'feeding' was hardcoded and
+                // may not even be in their grid.
+                trackerId: selectedTrackerIds[0] ?? 'feeding',
+              })}
               variant="secondary"
             />
             <QuickLogLocalEvents
