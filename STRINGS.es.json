@@ -251,6 +251,9 @@
   "nav": {
     "quick-log-slab": "Registro rápido",
     "quick-log-slab-subtitle": "Registra lo que ya pasó",
+    "note-slab": "Nota rápida",
+    "note-slab-subtitle": "Anótalo ahora, ordénalo después",
+    "note-fab-hint": "Abre una nota con una hora que puedes cambiar",
     "schedule-slab": "Programar",
     "schedule-slab-subtitle": "Una rutina o un recordatorio único",
     "schedule-fab-hint": "Abre opciones de programación"
@@ -905,6 +908,17 @@
       "secondary": "Cancelar",
       "question": "¿Agregar de todos modos?"
     }
+  },
+  "quick-note": {
+    "title": "Nota rápida",
+    "when-label": "Cuándo",
+    "when-hint": "Elige un día y una hora",
+    "note-label": "Nota privada",
+    "note-helper": "Privada · {count} / 500",
+    "add": "Añadir",
+    "required-error": "Escribe una nota primero.",
+    "persistence-error": "No se pudo guardar la nota. Tu texto sigue aquí. Inténtalo de nuevo.",
+    "saved-announcement": "Nota añadida"
   },
   "timeline": {
     "title": "Eventos",

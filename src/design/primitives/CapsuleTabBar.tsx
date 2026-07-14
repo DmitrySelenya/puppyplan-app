@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  noteAction,
   primaryTabs,
   quickLogAction,
   scheduleAction,
@@ -182,6 +183,10 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
       {open ? (
         <Chooser
           onClose={() => setOpen(false)}
+          onNote={() => {
+            setOpen(false);
+            router.push(noteAction.href);
+          }}
           onQuickLog={() => {
             setOpen(false);
             router.push(quickLogAction.href);
@@ -200,12 +205,14 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
 
 function Chooser({
   onClose,
+  onNote,
   onQuickLog,
   onSchedule,
   progress,
   reducedMotion,
 }: {
   onClose: () => void;
+  onNote: () => void;
   onQuickLog: () => void;
   onSchedule: () => void;
   progress: SharedValue<number>;
@@ -258,6 +265,15 @@ function Chooser({
           title={t('nav.quick-log-slab')}
         />
         <Slab
+          accessibilityHint={t('nav.note-slab-subtitle')}
+          icon="docText"
+          iconColor={tokens.color.primary[700]}
+          iconTint={tokens.color.primary[50]}
+          onPress={onNote}
+          subtitle={t('nav.note-slab-subtitle')}
+          title={t('nav.note-slab')}
+        />
+        <Slab
           accessibilityHint={t('nav.schedule-slab-subtitle')}
           icon="calendar"
           iconColor={tokens.color.status.info}
@@ -295,7 +311,8 @@ function Slab({
       accessibilityRole="button"
       minTarget="thumb"
       onPress={onPress}
-      style={styles.slab}>
+      style={styles.slab}
+      testID="nav-slab">
       <View style={[styles.slabIcon, { backgroundColor: iconTint }]}>
         <AppIcon color={iconColor} name={icon} size={tokens.component.tabBar.icon} />
       </View>

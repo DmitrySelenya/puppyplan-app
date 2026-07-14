@@ -42,6 +42,18 @@ export const quickLogAction = {
   accessibilityHintKey: I18nKey;
 };
 
+export const noteAction = {
+  id: 'note',
+  href: '/quick-log/note',
+  labelKey: 'nav.note-slab',
+  accessibilityHintKey: 'nav.note-fab-hint',
+} as const satisfies {
+  id: string;
+  href: string;
+  labelKey: I18nKey;
+  accessibilityHintKey: I18nKey;
+};
+
 export const scheduleAction = {
   id: 'schedule',
   href: '/quick-log/schedule',
@@ -66,6 +78,7 @@ export const settingsRoutes = [
 
 export const modalRoutes = [
   quickLogAction.href,
+  noteAction.href,
   scheduleAction.href,
   '/quick-log/details',
   '/paywall',
@@ -175,6 +188,11 @@ export const plannedRouteFiles = [
   {
     route: '/quick-log/schedule',
     file: 'app/(sheets)/quick-log/schedule/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
+    route: '/quick-log/note',
+    file: 'app/(sheets)/quick-log/note/index.tsx',
     implementationStage: 'existing',
   },
   {

@@ -2,7 +2,12 @@ import * as React from 'react';
 import { StyleSheet } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import { primaryTabs, quickLogAction, scheduleAction } from '@/contracts/navigation';
+import {
+  noteAction,
+  primaryTabs,
+  quickLogAction,
+  scheduleAction,
+} from '@/contracts/navigation';
 import * as haptics from '@/design/haptics';
 import * as motion from '@/design/motion';
 import { tokens } from '@/design/tokens';
@@ -241,7 +246,7 @@ describe('CapsuleTabBar', () => {
     expect(screen.queryAllByRole('tab')).toHaveLength(0);
   });
 
-  it('shows a scrim, a drag handle, and two slabs; scrim tap closes', () => {
+  it('shows a scrim, a drag handle, and three slabs; scrim tap closes', () => {
     renderBar();
 
     fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
@@ -249,6 +254,7 @@ describe('CapsuleTabBar', () => {
     expect(screen.getByTestId('nav-scrim')).toBeTruthy();
     expect(screen.getByTestId('nav-drag-handle')).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('nav.quick-log-slab') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('nav.note-slab') })).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('nav.schedule-slab') })).toBeTruthy();
 
     fireEvent.press(screen.getByTestId('nav-scrim'));
@@ -257,25 +263,58 @@ describe('CapsuleTabBar', () => {
     expect(screen.getByTestId('nav-capsule')).toBeTruthy();
   });
 
+  it('AC-QN-SLAB: keeps the locked slab order Quick Log, Quick note, Schedule', () => {
+    renderBar();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+
+    expect(
+      screen.getAllByTestId('nav-slab').map((slab) => slab.props.accessibilityLabel),
+    ).toEqual([
+      i18n.t('nav.quick-log-slab'),
+      i18n.t('nav.note-slab'),
+      i18n.t('nav.schedule-slab'),
+    ]);
+  });
+
   it('renders each slab with a subtitle and a chevron, not title-only', () => {
     renderBar();
 
     fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
 
     expect(screen.getByText(i18n.t('nav.quick-log-slab-subtitle'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('nav.note-slab-subtitle'))).toBeTruthy();
     expect(screen.getByText(i18n.t('nav.schedule-slab-subtitle'))).toBeTruthy();
     expect(
       screen.getAllByTestId('nav-slab-chevron', { includeHiddenElements: true }),
-    ).toHaveLength(2);
+    ).toHaveLength(3);
   });
 
-  it('routes Quick Log and Schedule slabs to their destinations', () => {
+  it('AC-QN-SLAB: keeps every slab at or above the thumb-zone tap target', () => {
+    renderBar();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+
+    for (const slab of screen.getAllByTestId('nav-slab')) {
+      const style = StyleSheet.flatten(slab.props.style);
+
+      expect(style.minHeight).toBeGreaterThanOrEqual(tokens.layout.tapTargetThumbZone);
+    }
+  });
+
+  it('routes Quick Log, Quick note, and Schedule slabs to their destinations', () => {
     renderBar();
 
     fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
     fireEvent.press(screen.getByRole('button', { name: i18n.t('nav.quick-log-slab') }));
 
     expect(mockRouterPush).toHaveBeenCalledWith(quickLogAction.href);
+    expect(screen.queryByTestId('nav-chooser')).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('nav.note-slab') }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith(noteAction.href);
     expect(screen.queryByTestId('nav-chooser')).toBeNull();
 
     fireEvent.press(screen.getByRole('button', { name: i18n.t('tabs.add') }));

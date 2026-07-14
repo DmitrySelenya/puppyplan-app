@@ -257,6 +257,9 @@
   "nav": {
     "quick-log-slab": "Quick Log",
     "quick-log-slab-subtitle": "Log what already happened",
+    "note-slab": "Quick note",
+    "note-slab-subtitle": "Write it down now, sort it out later",
+    "note-fab-hint": "Opens a note with a time you can change",
     "schedule-slab": "Schedule",
     "schedule-slab-subtitle": "A routine or one-time reminder",
     "schedule-fab-hint": "Opens scheduling options"
@@ -914,6 +917,18 @@
       "secondary": "Cancel",
       "question": "Add anyway?"
     }
+  },
+
+  "quick-note": {
+    "title": "Quick note",
+    "when-label": "When",
+    "when-hint": "Pick a day and time",
+    "note-label": "Private note",
+    "note-helper": "Private · {count} / 500",
+    "add": "Add",
+    "required-error": "Write a note first.",
+    "persistence-error": "The note could not be saved. Your text is still here. Try again.",
+    "saved-announcement": "Note added"
   },
 
   "timeline": {
