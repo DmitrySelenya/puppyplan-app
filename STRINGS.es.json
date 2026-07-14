@@ -833,13 +833,8 @@
           "wake": "Despertar",
           "retrospective": "Añadir sueño terminado"
         },
-        "duration-label": "¿Cuánto duró?",
-        "duration": {
-          "none": "No estoy seguro",
-          "15": "15 min",
-          "30": "30 min",
-          "60": "1 h"
-        }
+        "duration-label": "¿Cuánto duró? (minutos)",
+        "duration-error": "Introduce minutos entre 1 y 1440."
       },
       "zoomies": {
         "intensity-label": "¿Qué intensidad tuvo?",

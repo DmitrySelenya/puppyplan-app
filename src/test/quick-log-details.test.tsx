@@ -112,9 +112,10 @@ describe('Quick Log details', () => {
     );
 
     expect(screen.getByText(i18n.t('quick-log.details.sleep.duration-label'))).toBeTruthy();
-    fireEvent.press(screen.getByRole('tab', {
-      name: i18n.t('quick-log.details.sleep.duration.30'),
-    }));
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('quick-log.details.sleep.duration-label')),
+      '30',
+    );
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.details.save'),
     }));
@@ -234,6 +235,51 @@ describe('Quick Log details', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it('AC-QN-NIGHT records a retrospective sleep of arbitrary length, not just the chip presets', () => {
+    const onSave = jest.fn();
+
+    renderDetails(
+      <QuickLogDetailsScreen
+        initialSleepAction="retrospective"
+        initialTrackerId="sleep"
+        onSave={onSave}
+      />,
+    );
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('quick-log.details.sleep.duration-label')),
+      '414',
+    );
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'retrospective',
+      durationMinutes: 414,
+      trackerId: 'sleep',
+    }));
+  });
+
+  it('AC-QN-NIGHT rejects a sleep duration the payload schema cannot carry', () => {
+    const onSave = jest.fn();
+
+    renderDetails(
+      <QuickLogDetailsScreen
+        initialSleepAction="retrospective"
+        initialTrackerId="sleep"
+        onSave={onSave}
+      />,
+    );
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('quick-log.details.sleep.duration-label')),
+      '1441',
+    );
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByText(i18n.t('quick-log.details.sleep.duration-error'))).toBeTruthy();
   });
 
   it('AC-QN-WHEN backdates last night from midday without a future-time error', () => {
@@ -426,9 +472,10 @@ describe('Quick Log details', () => {
       name: i18n.t(`quick-log.details.sleep.action.${action}`),
     }));
     if (action === 'retrospective') {
-      fireEvent.press(screen.getByRole('tab', {
-        name: i18n.t('quick-log.details.sleep.duration.30'),
-      }));
+      fireEvent.changeText(
+        screen.getByLabelText(i18n.t('quick-log.details.sleep.duration-label')),
+        '30',
+      );
     }
     fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
 

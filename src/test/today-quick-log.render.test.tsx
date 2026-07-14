@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 
 import { i18n } from '@/lib/i18n';
+import { formatLocalCalendarDate } from '@/lib/i18n/format-date';
 import { createPuppyPlanQueryClient } from '@/lib/query/client';
 import { queryKeys, type TimelineFilters } from '@/lib/query/keys';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
@@ -600,6 +601,51 @@ describe('Today Quick Log state integration', () => {
       householdId,
       puppyId,
     });
+  });
+
+  it('AC-QN-NIGHT renders last night as one interval on the wake day, not a bare wake', async () => {
+    // Local wall-clock: the sleep starts the evening before the day being read.
+    const startedAt = new Date(2026, 4, 26, 23, 41, 0).toISOString();
+    const endedAt = new Date(2026, 4, 27, 6, 35, 0).toISOString();
+    const start = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001591',
+      event_type: 'sleep',
+      id: '00000000-0000-4000-8000-000000001592',
+      occurred_at: startedAt,
+      payload: { action: 'start' },
+      payload_version: 2,
+    });
+    const wake = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001593',
+      event_type: 'sleep',
+      id: '00000000-0000-4000-8000-000000001594',
+      occurred_at: endedAt,
+      payload: { action: 'wake' },
+      payload_version: 2,
+    });
+    // Honour the requested window the way the real repository does, so the start row is only
+    // reachable through the previous-day lookup and the test cannot pass without it.
+    mockListEvents.mockImplementation(async ({ filters }: { filters: TimelineFilters }) =>
+      [wake, start].filter((row) => {
+        const day = formatLocalCalendarDate(row.occurred_at);
+
+        return (filters.from === undefined || day >= filters.from)
+          && (filters.to === undefined || day <= filters.to);
+      }));
+
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openOnboarding={openOnboarding}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    // 23:41 -> 06:35 is 414 minutes; before cross-midnight pairing this could not be shown at all.
+    expect(await screen.findByText(/414/)).toBeTruthy();
+    expect(mockListEvents).toHaveBeenCalledWith(expect.objectContaining({
+      filters: expect.objectContaining({ from: '2026-05-26', to: '2026-05-26' }),
+    }));
   });
 
   it('PUP-27 I5 does not show a today Quick Log row while viewing a selected past day', async () => {

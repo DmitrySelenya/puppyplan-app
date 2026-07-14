@@ -60,10 +60,12 @@ export type QuickLogDetailsScreenProps = Readonly<{
 type FeedingAmountValue = 'meal' | 'snack' | 'water';
 type PottySubtypeValue = 'outside' | 'inside' | 'poop';
 type SleepActionValue = 'start' | 'wake' | 'retrospective';
-type SleepDurationValue = 'none' | `${number}`;
 type TrainingDurationValue = 'short' | 'medium' | 'long';
 type TrainingTopicValue = 'recall' | 'sit' | 'crate' | 'leash' | 'settling' | 'other';
 type ZoomiesIntensityValue = 'none' | 'low' | 'medium' | 'high';
+
+/** The ceiling the sleep v2 payload schema accepts (24 hours). */
+const SLEEP_DURATION_MAX_MINUTES = 1440;
 
 const noop = () => undefined;
 
@@ -99,10 +101,11 @@ export function QuickLogDetailsScreen({
       ? initialDraft.action !== undefined || initialSleepAction !== undefined
       : initialSleepAction !== undefined,
   );
-  const [sleepDuration, setSleepDuration] = useState<SleepDurationValue>(() =>
+  const [sleepDuration, setSleepDuration] = useState(() =>
     initialDraft?.trackerId === 'sleep' && initialDraft.durationMinutes !== undefined
-      ? String(initialDraft.durationMinutes) as `${number}`
-      : 'none');
+      ? String(initialDraft.durationMinutes)
+      : '');
+  const [sleepDurationError, setSleepDurationError] = useState(false);
   const [walkDuration, setWalkDuration] = useState(() =>
     initialDraft?.trackerId === 'walk' && initialDraft.durationMinutes !== undefined
       ? String(initialDraft.durationMinutes)
@@ -146,6 +149,12 @@ export function QuickLogDetailsScreen({
       : validateOccurredAt(occurredAt, new Date(), t);
     if (validationError) {
       setTimeError(validationError);
+      return;
+    }
+
+    if (trackerId === 'sleep' && parseSleepDuration(sleepDuration) === null) {
+      setSleepDurationError(true);
+      setPersistenceError(false);
       return;
     }
 
@@ -264,12 +273,18 @@ export function QuickLogDetailsScreen({
           {trackerId === 'sleep' ? (
             <SleepDetailsFields
               action={sleepAction}
+              errorText={sleepDurationError
+                ? t('quick-log.details.sleep.duration-error')
+                : undefined}
               onActionChange={(action) => {
                 setSleepAction(action);
                 setSleepActionTouched(true);
               }}
               value={sleepDuration}
-              onValueChange={setSleepDuration}
+              onValueChange={(value) => {
+                setSleepDuration(value);
+                setSleepDurationError(false);
+              }}
             />
           ) : null}
           {trackerId === 'training' ? (
@@ -656,14 +671,16 @@ function PottyDetailsFields({
 
 function SleepDetailsFields({
   action,
+  errorText,
   onActionChange,
   onValueChange,
   value,
 }: Readonly<{
   action: SleepActionValue;
+  errorText?: string;
   onActionChange: (value: SleepActionValue) => void;
-  onValueChange: (value: SleepDurationValue) => void;
-  value: SleepDurationValue;
+  onValueChange: (value: string) => void;
+  value: string;
 }>) {
   const { t } = useAppTranslation();
 
@@ -680,14 +697,12 @@ function SleepDetailsFields({
           }))}
           value={action}
         />
-        <AppText variant="headline">{t('quick-log.details.sleep.duration-label')}</AppText>
-        <SegmentedControl
-          accessibilityLabel={t('quick-log.details.sleep.duration-label')}
-          onValueChange={onValueChange}
-          options={sleepDurationOptions.map((option) => ({
-            label: t(option.labelKey),
-            value: option.value,
-          }))}
+        <TextField
+          errorText={errorText}
+          keyboardType="number-pad"
+          label={t('quick-log.details.sleep.duration-label')}
+          maxLength={4}
+          onChangeText={onValueChange}
           value={value}
         />
       </Stack>
@@ -816,7 +831,7 @@ function createDraftInput(input: Readonly<{
   pottySubtype: PottySubtypeValue;
   sleepAction: SleepActionValue;
   sleepActionTouched: boolean;
-  sleepDuration: SleepDurationValue;
+  sleepDuration: string;
   trainingDuration: TrainingDurationValue;
   trainingTopic: TrainingTopicValue;
   trackerId: QuickLogDetailTrackerId;
@@ -848,17 +863,19 @@ function createDraftInput(input: Readonly<{
   }
 
   if (input.trackerId === 'sleep') {
-    if (!input.sleepActionTouched && input.sleepDuration !== 'none') {
+    const durationMinutes = parseSleepDuration(input.sleepDuration) ?? undefined;
+
+    if (!input.sleepActionTouched && durationMinutes !== undefined) {
       return {
-        durationMinutes: Number(input.sleepDuration),
+        durationMinutes,
         trackerId: input.trackerId,
       };
     }
 
     return {
       action: input.sleepAction,
-      ...(input.sleepAction === 'retrospective' && input.sleepDuration !== 'none'
-        ? { durationMinutes: Number(input.sleepDuration) }
+      ...(input.sleepAction === 'retrospective' && durationMinutes !== undefined
+        ? { durationMinutes }
         : {}),
       note,
       occurredAt,
@@ -905,6 +922,26 @@ function createDraftInput(input: Readonly<{
   }
 
   return { note, occurredAt, trackerId: input.trackerId };
+}
+
+/**
+ * Sleep duration is free-entry minutes so an overnight sleep is expressible at all. Returns the
+ * minutes, `undefined` for a blank field, or `null` for anything the v2 payload cannot carry.
+ */
+function parseSleepDuration(value: string): number | undefined | null {
+  const trimmed = value.trim();
+
+  if (trimmed === '') {
+    return undefined;
+  }
+
+  if (!/^\d+$/.test(trimmed)) {
+    return null;
+  }
+
+  const minutes = Number(trimmed);
+
+  return minutes >= 1 && minutes <= SLEEP_DURATION_MAX_MINUTES ? minutes : null;
 }
 
 function getInitialOccurredAt(initialDraft: QuickLogDetailDraft | undefined): Date {
@@ -1006,28 +1043,6 @@ const feedingAmountOptions = [
 ] as const satisfies readonly {
   labelKey: I18nKey;
   value: FeedingAmountValue;
-}[];
-
-const sleepDurationOptions = [
-  {
-    labelKey: 'quick-log.details.sleep.duration.none',
-    value: 'none',
-  },
-  {
-    labelKey: 'quick-log.details.sleep.duration.15',
-    value: '15',
-  },
-  {
-    labelKey: 'quick-log.details.sleep.duration.30',
-    value: '30',
-  },
-  {
-    labelKey: 'quick-log.details.sleep.duration.60',
-    value: '60',
-  },
-] as const satisfies readonly {
-  labelKey: I18nKey;
-  value: SleepDurationValue;
 }[];
 
 const timeOffsetOptions = [

@@ -144,15 +144,34 @@ const diaryHistoryFilterSpecs = [
 ] as const satisfies readonly DiaryHistoryFilterSpec[];
 const diaryObservability = createObservabilityReporter();
 
+/**
+ * The day feed and the previous-day sleep lookup are separate queries whose windows can overlap,
+ * so a row must not be able to reach the list twice.
+ */
+function dedupeRowsByClientEventId(
+  rows: readonly QuickLogCachedEventRow[],
+): readonly QuickLogCachedEventRow[] {
+  const byClientEventId = new Map<string, QuickLogCachedEventRow>();
+
+  for (const row of rows) {
+    byClientEventId.set(row.client_event_id, row);
+  }
+
+  return [...byClientEventId.values()];
+}
+
 function createDiaryEventRows(
   rows: readonly QuickLogCachedEventRow[],
   input: Readonly<{
+    displayDate?: string;
     locale: string;
     t: ReturnType<typeof useAppTranslation>['t'];
     todayDate: string;
   }>,
 ): readonly DiaryEventRow[] {
-  return createDiarySleepPresentationItems(rows).flatMap((item) => {
+  return createDiarySleepPresentationItems(rows, {
+    displayDate: input.displayDate,
+  }).flatMap((item) => {
     const row = item.kind === 'sleep-interval' ? item.wakeRow : item.row;
     const event = createQuickLogEventView(row, input);
     if (event === null) {
@@ -227,12 +246,26 @@ export function TodayScreen({
         to: selectedCalendarDate,
       },
   );
+  // An overnight sleep starts the evening before the day it is read on, so the previous day's
+  // sleep rows are pulled in as pairing input only. They never enter the day's own feed or plan.
+  const previousDaySleepRows = useQuickLogTimelineRows(
+    careContext,
+    careContext === null || selectedCalendarDate === null
+      ? undefined
+      : {
+        eventTypes: ['sleep'],
+        from: shiftCalendarDate(selectedCalendarDate, -1),
+        to: shiftCalendarDate(selectedCalendarDate, -1),
+      },
+  );
   const historyTimelineRows = useQuickLogTimelineRows(
     diaryHistoryOpen && isViewingToday ? careContext : null,
     historyFilters,
   );
   const rows = timelineRows.rows;
-  const visibleRows = diaryHistoryOpen ? historyTimelineRows.rows : rows;
+  const visibleRows = diaryHistoryOpen
+    ? historyTimelineRows.rows
+    : dedupeRowsByClientEventId([...previousDaySleepRows.rows, ...rows]);
   const visibleTimelineStatus = diaryHistoryOpen ? historyTimelineRows.status : timelineRows.status;
   const todayPlanSourceInput = useMemo(() => careContext === null || !isViewingToday
     ? null
@@ -277,6 +310,9 @@ export function TodayScreen({
     return event === null ? [] : [{ event, row }];
   });
   const eventRows = createDiaryEventRows(visibleRows, {
+    displayDate: diaryHistoryOpen || selectedCalendarDate === null
+      ? undefined
+      : selectedCalendarDate,
     locale,
     t,
     todayDate: careContext.todayDate,

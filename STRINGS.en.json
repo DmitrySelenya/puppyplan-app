@@ -842,13 +842,8 @@
           "wake": "Wake up",
           "retrospective": "Add completed sleep"
         },
-        "duration-label": "About how long?",
-        "duration": {
-          "none": "Not sure",
-          "15": "15 min",
-          "30": "30 min",
-          "60": "1 hr"
-        }
+        "duration-label": "About how long? (minutes)",
+        "duration-error": "Enter minutes between 1 and 1440."
       },
       "zoomies": {
         "intensity-label": "How intense?",
