@@ -21,8 +21,11 @@ button. Explicit rejection: no autoFocus — "я бы не делал автоф
 ## Allowed deviations
 
 - No atlas artboard (see above); this spec card is the build contract.
-- The chooser grows from two slabs to three. Order is Quick Log, Quick note, Schedule: fact-first
-  actions stay adjacent, and Schedule (the only plan-shaped action) stays last.
+- The chooser has three slabs, superseding the original two-slab lock. Order is Quick Log,
+  Quick note, Schedule: fact-first actions stay adjacent, and Schedule (the only plan-shaped
+  action) stays last.
+- Owner decision (2026-07-14): keep this three-slab chooser. The common fact path budget is three
+  taps (`Add → Quick Log → tracker`); subtype/action confirmation may add one tap.
 - The time control is a pill + native iOS wheel, not the numeric `HH:MM` field locked for
   `dogfood.quick-log.details`. The details form converges onto this control in Phase 2 of
   `docs/plans/active/2026-07-14-quick-note-capture.md`.
@@ -66,8 +69,9 @@ button. Explicit rejection: no autoFocus — "я бы не делал автоф
 - Pill open (wheel visible) — production.
 - Backdated pill (non-today label) — production.
 - Saving (Add disabled + loading) — production.
-- Persistence error (inline error, text preserved) — production.
-- Post-save (field cleared, sheet open, pill reset to now) — production.
+- Persistence error (inline error, text preserved, sheet stays open) — production.
+- Post-save (owner directive 2026-07-14): the sheet closes and returns to the Diary timeline;
+  durable acceptance is announced to assistive tech before the sheet leaves.
 - Viewer / permission-denied — production, reusing the details permission anatomy.
 
 ## Accessibility

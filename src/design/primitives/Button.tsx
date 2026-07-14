@@ -96,11 +96,14 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   label: {
+    flexShrink: 1,
     textAlign: 'center',
   },
   labelFrame: {
     alignItems: 'center',
+    flexShrink: 1,
     justifyContent: 'center',
+    minWidth: 0,
   },
   loadingIndicator: {
     position: 'absolute',

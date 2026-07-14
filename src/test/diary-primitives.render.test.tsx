@@ -1,9 +1,10 @@
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { designFontFamilies } from '@/design/fonts';
 import {
   AppText,
+  Button,
   CheckCircle,
   DayDivider,
   EmptyIllustration,
@@ -17,6 +18,9 @@ import {
   type WeekStripDay,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
+import { DiaryHeader } from '@/features/today/components/DiaryHeader';
+import { i18n } from '@/lib/i18n';
+import { AppProviders } from '@/lib/providers/AppProviders';
 
 let mockFontScale = 1;
 
@@ -120,6 +124,20 @@ describe('TimeGutter', () => {
       maxFontSizeMultiplier: 1.3,
       numberOfLines: 1,
     }));
+  });
+
+  it('AC-P33-DOG-DIARY-AX delegates scaled TimeGutter line height to native metrics while preserving base overrides', () => {
+    const base = render(<TimeGutter time="7:30 AM" />);
+
+    expect(flatten(screen.getByText('7:30')).lineHeight).toBe(16);
+    expect(flatten(screen.getByText('AM')).lineHeight).toBe(12);
+
+    base.unmount();
+    mockFontScale = 3;
+    render(<TimeGutter time="7:30 AM" />);
+
+    expect(flatten(screen.getByText('7:30')).lineHeight).toBeUndefined();
+    expect(flatten(screen.getByText('AM')).lineHeight).toBeUndefined();
   });
 
   it('renders the clock in the display (Lora) family', () => {
@@ -369,5 +387,108 @@ describe('SwipeToDelete', () => {
 
     fireEvent.press(action);
     expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Diary XXXL accessibility anatomy', () => {
+  it('AC-P33-DOG-DIARY-AX stacks anatomy, keeps full labels, and delegates scaled line height to native metrics', async () => {
+    mockFontScale = 1;
+    await i18n.changeLanguage('en');
+    const shareLabel = i18n.t('today.history.share-action');
+    const reviewLabel = i18n.t('today.history.open-action');
+    const base = render(
+      <AppProviders>
+        <AppText testID="base-footnote-line-height" variant="footnote">
+          Synthetic base footnote
+        </AppText>
+        <AppText testID="base-headline-line-height" variant="headline">
+          Synthetic base headline
+        </AppText>
+      </AppProviders>,
+    );
+
+    expect(flatten(screen.getByTestId('base-footnote-line-height')).lineHeight).toBe(
+      tokens.typography.scale.footnote.lineHeight,
+    );
+    expect(flatten(screen.getByTestId('base-headline-line-height')).lineHeight).toBe(
+      tokens.typography.scale.headline.lineHeight,
+    );
+
+    base.unmount();
+    mockFontScale = 3;
+
+    render(
+      <AppProviders>
+        <DiaryHeader
+          puppyName="Synthetic long puppy name"
+          timeOfDay="morning"
+          todayDate="2026-07-14"
+        />
+        <WeekStrip
+          accessibilityLabel="Synthetic week"
+          days={WEEK_DAYS}
+          onSelectDay={jest.fn()}
+          selectedIndex={1}
+          todayIndex={1}
+          testID="ax-week-strip"
+        />
+        <FactCard
+          accessibilityLabel="Synthetic full fact accessibility label"
+          actionsLabel="Synthetic full fact actions label"
+          caption="Synthetic complete caption that must remain readable"
+          icon="paw"
+          onActionsPress={jest.fn()}
+          testID="ax-fact"
+          time="10:35 AM"
+          title="Synthetic complete fact title that must remain readable"
+        />
+        <Button label={shareLabel} onPress={jest.fn()} testID="ax-share-day" />
+        <Button label={reviewLabel} onPress={jest.fn()} testID="ax-review-history" />
+        <AppText testID="ax-footnote-line-height" variant="footnote">
+          Synthetic XXXL footnote
+        </AppText>
+        <AppText testID="ax-headline-line-height" variant="headline">
+          Synthetic XXXL headline
+        </AppText>
+        <AppText
+          allowFontScaling={false}
+          testID="ax-static-footnote-line-height"
+          variant="footnote">
+          Synthetic non-scaling footnote
+        </AppText>
+      </AppProviders>,
+    );
+
+    expect(flatten(screen.getByTestId('diary-header-row'))).toEqual(expect.objectContaining({
+      alignItems: 'stretch',
+      flexDirection: 'column',
+    }));
+    expect(screen.UNSAFE_getByType(ScrollView).props).toEqual(expect.objectContaining({
+      horizontal: true,
+      showsHorizontalScrollIndicator: false,
+    }));
+    expect(screen.getAllByRole('button').filter((node) =>
+      WEEK_DAYS.some((day) => day.accessibilityLabel === node.props.accessibilityLabel),
+    )).toHaveLength(7);
+    expect(flatten(screen.getByTestId('ax-fact'))).toEqual(expect.objectContaining({
+      alignItems: 'stretch',
+      flexDirection: 'column',
+    }));
+    expect(screen.getByText('Synthetic complete fact title that must remain readable').props)
+      .toEqual(expect.objectContaining({
+        children: 'Synthetic complete fact title that must remain readable',
+      }));
+    expect(screen.getByText('Synthetic complete caption that must remain readable').props)
+      .toEqual(expect.objectContaining({
+        children: 'Synthetic complete caption that must remain readable',
+      }));
+    expect(screen.getByRole('button', { name: 'Synthetic full fact actions label' })).toBeTruthy();
+    expect(screen.getByText(shareLabel).props.children).toBe(shareLabel);
+    expect(screen.getByText(reviewLabel).props.children).toBe(reviewLabel);
+    expect(flatten(screen.getByTestId('ax-footnote-line-height')).lineHeight).toBeUndefined();
+    expect(flatten(screen.getByTestId('ax-headline-line-height')).lineHeight).toBeUndefined();
+    expect(flatten(screen.getByTestId('ax-static-footnote-line-height')).lineHeight).toBe(
+      tokens.typography.scale.footnote.lineHeight,
+    );
   });
 });

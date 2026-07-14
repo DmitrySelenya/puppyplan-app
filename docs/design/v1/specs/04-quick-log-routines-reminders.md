@@ -11,6 +11,8 @@ Allowed deviations: picker UI must use native platform controls even if the Open
 - Duplicate warning: 60-second duplicate-care check, warning icon + text, save-anyway affordance.
 - Failed save: retry/discard inline near affected event; no silent failure.
 - Routine setup: tracker tile grid, native time picker, exactly three repeat chips, collapsed quantity/note, draft guard.
+- Draft guard: cancelling a changed routine shows in-app Keep editing / Discard confirmation;
+  pristine cancel closes immediately and no business confirmation uses `Alert.alert`.
 - Permission primer: shown before first routine notification permission request.
 - Routine lifecycle: edit, pause, delete, mark done, skip, first-routine success, paused row, pause recovery.
 - Reminder preferences: reminders list, edit form, quiet hours, push lock-screen, permission-denied recovery.

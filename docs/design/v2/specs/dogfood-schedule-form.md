@@ -40,6 +40,8 @@ contextual duration/amount; notification primer occurs only after successful fir
 
 - Event and repeat choices expose selected state; weekday labels include full localized day names.
 - Save announces disabled reason through inline error, not only visual opacity.
+- Cancelling a changed draft opens an in-app confirmation with Keep editing and Discard; the
+  confirmation preserves all entered values and Discard is the only destructive close path.
 
 ## Notes / deferred
 

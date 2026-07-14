@@ -117,6 +117,20 @@ describe('Quick Log event view model', () => {
     });
   });
 
+  it('AC-P33-READ reads a title-less observation note as the row title without a duplicate preview', () => {
+    const event = createQuickLogEventView(createRow({
+      event_type: 'observation',
+      payload_version: 2,
+      payload: { note: 'Synthetic quick note' },
+    }), { t, todayDate });
+
+    expect(event).toMatchObject({
+      eventType: 'observation',
+      title: 'Synthetic quick note',
+    });
+    expect(event?.note).toBeUndefined();
+  });
+
   it.each([
     ['start', undefined, 'quick-log.details.sleep.action.start'],
     ['wake', undefined, 'quick-log.details.sleep.action.wake'],

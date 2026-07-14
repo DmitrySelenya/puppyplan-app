@@ -178,4 +178,84 @@ describe('RoutineEditorScreen', () => {
     expect(screen.getByRole('button', { name: i18n.t('reminders.form.save') })
       .props.accessibilityState.disabled).toBe(true);
   });
+
+  it('AC-P33-DOG-DRAFT confirms a dirty cancel, preserves fields on Keep editing, and cancels pristine directly', () => {
+    const onCancel = jest.fn();
+    const view = render(<RoutineEditorScreen onCancel={onCancel} onSave={jest.fn()} />);
+
+    fireEvent.press(screen.getByTestId('routine-event-feeding'));
+    fireEvent.changeText(screen.getByTestId('routine-title'), 'Synthetic feeding routine');
+    fireEvent.changeText(screen.getByTestId('routine-amount'), '42');
+    fireEvent.changeText(screen.getByTestId('routine-note'), 'Synthetic private context');
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('reminders.form.cancel') }));
+
+    expect(onCancel).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByRole('button', { name: 'Keep editing' }));
+    expect(screen.getByTestId('routine-title').props.value).toBe('Synthetic feeding routine');
+    expect(screen.getByTestId('routine-amount').props.value).toBe('42');
+    expect(screen.getByTestId('routine-note').props.value).toBe('Synthetic private context');
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('reminders.form.cancel') }));
+    fireEvent.press(screen.getByRole('button', { name: 'Discard' }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    view.unmount();
+    onCancel.mockClear();
+    render(<RoutineEditorScreen onCancel={onCancel} onSave={jest.fn()} />);
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('reminders.form.cancel') }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Keep editing' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Discard' })).toBeNull();
+  });
+
+  it('AC-P33-DOG-DRAFT keeps discard confirmation ungrouped with two separate focusable actions', () => {
+    render(<RoutineEditorScreen onCancel={jest.fn()} onSave={jest.fn()} />);
+
+    fireEvent.press(screen.getByTestId('routine-event-feeding'));
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('reminders.form.cancel') }));
+
+    const keepEditing = screen.getByRole('button', {
+      name: i18n.t('reminders.form.routine.keep-editing'),
+    });
+    const discard = screen.getByRole('button', {
+      name: i18n.t('reminders.form.routine.discard'),
+    });
+    expect(keepEditing.props).toEqual(expect.objectContaining({
+      accessibilityRole: 'button',
+      accessible: true,
+    }));
+    expect(discard.props).toEqual(expect.objectContaining({
+      accessibilityRole: 'button',
+      accessible: true,
+    }));
+
+    const confirmation = screen.getByTestId('routine-discard-confirmation');
+    expect(confirmation.props.accessible).not.toBe(true);
+    expect(confirmation.props.accessibilityRole).toBeUndefined();
+  });
+
+  it('AC-P33-DOG-DRAFT treats reordered custom repeat days as the same pristine semantic set', () => {
+    const onCancel = jest.fn();
+    render(
+      <RoutineEditorScreen
+        initialDraft={{
+          rule: {
+            repeat: { days: [3, 1] },
+            time: '07:30',
+          },
+          trackerId: 'feeding',
+        }}
+        mode="edit"
+        onCancel={onCancel}
+        onSave={jest.fn()}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('routine-day-3'));
+    fireEvent.press(screen.getByTestId('routine-day-3'));
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('reminders.form.cancel') }));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('routine-discard-confirmation')).toBeNull();
+  });
 });

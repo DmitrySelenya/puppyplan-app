@@ -154,6 +154,7 @@ export type QuickLogMutationPortUpdateDetailsRequest = QuickLogMutationPortSynce
 
 export type QuickLogMutationPort = Readonly<{
   createDetailed?: (variables: QuickLogDetailedMutationVariables) => Promise<EventLogRecord>;
+  createDetailedDurably?: (variables: QuickLogDetailedMutationVariables) => Promise<void>;
   deleteLocal: (clientEventId: string) => unknown;
   deleteSynced: (request: QuickLogMutationPortSyncedDeleteRequest) => Promise<void>;
   mutate: (request: QuickLogMutationPortRequest) => unknown;
@@ -700,6 +701,34 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
 
     return {
       createDetailed: (variables) => quickLogMutation.mutateAsync(variables),
+      createDetailedDurably: async (variables) => {
+        const clientEventId = variables.clientEventId ?? createQuickLogClientEventId();
+
+        try {
+          await quickLogMutation.mutateAsync({
+            ...variables,
+            clientEventId,
+          });
+        } catch (error) {
+          const item = await queue.getByClientEventId(clientEventId);
+
+          if (item === null) {
+            throw error;
+          }
+
+          // A retained retryable item is durable acceptance; a permanent failure is not.
+          // Discard the dead item so the caller's inline error stays the only representation
+          // and a user retry cannot leave a duplicate failed fact behind.
+          if (item.state === 'failed_permanent') {
+            await deleteLocalQuickLogEvent({
+              clientEventId,
+              queryClient,
+              queueRef,
+            });
+            throw error;
+          }
+        }
+      },
       deleteLocal: (clientEventId) => {
         void deleteLocalQuickLogEvent({
           clientEventId,

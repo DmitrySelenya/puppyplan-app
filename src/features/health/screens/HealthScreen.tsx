@@ -22,6 +22,7 @@ import { Touchable } from '@/design/primitives/Touchable';
 import { Toggle } from '@/design/primitives/Toggle';
 import { tokens } from '@/design/tokens';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+import { formatCalendarDate } from '@/lib/i18n/format-date';
 import type { ActivePuppyProfile, HealthRecord } from '@/contracts/supabase';
 import type { ActiveCareContext } from '@/contracts/onboarding';
 import {
@@ -45,6 +46,7 @@ export type HealthScreenProps = Readonly<{
   onOpenPuppyProfile?: () => void;
   onOpenQuickTrackers?: () => void;
   healthRecords?: readonly HealthRecord[];
+  puppy?: ActivePuppyProfile | null;
   reviewState?: HealthMainReviewState;
 }>;
 
@@ -99,6 +101,7 @@ export function HealthScreen({
   onOpenHealthRecord,
   onOpenPuppyProfile = () => undefined,
   onOpenQuickTrackers = () => undefined,
+  puppy = null,
   reviewState = 'empty',
 }: HealthScreenProps = {}) {
   const { t } = useAppTranslation();
@@ -121,6 +124,7 @@ export function HealthScreen({
       <PetProfileHub
         onOpenPuppyProfile={onOpenPuppyProfile}
         onOpenQuickTrackers={onOpenQuickTrackers}
+        puppy={puppy}
       />
       <SegmentedControl
         accessibilityLabel={t('health.tab-title')}
@@ -308,13 +312,20 @@ function HealthVetPrepCard() {
 function PetProfileHub({
   onOpenPuppyProfile,
   onOpenQuickTrackers,
+  puppy,
 }: Readonly<{
   onOpenPuppyProfile: () => void;
   onOpenQuickTrackers: () => void;
+  puppy: ActivePuppyProfile | null;
 }>) {
-  const { t } = useAppTranslation();
-  const profileTitle = t('more.puppy-profile.screen-title');
-  const ageValue = t('more.puppy-summary.no-age');
+  const { locale, t } = useAppTranslation();
+  const profileTitle = puppy?.name.trim() || t('more.puppy-profile.screen-title');
+  let ageValue = t('more.puppy-summary.no-age');
+  if (puppy?.age_weeks_estimate !== null && puppy?.age_weeks_estimate !== undefined) {
+    ageValue = t('more.puppy-summary.age-weeks', { count: puppy.age_weeks_estimate });
+  } else if (puppy?.birth_date) {
+    ageValue = formatCalendarDate(puppy.birth_date, locale);
+  }
   const missingValue = t('more.puppy-profile.missing-value');
 
   return (
@@ -329,7 +340,7 @@ function PetProfileHub({
       <Stack gap="md">
         <Stack align="center" direction="horizontal" gap="md" wrap>
           <Avatar
-            initials="PP"
+            initials={getPuppyInitials(profileTitle)}
             label={profileTitle}
             size="lg"
             testID="pet-profile-hub-avatar"
@@ -364,12 +375,6 @@ function PetProfileHub({
         </View>
 
         <Stack direction="horizontal" gap="sm" wrap>
-          <Button
-            label={t('health.pet-hub.add-weight')}
-            leading={<AppIcon name="weight" size={18} />}
-            onPress={() => undefined}
-            variant="secondary"
-          />
           <Touchable
             accessibilityLabel={t('health.pet-hub.quick-trackers-a11y')}
             accessibilityRole="button"
@@ -398,6 +403,16 @@ function PetProfileHub({
       </Stack>
     </Card>
   );
+}
+
+function getPuppyInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.slice(0, 1))
+    .join('')
+    .toUpperCase();
 }
 
 function PetHubFact({

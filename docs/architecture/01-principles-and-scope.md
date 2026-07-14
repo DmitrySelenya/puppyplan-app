@@ -7,7 +7,7 @@ PuppyPlan is not a generic dog app, a training library, a veterinary app, a well
 The beta optimizes for:
 
 - first useful value in under 45 seconds;
-- Quick Log in 1-2 taps;
+- common one-step Quick Log in 3 taps or fewer from any screen; subtype/action confirmation may add one tap;
 - Diary as a calm home for the next routine, recent facts, and past history;
 - family coordination without duplicate care;
 - safe scoped sharing with trainer/viewer;

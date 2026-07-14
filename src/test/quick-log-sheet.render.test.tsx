@@ -319,7 +319,7 @@ describe('QuickLogShell', () => {
     expect(closeSheet).toHaveBeenCalledTimes(1);
   });
 
-  it('AC-OB-PROMPT-RUNTIME schedules post-save prompts only after an actual tracker log', () => {
+  it('AC-P33-DOG-FAST AC-OB-PROMPT-RUNTIME saves a simple tracker on tap 3 of the global path', () => {
     const closeSheet = jest.fn();
     const mutation = createMutationPort();
     const onQuickLogSaved = jest.fn();

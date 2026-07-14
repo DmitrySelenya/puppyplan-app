@@ -877,6 +877,56 @@ describe('design primitives', () => {
     expect(tabStyle.paddingHorizontal).toBeLessThanOrEqual(tokens.space[1]);
   });
 
+  it('AC-QN-FIX-COMPACT opts into intrinsic label width without changing equal-width defaults', () => {
+    render(
+      <>
+        <SegmentedControl
+          accessibilityLabel="Default distribution"
+          onValueChange={jest.fn()}
+          options={[
+            { label: 'Default first', value: 'first' },
+            { label: 'Default second', value: 'second' },
+          ]}
+          value="first"
+        />
+        <SegmentedControl
+          accessibilityLabel="Sleep event"
+          distribution="content"
+          onValueChange={jest.fn()}
+          options={[
+            { label: 'Start sleep', value: 'start' },
+            { label: 'Wake up', value: 'wake' },
+            { label: 'Add completed sleep', value: 'retrospective' },
+          ]}
+          value="start"
+        />
+      </>,
+    );
+
+    const defaultStyle = flattenViewStyle(
+      screen.getByRole('tab', { name: 'Default first' }).props.style,
+    );
+    const startStyle = flattenViewStyle(
+      screen.getByRole('tab', { name: 'Start sleep' }).props.style,
+    );
+    const completedStyle = flattenViewStyle(
+      screen.getByRole('tab', { name: 'Add completed sleep' }).props.style,
+    );
+
+    expect(defaultStyle.flex).toBe(1);
+    expect(defaultStyle.flexBasis).toBeUndefined();
+    // The opt-in auto basis keeps each label's intrinsic width in the allocation. Applying this
+    // globally would regress equal-width filters elsewhere in the design system.
+    expect(startStyle).toEqual(expect.objectContaining({
+      flexBasis: 'auto',
+      flexGrow: 1,
+    }));
+    expect(completedStyle).toEqual(expect.objectContaining({
+      flexBasis: 'auto',
+      flexGrow: 1,
+    }));
+  });
+
   it('keeps health row metadata in the copy column so long titles are not squeezed', () => {
     render(
       <ListRow

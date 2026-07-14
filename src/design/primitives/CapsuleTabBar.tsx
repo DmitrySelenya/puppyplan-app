@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -103,8 +103,6 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
         testID="nav-capsule-slot">
         {!open ? (
           <View
-            accessible
-            accessibilityRole="tablist"
             style={styles.capsule}
             testID="nav-capsule">
             {primaryTabs.map((tab) => {
@@ -116,8 +114,9 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
 
               return (
                 <Touchable
+                  accessible
                   accessibilityLabel={t(tab.labelKey)}
-                  accessibilityRole="tab"
+                  accessibilityRole={Platform.OS === 'ios' ? 'button' : 'tab'}
                   accessibilityState={{ selected }}
                   key={tab.routeName}
                   minTarget="thumb"
@@ -203,6 +202,12 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
   );
 }
 
+/**
+ * The morphed close control floats above the chooser sheet, so the sheet reserves the control's
+ * footprint at its bottom edge; otherwise the last slab renders underneath it.
+ */
+const closeControlClearance = tokens.component.fab.size + (tokens.space[2] * 2);
+
 function Chooser({
   onClose,
   onNote,
@@ -219,6 +224,7 @@ function Chooser({
   reducedMotion: boolean;
 }) {
   const { t } = useAppTranslation();
+  const insets = useSafeAreaInsets();
   const scrimStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
   }));
@@ -250,7 +256,9 @@ function Chooser({
           testID="nav-scrim"
         />
       </Animated.View>
-      <Animated.View style={[styles.sheet, sheetStyle]}>
+      <Animated.View
+        style={[styles.sheet, sheetStyle, { paddingBottom: closeControlClearance + insets.bottom }]}
+        testID="nav-chooser-sheet">
         <View
           style={styles.dragHandle}
           testID="nav-drag-handle"

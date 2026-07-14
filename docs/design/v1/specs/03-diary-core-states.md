@@ -2,6 +2,9 @@
 Route: `/diary`   Atlas: legacy `today/*`, `timeline/*` refs + Open Design V2 Diary boards
 Device sizes: iOS 390x844, Android 412x900, SE compact for native verification
 Allowed deviations: old Today/Timeline refs are visual fallback only; production route is Diary.
+At Dynamic Type accessibility sizes the greeting/facts may stack vertically and the week strip may
+scroll horizontally; preserving complete meaning and touch targets takes precedence over retaining
+the compact seven-column geometry.
 
 ## Anatomy
 
@@ -27,6 +30,8 @@ Allowed deviations: old Today/Timeline refs are visual fallback only; production
 - Each event card has a full label that distinguishes planned routine from logged fact.
 - Checkbox and overflow/edit affordance are separate hit targets.
 - Week days are buttons with selected/today state in labels.
+- At Accessibility XXXL, greeting/date, day labels, event time/title/caption/actions, Share day, and
+  Review history remain fully readable on the SE without relying on clipped visual text.
 
 ## Notes / Deferred
 

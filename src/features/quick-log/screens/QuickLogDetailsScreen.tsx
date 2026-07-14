@@ -157,7 +157,12 @@ export function QuickLogDetailsScreen({
       return;
     }
 
-    if (trackerId === 'sleep' && parseSleepDuration(sleepDuration) === null) {
+    const parsedSleepDuration = parseSleepDuration(sleepDuration);
+    if (
+      trackerId === 'sleep'
+      && sleepAction === 'retrospective'
+      && (parsedSleepDuration === undefined || parsedSleepDuration === null)
+    ) {
       setSleepDurationError(true);
       setPersistenceError(false);
       return;
@@ -695,6 +700,7 @@ function SleepDetailsFields({
         <AppText variant="headline">{t('quick-log.details.sleep.action-label')}</AppText>
         <SegmentedControl
           accessibilityLabel={t('quick-log.details.sleep.action-label')}
+          distribution="content"
           onValueChange={onActionChange}
           options={sleepActionOptions.map((option) => ({
             label: t(option.labelKey),
@@ -702,14 +708,16 @@ function SleepDetailsFields({
           }))}
           value={action}
         />
-        <TextField
-          errorText={errorText}
-          keyboardType="number-pad"
-          label={t('quick-log.details.sleep.duration-label')}
-          maxLength={4}
-          onChangeText={onValueChange}
-          value={value}
-        />
+        {action === 'retrospective' ? (
+          <TextField
+            errorText={errorText}
+            keyboardType="number-pad"
+            label={t('quick-log.details.sleep.duration-label')}
+            maxLength={4}
+            onChangeText={onValueChange}
+            value={value}
+          />
+        ) : null}
       </Stack>
     </Card>
   );

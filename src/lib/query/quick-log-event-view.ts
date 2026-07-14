@@ -109,6 +109,11 @@ export function createQuickLogEventView(
   }
 
   const readback = getValidatedV2Readback(row);
+  // Owner directive (2026-07-14): a quick note is its own content — an Observation whose payload
+  // carries only a note reads as that note, not as a generic tracker label above a preview.
+  const noteAsTitle = row.event_type === 'observation'
+    && readback.title === undefined
+    && readback.note !== undefined;
 
   return {
     // PUP-15 production Quick Log is gated until active care context can resolve row.created_by.
@@ -120,13 +125,14 @@ export function createQuickLogEventView(
       : { durationMinutes: readback.durationMinutes }),
     eventType: row.event_type,
     householdId: row.household_id,
-    ...(readback.note === undefined ? {} : { note: readback.note }),
+    ...(readback.note === undefined || noteAsTitle ? {} : { note: readback.note }),
     occurredAtLabel: formatEventTime(row.occurred_at, input.locale),
     puppyId: row.puppy_id,
     retryCount: row.localSync?.retryCount ?? 0,
     status,
     statusLabel: getQuickLogStatusLabel(status, input.t),
     title: readback.title
+      ?? (noteAsTitle ? readback.note : undefined)
       ?? (readback.sleepAction === undefined
         ? input.t(titleKey)
         : input.t(sleepActionLabelKeys[readback.sleepAction])),

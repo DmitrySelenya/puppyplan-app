@@ -52,6 +52,14 @@ function todayTimelineKey() {
   });
 }
 
+function previousDaySleepTimelineKey() {
+  return queryKeys.events.timeline(householdId, puppyId, {
+    eventTypes: ['sleep'],
+    from: '2026-05-26',
+    to: '2026-05-26',
+  });
+}
+
 function renderWithQuery(element: ReactElement) {
   const queryClient = createPuppyPlanQueryClient();
   testQueryClients.push(queryClient);
@@ -701,6 +709,137 @@ describe('Today Quick Log state integration', () => {
     expect(mockListEvents).toHaveBeenCalledWith(expect.objectContaining({
       filters: expect.objectContaining({ from: '2026-05-26', to: '2026-05-26' }),
     }));
+  });
+
+  it('AC-P33-DOG-RETRO renders retrospective sleep with its localized derived interval title', async () => {
+    const endedAt = new Date('2026-05-27T08:16:00.000Z');
+    const durationMinutes = 34;
+    const startedAt = new Date(endedAt.getTime() - durationMinutes * 60_000);
+    const retrospective = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001599',
+      event_type: 'sleep',
+      id: '00000000-0000-4000-8000-000000001600',
+      occurred_at: endedAt.toISOString(),
+      payload: { action: 'retrospective', duration_minutes: durationMinutes },
+      payload_version: 2,
+    });
+    mockListEvents.mockImplementation(async ({ filters }: { filters: TimelineFilters }) =>
+      filters.eventTypes?.includes('sleep') ? [] : [retrospective]);
+
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    const formatter = new Intl.DateTimeFormat(i18n.language, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    const title = i18n.t('today.history.sleep-interval', {
+      duration: durationMinutes,
+      end: formatter.format(endedAt),
+      start: formatter.format(startedAt),
+    });
+
+    expect(await screen.findByText(title)).toBeTruthy();
+  });
+
+  it('AC-QN-FIX-NIGHT-STATUS does not present a bare wake while previous-day pairing input is loading', async () => {
+    const wake = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001595',
+      event_type: 'sleep',
+      id: '00000000-0000-4000-8000-000000001596',
+      occurred_at: '2026-05-27T06:35:00.000Z',
+      payload: { action: 'wake' },
+      payload_version: 2,
+    });
+    const pendingPreviousDay = new Promise<readonly QuickLogCachedEventRow[]>(() => undefined);
+    mockListEvents.mockImplementation(({ filters }: { filters: TimelineFilters }) =>
+      filters.eventTypes?.includes('sleep')
+        ? pendingPreviousDay
+        : Promise.resolve([wake]));
+
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(queryClient.getQueryState(todayTimelineKey())?.status).toBe('success');
+      expect(queryClient.getQueryState(previousDaySleepTimelineKey())?.status).toBe('pending');
+    });
+
+    expect(screen.queryByText(i18n.t('quick-log.details.sleep.action.wake'))).toBeNull();
+    expect(screen.getByText(i18n.t('today.states.loading.title'))).toBeTruthy();
+  });
+
+  it('AC-QN-FIX-NIGHT-STATUS surfaces previous-day pairing failure without a bare wake', async () => {
+    const wake = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001597',
+      event_type: 'sleep',
+      id: '00000000-0000-4000-8000-000000001598',
+      occurred_at: '2026-05-27T06:35:00.000Z',
+      payload: { action: 'wake' },
+      payload_version: 2,
+    });
+    mockListEvents.mockImplementation(({ filters }: { filters: TimelineFilters }) =>
+      filters.eventTypes?.includes('sleep')
+        ? Promise.reject(new Error('synthetic previous-day query failure'))
+        : Promise.resolve([wake]));
+
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(queryClient.getQueryState(todayTimelineKey())?.status).toBe('success');
+      expect(queryClient.getQueryState(previousDaySleepTimelineKey())?.status).toBe('error');
+    });
+
+    expect(screen.queryByText(i18n.t('quick-log.details.sleep.action.wake'))).toBeNull();
+    expect(screen.getByText(i18n.t('today.states.error.title'))).toBeTruthy();
+  });
+
+  it('AC-QN-FIX-NIGHT-STATUS keeps ready current-day facts visible when sleep pairing fails', async () => {
+    const feeding = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001599',
+      id: '00000000-0000-4000-8000-000000001600',
+    });
+    const wake = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001601',
+      event_type: 'sleep',
+      id: '00000000-0000-4000-8000-000000001602',
+      occurred_at: '2026-05-27T06:35:00.000Z',
+      payload: { action: 'wake' },
+      payload_version: 2,
+    });
+    mockListEvents.mockImplementation(({ filters }: { filters: TimelineFilters }) =>
+      filters.eventTypes?.includes('sleep')
+        ? Promise.reject(new Error('synthetic previous-day query failure'))
+        : Promise.resolve([feeding, wake]));
+
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(queryClient.getQueryState(todayTimelineKey())?.status).toBe('success');
+      expect(queryClient.getQueryState(previousDaySleepTimelineKey())?.status).toBe('error');
+    });
+
+    expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('quick-log.details.sleep.action.wake'))).toBeNull();
+    expect(screen.getByText(i18n.t('today.states.error.title'))).toBeTruthy();
   });
 
   it('PUP-27 I5 does not show a today Quick Log row while viewing a selected past day', async () => {

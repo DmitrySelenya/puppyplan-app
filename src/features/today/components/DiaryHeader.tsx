@@ -44,7 +44,9 @@ export function DiaryHeader({
 
   return (
     <View style={styles.header} testID="diary-header">
-      <View style={styles.row}>
+      <View
+        style={[styles.row, fontScale >= 2 ? styles.accessibilityRow : null]}
+        testID="diary-header-row">
         <View style={styles.copy}>
           <AppText variant={fontScale >= 2 ? 'title2' : 'title1'}>{greeting}</AppText>
           {date ? (
@@ -81,6 +83,10 @@ function formatHeaderDate(todayDate: string | undefined, locale: string): string
 }
 
 const styles = StyleSheet.create({
+  accessibilityRow: {
+    alignItems: 'stretch',
+    flexDirection: 'column',
+  },
   copy: {
     flex: 1,
     minWidth: 0,

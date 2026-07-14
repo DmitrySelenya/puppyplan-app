@@ -54,7 +54,7 @@ export function WhenPicker({
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         accessibilityValue={{ text: valueText }}
-        minTarget="thumb"
+        minTarget="default"
         onPress={() => onOpenChange(!open)}
         style={styles.pill}
         testID={`${testID}-pill`}>
@@ -85,7 +85,9 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.color.surface.sunken,
     borderRadius: tokens.radius.full,
     justifyContent: 'center',
-    paddingHorizontal: tokens.space[3],
+    // Wide enough that the control reads as a pill rather than a blob at the shortest label
+    // ("09:05"), while the 44pt minimum target comes from Touchable.
+    paddingHorizontal: tokens.space[4],
   },
   root: {
     gap: tokens.space[2],

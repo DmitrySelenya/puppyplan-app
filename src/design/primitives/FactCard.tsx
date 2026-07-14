@@ -1,5 +1,5 @@
 import type { AccessibilityActionEvent, AccessibilityActionInfo } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
@@ -40,6 +40,8 @@ export function FactCard({
   time,
   title,
 }: FactCardProps) {
+  const { fontScale } = useWindowDimensions();
+  const accessibilityLayout = fontScale >= 2;
   const content = (
     <>
       <IconChip accent={accent} icon={icon} />
@@ -60,7 +62,9 @@ export function FactCard({
   );
 
   return (
-    <View style={styles.row} testID={testID}>
+    <View
+      style={[styles.row, accessibilityLayout ? styles.accessibilityRow : null]}
+      testID={testID}>
       <TimeGutter time={time} />
       {onPress === undefined ? (
         <View
@@ -68,7 +72,7 @@ export function FactCard({
           accessibilityLabel={accessibilityLabel}
           accessible
           onAccessibilityAction={onAccessibilityAction}
-          style={styles.card}
+          style={[styles.card, accessibilityLayout ? styles.accessibilityCard : null]}
           testID={testID ? `${testID}-card` : undefined}>
           {content}
         </View>
@@ -79,7 +83,7 @@ export function FactCard({
           accessibilityRole="button"
           onAccessibilityAction={onAccessibilityAction}
           onPress={onPress}
-          style={styles.card}
+          style={[styles.card, accessibilityLayout ? styles.accessibilityCard : null]}
           testID={testID ? `${testID}-card` : undefined}>
           {content}
         </Touchable>
@@ -89,7 +93,7 @@ export function FactCard({
           accessibilityLabel={actionsLabel}
           accessibilityRole="button"
           onPress={onActionsPress}
-          style={styles.actions}>
+          style={[styles.actions, accessibilityLayout ? styles.accessibilityActions : null]}>
           <AppIcon color={tokens.color.text.secondary} name="more" size={22} />
         </Touchable>
       ) : null}
@@ -98,6 +102,19 @@ export function FactCard({
 }
 
 const styles = StyleSheet.create({
+  accessibilityActions: {
+    alignSelf: 'flex-end',
+    marginLeft: 0,
+  },
+  accessibilityCard: {
+    alignSelf: 'stretch',
+    width: '100%',
+  },
+  accessibilityRow: {
+    alignItems: 'stretch',
+    flexDirection: 'column',
+    gap: tokens.space[2],
+  },
   caption: {
     marginTop: 1,
   },

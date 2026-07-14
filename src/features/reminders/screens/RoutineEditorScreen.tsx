@@ -72,6 +72,16 @@ const variantIdsByTracker: Record<'potty' | 'training', readonly ReminderVariant
 };
 
 type ValidationKind = 'days' | 'details' | 'event' | 'observation';
+type RoutineFormState = Readonly<{
+  amount: string;
+  customDays: readonly number[];
+  dateTime: Date;
+  note: string;
+  repeatChoice: RepeatChoice;
+  title: string;
+  trackerId?: ReminderTrackerId;
+  variant?: ReminderVariant;
+}>;
 
 export type RoutineEditorScreenProps = Readonly<{
   initialDraft?: ReminderScheduleDraft;
@@ -94,24 +104,29 @@ export function RoutineEditorScreen({
 }: RoutineEditorScreenProps) {
   const { locale, t } = useAppTranslation();
   const { fontScale } = useWindowDimensions();
-  const initialRule = initialDraft?.rule;
-  const [trackerId, setTrackerId] = useState<ReminderTrackerId | undefined>(initialDraft?.trackerId);
-  const [title, setTitle] = useState(initialRule?.title ?? '');
-  const [note, setNote] = useState(initialRule?.note ?? '');
-  const [amount, setAmount] = useState(initialRule?.amount?.value.toString() ?? '');
-  const [variant, setVariant] = useState<ReminderVariant | undefined>(initialRule?.variant);
-  const [repeatChoice, setRepeatChoice] = useState<RepeatChoice>(() => {
-    const repeat = initialRule?.repeat;
-    return typeof repeat === 'object' ? 'custom' : repeat ?? 'daily';
-  });
-  const [customDays, setCustomDays] = useState<readonly number[]>(() => {
-    const repeat = initialRule?.repeat;
-    return typeof repeat === 'object' ? repeat.days : [1];
-  });
-  const [dateTime, setDateTime] = useState(() => createInitialDate(initialRule?.date, initialRule?.time));
+  const [initialForm] = useState(() => createInitialFormState(initialDraft));
+  const [trackerId, setTrackerId] = useState(initialForm.trackerId);
+  const [title, setTitle] = useState(initialForm.title);
+  const [note, setNote] = useState(initialForm.note);
+  const [amount, setAmount] = useState(initialForm.amount);
+  const [variant, setVariant] = useState(initialForm.variant);
+  const [repeatChoice, setRepeatChoice] = useState(initialForm.repeatChoice);
+  const [customDays, setCustomDays] = useState(initialForm.customDays);
+  const [dateTime, setDateTime] = useState(initialForm.dateTime);
   const [saveError, setSaveError] = useState(false);
   const [showPrimer, setShowPrimer] = useState(false);
+  const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
   const isViewer = mode === 'viewer';
+  const isDirty = !areRoutineFormStatesEqual(initialForm, {
+    amount,
+    customDays,
+    dateTime,
+    note,
+    repeatChoice,
+    title,
+    trackerId,
+    variant,
+  });
 
   const weekdayShortLabels = useMemo(() => {
     const formatter = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', weekday: 'short' });
@@ -153,6 +168,15 @@ export function RoutineEditorScreen({
     } catch {
       setSaveError(true);
     }
+  };
+
+  const cancel = () => {
+    if (isDirty) {
+      setShowDiscardConfirmation(true);
+      return;
+    }
+
+    onCancel();
   };
 
   const validationError = (kind: ValidationKind) => validationKind === kind ? (
@@ -197,7 +221,7 @@ export function RoutineEditorScreen({
     <Screen contentStyle={styles.content} modal>
       <Stack gap="md">
         <Stack align="center" direction="horizontal" justify="space-between">
-          <Button label={t('reminders.form.cancel')} onPress={onCancel} variant="tertiary" />
+          <Button label={t('reminders.form.cancel')} onPress={cancel} variant="tertiary" />
           <AppText accessibilityRole="header" variant="headline">
             {t('reminders.form.routine.title')}
           </AppText>
@@ -209,6 +233,31 @@ export function RoutineEditorScreen({
             variant="tertiary"
           />
         </Stack>
+
+        {showDiscardConfirmation ? (
+          <Card testID="routine-discard-confirmation">
+            <Stack gap="sm">
+              <AppText accessibilityRole="header" variant="headline">
+                {t('reminders.form.routine.discard-title')}
+              </AppText>
+              <AppText accessibilityRole="alert" tone="secondary" variant="body">
+                {t('reminders.form.routine.discard-body')}
+              </AppText>
+              <Stack direction="horizontal" gap="sm" wrap>
+                <Button
+                  label={t('reminders.form.routine.keep-editing')}
+                  onPress={() => setShowDiscardConfirmation(false)}
+                  variant="secondary"
+                />
+                <Button
+                  label={t('reminders.form.routine.discard')}
+                  onPress={onCancel}
+                  variant="destructive"
+                />
+              </Stack>
+            </Stack>
+          </Card>
+        ) : null}
 
         {saveError ? (
           <Card accessibilityRole="alert" testID="routine-save-error" variant="mutedTemplate">
@@ -437,6 +486,46 @@ function getValidationKind(input: Readonly<{
   }
 
   return 'details';
+}
+
+function createInitialFormState(
+  initialDraft: ReminderScheduleDraft | undefined,
+): RoutineFormState {
+  const rule = initialDraft?.rule;
+  const repeat = rule?.repeat;
+
+  return {
+    amount: rule?.amount?.value.toString() ?? '',
+    customDays: typeof repeat === 'object' ? repeat.days : [1],
+    dateTime: createInitialDate(rule?.date, rule?.time),
+    note: rule?.note ?? '',
+    repeatChoice: typeof repeat === 'object' ? 'custom' : repeat ?? 'daily',
+    title: rule?.title ?? '',
+    trackerId: initialDraft?.trackerId,
+    variant: rule?.variant,
+  };
+}
+
+function areRoutineFormStatesEqual(
+  left: RoutineFormState,
+  right: RoutineFormState,
+): boolean {
+  return left.amount === right.amount
+    && areDaySetsEqual(left.customDays, right.customDays)
+    && left.dateTime.getTime() === right.dateTime.getTime()
+    && left.note === right.note
+    && left.repeatChoice === right.repeatChoice
+    && left.title === right.title
+    && left.trackerId === right.trackerId
+    && left.variant === right.variant;
+}
+
+function areDaySetsEqual(left: readonly number[], right: readonly number[]): boolean {
+  const leftDays = new Set(left);
+  const rightDays = new Set(right);
+
+  return leftDays.size === rightDays.size
+    && [...leftDays].every((day) => rightDays.has(day));
 }
 
 function buildDraft(input: Readonly<{

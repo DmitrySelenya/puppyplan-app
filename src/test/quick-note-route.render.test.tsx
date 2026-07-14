@@ -12,6 +12,7 @@ const mockRouterReplace = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
 const mockCreateDetailed = jest.fn();
+const mockCreateDetailedDurably = jest.fn();
 
 jest.mock('react-native', () => {
   const actual = jest.requireActual<typeof import('react-native')>('react-native');
@@ -56,6 +57,8 @@ describe('QuickNoteRoute', () => {
     mockRouterReplace.mockClear();
     mockCreateDetailed.mockReset();
     mockCreateDetailed.mockResolvedValue(undefined);
+    mockCreateDetailedDurably.mockReset();
+    mockCreateDetailedDurably.mockResolvedValue(undefined);
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
         authState: 'authenticated',
@@ -70,7 +73,10 @@ describe('QuickNoteRoute', () => {
       status: 'ready',
     });
     mockUseQuickLogMutationPort.mockReturnValue({
-      mutation: { createDetailed: mockCreateDetailed },
+      mutation: {
+        createDetailed: mockCreateDetailed,
+        createDetailedDurably: mockCreateDetailedDurably,
+      },
       mutationEvents: [],
       status: 'ready',
     });
@@ -84,7 +90,7 @@ describe('QuickNoteRoute', () => {
     reduceMotionProbe.mockRestore();
   });
 
-  it('AC-QN-PERSIST writes the note through the existing durable detailed mutation', async () => {
+  it('AC-QN-FIX-DURABLE writes through the durable-acceptance mutation', async () => {
     renderRoute();
 
     fireEvent.changeText(
@@ -94,7 +100,7 @@ describe('QuickNoteRoute', () => {
     fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-note.add') }));
 
     await waitFor(() => {
-      expect(mockCreateDetailed).toHaveBeenCalledWith(
+      expect(mockCreateDetailedDurably).toHaveBeenCalledWith(
         expect.objectContaining({
           detailDraft: expect.objectContaining({
             note: 'Synthetic settled note',
@@ -107,9 +113,10 @@ describe('QuickNoteRoute', () => {
         }),
       );
     });
+    expect(mockCreateDetailed).not.toHaveBeenCalled();
   });
 
-  it('AC-QN-PERSIST keeps the sheet open after a save so the next note costs one tap', async () => {
+  it('AC-QN-FIX-DURABLE returns to the Diary once the draft is durably accepted', async () => {
     renderRoute();
 
     fireEvent.changeText(
@@ -119,14 +126,15 @@ describe('QuickNoteRoute', () => {
     fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-note.add') }));
 
     await waitFor(() => {
-      expect(mockCreateDetailed).toHaveBeenCalled();
+      expect(mockCreateDetailedDurably).toHaveBeenCalledTimes(1);
     });
-    expect(mockRouterBack).not.toHaveBeenCalled();
-    expect(screen.getByTestId('quick-note-sheet')).toBeTruthy();
+    await waitFor(() => {
+      expect(mockRouterBack).toHaveBeenCalledTimes(1);
+    });
   });
 
-  it('AC-QN-PERSIST surfaces a failed write instead of swallowing it', async () => {
-    mockCreateDetailed.mockRejectedValue(new Error('offline'));
+  it('AC-QN-FIX-DURABLE preserves the draft only when durable enqueue rejects', async () => {
+    mockCreateDetailedDurably.mockRejectedValue(new Error('synthetic enqueue failure'));
 
     renderRoute();
 
@@ -141,9 +149,10 @@ describe('QuickNoteRoute', () => {
       'value',
       'Synthetic settled note',
     );
+    expect(mockRouterBack).not.toHaveBeenCalled();
   });
 
-  it('blocks the write for viewers', () => {
+  it('AC-QN-FIX-STATE renders permission-denied anatomy for viewers', () => {
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
         authState: 'authenticated',
@@ -160,6 +169,29 @@ describe('QuickNoteRoute', () => {
 
     renderRoute();
 
+    expect(
+      screen.getByRole('button', { name: i18n.t('quick-note.add') }),
+    ).toHaveProp('accessibilityState', expect.objectContaining({ disabled: true }));
+    expect(screen.getByTestId('quick-log-details-state-permission-denied')).toBeTruthy();
+    expect(
+      screen.getByText(i18n.t('quick-log.details.states.permission-denied.title')),
+    ).toBeTruthy();
+  });
+
+  it('AC-QN-FIX-STATE renders pending-write anatomy while the durable queue initializes', () => {
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: undefined,
+      mutationEvents: [],
+      status: 'loading',
+    });
+
+    renderRoute();
+
+    expect(screen.getByTestId('quick-log-details-state-pending-write')).toHaveProp(
+      'accessibilityLiveRegion',
+      'polite',
+    );
+    expect(screen.getByText(i18n.t('quick-log.details.states.pending-write.title'))).toBeTruthy();
     expect(
       screen.getByRole('button', { name: i18n.t('quick-note.add') }),
     ).toHaveProp('accessibilityState', expect.objectContaining({ disabled: true }));

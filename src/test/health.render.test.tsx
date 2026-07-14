@@ -50,7 +50,7 @@ describe('Health V2 anatomy', () => {
     expect(screen.getAllByText(i18n.t('more.puppy-profile.missing-value')).length).toBeGreaterThanOrEqual(2);
     const editProfile = screen.getByRole('button', { name: i18n.t('health.pet-hub.edit-profile') });
     expect(editProfile).toBeTruthy();
-    expect(screen.getByRole('button', { name: i18n.t('health.pet-hub.add-weight') })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: i18n.t('health.pet-hub.add-weight') })).toBeNull();
     const trackersEntry = screen.getByRole('button', {
       name: i18n.t('health.pet-hub.quick-trackers-a11y'),
     });

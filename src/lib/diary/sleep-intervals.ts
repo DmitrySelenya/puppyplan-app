@@ -1,3 +1,4 @@
+import { eventPayloadSchemasV2 } from '@/contracts/supabase';
 import { formatLocalCalendarDate } from '@/lib/i18n/format-date';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 
@@ -42,6 +43,23 @@ export function createDiarySleepPresentationItems(
   const presented: (DiarySleepPresentationItem & Readonly<{ displayAt?: string }>)[] = [];
 
   for (const { row } of chronological) {
+    const retrospectiveDuration = getRetrospectiveDuration(row);
+    const retrospectiveEnd = Date.parse(row.occurred_at);
+    if (retrospectiveDuration !== null && Number.isFinite(retrospectiveEnd)) {
+      presented.push({
+        displayAt: row.occurred_at,
+        durationMinutes: retrospectiveDuration,
+        endedAt: row.occurred_at,
+        kind: 'sleep-interval',
+        startRow: row,
+        startedAt: new Date(
+          retrospectiveEnd - retrospectiveDuration * 60_000,
+        ).toISOString(),
+        wakeRow: row,
+      });
+      continue;
+    }
+
     const action = getSleepAction(row);
     if (action === null) {
       presented.push({ displayAt: row.occurred_at, kind: 'event', row });
@@ -97,6 +115,19 @@ export function createDiarySleepPresentationItems(
       || formatLocalCalendarDate(item.displayAt) === options.displayDate)
     .sort((left, right) => (right.displayAt ?? '').localeCompare(left.displayAt ?? ''))
     .map(({ displayAt: _displayAt, ...item }) => item);
+}
+
+function getRetrospectiveDuration(row: QuickLogCachedEventRow): number | null {
+  if (row.event_type !== 'sleep' || row.payload_version !== 2) {
+    return null;
+  }
+
+  const parsedPayload = eventPayloadSchemasV2.sleep.safeParse(row.payload);
+  if (!parsedPayload.success || parsedPayload.data.action !== 'retrospective') {
+    return null;
+  }
+
+  return parsedPayload.data.duration_minutes ?? null;
 }
 
 function getSleepAction(row: QuickLogCachedEventRow): 'start' | 'wake' | null {

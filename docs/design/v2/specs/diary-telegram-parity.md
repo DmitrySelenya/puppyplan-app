@@ -21,6 +21,8 @@ Allowed deviations:
 - Time entry is chips plus numeric `HH:MM`; the native picker remains a fallback rather than the
   primary control.
 - Day export uses the native share sheet and chat-readable text. Import is not part of this lock.
+- Owner decision (2026-07-14): retain the three-choice Add chooser. A common one-step fact uses
+  `Add → Quick Log → tracker` (three taps); Potty/Sleep may require one additional explicit choice.
 
 ## Anatomy (top to bottom)
 
@@ -29,6 +31,9 @@ Allowed deviations:
 - Mixed Diary list in descending display-time order.
 - Logged fact: content-safe time gutter, tracker icon, canonical title, actor/sync caption, optional
   two-line private note preview, and a visible 44pt actions button.
+- Owner directive (2026-07-14): an Observation whose payload carries a note but no explicit title
+  renders the note as the row title instead of the generic tracker label; no duplicate preview line
+  is shown. Day export then emits the note alone as the fact description.
 - Planned routine: existing `RoutineCard`; planned/actual semantics are unchanged.
 - Fact details: canonical type/subtype, exact time, full private note, actor, created/edited stamps,
   then Edit and Delete actions for writers; viewer mode is read-only.
@@ -60,6 +65,8 @@ Allowed deviations:
   the authenticated screen and never relies on color.
 - Row tap and visible actions have separate labels; Delete is also an accessibility action.
 - Dynamic Type uses existing ceilings; previews wrap to two lines and details show the full value.
+- At Accessibility XXXL on the SE, the header and fact anatomy may stack and the week strip may
+  scroll horizontally; time, title, caption, actions, Share day, and Review history remain complete.
 - Reduced Motion behavior remains owned by existing primitives.
 
 ## Locked quick-entry grammar (parser retained without UI; owner directive 2026-07-13)

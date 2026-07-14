@@ -50,7 +50,10 @@ import {
   type QuickLogSurfaceCareContext,
 } from '@/lib/query/quick-log-event-view';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
-import { useQuickLogTimelineRows } from '@/lib/query/useQuickLogTimelineRows';
+import {
+  useQuickLogTimelineRows,
+  type QuickLogTimelineRowsStatus,
+} from '@/lib/query/useQuickLogTimelineRows';
 import { formatDiaryDayExport } from '@/lib/diary/day-export';
 import { createDiarySleepPresentationItems } from '@/lib/diary/sleep-intervals';
 
@@ -144,6 +147,25 @@ const diaryHistoryFilterSpecs = [
   },
 ] as const satisfies readonly DiaryHistoryFilterSpec[];
 const diaryObservability = createObservabilityReporter();
+
+function combineTimelineStatuses(
+  currentDayStatus: QuickLogTimelineRowsStatus,
+  previousDaySleepStatus: QuickLogTimelineRowsStatus,
+): QuickLogTimelineRowsStatus {
+  if (currentDayStatus === 'error' || previousDaySleepStatus === 'error') {
+    return 'error';
+  }
+
+  if (currentDayStatus === 'loading' || previousDaySleepStatus === 'loading') {
+    return 'loading';
+  }
+
+  if (currentDayStatus === 'unavailable' || previousDaySleepStatus === 'unavailable') {
+    return 'unavailable';
+  }
+
+  return 'ready';
+}
 
 /**
  * The day feed and the previous-day sleep lookup are separate queries whose windows can overlap,
@@ -264,10 +286,25 @@ export function TodayScreen({
     historyFilters,
   );
   const rows = timelineRows.rows;
+  const dayTimelineStatus = combineTimelineStatuses(
+    timelineRows.status,
+    previousDaySleepRows.status,
+  );
+  const sleepPairingReady = timelineRows.status === 'ready'
+    && previousDaySleepRows.status === 'ready';
+  const currentDayRowsForDisplay = timelineRows.status !== 'ready'
+    ? []
+    : previousDaySleepRows.status === 'ready'
+      ? rows
+      : rows.filter((row) => row.event_type !== 'sleep');
   const visibleRows = diaryHistoryOpen
     ? historyTimelineRows.rows
-    : dedupeRowsByClientEventId([...previousDaySleepRows.rows, ...rows]);
-  const visibleTimelineStatus = diaryHistoryOpen ? historyTimelineRows.status : timelineRows.status;
+    : sleepPairingReady
+      ? dedupeRowsByClientEventId([...previousDaySleepRows.rows, ...rows])
+      : currentDayRowsForDisplay;
+  const visibleTimelineStatus = diaryHistoryOpen
+    ? historyTimelineRows.status
+    : dayTimelineStatus;
   const todayPlanSourceInput = useMemo(() => careContext === null || !isViewingToday
     ? null
     : createTodayPlanInput({
@@ -294,7 +331,7 @@ export function TodayScreen({
     );
   }
 
-  const selectedDayEventRows = rows.flatMap((row) => {
+  const selectedDayEventRows = currentDayRowsForDisplay.flatMap((row) => {
     if (
       selectedCalendarDate === null
       || formatLocalCalendarDate(row.occurred_at) !== selectedCalendarDate
@@ -323,20 +360,20 @@ export function TodayScreen({
   const todayStatus = getTodayStatusState({
     careContext,
     eventViews: todayEventViews,
-    rows,
+    rows: currentDayRowsForDisplay,
     screenState,
-    timelineStatus: timelineRows.status,
+    timelineStatus: dayTimelineStatus,
   });
   const showTodayPlan = todayPlan !== null
     && todayStatus !== 'all-done'
     && screenState !== 'cold-start'
     && screenState !== 'empty-history'
     && screenState !== 'pending-write'
-    && !(timelineRows.status === 'loading' && rows.length === 0);
+    && !(dayTimelineStatus === 'loading' && currentDayRowsForDisplay.length === 0);
   const showQuickLogSection = diaryHistoryOpen
     || (dayModel?.items.length ?? 0) > 0
     || eventViews.length > 0
-    || timelineRows.status === 'error'
+    || dayTimelineStatus === 'error'
     || hasPendingLocalRows(rows)
     || shouldShowQuickLogFailedBanner(rows);
   const infoHero = showTodayPlan && todayPlan !== null ? (
@@ -1203,7 +1240,7 @@ function getTodayStatusState(input: Readonly<{
     return 'permission-denied';
   }
 
-  if (input.timelineStatus === 'loading' && input.rows.length === 0) {
+  if (input.timelineStatus === 'loading') {
     return 'loading';
   }
 

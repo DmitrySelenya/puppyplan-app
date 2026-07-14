@@ -14,7 +14,6 @@ Every file in `active/` must have a row in the Current Plans table below (enforc
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
-| Active task plan | [Quick Note Capture + Backdating Overhaul](active/2026-07-14-quick-note-capture.md) | pending (PUP-33 follow-up scope) | Draft approved verbally; awaiting explicit owner go for Phase 1 + Linear issue |
 | Active task plan | [Diary Telegram Parity — Make Real Logging Faster Than The Chat](active/2026-07-13-diary-telegram-parity.md) | `PUP-33` | Phase 0 — scoped duplicate fix implemented locally; owner-device legacy discard + fresh check-off and 20+ event verification remain |
 | Active task plan | [Dogfood Device Handoff — From Green Simulator To Two Household iPhones](active/2026-07-12-dogfood-device-handoff.md) | `PUP-32`, `PUP-30` physical acceptance | Phase 3 complete; awaiting owner two-iPhone install and open 8-item physical checklist in Phase 4 |
 | Active task plan | [Dogfood Core Loop — Quick Capture, Routine, Diary, Notifications](active/2026-07-11-dogfood-core-loop.md) | `PUP-29`, revised `PUP-31`, `PUP-30`, `PUP-32` | Phases 0–8 complete in the working tree; device/physical follow-up moved to the 2026-07-12 handoff plan |
@@ -33,7 +32,7 @@ Every file in `active/` must have a row in the Current Plans table below (enforc
 | Active roadmap | [Redesign Resequencing](active/2026-06-17-redesign-resequencing.md) | no-Linear exception | Phase 3 — V2 intake underway; DEFER lane executes via the gaps coverage matrix and polish backlog |
 | Active roadmap | [Full PRD Native App Master Roadmap](active/2026-05-29-full-prd-native-app-master-roadmap.md) | `PUP-17` | Superseded in part by the 2026-07-07 V2 override (ADR-0020, resequencing, gaps doc); phase scopes/invariants/approvals remain valid |
 
-Completed plans live in [`completed/`](completed/) with their final status and merge evidence in each file's header; see the folder listing rather than a duplicated table here. Recent closures (2026-07-07 hygiene pass): phase-0 architecture cleanup, design handoff/gallery (PUP-7), post-PUP-18 next batch (PUP-19/20/21), PUP-22/23 Today+QuickLog+Timeline, both V1 design-fidelity plans, isolated TDD workflow (PUP-25), and Diary week-strip day selection (PR #29). Their deferred tails moved to the Release Readiness aggregator.
+Completed plans live in [`completed/`](completed/) with their final status and merge evidence in each file's header; see the folder listing rather than a duplicated table here. Recent closures include Quick Note Capture + Backdating Overhaul (2026-07-14); the 2026-07-07 hygiene pass closed phase-0 architecture cleanup, design handoff/gallery (PUP-7), post-PUP-18 next batch (PUP-19/20/21), PUP-22/23 Today+QuickLog+Timeline, both V1 design-fidelity plans, isolated TDD workflow (PUP-25), and Diary week-strip day selection (PR #29). Their deferred tails moved to the Release Readiness aggregator.
 
 ## Execution Order
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { createQuickLogDetailDraft, type QuickLogDetailDraft } from '@/contracts/quick-log';
 import {
@@ -14,6 +14,8 @@ import {
 import { tokens } from '@/design/tokens';
 import { formatWhenLabel, getBackdateBounds } from '@/lib/datetime/when-label';
 import { useAppTranslation } from '@/lib/i18n';
+
+import { QuickLogDetailsStatePreview } from './QuickLogDetailsScreen';
 
 const NOTE_MAX_LENGTH = 500;
 
@@ -40,7 +42,8 @@ export function QuickNoteScreen({
   const [isSaving, setIsSaving] = useState(false);
   const [requiredError, setRequiredError] = useState(false);
   const [persistenceError, setPersistenceError] = useState(false);
-  const canWrite = status === 'ready' || status === 'pending-write';
+  const canWrite = status === 'ready';
+  const stacked = fontScale >= 2 || wheelOpen;
   const bounds = getBackdateBounds();
 
   const submit = async () => {
@@ -62,10 +65,10 @@ export function QuickNoteScreen({
       }));
       if (isPromiseLike(result)) {
         await result;
+        AccessibilityInfo.announceForAccessibility(t('quick-note.saved-announcement'));
       }
-      setNote('');
-      setOccurredAt(new Date());
-      setWheelOpen(false);
+      // Owner directive (2026-07-14): an accepted note returns straight to the Diary timeline.
+      onClose();
     } catch {
       setPersistenceError(true);
     } finally {
@@ -74,7 +77,7 @@ export function QuickNoteScreen({
   };
 
   return (
-    <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
+    <Screen contentStyle={styles.sheetContent} edges={['bottom']} modal>
       <SheetSurface accessibilityLabel={t('quick-note.title')}>
         <Stack gap="md" testID="quick-note-sheet">
           <Stack
@@ -95,10 +98,16 @@ export function QuickNoteScreen({
               variant="tertiary"
             />
           </Stack>
+          {status === 'pending-write' || status === 'permission-denied' ? (
+            <QuickLogDetailsStatePreview state={status} />
+          ) : null}
           <Stack
-            align={fontScale >= 2 ? 'stretch' : 'flex-start'}
-            direction={fontScale >= 2 ? 'vertical' : 'horizontal'}
-            gap="sm">
+            // The open wheel needs the full width, so the note field drops below it rather than
+            // being squeezed out of the row.
+            align={stacked ? 'stretch' : 'flex-start'}
+            direction={stacked ? 'vertical' : 'horizontal'}
+            gap="sm"
+            testID="quick-note-capture-row">
             <Stack gap="xs">
               <AppText tone="secondary" variant="subheadline">
                 {t('quick-note.when-label')}

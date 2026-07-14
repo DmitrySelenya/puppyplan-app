@@ -114,7 +114,7 @@ describe('QuickLogDetailsRoute', () => {
     reduceMotionProbe.mockRestore();
   });
 
-  it('renders the requested detail variant and closes through the modal helper', () => {
+  it('renders the requested detail variant with the safe sleep default and closes through the modal helper', () => {
     render(
       <AppProviders>
         <QuickLogFeedbackProvider>
@@ -122,6 +122,12 @@ describe('QuickLogDetailsRoute', () => {
         </QuickLogFeedbackProvider>
       </AppProviders>,
     );
+
+    expect(screen.queryByText(i18n.t('quick-log.details.sleep.duration-label'))).toBeNull();
+
+    fireEvent.press(screen.getByRole('tab', {
+      name: i18n.t('quick-log.details.sleep.action.retrospective'),
+    }));
 
     expect(screen.getByText(i18n.t('quick-log.details.sleep.duration-label'))).toBeTruthy();
 

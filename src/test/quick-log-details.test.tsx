@@ -14,6 +14,7 @@ import {
   QuickLogDetailsStatePreview,
   type QuickLogDetailsReviewState,
 } from '@/features/quick-log/screens/QuickLogDetailsScreen';
+import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { i18n } from '@/lib/i18n';
 import { formatDiaryDayExport } from '@/lib/diary/day-export';
 import { parseQuickEntryBatch, parseQuickEntryLine } from '@/lib/quick-entry/parser';
@@ -101,7 +102,7 @@ describe('Quick Log details', () => {
     });
   });
 
-  it('renders sleep details and saves a typed optional duration draft', () => {
+  it('AC-QN-FIX-SLEEP-DEFAULT saves the selected Sleep default as an explicit start', () => {
     const onSave = jest.fn();
 
     renderDetails(
@@ -111,19 +112,42 @@ describe('Quick Log details', () => {
       />,
     );
 
-    expect(screen.getByText(i18n.t('quick-log.details.sleep.duration-label'))).toBeTruthy();
-    fireEvent.changeText(
-      screen.getByLabelText(i18n.t('quick-log.details.sleep.duration-label')),
-      '30',
-    );
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.details.save'),
     }));
 
-    expect(onSave).toHaveBeenCalledWith({
-      durationMinutes: 30,
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'start',
+      occurredAt: expect.any(String),
       trackerId: 'sleep',
-    });
+    }));
+  });
+
+  it('AC-QN-FIX-SLEEP-DEFAULT exposes duration only for retrospective sleep', () => {
+    renderDetails(<QuickLogDetailsScreen initialTrackerId="sleep" />);
+
+    expect(screen.queryByLabelText(i18n.t('quick-log.details.sleep.duration-label'))).toBeNull();
+
+    fireEvent.press(screen.getByRole('tab', {
+      name: i18n.t('quick-log.details.sleep.action.retrospective'),
+    }));
+
+    expect(screen.getByLabelText(i18n.t('quick-log.details.sleep.duration-label'))).toBeTruthy();
+  });
+
+  it('AC-QN-FIX-COMPACT requests content distribution only for the Sleep action control', () => {
+    const { UNSAFE_getAllByType } = renderDetails(
+      <QuickLogDetailsScreen initialTrackerId="sleep" />,
+    );
+
+    const controls = UNSAFE_getAllByType(SegmentedControl);
+    const sleepActionControl = controls.find(
+      (control) => control.props.accessibilityLabel
+        === i18n.t('quick-log.details.sleep.action-label'),
+    );
+
+    expect(sleepActionControl?.props.distribution).toBe('content');
+    expect(controls.filter((control) => control.props.distribution === 'content')).toHaveLength(1);
   });
 
   it('renders zoomies details and saves a typed optional intensity draft', () => {

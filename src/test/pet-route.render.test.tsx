@@ -1,7 +1,9 @@
 import { AccessibilityInfo } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import { i18n } from '@/lib/i18n';
+import type { ActivePuppyProfile } from '@/contracts/supabase';
+import { i18n, toSupportedLocale } from '@/lib/i18n';
+import { formatCalendarDate } from '@/lib/i18n/format-date';
 
 import PetRoute from '../../app/(tabs)/pet';
 
@@ -14,6 +16,19 @@ const mockCareContext = {
   todayDate: '2026-07-02',
   userId: '00000000-0000-4000-8000-000000003002',
 };
+const baseMockPuppy: ActivePuppyProfile = {
+  age_weeks_estimate: 9,
+  birth_date: null,
+  created_at: '2026-07-02T08:00:00.000Z',
+  deleted_at: null,
+  household_id: mockCareContext.householdId,
+  household_role: 'owner',
+  id: mockCareContext.puppyId,
+  name: 'Synthetic puppy',
+  quick_tracker_ids: ['feeding'],
+  updated_at: '2026-07-02T08:00:00.000Z',
+};
+let mockPuppy = baseMockPuppy;
 let mockActiveCareStatus: 'error' | 'loading' | 'ready' = 'ready';
 let mockHealthRecords: unknown[] = [];
 let mockHealthRecordsError = false;
@@ -28,7 +43,7 @@ jest.mock('expo-router', () => ({
 jest.mock('@/lib/query/active-care-context', () => ({
   useActiveCareContext: () => ({
     careContext: mockActiveCareStatus === 'ready' ? mockCareContext : null,
-    puppy: null,
+    puppy: mockActiveCareStatus === 'ready' ? mockPuppy : null,
     status: mockActiveCareStatus,
   }),
 }));
@@ -50,6 +65,7 @@ describe('PetRoute', () => {
     mockHealthRecords = [];
     mockHealthRecordsError = false;
     mockHealthRecordsLoading = false;
+    mockPuppy = baseMockPuppy;
     reduceMotionProbe = jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
       .mockReturnValue(new Promise<boolean>(() => {}));
@@ -78,6 +94,34 @@ describe('PetRoute', () => {
     }));
 
     expect(mockRouterPush).toHaveBeenCalledWith('/settings/puppy-profile');
+  });
+
+  it('AC-P33-DOG-PET renders active puppy identity without unsupported breed, weight, or Add weight behavior', () => {
+    render(<PetRoute />);
+
+    expect(screen.getByText(mockPuppy.name)).toBeTruthy();
+    expect(screen.getByText(i18n.t('more.puppy-summary.age-weeks', { count: 9 }))).toBeTruthy();
+    expect(screen.getAllByText(i18n.t('more.puppy-profile.missing-value'))).toHaveLength(2);
+    expect(screen.queryByRole('button', {
+      name: i18n.t('health.pet-hub.add-weight'),
+    })).toBeNull();
+  });
+
+  it('AC-P33-DOG-PET displays localized birth-date age information when estimated weeks are absent', () => {
+    const birthDate = '2026-04-03';
+    mockPuppy = {
+      ...baseMockPuppy,
+      age_weeks_estimate: null,
+      birth_date: birthDate,
+    };
+
+    render(<PetRoute />);
+
+    expect(screen.getByText(formatCalendarDate(
+      birthDate,
+      toSupportedLocale(i18n.resolvedLanguage ?? i18n.language),
+    ))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('more.puppy-summary.no-age'))).toBeNull();
   });
 
   it('routes the empty Pet Health Add record action to the health record editor', () => {

@@ -15,8 +15,9 @@ function localIso(
 }
 
 function createSleepRow(input: Readonly<{
-  action: 'start' | 'wake';
+  action: 'retrospective' | 'start' | 'wake';
   clientEventId: string;
+  durationMinutes?: number;
   id: string;
   occurredAt: string;
 }>): QuickLogCachedEventRow {
@@ -29,7 +30,12 @@ function createSleepRow(input: Readonly<{
     household_id: '00000000-0000-4000-8000-000000006001',
     id: input.id,
     occurred_at: input.occurredAt,
-    payload: { action: input.action },
+    payload: {
+      action: input.action,
+      ...(input.durationMinutes === undefined
+        ? {}
+        : { duration_minutes: input.durationMinutes }),
+    },
     payload_version: 2,
     puppy_id: '00000000-0000-4000-8000-000000006002',
     updated_at: input.occurredAt,
@@ -38,6 +44,21 @@ function createSleepRow(input: Readonly<{
 }
 
 describe('Diary sleep presentation', () => {
+  it('AC-P33-DOG-RETRO leaves an out-of-schema retrospective duration as an ordinary event', () => {
+    const invalidRetrospective = createSleepRow({
+      action: 'retrospective',
+      clientEventId: 'evt_00000000-0000-4000-8000-000000006100',
+      durationMinutes: 1441,
+      id: '00000000-0000-4000-8000-000000006200',
+      occurredAt: '2026-06-09T08:16:00.000Z',
+    });
+
+    expect(createDiarySleepPresentationItems([invalidRetrospective])).toEqual([{
+      kind: 'event',
+      row: invalidRetrospective,
+    }]);
+  });
+
   it('AC-P33-SLEEP collapses one start-to-wake pair into a single interval with both durable ids and exact duration', () => {
     const start = createSleepRow({
       action: 'start',
@@ -133,6 +154,37 @@ describe('Diary sleep presentation', () => {
       startedAt: start.occurred_at,
       wakeRow: wake,
     }]);
+  });
+
+  it('AC-QN-FIX-DST uses elapsed time across spring-forward and assigns the interval to the wake day', () => {
+    // Europe/Warsaw advances from UTC+01 to UTC+02 during this sleep. The wall clock moves
+    // 23:30 -> 03:30, but only 180 real minutes elapse.
+    const start = createSleepRow({
+      action: 'start',
+      clientEventId: 'evt_00000000-0000-4000-8000-000000006510',
+      id: '00000000-0000-4000-8000-000000006610',
+      occurredAt: '2026-03-28T22:30:00.000Z',
+    });
+    const wake = createSleepRow({
+      action: 'wake',
+      clientEventId: 'evt_00000000-0000-4000-8000-000000006511',
+      id: '00000000-0000-4000-8000-000000006611',
+      occurredAt: '2026-03-29T01:30:00.000Z',
+    });
+
+    expect(createDiarySleepPresentationItems([wake, start], {
+      displayDate: '2026-03-29',
+    })).toEqual([{
+      durationMinutes: 180,
+      endedAt: wake.occurred_at,
+      kind: 'sleep-interval',
+      startRow: start,
+      startedAt: start.occurred_at,
+      wakeRow: wake,
+    }]);
+    expect(createDiarySleepPresentationItems([wake, start], {
+      displayDate: '2026-03-28',
+    })).toEqual([]);
   });
 
   it('AC-QN-NIGHT shows an overnight interval on the wake day and hides the bare start row', () => {

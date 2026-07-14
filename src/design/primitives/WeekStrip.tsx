@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { designFontFamilies } from '@/design/fonts';
 import { AppText } from '@/design/primitives/AppText';
@@ -38,51 +38,78 @@ export function WeekStrip({
   testID,
   todayIndex,
 }: WeekStripProps) {
+  const { fontScale } = useWindowDimensions();
+  const accessibilityLayout = fontScale >= 2;
+  const dayButtons = days.map((entry, index) => {
+    const isSelected = index === selectedIndex;
+    const isToday = index === todayIndex;
+
+    return (
+      <Touchable
+        accessibilityLabel={entry.accessibilityLabel}
+        accessibilityRole={onSelectDay ? 'button' : 'text'}
+        accessibilityState={onSelectDay ? { selected: isSelected } : undefined}
+        key={entry.key}
+        minTarget="none"
+        onPress={onSelectDay ? () => onSelectDay(index) : undefined}
+        style={[styles.day, accessibilityLayout ? styles.accessibilityDay : null]}
+        testID={entry.testID}>
+        <AppText tone={isSelected ? 'primary' : 'secondary'} variant="caption">
+          {entry.dow}
+        </AppText>
+        <View style={styles.circleWrap}>
+          <View
+            style={[
+              styles.circle,
+              isSelected ? styles.circleSelected : styles.circleDefault,
+            ]}>
+            <AppText
+              maxFontSizeMultiplier={1.5}
+              numeric
+              style={[styles.circleNum, isSelected ? styles.circleNumSelected : null]}>
+              {entry.day}
+            </AppText>
+          </View>
+          {isToday && !isSelected ? <View style={styles.dot} /> : null}
+        </View>
+      </Touchable>
+    );
+  });
+
+  if (accessibilityLayout) {
+    return (
+      <ScrollView
+        accessibilityLabel={accessibilityLabel}
+        contentContainerStyle={styles.accessibilityStrip}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        testID={testID}>
+        {dayButtons}
+      </ScrollView>
+    );
+  }
+
   return (
     <View
       accessibilityLabel={accessibilityLabel}
       style={styles.strip}
       testID={testID}>
-      {days.map((entry, index) => {
-        const isSelected = index === selectedIndex;
-        const isToday = index === todayIndex;
-
-        return (
-          <Touchable
-            accessibilityLabel={entry.accessibilityLabel}
-            accessibilityRole={onSelectDay ? 'button' : 'text'}
-            accessibilityState={onSelectDay ? { selected: isSelected } : undefined}
-            key={entry.key}
-            minTarget="none"
-            onPress={onSelectDay ? () => onSelectDay(index) : undefined}
-            style={styles.day}
-            testID={entry.testID}>
-            <AppText tone={isSelected ? 'primary' : 'secondary'} variant="caption">
-              {entry.dow}
-            </AppText>
-            <View style={styles.circleWrap}>
-              <View
-                style={[
-                  styles.circle,
-                  isSelected ? styles.circleSelected : styles.circleDefault,
-                ]}>
-                <AppText
-                  maxFontSizeMultiplier={1.5}
-                  numeric
-                  style={[styles.circleNum, isSelected ? styles.circleNumSelected : null]}>
-                  {entry.day}
-                </AppText>
-              </View>
-              {isToday && !isSelected ? <View style={styles.dot} /> : null}
-            </View>
-          </Touchable>
-        );
-      })}
+      {dayButtons}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  accessibilityDay: {
+    flexGrow: 0,
+    flexShrink: 0,
+    width: 64,
+  },
+  accessibilityStrip: {
+    flexDirection: 'row',
+    gap: tokens.space[2],
+    paddingHorizontal: tokens.space[3],
+  },
   circle: {
     alignItems: 'center',
     borderRadius: tokens.radius.full,

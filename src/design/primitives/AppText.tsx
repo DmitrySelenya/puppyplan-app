@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from 'react';
 import type { StyleProp, TextProps, TextStyle } from 'react-native';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions } from 'react-native';
 
 import { designFontFamilies } from '@/design/fonts';
 import { tokens } from '@/design/tokens';
@@ -66,15 +66,26 @@ export function AppText({
   variant = 'body',
   ...props
 }: AppTextProps) {
+  const { fontScale } = useWindowDimensions();
   const multiplier = maxFontSizeMultiplier ?? APP_TEXT_MAX_FONT_SIZE_MULTIPLIER_BY_VARIANT[variant];
   const numericStyle = numeric || variant === 'code' ? styles.numeric : null;
+  const naturalLineHeightStyle = allowFontScaling && fontScale >= 2 && multiplier !== 1
+    ? { lineHeight: undefined }
+    : null;
 
   return (
     <Text
       {...props}
       allowFontScaling={allowFontScaling}
       maxFontSizeMultiplier={multiplier}
-      style={[styles.base, toneStyles[tone], variantStyles[variant], numericStyle, style]}>
+      style={[
+        styles.base,
+        toneStyles[tone],
+        variantStyles[variant],
+        numericStyle,
+        style,
+        naturalLineHeightStyle,
+      ]}>
       {children}
     </Text>
   );

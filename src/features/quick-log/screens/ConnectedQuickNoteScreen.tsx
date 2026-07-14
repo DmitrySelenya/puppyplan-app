@@ -13,24 +13,24 @@ export function ConnectedQuickNoteScreen() {
   const activeCare = useActiveCareContext();
   const quickLogMutation = useQuickLogMutationPort();
   const careContext = activeCare.careContext;
-  const createDetailed = quickLogMutation.mutation?.createDetailed;
+  const createDetailedDurably = quickLogMutation.mutation?.createDetailedDurably;
   const canWrite = careContext !== null
     && careContext.householdRole !== 'viewer'
-    && createDetailed !== undefined;
+    && createDetailedDurably !== undefined;
 
   const save = (draft: QuickLogDetailDraft): Promise<void> => {
     if (!canWrite) {
       return Promise.reject(new Error('quick-note write is unavailable'));
     }
 
-    return createDetailed({
+    return createDetailedDurably({
       detailDraft: draft,
       householdId: careContext.householdId,
       occurredAt: draft.occurredAt ?? new Date().toISOString(),
       puppyId: careContext.puppyId,
       todayDate: careContext.todayDate,
       trackerId: draft.trackerId,
-    }).then(() => undefined);
+    });
   };
 
   return (
@@ -53,12 +53,16 @@ function getQuickNoteStatus(input: Readonly<{
     return 'loading';
   }
 
-  if (!input.canWrite) {
+  if (input.activeCare.careContext?.householdRole === 'viewer') {
     return 'permission-denied';
   }
 
   if (input.quickLogMutation.status === 'loading') {
     return 'pending-write';
+  }
+
+  if (!input.canWrite) {
+    return 'permission-denied';
   }
 
   return 'ready';

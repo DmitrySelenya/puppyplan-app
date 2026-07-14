@@ -1,6 +1,8 @@
 # Quick Note Capture + Backdating Overhaul
 
-- **Status:** Draft — pending owner approval of phase order (verbal verdict approved 2026-07-14)
+- **Status:** Completed — Phases 1–4 implemented and committed 2026-07-14 on owner instruction;
+  review-fix acceptance, full local gate, and Stage 4 Release-simulator verification complete.
+- **Completed:** 2026-07-14
 - **Linear:** pending (owner to confirm issue creation; falls under PUP-33 follow-up scope otherwise)
 - **Owner decision trail:** 2026-07-14 owner proposed the Quick note slab himself after hands-on
   e2e testing against his real Telegram log; confirmed the verdict and phase order; explicitly
@@ -121,3 +123,103 @@ is recorded here per phase.
 - 2026-07-14: plan drafted from owner-run e2e verdict; owner approved verdict + phase order,
   rejected autoFocus. Awaiting explicit approval to start Phase 1 implementation and to create
   the Linear issue.
+- 2026-07-14: owner instructed implementation of the whole plan, with the pre-existing work
+  committed first. Phases 1–4 landed as four commits on
+  `dimaselenya/pup-33-diary-telegram-parity-trusted-writes-readable-notes-chat`:
+  - **Phase 1** (`86e91dd`): Stage 0 lock `docs/design/v2/specs/quick-note.md` (recorded as a
+    fresh owner-authored design, no atlas artboard); `noteAction` contract + `/quick-log/note`
+    sheet; third slab; capture sheet with time pill, native day+time wheel, no autoFocus;
+    writes an Observation v2 fact through the existing durable queue and keeps the sheet open.
+  - **Phase 2** (`16c619f`): `WhenPicker` primitive extracted and adopted by the details form,
+    replacing the numeric `HH:MM` field and the separate date control. Midnight backdating and
+    the time-reset-on-date-change defect are both resolved.
+  - **Phase 3** (`553c602`): cross-midnight sleep pairing (puppy-scoped key, 16h bound,
+    previous-day sleep rows as pairing input only, deduped by `client_event_id`); retrospective
+    sleep takes free minutes validated against the 1440 schema ceiling.
+  - **Phase 4** (`6bc0521`): version-aware `getTodayQuickAction`; tracker pass-through from the
+    grid via long press plus an accessibility action; edit-mode strings.
+  - Gate at Phase 4: 99 suites / 935 tests, tsc clean, lint and all check scripts green.
+
+### Named deviations taken during implementation (owner review requested)
+
+- **Sleep duration presets removed.** Phase 3.3 replaced the `Not sure / 15 / 30 / 60` chips with
+  a free-minutes field, per the plan's "numeric minutes entry ... replacing the 15/30/60 cap".
+  This costs one tap for the common 30-minute nap. If that regression matters, the chips can be
+  restored alongside the field as presets — say so and it is a small follow-up.
+- **`WhenPicker` open state is controlled**, not internal, so a surface can collapse the wheel
+  when it resets its own value (the note sheet does this after each save).
+- **Submit-time future/too-old validation retained** in the details form even though the wheel
+  bounds now make an out-of-range value unreachable. It guards values that did not come from the
+  wheel; the plan's "delete the today-bound validation path" is satisfied by removing the
+  `HH:MM`-vs-selected-day parse, which was the actual defect.
+
+## 2026-07-14 review-fix lock
+
+Owner instruction: fix every issue found in the current SE simulator/code review. This is a
+bugfix continuation of PUP-33 and does not widen the product scope.
+
+**TDD mode:** heavy/full-isolated because the fixes touch Quick Log queue acceptance,
+query/cache behavior, and design-fidelity states. RED, GREEN, and REFACTOR use separate agent
+contexts; the primary agent re-reads the resulting diff and runs independent verification.
+
+### Acceptance criteria
+
+- **AC-QN-FIX-SLEEP-DEFAULT:** opening details with Sleep selected and pressing Save without
+  interacting with the action control writes an explicit `action: start`; duration input is
+  available only for `retrospective`, where a valid 1–1440 minute value is required.
+- **AC-QN-FIX-NIGHT-STATUS:** the wake-day feed never presents a bare wake as a successful day
+  when its required previous-day pairing query is loading or failed; once both query inputs are
+  ready, a previous-day start and current-day wake render as one interval.
+- **AC-QN-FIX-DST:** cross-midnight sleep duration is elapsed-time correct across a DST boundary
+  and the interval remains assigned to the wake day.
+- **AC-QN-FIX-DURABLE:** once a Quick note has been durably enqueued, a transient or permanent
+  server rejection does not preserve a re-submittable composer draft or create a second queue
+  identity; failure before durable enqueue remains inline and preserves the draft.
+- **AC-QN-FIX-STATE:** queue initialization renders the existing pending-write anatomy with Add
+  disabled; viewer access renders the existing permission-denied anatomy with Add disabled.
+- **AC-QN-FIX-A11Y-MODAL:** the Quick note route marks its screen as modal so assistive focus is
+  isolated from the underlying Diary controls.
+- **AC-QN-FIX-A11Y-SAVED:** durable Quick note acceptance emits the typed polite saved
+  announcement and contains no note text.
+- **AC-QN-FIX-COMPACT:** the three sleep action segments allocate content-aware width on the
+  primary SE profile so `Add completed sleep` is not ellipsized at the default font scale.
+
+### Constraints and error cases
+
+- No schema, RLS, migration, dependency, route, production, or generated-native changes.
+- Preserve the existing `client_event_id` queue/idempotency contract and 3-second/60-second
+  Quick Log rules.
+- Never log, announce, or retain note text in diagnostics/evidence.
+- Server failure after durable enqueue remains visible through the existing queued/failed event
+  recovery surface; only pre-enqueue failure belongs in the composer inline error.
+- Stage 4 uses synthetic data on `Grith iPhone SE 3 iOS 26.3`.
+
+### Review-fix verification evidence
+
+- **RED:** 7 focused suites exposed 14 failures across durable acceptance, sleep default/state,
+  compact segments, Quick note state anatomy, and modal/saved accessibility. The independent DST
+  case was already green and records a 180-minute elapsed interval on the wake day across the
+  spring-forward boundary.
+- **GREEN:** the focused set passes at 7 suites / 151 tests. The follow-up Today regression test
+  also confirms that an unavailable previous-day sleep query suppresses only unpaired sleep rows;
+  unrelated current-day facts remain visible.
+- **REFACTOR:** separate behavior-preserving review found no justified production cleanup after
+  checking queue failure propagation, sleep-only suppression, saved-announcement privacy, modal
+  anatomy, and compact segment layout.
+- **Full local gate:** `npm run check` exits 0 — lint and TypeScript clean; 99 Jest suites / 952
+  tests; 119 Node tests; navigation, EN/RU/ES parity and string budgets, scaffold guardrails,
+  plan index, token drift, privacy scan, and text hygiene all pass. The new hook test QueryClient
+  uses infinite test-only garbage-collection time, so Jest exits normally without `--forceExit`.
+- **Stage 4 native comparison:** `PASS` on the required `Grith iPhone SE 3 iOS 26.3` profile,
+  fresh `Release` build, scheme `PuppyPlan`, bundle `com.dmitry-selenya.puppyplan-app`. There is
+  no atlas artboard for this owner-authored screen, so the comparison target remains the Stage 0
+  spec plus the fresh owner design already recorded above.
+  - Quick note opens without a keyboard, the expanded native day+time wheel stacks above the note
+    field without clipping, durable save clears and resets the composer while keeping the sheet
+    open, and the synthetic Observation appears in Diary.
+  - Sleep opens on `Start sleep` without a duration field. `Add completed sleep` is fully readable
+    on the SE, reveals the duration field, accepts 414 minutes, and saves successfully.
+  - Diary renders the verified cross-midnight interval as `11:41 PM–6:35 AM · 414 min` on the
+    wake day.
+- No schema/RLS/migration/dependency/generated-native changes, commit, push, PR, release action,
+  or Linear mutation was performed by this review-fix pass.

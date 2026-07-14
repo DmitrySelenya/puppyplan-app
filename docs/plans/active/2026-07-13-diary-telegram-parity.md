@@ -2,8 +2,9 @@
 
 **Status:** Active.
 
-**Current phase:** Phase 0 owner-device re-verification. Phases 1–4 are implemented and locally
-verified; the plan remains active until the fixed build passes the physical-device burst.
+**Current phase:** Phase 0 owner-device re-verification. Phases 1–5 are implemented and locally
+verified; the plan remains active until the fixed build's physical-device convergence check and
+fresh 20+ event burst pass.
 
 **Plan type:** Active task plan.
 
@@ -105,6 +106,98 @@ raw chat content is not copied into docs, tests, logs, Linear, or retained scree
 the primary agent re-reads the diff and independently runs verification before any completion claim.
 
 ## Phases
+
+### Phase 5 — 2026-07-14 dogfood regression closure
+
+The owner explicitly asked to fix every problem found in the 2026-07-14 SE dogfood run. This phase
+spans Diary, Pet, navigation, and Reminders because the failures block the same real-day tracking
+journey. Ownership remains separated: no feature imports another feature's internals, no storage or
+schema changes are introduced, and each slice keeps its own tests. **ADR impact:** none — this phase
+does not change the navigation, persistence, schema, RLS, or queue architecture; it repairs existing
+V2 contracts inside their current ownership boundaries.
+
+**Stage 0 lock package:** `docs/design/v1/specs/01-navigation-add.md`,
+`03-diary-core-states.md`, `04-quick-log-routines-reminders.md`, `05-pet-health.md`,
+`docs/design/v2/specs/diary-telegram-parity.md`, and `dogfood-schedule-form.md`; required device is
+`Grith iPhone SE 3 iOS 26.3`; normal text plus Accessibility XXXL; synthetic data only.
+
+**TDD mode:** heavy/full-isolated. Existing isolated RED, GREEN, and REFACTOR contexts are reused
+sequentially. The primary agent independently reads the diff and runs targeted, full-gate, and
+native verification.
+
+#### Locked acceptance criteria
+
+- **AC-P33-DOG-RETRO:** a valid retrospective sleep row renders one completed interval whose end is
+  `occurred_at`, whose start is `duration_minutes` earlier, and whose Diary title includes the
+  localized interval and duration. Start/wake pairing semantics stay unchanged.
+- **AC-P33-DOG-PET:** Pet renders the active puppy's real name and age from the existing
+  `ActivePuppyProfile`; unavailable breed/weight remain honestly missing. No visible Pet action may
+  use a no-op handler; unsupported weight capture is not advertised as an actionable control.
+- **AC-P33-DOG-NAV-AX:** the native accessibility tree exposes Diary, Pet, and More as three
+  independently focusable selected-state primary-navigation actions in order, with Add as a
+  separate button. A parent grouping element must not hide the children on iOS. Named iOS platform
+  deviation: the custom controls use native `button` role plus `selected` state because React
+  Native maps `tab` to `UIAccessibilityTraitNone`; Android retains `tab`.
+- **AC-P33-DOG-DIARY-AX:** at Accessibility XXXL on the SE, the greeting/date remain readable, the
+  seven-day strip is reachable without clipped labels, fact time/title/caption/actions preserve all
+  meaning, and Share day / Review history are not truncated.
+- **AC-P33-DOG-DRAFT:** cancelling a create/edit routine after any field differs from its initial
+  draft shows an in-app confirmation with Keep editing and Discard. Keep editing preserves every
+  field; Discard is the only path that invokes `onCancel`. A pristine form still closes directly.
+- **AC-P33-DOG-FAST:** retain the owner-approved three-choice Add chooser. A common tracker with no
+  required subtype/action choice saves in at most three taps from any screen: `Add → Quick Log →
+  tracker`. Potty/Sleep may use one additional explicit result/action tap. Quick note and Schedule
+  remain separate chooser actions; no second Diary composer is introduced. Owner approved this
+  tap budget on 2026-07-14.
+
+#### Root-cause evidence
+
+- Retrospective sleep is parsed by `createQuickLogEventView`, but
+  `createDiarySleepPresentationItems` recognizes only `start`/`wake`, so retrospective rows fall
+  through as generic events and never derive their interval.
+- `PetProfileHub` hardcodes its title, age, initials, breed, and weight while the Pet route already
+  owns `useActiveCareContext`; the profile is simply not threaded into `HealthScreen`.
+- `CapsuleTabBar` marks the visual capsule itself as an accessible `tablist`; native iOS groups that
+  parent and suppresses the three accessible children. Removing that grouping and adding explicit
+  `accessible` still left them absent from the Release rs/1 snapshot because the iOS React Native
+  `tab` mapping has no actionable trait; the platform role must be `button`.
+- Diary uses horizontal fixed-width anatomy at every scale: header row, seven fixed 38pt circles,
+  62pt time gutter, and horizontal fact/action row. Text ceilings alone cannot prevent clipping at
+  XXXL on the SE. The first native XXXL rerun also exposed custom-font glyph clipping in the
+  explicit token/caller line boxes for the date, Share day, Today/Review history, and time labels.
+  React Native already scales explicit `lineHeight` natively, so pre-scaling it in JavaScript would
+  double the result. At accessibility font scale the shared text primitive instead removes the
+  explicit line height and delegates once to each platform's natural scaled font metrics.
+- `RoutineEditorScreen` wires Cancel directly to `onCancel` and has no initial-vs-current draft
+  comparison or confirmation state.
+
+#### Checklist
+
+- [x] RED regression tests fail for the five non-ambiguous criteria above. Isolated RED evidence:
+  six suites, six expected failures, 91 skipped; failures were the generic retrospective title,
+  missing active puppy identity, the existing dead Add weight affordance, accessible capsule
+  grouping, missing XXXL responsive anatomy, and direct dirty cancellation. The RED reviewer caught
+  and corrected the old Health test's contradictory Add weight expectation before GREEN.
+  Production was unchanged and `git diff --check` passed.
+- [x] GREEN fixes pass targeted suites without changing schemas, queues, or dependencies. Final
+  independent targeted evidence: eight suites / 165 tests passed.
+- [x] REFACTOR context confirms no unnecessary abstraction or cross-feature coupling. It also
+  rejected an intermediate JavaScript line-height multiplier after proving React Native already
+  scales explicit line height natively; the corrected natural-metrics implementation then passed
+  25/25 Diary primitive tests, typecheck, and diff check.
+- [x] Stage 4 normal + XXXL native SE comparisons are recorded for Diary, Pet, tabs, and routine
+  draft confirmation. Release verification used `Grith iPhone SE 3 iOS 26.3`: normal Diary/Pet and
+  dirty routine confirmation passed; the rs/1 tree exposed separate Diary/Pet/More/Add actions;
+  XXXL kept greeting/date, Share day, Today/Review history, fact time/title/caption/actions readable,
+  and a horizontal swipe exposed Saturday and Sunday. The simulator was restored to Large text.
+- [x] `npm run check` passes and evidence is mirrored to PUP-33. Final local gate: 99 Jest suites /
+  961 tests, 119 Node tests, and scaffold/i18n/privacy/token/text-hygiene checks all green. Existing
+  Expo notification and React `act()` warnings remain non-failing and outside this slice.
+- [x] Owner resolved AC-P33-DOG-FAST on 2026-07-14: keep all three chooser actions and use a
+  three-tap budget for common one-step facts. Existing anatomy and behavior tests map the path:
+  Capsule Add → Quick Log is the first two taps; a simple tracker tap performs the save as tap 3.
+  Decision verification: two focused suites / 45 tests passed, then `npm run check` remained green
+  at 99 Jest suites / 961 tests plus 119 Node tests and all static gates.
 
 ### Phase 0 — Trust: device write failures (P0, owner's phone required)
 
@@ -247,6 +340,31 @@ data renders truthfully (Phase 2), and entry speed for their actual cadence is a
 chat speed (Phases 1d + 3). Each phase's evidence is recorded here with honest PASS/FAIL.
 
 ## Changelog
+
+- 2026-07-14 (owner follow-up + independent review fixes): an independent review re-ran the full
+  gate and a native SE pass over the Phase 5 build (all six fixes confirmed on device profile;
+  screenshots retained in the review session). Three corrections landed from that review and the
+  owner's follow-up directives: (1) an accepted Quick note now closes the sheet and returns to the
+  Diary timeline (announcement first, inline-error path unchanged); (2) an Observation carrying
+  only a note renders the note as its Diary row title instead of the generic "Observation" label,
+  and day export emits the note alone; (3) `createDetailedDurably` no longer reports a
+  `failed_permanent` outcome as durable acceptance — the dead queue item is discarded and the
+  rejection surfaces in the sheet with the text preserved, so a retry cannot leave a duplicate
+  failed fact. Review also corrected one of its own findings: previous-day sleep-pairing failure
+  already surfaces the Diary error banner by locked design (AC-QN-FIX-NIGHT-STATUS) and was left
+  unchanged. Specs updated (`quick-note.md`, `diary-telegram-parity.md`); targeted suites 63/63.
+
+- 2026-07-14 (SE dogfood regression closure, non-ambiguous scope): fixed retrospective sleep as a
+  derived completed interval, threaded the active puppy identity/age into Pet, removed the dead
+  Add-weight affordance, protected dirty routine drafts with Keep editing / Discard, exposed
+  Diary/Pet/More/Add as separate native iOS accessibility actions, and made Diary anatomy/content
+  safe at Accessibility XXXL. A native-only text-clipping follow-up first disproved JavaScript
+  line-height pre-scaling against React Native's platform implementation, then delegated large-type
+  line boxes to natural native font metrics; the corrected Release screenshot has no vertical
+  clipping and no double-spaced text. Required SE normal/XXXL Stage 4 passed, targeted suites passed
+  165/165, and `npm run check` passed (99 Jest suites / 961 tests plus 119 Node tests and all static
+  gates). The owner then resolved AC-P33-DOG-FAST: the three-choice Add chooser stays, the common
+  one-step fact budget is three taps, and Potty/Sleep may use one additional explicit choice.
 
 - 2026-07-13 (owner design correction — quick-entry composer removed): after seeing the Diary
   composer card on the simulator, the owner rejected a second in-Diary add-record entry point and
