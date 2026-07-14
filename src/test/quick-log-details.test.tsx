@@ -18,6 +18,11 @@ import { i18n } from '@/lib/i18n';
 import { formatDiaryDayExport } from '@/lib/diary/day-export';
 import { parseQuickEntryBatch, parseQuickEntryLine } from '@/lib/quick-entry/parser';
 
+// The native picker serializes its bound props to epoch milliseconds.
+function toTimestamp(value: Date | number): number {
+  return typeof value === 'number' ? value : value.getTime();
+}
+
 function renderDetails(
   element: ReactElement,
 ) {
@@ -169,7 +174,8 @@ describe('Quick Log details', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Observation' }));
     fireEvent.changeText(screen.getByLabelText('Title'), 'Calm greeting');
     fireEvent.changeText(screen.getByLabelText('Private note'), 'Settled after a minute');
-    fireEvent(screen.getByTestId('quick-log-details-occurred-at'), 'onChange', {
+    fireEvent.press(screen.getByTestId('quick-log-details-when-pill'));
+    fireEvent(screen.getByTestId('quick-log-details-when-wheel'), 'onChange', {
       nativeEvent: { timestamp: occurredAt.getTime() },
     });
     fireEvent.press(screen.getByRole('button', {
@@ -203,11 +209,12 @@ describe('Quick Log details', () => {
       'value',
       'Synthetic private context',
     );
-    expect(screen.getByTestId('quick-log-details-occurred-at').props.value.toISOString())
-      .toBe(occurredAt);
+    fireEvent.press(screen.getByTestId('quick-log-details-when-pill'));
+    expect(screen.getByTestId('quick-log-details-when-wheel').props.date)
+      .toBe(new Date(occurredAt).getTime());
   });
 
-  it('AC-P33-TIME exposes offset chips and saves a numeric HH:MM backdate', () => {
+  it('AC-P33-TIME exposes offset chips and saves the offset they apply', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date(2026, 6, 13, 12, 0, 0));
     const onSave = jest.fn();
@@ -219,12 +226,73 @@ describe('Quick Log details', () => {
         expect(screen.getByRole('button', { name: label })).toBeTruthy();
       }
 
-      fireEvent.changeText(screen.getByLabelText('HH:MM'), '10:35');
+      fireEvent.press(screen.getByRole('button', { name: '−30m' }));
       fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
 
-      const expected = new Date(2026, 6, 13, 10, 35, 0, 0).toISOString();
+      const expected = new Date(2026, 6, 13, 11, 30, 0, 0).toISOString();
       expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ occurredAt: expected }));
-      expect(screen.getByTestId('quick-log-details-occurred-at')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('AC-QN-WHEN backdates last night from midday without a future-time error', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 6, 14, 12, 56, 0));
+    const lastNight = new Date(2026, 6, 13, 23, 41, 0);
+    const onSave = jest.fn();
+
+    try {
+      renderDetails(<QuickLogDetailsScreen initialTrackerId="sleep" onSave={onSave} />);
+
+      fireEvent.press(screen.getByTestId('quick-log-details-when-pill'));
+      fireEvent(screen.getByTestId('quick-log-details-when-wheel'), 'onChange', {
+        nativeEvent: { timestamp: lastNight.getTime() },
+      });
+      fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+        occurredAt: lastNight.toISOString(),
+      }));
+      expect(screen.queryByText(/future/i)).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('AC-QN-WHEN keeps the chosen time when the day changes', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 6, 14, 12, 56, 0));
+
+    try {
+      renderDetails(<QuickLogDetailsScreen initialTrackerId="sleep" />);
+
+      fireEvent.press(screen.getByTestId('quick-log-details-when-pill'));
+      fireEvent(screen.getByTestId('quick-log-details-when-wheel'), 'onChange', {
+        nativeEvent: { timestamp: new Date(2026, 6, 13, 23, 41, 0).getTime() },
+      });
+
+      const pill = screen.getByTestId('quick-log-details-when-pill');
+
+      expect(pill.props.accessibilityValue.text).toContain('23:41');
+      expect(pill.props.accessibilityValue.text).not.toBe('23:41');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('AC-QN-WHEN bounds the wheel so an out-of-range time cannot be entered', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 6, 14, 12, 0, 0));
+
+    try {
+      renderDetails(<QuickLogDetailsScreen initialTrackerId="feeding" />);
+      fireEvent.press(screen.getByTestId('quick-log-details-when-pill'));
+
+      const wheel = screen.getByTestId('quick-log-details-when-wheel');
+
+      expect(toTimestamp(wheel.props.maximumDate)).toBe(Date.now());
+      expect(toTimestamp(wheel.props.minimumDate)).toBe(Date.now() - 7 * 24 * 60 * 60 * 1_000);
     } finally {
       jest.useRealTimers();
     }
@@ -317,7 +385,8 @@ describe('Quick Log details', () => {
 
     const note = screen.getByLabelText('Private note');
     fireEvent.changeText(note, 'Keep this draft');
-    fireEvent(screen.getByTestId('quick-log-details-occurred-at'), 'onChange', {
+    fireEvent.press(screen.getByTestId('quick-log-details-when-pill'));
+    fireEvent(screen.getByTestId('quick-log-details-when-wheel'), 'onChange', {
       nativeEvent: { timestamp: future.getTime() },
     });
     fireEvent.press(screen.getByRole('button', {

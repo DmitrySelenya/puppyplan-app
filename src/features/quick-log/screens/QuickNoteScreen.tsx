@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 import { createQuickLogDetailDraft, type QuickLogDetailDraft } from '@/contracts/quick-log';
 import {
@@ -10,13 +9,13 @@ import {
   SheetSurface,
   Stack,
   TextField,
-  Touchable,
+  WhenPicker,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
+import { formatWhenLabel, getBackdateBounds } from '@/lib/datetime/when-label';
 import { useAppTranslation } from '@/lib/i18n';
 
 const NOTE_MAX_LENGTH = 500;
-const BACKDATE_WINDOW_MS = 7 * 24 * 60 * 60 * 1_000;
 
 export type QuickNoteStatus = 'ready' | 'loading' | 'pending-write' | 'permission-denied';
 
@@ -42,15 +41,7 @@ export function QuickNoteScreen({
   const [requiredError, setRequiredError] = useState(false);
   const [persistenceError, setPersistenceError] = useState(false);
   const canWrite = status === 'ready' || status === 'pending-write';
-
-  const updateOccurredAt = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    const timestamp = selectedDate?.getTime() ?? event.nativeEvent.timestamp;
-    if (timestamp === undefined) {
-      return;
-    }
-
-    setOccurredAt(new Date(timestamp));
-  };
+  const bounds = getBackdateBounds();
 
   const submit = async () => {
     const trimmed = note.trim();
@@ -112,20 +103,18 @@ export function QuickNoteScreen({
               <AppText tone="secondary" variant="subheadline">
                 {t('quick-note.when-label')}
               </AppText>
-              <Touchable
-                accessibilityHint={t('quick-note.when-hint')}
-                accessibilityLabel={t('quick-note.when-label')}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: wheelOpen }}
-                accessibilityValue={{ text: formatWhen(occurredAt, locale) }}
-                minTarget="thumb"
-                onPress={() => setWheelOpen((open) => !open)}
-                style={styles.whenPill}
-                testID="quick-note-when-pill">
-                <AppText maxFontSizeMultiplier={2} variant="bodyEmph">
-                  {formatWhen(occurredAt, locale)}
-                </AppText>
-              </Touchable>
+              <WhenPicker
+                hint={t('quick-note.when-hint')}
+                label={t('quick-note.when-label')}
+                maximumDate={bounds.maximumDate}
+                minimumDate={bounds.minimumDate}
+                onChange={setOccurredAt}
+                onOpenChange={setWheelOpen}
+                open={wheelOpen}
+                testID="quick-note-when"
+                value={occurredAt}
+                valueText={formatWhenLabel(occurredAt, locale)}
+              />
             </Stack>
             <View style={styles.noteField}>
               <TextField
@@ -140,25 +129,6 @@ export function QuickNoteScreen({
               />
             </View>
           </Stack>
-          {wheelOpen ? (
-            <View
-              {...{
-                onChange: updateOccurredAt,
-                testID: 'quick-note-occurred-at',
-                value: occurredAt,
-              }}>
-              <DateTimePicker
-                accessibilityLabel={t('quick-note.when-label')}
-                display="spinner"
-                maximumDate={new Date()}
-                minimumDate={new Date(Date.now() - BACKDATE_WINDOW_MS)}
-                mode="datetime"
-                onChange={updateOccurredAt}
-                testID="quick-note-wheel"
-                value={occurredAt}
-              />
-            </View>
-          ) : null}
           <AppText tone="secondary" variant="footnote">
             {t('quick-note.note-helper', { count: note.length })}
           </AppText>
@@ -185,26 +155,6 @@ export function QuickNoteScreen({
   );
 }
 
-function formatWhen(date: Date, locale: string): string {
-  const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-
-  if (isToday(date)) {
-    return time;
-  }
-
-  const day = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(date);
-
-  return `${day}, ${time}`;
-}
-
-function isToday(date: Date): boolean {
-  const now = new Date();
-
-  return date.getFullYear() === now.getFullYear()
-    && date.getMonth() === now.getMonth()
-    && date.getDate() === now.getDate();
-}
-
 function isPromiseLike(value: unknown): value is Promise<void> {
   return typeof value === 'object'
     && value !== null
@@ -229,12 +179,5 @@ const styles = StyleSheet.create({
   },
   title: {
     flexShrink: 1,
-  },
-  whenPill: {
-    alignItems: 'center',
-    backgroundColor: tokens.color.surface.sunken,
-    borderRadius: tokens.radius.full,
-    justifyContent: 'center',
-    paddingHorizontal: tokens.space[3],
   },
 });

@@ -86,6 +86,7 @@ export {
   type TrackerTileProps,
   type TrackerTileSize,
 } from '@/design/primitives/TrackerTile';
+export { WhenPicker, type WhenPickerProps } from '@/design/primitives/WhenPicker';
 export {
   WeekStrip,
   type WeekStripDay,

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 
 import {
   createQuickLogDetailDraft,
@@ -20,9 +19,11 @@ import {
   Stack,
   StatusPill,
   TextField,
+  WhenPicker,
   type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
+import { formatWhenLabel, getBackdateBounds } from '@/lib/datetime/when-label';
 import { useAppTranslation, type I18nKey } from '@/lib/i18n';
 
 export type QuickLogDetailsReviewState =
@@ -79,8 +80,9 @@ export function QuickLogDetailsScreen({
   trackerLocked = false,
 }: QuickLogDetailsScreenProps) {
   const { fontScale } = useWindowDimensions();
-  const { t } = useAppTranslation();
+  const { locale, t } = useAppTranslation();
   const reviewState = status === 'ready' ? undefined : status;
+  const backdateBounds = getBackdateBounds();
   const initialOccurredAt = getInitialOccurredAt(initialDraft);
   const [trackerId, setTrackerId] = useState<QuickLogDetailTrackerId>(() =>
     initialDraft?.trackerId ?? normalizeDetailTrackerId(initialTrackerId));
@@ -115,7 +117,7 @@ export function QuickLogDetailsScreen({
   const [occurredAtEdited, setOccurredAtEdited] = useState(
     initialDraft?.occurredAt !== undefined,
   );
-  const [numericTime, setNumericTime] = useState(() => formatNumericTime(initialOccurredAt));
+  const [wheelOpen, setWheelOpen] = useState(false);
   const [timeError, setTimeError] = useState<string>();
   const [note, setNote] = useState(initialDraft?.note ?? '');
   const [observationTitle, setObservationTitle] = useState(
@@ -125,27 +127,7 @@ export function QuickLogDetailsScreen({
   const [persistenceError, setPersistenceError] = useState(false);
   const [observationError, setObservationError] = useState(false);
 
-  const updateOccurredAt = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    const timestamp = selectedDate?.getTime() ?? event.nativeEvent.timestamp;
-    if (timestamp === undefined) {
-      return;
-    }
-
-    const next = new Date(timestamp);
-    setOccurredAt(next);
-    setOccurredAtEdited(true);
-    setNumericTime(formatNumericTime(next));
-    setTimeError(validateOccurredAt(next, new Date(), t));
-  };
-
-  const updateNumericTime = (value: string) => {
-    setNumericTime(value);
-    const next = parseNumericTime(value, occurredAt);
-    if (next === null) {
-      setTimeError(t('quick-log.details.when.invalid-error'));
-      return;
-    }
-
+  const updateOccurredAt = (next: Date) => {
     setOccurredAt(next);
     setOccurredAtEdited(true);
     setTimeError(validateOccurredAt(next, new Date(), t));
@@ -155,16 +137,10 @@ export function QuickLogDetailsScreen({
     const next = new Date(Date.now() - offsetMinutes * 60_000);
     setOccurredAt(next);
     setOccurredAtEdited(true);
-    setNumericTime(formatNumericTime(next));
     setTimeError(undefined);
   };
 
   const submit = async () => {
-    if (parseNumericTime(numericTime, occurredAt) === null) {
-      setTimeError(t('quick-log.details.when.invalid-error'));
-      return;
-    }
-
     const validationError = initialDraft?.occurredAt === occurredAt.toISOString()
       ? undefined
       : validateOccurredAt(occurredAt, new Date(), t);
@@ -343,30 +319,18 @@ export function QuickLogDetailsScreen({
                   />
                 ))}
               </Stack>
-              <TextField
-                keyboardType="numbers-and-punctuation"
-                label={t('quick-log.details.when.numeric-label')}
-                maxLength={5}
-                onChangeText={updateNumericTime}
-                value={numericTime}
+              <WhenPicker
+                hint={t('quick-log.details.when.hint')}
+                label={t('quick-log.details.when.label')}
+                maximumDate={backdateBounds.maximumDate}
+                minimumDate={backdateBounds.minimumDate}
+                onChange={updateOccurredAt}
+                onOpenChange={setWheelOpen}
+                open={wheelOpen}
+                testID="quick-log-details-when"
+                value={occurredAt}
+                valueText={formatWhenLabel(occurredAt, locale)}
               />
-              <View
-                {...{
-                  onChange: updateOccurredAt,
-                  testID: 'quick-log-details-occurred-at',
-                  value: occurredAt,
-                }}>
-                <DateTimePicker
-                  accessibilityLabel={t('quick-log.details.when.label')}
-                  maximumDate={new Date()}
-                  minimumDate={new Date(Date.now() - 7 * 24 * 60 * 60 * 1_000)}
-                  mode="datetime"
-                  display="compact"
-                  onChange={updateOccurredAt}
-                  style={styles.dateTimePicker}
-                  value={occurredAt}
-                />
-              </View>
               {timeError ? (
                 <AppText style={styles.errorText} variant="footnote">{timeError}</AppText>
               ) : null}
@@ -947,21 +911,6 @@ function getInitialOccurredAt(initialDraft: QuickLogDetailDraft | undefined): Da
   return initialDraft?.occurredAt === undefined ? new Date() : new Date(initialDraft.occurredAt);
 }
 
-function formatNumericTime(date: Date): string {
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}
-
-function parseNumericTime(value: string, baseDate: Date): Date | null {
-  const match = /^(?<hour>[01]\d|2[0-3]):(?<minute>[0-5]\d)$/.exec(value.trim());
-  if (match?.groups === undefined) {
-    return null;
-  }
-
-  const next = new Date(baseDate);
-  next.setHours(Number(match.groups.hour), Number(match.groups.minute), 0, 0);
-  return next;
-}
-
 function validateOccurredAt(date: Date, now: Date, t: (key: I18nKey) => string): string | undefined {
   if (date.getTime() > now.getTime()) {
     return t('quick-log.details.when.future-error');
@@ -1172,11 +1121,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: tokens.color.status.danger,
-  },
-  dateTimePicker: {
-    alignSelf: 'flex-start',
-    height: 44,
-    minWidth: 180,
   },
   eventSelectorButton: {
     flexBasis: '47%',

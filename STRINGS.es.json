@@ -777,12 +777,11 @@
       },
       "when": {
         "label": "Cuándo",
-        "numeric-label": "HH:MM",
+        "hint": "Elige un día y una hora",
         "now": "Ahora",
         "minus-15": "−15 min",
         "minus-30": "−30 min",
         "minus-60": "−1 h",
-        "invalid-error": "Introduce una hora válida con el formato HH:MM.",
         "future-error": "La hora no puede estar en el futuro.",
         "too-old-error": "La hora debe estar dentro de los últimos 7 días."
       },

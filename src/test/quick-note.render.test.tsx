@@ -58,11 +58,11 @@ describe('Quick note capture', () => {
   it('AC-QN-TIME keeps the wheel closed until the pill is tapped', () => {
     renderNote(<QuickNoteScreen />);
 
-    expect(screen.queryByTestId('quick-note-wheel')).toBeNull();
+    expect(screen.queryByTestId('quick-note-when-wheel')).toBeNull();
 
     fireEvent.press(screen.getByTestId('quick-note-when-pill'));
 
-    expect(screen.getByTestId('quick-note-wheel')).toBeTruthy();
+    expect(screen.getByTestId('quick-note-when-wheel')).toBeTruthy();
   });
 
   it('AC-QN-TIME labels a backdated pill with its day and keeps the chosen time', () => {
@@ -73,7 +73,7 @@ describe('Quick note capture', () => {
     renderNote(<QuickNoteScreen />);
 
     fireEvent.press(screen.getByTestId('quick-note-when-pill'));
-    fireEvent(screen.getByTestId('quick-note-wheel'), 'onChange', {
+    fireEvent(screen.getByTestId('quick-note-when-wheel'), 'onChange', {
       nativeEvent: { timestamp: lastNight.getTime() },
     });
 
@@ -90,7 +90,7 @@ describe('Quick note capture', () => {
     renderNote(<QuickNoteScreen />);
     fireEvent.press(screen.getByTestId('quick-note-when-pill'));
 
-    const wheel = screen.getByTestId('quick-note-wheel');
+    const wheel = screen.getByTestId('quick-note-when-wheel');
 
     expect(toTimestamp(wheel.props.maximumDate)).toBe(Date.now());
     expect(toTimestamp(wheel.props.minimumDate)).toBe(Date.now() - 7 * 24 * 60 * 60 * 1_000);
@@ -105,7 +105,7 @@ describe('Quick note capture', () => {
     renderNote(<QuickNoteScreen onSave={onSave} />);
 
     fireEvent.press(screen.getByTestId('quick-note-when-pill'));
-    fireEvent(screen.getByTestId('quick-note-wheel'), 'onChange', {
+    fireEvent(screen.getByTestId('quick-note-when-wheel'), 'onChange', {
       nativeEvent: { timestamp: lastNight.getTime() },
     });
     fireEvent.changeText(
@@ -131,7 +131,7 @@ describe('Quick note capture', () => {
     renderNote(<QuickNoteScreen onSave={onSave} />);
 
     fireEvent.press(screen.getByTestId('quick-note-when-pill'));
-    fireEvent(screen.getByTestId('quick-note-wheel'), 'onChange', {
+    fireEvent(screen.getByTestId('quick-note-when-wheel'), 'onChange', {
       nativeEvent: { timestamp: new Date(2026, 6, 13, 23, 41, 0).getTime() },
     });
     fireEvent.changeText(
@@ -147,7 +147,7 @@ describe('Quick note capture', () => {
       'accessibilityValue',
       { text: '12:56' },
     );
-    expect(screen.queryByTestId('quick-note-wheel')).toBeNull();
+    expect(screen.queryByTestId('quick-note-when-wheel')).toBeNull();
     expect(screen.getByTestId('quick-note-sheet')).toBeTruthy();
   });
 

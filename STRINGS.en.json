@@ -786,12 +786,11 @@
       },
       "when": {
         "label": "When",
-        "numeric-label": "HH:MM",
+        "hint": "Pick a day and time",
         "now": "Now",
         "minus-15": "−15m",
         "minus-30": "−30m",
         "minus-60": "−1h",
-        "invalid-error": "Enter a valid time as HH:MM.",
         "future-error": "Time cannot be in the future.",
         "too-old-error": "Time must be within the last 7 days."
       },

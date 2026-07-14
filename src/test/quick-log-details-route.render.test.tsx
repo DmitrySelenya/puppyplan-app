@@ -249,8 +249,9 @@ describe('QuickLogDetailsRoute', () => {
       .toHaveProp('value', 'Calm greeting');
     expect(screen.getByLabelText(i18n.t('quick-log.details.note.label')))
       .toHaveProp('value', 'Synthetic private context for details');
-    expect(screen.getByTestId('quick-log-details-occurred-at').props.value.toISOString())
-      .toBe('2026-06-09T08:10:00.000Z');
+    fireEvent.press(screen.getByTestId('quick-log-details-when-pill'));
+    expect(screen.getByTestId('quick-log-details-when-wheel').props.date)
+      .toBe(new Date('2026-06-09T08:10:00.000Z').getTime());
     const details = screen.UNSAFE_getByType(QuickLogDetailsScreen);
     expect(details.props.auditMetadata).toEqual({
       clientEventId: row.client_event_id,
