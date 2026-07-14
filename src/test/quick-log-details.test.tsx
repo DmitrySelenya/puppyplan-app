@@ -4,15 +4,19 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react-nativ
 import { I18nextProvider } from 'react-i18next';
 
 import {
+  createQuickLogDetailPayload,
   createQuickLogDetailDraft,
   quickLogDetailDraftSchema,
 } from '@/contracts/quick-log';
+import { eventPayloadSchemasV2 } from '@/contracts/supabase';
 import {
   QuickLogDetailsScreen,
   QuickLogDetailsStatePreview,
   type QuickLogDetailsReviewState,
 } from '@/features/quick-log/screens/QuickLogDetailsScreen';
 import { i18n } from '@/lib/i18n';
+import { formatDiaryDayExport } from '@/lib/diary/day-export';
+import { parseQuickEntryBatch, parseQuickEntryLine } from '@/lib/quick-entry/parser';
 
 function renderDetails(
   element: ReactElement,
@@ -178,6 +182,131 @@ describe('Quick Log details', () => {
       title: 'Calm greeting',
       trackerId: 'observation',
     }));
+  });
+
+  it('AC-P33-CORRECT pre-fills the exact draft when a writer edits an existing fact', () => {
+    const occurredAt = '2026-07-13T08:35:00.000Z';
+
+    renderDetails(
+      <QuickLogDetailsScreen
+        initialDraft={{
+          note: 'Synthetic private context',
+          occurredAt,
+          title: 'Calm observation',
+          trackerId: 'observation',
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText('Title')).toHaveProp('value', 'Calm observation');
+    expect(screen.getByLabelText('Private note')).toHaveProp(
+      'value',
+      'Synthetic private context',
+    );
+    expect(screen.getByTestId('quick-log-details-occurred-at').props.value.toISOString())
+      .toBe(occurredAt);
+  });
+
+  it('AC-P33-TIME exposes offset chips and saves a numeric HH:MM backdate', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 6, 13, 12, 0, 0));
+    const onSave = jest.fn();
+
+    try {
+      renderDetails(<QuickLogDetailsScreen initialTrackerId="feeding" onSave={onSave} />);
+
+      for (const label of ['Now', '−15m', '−30m', '−1h']) {
+        expect(screen.getByRole('button', { name: label })).toBeTruthy();
+      }
+
+      fireEvent.changeText(screen.getByLabelText('HH:MM'), '10:35');
+      fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+      const expected = new Date(2026, 6, 13, 10, 35, 0, 0).toISOString();
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ occurredAt: expected }));
+      expect(screen.getByTestId('quick-log-details-occurred-at')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('AC-P33-PAYLOAD round-trips every detailed tracker through its canonical v2 schema', () => {
+    const occurredAt = '2026-07-13T08:35:00.000Z';
+    const cases = [
+      ['potty', { trackerId: 'potty', subtype: 'outside', occurredAt }],
+      ['feeding', { trackerId: 'feeding', amount: 'meal', occurredAt }],
+      ['sleep', {
+        trackerId: 'sleep', action: 'retrospective', durationMinutes: 30, occurredAt,
+      }],
+      ['walk', { trackerId: 'walk', durationMinutes: 15, occurredAt }],
+      ['zoomies', { trackerId: 'zoomies', intensity: 'medium', occurredAt }],
+      ['training', {
+        trackerId: 'training', topic: 'settling', durationBucket: 'short', occurredAt,
+      }],
+      ['observation', {
+        trackerId: 'observation', title: 'Calm observation', occurredAt,
+      }],
+    ] as const;
+
+    for (const [eventType, draft] of cases) {
+      const payload = createQuickLogDetailPayload({ draft, eventType });
+      expect(eventPayloadSchemasV2[eventType].safeParse(payload).success).toBe(true);
+    }
+  });
+
+  it('AC-P33-ENTRY recognizes bilingual tracker words and preserves unknown input losslessly', () => {
+    const now = new Date(2026, 6, 13, 12, 0, 0);
+    const recognized = parseQuickEntryLine('07:15 пописал', { locale: 'ru', now });
+    const unknown = parseQuickEntryLine('07:42 спокойно лежал', { locale: 'ru', now });
+
+    expect(recognized).toMatchObject({
+      detailDraft: { subtype: 'outside', trackerId: 'potty' },
+      sourceLine: '07:15 пописал',
+      trackerId: 'potty',
+    });
+    expect(new Date(recognized.occurredAt)).toEqual(new Date(2026, 6, 13, 7, 15, 0, 0));
+    expect(unknown).toMatchObject({
+      detailDraft: { note: '07:42 спокойно лежал', trackerId: 'observation' },
+      sourceLine: '07:42 спокойно лежал',
+      trackerId: 'observation',
+    });
+  });
+
+  it('AC-P33-ENTRY parses newline batches independently in source order without dropping a line', () => {
+    const parsed = parseQuickEntryBatch(
+      '08:16 проснулся\n08:25 поел\n08:40 запись без словаря',
+      { locale: 'ru', now: new Date(2026, 6, 13, 12, 0, 0) },
+    );
+
+    expect(parsed.map(({ sourceLine, trackerId }) => [sourceLine, trackerId])).toEqual([
+      ['08:16 проснулся', 'sleep'],
+      ['08:25 поел', 'feeding'],
+      ['08:40 запись без словаря', 'observation'],
+    ]);
+    expect(parsed[2]?.detailDraft).toMatchObject({
+      note: '08:40 запись без словаря',
+      trackerId: 'observation',
+    });
+  });
+
+  it('AC-P33-EXPORT formats a day oldest-to-newest as chat-readable HH:MM lines', () => {
+    expect(formatDiaryDayExport({
+      items: [
+        {
+          clientEventId: 'evt_00000000-0000-4000-8000-000000000302',
+          occurredAt: '2026-07-13T08:16:00.000Z',
+          title: 'Woke up',
+        },
+        {
+          clientEventId: 'evt_00000000-0000-4000-8000-000000000301',
+          note: 'Synthetic private context',
+          occurredAt: '2026-07-13T07:15:00.000Z',
+          title: 'Pee outside',
+        },
+      ],
+      locale: 'en-GB',
+      timeZone: 'UTC',
+    })).toBe('07:15 Pee outside — Synthetic private context\n08:16 Woke up');
   });
 
   it('AC-QL-DETAIL-TIME rejects a future time inline and preserves the note', () => {

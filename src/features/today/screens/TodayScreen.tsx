@@ -20,7 +20,6 @@ import { Card } from '@/design/primitives/Card';
 import { DayDivider } from '@/design/primitives/DayDivider';
 import { EmptyIllustration } from '@/design/primitives/EmptyIllustration';
 import { FactCard } from '@/design/primitives/FactCard';
-import { IconButton } from '@/design/primitives/IconButton';
 import { type EventAccent } from '@/design/primitives/IconChip';
 import { InfoHero } from '@/design/primitives/InfoHero';
 import { RoutineCard } from '@/design/primitives/RoutineCard';
@@ -51,6 +50,8 @@ import {
 } from '@/lib/query/quick-log-event-view';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { useQuickLogTimelineRows } from '@/lib/query/useQuickLogTimelineRows';
+import { formatDiaryDayExport } from '@/lib/diary/day-export';
+import { createDiarySleepPresentationItems } from '@/lib/diary/sleep-intervals';
 
 import { DiaryHeader } from '../components/DiaryHeader';
 import {
@@ -75,6 +76,7 @@ export type TodayScreenProps = Readonly<{
     item: DiaryPlannedItem,
     pottySubtype?: QuickLogPottySubtype,
   ) => Promise<void>;
+  onShareText?: (text: string) => Promise<void> | void;
   openOnboarding?: () => void;
   openQuickLog?: () => void;
   openTimeline: () => void;
@@ -142,12 +144,50 @@ const diaryHistoryFilterSpecs = [
 ] as const satisfies readonly DiaryHistoryFilterSpec[];
 const diaryObservability = createObservabilityReporter();
 
+function createDiaryEventRows(
+  rows: readonly QuickLogCachedEventRow[],
+  input: Readonly<{
+    locale: string;
+    t: ReturnType<typeof useAppTranslation>['t'];
+    todayDate: string;
+  }>,
+): readonly DiaryEventRow[] {
+  return createDiarySleepPresentationItems(rows).flatMap((item) => {
+    const row = item.kind === 'sleep-interval' ? item.wakeRow : item.row;
+    const event = createQuickLogEventView(row, input);
+    if (event === null) {
+      return [];
+    }
+    if (item.kind === 'event') {
+      return [{ event, row }];
+    }
+
+    const formatter = new Intl.DateTimeFormat(input.locale, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    return [{
+      event: {
+        ...event,
+        note: event.note ?? createQuickLogEventView(item.startRow, input)?.note,
+        title: input.t('today.history.sleep-interval', {
+          duration: item.durationMinutes,
+          end: formatter.format(new Date(item.endedAt)),
+          start: formatter.format(new Date(item.startedAt)),
+        }),
+      },
+      row,
+    }];
+  });
+}
+
 export function TodayScreen({
   actions = emptyActions,
   careContext = null,
   dayModel = null,
   dayModelStatus = 'unavailable',
   onCheckOff,
+  onShareText,
   openOnboarding,
   openQuickLog,
   openTimeline,
@@ -161,6 +201,7 @@ export function TodayScreen({
   const [selectedHistoryFilter, setSelectedHistoryFilter] =
     useState<DiaryHistoryFilterValue>('all');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [shareError, setShareError] = useState(false);
   const selectedCalendarDate = careContext === null
     ? null
     : selectedDate ?? careContext.todayDate;
@@ -219,7 +260,14 @@ export function TodayScreen({
     );
   }
 
-  const todayEventRows = rows.flatMap((row) => {
+  const selectedDayEventRows = rows.flatMap((row) => {
+    if (
+      selectedCalendarDate === null
+      || formatLocalCalendarDate(row.occurred_at) !== selectedCalendarDate
+    ) {
+      return [];
+    }
+
     const event = createQuickLogEventView(row, {
       locale,
       t,
@@ -228,16 +276,12 @@ export function TodayScreen({
 
     return event === null ? [] : [{ event, row }];
   });
-  const eventRows = visibleRows.flatMap((row) => {
-    const event = createQuickLogEventView(row, {
-      locale,
-      t,
-      todayDate: careContext.todayDate,
-    });
-
-    return event === null ? [] : [{ event, row }];
+  const eventRows = createDiaryEventRows(visibleRows, {
+    locale,
+    t,
+    todayDate: careContext.todayDate,
   });
-  const todayEventViews = todayEventRows.map((eventRow) => eventRow.event);
+  const todayEventViews = selectedDayEventRows.map((eventRow) => eventRow.event);
   const eventViews = eventRows.map((eventRow) => eventRow.event);
   const todayStatus = getTodayStatusState({
     careContext,
@@ -264,6 +308,42 @@ export function TodayScreen({
       onPrimaryAction={openQuickLog}
     />
   ) : null;
+  const shareSelectedDay = onShareText === undefined || selectedDayEventRows.length === 0
+    ? null
+    : (
+      <Stack align="flex-start" gap="xs">
+        <Button
+          label={t('today.history.share-action')}
+          onPress={() => {
+            const text = formatDiaryDayExport({
+              items: selectedDayEventRows.map(({ event, row }) => ({
+                clientEventId: event.clientEventId,
+                note: event.note,
+                occurredAt: row.occurred_at,
+                title: event.title,
+              })),
+              locale,
+              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            });
+            setShareError(false);
+            void (async () => {
+              try {
+                await onShareText(text);
+              } catch {
+                setShareError(true);
+              }
+            })();
+          }}
+          testID="diary-share-day"
+          variant="tertiary"
+        />
+        {shareError ? (
+          <AppText accessibilityRole="alert" style={styles.shareError} variant="footnote">
+            {t('today.history.share-error')}
+          </AppText>
+        ) : null}
+      </Stack>
+    );
 
   return (
     <Screen contentStyle={styles.content}>
@@ -281,6 +361,7 @@ export function TodayScreen({
         selectedDate={selectedCalendarDate ?? careContext.todayDate}
         todayDate={careContext.todayDate}
       />
+      {shareSelectedDay}
       {isViewingToday ? (
         <>
           <DiaryClayState
@@ -1374,6 +1455,7 @@ function DiaryFactRow({
   const onEdit = actions.onEdit;
   const onRetry = actions.onRetry;
   const onUndo = actions.onUndo;
+  const [actionsOpen, setActionsOpen] = useState(false);
   const editRequest = event.status === 'synced' ? createQuickLogEditRequest(event) : null;
   const visual = getFactCardVisual(row);
   const canSwipeDelete = event.status === 'synced' && onDelete !== undefined;
@@ -1382,18 +1464,35 @@ function DiaryFactRow({
     <FactCard
       accent={visual.accent}
       accessibilityActions={canSwipeDelete ? [{ name: 'delete', label: deleteLabel }] : undefined}
-      accessibilityLabel={t('today.history.fact-a11y-label', {
-        caption: event.status === 'synced' ? event.actorLabel : event.statusLabel,
-        time: event.occurredAtLabel,
-        title: event.title,
-      })}
+      accessibilityLabel={event.note === undefined
+        ? t('today.history.fact-a11y-label', {
+            caption: event.status === 'synced' ? event.actorLabel : event.statusLabel,
+            time: event.occurredAtLabel,
+            title: event.title,
+          })
+        : t('today.history.fact-note-a11y-label', {
+            caption: event.status === 'synced' ? event.actorLabel : event.statusLabel,
+            note: event.note,
+            time: event.occurredAtLabel,
+            title: event.title,
+          })}
       caption={event.status === 'synced' ? event.actorLabel : event.statusLabel}
       icon={visual.icon}
+      note={event.note}
       onAccessibilityAction={canSwipeDelete ? (accessibilityEvent) => {
         if (accessibilityEvent.nativeEvent.actionName === 'delete' && onDelete !== undefined) {
           onDelete(createQuickLogDeleteRequest(event));
         }
       } : undefined}
+      actionsLabel={editRequest !== null && (onEdit !== undefined || onDelete !== undefined)
+        ? t('today.history.item-actions')
+        : undefined}
+      onActionsPress={editRequest !== null && (onEdit !== undefined || onDelete !== undefined)
+        ? () => { setActionsOpen((open) => !open); }
+        : undefined}
+      onPress={editRequest !== null && onEdit !== undefined
+        ? () => { onEdit(editRequest); }
+        : undefined}
       testID="diary-history-logged-fact"
       time={event.occurredAtLabel}
       title={event.title}
@@ -1418,23 +1517,25 @@ function DiaryFactRow({
             </SwipeToDelete>
           ) : factCard}
         </View>
-        {editRequest !== null && onEdit !== undefined ? (
-          <IconButton
-            accessibilityLabel={t('today.history.item-actions')}
-            icon={
-              <AppIcon
-                color={tokens.color.text.secondary}
-                name="more"
-                size={22}
-              />
-            }
-            onPress={() => {
-              onEdit(editRequest);
-            }}
-            style={styles.eventActionsButton}
-          />
-        ) : null}
       </Stack>
+      {actionsOpen && editRequest !== null ? (
+        <Stack direction="horizontal" gap="sm" wrap>
+          {onEdit !== undefined ? (
+            <Button
+              label={t('common.edit')}
+              onPress={() => { onEdit(editRequest); }}
+              variant="secondary"
+            />
+          ) : null}
+          {onDelete !== undefined ? (
+            <Button
+              label={deleteLabel}
+              onPress={() => { onDelete(createQuickLogDeleteRequest(event)); }}
+              variant="tertiary"
+            />
+          ) : null}
+        </Stack>
+      ) : null}
       {event.status === 'failed' && (onRetry !== undefined || onDelete !== undefined) ? (
         <Stack direction="horizontal" gap="sm" wrap>
           {onRetry !== undefined ? (
@@ -1635,6 +1736,9 @@ const styles = StyleSheet.create({
   },
   infoHeroAction: {
     alignSelf: 'flex-start',
+  },
+  shareError: {
+    color: tokens.color.status.danger,
   },
   sectionTitle: {
     flexShrink: 1,

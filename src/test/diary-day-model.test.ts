@@ -44,7 +44,7 @@ describe('buildDiaryDayModel', () => {
     }));
   });
 
-  it('AC-P5-2 sorts planned slots and spontaneous facts without auto-linking', () => {
+  it('AC-P5-2 AC-P33-ORDER sorts planned slots and spontaneous facts newest-first without auto-linking', () => {
     const model = buildDiaryDayModel({
       day: '2026-03-29',
       facts: [fact()],
@@ -61,11 +61,11 @@ describe('buildDiaryDayModel', () => {
     });
 
     expect(model.items.map((item) => [item.kind, item.displayAt])).toEqual([
-      ['planned', '2026-03-29T06:00:00.000Z'],
-      ['fact', '2026-03-29T07:30:00.000Z'],
       ['planned', '2026-03-29T08:00:00.000Z'],
+      ['fact', '2026-03-29T07:30:00.000Z'],
+      ['planned', '2026-03-29T06:00:00.000Z'],
     ]);
-    expect(model.items[0]).toEqual(expect.objectContaining({ status: 'past-unmarked' }));
+    expect(model.items[2]).toEqual(expect.objectContaining({ status: 'past-unmarked' }));
   });
 
   it('AC-P5-3 merges an exact linked fact and exposes planned plus actual time', () => {
@@ -102,8 +102,36 @@ describe('buildDiaryDayModel', () => {
     });
 
     expect(model.items).toHaveLength(2);
-    expect(model.items[0]).toEqual(expect.objectContaining({ kind: 'planned', status: 'past-unmarked' }));
-    expect(model.items[1]).toEqual(expect.objectContaining({ kind: 'fact' }));
+    expect(model.items[0]).toEqual(expect.objectContaining({ kind: 'fact' }));
+    expect(model.items[1]).toEqual(expect.objectContaining({ kind: 'planned', status: 'past-unmarked' }));
+  });
+
+  it('AC-P33-ORDER keeps the existing planned-before-fact and id tie rules deterministic', () => {
+    const tiedAt = '2026-03-29T06:00:00.000Z';
+    const model = buildDiaryDayModel({
+      day: '2026-03-29',
+      facts: [
+        fact({
+          clientEventId: 'evt_00000000-0000-4000-8000-000000000203',
+          occurredAt: tiedAt,
+        }),
+        fact({
+          clientEventId: 'evt_00000000-0000-4000-8000-000000000202',
+          occurredAt: tiedAt,
+        }),
+      ],
+      nowMs: Date.parse('2026-03-29T09:00:00.000Z'),
+      reminders: [reminder()],
+      timeZone: 'Europe/Warsaw',
+    });
+
+    expect(model.items.map((item) => item.kind === 'planned'
+      ? `planned:${item.reminderId}`
+      : `fact:${item.clientEventId}`)).toEqual([
+      `planned:${feedingId}`,
+      'fact:evt_00000000-0000-4000-8000-000000000202',
+      'fact:evt_00000000-0000-4000-8000-000000000203',
+    ]);
   });
 
   it('AC-P5-5 collapses duplicate linked facts into one deterministic completion row', () => {

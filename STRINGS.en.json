@@ -527,9 +527,13 @@
     "history": {
       "section-title": "Today",
       "open-action": "Review history",
+      "share-action": "Share day",
+      "share-error": "The day could not be shared. Try again.",
       "delete-action": "Delete entry",
       "item-actions": "Diary item actions",
-      "fact-a11y-label": "{title}, {time}, {caption}"
+      "sleep-interval": "Slept {start}–{end} · {duration} min",
+      "fact-a11y-label": "{title}, {time}, {caption}",
+      "fact-note-a11y-label": "{title}, {time}, {caption}. Note: {note}"
     },
     "daily-cards": {
       "first-day-banner": "The first day is about observing, not results.",
@@ -757,6 +761,17 @@
       "save": "Save details",
       "persistence-error": "Details could not be saved. Your draft is still here. Try again.",
       "skip": "Skip details",
+      "audit": {
+        "title": "Entry details",
+        "actor-you": "Logged by you",
+        "actor-household": "Logged by a household member",
+        "created": "Created {value}",
+        "updated": "Edited {value}",
+        "version": "Version {version}"
+      },
+      "read-only": {
+        "duration-minutes": "{count} min"
+      },
       "tabs": {
         "potty": "Potty",
         "feeding": "Feeding",
@@ -768,6 +783,12 @@
       },
       "when": {
         "label": "When",
+        "numeric-label": "HH:MM",
+        "now": "Now",
+        "minus-15": "−15m",
+        "minus-30": "−30m",
+        "minus-60": "−1h",
+        "invalid-error": "Enter a valid time as HH:MM.",
         "future-error": "Time cannot be in the future.",
         "too-old-error": "Time must be within the last 7 days."
       },
@@ -835,6 +856,9 @@
           "medium": "Medium",
           "high": "High"
         }
+      },
+      "walk": {
+        "duration-label": "Duration in minutes"
       },
       "states": {
         "loading": {

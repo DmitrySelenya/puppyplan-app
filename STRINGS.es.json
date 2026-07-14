@@ -519,9 +519,13 @@
     "history": {
       "section-title": "Hoy",
       "open-action": "Revisar historial",
+      "share-action": "Compartir el día",
+      "share-error": "No se pudo compartir el día. Inténtalo de nuevo.",
       "delete-action": "Eliminar registro",
       "item-actions": "Acciones del registro del diario",
-      "fact-a11y-label": "{title}, {time}, {caption}"
+      "sleep-interval": "Durmió de {start} a {end} · {duration} min",
+      "fact-a11y-label": "{title}, {time}, {caption}",
+      "fact-note-a11y-label": "{title}, {time}, {caption}. Nota: {note}"
     },
     "daily-cards": {
       "first-day-banner": "El primer día se trata de observar, no de resultados.",
@@ -748,6 +752,17 @@
       "save": "Guardar detalles",
       "persistence-error": "No se pudieron guardar los detalles. El borrador sigue aquí. Inténtalo de nuevo.",
       "skip": "Omitir detalles",
+      "audit": {
+        "title": "Detalles del registro",
+        "actor-you": "Registrado por ti",
+        "actor-household": "Registrado por un miembro del hogar",
+        "created": "Creado {value}",
+        "updated": "Editado {value}",
+        "version": "Versión {version}"
+      },
+      "read-only": {
+        "duration-minutes": "{count} min"
+      },
       "tabs": {
         "potty": "Baño",
         "feeding": "Alimentación",
@@ -759,6 +774,12 @@
       },
       "when": {
         "label": "Cuándo",
+        "numeric-label": "HH:MM",
+        "now": "Ahora",
+        "minus-15": "−15 min",
+        "minus-30": "−30 min",
+        "minus-60": "−1 h",
+        "invalid-error": "Introduce una hora válida con el formato HH:MM.",
         "future-error": "La hora no puede estar en el futuro.",
         "too-old-error": "La hora debe estar dentro de los últimos 7 días."
       },
@@ -826,6 +847,9 @@
           "medium": "Media",
           "high": "Alta"
         }
+      },
+      "walk": {
+        "duration-label": "Duración en minutos"
       },
       "states": {
         "loading": {

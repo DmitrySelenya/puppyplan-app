@@ -1,3 +1,4 @@
+import { Share } from 'react-native';
 import { render, waitFor } from '@testing-library/react-native';
 
 import type { QuickLogEventActionHandlers } from '@/lib/query/quick-log-event-view';
@@ -13,11 +14,15 @@ const mockShowSnackbar = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
 let capturedActions: QuickLogEventActionHandlers | undefined;
-let capturedProps: TodayScreenProps | undefined;
+type DiaryParityScreenProps = TodayScreenProps & Readonly<{
+  onShareText?: (text: string) => Promise<void> | void;
+}>;
+
+let capturedProps: DiaryParityScreenProps | undefined;
 
 jest.mock('expo-router', () => ({
   router: {
-    push: (href: string) => mockRouterPush(href),
+    push: (href: unknown) => mockRouterPush(href),
   },
 }));
 
@@ -28,7 +33,7 @@ jest.mock('@/features/today/screens/TodayScreen', () => {
     ...actual,
     TodayScreen: (props: TodayScreenProps) => {
       capturedActions = props.actions;
-      capturedProps = props;
+      capturedProps = props as DiaryParityScreenProps;
 
       return null;
     },
@@ -299,6 +304,67 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     expect(mockRouterPush).toHaveBeenCalledWith('/quick-log/schedule');
   });
 
+  it('AC-P33-CORRECT opens update details with routing-only params and never places private content in the URL', () => {
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: {
+        createDetailed: jest.fn(),
+        deleteLocal: jest.fn(),
+        deleteSynced: jest.fn(),
+        mutate: jest.fn(),
+        retry: jest.fn(),
+        restoreSynced: jest.fn(),
+        updateDetails: jest.fn(),
+        undo: jest.fn(),
+      },
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(<AppProviders><DiaryRoute /></AppProviders>);
+
+    capturedActions?.onEdit?.({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007801',
+      eventType: 'observation',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      todayDate: '2026-06-09',
+      trackerId: 'observation',
+    });
+
+    expect(mockRouterPush).toHaveBeenCalledWith({
+      pathname: '/quick-log/details',
+      params: {
+        clientEventId: 'evt_00000000-0000-4000-8000-000000007801',
+        eventType: 'observation',
+        householdId: '00000000-0000-4000-8000-000000007001',
+        puppyId: '00000000-0000-4000-8000-000000007002',
+        todayDate: '2026-06-09',
+        trackerId: 'observation',
+      },
+    });
+    expect(JSON.stringify(mockRouterPush.mock.calls)).not.toContain('Synthetic private context');
+    expect(JSON.stringify(mockRouterPush.mock.calls)).not.toContain('note');
+    expect(JSON.stringify(mockRouterPush.mock.calls)).not.toContain('payload');
+  });
+
+  it('AC-P33-EXPORT invokes the native share sheet only after the explicit screen action', async () => {
+    const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: Share.sharedAction });
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: undefined,
+      mutationEvents: [],
+      status: 'unavailable',
+    });
+    render(<AppProviders><DiaryRoute /></AppProviders>);
+
+    expect(share).not.toHaveBeenCalled();
+    await capturedProps?.onShareText?.('08:10 Feeding — synthetic context');
+
+    expect(share).toHaveBeenCalledWith({
+      message: '08:10 Feeding — synthetic context',
+    });
+    share.mockRestore();
+  });
+
   it('does not expose write handlers for viewer care contexts', () => {
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
@@ -333,5 +399,7 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     );
 
     expect(capturedActions).toBeUndefined();
+    expect(capturedProps?.onCheckOff).toBeUndefined();
+    expect(capturedProps?.onShareText).toEqual(expect.any(Function));
   });
 });

@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 
 import {
   getQuickLogDetailTrackerIdForEventType,
+  createQuickLogDetailDraft,
   isQuickLogEventType,
   quickLogClientEventIdSchema,
   quickLogDetailTrackerIdSchema,
@@ -11,6 +12,7 @@ import {
 } from '@/contracts/quick-log';
 import {
   dateSchema,
+  eventPayloadSchemasV2,
   eventTypeSchema,
   uuidSchema,
 } from '@/contracts/supabase';
@@ -21,6 +23,8 @@ import {
 import { closeModalRoute } from '@/lib/navigation/modal-close';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 import { useQuickLogMutationPort } from '@/lib/query/quick-log';
+import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
+import { useQuickLogCachedRows } from '@/lib/query/useQuickLogCachedRows';
 import type { QuickLogSurfaceCareContext } from '@/lib/query/quick-log-event-view';
 
 type QuickLogDetailsRouteParams = Readonly<{
@@ -48,8 +52,24 @@ export default function QuickLogDetailsRoute() {
   const quickLogMutation = useQuickLogMutationPort();
   const mutation = quickLogMutation.mutation;
   const detailContext = parseQuickLogDetailsRouteContext(params);
+  const cachedRows = useQuickLogCachedRows(activeCare.careContext);
+  const detailRow = detailContext === null
+    ? null
+    : findQuickLogDetailRow(cachedRows, detailContext);
+  const initialDraft = detailRow === null ? undefined : createDraftFromCachedRow(detailRow);
+  const isReadOnlyDetail = detailRow !== null
+    && activeCare.careContext?.householdRole === 'viewer';
+  const hasMissingDetailTarget = detailContext !== null
+    && detailRow === null
+    && canUpdateQuickLogDetails(activeCare.careContext, detailContext);
+  const hasUnreadableDetail = detailRow !== null && initialDraft === undefined;
+  const shouldRenderReadOnly = isReadOnlyDetail
+    || hasMissingDetailTarget
+    || hasUnreadableDetail;
   const initialTrackerId = detailContext?.trackerId ?? parseStandaloneTrackerId(params.trackerId);
-  const status = getQuickLogDetailsStatus({
+  const status = isReadOnlyDetail
+    ? 'ready'
+    : hasMissingDetailTarget || hasUnreadableDetail ? 'error' : getQuickLogDetailsStatus({
     activeCare,
     quickLogMutationStatus: quickLogMutation.status,
   });
@@ -87,7 +107,8 @@ export default function QuickLogDetailsRoute() {
     if (
       detailContext === null
       && mutation?.createDetailed !== undefined
-      && activeCare.careContext?.householdRole === 'owner'
+      && activeCare.careContext !== null
+      && activeCare.careContext.householdRole !== 'viewer'
     ) {
       const careContext = activeCare.careContext;
       return mutation.createDetailed({
@@ -103,13 +124,119 @@ export default function QuickLogDetailsRoute() {
 
   return (
     <QuickLogDetailsScreen
+      auditMetadata={detailRow === null ? undefined : {
+        clientEventId: detailRow.client_event_id,
+        createdAt: detailRow.created_at,
+        isCreatedByCurrentUser: detailRow.created_by === activeCare.careContext?.userId,
+        occurredAt: detailRow.occurred_at,
+        updatedAt: detailRow.updated_at,
+        version: detailRow.version,
+      }}
+      initialDraft={initialDraft}
       initialTrackerId={initialTrackerId}
       initialSleepAction={parseSleepAction(params.sleepAction)}
       onClose={close}
       onSave={save}
+      readOnly={shouldRenderReadOnly}
       status={status}
+      syncStatus={detailRow === null ? undefined : getDetailSyncStatus(detailRow)}
+      trackerLocked={detailRow !== null}
     />
   );
+}
+
+function getDetailSyncStatus(
+  row: QuickLogCachedEventRow,
+): 'failed' | 'pending' | 'synced' {
+  if (row.localSync?.state === 'failed_permanent' || row.localSync?.state === 'failed_retryable') {
+    return 'failed';
+  }
+  if (row.localSync?.state === 'pending_local' || row.localSync?.state === 'sending') {
+    return 'pending';
+  }
+  return 'synced';
+}
+
+function findQuickLogDetailRow(
+  rows: readonly QuickLogCachedEventRow[],
+  context: QuickLogDetailsRouteContext,
+): QuickLogCachedEventRow | null {
+  return rows.find((row) => row.deleted_at === null
+    && row.client_event_id === context.clientEventId
+    && row.event_type === context.eventType
+    && row.household_id === context.householdId
+    && row.puppy_id === context.puppyId) ?? null;
+}
+
+function createDraftFromCachedRow(row: QuickLogCachedEventRow): QuickLogDetailDraft | undefined {
+  if (row.payload_version !== 2 || !isQuickLogEventType(row.event_type)) {
+    return undefined;
+  }
+
+  const payloadResult = eventPayloadSchemasV2[row.event_type].safeParse(row.payload);
+  const trackerId = getQuickLogDetailTrackerIdForEventType(row.event_type);
+  if (!payloadResult.success || trackerId === null) {
+    return undefined;
+  }
+
+  const payload = payloadResult.data;
+  const shared = {
+    ...('note' in payload && payload.note !== undefined ? { note: payload.note } : {}),
+    occurredAt: row.occurred_at,
+  };
+  if (trackerId === 'potty' && 'subtype' in payload) {
+    return createQuickLogDetailDraft({ ...shared, subtype: payload.subtype, trackerId });
+  }
+  if (trackerId === 'feeding' && 'amount' in payload) {
+    return createQuickLogDetailDraft({ ...shared, amount: payload.amount, trackerId });
+  }
+  if (trackerId === 'sleep' && 'action' in payload) {
+    return createQuickLogDetailDraft({
+      ...shared,
+      action: payload.action,
+      ...('duration_minutes' in payload && payload.duration_minutes !== undefined
+        ? { durationMinutes: payload.duration_minutes }
+        : {}),
+      trackerId,
+    });
+  }
+  if (trackerId === 'walk') {
+    return createQuickLogDetailDraft({
+      ...shared,
+      ...('duration_minutes' in payload && payload.duration_minutes !== undefined
+        ? { durationMinutes: payload.duration_minutes }
+        : {}),
+      trackerId,
+    });
+  }
+  if (trackerId === 'zoomies') {
+    return createQuickLogDetailDraft({
+      ...shared,
+      ...('intensity' in payload && payload.intensity !== undefined
+        ? { intensity: payload.intensity }
+        : {}),
+      trackerId,
+    });
+  }
+  if (trackerId === 'training' && 'topic' in payload) {
+    return createQuickLogDetailDraft({
+      ...shared,
+      ...('duration_bucket' in payload && payload.duration_bucket !== undefined
+        ? { durationBucket: payload.duration_bucket }
+        : {}),
+      topic: payload.topic,
+      trackerId,
+    });
+  }
+  if (trackerId === 'observation') {
+    return createQuickLogDetailDraft({
+      ...shared,
+      ...('title' in payload && payload.title !== undefined ? { title: payload.title } : {}),
+      trackerId,
+    });
+  }
+
+  return undefined;
 }
 
 function getQuickLogDetailsStatus(input: Readonly<{

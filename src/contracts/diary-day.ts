@@ -128,7 +128,7 @@ function compareFacts(left: DiaryDayFact, right: DiaryDayFact): number {
 }
 
 function compareItems(left: DiaryDayItem, right: DiaryDayItem): number {
-  return left.displayAt.localeCompare(right.displayAt)
+  return right.displayAt.localeCompare(left.displayAt)
     || itemStableKey(left).localeCompare(itemStableKey(right));
 }
 

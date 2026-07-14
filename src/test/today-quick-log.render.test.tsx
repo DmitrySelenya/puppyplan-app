@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { ComponentType, ReactElement } from 'react';
 import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -8,7 +8,10 @@ import { i18n } from '@/lib/i18n';
 import { createPuppyPlanQueryClient } from '@/lib/query/client';
 import { queryKeys, type TimelineFilters } from '@/lib/query/keys';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
-import { TodayScreen } from '@/features/today/screens/TodayScreen';
+import {
+  TodayScreen,
+  type TodayScreenProps,
+} from '@/features/today/screens/TodayScreen';
 import { IconChip } from '@/design/primitives/IconChip';
 import { tokens } from '@/design/tokens';
 
@@ -36,6 +39,10 @@ const careContext = {
 const openTimeline = jest.fn();
 const openOnboarding = jest.fn();
 const testQueryClients: ReturnType<typeof createPuppyPlanQueryClient>[] = [];
+type DiaryParityTodayProps = TodayScreenProps & Readonly<{
+  onShareText?: (text: string) => Promise<void> | void;
+}>;
+const DiaryParityTodayScreen = TodayScreen as ComponentType<DiaryParityTodayProps>;
 
 function todayTimelineKey() {
   return queryKeys.events.timeline(householdId, puppyId, {
@@ -257,8 +264,16 @@ describe('Today Quick Log state integration', () => {
     });
   });
 
-  it('renders synced Diary history facts with an edit action, no standalone delete button, and no visible status pill', async () => {
-    mockListEvents.mockResolvedValue([createRow()]);
+  it('AC-P33-READ AC-P33-CORRECT renders note readback, opens edit on row press, and exposes visible Edit/Delete actions', async () => {
+    const notedRow = createRow({
+      event_type: 'observation',
+      payload: {
+        note: 'Synthetic private context for readback',
+        title: 'Calm pause',
+      },
+      payload_version: 2,
+    });
+    mockListEvents.mockResolvedValue([notedRow]);
     const actions = {
       onDelete: jest.fn(),
       onEdit: jest.fn(),
@@ -275,13 +290,15 @@ describe('Today Quick Log state integration', () => {
 
     act(() => {
       queryClient.setQueryData(todayTimelineKey(), [
-        createRow(),
+        notedRow,
       ]);
     });
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('quick-log.trackers.feeding'))).toBeTruthy();
+      expect(screen.getByText('Synthetic private context for readback')).toBeTruthy();
     });
+    expect(screen.getByTestId('diary-history-logged-fact-card').props.accessibilityLabel)
+      .toContain('Synthetic private context for readback');
     expect(
       StyleSheet.flatten(screen.getByTestId('diary-history-logged-fact-card').props.style)
         .backgroundColor,
@@ -298,18 +315,34 @@ describe('Today Quick Log state integration', () => {
 
     expect(itemActionStyle.minHeight).toBeGreaterThanOrEqual(44);
     expect(itemActionStyle.minWidth).toBeGreaterThanOrEqual(44);
-    fireEvent.press(itemActions);
+    const factCard = screen.getByTestId('diary-history-logged-fact-card');
+    fireEvent.press(factCard);
     expect(actions.onEdit).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
-      eventType: 'feeding',
+      eventType: 'observation',
       householdId,
       puppyId,
       todayDate,
-      trackerId: 'feeding',
+      trackerId: 'observation',
     });
-    expect(screen.queryByRole('button', {
+    actions.onEdit.mockClear();
+
+    fireEvent.press(itemActions);
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeTruthy();
+    const deleteAction = screen.getByRole('button', {
       name: i18n.t('today.history.delete-action'),
-    })).toBeNull();
+    });
+    expect(deleteAction).toBeTruthy();
+    expect(actions.onEdit).not.toHaveBeenCalled();
+    fireEvent.press(deleteAction);
+    expect(actions.onDelete).toHaveBeenCalledWith({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
+      eventType: 'observation',
+      householdId,
+      puppyId,
+      status: 'synced',
+      todayDate,
+    });
     expect(screen.queryByText(i18n.t('timeline.pills.synced'))).toBeNull();
     expect(screen.queryByText('OK')).toBeNull();
     expect(JSON.stringify(toJSON())).not.toContain('"OK"');
@@ -319,6 +352,98 @@ describe('Today Quick Log state integration', () => {
     expect(screen.queryByRole('button', {
       name: i18n.t('quick-log.failed.primary'),
     })).toBeNull();
+  });
+
+  it('AC-P33-EXPORT shares only the selected today rows even when the history drawer contains multiple days', async () => {
+    const onShareText = jest.fn();
+    const selectedDayRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001581',
+      event_type: 'observation',
+      occurred_at: '2026-05-27T09:00:00.000Z',
+      payload: { note: 'Synthetic selected-day note', title: 'Calm greeting' },
+      payload_version: 2,
+    });
+    const otherDayRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001582',
+      event_type: 'observation',
+      occurred_at: '2026-05-26T08:00:00.000Z',
+      payload: { note: 'Synthetic other-day private note', title: 'Earlier context' },
+      payload_version: 2,
+    });
+    const { queryClient } = renderWithQuery(
+      <DiaryParityTodayScreen
+        careContext={careContext}
+        onShareText={onShareText}
+        openTimeline={openTimeline}
+      />,
+    );
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [selectedDayRow]);
+      queryClient.setQueryData(
+        queryKeys.events.timeline(householdId, puppyId, {}),
+        [selectedDayRow, otherDayRow],
+      );
+    });
+
+    await waitFor(() => expect(screen.getByText('Synthetic selected-day note')).toBeTruthy());
+    expect(onShareText).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('today.history.open-action'),
+    }));
+    await waitFor(() => expect(screen.getByText('Synthetic other-day private note')).toBeTruthy());
+    fireEvent.press(screen.getByTestId('diary-share-day'));
+
+    expect(onShareText).toHaveBeenCalledTimes(1);
+    const sharedText = onShareText.mock.calls[0]?.[0] as string;
+    expect(sharedText.split('\n')).toHaveLength(1);
+    expect(sharedText).toContain('Calm greeting — Synthetic selected-day note');
+    expect(sharedText).not.toContain('Earlier context');
+    expect(sharedText).not.toContain('Synthetic other-day private note');
+  });
+
+  it('AC-P33-EXPORT shares the selected past day without leaking cached today rows', async () => {
+    const onShareText = jest.fn();
+    const selectedPastDate = '2026-05-26';
+    const todayRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001583',
+      event_type: 'observation',
+      payload: { note: 'Synthetic today-only note', title: 'Today context' },
+      payload_version: 2,
+    });
+    const selectedPastRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001584',
+      event_type: 'observation',
+      occurred_at: '2026-05-26T08:00:00.000Z',
+      payload: { note: 'Synthetic selected-past note', title: 'Past context' },
+      payload_version: 2,
+    });
+    mockListEvents.mockImplementation((request: { filters?: TimelineFilters }) => {
+      if (request.filters?.from === selectedPastDate) {
+        return Promise.resolve([selectedPastRow]);
+      }
+
+      return Promise.resolve([todayRow]);
+    });
+    const { queryClient } = renderWithQuery(
+      <DiaryParityTodayScreen
+        careContext={careContext}
+        onShareText={onShareText}
+        openTimeline={openTimeline}
+      />,
+    );
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [todayRow]);
+    });
+
+    fireEvent.press(screen.getByTestId(`week-strip-day-${selectedPastDate}`));
+    await waitFor(() => expect(screen.getByText('Synthetic selected-past note')).toBeTruthy());
+    fireEvent.press(screen.getByTestId('diary-share-day'));
+
+    expect(onShareText).toHaveBeenCalledTimes(1);
+    const sharedText = onShareText.mock.calls[0]?.[0] as string;
+    expect(sharedText).toContain('Past context — Synthetic selected-past note');
+    expect(sharedText).not.toContain('Today context');
+    expect(sharedText).not.toContain('Synthetic today-only note');
   });
 
   it('deletes a synced Diary history fact via the accessibility action (VoiceOver/TalkBack parity)', async () => {

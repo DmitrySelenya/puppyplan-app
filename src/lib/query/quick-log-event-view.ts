@@ -68,8 +68,10 @@ export type QuickLogEventActionHandlers = Readonly<{
 export type QuickLogEventView = Readonly<{
   actorLabel: string;
   clientEventId: string;
+  durationMinutes?: number;
   eventType: QuickLogEventType;
   householdId: string;
+  note?: string;
   occurredAtLabel: string;
   puppyId: string;
   retryCount: number;
@@ -106,21 +108,86 @@ export function createQuickLogEventView(
     return null;
   }
 
+  const readback = getValidatedV2Readback(row);
+
   return {
     // PUP-15 production Quick Log is gated until active care context can resolve row.created_by.
     // Replace this with timeline.actor-template in the active-context follow-up.
     actorLabel: input.t('timeline.actor-you'),
     clientEventId: row.client_event_id,
+    ...(readback.durationMinutes === undefined
+      ? {}
+      : { durationMinutes: readback.durationMinutes }),
     eventType: row.event_type,
     householdId: row.household_id,
+    ...(readback.note === undefined ? {} : { note: readback.note }),
     occurredAtLabel: formatEventTime(row.occurred_at, input.locale),
     puppyId: row.puppy_id,
     retryCount: row.localSync?.retryCount ?? 0,
     status,
     statusLabel: getQuickLogStatusLabel(status, input.t),
-    title: input.t(titleKey),
+    title: readback.title
+      ?? (readback.sleepAction === undefined
+        ? input.t(titleKey)
+        : input.t(sleepActionLabelKeys[readback.sleepAction])),
     todayDate: input.todayDate,
   };
+}
+
+type QuickLogV2Readback = Readonly<{
+  durationMinutes?: number;
+  note?: string;
+  sleepAction?: 'start' | 'wake' | 'retrospective';
+  title?: string;
+}>;
+
+function getValidatedV2Readback(row: QuickLogCachedEventRow): QuickLogV2Readback {
+  if (row.payload_version !== 2) {
+    return {};
+  }
+
+  if (row.event_type === 'observation') {
+    const result = eventPayloadSchemasV2.observation.safeParse(row.payload);
+    return result.success ? { note: result.data.note, title: result.data.title } : {};
+  }
+
+  if (row.event_type === 'sleep') {
+    const result = eventPayloadSchemasV2.sleep.safeParse(row.payload);
+    return result.success
+      ? {
+          durationMinutes: result.data.duration_minutes,
+          note: result.data.note,
+          sleepAction: result.data.action,
+        }
+      : {};
+  }
+
+  if (row.event_type === 'training') {
+    const result = eventPayloadSchemasV2.training.safeParse(row.payload);
+    return result.success ? { note: result.data.note } : {};
+  }
+
+  if (row.event_type === 'potty') {
+    const result = eventPayloadSchemasV2.potty.safeParse(row.payload);
+    return result.success ? { note: result.data.note } : {};
+  }
+
+  if (row.event_type === 'feeding') {
+    const result = eventPayloadSchemasV2.feeding.safeParse(row.payload);
+    return result.success ? { note: result.data.note } : {};
+  }
+
+  if (row.event_type === 'walk') {
+    const result = eventPayloadSchemasV2.walk.safeParse(row.payload);
+    return result.success ? { note: result.data.note } : {};
+  }
+
+  if (row.event_type === 'zoomies') {
+    const result = eventPayloadSchemasV2.zoomies.safeParse(row.payload);
+    return result.success ? { note: result.data.note } : {};
+  }
+
+  return {};
 }
 
 export function getQuickLogTrackerIdForEventRow(
@@ -316,6 +383,12 @@ const pottySubtypeLabelKeys = {
   outside: 'quick-log.trackers.potty-outside',
   poop: 'quick-log.trackers.potty-poop',
 } as const satisfies Record<'inside' | 'outside' | 'poop', I18nKey>;
+
+const sleepActionLabelKeys = {
+  retrospective: 'quick-log.details.sleep.action.retrospective',
+  start: 'quick-log.details.sleep.action.start',
+  wake: 'quick-log.details.sleep.action.wake',
+} as const satisfies Record<'start' | 'wake' | 'retrospective', I18nKey>;
 
 type LegacyPottyQuickAction = 'pee_inside' | 'pee_outside' | 'poop';
 

@@ -70,7 +70,7 @@ export function useQuickLogTimelineRows(
             householdId,
             puppyId,
           });
-          const cachedRows = getCachedTimelineLocalRows(
+          const cachedRows = getCachedTimelineRows(
             queryClient,
             timelineRootKey,
             normalizedFilters,
@@ -153,22 +153,20 @@ function mergeDurableRowsWithLocalRows(
   durableRows: readonly QuickLogCachedEventRow[],
   cachedRows: readonly QuickLogCachedEventRow[],
 ): readonly QuickLogCachedEventRow[] {
-  const localRows = cachedRows.filter((row) => row.localSync !== undefined);
-
-  if (localRows.length === 0) {
+  if (cachedRows.length === 0) {
     return durableRows;
   }
 
   const durableClientEventIds = new Set(durableRows.map((row) => row.client_event_id));
   const durableIds = new Set(durableRows.map((row) => row.id));
-  const missingLocalRows = localRows.filter(
+  const missingCachedRows = cachedRows.filter(
     (row) => !durableClientEventIds.has(row.client_event_id) && !durableIds.has(row.id),
   );
 
-  return [...missingLocalRows, ...durableRows].sort(compareRowsByNewestFirst);
+  return [...missingCachedRows, ...durableRows].sort(compareRowsByNewestFirst);
 }
 
-function getCachedTimelineLocalRows(
+function getCachedTimelineRows(
   queryClient: QueryClient,
   timelineRootKey: QueryKey,
   filters: TimelineFilters,
@@ -177,27 +175,27 @@ function getCachedTimelineLocalRows(
     exact: false,
     queryKey: timelineRootKey,
   });
-  const localRowsByClientEventId = new Map<string, QuickLogCachedEventRow>();
+  const rowsByClientEventId = new Map<string, QuickLogCachedEventRow>();
 
   for (const [, rows] of matchingQueries) {
     for (const row of rows ?? emptyRows) {
       if (
-        row.localSync !== undefined
+        row.deleted_at === null
         && rowMatchesTimelineFilters(row, filters)
       ) {
-        const currentRow = localRowsByClientEventId.get(row.client_event_id);
+        const currentRow = rowsByClientEventId.get(row.client_event_id);
 
         if (
           currentRow === undefined
           || isPreferredLocalRowVersion(row, currentRow)
         ) {
-          localRowsByClientEventId.set(row.client_event_id, row);
+          rowsByClientEventId.set(row.client_event_id, row);
         }
       }
     }
   }
 
-  return [...localRowsByClientEventId.values()];
+  return [...rowsByClientEventId.values()];
 }
 
 function isPreferredLocalRowVersion(

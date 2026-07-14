@@ -2,7 +2,8 @@
 
 **Status:** Active.
 
-**Current phase:** Phase 0 — scoped duplicate-convergence fix and owner-device re-verification.
+**Current phase:** Phase 0 owner-device re-verification. Phases 1–4 are implemented and locally
+verified; the plan remains active until the fixed build passes the physical-device burst.
 
 **Plan type:** Active task plan.
 
@@ -30,6 +31,12 @@ synthetic here) is:
 The hands-on audit (simulator + the owner's device screenshots) produced the findings below. The
 goal of this plan is not cosmetic polish: it is to make the app **strictly better than the chat**
 for this workflow — faster to write, richer to read, trustworthy to store.
+
+The baseline simulator audit and migration scorecard are recorded in
+`docs/reviews/2026-07-13-diary-telegram-parity-ux-audit.md`. The software findings from that audit
+are now implemented and green locally. The overall verdict remains **NO-GO as a Telegram
+replacement** only because the fixed build has not yet passed the required physical owner-device
+cross-device check-off and 20+ event burst.
 
 ## Audit findings (2026-07-13, confirmed)
 
@@ -67,6 +74,35 @@ anchor (`bf9ab9d`); polish backlog items 13–19 (`2026-06-30-v2-screen-polish-b
 - `npm run check` green before every commit; verify on a standalone Release build (SE simulator;
   device where the finding is device-specific).
 - Defects outside this plan's scope: record and stop, don't fix-forward.
+
+## 2026-07-13 implementation lock
+
+The owner instructed the agent to fix the complete audited flow. Stage 0 is locked in
+`docs/design/v2/specs/diary-telegram-parity.md` against `dogfood.diary.01`, `diary-item-edit`,
+`dogfood.quick-log.details.01`, and `dogfood.stage0.variants.01`. The new lock records the explicit
+owner-directed deviations: newest-first activity, readable private note previews, visible details /
+edit / delete, numeric backdating, the persistent quick-entry line, sleep intervals, and day export.
+The bilingual keyword map is derived only from generic vocabulary in the owner-supplied workflow;
+raw chat content is not copied into docs, tests, logs, Linear, or retained screenshots.
+
+### Locked implementation acceptance
+
+- **AC-P33-ORDER:** all Diary facts render newest-first with deterministic tie ordering.
+- **AC-P33-READ:** a v2 title/note is readable in the fact row and in a full details/edit surface.
+- **AC-P33-CORRECT:** writers can edit and delete from visible controls; viewers cannot mutate.
+- **AC-P33-TIME:** numeric `HH:MM` plus Now / -15m / -30m / -1h sets a valid past instant without
+  replacing the native fallback picker.
+- **AC-P33-PAYLOAD:** every detailed tracker output round-trips through its canonical v2 schema.
+- **AC-P33-GUTTER:** valid localized two-digit times do not truncate at supported font scales.
+- **AC-P33-SLEEP:** start, wake, and retrospective sleep facts read as explicit sleep actions;
+  retrospective facts show their interval duration.
+- **AC-P33-ENTRY:** Russian/English quick-entry text and newline batches preserve every source line;
+  unknown text becomes an Observation note instead of being discarded.
+- **AC-P33-EXPORT:** an authenticated day can be shared as synthetic-safe `HH:MM description` text;
+  private text leaves the app only after the user invokes the native share action.
+
+**TDD mode:** heavy/full-isolated. RED, GREEN, and REFACTOR are performed in separate agent contexts;
+the primary agent re-reads the diff and independently runs verification before any completion claim.
 
 ## Phases
 
@@ -142,18 +178,18 @@ re-scoped with the owner), and covered by regression tests; a fresh device sessi
 
 The four highest-leverage fixes; each is its own commit with spec-card note + tests.
 
-- [ ] **1a Newest-first Diary.** Flip the day ordering so the freshest item is at the top
+- [x] **1a Newest-first Diary.** Flip the day ordering so the freshest item is at the top
   (`compareItems`/`compareFacts` descending display order; planned-vs-fact tie rules preserved).
   Update the Diary spec card; adjust render tests. Consider (record decision): keep planned
   future occurrences pinned in a small "upcoming today" strip so flipping doesn't bury the plan.
-- [ ] **1b Notes readable.** FactCard shows a 1–2 line note preview under the title; a note glyph
+- [x] **1b Notes readable.** FactCard shows a 1–2 line note preview under the title; a note glyph
   marks noted rows. Spec-card update for row anatomy.
-- [ ] **1c Fact details + edit.** Tap a fact row → details sheet: full note, exact time, subtype,
+- [x] **1c Fact details + edit.** Tap a fact row → details sheet: full note, exact time, subtype,
   logged-by, created/edited stamps; actions Edit and Delete. Edit opens the existing detailed
   composer pre-filled (`initialDraft` path exists for reminders — mirror it for facts) and saves
   as an update (new `version`, same client event id) through the durable queue. Viewer role stays
   read-only.
-- [ ] **1d Backdate without the wheel.** In the detailed composer (and fast-lane long-press if
+- [x] **1d Backdate without the wheel.** In the detailed composer (and fast-lane long-press if
   cheap), replace wheel-first entry with: chips `Now / −15m / −30m / −1h` + a numeric `HH:MM`
   text entry; the wheel remains as fallback. Time parsing is locale-safe and validated.
 
@@ -164,13 +200,13 @@ recorded.
 
 ### Phase 2 — Data quality and correctness (P2)
 
-- [ ] **2a Canonical detailed payloads.** The detailed composer emits payloads that parse against
+- [x] **2a Canonical detailed payloads.** The detailed composer emits payloads that parse against
   `eventPayloadSchemas.*` for every tracker (fixes the potty icon mismatch F6). Contract test:
   composer output × schema round-trip for all trackers/subtypes.
-- [ ] **2b TimeGutter content-safe width.** The gutter never truncates a valid time at any
+- [x] **2b TimeGutter content-safe width.** The gutter never truncates a valid time at any
   supported font scale (measure or widen below the AX threshold; keep the locked 62 pt AX
   behavior). Regression test with `10:35 AM`-class strings at fontScale 1.0–1.9.
-- [ ] **2c Sleep as an interval.** Expose the existing contract (`start` / `wake` /
+- [x] **2c Sleep as an interval.** Expose the existing contract (`start` / `wake` /
   `retrospective` + `duration_minutes`) in the UI: fast lane Sleep → "fell asleep" starts an open
   interval; next tap offers "woke up" completing it; detailed composer accepts explicit duration.
   Diary renders the interval (start–end) on one row.
@@ -180,14 +216,14 @@ the "7:42 fell asleep / 8:16 woke" flow is two taps and renders as one interval 
 
 ### Phase 3 — Quick-entry line (the beat-the-chat feature; design lock first)
 
-- [ ] Write the spec card + brainstorm record BEFORE code: a persistent one-line input on the
+- [x] Write the spec card + brainstorm record BEFORE code: a persistent one-line input on the
   Diary ("`01:31 pee outside, a bit fussy`") that parses time + tracker keyword + free text into
   a prefilled fact; ambiguous input falls back to the detailed composer prefilled with the raw
   text as the note. Russian and English keywords; owner reviews the keyword map.
-- [ ] Implement behind the locked spec: parser is a pure, heavily-tested unit
+- [x] Implement behind the locked spec: parser is a pure, heavily-tested unit
   (`src/lib/quick-entry/` proposed); UI is a thin composer over the existing durable mutation
   path. No new storage.
-- [ ] Batch mode: after save, the line stays focused for the next entry (chat cadence).
+- [x] Batch mode: after save, the line stays focused for the next entry (chat cadence).
 
 **Acceptance:** the owner's real cadence — six one-line events in a row, mixed backdated —
 is fully enterable from the line without opening any sheet; parser unit suite covers the locked
@@ -195,10 +231,10 @@ keyword map, time formats, and fallbacks; Stage 4 evidence on device.
 
 ### Phase 4 — Telegram bridge (scoped decision, likely deferred)
 
-- [ ] Decide with the owner: minimum viable bridge = share-sheet export of a day (text in the
-  chat's own format) so the app can coexist with the chat during migration; import of chat
-  history is expensive (parsing exported JSON) and probably not worth it — decide explicitly
-  rather than silently skip.
+- [x] Decision: ship selected-day share-sheet export now; defer Telegram-history import. Export
+  uses the chat-like `HH:MM description` format and is explicitly user-triggered. Import remains
+  outside this slice because it requires parsing private Telegram export data and does not improve
+  the daily capture loop enough to justify that privacy and implementation surface yet.
 
 **Acceptance:** a recorded decision; if export ships, a day exports to text that reads like the
 household's chat format (synthetic fixture test).
@@ -211,6 +247,38 @@ data renders truthfully (Phase 2), and entry speed for their actual cadence is a
 chat speed (Phases 1d + 3). Each phase's evidence is recorded here with honest PASS/FAIL.
 
 ## Changelog
+
+- 2026-07-13 (owner design correction — quick-entry composer removed): after seeing the Diary
+  composer card on the simulator, the owner rejected a second in-Diary add-record entry point and
+  reaffirmed the single central "+" as the only way to add records ("parity" means notes on every
+  event and readable custom entries, not a chat UI). The `DiaryQuickEntryComposer`, its
+  `onQuickEntry` wiring, `today.quick-entry.*` strings/keys, and its render tests were removed;
+  `src/lib/quick-entry/parser.ts` and its unit tests are retained UI-less by explicit owner choice
+  for possible future import/transfer use. AC-P33-ENTRY is void as a UI criterion. Share-day export
+  stays pending owner confirmation. Full gate after removal: 96 Jest suites / 890 tests plus Node
+  and check scripts, all green.
+
+- 2026-07-13 (Phases 1–4 implementation + native Stage 4): implemented newest-first deterministic
+  Diary ordering, visible note previews, full fact readback, writer edit/delete and viewer read-only
+  behavior, numeric/chip backdating, canonical v2 payload round-trips for all seven trackers,
+  content-safe time gutters, sleep interval projection, bilingual lossless quick-entry batches,
+  and selected-day share-sheet export. Heavy-isolated RED/GREEN suites passed at each slice; the
+  independent full gate passed with 96 Jest suites / 893 tests and 119 Node tests, plus lint,
+  typecheck, scaffold, i18n, privacy, token, plan, and text-hygiene checks. Native Stage 4 on the
+  required `Grith iPhone SE 3 iOS 26.3` profile passed: a synthetic entry was created, appeared at
+  the top with a readable note, opened into the audited detail surface, edited with the same locked
+  tracker type, deleted without removing neighboring facts, and the selected-day action opened the
+  iOS Share Sheet. Evidence is retained under `output/ux-audit/pup33-fixed/`. Stage 4 verdict:
+  **PASS** against the locked spec; no named visual deviation. Physical owner-device cross-device
+  convergence and the fresh 20+ event burst remain the sole completion blocker.
+
+- 2026-07-13 (fresh SE simulator UX audit): replayed the Telegram-shaped workflow with synthetic
+  data on the required iPhone SE profile. Confirmed current-run evidence for oldest-first placement,
+  repeated generic Observation rows, two-digit TimeGutter truncation, nested detailed-entry sheets,
+  and hidden swipe-only delete. A new fast Potty fact persisted across relaunch; its swipe deletion
+  succeeded and remained absent after relaunch. This is positive path evidence only: the owner-device
+  fresh cross-device check-off and 20+ event burst remain open, so Telegram replacement stays NO-GO.
+  Full report: `docs/reviews/2026-07-13-diary-telegram-parity-ux-audit.md`.
 
 - 2026-07-13 (review of Codex Phase 0 + training parity): independent review confirmed the scoped
   comparator/Observation-v2 fix is correct and green (comparator logic, tests↔AC mapping, docs, and

@@ -523,9 +523,13 @@
     "history": {
       "section-title": "Сегодня",
       "open-action": "Посмотреть историю",
+      "share-action": "Поделиться днём",
+      "share-error": "Не удалось поделиться днём. Попробуйте ещё раз.",
       "delete-action": "Удалить запись",
       "item-actions": "Действия записи дневника",
-      "fact-a11y-label": "{title}, {time}, {caption}"
+      "sleep-interval": "Спал с {start} до {end} · {duration} мин",
+      "fact-a11y-label": "{title}, {time}, {caption}",
+      "fact-note-a11y-label": "{title}, {time}, {caption}. Заметка: {note}"
     },
     "daily-cards": {
       "first-day-banner": "В первый день важно наблюдать, а не добиваться результата.",
@@ -753,6 +757,17 @@
       "save": "Сохранить детали",
       "persistence-error": "Не удалось сохранить детали. Черновик остался здесь. Попробуйте ещё раз.",
       "skip": "Пропустить детали",
+      "audit": {
+        "title": "Сведения о записи",
+        "actor-you": "Записано вами",
+        "actor-household": "Записано участником семьи",
+        "created": "Создано {value}",
+        "updated": "Изменено {value}",
+        "version": "Версия {version}"
+      },
+      "read-only": {
+        "duration-minutes": "{count} мин"
+      },
       "tabs": {
         "potty": "Туалет",
         "feeding": "Кормление",
@@ -764,6 +779,12 @@
       },
       "when": {
         "label": "Когда",
+        "numeric-label": "ЧЧ:ММ",
+        "now": "Сейчас",
+        "minus-15": "−15 мин",
+        "minus-30": "−30 мин",
+        "minus-60": "−1 ч",
+        "invalid-error": "Введите корректное время в формате ЧЧ:ММ.",
         "future-error": "Время не может быть в будущем.",
         "too-old-error": "Время должно быть в пределах последних 7 дней."
       },
@@ -831,6 +852,9 @@
           "medium": "Средне",
           "high": "Сильно"
         }
+      },
+      "walk": {
+        "duration-label": "Длительность в минутах"
       },
       "states": {
         "loading": {

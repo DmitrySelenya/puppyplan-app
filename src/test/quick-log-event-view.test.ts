@@ -89,13 +89,6 @@ describe('Quick Log event view model', () => {
   });
 
   it.each([
-    ['sleep', { action: 'start', note: 'Synthetic sleep note' }, 'quick-log.details.tabs.sleep'],
-    ['sleep', { action: 'wake', note: 'Synthetic wake note' }, 'quick-log.details.tabs.sleep'],
-    [
-      'sleep',
-      { action: 'retrospective', duration_minutes: 90, note: 'Synthetic retrospective note' },
-      'quick-log.details.tabs.sleep',
-    ],
     [
       'training',
       { topic: 'settling', duration_bucket: 'short', note: 'Synthetic training note' },
@@ -104,9 +97,9 @@ describe('Quick Log event view model', () => {
     [
       'observation',
       { title: 'Calm greeting', note: 'Synthetic observation note' },
-      'quick-log.details.tabs.observation',
+      null,
     ],
-  ] as const)('AC-4/AC-5 keeps v2 %s facts visible without exposing private note text', (
+  ] as const)('AC-P33-READ exposes the canonical title and private note for authenticated %s readback', (
     eventType,
     payload,
     titleKey,
@@ -119,9 +112,36 @@ describe('Quick Log event view model', () => {
 
     expect(event).toMatchObject({
       eventType,
+      note: payload.note,
+      title: titleKey === null ? 'Calm greeting' : i18n.t(titleKey),
+    });
+  });
+
+  it.each([
+    ['start', undefined, 'quick-log.details.sleep.action.start'],
+    ['wake', undefined, 'quick-log.details.sleep.action.wake'],
+    ['retrospective', 90, 'quick-log.details.sleep.action.retrospective'],
+  ] as const)('AC-P33-SLEEP reads %s as an explicit sleep action', (
+    action,
+    durationMinutes,
+    titleKey,
+  ) => {
+    const event = createQuickLogEventView(createRow({
+      event_type: 'sleep',
+      payload_version: 2,
+      payload: {
+        action,
+        ...(durationMinutes === undefined ? {} : { duration_minutes: durationMinutes }),
+        note: 'Synthetic sleep note',
+      },
+    }), { t, todayDate });
+
+    expect(event).toMatchObject({
+      ...(durationMinutes === undefined ? {} : { durationMinutes }),
+      eventType: 'sleep',
+      note: 'Synthetic sleep note',
       title: i18n.t(titleKey),
     });
-    expect(JSON.stringify(event)).not.toContain(payload.note);
   });
 });
 

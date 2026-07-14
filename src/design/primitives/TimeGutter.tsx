@@ -1,9 +1,9 @@
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { designFontFamilies } from '@/design/fonts';
 import { AppText } from '@/design/primitives/AppText';
 
-const GUTTER_WIDTH = 46;
+const GUTTER_WIDTH = 62;
 
 export type TimeGutterProps = {
   /** A clock time such as "7:15 am"; the meridiem is rendered smaller below. */
@@ -13,13 +13,12 @@ export type TimeGutterProps = {
 
 /** Right-aligned time column that anchors a Diary event row. */
 export function TimeGutter({ time, testID }: TimeGutterProps) {
-  const { fontScale } = useWindowDimensions();
   const normalizedTime = time.trim().replaceAll('\u00a0', ' ').replaceAll('\u202f', ' ');
   const [clock, meridiem] = normalizedTime.split(/\s+/, 2);
 
   return (
     <View
-      style={[styles.gutter, fontScale >= 2 ? styles.accessibilityGutter : null]}
+      style={styles.gutter}
       testID={testID}>
       <AppText
         maxFontSizeMultiplier={1.3}
@@ -45,9 +44,6 @@ export function TimeGutter({ time, testID }: TimeGutterProps) {
 }
 
 const styles = StyleSheet.create({
-  accessibilityGutter: {
-    width: 62,
-  },
   clock: {
     fontFamily: designFontFamilies.display.semibold,
     fontWeight: '700',

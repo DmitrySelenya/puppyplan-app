@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { Share } from 'react-native';
 
 import {
   TodayScreen,
@@ -31,6 +32,12 @@ export default function DiaryRoute() {
         ? undefined
         : {
           onDelete,
+          onEdit: (request) => {
+            router.push({
+              pathname: '/quick-log/details',
+              params: request,
+            });
+          },
           onRetry: (clientEventId, recoverySurface, sourceSurface) => {
             mutation.retry(clientEventId, recoverySurface, sourceSurface);
           },
@@ -60,6 +67,9 @@ export default function DiaryRoute() {
             pottySubtype,
           }));
         }}
+      onShareText={async (message) => {
+        await Share.share({ message });
+      }}
       openOnboarding={() => {
         router.push('/onboarding');
       }}

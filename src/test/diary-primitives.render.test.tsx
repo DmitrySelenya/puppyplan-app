@@ -75,9 +75,10 @@ describe('TimeGutter', () => {
   });
 
   it.each([
-    { expectedWidth: 46, fontScale: 1.999 },
+    { expectedWidth: 62, fontScale: 1 },
+    { expectedWidth: 62, fontScale: 1.9 },
     { expectedWidth: 62, fontScale: 2 },
-  ])('AC-DT-2K AC-DT-2L AC-DT-2M adapts the complete time gutter at fontScale $fontScale', ({
+  ])('AC-P33-GUTTER keeps the complete time gutter content-safe at fontScale $fontScale', ({
     expectedWidth,
     fontScale,
   }) => {
@@ -307,6 +308,42 @@ describe('FactCard', () => {
     expect(flatten(screen.getByTestId('f-card')).borderRadius).toBe(tokens.radius.card);
     expect(screen.getByText('Play')).toBeTruthy();
     expect(screen.getByText('Logged · 10 min')).toBeTruthy();
+  });
+
+  it('AC-P33-READ AC-P33-CORRECT renders a two-line note preview and separate row/actions buttons', () => {
+    const onActionsPress = jest.fn();
+    const onPress = jest.fn();
+
+    render(
+      <FactCard
+        accessibilityLabel="Observation, 2:32 pm, Synthetic private context"
+        actionsLabel="Fact actions"
+        caption="Logged · 10 min"
+        icon="paw"
+        note="Synthetic private context"
+        onActionsPress={onActionsPress}
+        onPress={onPress}
+        testID="noted-fact"
+        time="2:32 pm"
+        title="Observation"
+      />,
+    );
+
+    const row = screen.getByRole('button', {
+      name: 'Observation, 2:32 pm, Synthetic private context',
+    });
+    const actions = screen.getByRole('button', { name: 'Fact actions' });
+    const note = screen.getByText('Synthetic private context');
+
+    expect(note.props).toEqual(expect.objectContaining({ numberOfLines: 2 }));
+    expect(flatten(note).color).toBe(tokens.color.text.primary);
+    expect(flatten(actions).minHeight).toBeGreaterThanOrEqual(44);
+    expect(flatten(actions).minWidth).toBeGreaterThanOrEqual(44);
+
+    fireEvent.press(row);
+    fireEvent.press(actions);
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(onActionsPress).toHaveBeenCalledTimes(1);
   });
 });
 

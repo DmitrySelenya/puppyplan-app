@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, useWindowDimensions } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 import {
@@ -34,18 +34,32 @@ export type QuickLogDetailsReviewState =
 
 export type QuickLogDetailsStatus = QuickLogDetailsReviewState | 'ready';
 
+export type QuickLogDetailsAuditMetadata = Readonly<{
+  clientEventId: string;
+  createdAt: string;
+  isCreatedByCurrentUser: boolean;
+  occurredAt: string;
+  updatedAt: string;
+  version: number;
+}>;
+
 export type QuickLogDetailsScreenProps = Readonly<{
+  auditMetadata?: QuickLogDetailsAuditMetadata;
+  initialDraft?: QuickLogDetailDraft;
   initialTrackerId?: QuickLogDetailTrackerId | string;
   initialSleepAction?: SleepActionValue;
   onClose?: () => void;
   onSave?: (draft: QuickLogDetailDraft) => Promise<void> | void;
+  readOnly?: boolean;
   status?: QuickLogDetailsStatus;
+  syncStatus?: 'failed' | 'pending' | 'synced';
+  trackerLocked?: boolean;
 }>;
 
 type FeedingAmountValue = 'meal' | 'snack' | 'water';
 type PottySubtypeValue = 'outside' | 'inside' | 'poop';
 type SleepActionValue = 'start' | 'wake' | 'retrospective';
-type SleepDurationValue = 'none' | '15' | '30' | '60';
+type SleepDurationValue = 'none' | `${number}`;
 type TrainingDurationValue = 'short' | 'medium' | 'long';
 type TrainingTopicValue = 'recall' | 'sit' | 'crate' | 'leash' | 'settling' | 'other';
 type ZoomiesIntensityValue = 'none' | 'low' | 'medium' | 'high';
@@ -53,30 +67,60 @@ type ZoomiesIntensityValue = 'none' | 'low' | 'medium' | 'high';
 const noop = () => undefined;
 
 export function QuickLogDetailsScreen({
+  auditMetadata,
+  initialDraft,
   initialTrackerId = 'feeding',
   initialSleepAction,
   onClose = noop,
   onSave = noop,
+  readOnly = false,
   status = 'ready',
+  syncStatus,
+  trackerLocked = false,
 }: QuickLogDetailsScreenProps) {
   const { fontScale } = useWindowDimensions();
   const { t } = useAppTranslation();
   const reviewState = status === 'ready' ? undefined : status;
+  const initialOccurredAt = getInitialOccurredAt(initialDraft);
   const [trackerId, setTrackerId] = useState<QuickLogDetailTrackerId>(() =>
-    normalizeDetailTrackerId(initialTrackerId));
-  const [feedingAmount, setFeedingAmount] = useState<FeedingAmountValue>('meal');
-  const [pottySubtype, setPottySubtype] = useState<PottySubtypeValue>('outside');
-  const [sleepAction, setSleepAction] = useState<SleepActionValue>(initialSleepAction ?? 'start');
-  const [sleepActionTouched, setSleepActionTouched] = useState(initialSleepAction !== undefined);
-  const [sleepDuration, setSleepDuration] = useState<SleepDurationValue>('none');
-  const [trainingDuration, setTrainingDuration] = useState<TrainingDurationValue>('medium');
-  const [trainingTopic, setTrainingTopic] = useState<TrainingTopicValue>('other');
-  const [zoomiesIntensity, setZoomiesIntensity] = useState<ZoomiesIntensityValue>('none');
-  const [occurredAt, setOccurredAt] = useState(() => new Date());
-  const [occurredAtEdited, setOccurredAtEdited] = useState(false);
+    initialDraft?.trackerId ?? normalizeDetailTrackerId(initialTrackerId));
+  const [feedingAmount, setFeedingAmount] = useState<FeedingAmountValue>(() =>
+    initialDraft?.trackerId === 'feeding' ? initialDraft.amount ?? 'meal' : 'meal');
+  const [pottySubtype, setPottySubtype] = useState<PottySubtypeValue>(() =>
+    initialDraft?.trackerId === 'potty' ? initialDraft.subtype ?? 'outside' : 'outside');
+  const [sleepAction, setSleepAction] = useState<SleepActionValue>(() =>
+    initialDraft?.trackerId === 'sleep'
+      ? initialDraft.action ?? initialSleepAction ?? 'start'
+      : initialSleepAction ?? 'start');
+  const [sleepActionTouched, setSleepActionTouched] = useState(
+    initialDraft?.trackerId === 'sleep'
+      ? initialDraft.action !== undefined || initialSleepAction !== undefined
+      : initialSleepAction !== undefined,
+  );
+  const [sleepDuration, setSleepDuration] = useState<SleepDurationValue>(() =>
+    initialDraft?.trackerId === 'sleep' && initialDraft.durationMinutes !== undefined
+      ? String(initialDraft.durationMinutes) as `${number}`
+      : 'none');
+  const [walkDuration, setWalkDuration] = useState(() =>
+    initialDraft?.trackerId === 'walk' && initialDraft.durationMinutes !== undefined
+      ? String(initialDraft.durationMinutes)
+      : '');
+  const [trainingDuration, setTrainingDuration] = useState<TrainingDurationValue>(() =>
+    initialDraft?.trackerId === 'training' ? initialDraft.durationBucket ?? 'medium' : 'medium');
+  const [trainingTopic, setTrainingTopic] = useState<TrainingTopicValue>(() =>
+    initialDraft?.trackerId === 'training' ? initialDraft.topic ?? 'other' : 'other');
+  const [zoomiesIntensity, setZoomiesIntensity] = useState<ZoomiesIntensityValue>(() =>
+    initialDraft?.trackerId === 'zoomies' ? initialDraft.intensity ?? 'none' : 'none');
+  const [occurredAt, setOccurredAt] = useState(initialOccurredAt);
+  const [occurredAtEdited, setOccurredAtEdited] = useState(
+    initialDraft?.occurredAt !== undefined,
+  );
+  const [numericTime, setNumericTime] = useState(() => formatNumericTime(initialOccurredAt));
   const [timeError, setTimeError] = useState<string>();
-  const [note, setNote] = useState('');
-  const [observationTitle, setObservationTitle] = useState('');
+  const [note, setNote] = useState(initialDraft?.note ?? '');
+  const [observationTitle, setObservationTitle] = useState(
+    initialDraft?.trackerId === 'observation' ? initialDraft.title ?? '' : '',
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [persistenceError, setPersistenceError] = useState(false);
   const [observationError, setObservationError] = useState(false);
@@ -90,11 +134,40 @@ export function QuickLogDetailsScreen({
     const next = new Date(timestamp);
     setOccurredAt(next);
     setOccurredAtEdited(true);
+    setNumericTime(formatNumericTime(next));
     setTimeError(validateOccurredAt(next, new Date(), t));
   };
 
+  const updateNumericTime = (value: string) => {
+    setNumericTime(value);
+    const next = parseNumericTime(value, occurredAt);
+    if (next === null) {
+      setTimeError(t('quick-log.details.when.invalid-error'));
+      return;
+    }
+
+    setOccurredAt(next);
+    setOccurredAtEdited(true);
+    setTimeError(validateOccurredAt(next, new Date(), t));
+  };
+
+  const applyTimeOffset = (offsetMinutes: number) => {
+    const next = new Date(Date.now() - offsetMinutes * 60_000);
+    setOccurredAt(next);
+    setOccurredAtEdited(true);
+    setNumericTime(formatNumericTime(next));
+    setTimeError(undefined);
+  };
+
   const submit = async () => {
-    const validationError = validateOccurredAt(occurredAt, new Date(), t);
+    if (parseNumericTime(numericTime, occurredAt) === null) {
+      setTimeError(t('quick-log.details.when.invalid-error'));
+      return;
+    }
+
+    const validationError = initialDraft?.occurredAt === occurredAt.toISOString()
+      ? undefined
+      : validateOccurredAt(occurredAt, new Date(), t);
     if (validationError) {
       setTimeError(validationError);
       return;
@@ -124,6 +197,7 @@ export function QuickLogDetailsScreen({
         trainingDuration,
         trainingTopic,
         trackerId,
+        walkDuration,
         zoomiesIntensity,
       })));
       if (isPromiseLike(result)) {
@@ -135,6 +209,19 @@ export function QuickLogDetailsScreen({
       setIsSaving(false);
     }
   };
+
+  if (readOnly) {
+    return (
+      <QuickLogReadOnlyDetails
+        auditMetadata={auditMetadata}
+        draft={initialDraft}
+        onClose={onClose}
+        status={status}
+        syncStatus={syncStatus}
+        trackerId={trackerId}
+      />
+    );
+  }
 
   return (
     <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
@@ -170,6 +257,7 @@ export function QuickLogDetailsScreen({
                   return (
                     <Button
                       accessibilityState={{ selected }}
+                      disabled={trackerLocked}
                       key={option.value}
                       label={t(option.labelKey)}
                       onPress={() => setTrackerId(option.value)}
@@ -185,6 +273,9 @@ export function QuickLogDetailsScreen({
             </Stack>
           </Card>
           {reviewState ? <QuickLogDetailsStatePreview state={reviewState} /> : null}
+          {auditMetadata ? (
+            <QuickLogDetailsAudit metadata={auditMetadata} syncStatus={syncStatus} />
+          ) : null}
           {trackerId === 'potty' ? (
             <PottyDetailsFields value={pottySubtype} onValueChange={setPottySubtype} />
           ) : null}
@@ -219,6 +310,14 @@ export function QuickLogDetailsScreen({
               onValueChange={setZoomiesIntensity}
             />
           ) : null}
+          {trackerId === 'walk' ? (
+            <TextField
+              keyboardType="number-pad"
+              label={t('quick-log.details.walk.duration-label')}
+              onChangeText={setWalkDuration}
+              value={walkDuration}
+            />
+          ) : null}
           {trackerId === 'observation' ? (
             <TextField
               label={t('quick-log.details.observation.title-label')}
@@ -233,17 +332,41 @@ export function QuickLogDetailsScreen({
           <Card>
             <Stack gap="sm">
               <AppText variant="headline">{t('quick-log.details.when.label')}</AppText>
-              <DateTimePicker
-                accessibilityLabel={t('quick-log.details.when.label')}
-                maximumDate={new Date()}
-                minimumDate={new Date(Date.now() - 7 * 24 * 60 * 60 * 1_000)}
-                mode="datetime"
-                display="compact"
-                onChange={updateOccurredAt}
-                style={styles.dateTimePicker}
-                testID="quick-log-details-occurred-at"
-                value={occurredAt}
+              <Stack direction="horizontal" gap="sm" wrap>
+                {timeOffsetOptions.map((option) => (
+                  <Button
+                    key={option.offsetMinutes}
+                    label={t(option.labelKey)}
+                    onPress={() => applyTimeOffset(option.offsetMinutes)}
+                    style={styles.timeOffsetButton}
+                    variant="secondary"
+                  />
+                ))}
+              </Stack>
+              <TextField
+                keyboardType="numbers-and-punctuation"
+                label={t('quick-log.details.when.numeric-label')}
+                maxLength={5}
+                onChangeText={updateNumericTime}
+                value={numericTime}
               />
+              <View
+                {...{
+                  onChange: updateOccurredAt,
+                  testID: 'quick-log-details-occurred-at',
+                  value: occurredAt,
+                }}>
+                <DateTimePicker
+                  accessibilityLabel={t('quick-log.details.when.label')}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(Date.now() - 7 * 24 * 60 * 60 * 1_000)}
+                  mode="datetime"
+                  display="compact"
+                  onChange={updateOccurredAt}
+                  style={styles.dateTimePicker}
+                  value={occurredAt}
+                />
+              </View>
               {timeError ? (
                 <AppText style={styles.errorText} variant="footnote">{timeError}</AppText>
               ) : null}
@@ -290,6 +413,227 @@ export function QuickLogDetailsScreen({
       </SheetSurface>
     </Screen>
   );
+}
+
+function QuickLogReadOnlyDetails({
+  auditMetadata,
+  draft,
+  onClose,
+  status,
+  syncStatus,
+  trackerId,
+}: Readonly<{
+  auditMetadata?: QuickLogDetailsAuditMetadata;
+  draft?: QuickLogDetailDraft;
+  onClose: () => void;
+  status: QuickLogDetailsStatus;
+  syncStatus?: 'failed' | 'pending' | 'synced';
+  trackerId: QuickLogDetailTrackerId;
+}>) {
+  const { locale, t } = useAppTranslation();
+  const note = draft?.note;
+  const observationTitle = draft?.trackerId === 'observation' ? draft.title : undefined;
+  const detailLines = getReadOnlyDetailLines(draft, t);
+
+  return (
+    <Screen contentStyle={styles.sheetContent} edges={['bottom']}>
+      <SheetSurface accessibilityLabel={t('quick-log.details.title')}>
+        <Stack gap="md">
+          <Stack align="flex-start" direction="horizontal" gap="sm" justify="space-between" wrap>
+            <AppText variant="title">{t('quick-log.details.title')}</AppText>
+            <Button label={t('common.close')} onPress={onClose} variant="tertiary" />
+          </Stack>
+          <Card>
+            <Stack gap="sm">
+              <AppText tone="secondary" variant="label">
+                {t('quick-log.details.states.permission-denied.status')}
+              </AppText>
+              <AppText variant="headline">
+                {observationTitle ?? t(getDetailTrackerLabelKey(trackerId))}
+              </AppText>
+              {note ? <AppText>{note}</AppText> : null}
+              {detailLines.map((line) => (
+                <AppText key={line.label}>
+                  {line.label}: {line.value}
+                </AppText>
+              ))}
+              {draft?.occurredAt ? (
+                <AppText tone="secondary">
+                  {new Intl.DateTimeFormat(locale, {
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  }).format(new Date(draft.occurredAt))}
+                </AppText>
+              ) : null}
+            </Stack>
+          </Card>
+          {status === 'error' ? <QuickLogDetailsStatePreview state="error" /> : null}
+          {auditMetadata ? (
+            <QuickLogDetailsAudit metadata={auditMetadata} syncStatus={syncStatus} />
+          ) : null}
+        </Stack>
+      </SheetSurface>
+    </Screen>
+  );
+}
+
+function QuickLogDetailsAudit({
+  metadata,
+  syncStatus,
+}: Readonly<{
+  metadata: QuickLogDetailsAuditMetadata;
+  syncStatus?: 'failed' | 'pending' | 'synced';
+}>) {
+  const { locale, t } = useAppTranslation();
+  const formatter = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  return (
+    <Card>
+      <Stack gap="xs" testID="quick-log-details-audit">
+        <AppText variant="headline">{t('quick-log.details.audit.title')}</AppText>
+        <AppText>{metadata.isCreatedByCurrentUser
+          ? t('quick-log.details.audit.actor-you')
+          : t('quick-log.details.audit.actor-household')}</AppText>
+        {syncStatus ? <AppText>{t(getSyncStatusLabelKey(syncStatus))}</AppText> : null}
+        <AppText tone="secondary">
+          {t('quick-log.details.audit.created', {
+            value: formatter.format(new Date(metadata.createdAt)),
+          })}
+        </AppText>
+        <AppText tone="secondary">
+          {t('quick-log.details.audit.updated', {
+            value: formatter.format(new Date(metadata.updatedAt)),
+          })}
+        </AppText>
+        <AppText tone="secondary">
+          {t('quick-log.details.audit.version', { version: metadata.version })}
+        </AppText>
+      </Stack>
+    </Card>
+  );
+}
+
+function getReadOnlyDetailLines(
+  draft: QuickLogDetailDraft | undefined,
+  t: ReturnType<typeof useAppTranslation>['t'],
+): readonly Readonly<{ label: string; value: string }>[] {
+  if (draft === undefined) {
+    return [];
+  }
+  if (draft.trackerId === 'potty' && draft.subtype !== undefined) {
+    return [{
+      label: t('quick-log.details.potty.subtype-label'),
+      value: t(readOnlyPottySubtypeKeys[draft.subtype]),
+    }];
+  }
+  if (draft.trackerId === 'feeding' && draft.amount !== undefined) {
+    return [{
+      label: t('quick-log.details.feeding.amount-label'),
+      value: t(readOnlyFeedingAmountKeys[draft.amount]),
+    }];
+  }
+  if (draft.trackerId === 'sleep') {
+    return [
+      ...(draft.action === undefined ? [] : [{
+        label: t('quick-log.details.sleep.action-label'),
+        value: t(readOnlySleepActionKeys[draft.action]),
+      }]),
+      ...(draft.durationMinutes === undefined ? [] : [{
+        label: t('quick-log.details.sleep.duration-label'),
+        value: t('quick-log.details.read-only.duration-minutes', {
+          count: draft.durationMinutes,
+        }),
+      }]),
+    ];
+  }
+  if (draft.trackerId === 'walk' && draft.durationMinutes !== undefined) {
+    return [{
+      label: t('quick-log.details.walk.duration-label'),
+      value: t('quick-log.details.read-only.duration-minutes', { count: draft.durationMinutes }),
+    }];
+  }
+  if (draft.trackerId === 'zoomies' && draft.intensity !== undefined) {
+    return [{
+      label: t('quick-log.details.zoomies.intensity-label'),
+      value: t(readOnlyZoomiesIntensityKeys[draft.intensity]),
+    }];
+  }
+  if (draft.trackerId === 'training') {
+    return [
+      ...(draft.topic === undefined ? [] : [{
+        label: t('quick-log.details.training.topic-label'),
+        value: t(readOnlyTrainingTopicKeys[draft.topic]),
+      }]),
+      ...(draft.durationBucket === undefined ? [] : [{
+        label: t('quick-log.details.training.duration-label'),
+        value: t(readOnlyTrainingDurationKeys[draft.durationBucket]),
+      }]),
+    ];
+  }
+
+  return [];
+}
+
+const readOnlyPottySubtypeKeys = {
+  inside: 'quick-log.details.potty.subtype.inside',
+  outside: 'quick-log.details.potty.subtype.outside',
+  poop: 'quick-log.details.potty.subtype.poop',
+} as const satisfies Record<PottySubtypeValue, I18nKey>;
+
+const readOnlyFeedingAmountKeys = {
+  meal: 'quick-log.details.feeding.amount.meal',
+  snack: 'quick-log.details.feeding.amount.snack',
+  water: 'quick-log.details.feeding.amount.water',
+} as const satisfies Record<FeedingAmountValue, I18nKey>;
+
+const readOnlySleepActionKeys = {
+  retrospective: 'quick-log.details.sleep.action.retrospective',
+  start: 'quick-log.details.sleep.action.start',
+  wake: 'quick-log.details.sleep.action.wake',
+} as const satisfies Record<SleepActionValue, I18nKey>;
+
+const readOnlyZoomiesIntensityKeys = {
+  high: 'quick-log.details.zoomies.intensity.high',
+  low: 'quick-log.details.zoomies.intensity.low',
+  medium: 'quick-log.details.zoomies.intensity.medium',
+} as const satisfies Record<Exclude<ZoomiesIntensityValue, 'none'>, I18nKey>;
+
+const readOnlyTrainingTopicKeys = {
+  crate: 'quick-log.details.training.topic.crate',
+  leash: 'quick-log.details.training.topic.leash',
+  other: 'quick-log.details.training.topic.other',
+  recall: 'quick-log.details.training.topic.recall',
+  settling: 'quick-log.details.training.topic.settling',
+  sit: 'quick-log.details.training.topic.sit',
+} as const satisfies Record<TrainingTopicValue, I18nKey>;
+
+const readOnlyTrainingDurationKeys = {
+  long: 'quick-log.details.training.duration.long',
+  medium: 'quick-log.details.training.duration.medium',
+  short: 'quick-log.details.training.duration.short',
+} as const satisfies Record<TrainingDurationValue, I18nKey>;
+
+function getDetailTrackerLabelKey(trackerId: QuickLogDetailTrackerId): I18nKey {
+  return `quick-log.details.tabs.${trackerId}`;
+}
+
+function getSyncStatusLabelKey(status: 'failed' | 'pending' | 'synced'): I18nKey {
+  if (status === 'failed') {
+    return 'timeline.pills.failed';
+  }
+  if (status === 'pending') {
+    return 'timeline.pills.pending';
+  }
+  return 'timeline.pills.synced';
 }
 
 function FeedingDetailsFields({
@@ -512,6 +856,7 @@ function createDraftInput(input: Readonly<{
   trainingDuration: TrainingDurationValue;
   trainingTopic: TrainingTopicValue;
   trackerId: QuickLogDetailTrackerId;
+  walkDuration: string;
   zoomiesIntensity: ZoomiesIntensityValue;
 }>): QuickLogDetailDraft {
   const note = input.note.trim() || undefined;
@@ -584,7 +929,37 @@ function createDraftInput(input: Readonly<{
     };
   }
 
+  if (input.trackerId === 'walk') {
+    return {
+      durationMinutes: input.walkDuration.trim() === ''
+        ? undefined
+        : Number(input.walkDuration),
+      note,
+      occurredAt,
+      trackerId: input.trackerId,
+    };
+  }
+
   return { note, occurredAt, trackerId: input.trackerId };
+}
+
+function getInitialOccurredAt(initialDraft: QuickLogDetailDraft | undefined): Date {
+  return initialDraft?.occurredAt === undefined ? new Date() : new Date(initialDraft.occurredAt);
+}
+
+function formatNumericTime(date: Date): string {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function parseNumericTime(value: string, baseDate: Date): Date | null {
+  const match = /^(?<hour>[01]\d|2[0-3]):(?<minute>[0-5]\d)$/.exec(value.trim());
+  if (match?.groups === undefined) {
+    return null;
+  }
+
+  const next = new Date(baseDate);
+  next.setHours(Number(match.groups.hour), Number(match.groups.minute), 0, 0);
+  return next;
 }
 
 function validateOccurredAt(date: Date, now: Date, t: (key: I18nKey) => string): string | undefined {
@@ -706,6 +1081,13 @@ const sleepDurationOptions = [
   value: SleepDurationValue;
 }[];
 
+const timeOffsetOptions = [
+  { labelKey: 'quick-log.details.when.now', offsetMinutes: 0 },
+  { labelKey: 'quick-log.details.when.minus-15', offsetMinutes: 15 },
+  { labelKey: 'quick-log.details.when.minus-30', offsetMinutes: 30 },
+  { labelKey: 'quick-log.details.when.minus-60', offsetMinutes: 60 },
+] as const satisfies readonly { labelKey: I18nKey; offsetMinutes: number }[];
+
 const zoomiesIntensityOptions = [
   {
     labelKey: 'quick-log.details.zoomies.intensity.none',
@@ -807,5 +1189,9 @@ const styles = StyleSheet.create({
   },
   title: {
     flexShrink: 1,
+  },
+  timeOffsetButton: {
+    flexGrow: 1,
+    minHeight: 44,
   },
 });
