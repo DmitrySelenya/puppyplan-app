@@ -343,6 +343,16 @@ describe('Today Quick Log state integration', () => {
       name: i18n.t('today.history.delete-action'),
     });
     expect(deleteAction).toBeTruthy();
+    // AC-P33-DEL: deleting a logged record is the one destructive action in the day list. Styled
+    // as a tertiary link it reads as a peer of Edit and shares the same accent, so nothing but the
+    // word warns the owner. The design system carries a destructive variant for exactly this.
+    expect(
+      StyleSheet.flatten(
+        typeof deleteAction.props.style === 'function'
+          ? deleteAction.props.style({ pressed: false })
+          : deleteAction.props.style,
+      ).backgroundColor,
+    ).toBe(tokens.color.status.danger);
     expect(actions.onEdit).not.toHaveBeenCalled();
     fireEvent.press(deleteAction);
     expect(actions.onDelete).toHaveBeenCalledWith({

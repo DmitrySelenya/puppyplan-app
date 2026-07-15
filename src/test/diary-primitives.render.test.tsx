@@ -223,6 +223,32 @@ describe('InfoHero', () => {
     expect(screen.getByTestId('hero').props.accessibilityRole).toBe('summary');
     expect(flatten(screen.getByTestId('hero')).borderRadius).toBe(tokens.radius.hero);
   });
+
+  it('AC-P33-HERO sets a guidance title in the display face above the body', () => {
+    render(
+      <InfoHero
+        message="Diary stays quiet when logs are current."
+        testID="hero"
+        title="Keep the rhythm visible"
+      />,
+    );
+
+    // Fusing the title into the message string renders it as the first line of the paragraph:
+    // same face, same size, same tone. The title has to carry the display face to read as a title.
+    expect(flatten(screen.getByText('Keep the rhythm visible')).fontFamily)
+      .toBe(designFontFamilies.display.semibold);
+    expect(flatten(screen.getByText('Diary stays quiet when logs are current.')).fontFamily)
+      .toBe(designFontFamilies.text.regular);
+  });
+
+  it('AC-P33-HERO subordinates the body tone only when a title is present', () => {
+    const { rerender } = render(<InfoHero message="Standalone tip." testID="hero" />);
+    const standaloneColor = flatten(screen.getByText('Standalone tip.')).color;
+
+    rerender(<InfoHero message="Body copy." testID="hero" title="A title" />);
+
+    expect(flatten(screen.getByText('Body copy.')).color).not.toBe(standaloneColor);
+  });
 });
 
 describe('EmptyIllustration', () => {

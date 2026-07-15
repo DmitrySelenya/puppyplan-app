@@ -1079,12 +1079,16 @@ function DiaryInfoHero({
   const { t } = useAppTranslation();
   const copy = todayHeroCopy[hero.variant];
   const body = hero.variant === 'first_day' ? '' : t(copy.bodyKey);
-  const message = body.trim() ? `${t(copy.titleKey)}\n${body}` : t(copy.titleKey);
+  const title = t(copy.titleKey);
   const primaryKey = 'primaryKey' in copy ? copy.primaryKey : undefined;
 
   return (
     <Stack gap="sm">
-      <InfoHero message={message} testID="diary-info-hero" />
+      {body.trim() ? (
+        <InfoHero message={body} testID="diary-info-hero" title={title} />
+      ) : (
+        <InfoHero message={title} testID="diary-info-hero" />
+      )}
       {primaryKey === undefined || onPrimaryAction === undefined ? null : (
         <Button
           label={t(primaryKey)}
@@ -1623,7 +1627,7 @@ function DiaryFactRow({
             <Button
               label={deleteLabel}
               onPress={() => { onDelete(createQuickLogDeleteRequest(event)); }}
-              variant="tertiary"
+              variant="destructive"
             />
           ) : null}
         </Stack>
