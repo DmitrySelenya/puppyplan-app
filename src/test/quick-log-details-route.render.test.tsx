@@ -123,13 +123,13 @@ describe('QuickLogDetailsRoute', () => {
       </AppProviders>,
     );
 
-    expect(screen.queryByText(i18n.t('quick-log.details.sleep.duration-label'))).toBeNull();
+    expect(screen.queryByTestId('quick-log-details-sleep-start-pill')).toBeNull();
 
     fireEvent.press(screen.getByRole('tab', {
       name: i18n.t('quick-log.details.sleep.action.retrospective'),
     }));
 
-    expect(screen.getByText(i18n.t('quick-log.details.sleep.duration-label'))).toBeTruthy();
+    expect(screen.getByTestId('quick-log-details-sleep-start-pill')).toBeTruthy();
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('quick-log.details.skip'),

@@ -847,7 +847,12 @@
           "retrospective": "Добавить завершённый сон"
         },
         "duration-label": "Сколько примерно? (минуты)",
-        "duration-error": "Введите минуты от 1 до 1440."
+        "start-label": "Уснул",
+        "end-label": "Проснулся",
+        "start-placeholder": "Выберите время",
+        "range-missing-error": "Укажите, когда сон начался.",
+        "range-error": "Пробуждение должно быть позже начала сна.",
+        "range-too-long-error": "Один сон не может длиться больше 24 часов."
       },
       "zoomies": {
         "intensity-label": "Насколько активно?",

@@ -851,7 +851,12 @@
           "retrospective": "Add completed sleep"
         },
         "duration-label": "About how long? (minutes)",
-        "duration-error": "Enter minutes between 1 and 1440."
+        "start-label": "Fell asleep",
+        "end-label": "Woke up",
+        "start-placeholder": "Choose time",
+        "range-missing-error": "Add when the sleep started.",
+        "range-error": "Wake-up time must be after the sleep started.",
+        "range-too-long-error": "One sleep cannot be longer than 24 hours."
       },
       "zoomies": {
         "intensity-label": "How intense?",

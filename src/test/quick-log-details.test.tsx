@@ -24,6 +24,17 @@ function toTimestamp(value: Date | number): number {
   return typeof value === 'number' ? value : value.getTime();
 }
 
+function setSleepRange(start: Date, end: Date) {
+  fireEvent.press(screen.getByTestId('quick-log-details-sleep-start-pill'));
+  fireEvent(screen.getByTestId('quick-log-details-sleep-start-wheel'), 'onChange', {
+    nativeEvent: { timestamp: start.getTime() },
+  });
+  fireEvent.press(screen.getByTestId('quick-log-details-sleep-end-pill'));
+  fireEvent(screen.getByTestId('quick-log-details-sleep-end-wheel'), 'onChange', {
+    nativeEvent: { timestamp: end.getTime() },
+  });
+}
+
 function renderDetails(
   element: ReactElement,
 ) {
@@ -123,16 +134,42 @@ describe('Quick Log details', () => {
     }));
   });
 
-  it('AC-QN-FIX-SLEEP-DEFAULT exposes duration only for retrospective sleep', () => {
+  it('AC-QN-FIX-SLEEP-DEFAULT exposes the sleep range only for retrospective sleep', () => {
     renderDetails(<QuickLogDetailsScreen initialTrackerId="sleep" />);
 
-    expect(screen.queryByLabelText(i18n.t('quick-log.details.sleep.duration-label'))).toBeNull();
+    expect(screen.queryByTestId('quick-log-details-sleep-start-pill')).toBeNull();
 
     fireEvent.press(screen.getByRole('tab', {
       name: i18n.t('quick-log.details.sleep.action.retrospective'),
     }));
 
-    expect(screen.getByLabelText(i18n.t('quick-log.details.sleep.duration-label'))).toBeTruthy();
+    expect(screen.getByTestId('quick-log-details-sleep-start-pill')).toBeTruthy();
+    expect(screen.getByTestId('quick-log-details-sleep-end-pill')).toBeTruthy();
+  });
+
+  it('AC-QN-NIGHT opens one sleep wheel at a time so scrolling cannot drag the other', () => {
+    renderDetails(
+      <QuickLogDetailsScreen initialSleepAction="retrospective" initialTrackerId="sleep" />,
+    );
+
+    fireEvent.press(screen.getByTestId('quick-log-details-sleep-start-pill'));
+    expect(screen.getByTestId('quick-log-details-sleep-start-wheel')).toBeTruthy();
+    expect(screen.queryByTestId('quick-log-details-sleep-end-wheel')).toBeNull();
+
+    // Two wheels at once make the card taller than the sheet; scrolling then rewrites a set time.
+    fireEvent.press(screen.getByTestId('quick-log-details-sleep-end-pill'));
+    expect(screen.getByTestId('quick-log-details-sleep-end-wheel')).toBeTruthy();
+    expect(screen.queryByTestId('quick-log-details-sleep-start-wheel')).toBeNull();
+  });
+
+  it('AC-QN-NIGHT labels both sleep pills visibly, not only for screen readers', () => {
+    renderDetails(
+      <QuickLogDetailsScreen initialSleepAction="retrospective" initialTrackerId="sleep" />,
+    );
+
+    // Two bare pills would read as "Choose time / 11:48" with nothing saying which end is which.
+    expect(screen.getByText(i18n.t('quick-log.details.sleep.start-label'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.sleep.end-label'))).toBeTruthy();
   });
 
   it('AC-QN-FIX-COMPACT requests content distribution only for the Sleep action control', () => {
@@ -261,31 +298,60 @@ describe('Quick Log details', () => {
     }
   });
 
-  it('AC-QN-NIGHT records a retrospective sleep of arbitrary length, not just the chip presets', () => {
+  it('AC-QN-NIGHT records a retrospective sleep as the from–to range the owner actually knows', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 6, 15, 9, 0, 0));
     const onSave = jest.fn();
 
-    renderDetails(
-      <QuickLogDetailsScreen
-        initialSleepAction="retrospective"
-        initialTrackerId="sleep"
-        onSave={onSave}
-      />,
-    );
+    try {
+      renderDetails(
+        <QuickLogDetailsScreen
+          initialSleepAction="retrospective"
+          initialTrackerId="sleep"
+          onSave={onSave}
+        />,
+      );
 
-    fireEvent.changeText(
-      screen.getByLabelText(i18n.t('quick-log.details.sleep.duration-label')),
-      '414',
-    );
-    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+      setSleepRange(
+        new Date(2026, 6, 14, 23, 41, 0),
+        new Date(2026, 6, 15, 6, 35, 0),
+      );
+      fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
 
-    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
-      action: 'retrospective',
-      durationMinutes: 414,
-      trackerId: 'sleep',
-    }));
+      // The owner picks two times; the 414 minutes are derived, never typed.
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'retrospective',
+        durationMinutes: 414,
+        occurredAt: new Date(2026, 6, 15, 6, 35, 0).toISOString(),
+        trackerId: 'sleep',
+      }));
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
-  it('AC-QN-NIGHT rejects a sleep duration the payload schema cannot carry', () => {
+  it('AC-QN-NIGHT shows the derived duration so the owner can sanity-check the range', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 6, 15, 9, 0, 0));
+
+    try {
+      renderDetails(
+        <QuickLogDetailsScreen initialSleepAction="retrospective" initialTrackerId="sleep" />,
+      );
+
+      setSleepRange(
+        new Date(2026, 6, 14, 23, 41, 0),
+        new Date(2026, 6, 15, 6, 35, 0),
+      );
+
+      expect(screen.getByTestId('quick-log-details-sleep-derived-duration'))
+        .toHaveTextContent('6 hr 54 min');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('AC-QN-NIGHT blocks saving until the sleep start is chosen rather than defaulting to a guess', () => {
     const onSave = jest.fn();
 
     renderDetails(
@@ -296,14 +362,106 @@ describe('Quick Log details', () => {
       />,
     );
 
-    fireEvent.changeText(
-      screen.getByLabelText(i18n.t('quick-log.details.sleep.duration-label')),
-      '1441',
-    );
+    expect(screen.getByTestId('quick-log-details-sleep-start-pill'))
+      .toHaveTextContent(i18n.t('quick-log.details.sleep.start-placeholder'));
+
     fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
 
     expect(onSave).not.toHaveBeenCalled();
-    expect(screen.getByText(i18n.t('quick-log.details.sleep.duration-error'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.details.sleep.range-missing-error'))).toBeTruthy();
+  });
+
+  it('AC-QN-NIGHT rejects a wake-up that precedes the sleep', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 6, 15, 9, 0, 0));
+    const onSave = jest.fn();
+
+    try {
+      renderDetails(
+        <QuickLogDetailsScreen
+          initialSleepAction="retrospective"
+          initialTrackerId="sleep"
+          onSave={onSave}
+        />,
+      );
+
+      setSleepRange(
+        new Date(2026, 6, 15, 6, 35, 0),
+        new Date(2026, 6, 14, 23, 41, 0),
+      );
+      fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+      expect(onSave).not.toHaveBeenCalled();
+      expect(screen.getByText(i18n.t('quick-log.details.sleep.range-error'))).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('AC-QN-NIGHT rejects a range the payload schema cannot carry', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 6, 15, 9, 0, 0));
+    const onSave = jest.fn();
+
+    try {
+      renderDetails(
+        <QuickLogDetailsScreen
+          initialSleepAction="retrospective"
+          initialTrackerId="sleep"
+          onSave={onSave}
+        />,
+      );
+
+      setSleepRange(
+        new Date(2026, 6, 14, 8, 0, 0),
+        new Date(2026, 6, 15, 8, 1, 0),
+      );
+      fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+      expect(onSave).not.toHaveBeenCalled();
+      expect(screen.getByText(i18n.t('quick-log.details.sleep.range-too-long-error'))).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('AC-QN-NIGHT seeds both pills when an existing retrospective sleep is edited', () => {
+    renderDetails(
+      <QuickLogDetailsScreen
+        initialDraft={{
+          action: 'retrospective',
+          durationMinutes: 414,
+          occurredAt: new Date(2026, 6, 15, 6, 35, 0).toISOString(),
+          trackerId: 'sleep',
+        }}
+      />,
+    );
+
+    // The stored row carries end + duration, so the start pill has to be reconstructed backwards.
+    fireEvent.press(screen.getByTestId('quick-log-details-sleep-start-pill'));
+    expect(screen.getByTestId('quick-log-details-sleep-start-wheel').props.date)
+      .toBe(new Date(2026, 6, 14, 23, 41, 0).getTime());
+
+    fireEvent.press(screen.getByTestId('quick-log-details-sleep-end-pill'));
+    expect(screen.getByTestId('quick-log-details-sleep-end-wheel').props.date)
+      .toBe(new Date(2026, 6, 15, 6, 35, 0).getTime());
+  });
+
+  it('AC-QN-NIGHT gives retrospective sleep one time control, not two competing ones', () => {
+    renderDetails(
+      <QuickLogDetailsScreen initialSleepAction="retrospective" initialTrackerId="sleep" />,
+    );
+
+    // "Woke up" is occurredAt; a second generic When card would hide that relationship.
+    expect(screen.queryByTestId('quick-log-details-when-pill')).toBeNull();
+    expect(screen.getByTestId('quick-log-details-sleep-end-pill')).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('tab', {
+      name: i18n.t('quick-log.details.sleep.action.start'),
+    }));
+
+    expect(screen.getByTestId('quick-log-details-when-pill')).toBeTruthy();
+    expect(screen.queryByTestId('quick-log-details-sleep-end-pill')).toBeNull();
   });
 
   it('AC-QN-POLISH titles the sheet as an edit when an existing fact is opened', () => {
@@ -524,10 +682,8 @@ describe('Quick Log details', () => {
       name: i18n.t(`quick-log.details.sleep.action.${action}`),
     }));
     if (action === 'retrospective') {
-      fireEvent.changeText(
-        screen.getByLabelText(i18n.t('quick-log.details.sleep.duration-label')),
-        '30',
-      );
+      const wokeUp = new Date();
+      setSleepRange(new Date(wokeUp.getTime() - 30 * 60_000), wokeUp);
     }
     fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
 

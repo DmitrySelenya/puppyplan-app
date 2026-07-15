@@ -303,6 +303,10 @@ recorded.
   `retrospective` + `duration_minutes`) in the UI: fast lane Sleep → "fell asleep" starts an open
   interval; next tap offers "woke up" completing it; detailed composer accepts explicit duration.
   Diary renders the interval (start–end) on one row.
+  - **Superseded 2026-07-15:** "detailed composer accepts explicit duration" is replaced by a
+    from–to range (two `WhenPicker` pills; duration derived). Dogfood showed owners read the night
+    as "23:41 → 6:35" and typing minutes made them subtract in their head at 6am. Model unchanged —
+    it already stores end + duration. Lock: `docs/design/v1/specs/quick-log-sleep-retrospective.md`.
 
 **Acceptance:** detailed and fast-lane events are payload-identical in shape; no truncated times;
 the "7:42 fell asleep / 8:16 woke" flow is two taps and renders as one interval row.
@@ -340,6 +344,32 @@ data renders truthfully (Phase 2), and entry speed for their actual cadence is a
 chat speed (Phases 1d + 3). Each phase's evidence is recorded here with honest PASS/FAIL.
 
 ## Changelog
+
+- 2026-07-15 (retrospective sleep becomes a from–to range): dogfood showed the last big capture
+  friction was arithmetic — the owner's night is "23:41 → 6:35", and the composer asked for 414
+  minutes, i.e. subtraction in their head at 6am. The model never needed changing: a retrospective
+  sleep already stores end (`occurred_at`) + `duration_minutes`, and `src/lib/diary/
+  sleep-intervals.ts` already derived the start for the Diary row, so the range was expressible all
+  along and only the input affordance was missing. Two `WhenPicker` pills ("Fell asleep" / "Woke
+  up") now bracket the sleep and the duration is derived (`src/lib/datetime/sleep-range.ts`), never
+  typed; crossing midnight needs no special case because both ends are absolute instants. The start
+  pill starts **empty** and blocks Save ("Add when the sleep started.") rather than defaulting to a
+  guess, which would save a night nobody entered. The generic "When" card hides for retrospective
+  sleep — "Woke up" *is* `occurredAt`, and two time controls in separate cards hide their
+  relationship. This **supersedes** phase 2c's "detailed composer accepts explicit duration".
+  Stage 0 lock: no artboard exists (manifest lists the sleep/feeding/zoomies detail forms as an
+  open gap), so the owner approved the scope in chat instead; recorded in
+  `docs/design/v1/specs/quick-log-sleep-retrospective.md`. Stage 4 **PASS** (SE, synthetic) and it
+  earned its keep — it caught two defects the render tests missed: the pills had no *visible*
+  labels (tests queried the accessibility label, which existed, so they passed while a sighted
+  owner saw "Choose time / 11:48" with no way to tell the ends apart), and two wheels open at once
+  made the card taller than the sheet so scrolling dragged a wheel and silently rewrote a set time
+  (hit by accident while driving the sim; opening one wheel now collapses the other). Both are now
+  covered by tests. Verified end to end: 23:41 → 06:35 derives "6 hr 54 min"; a saved range renders
+  in the Diary as "Slept 10:56 PM–11:56 AM · 13 hr". Gate: `npm run check` exit 0. Still open:
+  play intervals ("12:02–12:10") remain inexpressible, the capture pill (24h) disagrees with Diary
+  rows (12h), and Save on a retrospective sleep returns to the Sleep action choice rather than the
+  Diary.
 
 - 2026-07-15 (overnight dogfood: two silent-data-loss fixes + two frictions): a roleplay E2E pass
   across the midnight boundary (owner's Telegram routine replayed in the simulator) found that

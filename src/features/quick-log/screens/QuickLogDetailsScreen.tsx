@@ -23,6 +23,8 @@ import {
   type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
+import { formatDurationMinutes } from '@/lib/datetime/duration-label';
+import { getSleepRangeMinutes, type SleepRangeResult } from '@/lib/datetime/sleep-range';
 import { formatWhenLabel, getBackdateBounds } from '@/lib/datetime/when-label';
 import { useAppTranslation, type I18nKey } from '@/lib/i18n';
 
@@ -64,8 +66,13 @@ type TrainingDurationValue = 'short' | 'medium' | 'long';
 type TrainingTopicValue = 'recall' | 'sit' | 'crate' | 'leash' | 'settling' | 'other';
 type ZoomiesIntensityValue = 'none' | 'low' | 'medium' | 'high';
 
-/** The ceiling the sleep v2 payload schema accepts (24 hours). */
-const SLEEP_DURATION_MAX_MINUTES = 1440;
+type SleepRangeErrorReason = 'missing' | 'not-positive' | 'too-long';
+
+const sleepRangeErrorKeys = {
+  'missing': 'quick-log.details.sleep.range-missing-error',
+  'not-positive': 'quick-log.details.sleep.range-error',
+  'too-long': 'quick-log.details.sleep.range-too-long-error',
+} as const satisfies Record<SleepRangeErrorReason, I18nKey>;
 
 const noop = () => undefined;
 
@@ -106,11 +113,13 @@ export function QuickLogDetailsScreen({
       ? initialDraft.action !== undefined || initialSleepAction !== undefined
       : initialSleepAction !== undefined,
   );
-  const [sleepDuration, setSleepDuration] = useState(() =>
-    initialDraft?.trackerId === 'sleep' && initialDraft.durationMinutes !== undefined
-      ? String(initialDraft.durationMinutes)
-      : '');
-  const [sleepDurationError, setSleepDurationError] = useState(false);
+  // A stored retrospective sleep carries end + duration, so the start it was entered as has to be
+  // reconstructed backwards. `null` means the owner has not picked one yet — never a guessed default,
+  // which would save a night nobody entered.
+  const [sleepStart, setSleepStart] = useState<Date | null>(() =>
+    getInitialSleepStart(initialDraft));
+  const [sleepStartWheelOpen, setSleepStartWheelOpen] = useState(false);
+  const [sleepRangeError, setSleepRangeError] = useState<SleepRangeErrorReason>();
   const [walkDuration, setWalkDuration] = useState(() =>
     initialDraft?.trackerId === 'walk' && initialDraft.durationMinutes !== undefined
       ? String(initialDraft.durationMinutes)
@@ -139,7 +148,14 @@ export function QuickLogDetailsScreen({
     setOccurredAt(next);
     setOccurredAtEdited(true);
     setTimeError(validateOccurredAt(next, new Date(), t));
+    setSleepRangeError(undefined);
   };
+
+  // For a retrospective sleep `occurredAt` is the wake time, so the range is start → occurredAt.
+  const isRetrospectiveSleep = trackerId === 'sleep' && sleepAction === 'retrospective';
+  const sleepRange = sleepStart === null
+    ? undefined
+    : getSleepRangeMinutes(sleepStart.getTime(), occurredAt.getTime());
 
   const applyTimeOffset = (offsetMinutes: number) => {
     const next = new Date(Date.now() - offsetMinutes * 60_000);
@@ -157,15 +173,18 @@ export function QuickLogDetailsScreen({
       return;
     }
 
-    const parsedSleepDuration = parseSleepDuration(sleepDuration);
-    if (
-      trackerId === 'sleep'
-      && sleepAction === 'retrospective'
-      && (parsedSleepDuration === undefined || parsedSleepDuration === null)
-    ) {
-      setSleepDurationError(true);
-      setPersistenceError(false);
-      return;
+    if (trackerId === 'sleep' && sleepAction === 'retrospective') {
+      if (sleepRange === undefined) {
+        setSleepRangeError('missing');
+        setPersistenceError(false);
+        return;
+      }
+
+      if (!sleepRange.ok) {
+        setSleepRangeError(sleepRange.reason);
+        setPersistenceError(false);
+        return;
+      }
     }
 
     if (trackerId === 'observation'
@@ -188,7 +207,7 @@ export function QuickLogDetailsScreen({
         pottySubtype,
         sleepAction,
         sleepActionTouched,
-        sleepDuration,
+        sleepDurationMinutes: sleepRange?.ok === true ? sleepRange.durationMinutes : undefined,
         trainingDuration,
         trainingTopic,
         trackerId,
@@ -283,18 +302,42 @@ export function QuickLogDetailsScreen({
           {trackerId === 'sleep' ? (
             <SleepDetailsFields
               action={sleepAction}
-              errorText={sleepDurationError
-                ? t('quick-log.details.sleep.duration-error')
-                : undefined}
+              endValue={occurredAt}
+              endWheelOpen={wheelOpen}
+              errorText={sleepRangeError === undefined
+                ? undefined
+                : t(sleepRangeErrorKeys[sleepRangeError])}
+              locale={locale}
+              maximumDate={backdateBounds.maximumDate}
+              minimumDate={backdateBounds.minimumDate}
               onActionChange={(action) => {
                 setSleepAction(action);
                 setSleepActionTouched(true);
+                setSleepRangeError(undefined);
               }}
-              value={sleepDuration}
-              onValueChange={(value) => {
-                setSleepDuration(value);
-                setSleepDurationError(false);
+              onEndChange={updateOccurredAt}
+              // Both wheels open at once make the card taller than the sheet, so scrolling it drags
+              // a wheel instead and silently rewrites a time the owner already set.
+              onEndWheelOpenChange={(open) => {
+                setWheelOpen(open);
+                if (open) {
+                  setSleepStartWheelOpen(false);
+                }
               }}
+              onStartChange={(next) => {
+                setSleepStart(next);
+                setSleepRangeError(undefined);
+              }}
+              onStartWheelOpenChange={(open) => {
+                setSleepStartWheelOpen(open);
+                if (open) {
+                  setWheelOpen(false);
+                }
+              }}
+              range={sleepRange}
+              startValue={sleepStart}
+              startWheelOpen={sleepStartWheelOpen}
+              timeErrorText={timeError}
             />
           ) : null}
           {trackerId === 'training' ? (
@@ -330,6 +373,11 @@ export function QuickLogDetailsScreen({
               value={observationTitle}
             />
           ) : null}
+          {/*
+            * Retrospective sleep owns its own time control: "Woke up" *is* occurredAt, and a second
+            * generic When card would put the two ends of one range in separate cards.
+            */}
+          {isRetrospectiveSleep ? null : (
           <Card>
             <Stack gap="sm">
               <AppText variant="headline">{t('quick-log.details.when.label')}</AppText>
@@ -361,6 +409,7 @@ export function QuickLogDetailsScreen({
               ) : null}
             </Stack>
           </Card>
+          )}
           <TextField
             label={t('quick-log.details.note.label')}
             maxLength={500}
@@ -681,16 +730,38 @@ function PottyDetailsFields({
 
 function SleepDetailsFields({
   action,
+  endValue,
+  endWheelOpen,
   errorText,
+  locale,
+  maximumDate,
+  minimumDate,
   onActionChange,
-  onValueChange,
-  value,
+  onEndChange,
+  onEndWheelOpenChange,
+  onStartChange,
+  onStartWheelOpenChange,
+  range,
+  startValue,
+  startWheelOpen,
+  timeErrorText,
 }: Readonly<{
   action: SleepActionValue;
+  endValue: Date;
+  endWheelOpen: boolean;
   errorText?: string;
+  locale: string;
+  maximumDate: Date;
+  minimumDate: Date;
   onActionChange: (value: SleepActionValue) => void;
-  onValueChange: (value: string) => void;
-  value: string;
+  onEndChange: (value: Date) => void;
+  onEndWheelOpenChange: (open: boolean) => void;
+  onStartChange: (value: Date) => void;
+  onStartWheelOpenChange: (open: boolean) => void;
+  range: SleepRangeResult | undefined;
+  startValue: Date | null;
+  startWheelOpen: boolean;
+  timeErrorText?: string;
 }>) {
   const { t } = useAppTranslation();
 
@@ -709,14 +780,58 @@ function SleepDetailsFields({
           value={action}
         />
         {action === 'retrospective' ? (
-          <TextField
-            errorText={errorText}
-            keyboardType="number-pad"
-            label={t('quick-log.details.sleep.duration-label')}
-            maxLength={4}
-            onChangeText={onValueChange}
-            value={value}
-          />
+          <>
+            {/*
+              * Two bare pills read as "Choose time / 11:48" with nothing saying which end is which,
+              * so each carries a visible label and not just an accessibility one.
+              */}
+            <AppText variant="subheadline">{t('quick-log.details.sleep.start-label')}</AppText>
+            <WhenPicker
+              hint={t('quick-log.details.when.hint')}
+              label={t('quick-log.details.sleep.start-label')}
+              maximumDate={maximumDate}
+              minimumDate={minimumDate}
+              onChange={onStartChange}
+              onOpenChange={onStartWheelOpenChange}
+              open={startWheelOpen}
+              testID="quick-log-details-sleep-start"
+              // With no start chosen the wheel still has to open somewhere; the wake time is the
+              // closest thing to the owner's intent.
+              value={startValue ?? endValue}
+              valueText={startValue === null
+                ? t('quick-log.details.sleep.start-placeholder')
+                : formatWhenLabel(startValue, locale)}
+            />
+            <AppText variant="subheadline">{t('quick-log.details.sleep.end-label')}</AppText>
+            <WhenPicker
+              hint={t('quick-log.details.when.hint')}
+              label={t('quick-log.details.sleep.end-label')}
+              maximumDate={maximumDate}
+              minimumDate={minimumDate}
+              onChange={onEndChange}
+              onOpenChange={onEndWheelOpenChange}
+              open={endWheelOpen}
+              testID="quick-log-details-sleep-end"
+              value={endValue}
+              valueText={formatWhenLabel(endValue, locale)}
+            />
+            {errorText === undefined && timeErrorText === undefined ? (
+              <AppText
+                testID="quick-log-details-sleep-derived-duration"
+                tone="secondary"
+                variant="footnote">
+                {range?.ok === true ? formatDurationMinutes(range.durationMinutes, t) : ''}
+              </AppText>
+            ) : (
+              <AppText
+                accessibilityRole="alert"
+                style={styles.errorText}
+                testID="quick-log-details-sleep-derived-duration"
+                variant="footnote">
+                {errorText ?? timeErrorText}
+              </AppText>
+            )}
+          </>
         ) : null}
       </Stack>
     </Card>
@@ -844,7 +959,7 @@ function createDraftInput(input: Readonly<{
   pottySubtype: PottySubtypeValue;
   sleepAction: SleepActionValue;
   sleepActionTouched: boolean;
-  sleepDuration: string;
+  sleepDurationMinutes: number | undefined;
   trainingDuration: TrainingDurationValue;
   trainingTopic: TrainingTopicValue;
   trackerId: QuickLogDetailTrackerId;
@@ -876,7 +991,7 @@ function createDraftInput(input: Readonly<{
   }
 
   if (input.trackerId === 'sleep') {
-    const durationMinutes = parseSleepDuration(input.sleepDuration) ?? undefined;
+    const durationMinutes = input.sleepDurationMinutes;
 
     if (!input.sleepActionTouched && durationMinutes !== undefined) {
       return {
@@ -938,23 +1053,16 @@ function createDraftInput(input: Readonly<{
 }
 
 /**
- * Sleep duration is free-entry minutes so an overnight sleep is expressible at all. Returns the
- * minutes, `undefined` for a blank field, or `null` for anything the v2 payload cannot carry.
+ * A stored retrospective sleep keeps its end (`occurredAt`) and duration, so the start the owner
+ * originally picked only exists as their difference.
  */
-function parseSleepDuration(value: string): number | undefined | null {
-  const trimmed = value.trim();
-
-  if (trimmed === '') {
-    return undefined;
-  }
-
-  if (!/^\d+$/.test(trimmed)) {
+function getInitialSleepStart(initialDraft: QuickLogDetailDraft | undefined): Date | null {
+  if (initialDraft?.trackerId !== 'sleep' || initialDraft.durationMinutes === undefined) {
     return null;
   }
 
-  const minutes = Number(trimmed);
-
-  return minutes >= 1 && minutes <= SLEEP_DURATION_MAX_MINUTES ? minutes : null;
+  return new Date(getInitialOccurredAt(initialDraft).getTime()
+    - initialDraft.durationMinutes * 60_000);
 }
 
 function getInitialOccurredAt(initialDraft: QuickLogDetailDraft | undefined): Date {

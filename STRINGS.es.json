@@ -842,7 +842,12 @@
           "retrospective": "Añadir sueño terminado"
         },
         "duration-label": "¿Cuánto duró? (minutos)",
-        "duration-error": "Introduce minutos entre 1 y 1440."
+        "start-label": "Se durmió",
+        "end-label": "Se despertó",
+        "start-placeholder": "Elige la hora",
+        "range-missing-error": "Indica cuándo empezó el sueño.",
+        "range-error": "El despertar debe ser posterior al inicio del sueño.",
+        "range-too-long-error": "Un sueño no puede durar más de 24 horas."
       },
       "zoomies": {
         "intensity-label": "¿Qué intensidad tuvo?",
