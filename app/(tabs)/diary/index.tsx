@@ -15,7 +15,7 @@ export default function DiaryRoute() {
   const activeCare = useActiveCareContext();
   const quickLogMutation = useQuickLogMutationPort();
   const mutation = quickLogMutation.mutation;
-  const createDetailed = mutation?.createDetailed;
+  const checkOffReminder = mutation?.checkOffReminder;
   const diaryDay = useDiaryDayModel(
     activeCare.careContext,
     activeCare.careContext?.todayDate ?? null,
@@ -48,7 +48,7 @@ export default function DiaryRoute() {
       careContext={activeCare.careContext}
       dayModel={diaryDay.model}
       dayModelStatus={diaryDay.status}
-      onCheckOff={!canWriteQuickLogEvents || createDetailed === undefined
+      onCheckOff={!canWriteQuickLogEvents || checkOffReminder === undefined
         ? undefined
         : async (item, pottySubtype) => {
           const careContext = activeCare.careContext;
@@ -56,7 +56,7 @@ export default function DiaryRoute() {
             throw new Error('diary_checkoff_context_unavailable');
           }
 
-          await createDetailed(createDiaryCheckOffVariables({
+          await checkOffReminder(createDiaryCheckOffVariables({
             context: {
               householdId: careContext.householdId,
               puppyId: careContext.puppyId,

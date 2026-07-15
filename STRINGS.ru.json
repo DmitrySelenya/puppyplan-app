@@ -368,6 +368,7 @@
   "today": {
     "plan": {
       "check-off": "Отметить",
+      "uncheck": "Снять отметку",
       "planned-template": "По плану {time}",
       "actual-template": "Выполнено {time}",
       "past-unmarked": "Не отмечено",

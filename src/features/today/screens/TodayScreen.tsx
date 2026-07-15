@@ -660,6 +660,15 @@ function DiaryMixedDayRows({
         const canCheckOff = item.status !== 'done'
           && onCheckOff !== undefined
           && checkingKey !== key;
+        // `done` is derived from a linked fact existing, so deleting that fact is the exact
+        // inverse of the check-off. The linked fact is folded into this row and never gets a
+        // fact row of its own, so this checkbox is the only affordance that can undo the mark.
+        const linkedEventRow = item.status === 'done' && item.clientEventId !== undefined
+          ? eventRowsById.get(item.clientEventId)
+          : undefined;
+        const canUncheck = linkedEventRow !== undefined
+          && actions.onDelete !== undefined
+          && checkingKey !== key;
         const visual = getPlannedCardVisual(item);
 
         return (
@@ -670,7 +679,9 @@ function DiaryMixedDayRows({
                 accessibilityLabel={`${title}. ${t('today.plan.planned-template', {
                   time: plannedTime,
                 })}. ${statusLabel}`}
-                checkboxLabel={t('today.plan.check-off')}
+                checkboxLabel={item.status === 'done'
+                  ? t('today.plan.uncheck')
+                  : t('today.plan.check-off')}
                 checkboxTestID={onCheckOff !== undefined && item.status !== 'done'
                   ? `diary-check-off-${item.reminderId}`
                   : undefined}
@@ -682,6 +693,8 @@ function DiaryMixedDayRows({
                   } else {
                     void complete(item);
                   }
+                } : canUncheck ? () => {
+                  actions.onDelete?.(createQuickLogDeleteRequest(linkedEventRow.event));
                 } : undefined}
                 state={item.status === 'done'
                   ? 'done'

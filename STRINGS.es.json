@@ -364,6 +364,7 @@
   "today": {
     "plan": {
       "check-off": "Marcar como hecho",
+      "uncheck": "Desmarcar",
       "planned-template": "Planificado {time}",
       "actual-template": "Hecho {time}",
       "past-unmarked": "Sin registrar",

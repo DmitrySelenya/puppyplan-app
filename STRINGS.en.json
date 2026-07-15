@@ -372,6 +372,7 @@
   "today": {
     "plan": {
       "check-off": "Mark done",
+      "uncheck": "Mark not done",
       "planned-template": "Planned {time}",
       "actual-template": "Done {time}",
       "past-unmarked": "Not logged",

@@ -1,6 +1,7 @@
 import { MutationObserver, QueryClient, QueryObserver } from '@tanstack/react-query';
 
 import {
+  checkOffReminderQuickLogEvent,
   createQuickLogMutationOptions,
   deleteSyncedQuickLogEvent,
   removeQuickLogOptimisticEvent,
@@ -1658,6 +1659,92 @@ describe('Quick Log mutation lifecycle', () => {
   });
 });
 
+describe('checkOffReminderQuickLogEvent', () => {
+  const reminderId = '00000000-0000-4000-8000-000000000401';
+  const scheduledFor = '2026-05-26T08:00:00.000Z';
+  const checkOffId = createReminderCheckOffClientEventId({ reminderId, scheduledFor });
+
+  function checkOffVariables() {
+    return {
+      clientEventId: checkOffId,
+      detailDraft: { amount: 'meal' as const, trackerId: 'feeding' as const },
+      householdId,
+      occurredAt,
+      puppyId,
+      reminderLink: { reminderId, scheduledFor },
+      todayDate,
+      trackerId: 'feeding' as const,
+    };
+  }
+
+  it('AC-P33-UNCHECK-3 restores a tombstoned check-off instead of re-inserting its deterministic id', async () => {
+    const queryClient = createTestQueryClient();
+    const events = new FakeQuickLogEventsRepository();
+    const insert = jest.fn().mockResolvedValue(undefined);
+
+    queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), []);
+    // The owner took this mark off, so the slot's row is tombstoned under the same deterministic
+    // id. Inserting it again resolves to 23514 by design (af63f2c keeps a tombstoned collision
+    // visibly failed), which would burn the slot forever.
+    events.existingRow = {
+      ...serverRow(),
+      client_event_id: checkOffId,
+      deleted_at: now,
+    };
+
+    await checkOffReminderQuickLogEvent({
+      events,
+      insert,
+      queryClient,
+      variables: checkOffVariables(),
+    });
+
+    expect(insert).not.toHaveBeenCalled();
+    expect(events.restores).toEqual([{ clientEventId: checkOffId, householdId }]);
+  });
+
+  it('AC-P33-UNCHECK-3 inserts normally when the slot carries no tombstone', async () => {
+    const queryClient = createTestQueryClient();
+    const events = new FakeQuickLogEventsRepository();
+    const insert = jest.fn().mockResolvedValue(undefined);
+
+    events.existingRow = null;
+
+    await checkOffReminderQuickLogEvent({
+      events,
+      insert,
+      queryClient,
+      variables: checkOffVariables(),
+    });
+
+    expect(insert).toHaveBeenCalledWith(checkOffVariables());
+    expect(events.restores).toEqual([]);
+  });
+
+  it('AC-P33-UNCHECK-3 leaves a live row to the insert path so cross-device check-offs still converge', async () => {
+    const queryClient = createTestQueryClient();
+    const events = new FakeQuickLogEventsRepository();
+    const insert = jest.fn().mockResolvedValue(undefined);
+
+    // A live row belongs to the first writer. Converging on it is AC-F1's job, not this one's.
+    events.existingRow = {
+      ...serverRow(),
+      client_event_id: checkOffId,
+      deleted_at: null,
+    };
+
+    await checkOffReminderQuickLogEvent({
+      events,
+      insert,
+      queryClient,
+      variables: checkOffVariables(),
+    });
+
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(events.restores).toEqual([]);
+  });
+});
+
 function createTestQueryClient(): QueryClient {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -1810,12 +1897,26 @@ class FakeQuickLogEventsRepository {
     householdId: string;
     clientEventId: string;
   }[] = [];
+  public readonly selects: {
+    householdId: string;
+    clientEventId: string;
+  }[] = [];
   public insertError: unknown = null;
   public insertGate: Promise<void> | null = null;
   public insertRow: EventLogRecord | null = null;
+  public existingRow: EventLogRecord | null = null;
   public restoreRow: EventLogRecord | null = null;
   public tombstoneError: unknown = null;
   public payloadUpdateError: unknown = null;
+
+  public async selectExistingEvent(input: {
+    householdId: string;
+    clientEventId: string;
+  }): Promise<EventLogRecord | null> {
+    this.selects.push(input);
+
+    return this.existingRow;
+  }
 
 	  public async insertEvent(insert: EventLogInsert): Promise<EventLogRecord> {
 	    this.inserts.push(insert);

@@ -840,6 +840,90 @@ describe('Today core card rendering', () => {
     expect(screen.getByText(i18n.t('today.plan.actual-template', { time: '10:12 AM' }))).toBeTruthy();
   });
 
+  it('AC-P33-UNCHECK takes the mark back off a done routine and deletes its linked event', async () => {
+    const onDelete = jest.fn();
+    mockListEvents.mockResolvedValue([
+      createRow({
+        client_event_id: 'evt_00000000-0000-4000-8000-000000002710',
+        event_type: 'walk',
+        occurred_at: '2026-06-12T10:12:00.000Z',
+        payload: {},
+      }),
+    ]);
+
+    renderWithQuery(
+      <TodayScreen
+        actions={{ onDelete }}
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            clientEventId: 'evt_00000000-0000-4000-8000-000000002710',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002703',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    // The linked event arrives with the timeline query, not with the day model, so the way back
+    // only opens once it lands.
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t('today.plan.uncheck')).props.accessibilityState,
+      ).toMatchObject({ disabled: false });
+    });
+
+    // `done` is derived purely from a linked fact existing, so removing that fact is the exact
+    // inverse of the check-off. Without it a mis-tap on a 44pt checkbox was a one-way door: the
+    // handler was dropped at `done`, and the linked event never gets a row of its own to delete.
+    fireEvent.press(screen.getByRole('checkbox', { name: i18n.t('today.plan.uncheck') }));
+
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000002710',
+    }));
+  });
+
+  it('AC-P33-UNCHECK stops announcing a checkbox when the mark cannot be taken back', async () => {
+    mockListEvents.mockResolvedValue([]);
+
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            clientEventId: 'evt_00000000-0000-4000-8000-000000002711',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002704',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('diary-planned-done')).toBeTruthy());
+
+    // A read-only viewer has no way back, so the control must not keep promising a toggle it
+    // cannot honour: an enabled `checkbox` role that silently no-ops is the defect itself.
+    expect(screen.getByLabelText(i18n.t('today.plan.uncheck')).props.accessibilityState)
+      .toMatchObject({ checked: true, disabled: true });
+  });
+
   it('AC-P5-POTTY asks subtype before checking off a generic potty routine', async () => {
     const onCheckOff = jest.fn().mockResolvedValue(undefined);
     const potty = createPlannedItem({ trackerId: 'potty' });

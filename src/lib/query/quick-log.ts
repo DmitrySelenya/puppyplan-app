@@ -153,6 +153,11 @@ export type QuickLogMutationPortUpdateDetailsRequest = QuickLogMutationPortSynce
 }>;
 
 export type QuickLogMutationPort = Readonly<{
+  /**
+   * Check off a reminder slot. Restores the slot's row when the owner had un-checked it, because
+   * the check-off id is derived from the slot and insert never resurrects a tombstone.
+   */
+  checkOffReminder?: (variables: QuickLogDetailedMutationVariables) => Promise<void>;
   createDetailed?: (variables: QuickLogDetailedMutationVariables) => Promise<EventLogRecord>;
   createDetailedDurably?: (variables: QuickLogDetailedMutationVariables) => Promise<void>;
   deleteLocal: (clientEventId: string) => unknown;
@@ -700,6 +705,11 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
     }
 
     return {
+      checkOffReminder: (variables) => checkOffReminderQuickLogEvent({
+        insert: (checkOff) => quickLogMutation.mutateAsync(checkOff),
+        queryClient,
+        variables,
+      }),
       createDetailed: (variables) => quickLogMutation.mutateAsync(variables),
       createDetailedDurably: async (variables) => {
         const clientEventId = variables.clientEventId ?? createQuickLogClientEventId();
@@ -871,6 +881,55 @@ export async function deleteSyncedQuickLogEvent(
     timelineRootKey,
     includeTimeline: true,
   });
+}
+
+/**
+ * Check off a reminder slot, restoring the mark rather than re-inserting it when the owner had
+ * taken it back off.
+ *
+ * A check-off's `client_event_id` is derived from the slot, so it is the same id every time. Once
+ * un-checking tombstones that row, `insertEvent` can never bring it back: a tombstoned collision
+ * is deliberately never an idempotent success (`isQuickLogIdempotentDuplicate`), which is what
+ * keeps a deleted event deleted when another device replays it. Left alone, that would make the
+ * first un-check burn the slot for good. Putting a mark back is an explicit intent, so it restores
+ * explicitly instead of asking insert to resurrect anything.
+ *
+ * A live row is left to `insert`, which converges it on the first writer (AC-F1).
+ */
+export async function checkOffReminderQuickLogEvent(
+  input: Readonly<{
+    events?: Pick<SupabaseEventLogRepository, 'restoreByClientEventId' | 'selectExistingEvent'>;
+    insert: (variables: QuickLogDetailedMutationVariables) => Promise<unknown>;
+    queryClient: QueryClient;
+    variables: QuickLogDetailedMutationVariables;
+  }>,
+): Promise<void> {
+  const events = input.events ?? createSupabaseEventLogRepository();
+  const { variables } = input;
+  const clientEventId = variables.clientEventId;
+
+  if (clientEventId !== undefined) {
+    const existing = await events.selectExistingEvent({
+      clientEventId,
+      householdId: variables.householdId,
+    });
+
+    if (existing !== null && existing.deleted_at !== null) {
+      await restoreSyncedQuickLogEvent({
+        clientEventId,
+        eventType: existing.event_type,
+        events,
+        householdId: variables.householdId,
+        puppyId: variables.puppyId,
+        queryClient: input.queryClient,
+        todayDate: variables.todayDate,
+      });
+
+      return;
+    }
+  }
+
+  await input.insert(variables);
 }
 
 export async function restoreSyncedQuickLogEvent(

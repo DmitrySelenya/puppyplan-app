@@ -282,6 +282,7 @@ export const shellI18nKeys = [
   'today.plan.potty-inside',
   'today.plan.potty-outside',
   'today.plan.potty-poop',
+  'today.plan.uncheck',
   'today.plan.upcoming',
   'timeline.filter-chips.0',
   'timeline.filter-chips.1',
