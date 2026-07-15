@@ -127,8 +127,33 @@ describe('Quick Log event view model', () => {
     expect(event).toMatchObject({
       eventType: 'observation',
       title: 'Synthetic quick note',
+      // The row title is normally a generated label ("Slept 10:56 PM–11:56 AM"), which the card sets
+      // in the Lora display face. Free prose has to declare itself so the card can stop doing that.
+      titleKind: 'prose',
     });
     expect(event?.note).toBeUndefined();
+  });
+
+  it('AC-P33-READ marks a generated row label as a label, not prose', () => {
+    const event = createQuickLogEventView(createRow({
+      event_type: 'potty',
+      payload_version: 2,
+      payload: { subtype: 'outside' },
+    }), { t, todayDate });
+
+    expect(event?.titleKind).toBe('label');
+  });
+
+  it("AC-P33-READ marks an observation's own title as a label", () => {
+    const event = createQuickLogEventView(createRow({
+      event_type: 'observation',
+      payload_version: 2,
+      payload: { note: 'Synthetic note body', title: 'Calm greeting' },
+    }), { t, todayDate });
+
+    // A typed title is capped at 80 characters and is a title by intent, so it keeps the display
+    // face. Only a note standing in for one is prose.
+    expect(event).toMatchObject({ title: 'Calm greeting', titleKind: 'label' });
   });
 
   it.each([

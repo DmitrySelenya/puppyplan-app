@@ -1587,6 +1587,7 @@ function DiaryFactRow({
       testID="diary-history-logged-fact"
       time={event.occurredAtLabel}
       title={event.title}
+      titleKind={event.titleKind}
     />
   );
 

@@ -78,6 +78,8 @@ export type QuickLogEventView = Readonly<{
   status: 'pending' | 'failed' | 'synced';
   statusLabel: string;
   title: string;
+  /** `prose` when the title is text the owner wrote rather than a label we generated. */
+  titleKind: 'label' | 'prose';
   todayDate: string;
 }>;
 
@@ -136,6 +138,9 @@ export function createQuickLogEventView(
       ?? (readback.sleepAction === undefined
         ? input.t(titleKey)
         : input.t(sleepActionLabelKeys[readback.sleepAction])),
+    // Only a note standing in for a title is unbounded prose. A typed observation title is capped
+    // at 80 characters and is a title by intent, so it keeps the display face.
+    titleKind: noteAsTitle ? 'prose' : 'label',
     todayDate: input.todayDate,
   };
 }
