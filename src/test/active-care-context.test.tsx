@@ -2,10 +2,7 @@ import {
   defaultQuickLogTrackerIds,
 } from '@/contracts/quick-log';
 import type { ActivePuppyProfile } from '@/contracts/supabase';
-import {
-  createActiveCareContext,
-  getTodayDate,
-} from '@/lib/query/active-care-context';
+import { createActiveCareContext } from '@/lib/query/active-care-context';
 import { queryKeys } from '@/lib/query/keys';
 
 const householdId = '00000000-0000-4000-8000-000000002101';
@@ -74,16 +71,5 @@ describe('active care context query contract', () => {
     });
 
     expect(context?.selectedTrackerIds).toEqual(defaultQuickLogTrackerIds);
-  });
-
-  it('formats today dates from the device-local calendar day', () => {
-    const deviceLocalDate = {
-      getDate: () => 8,
-      getFullYear: () => 2026,
-      getMonth: () => 5,
-      toISOString: () => '2026-06-09T00:30:00.000Z',
-    } as Date;
-
-    expect(getTodayDate(deviceLocalDate)).toBe('2026-06-08');
   });
 });

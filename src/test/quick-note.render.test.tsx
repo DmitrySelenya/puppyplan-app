@@ -283,5 +283,56 @@ describe('Quick note capture', () => {
     fireEvent.press(screen.getByRole('button', { name: i18n.t('common.close') }));
 
     expect(onClose).toHaveBeenCalled();
+    expect(screen.queryByTestId('quick-note-discard-confirmation')).toBeNull();
+  });
+
+  it('AC-QN-DRAFT confirms before discarding typed text and keeps it on Keep editing', () => {
+    const onClose = jest.fn();
+
+    renderNote(<QuickNoteScreen onClose={onClose} />);
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('quick-note.note-label')),
+      'Woke at 02:24, would not settle',
+    );
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('common.close') }));
+
+    // Capture-first surface: a half-written note is the whole point, so it never leaves silently.
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByTestId('quick-note-discard-confirmation')).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-note.keep-editing') }));
+
+    expect(screen.queryByTestId('quick-note-discard-confirmation')).toBeNull();
+    expect(screen.getByLabelText(i18n.t('quick-note.note-label')))
+      .toHaveProp('value', 'Woke at 02:24, would not settle');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('AC-QN-DRAFT discards the note only when the owner confirms', () => {
+    const onClose = jest.fn();
+
+    renderNote(<QuickNoteScreen onClose={onClose} />);
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('quick-note.note-label')),
+      'Chewed the crate bars again',
+    );
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('common.close') }));
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-note.discard') }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-QN-DRAFT treats whitespace as an empty draft and closes straight away', () => {
+    const onClose = jest.fn();
+
+    renderNote(<QuickNoteScreen onClose={onClose} />);
+
+    fireEvent.changeText(screen.getByLabelText(i18n.t('quick-note.note-label')), '   ');
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('common.close') }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('quick-note-discard-confirmation')).toBeNull();
   });
 });

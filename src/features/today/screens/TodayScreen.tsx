@@ -54,6 +54,7 @@ import {
   useQuickLogTimelineRows,
   type QuickLogTimelineRowsStatus,
 } from '@/lib/query/useQuickLogTimelineRows';
+import { formatDurationMinutes } from '@/lib/datetime/duration-label';
 import { formatDiaryDayExport } from '@/lib/diary/day-export';
 import { createDiarySleepPresentationItems } from '@/lib/diary/sleep-intervals';
 
@@ -213,7 +214,7 @@ function createDiaryEventRows(
         ...event,
         note: event.note ?? createQuickLogEventView(item.startRow, input)?.note,
         title: input.t('today.history.sleep-interval', {
-          duration: item.durationMinutes,
+          duration: formatDurationMinutes(item.durationMinutes, input.t),
           end: formatter.format(new Date(item.endedAt)),
           start: formatter.format(new Date(item.startedAt)),
         }),

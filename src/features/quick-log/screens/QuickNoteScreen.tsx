@@ -5,6 +5,7 @@ import { createQuickLogDetailDraft, type QuickLogDetailDraft } from '@/contracts
 import {
   AppText,
   Button,
+  Card,
   Screen,
   SheetSurface,
   Stack,
@@ -42,9 +43,22 @@ export function QuickNoteScreen({
   const [isSaving, setIsSaving] = useState(false);
   const [requiredError, setRequiredError] = useState(false);
   const [persistenceError, setPersistenceError] = useState(false);
+  const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
   const canWrite = status === 'ready';
   const stacked = fontScale >= 2 || wheelOpen;
   const bounds = getBackdateBounds();
+  const isDirty = note.trim() !== '';
+
+  // Capture-first surface: a half-written note is the whole point of it, so closing never drops
+  // text without asking.
+  const close = () => {
+    if (isDirty) {
+      setShowDiscardConfirmation(true);
+      return;
+    }
+
+    onClose();
+  };
 
   const submit = async () => {
     const trimmed = note.trim();
@@ -93,11 +107,35 @@ export function QuickNoteScreen({
               label={t('common.close')}
               labelMaxFontSizeMultiplier={2}
               labelVariant="label"
-              onPress={onClose}
+              onPress={close}
               style={styles.closeButton}
               variant="tertiary"
             />
           </Stack>
+          {showDiscardConfirmation ? (
+            <Card testID="quick-note-discard-confirmation">
+              <Stack gap="sm">
+                <AppText accessibilityRole="header" variant="headline">
+                  {t('quick-note.discard-title')}
+                </AppText>
+                <AppText accessibilityRole="alert" tone="secondary" variant="body">
+                  {t('quick-note.discard-body')}
+                </AppText>
+                <Stack direction="horizontal" gap="sm" wrap>
+                  <Button
+                    label={t('quick-note.keep-editing')}
+                    onPress={() => setShowDiscardConfirmation(false)}
+                    variant="secondary"
+                  />
+                  <Button
+                    label={t('quick-note.discard')}
+                    onPress={onClose}
+                    variant="destructive"
+                  />
+                </Stack>
+              </Stack>
+            </Card>
+          ) : null}
           {status === 'pending-write' || status === 'permission-denied' ? (
             <QuickLogDetailsStatePreview state={status} />
           ) : null}

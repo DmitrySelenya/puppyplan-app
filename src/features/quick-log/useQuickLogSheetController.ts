@@ -42,6 +42,8 @@ export type QuickLogCareContext = QuickLogSurfaceCareContext;
 export type QuickLogRecentEvent = Readonly<{
   occurredAtMs: number;
   payload?: QuickLogDuplicateCareWarningPayload;
+  // Carried so the sleep step can tell an open interval from a closed one.
+  sleepAction?: 'start' | 'wake' | 'retrospective';
   trackerId: QuickLogTrackerId;
 }>;
 

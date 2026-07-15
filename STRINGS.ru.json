@@ -11,6 +11,9 @@
   },
 
   "common": {
+    "duration-hours-minutes": "{hours} ч {minutes} мин",
+    "duration-hours": "{hours} ч",
+    "duration-minutes": "{minutes} мин",
     "save": "Сохранить",
     "cancel": "Отмена",
     "cancel-action": "Отменить",
@@ -530,7 +533,7 @@
       "share-error": "Не удалось поделиться днём. Попробуйте ещё раз.",
       "delete-action": "Удалить запись",
       "item-actions": "Действия записи дневника",
-      "sleep-interval": "Спал с {start} до {end} · {duration} мин",
+      "sleep-interval": "Спал с {start} до {end} · {duration}",
       "fact-a11y-label": "{title}, {time}, {caption}",
       "fact-note-a11y-label": "{title}, {time}, {caption}. Заметка: {note}"
     },
@@ -683,7 +686,8 @@
       "body": "Выберите, что произошло.",
       "start": "Начать сон",
       "wake": "Проснулся",
-      "retrospective": "Записать прошедший сон"
+      "retrospective": "Записать прошедший сон",
+      "open-since": "Спит с {time} · {duration}"
     },
     "trackers": {
       "potty": "Туалет",
@@ -922,7 +926,11 @@
     "add": "Добавить",
     "required-error": "Сначала напишите заметку.",
     "persistence-error": "Не удалось сохранить заметку. Текст остался здесь. Попробуйте ещё раз.",
-    "saved-announcement": "Заметка добавлена"
+    "saved-announcement": "Заметка добавлена",
+    "discard-title": "Удалить заметку?",
+    "discard-body": "Текст ещё не сохранён.",
+    "keep-editing": "Продолжить",
+    "discard": "Удалить"
   },
 
   "timeline": {

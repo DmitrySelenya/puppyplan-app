@@ -10,6 +10,9 @@
   },
 
   "common": {
+    "duration-hours-minutes": "{hours} hr {minutes} min",
+    "duration-hours": "{hours} hr",
+    "duration-minutes": "{minutes} min",
     "save": "Save",
     "cancel": "Cancel",
     "cancel-action": "Cancel",
@@ -534,7 +537,7 @@
       "share-error": "The day could not be shared. Try again.",
       "delete-action": "Delete entry",
       "item-actions": "Diary item actions",
-      "sleep-interval": "Slept {start}–{end} · {duration} min",
+      "sleep-interval": "Slept {start}–{end} · {duration}",
       "fact-a11y-label": "{title}, {time}, {caption}",
       "fact-note-a11y-label": "{title}, {time}, {caption}. Note: {note}"
     },
@@ -687,7 +690,8 @@
       "body": "Choose what happened.",
       "start": "Start sleep",
       "wake": "Wake up",
-      "retrospective": "Slept retrospectively"
+      "retrospective": "Slept retrospectively",
+      "open-since": "Asleep since {time} · {duration}"
     },
     "trackers": {
       "potty": "Potty",
@@ -926,7 +930,11 @@
     "add": "Add",
     "required-error": "Write a note first.",
     "persistence-error": "The note could not be saved. Your text is still here. Try again.",
-    "saved-announcement": "Note added"
+    "saved-announcement": "Note added",
+    "discard-title": "Discard this note?",
+    "discard-body": "Your text has not been saved yet.",
+    "keep-editing": "Keep editing",
+    "discard": "Discard"
   },
 
   "timeline": {

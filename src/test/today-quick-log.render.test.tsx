@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 
+import { formatDurationMinutes } from '@/lib/datetime/duration-label';
 import { i18n } from '@/lib/i18n';
 import { formatLocalCalendarDate } from '@/lib/i18n/format-date';
 import { createPuppyPlanQueryClient } from '@/lib/query/client';
@@ -704,8 +705,9 @@ describe('Today Quick Log state integration', () => {
       />,
     );
 
-    // 23:41 -> 06:35 is 414 minutes; before cross-midnight pairing this could not be shown at all.
-    expect(await screen.findByText(/414/)).toBeTruthy();
+    // 23:41 -> 06:35 is 414 minutes, read back as hours; before cross-midnight pairing this could
+    // not be shown at all.
+    expect(await screen.findByText(/6 hr 54 min/)).toBeTruthy();
     expect(mockListEvents).toHaveBeenCalledWith(expect.objectContaining({
       filters: expect.objectContaining({ from: '2026-05-26', to: '2026-05-26' }),
     }));
@@ -738,7 +740,7 @@ describe('Today Quick Log state integration', () => {
       minute: '2-digit',
     });
     const title = i18n.t('today.history.sleep-interval', {
-      duration: durationMinutes,
+      duration: formatDurationMinutes(durationMinutes, i18n.t),
       end: formatter.format(endedAt),
       start: formatter.format(startedAt),
     });

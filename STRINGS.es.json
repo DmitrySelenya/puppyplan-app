@@ -10,6 +10,9 @@
     "placeholderSyntax": "Sintaxis simple {name}. Consulta los campos _comment para la lista de variables por clave."
   },
   "common": {
+    "duration-hours-minutes": "{hours} h {minutes} min",
+    "duration-hours": "{hours} h",
+    "duration-minutes": "{minutes} min",
     "save": "Guardar",
     "cancel": "Cancelar",
     "cancel-action": "Cancelar",
@@ -526,7 +529,7 @@
       "share-error": "No se pudo compartir el día. Inténtalo de nuevo.",
       "delete-action": "Eliminar registro",
       "item-actions": "Acciones del registro del diario",
-      "sleep-interval": "Durmió de {start} a {end} · {duration} min",
+      "sleep-interval": "Durmió de {start} a {end} · {duration}",
       "fact-a11y-label": "{title}, {time}, {caption}",
       "fact-note-a11y-label": "{title}, {time}, {caption}. Nota: {note}"
     },
@@ -678,7 +681,8 @@
       "body": "Elige qué ocurrió.",
       "start": "Empezar sueño",
       "wake": "Despertar",
-      "retrospective": "Registrar sueño anterior"
+      "retrospective": "Registrar sueño anterior",
+      "open-since": "Durmiendo desde las {time} · {duration}"
     },
     "trackers": {
       "potty": "Baño",
@@ -916,7 +920,11 @@
     "add": "Añadir",
     "required-error": "Escribe una nota primero.",
     "persistence-error": "No se pudo guardar la nota. Tu texto sigue aquí. Inténtalo de nuevo.",
-    "saved-announcement": "Nota añadida"
+    "saved-announcement": "Nota añadida",
+    "discard-title": "¿Descartar esta nota?",
+    "discard-body": "Tu texto aún no se ha guardado.",
+    "keep-editing": "Seguir editando",
+    "discard": "Descartar"
   },
   "timeline": {
     "title": "Eventos",

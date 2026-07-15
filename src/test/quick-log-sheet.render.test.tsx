@@ -184,6 +184,54 @@ describe('QuickLogShell', () => {
     }));
   });
 
+  it('AC-P33-SLEEP-OPEN shows an open sleep so a second Start sleep is not logged blind', () => {
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={createMutationPort()}
+        now={() => new Date('2026-05-27T08:30:00.000Z')}
+        recentEvents={[{
+          occurredAtMs: Date.parse('2026-05-27T07:55:00.000Z'),
+          sleepAction: 'start',
+          trackerId: 'sleep',
+        }]}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.sleep'),
+    }));
+
+    expect(screen.getByTestId('quick-log-sleep-open-hint')).toBeTruthy();
+  });
+
+  it('AC-P33-SLEEP-OPEN treats a later wake as closing the interval', () => {
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={createMutationPort()}
+        now={() => new Date('2026-05-27T08:30:00.000Z')}
+        recentEvents={[{
+          occurredAtMs: Date.parse('2026-05-27T08:10:00.000Z'),
+          sleepAction: 'wake',
+          trackerId: 'sleep',
+        }, {
+          occurredAtMs: Date.parse('2026-05-27T07:55:00.000Z'),
+          sleepAction: 'start',
+          trackerId: 'sleep',
+        }]}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.sleep'),
+    }));
+
+    expect(screen.queryByTestId('quick-log-sleep-open-hint')).toBeNull();
+  });
+
   it('AC-1 sends retrospective sleep and the visible detailed lane to the composer', () => {
     const mutation = createMutationPort();
     const openCreateDetails = jest.fn();

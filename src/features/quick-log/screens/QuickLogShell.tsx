@@ -8,7 +8,8 @@ import {
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
 import type { QuickLogDuplicateCareWarningPayload } from '@/contracts/business-rules';
-import { eventPayloadSchemas } from '@/contracts/supabase';
+import { eventPayloadSchemas, eventPayloadSchemasV2 } from '@/contracts/supabase';
+import { formatDurationMinutes } from '@/lib/datetime/duration-label';
 import { AppIcon } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
@@ -110,13 +111,48 @@ export function createQuickLogRecentEvents(
     }
 
     const payload = createRecentEventPayload(row, trackerId);
+    const sleepAction = createRecentSleepAction(row, trackerId);
 
     return [{
       occurredAtMs,
       ...(payload === undefined ? {} : { payload }),
+      ...(sleepAction === undefined ? {} : { sleepAction }),
       trackerId,
     }];
   }).sort((left, right) => right.occurredAtMs - left.occurredAtMs);
+}
+
+function createRecentSleepAction(
+  row: QuickLogCachedEventRow,
+  trackerId: QuickLogTrackerId,
+): 'start' | 'wake' | 'retrospective' | undefined {
+  if (trackerId !== 'sleep') {
+    return undefined;
+  }
+
+  const payloadResult = eventPayloadSchemasV2.sleep.safeParse(row.payload);
+
+  return payloadResult.success ? payloadResult.data.action : undefined;
+}
+
+/**
+ * The moment an unclosed sleep began, or null when the puppy is awake.
+ *
+ * Without this the sleep step looks identical whether or not a sleep is already running, so a
+ * second Start sleep silently opens a duplicate interval over the first.
+ */
+export function getOpenSleepStartMs(
+  recentEvents: readonly QuickLogRecentEvent[] | undefined,
+): number | null {
+  const latestSleep = (recentEvents ?? [])
+    .filter((event) => event.trackerId === 'sleep' && event.sleepAction !== undefined)
+    .reduce<QuickLogRecentEvent | null>(
+      (latest, event) =>
+        latest === null || event.occurredAtMs > latest.occurredAtMs ? event : latest,
+      null,
+    );
+
+  return latestSleep?.sleepAction === 'start' ? latestSleep.occurredAtMs : null;
 }
 
 function createQuickLogMutationLocalEventViews(
@@ -362,6 +398,7 @@ function QuickLogShellContent({
           />
         ) : sleepActionPickerOpen ? (
           <SleepActionPicker
+            nowMs={(now?.() ?? new Date()).getTime()}
             onBack={() => setSleepActionPickerOpen(false)}
             onRetrospective={() => openCreateDetails?.({
               sleepAction: 'retrospective',
@@ -371,6 +408,7 @@ function QuickLogShellContent({
               setSleepActionPickerOpen(false);
               controller.logTracker({ sleepAction, trackerId: 'sleep' });
             }}
+            openSleepStartMs={getOpenSleepStartMs(recentEvents)}
           />
         ) : (
           <>
@@ -458,15 +496,19 @@ function QuickLogShellContent({
 }
 
 function SleepActionPicker({
+  nowMs,
   onBack,
   onRetrospective,
   onSelect,
+  openSleepStartMs,
 }: Readonly<{
+  nowMs: number;
   onBack: () => void;
   onRetrospective: () => void;
   onSelect: (action: 'start' | 'wake') => void;
+  openSleepStartMs: number | null;
 }>) {
-  const { t } = useAppTranslation();
+  const { locale, t } = useAppTranslation();
 
   return (
     <Stack gap="md">
@@ -475,6 +517,20 @@ function SleepActionPicker({
         <Button label={t('common.back')} onPress={onBack} variant="tertiary" />
       </Stack>
       <AppText tone="secondary">{t('quick-log.sleep-action.body')}</AppText>
+      {openSleepStartMs === null ? null : (
+        <AppText testID="quick-log-sleep-open-hint" tone="secondary" variant="footnote">
+          {t('quick-log.sleep-action.open-since', {
+            duration: formatDurationMinutes(
+              Math.round((nowMs - openSleepStartMs) / 60_000),
+              t,
+            ),
+            time: new Intl.DateTimeFormat(locale, {
+              hour: 'numeric',
+              minute: '2-digit',
+            }).format(new Date(openSleepStartMs)),
+          })}
+        </AppText>
+      )}
       <Stack gap="sm">
         <Button label={t('quick-log.sleep-action.start')} onPress={() => onSelect('start')} />
         <Button label={t('quick-log.sleep-action.wake')} onPress={() => onSelect('wake')} />

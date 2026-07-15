@@ -341,6 +341,33 @@ chat speed (Phases 1d + 3). Each phase's evidence is recorded here with honest P
 
 ## Changelog
 
+- 2026-07-15 (overnight dogfood: two silent-data-loss fixes + two frictions): a roleplay E2E pass
+  across the midnight boundary (owner's Telegram routine replayed in the simulator) found that
+  midnight — the centre of an overnight puppy routine, not an edge case — broke two write paths,
+  and that the two bugs composed into silent data loss. (1) `app/(modals)/quick-log/details`
+  gated updates on `careContext.todayDate === detailContext.todayDate`. That param is a
+  cache-invalidation hint captured when the sheet opens, never a permission; once an edit crossed
+  midnight the guard failed and the code fell through to `close()`, dropping the draft with no
+  error and no version bump (reproduced twice: 414→400 min lost). The day is out of the guard,
+  invalidation now follows the live day, and an unpersistable draft raises instead of closing, so
+  the sheet keeps the text and shows the existing persistence error. (2) `getTodayDate()` was
+  computed once per render with nothing ticking at midnight, so the Diary stayed on yesterday and
+  new entries landed on a day the owner could not see; `useTodayDate` (`src/lib/datetime/
+  today-date.ts`) schedules to the next *local* midnight (DST-safe) and re-probes on AppState
+  `active`, since backgrounded timers are throttled. (3) Quick note gained the dirty-draft guard
+  the routine editor already had — a half-written note is the point of a capture-first surface.
+  Frictions: overnight sleep now reads "6 hr 54 min" rather than "414 min"
+  (`formatDurationMinutes`), and the sleep step shows an open interval ("Asleep since 11:02 AM")
+  so a second Start sleep is not logged blind. Gate: `npm run check` exit 0 (101 Jest suites /
+  975 tests, 119 Node tests, scaffold/privacy/i18n/token/text green). Fixes 1, 3 and both
+  frictions re-verified in the simulator; the midnight tick is covered by unit tests rather than a
+  wall-clock E2E. Note for the next agent: the simulator app runs an **embedded release
+  `main.jsbundle` and ignores Metro** — the first "fixes not visible" reading was a stale bundle,
+  not a broken fix. Still open from this pass: retrospective sleep asks for minutes rather than a
+  from–to range, play intervals ("12:02–12:10") remain inexpressible, and the capture pill (24h)
+  disagrees with Diary rows (12h) — that last one is a design decision for the fidelity pipeline,
+  so it was left alone.
+
 - 2026-07-14 (owner follow-up + independent review fixes): an independent review re-ran the full
   gate and a native SE pass over the Phase 5 build (all six fixes confirmed on device profile;
   screenshots retained in the review session). Three corrections landed from that review and the

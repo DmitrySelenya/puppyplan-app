@@ -78,18 +78,23 @@ export default function QuickLogDetailsRoute() {
   };
   const save = (draft: QuickLogDetailDraft): Promise<void> | void => {
     if (detailContext !== null) {
+      const careContext = activeCare.careContext;
+
       if (
         mutation !== undefined
         && draft.trackerId === detailContext.trackerId
-        && canUpdateQuickLogDetails(activeCare.careContext, detailContext)
+        && careContext !== null
+        && canUpdateQuickLogDetails(careContext, detailContext)
       ) {
         const result = mutation.updateDetails({
-        clientEventId: detailContext.clientEventId,
-        draft,
-        eventType: detailContext.eventType,
-        householdId: detailContext.householdId,
-        puppyId: detailContext.puppyId,
-        todayDate: detailContext.todayDate,
+          clientEventId: detailContext.clientEventId,
+          draft,
+          eventType: detailContext.eventType,
+          householdId: detailContext.householdId,
+          puppyId: detailContext.puppyId,
+          // The live day owns the dashboard bucket on screen. The day captured when the sheet
+          // opened goes stale as soon as an edit crosses midnight.
+          todayDate: careContext.todayDate,
         });
         if (isPromiseLike(result)) {
           return result.then(close);
@@ -98,10 +103,9 @@ export default function QuickLogDetailsRoute() {
         return;
       }
 
-      if (activeCare.careContext?.householdRole !== 'viewer') {
-        close();
-      }
-      return;
+      // Closing here would drop the edit without a trace. Let the sheet surface the failure and
+      // keep the draft on screen instead.
+      throw new Error('quick_log_details_update_unavailable');
     }
 
     if (
@@ -308,6 +312,9 @@ function parseStandaloneTrackerId(value: string | string[] | undefined): QuickLo
   return trackerIdResult.success ? trackerIdResult.data : 'feeding';
 }
 
+// `todayDate` is a cache-invalidation hint captured when the sheet opened, never a permission.
+// Gating writes on it silently dropped edits that crossed midnight, so scope is checked on the
+// household and puppy the entry actually belongs to.
 function canUpdateQuickLogDetails(
   careContext: QuickLogSurfaceCareContext | null,
   detailContext: QuickLogDetailsRouteContext,
@@ -315,8 +322,7 @@ function canUpdateQuickLogDetails(
   return careContext !== null
     && careContext.householdRole !== 'viewer'
     && careContext.householdId === detailContext.householdId
-    && careContext.puppyId === detailContext.puppyId
-    && careContext.todayDate === detailContext.todayDate;
+    && careContext.puppyId === detailContext.puppyId;
 }
 
 function firstParam(value: string | string[] | undefined): string | undefined {

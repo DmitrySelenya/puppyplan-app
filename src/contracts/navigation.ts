@@ -613,6 +613,7 @@ export const shellI18nKeys = [
   'quick-log.sleep-action.start',
   'quick-log.sleep-action.wake',
   'quick-log.sleep-action.retrospective',
+  'quick-log.sleep-action.open-since',
   'quick-log.duplicate-warning.title',
   'quick-log.duplicate-warning.question',
   'quick-log.duplicate-warning.primary-alt',

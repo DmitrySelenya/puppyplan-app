@@ -569,8 +569,7 @@ describe('QuickLogDetailsRoute', () => {
   it.each([
     ['householdId', '00000000-0000-4000-8000-000000007912'],
     ['puppyId', '00000000-0000-4000-8000-000000007913'],
-    ['todayDate', '2026-06-10'],
-  ] as const)('does not persist detail drafts when %s does not match active care context', (
+  ] as const)('AC-P33-EDIT-SILENT surfaces an error instead of silently closing when %s does not match active care context', async (
     field,
     value,
   ) => {
@@ -609,7 +608,79 @@ describe('QuickLogDetailsRoute', () => {
       name: i18n.t('quick-log.details.save'),
     }));
 
+    // A draft we cannot persist must say so; closing the sheet would drop the edit without a trace.
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.details.persistence-error'))).toBeTruthy();
+    });
     expect(mutation.updateDetails).not.toHaveBeenCalled();
+    expect(mockRouterBack).not.toHaveBeenCalled();
+  });
+
+  it('AC-P33-EDIT-MIDNIGHT persists an edit opened before midnight and invalidates the live day', async () => {
+    const updateDetails = jest.fn(async () => undefined);
+    const row = createCachedObservationRow();
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: row.household_id,
+        householdRole: 'owner',
+        puppyId: row.puppy_id,
+        selectedTrackerIds: ['observation'],
+        // The day rolled over while the entry sheet was open.
+        todayDate: '2026-06-10',
+        userId: '00000000-0000-4000-8000-000000007904',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    mockUseLocalSearchParams.mockReturnValue({
+      clientEventId: row.client_event_id,
+      eventType: row.event_type,
+      householdId: row.household_id,
+      puppyId: row.puppy_id,
+      todayDate: '2026-06-09',
+      trackerId: 'observation',
+    });
+    mockUseQuickLogCachedRows.mockReturnValue([row]);
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: {
+        deleteLocal: jest.fn(),
+        deleteSynced: jest.fn(),
+        mutate: jest.fn(),
+        retry: jest.fn(),
+        updateDetails,
+        undo: jest.fn(),
+      },
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <QuickLogFeedbackProvider>
+          <QuickLogDetailsRoute />
+        </QuickLogFeedbackProvider>
+      </AppProviders>,
+    );
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('quick-log.details.observation.title-label')),
+      'Corrected after midnight',
+    );
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.details.edit-save'),
+    }));
+
+    await waitFor(() => expect(updateDetails).toHaveBeenCalledWith(expect.objectContaining({
+      clientEventId: row.client_event_id,
+      draft: expect.objectContaining({
+        title: 'Corrected after midnight',
+        trackerId: 'observation',
+      }),
+      eventType: 'observation',
+      // Invalidation follows the live day, not the day captured when the sheet opened.
+      todayDate: '2026-06-10',
+    })));
     expect(mockRouterBack).toHaveBeenCalledTimes(1);
   });
 });
