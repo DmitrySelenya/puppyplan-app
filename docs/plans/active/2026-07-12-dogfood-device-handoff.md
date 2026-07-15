@@ -218,8 +218,9 @@ Acceptance criteria:
 
 - **AC-AX-1:** Diary's large greeting remains complete and scalable but has a screen-specific
   `maxFontSizeMultiplier` ceiling of `1.8`; the global `AppText` ceiling remains `3.0`.
-- **AC-AX-2:** at `fontScale >= 2`, `CapsuleTabBar` visually renders only the three tab icons; at
-  `fontScale < 2`, the localized Diary/Pet/More labels remain visible.
+- **AC-AX-2:** *(superseded 2026-07-15 — see below)* at `fontScale >= 2`, `CapsuleTabBar` visually
+  renders only the three tab icons; at `fontScale < 2`, the localized Diary/Pet/More labels remain
+  visible.
 - **AC-AX-3:** icon-only tabs retain localized `accessibilityLabel`, `tab` role, selected state,
   navigation behavior, and Diary/Pet/More/Add focus order.
 - **AC-AX-4:** render tests prove the greeting ceiling and both sides of the tab-label threshold;
@@ -229,6 +230,24 @@ Edge cases: the exact threshold (`2`) uses icon-only mode; the Add chooser/open 
 unchanged. Constraints: no global font-scaling disablement, truncated greeting, raw UI strings,
 dependency/schema/native-project change, or unrelated layout refactor. TDD mode:
 heavy/full-isolated RED, GREEN, and REFACTOR contexts.
+
+##### Owner revision 2026-07-15 — AC-AX-2 replaced by a label ceiling
+
+The 2026-07-15 Diary UX audit captured the shipped result of AC-AX-2 at accessibility sizes: the
+capsule renders a book, a paw and an ellipsis with no words. Owner ruling on seeing it — bound the
+label's size instead of deleting the label. AC-AX-1 had already established the ceiling technique
+for the greeting on this very screen; AC-AX-2 spent the label where AC-AX-1 spent a multiplier.
+
+- **AC-AX-2 (revised):** at every `fontScale`, `CapsuleTabBar` renders the localized
+  Diary/Pet/More labels. Label growth is bounded by `NAV_TAB_LABEL_MAX_FONT_SCALE` (`1.5`) on a
+  single line, so the capsule keeps its shape beside the Add control on the SE. No icon-only mode.
+- AC-AX-3 stands unchanged and still passes: the labels were always exposed to assistive tech via
+  `accessibilityLabel`; this criterion only ever governed what sighted users see.
+- AC-AX-4 stands, with the threshold test replaced by scale coverage at `1.999`, `2`, and `3.57`.
+
+Verification: `capsule-tab-bar.render.test.tsx` + `tab-layout.render.test.tsx` (26 passed), plus a
+rebuilt Release bundle captured on the SE at accessibility XXXL — the state that produced the
+original defect.
 
 TDD and verification evidence:
 

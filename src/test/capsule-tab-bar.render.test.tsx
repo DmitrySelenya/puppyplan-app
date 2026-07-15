@@ -16,6 +16,7 @@ import { AppProviders } from '@/lib/providers/AppProviders';
 
 import {
   CapsuleTabBar,
+  NAV_TAB_LABEL_MAX_FONT_SCALE,
   type CapsuleTabBarProps,
 } from '@/design/primitives/CapsuleTabBar';
 import { Touchable } from '@/design/primitives/Touchable';
@@ -157,13 +158,32 @@ describe('CapsuleTabBar', () => {
     );
   });
 
-  it('AC-AX-2 AC-AX-4: visually removes tab labels at exact font scale 2', () => {
-    mockFontScale = 2;
+  it.each([2, 3.57])(
+    'AC-AX-2 AC-AX-4: keeps localized visual labels at accessibility font scale %p',
+    (fontScale) => {
+      mockFontScale = fontScale;
+
+      renderBar();
+
+      // Dropping the labels took the tab names away from exactly the people who asked for larger
+      // text, and left a paw and an ellipsis to explain themselves. A ceiling keeps the capsule
+      // its shape without spending the label to do it.
+      expect(
+        primaryTabs.map((tab) => screen.getByText(i18n.t(tab.labelKey)).props.children),
+      ).toEqual(primaryTabs.map((tab) => i18n.t(tab.labelKey)));
+    },
+  );
+
+  it('AC-AX-2: bounds tab label growth to the nav ceiling on a single line', () => {
+    mockFontScale = 3.57;
 
     renderBar();
 
     for (const tab of primaryTabs) {
-      expect(screen.queryByText(i18n.t(tab.labelKey))).toBeNull();
+      const label = screen.getByText(i18n.t(tab.labelKey));
+
+      expect(label.props.maxFontSizeMultiplier).toBe(NAV_TAB_LABEL_MAX_FONT_SCALE);
+      expect(label.props.numberOfLines).toBe(1);
     }
   });
 

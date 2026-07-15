@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -32,6 +32,14 @@ const TAB_ICON = {
   'pet/index': 'paw',
   'more/index': 'more',
 } as const satisfies Record<(typeof primaryTabs)[number]['routeName'], AppIconName>;
+
+/**
+ * Tab labels keep scaling with the system font, but only this far. The capsule has to stay a
+ * capsule beside the Add control on the narrowest supported phone, and an unbounded `caption`
+ * at accessibility XXXL would burst it. Bounding the label is the cheaper trade than deleting
+ * it: an icon-only tab bar withholds the tab names from the people who asked for larger text.
+ */
+export const NAV_TAB_LABEL_MAX_FONT_SCALE = 1.5;
 
 const primaryTabCount = primaryTabs.length;
 const capsuleSlotMinWidth =
@@ -69,7 +77,6 @@ export type CapsuleTabBarProps = {
 export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
   const { t } = useAppTranslation();
   const insets = useSafeAreaInsets();
-  const { fontScale } = useWindowDimensions();
   const [open, setOpen] = React.useState(false);
   const focusedRouteName = state.routes[state.index]?.name;
   const reducedMotion = motion.useReducedMotion();
@@ -144,14 +151,14 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
                     name={TAB_ICON[tab.routeName]}
                     size={tokens.component.tabBar.icon}
                   />
-                  {fontScale < 2 ? (
-                    <AppText
-                      style={selected ? styles.activeLabel : undefined}
-                      tone={tone}
-                      variant="caption">
-                      {t(tab.labelKey)}
-                    </AppText>
-                  ) : null}
+                  <AppText
+                    maxFontSizeMultiplier={NAV_TAB_LABEL_MAX_FONT_SCALE}
+                    numberOfLines={1}
+                    style={selected ? styles.activeLabel : undefined}
+                    tone={tone}
+                    variant="caption">
+                    {t(tab.labelKey)}
+                  </AppText>
                 </Touchable>
               );
             })}
