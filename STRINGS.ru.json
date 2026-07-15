@@ -864,7 +864,8 @@
         }
       },
       "walk": {
-        "duration-label": "Длительность в минутах"
+        "duration-label": "Длительность в минутах",
+        "duration-error": "Введите целое число минут — от 1 до 1440."
       },
       "states": {
         "loading": {

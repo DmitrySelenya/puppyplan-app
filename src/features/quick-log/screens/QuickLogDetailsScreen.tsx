@@ -24,6 +24,7 @@ import {
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
 import { formatDurationMinutes } from '@/lib/datetime/duration-label';
+import { parseDurationMinutes } from '@/lib/datetime/duration-input';
 import { getSleepRangeMinutes, type SleepRangeResult } from '@/lib/datetime/sleep-range';
 import { formatWhenLabel, getBackdateBounds } from '@/lib/datetime/when-label';
 import { useAppTranslation, type I18nKey } from '@/lib/i18n';
@@ -124,6 +125,7 @@ export function QuickLogDetailsScreen({
     initialDraft?.trackerId === 'walk' && initialDraft.durationMinutes !== undefined
       ? String(initialDraft.durationMinutes)
       : '');
+  const [walkDurationError, setWalkDurationError] = useState(false);
   const [trainingDuration, setTrainingDuration] = useState<TrainingDurationValue>(() =>
     initialDraft?.trackerId === 'training' ? initialDraft.durationBucket ?? 'medium' : 'medium');
   const [trainingTopic, setTrainingTopic] = useState<TrainingTopicValue>(() =>
@@ -150,6 +152,10 @@ export function QuickLogDetailsScreen({
     setTimeError(validateOccurredAt(next, new Date(), t));
     setSleepRangeError(undefined);
   };
+
+  // Everything downstream of the draft is Zod, and it caps `duration_minutes` at a day. Parsing here
+  // keeps a typo answerable at the field instead of surfacing as "could not save … try again".
+  const walkDurationInput = parseDurationMinutes(walkDuration);
 
   // For a retrospective sleep `occurredAt` is the wake time, so the range is start → occurredAt.
   const isRetrospectiveSleep = trackerId === 'sleep' && sleepAction === 'retrospective';
@@ -187,6 +193,12 @@ export function QuickLogDetailsScreen({
       }
     }
 
+    if (trackerId === 'walk' && !walkDurationInput.ok) {
+      setWalkDurationError(true);
+      setPersistenceError(false);
+      return;
+    }
+
     if (trackerId === 'observation'
       && observationTitle.trim() === ''
       && note.trim() === '') {
@@ -211,7 +223,7 @@ export function QuickLogDetailsScreen({
         trainingDuration,
         trainingTopic,
         trackerId,
-        walkDuration,
+        walkDurationMinutes: walkDurationInput.ok ? walkDurationInput.minutes : undefined,
         zoomiesIntensity,
       })));
       if (isPromiseLike(result)) {
@@ -356,9 +368,15 @@ export function QuickLogDetailsScreen({
           ) : null}
           {trackerId === 'walk' ? (
             <TextField
+              errorText={walkDurationError
+                ? t('quick-log.details.walk.duration-error')
+                : undefined}
               keyboardType="number-pad"
               label={t('quick-log.details.walk.duration-label')}
-              onChangeText={setWalkDuration}
+              onChangeText={(value) => {
+                setWalkDuration(value);
+                setWalkDurationError(false);
+              }}
               value={walkDuration}
             />
           ) : null}
@@ -963,7 +981,7 @@ function createDraftInput(input: Readonly<{
   trainingDuration: TrainingDurationValue;
   trainingTopic: TrainingTopicValue;
   trackerId: QuickLogDetailTrackerId;
-  walkDuration: string;
+  walkDurationMinutes: number | undefined;
   zoomiesIntensity: ZoomiesIntensityValue;
 }>): QuickLogDetailDraft {
   const note = input.note.trim() || undefined;
@@ -1040,9 +1058,7 @@ function createDraftInput(input: Readonly<{
 
   if (input.trackerId === 'walk') {
     return {
-      durationMinutes: input.walkDuration.trim() === ''
-        ? undefined
-        : Number(input.walkDuration),
+      durationMinutes: input.walkDurationMinutes,
       note,
       occurredAt,
       trackerId: input.trackerId,

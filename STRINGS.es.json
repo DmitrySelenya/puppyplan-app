@@ -859,7 +859,8 @@
         }
       },
       "walk": {
-        "duration-label": "Duración en minutos"
+        "duration-label": "Duración en minutos",
+        "duration-error": "Introduce un número entero de minutos, de 1 a 1440."
       },
       "states": {
         "loading": {

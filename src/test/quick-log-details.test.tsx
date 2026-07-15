@@ -425,6 +425,58 @@ describe('Quick Log details', () => {
     }
   });
 
+  it.each([
+    ['above the payload ceiling', '2000'],
+    ['zero', '0'],
+    ['fractional', '1.5'],
+    ['not a number', 'abc'],
+  ])('AC-P33-WALK refuses a %s walk duration at the field, not as a save failure', (_case, typed) => {
+    const onSave = jest.fn();
+
+    renderDetails(<QuickLogDetailsScreen initialTrackerId="walk" onSave={onSave} />);
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('quick-log.details.walk.duration-label')),
+      typed,
+    );
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+    expect(onSave).not.toHaveBeenCalled();
+    // The contract caps duration_minutes at 1440. Letting the draft reach Zod turned a fixable
+    // typo into "could not save" — a sync error the owner can only answer by retrying forever.
+    expect(screen.getByText(i18n.t('quick-log.details.walk.duration-error'))).toBeTruthy();
+  });
+
+  it('AC-P33-WALK saves a duration the contract accepts', () => {
+    const onSave = jest.fn();
+
+    renderDetails(<QuickLogDetailsScreen initialTrackerId="walk" onSave={onSave} />);
+
+    fireEvent.changeText(
+      screen.getByLabelText(i18n.t('quick-log.details.walk.duration-label')),
+      '35',
+    );
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave.mock.calls[0][0]).toMatchObject({ durationMinutes: 35, trackerId: 'walk' });
+  });
+
+  it('AC-P33-WALK clears the duration error once the owner corrects it', () => {
+    const onSave = jest.fn();
+
+    renderDetails(<QuickLogDetailsScreen initialTrackerId="walk" onSave={onSave} />);
+
+    const field = screen.getByLabelText(i18n.t('quick-log.details.walk.duration-label'));
+    fireEvent.changeText(field, '2000');
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('quick-log.details.save') }));
+    expect(screen.getByText(i18n.t('quick-log.details.walk.duration-error'))).toBeTruthy();
+
+    fireEvent.changeText(field, '35');
+
+    expect(screen.queryByText(i18n.t('quick-log.details.walk.duration-error'))).toBeNull();
+  });
+
   it('AC-QN-NIGHT seeds both pills when an existing retrospective sleep is edited', () => {
     renderDetails(
       <QuickLogDetailsScreen
