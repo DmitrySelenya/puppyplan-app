@@ -22,7 +22,7 @@ import {
   type QuickLogNonPottyTrackerId,
   type QuickLogPottySubtype,
 } from '@/contracts/quick-log';
-import type { ReminderLink } from '@/contracts/reminders';
+import { getReminderLinkFromPayload, type ReminderLink } from '@/contracts/reminders';
 import {
   eventLogInsertSchema,
   eventLogRecordSchema,
@@ -47,6 +47,7 @@ import {
 } from '@/lib/observability';
 import {
   createSupabaseEventLogRepository,
+  type QuickLogSupabaseFailure,
   type SupabaseEventLogRepository,
 } from '@/lib/supabase/events';
 import { useAuth } from '@/lib/auth';
@@ -153,11 +154,6 @@ export type QuickLogMutationPortUpdateDetailsRequest = QuickLogMutationPortSynce
 }>;
 
 export type QuickLogMutationPort = Readonly<{
-  /**
-   * Check off a reminder slot. Restores the slot's row when the owner had un-checked it, because
-   * the check-off id is derived from the slot and insert never resurrects a tombstone.
-   */
-  checkOffReminder?: (variables: QuickLogDetailedMutationVariables) => Promise<void>;
   createDetailed?: (variables: QuickLogDetailedMutationVariables) => Promise<EventLogRecord>;
   createDetailedDurably?: (variables: QuickLogDetailedMutationVariables) => Promise<void>;
   deleteLocal: (clientEventId: string) => unknown;
@@ -225,7 +221,11 @@ export type QuickLogMutationDependencies = Readonly<{
   observability?: ObservabilityReporter;
   events?: Pick<
     SupabaseEventLogRepository,
-    'insertEvent' | 'restoreByClientEventId' | 'tombstoneByClientEventId' | 'updatePayloadByClientEventId'
+    | 'insertEvent'
+    | 'restoreByClientEventId'
+    | 'selectExistingEvent'
+    | 'tombstoneByClientEventId'
+    | 'updatePayloadByClientEventId'
   >;
   // Optional only while production Quick Log is gated by the deferred active care context.
   // Production wiring must inject the synchronous session actor instead of using the null default.
@@ -335,6 +335,63 @@ function createDetailedQuickLogEventInsert(
     title: draft.title,
     tracker_id: draft.trackerId,
   });
+}
+
+/**
+ * Send an insert, putting a slot's mark back on if this tap landed on the row a previous un-check
+ * tombstoned.
+ *
+ * A check-off's `client_event_id` is derived from its slot, so re-checking always lands on the same
+ * row. `insertEvent` refuses to resurrect a tombstone, and that refusal has to stay: it is what
+ * keeps a deletion deleted when a queued replay or another device re-sends the same id later
+ * (AC-F1-3). A fresh tap on the checkbox is not a replay, though — it is the owner asking for the
+ * mark back — and only a slot-linked insert can carry that intent, so only that one restores.
+ *
+ * The restore runs off the insert's failure rather than a lookup before it, so the common check-off
+ * still costs exactly one round trip and never blocks on the network before the caller's queue item
+ * is durable.
+ */
+async function sendQuickLogInsert(
+  events: Pick<SupabaseEventLogRepository, 'insertEvent' | 'restoreByClientEventId' | 'selectExistingEvent'>,
+  insert: EventLogInsert,
+): Promise<EventLogRecord> {
+  try {
+    return await events.insertEvent(insert);
+  } catch (error) {
+    const reminderLink = getReminderLinkFromPayload(insert.payload);
+
+    if (reminderLink === null || !isQuickLogInvalidPayloadFailure(error)) {
+      throw error;
+    }
+
+    const existing = await events.selectExistingEvent({
+      clientEventId: insert.client_event_id,
+      householdId: insert.household_id,
+    });
+    const existingLink = existing === null ? null : getReminderLinkFromPayload(existing.payload);
+
+    // Restore only this slot's own tombstone. Anything else that collided on the id is a genuine
+    // invalid collision and has to stay visibly failed.
+    if (
+      existing === null
+      || existing.deleted_at === null
+      || existingLink === null
+      || existingLink.reminderId !== reminderLink.reminderId
+      || existingLink.scheduledFor !== reminderLink.scheduledFor
+    ) {
+      throw error;
+    }
+
+    return await events.restoreByClientEventId({
+      clientEventId: insert.client_event_id,
+      householdId: insert.household_id,
+    });
+  }
+}
+
+function isQuickLogInvalidPayloadFailure(error: unknown): boolean {
+  return error instanceof Error
+    && (error as QuickLogSupabaseFailure).kind === 'invalid_payload';
 }
 
 export function createQuickLogMutationOptions(
@@ -462,7 +519,7 @@ export function createQuickLogMutationOptions(
         now: timestamp,
       });
 
-      return events.insertEvent(context.insert);
+      return sendQuickLogInsert(events, context.insert);
     },
     onError: async (error, _variables, context) => {
       if (!context) {
@@ -705,11 +762,6 @@ export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
     }
 
     return {
-      checkOffReminder: (variables) => checkOffReminderQuickLogEvent({
-        insert: (checkOff) => quickLogMutation.mutateAsync(checkOff),
-        queryClient,
-        variables,
-      }),
       createDetailed: (variables) => quickLogMutation.mutateAsync(variables),
       createDetailedDurably: async (variables) => {
         const clientEventId = variables.clientEventId ?? createQuickLogClientEventId();
@@ -881,55 +933,6 @@ export async function deleteSyncedQuickLogEvent(
     timelineRootKey,
     includeTimeline: true,
   });
-}
-
-/**
- * Check off a reminder slot, restoring the mark rather than re-inserting it when the owner had
- * taken it back off.
- *
- * A check-off's `client_event_id` is derived from the slot, so it is the same id every time. Once
- * un-checking tombstones that row, `insertEvent` can never bring it back: a tombstoned collision
- * is deliberately never an idempotent success (`isQuickLogIdempotentDuplicate`), which is what
- * keeps a deleted event deleted when another device replays it. Left alone, that would make the
- * first un-check burn the slot for good. Putting a mark back is an explicit intent, so it restores
- * explicitly instead of asking insert to resurrect anything.
- *
- * A live row is left to `insert`, which converges it on the first writer (AC-F1).
- */
-export async function checkOffReminderQuickLogEvent(
-  input: Readonly<{
-    events?: Pick<SupabaseEventLogRepository, 'restoreByClientEventId' | 'selectExistingEvent'>;
-    insert: (variables: QuickLogDetailedMutationVariables) => Promise<unknown>;
-    queryClient: QueryClient;
-    variables: QuickLogDetailedMutationVariables;
-  }>,
-): Promise<void> {
-  const events = input.events ?? createSupabaseEventLogRepository();
-  const { variables } = input;
-  const clientEventId = variables.clientEventId;
-
-  if (clientEventId !== undefined) {
-    const existing = await events.selectExistingEvent({
-      clientEventId,
-      householdId: variables.householdId,
-    });
-
-    if (existing !== null && existing.deleted_at !== null) {
-      await restoreSyncedQuickLogEvent({
-        clientEventId,
-        eventType: existing.event_type,
-        events,
-        householdId: variables.householdId,
-        puppyId: variables.puppyId,
-        queryClient: input.queryClient,
-        todayDate: variables.todayDate,
-      });
-
-      return;
-    }
-  }
-
-  await input.insert(variables);
 }
 
 export async function restoreSyncedQuickLogEvent(

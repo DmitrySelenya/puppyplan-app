@@ -1,7 +1,6 @@
 import { MutationObserver, QueryClient, QueryObserver } from '@tanstack/react-query';
 
 import {
-  checkOffReminderQuickLogEvent,
   createQuickLogMutationOptions,
   deleteSyncedQuickLogEvent,
   removeQuickLogOptimisticEvent,
@@ -1659,10 +1658,11 @@ describe('Quick Log mutation lifecycle', () => {
   });
 });
 
-describe('checkOffReminderQuickLogEvent', () => {
+describe('re-checking a routine the owner had un-checked', () => {
   const reminderId = '00000000-0000-4000-8000-000000000401';
   const scheduledFor = '2026-05-26T08:00:00.000Z';
   const checkOffId = createReminderCheckOffClientEventId({ reminderId, scheduledFor });
+  const reminderLink = { reminder_id: reminderId, scheduled_for: scheduledFor };
 
   function checkOffVariables() {
     return {
@@ -1677,71 +1677,156 @@ describe('checkOffReminderQuickLogEvent', () => {
     };
   }
 
-  it('AC-P33-UNCHECK-3 restores a tombstoned check-off instead of re-inserting its deterministic id', async () => {
-    const queryClient = createTestQueryClient();
-    const events = new FakeQuickLogEventsRepository();
-    const insert = jest.fn().mockResolvedValue(undefined);
+  function tombstoneRefusal(): Error {
+    // What `insertEvent` throws when the colliding row is a tombstone it refuses to resurrect.
+    const failure = new Error('Quick Log Supabase event request failed') as Error & {
+      kind: string;
+      retryAfterMs: number | null;
+    };
 
-    queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), []);
+    failure.kind = 'invalid_payload';
+    failure.retryAfterMs = null;
+
+    return failure;
+  }
+
+  function harness(events: FakeQuickLogEventsRepository) {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+
+    return {
+      queue,
+      queryClient,
+      options: createQuickLogMutationOptions({
+        createClientEventId: () => checkOffId,
+        events,
+        getSessionUserId: () => createdBy,
+        now: () => now,
+        queryClient,
+        queue,
+      }),
+    };
+  }
+
+  it('AC-P33-UNCHECK-3 restores the slot row instead of leaving the re-check failed', async () => {
+    const events = new FakeQuickLogEventsRepository();
+    const { options } = harness(events);
+
     // The owner took this mark off, so the slot's row is tombstoned under the same deterministic
-    // id. Inserting it again resolves to 23514 by design (af63f2c keeps a tombstoned collision
-    // visibly failed), which would burn the slot forever.
+    // id. `insertEvent` refuses to resurrect it by design (af63f2c keeps a tombstoned collision
+    // visibly failed), which on its own would burn the slot forever.
+    events.insertError = tombstoneRefusal();
     events.existingRow = {
       ...serverRow(),
       client_event_id: checkOffId,
       deleted_at: now,
+      payload: { reminder_link: reminderLink },
     };
 
-    await checkOffReminderQuickLogEvent({
-      events,
-      insert,
-      queryClient,
-      variables: checkOffVariables(),
-    });
+    const variables = checkOffVariables();
+    await options.onMutate?.(variables);
 
-    expect(insert).not.toHaveBeenCalled();
+    await expect(options.mutationFn?.(variables)).resolves.toMatchObject({
+      deleted_at: null,
+    });
     expect(events.restores).toEqual([{ clientEventId: checkOffId, householdId }]);
   });
 
-  it('AC-P33-UNCHECK-3 inserts normally when the slot carries no tombstone', async () => {
-    const queryClient = createTestQueryClient();
+  it('AC-P33-UNCHECK-3 costs no extra round trip when the slot is free', async () => {
     const events = new FakeQuickLogEventsRepository();
-    const insert = jest.fn().mockResolvedValue(undefined);
+    const { options } = harness(events);
+    const variables = checkOffVariables();
 
-    events.existingRow = null;
+    await options.onMutate?.(variables);
+    await options.mutationFn?.(variables);
 
-    await checkOffReminderQuickLogEvent({
-      events,
-      insert,
-      queryClient,
-      variables: checkOffVariables(),
-    });
-
-    expect(insert).toHaveBeenCalledWith(checkOffVariables());
+    expect(events.inserts).toHaveLength(1);
+    // The restore rides on the insert's own failure, so the common check-off never looks the row up.
+    expect(events.selects).toEqual([]);
     expect(events.restores).toEqual([]);
   });
 
-  it('AC-P33-UNCHECK-3 leaves a live row to the insert path so cross-device check-offs still converge', async () => {
-    const queryClient = createTestQueryClient();
+  it('AC-P33-UNCHECK-4 leaves a spontaneous tombstoned collision visibly failed', async () => {
     const events = new FakeQuickLogEventsRepository();
-    const insert = jest.fn().mockResolvedValue(undefined);
+    const { options } = harness(events);
 
-    // A live row belongs to the first writer. Converging on it is AC-F1's job, not this one's.
+    events.insertError = tombstoneRefusal();
+    events.existingRow = {
+      ...serverRow(),
+      client_event_id: clientEventId,
+      deleted_at: now,
+      payload: {},
+    };
+
+    // No reminder link: nothing here says "put this slot's mark back", so the refusal stands.
+    const variables = {
+      clientEventId,
+      householdId,
+      occurredAt,
+      puppyId,
+      todayDate,
+      trackerId: 'feeding' as const,
+    };
+    await options.onMutate?.(variables);
+
+    await expect(options.mutationFn?.(variables)).rejects.toMatchObject({
+      kind: 'invalid_payload',
+    });
+    expect(events.restores).toEqual([]);
+  });
+
+  it('AC-P33-UNCHECK-5 keeps an offline check-off in the durable queue instead of dropping it', async () => {
+    const events = new FakeQuickLogEventsRepository();
+    const { options, queue, queryClient } = harness(events);
+    const offline = Object.assign(new TypeError('Network request failed'), {
+      kind: 'network_unavailable',
+      retryAfterMs: null,
+    });
+
+    // Offline, every call throws — including the lookup the restore path would want. The tap must
+    // still survive as a queued, retryable item rather than vanishing.
+    events.insertError = offline;
+    events.selectError = offline;
+
+    const variables = checkOffVariables();
+    const context = await options.onMutate?.(variables);
+    const error = await options.mutationFn?.(variables).catch((thrown: unknown) => thrown);
+    await options.onError?.(error, variables, context);
+
+    expect(queue.items.get(checkOffId)).toMatchObject({
+      client_event_id: checkOffId,
+      state: 'failed_retryable',
+    });
+    expect(queryClient.getQueryData(
+      queryKeys.events.timelineRoot(householdId, puppyId),
+    )).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        client_event_id: checkOffId,
+        localSync: expect.objectContaining({ state: 'failed_retryable' }),
+      }),
+    ]));
+  });
+
+  it('AC-P33-UNCHECK-5 surfaces a failed restore rather than reporting the mark as back on', async () => {
+    const events = new FakeQuickLogEventsRepository();
+    const { options } = harness(events);
+
+    events.insertError = tombstoneRefusal();
     events.existingRow = {
       ...serverRow(),
       client_event_id: checkOffId,
-      deleted_at: null,
+      deleted_at: now,
+      payload: { reminder_link: reminderLink },
     };
-
-    await checkOffReminderQuickLogEvent({
-      events,
-      insert,
-      queryClient,
-      variables: checkOffVariables(),
+    events.restoreError = Object.assign(new TypeError('Network request failed'), {
+      kind: 'network_unavailable',
+      retryAfterMs: null,
     });
 
-    expect(insert).toHaveBeenCalledTimes(1);
-    expect(events.restores).toEqual([]);
+    const variables = checkOffVariables();
+    await options.onMutate?.(variables);
+
+    await expect(options.mutationFn?.(variables)).rejects.toBeInstanceOf(Error);
   });
 });
 
@@ -1908,12 +1993,18 @@ class FakeQuickLogEventsRepository {
   public restoreRow: EventLogRecord | null = null;
   public tombstoneError: unknown = null;
   public payloadUpdateError: unknown = null;
+  public selectError: unknown = null;
+  public restoreError: unknown = null;
 
   public async selectExistingEvent(input: {
     householdId: string;
     clientEventId: string;
   }): Promise<EventLogRecord | null> {
     this.selects.push(input);
+
+    if (this.selectError !== null) {
+      throw this.selectError;
+    }
 
     return this.existingRow;
   }
@@ -1961,6 +2052,10 @@ class FakeQuickLogEventsRepository {
     clientEventId: string;
   }): Promise<EventLogRecord> {
     this.restores.push(input);
+
+    if (this.restoreError !== null) {
+      throw this.restoreError;
+    }
 
     return this.restoreRow ?? {
       ...serverRow(),

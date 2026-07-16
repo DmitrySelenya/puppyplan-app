@@ -9,11 +9,11 @@ const SYNCED_DELETE_UNDO_DURATION_MS = 5_000;
 
 export function useSyncedQuickLogDeleteUndo(
   mutation: QuickLogMutationPort | undefined,
-): (request: QuickLogEventDeleteRequest) => void {
+): (request: QuickLogEventDeleteRequest) => Promise<void> {
   const { t } = useAppTranslation();
   const snackbar = useSnackbar();
 
-  return useCallback((request) => {
+  return useCallback(async (request) => {
     if (mutation === undefined) {
       return;
     }
@@ -32,7 +32,7 @@ export function useSyncedQuickLogDeleteUndo(
     };
     const snackbarId = `quick-log-synced-delete:${request.clientEventId}`;
 
-    void mutation.deleteSynced(restoreRequest)
+    await mutation.deleteSynced(restoreRequest)
       .then(() => {
         snackbar.showSnackbar({
           accessibilityLabel: t('timeline.delete-snackbar'),
@@ -65,12 +65,14 @@ export function useSyncedQuickLogDeleteUndo(
         });
       })
       .catch(() => {
+        // Not `quick-log.failed.*`: that copy says the entry couldn't be *saved*, which is the
+        // opposite of what was asked for here and reads as if the delete had gone through.
         snackbar.showSnackbar({
-          accessibilityLabel: t('quick-log.failed.generic'),
+          accessibilityLabel: t('timeline.delete-failed'),
           clientEventId: request.clientEventId,
           hapticEvent: 'error',
           id: `quick-log-synced-delete-error:${request.clientEventId}`,
-          message: t('quick-log.failed.snackbar'),
+          message: t('timeline.delete-failed'),
           tone: 'error',
         });
       });

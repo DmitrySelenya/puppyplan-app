@@ -993,6 +993,7 @@
       "secondary": "Отмена"
     },
     "delete-snackbar": "Запись удалена.",
+    "delete-failed": "Не удалось удалить. Повторить?",
     "more-actions": "Ещё действия",
     "swipe-actions": [
       "Изменить",

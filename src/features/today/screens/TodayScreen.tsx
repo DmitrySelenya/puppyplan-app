@@ -601,6 +601,27 @@ function DiaryMixedDayRows({
     eventRows.map((eventRow) => [eventRow.event.clientEventId, eventRow]),
   );
 
+  // Taking a mark back off is the same slot going busy as putting one on, so it holds the same
+  // key. Without it the tap has nothing to latch: `onDelete` settles over the network, and until
+  // the row stops being `done` every further tap fires another delete against the same event.
+  const uncheck = async (item: DiaryPlannedItem, event: QuickLogEventView) => {
+    const onDelete = actions.onDelete;
+
+    if (onDelete === undefined) {
+      return;
+    }
+
+    const key = `${item.reminderId}|${item.scheduledFor}`;
+    setCheckingKey(key);
+    setCheckOffError(null);
+
+    try {
+      await onDelete(createQuickLogDeleteRequest(event));
+    } finally {
+      setCheckingKey(null);
+    }
+  };
+
   const complete = async (item: DiaryPlannedItem, subtype?: QuickLogPottySubtype) => {
     if (onCheckOff === undefined) {
       return;
@@ -694,7 +715,7 @@ function DiaryMixedDayRows({
                     void complete(item);
                   }
                 } : canUncheck ? () => {
-                  actions.onDelete?.(createQuickLogDeleteRequest(linkedEventRow.event));
+                  void uncheck(item, linkedEventRow.event);
                 } : undefined}
                 state={item.status === 'done'
                   ? 'done'

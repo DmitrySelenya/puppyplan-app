@@ -55,7 +55,11 @@ export type QuickLogEventEditRequest = Readonly<{
 }>;
 
 export type QuickLogEventActionHandlers = Readonly<{
-  onDelete?: (request: QuickLogEventDeleteRequest) => void;
+  /**
+   * Resolves once the delete has settled. Fact rows fire and forget; the Diary's un-check awaits it
+   * so a second tap cannot fire a second delete against the row the first one is already removing.
+   */
+  onDelete?: (request: QuickLogEventDeleteRequest) => void | Promise<void>;
   onEdit?: (request: QuickLogEventEditRequest) => void;
   onRetry?: (
     clientEventId: string,

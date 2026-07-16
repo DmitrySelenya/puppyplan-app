@@ -892,6 +892,64 @@ describe('Today core card rendering', () => {
     }));
   });
 
+  it('AC-P33-UNCHECK-6 does not delete the linked event twice when the checkbox is tapped twice', async () => {
+    // The row stays `done` until the delete settles and the day model catches up, so a second tap
+    // in that window would otherwise fire a second delete at the same event.
+    let settleDelete: (() => void) | undefined;
+    const onDelete = jest.fn().mockReturnValue(new Promise<void>((resolve) => {
+      settleDelete = resolve;
+    }));
+    mockListEvents.mockResolvedValue([
+      createRow({
+        client_event_id: 'evt_00000000-0000-4000-8000-000000002712',
+        event_type: 'walk',
+        occurred_at: '2026-06-12T10:12:00.000Z',
+        payload: {},
+      }),
+    ]);
+
+    renderWithQuery(
+      <TodayScreen
+        actions={{ onDelete }}
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            clientEventId: 'evt_00000000-0000-4000-8000-000000002712',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002704',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t('today.plan.uncheck')).props.accessibilityState,
+      ).toMatchObject({ disabled: false });
+    });
+
+    fireEvent.press(screen.getByRole('checkbox', { name: i18n.t('today.plan.uncheck') }));
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t('today.plan.uncheck')).props.accessibilityState,
+      ).toMatchObject({ disabled: true });
+    });
+    fireEvent.press(screen.getByRole('checkbox', { name: i18n.t('today.plan.uncheck') }));
+
+    expect(onDelete).toHaveBeenCalledTimes(1);
+
+    settleDelete?.();
+  });
+
   it('AC-P33-UNCHECK stops announcing a checkbox when the mark cannot be taken back', async () => {
     mockListEvents.mockResolvedValue([]);
 

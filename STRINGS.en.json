@@ -997,6 +997,7 @@
       "secondary": "Cancel"
     },
     "delete-snackbar": "Entry deleted.",
+    "delete-failed": "Couldn't delete. Try again?",
     "more-actions": "More actions",
     "swipe-actions": [
       "Edit",

@@ -986,6 +986,7 @@
       "secondary": "Cancelar"
     },
     "delete-snackbar": "Entrada eliminada.",
+    "delete-failed": "No se pudo borrar. ¿Intentar otra vez?",
     "more-actions": "Más acciones",
     "swipe-actions": [
       "Editar",

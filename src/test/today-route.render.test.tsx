@@ -153,14 +153,13 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     });
   });
 
-  it('AC-P5-CHECKOFF wires an actual-time linked fact through checkOffReminder', async () => {
-    // Check-offs go through `checkOffReminder`, not a bare insert: the id is derived from the
-    // slot, so putting a mark back on after un-checking has to restore the tombstoned row.
-    const checkOffReminder = jest.fn().mockResolvedValue(undefined);
+  it('AC-P5-CHECKOFF wires an actual-time linked fact through the insert path', async () => {
+    // The reminder link the check-off carries is what lets the insert restore the slot's row after
+    // an un-check, so the route has no separate check-off call to make.
+    const createDetailed = jest.fn().mockResolvedValue({ id: 'synthetic-event' });
     mockUseQuickLogMutationPort.mockReturnValue({
       mutation: {
-        checkOffReminder,
-        createDetailed: jest.fn().mockResolvedValue({ id: 'synthetic-event' }),
+        createDetailed,
         deleteLocal: jest.fn(),
         deleteSynced: jest.fn(),
         mutate: jest.fn(),
@@ -185,7 +184,7 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
       trackerId: 'sleep',
     });
 
-    expect(checkOffReminder).toHaveBeenCalledWith(expect.objectContaining({
+    expect(createDetailed).toHaveBeenCalledWith(expect.objectContaining({
       detailDraft: expect.objectContaining({ trackerId: 'sleep' }),
       householdId: '00000000-0000-4000-8000-000000007001',
       occurredAt: expect.not.stringMatching('2026-06-09T08:00:00.000Z'),

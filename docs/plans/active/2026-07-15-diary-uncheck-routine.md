@@ -52,13 +52,34 @@ a live row with the same `reminder_link` converges on the first writer even when
 differs, but "a tombstoned server row is never idempotent success" and "keep a tombstoned
 collision visibly failed" are covered by AC-F1-* regression tests.
 
-Therefore: insert must keep refusing to resurrect a tombstone. Restoring is an **explicit user
-intent** ("put this mark back"), so it belongs in the check-off flow, not inside `insertEvent`.
+Therefore: `insertEvent` must keep refusing to resurrect a tombstone. Restoring is an **explicit
+user intent** ("put this mark back"), so it lives one layer up, in the mutation that sends the
+check-off.
+
+## The second trap — a restore that costs the offline tap
+
+The first attempt put restore in a port wrapper that looked the row up *before* calling the
+mutation. Jest was green and the live round trip worked, but it silently broke offline logging, and
+`/code-review` caught it: the durable enqueue happens in `onMutate`, *inside* the mutation. A
+lookup in front of `mutateAsync` throws on a dead network before `onMutate` ever runs, so an
+offline tap left no row, no queue item, and nothing to retry — the exact silent data loss
+`CLAUDE.md` forbids on sync paths.
+
+So the restore sits in `mutationFn`, behind the enqueue, and hangs off the insert's own failure
+rather than a lookup in front of it. Offline, the tap is queued and retried like any other; the
+common check-off still costs one round trip.
 
 ## Decisions
 
-- **Restore, do not re-insert.** A check-off whose deterministic id is already tombstoned restores
-  the row via `restoreByClientEventId` instead of inserting.
+- **Restore, do not re-insert.** When an insert carrying a `reminder_link` is refused and the
+  colliding row is that same slot's tombstone, `sendQuickLogInsert` restores it via
+  `restoreByClientEventId`.
+- **Only a slot-linked insert restores.** A spontaneous insert has no `reminder_link`, so nothing
+  in it says "put this mark back" and the refusal stands (AC-F1-3 unchanged). `retryLocalQuickLogEvent`
+  still calls `insertEvent` raw: a queued replay is not a fresh tap, and a deletion made elsewhere
+  must stay deleted.
+- **Restore off the failure, not ahead of it.** Checking first would tax every check-off with a
+  round trip and, before the enqueue, would lose the offline tap outright.
 - **Keep the restored `occurred_at`.** The restored row keeps its original time rather than being
   stamped with the moment of the re-check. This matches the convergence semantics `af63f2c`
   already chose, where the second device keeps the first writer's `occurred_at`.
@@ -72,9 +93,11 @@ intent** ("put this mark back"), so it belongs in the check-off flow, not inside
 - [x] `CheckCircle` marks itself `disabled` when it has no `onPress`.
 - [x] `TodayScreen` wires the done-state tap to delete the linked event, and labels it
       `today.plan.uncheck` rather than reusing "Mark done" on an already-done row.
-- [x] `checkOffReminder` on the mutation port: restore when the slot's event is tombstoned,
-      insert otherwise.
-- [x] Diary route calls `checkOffReminder` instead of `createDetailed`.
+- [x] ~~`checkOffReminder` on the mutation port~~ — replaced 2026-07-16 after `/code-review`; see
+      "The second trap" above. Restore now lives in `sendQuickLogInsert`, behind the durable
+      enqueue, and the port has no check-off call of its own.
+- [x] The snackbar for a failed *delete* says so, instead of borrowing "couldn't save".
+- [x] Un-checking holds the slot's busy key, so a second tap cannot fire a second delete.
 - [x] Live re-check round trip on the SE: check → uncheck → check again, all three landing.
       Verified 2026-07-15 against a genuinely tombstoned slot (burned during the earlier
       verification of the delete-only wiring), which the restore path healed with a plain tap;
@@ -90,6 +113,10 @@ intent** ("put this mark back"), so it belongs in the check-off flow, not inside
   that row instead of inserting, and does not surface "Could not mark this routine".
 - **AC-P33-UNCHECK-4:** `isQuickLogIdempotentDuplicate` is unchanged and AC-F1-* still pass — a
   tombstoned collision on a *spontaneous* insert stays visibly failed.
+- **AC-P33-UNCHECK-5:** a check-off tapped offline survives as a `failed_retryable` queue item with
+  its optimistic row, and a restore that fails is surfaced rather than reported as success.
+- **AC-P33-UNCHECK-6:** a second tap on a done routine while the first delete is still in flight
+  does not fire a second delete.
 
 ## Out of scope
 
