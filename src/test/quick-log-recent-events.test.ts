@@ -1,5 +1,6 @@
 import {
   createQuickLogRecentEvents,
+  getOpenSleepStartMs,
 } from '@/features/quick-log/screens/QuickLogShell';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 
@@ -100,5 +101,36 @@ describe('createQuickLogRecentEvents', () => {
         trackerId: 'potty',
       },
     ]);
+  });
+
+  it('AC-P1-RECOVERY-10 excludes retained delete intents from duplicate and open-sleep derivation', () => {
+    const recentEvents = createQuickLogRecentEvents([
+      createCachedRow({
+        client_event_id: 'evt_00000000-0000-4000-8000-000000008401',
+        event_type: 'feeding',
+        localSync: {
+          state: 'deleted_before_sync',
+          category: null,
+          retryCount: 0,
+        },
+      }),
+      createCachedRow({
+        client_event_id: 'evt_00000000-0000-4000-8000-000000008402',
+        event_type: 'sleep',
+        localSync: {
+          state: 'deleted_before_sync',
+          category: 'network_unavailable',
+          retryCount: 1,
+        },
+        occurred_at: '2026-06-09T08:01:00.000Z',
+        payload: {
+          action: 'start',
+        },
+        payload_version: 2,
+      }),
+    ]);
+
+    expect(recentEvents).toEqual([]);
+    expect(getOpenSleepStartMs(recentEvents)).toBeNull();
   });
 });

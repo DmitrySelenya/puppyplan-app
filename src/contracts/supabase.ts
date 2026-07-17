@@ -442,7 +442,7 @@ export const selectedTimelineShareScopeInputSchema = z.object({
   scope: z.literal('selected_timeline_range'),
   timeline_from: dateSchema,
   timeline_to: dateSchema,
-  selected_event_types: z.array(eventTypeSchema).min(1).nullable().optional(),
+  selected_event_types: z.array(eventTypeSchema).min(1),
 }).strict().refine((scope) => scope.timeline_from <= scope.timeline_to, {
   message: 'selected_timeline_range requires an ordered timeline_from/timeline_to range.',
   path: ['timeline_from'],
@@ -486,6 +486,14 @@ export const shareScopeRecordSchema = z.object({
   {
     message: 'selected_timeline_range requires an ordered timeline_from/timeline_to range.',
     path: ['timeline_from'],
+  },
+).refine(
+  (scope) =>
+    scope.scope !== 'selected_timeline_range'
+    || (scope.selected_event_types !== null && scope.selected_event_types.length > 0),
+  {
+    message: 'selected_timeline_range requires explicit selected_event_types.',
+    path: ['selected_event_types'],
   },
 );
 

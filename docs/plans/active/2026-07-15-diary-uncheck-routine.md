@@ -85,6 +85,9 @@ common check-off still costs one round trip.
   already chose, where the second device keeps the first writer's `occurred_at`.
 - **The snackbar stays "Entry deleted."** Un-checking really does delete the log record, and
   saying so is the useful part — the check-off's record is not obvious otherwise.
+- **The delete button stays `destructive`.** Owner decision recorded 2026-07-16: deletion creates
+  the tombstone and is the irreversible branch of this lifecycle action, so the existing
+  destructive visual treatment is intentional. No code or token change is required.
 - **`CheckCircle` tells the truth when there is no way back.** With no handler it reports
   `disabled`, instead of announcing an enabled checkbox that silently no-ops.
 

@@ -302,13 +302,24 @@ export function createQuickLogEditRequest(view: QuickLogEventView): QuickLogEven
 
 function getQuickLogEventStatus(row: QuickLogCachedEventRow): QuickLogEventView['status'] {
   if (
+    row.localSync?.state === 'deleted_before_sync'
+    && row.localSync.category !== null
+  ) {
+    return 'failed';
+  }
+
+  if (
     row.localSync?.state === 'failed_retryable'
     || row.localSync?.state === 'failed_permanent'
   ) {
     return 'failed';
   }
 
-  if (row.localSync?.state === 'pending_local' || row.localSync?.state === 'sending') {
+  if (
+    row.localSync?.state === 'pending_local'
+    || row.localSync?.state === 'sending'
+    || row.localSync?.state === 'deleted_before_sync'
+  ) {
     return 'pending';
   }
 

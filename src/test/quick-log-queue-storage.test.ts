@@ -6,6 +6,8 @@ import {
   type QuickLogQueueSqlExecutor,
   type QuickLogQueueSqlParams,
   type QuickLogQueueSqlRunner,
+  type QuickLogQueueStorage,
+  type QuickLogStoredQueueItem,
 } from '@/lib/queue';
 
 const householdId = '00000000-0000-4000-8000-000000000011';
@@ -51,7 +53,11 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
   ]);
   public readonly rows = new Map<string, QueueRow>();
   public readonly statements: string[] = [];
+  public activeExclusiveTransactions = 0;
+  public exclusiveTransactionRuns = 0;
   public failNextTransactionalRun = false;
+  public afterNextQueueItemStateWrite: (() => Promise<void>) | undefined;
+  public afterNextDetailWrite: (() => Promise<void>) | undefined;
 
   public async execAsync(sql: string): Promise<void> {
     this.statements.push(sql);
@@ -134,6 +140,36 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
           updated_at,
         });
       }
+
+      const afterWrite = this.afterNextDetailWrite;
+      this.afterNextDetailWrite = undefined;
+      await afterWrite?.();
+      return;
+    }
+
+    if (/UPDATE queue_item[\s\S]+created_by IS NULL/i.test(sql)) {
+      const updatedAt = params.find((value) =>
+        typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value));
+      if (typeof updatedAt !== 'string') {
+        throw new Error('Missing legacy quarantine timestamp');
+      }
+
+      for (const [rowId, row] of this.rows) {
+        if (
+          row.created_by === null
+          && ['pending_local', 'sending', 'failed_retryable'].includes(row.state)
+        ) {
+          this.rows.set(rowId, {
+            ...row,
+            state: 'failed_permanent',
+            retry_count: row.retry_count + 1,
+            last_error_category: 'missing_context',
+            retry_after_at: null,
+            updated_at: updatedAt,
+          });
+        }
+      }
+
       return;
     }
 
@@ -193,6 +229,10 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
         updated_at: String(params[4]),
       });
 
+      const afterWrite = this.afterNextQueueItemStateWrite;
+      this.afterNextQueueItemStateWrite = undefined;
+      await afterWrite?.();
+
       return;
     }
 
@@ -212,14 +252,22 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
       return { user_version: this.userVersion } as T;
     }
 
-    if (/SELECT \* FROM queue_item\s+WHERE \(state = \?/i.test(sql)) {
-      const now = String(params[2]);
+    if (/SELECT \* FROM queue_item[\s\S]+LIMIT 1/i.test(sql)) {
+      const nowParameterIndex = sqlParameterIndex(sql, /julianday\(\?\)/i);
+      const actorParameterIndex = sqlParameterIndex(sql, /created_by\s*=\s*\?/i);
+      const now = String(nowParameterIndex === null ? '' : params[nowParameterIndex]);
+      const actorId = actorParameterIndex === null
+        ? null
+        : String(params[actorParameterIndex]);
       const sortedRows = Array.from(this.rows.values())
         .filter((row) =>
-          row.state === 'pending_local'
-          || (
-            row.state === 'failed_retryable'
-            && (row.retry_after_at === null || Date.parse(row.retry_after_at) <= Date.parse(now))
+          (actorId === null || row.created_by === actorId)
+          && (
+            row.state === 'pending_local'
+            || (
+              row.state === 'failed_retryable'
+              && (row.retry_after_at === null || Date.parse(row.retry_after_at) <= Date.parse(now))
+            )
           ))
         .sort((left, right) => left.created_at.localeCompare(right.created_at));
 
@@ -279,6 +327,8 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
     task: (executor: QuickLogQueueSqlRunner) => Promise<T>,
   ): Promise<T> {
     const snapshot = new Map(this.rows);
+    this.exclusiveTransactionRuns += 1;
+    this.activeExclusiveTransactions += 1;
 
     try {
       return await task(this);
@@ -290,6 +340,8 @@ class TestQueueSqlExecutor implements QuickLogQueueSqlExecutor {
       }
 
       throw error;
+    } finally {
+      this.activeExclusiveTransactions -= 1;
     }
   }
 }
@@ -327,6 +379,111 @@ function rowFromParams(params: QuickLogQueueSqlParams): QueueRow {
     retry_after_at: typeof params[11] === 'string' ? params[11] : null,
     created_at: String(params[12]),
     updated_at: String(params[13]),
+  };
+}
+
+function sqlParameterIndex(sql: string, pattern: RegExp): number | null {
+  const match = pattern.exec(sql);
+  if (match?.index === undefined) return null;
+  return (sql.slice(0, match.index).match(/\?/g) ?? []).length;
+}
+
+type LegacyMissingActorQuarantineStorage = Readonly<{
+  quarantineLegacyMissingActorItems(options: Readonly<{ now: string }>): Promise<void>;
+}>;
+
+type ActorAwareManualRetryStorage = Readonly<{
+  manualRetryIfOwned(
+    expectedClientEventId: string,
+    options: Readonly<{
+      expectedCreatedBy: string;
+      isActorCurrent: () => boolean;
+      now: string;
+      recoverySurface?: 'manual_retry';
+    }>,
+  ): Promise<Awaited<ReturnType<QuickLogQueueStorage['manualRetry']>> | null>;
+}>;
+
+type ActorAwareDetailUpdateStorage = Readonly<{
+  updateDetails(
+    expectedClientEventId: string,
+    options: Readonly<{
+      expectedCreatedBy: string;
+      isActorCurrent: () => boolean;
+      now: string;
+      occurredAt: string;
+      payload: Record<string, import('@/contracts/supabase').JsonValue>;
+      payloadVersion: 1 | 2;
+    }>,
+  ): Promise<QuickLogStoredQueueItem | null>;
+}>;
+
+function requireLegacyMissingActorQuarantine(
+  storage: QuickLogQueueStorage,
+): LegacyMissingActorQuarantineStorage['quarantineLegacyMissingActorItems'] {
+  const quarantine = (storage as QuickLogQueueStorage & Partial<
+    LegacyMissingActorQuarantineStorage
+  >).quarantineLegacyMissingActorItems;
+
+  if (quarantine === undefined) {
+    throw new Error('Expected Quick Log storage to expose legacy missing-actor quarantine');
+  }
+
+  return quarantine.bind(storage);
+}
+
+function requireActorAwareManualRetry(
+  storage: QuickLogQueueStorage,
+): ActorAwareManualRetryStorage['manualRetryIfOwned'] {
+  const manualRetryIfOwned = (storage as QuickLogQueueStorage & Partial<
+    ActorAwareManualRetryStorage
+  >).manualRetryIfOwned;
+
+  if (manualRetryIfOwned === undefined) {
+    throw new Error('Expected Quick Log storage to expose actor-aware manual Retry');
+  }
+
+  return manualRetryIfOwned.bind(storage);
+}
+
+function requireActorAwareDetailUpdate(
+  storage: QuickLogQueueStorage,
+): ActorAwareDetailUpdateStorage['updateDetails'] {
+  const updateDetails = (storage as QuickLogQueueStorage & Partial<
+    ActorAwareDetailUpdateStorage
+  >).updateDetails;
+
+  if (updateDetails === undefined) {
+    throw new Error('Expected Quick Log storage to expose actor-aware detail updates');
+  }
+
+  return updateDetails.bind(storage);
+}
+
+function createStorageWriteGate(): Readonly<{
+  promise: Promise<void>;
+  resolve(): void;
+  signal(): void;
+  signaled: Promise<void>;
+}> {
+  let releaseWrite = (): void => {
+    throw new Error('Expected detail write release gate to be initialized');
+  };
+  let signalWrite = (): void => {
+    throw new Error('Expected detail write signal gate to be initialized');
+  };
+  const promise = new Promise<void>((resolve) => {
+    releaseWrite = resolve;
+  });
+  const signaled = new Promise<void>((resolve) => {
+    signalWrite = resolve;
+  });
+
+  return {
+    promise,
+    resolve: releaseWrite,
+    signal: signalWrite,
+    signaled,
   };
 }
 
@@ -683,6 +840,360 @@ describe('Quick Log queue SQLite storage boundary', () => {
     expect(JSON.stringify(row)).not.toContain('private-contact-marker');
   });
 
+  it('AC-P1-RECOVERY-10 atomically persists a full actor-scoped synced-delete intent', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor) as ReturnType<
+      typeof createQuickLogQueueStorage
+    > & {
+      enqueueDeletedBeforeSync(
+        input: unknown,
+        options: Readonly<{
+          now: string;
+          retryAfterAt?: string;
+        }>,
+      ): Promise<unknown>;
+    };
+
+    await expect(storage.enqueueDeletedBeforeSync(enqueueInput(), {
+      now: createdAt,
+    })).resolves.toMatchObject({
+      client_event_id: clientEventId,
+      household_id: householdId,
+      puppy_id: puppyId,
+      created_by: createdBy,
+      event_type: 'feeding',
+      payload_version: 1,
+      payload: { amount: 'meal' },
+      occurred_at: occurredAt,
+      state: 'deleted_before_sync',
+      retry_count: 0,
+      last_error_category: null,
+      retry_after_at: null,
+    });
+    expect(executor.rows.get(clientEventId)).toMatchObject({
+      created_by: createdBy,
+      payload_json: '{"amount":"meal"}',
+      retry_after_at: null,
+      state: 'deleted_before_sync',
+    });
+
+    const delayedClientEventId = 'evt_00000000-0000-4000-8000-000000000040';
+    const retryAfterAt = '2026-05-26T08:00:05.000Z';
+    await expect(storage.enqueueDeletedBeforeSync(enqueueInput({
+      client_event_id: delayedClientEventId,
+    }), {
+      now: createdAt,
+      retryAfterAt,
+    })).resolves.toMatchObject({
+      client_event_id: delayedClientEventId,
+      retry_count: 0,
+      retry_after_at: retryAfterAt,
+      state: 'deleted_before_sync',
+    });
+    expect(executor.rows.get(delayedClientEventId)).toMatchObject({
+      retry_after_at: retryAfterAt,
+      state: 'deleted_before_sync',
+    });
+
+    const failedClientEventId = 'evt_00000000-0000-4000-8000-000000000041';
+    executor.failNextTransactionalRun = true;
+    await expect(storage.enqueueDeletedBeforeSync(enqueueInput({
+      client_event_id: failedClientEventId,
+    }), {
+      now: '2026-05-26T08:00:02.000Z',
+    })).rejects.toThrow('synthetic transactional failure');
+    expect(executor.rows.has(failedClientEventId)).toBe(false);
+  });
+
+  it('AC-P3-ACTOR-1 removes a local Undo intent only when state and expected actor match atomically', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor) as ReturnType<
+      typeof createQuickLogQueueStorage
+    > & {
+      removeIfState(
+        expectedClientEventId: string,
+        expectedState: 'deleted_before_sync',
+        options: Readonly<{ expectedCreatedBy: string }>,
+      ): Promise<boolean>;
+    };
+    const otherActorId = '00000000-0000-4000-8000-000000000099';
+
+    await storage.enqueueDeletedBeforeSync(enqueueInput(), { now: createdAt });
+
+    await expect(storage.removeIfState(clientEventId, 'deleted_before_sync', {
+      expectedCreatedBy: otherActorId,
+    })).resolves.toBe(false);
+    await expect(storage.getByClientEventId(clientEventId)).resolves.toMatchObject({
+      client_event_id: clientEventId,
+      created_by: createdBy,
+      state: 'deleted_before_sync',
+    });
+
+    await expect(storage.removeIfState(clientEventId, 'deleted_before_sync', {
+      expectedCreatedBy: createdBy,
+    })).resolves.toBe(true);
+    await expect(storage.getByClientEventId(clientEventId)).resolves.toBeNull();
+  });
+
+  it('AC-P3-ACTOR-8 atomically recovers sending only for the matching real SQLite owner', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    const recoverIfOwned = storage.markFailedRetryableIfOwned;
+    if (recoverIfOwned === undefined) throw new Error('Expected atomic recovery capability');
+    const otherActorId = '00000000-0000-4000-8000-000000000099';
+
+    await storage.enqueue(enqueueInput(), { now: createdAt });
+    await storage.markSending(clientEventId, { now: '2026-05-26T08:00:02.000Z' });
+    const before = await storage.getByClientEventId(clientEventId);
+
+    await expect(recoverIfOwned(clientEventId, {
+      errorCategory: 'unknown',
+      expectedCreatedBy: otherActorId,
+      expectedState: 'sending',
+      retryAfterAt: '2026-05-26T08:10:00.000Z',
+      now: '2026-05-26T08:00:03.000Z',
+    })).resolves.toBeNull();
+    await expect(storage.getByClientEventId(clientEventId)).resolves.toEqual(before);
+    await expect(recoverIfOwned(clientEventId, {
+      errorCategory: 'unknown',
+      expectedCreatedBy: createdBy,
+      expectedState: 'sending',
+      retryAfterAt: '2026-05-26T08:10:00.000Z',
+      now: '2026-05-26T08:00:03.000Z',
+    })).resolves.toMatchObject({
+      created_by: createdBy,
+      last_error_category: 'unknown',
+      state: 'failed_retryable',
+    });
+  });
+
+  it('AC-P3-ACTOR-3 transitions sending to deleted only when source state and expected actor match atomically', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor) as ReturnType<
+      typeof createQuickLogQueueStorage
+    > & {
+      markDeletedBeforeSync(
+        expectedClientEventId: string,
+        options: Readonly<{
+          expectedCreatedBy: string;
+          expectedState: 'sending';
+          now: string;
+        }>,
+      ): Promise<QuickLogStoredQueueItem | null>;
+    };
+    const pendingClientEventId = 'evt_00000000-0000-4000-8000-000000000042';
+    const foreignClientEventId = 'evt_00000000-0000-4000-8000-000000000043';
+    const matchingClientEventId = 'evt_00000000-0000-4000-8000-000000000044';
+    const otherActorId = '00000000-0000-4000-8000-000000000099';
+
+    await storage.enqueue(enqueueInput({ client_event_id: pendingClientEventId }), {
+      now: createdAt,
+    });
+    await storage.enqueue(enqueueInput({ client_event_id: foreignClientEventId }), {
+      now: createdAt,
+    });
+    await storage.enqueue(enqueueInput({ client_event_id: matchingClientEventId }), {
+      now: createdAt,
+    });
+    await storage.markSending(foreignClientEventId, { now: '2026-05-26T08:00:02.000Z' });
+    await storage.markSending(matchingClientEventId, { now: '2026-05-26T08:00:02.000Z' });
+
+    const pendingBefore = await storage.getByClientEventId(pendingClientEventId);
+    const foreignBefore = await storage.getByClientEventId(foreignClientEventId);
+    const outcomes = await Promise.all([
+      storage.markDeletedBeforeSync(pendingClientEventId, {
+        expectedCreatedBy: createdBy,
+        expectedState: 'sending',
+        now: '2026-05-26T08:00:03.000Z',
+      }),
+      storage.markDeletedBeforeSync(foreignClientEventId, {
+        expectedCreatedBy: otherActorId,
+        expectedState: 'sending',
+        now: '2026-05-26T08:00:03.000Z',
+      }),
+      storage.markDeletedBeforeSync(matchingClientEventId, {
+        expectedCreatedBy: createdBy,
+        expectedState: 'sending',
+        now: '2026-05-26T08:00:03.000Z',
+      }),
+    ]);
+
+    expect({
+      foreignAfter: await storage.getByClientEventId(foreignClientEventId),
+      outcomes,
+      pendingAfter: await storage.getByClientEventId(pendingClientEventId),
+    }).toEqual({
+      foreignAfter: foreignBefore,
+      outcomes: [
+        null,
+        null,
+        expect.objectContaining({
+          client_event_id: matchingClientEventId,
+          created_by: createdBy,
+          state: 'deleted_before_sync',
+        }),
+      ],
+      pendingAfter: pendingBefore,
+    });
+  });
+
+  it.each([
+    'pending_local',
+    'failed_retryable',
+    'failed_permanent',
+  ] as const)(
+    'AC-P3-ACTOR-3 removes a %s row only when source state and expected actor match atomically',
+    async (expectedState) => {
+      const executor = new TestQueueSqlExecutor();
+      const storage = createQuickLogQueueStorage(executor);
+      const otherActorId = '00000000-0000-4000-8000-000000000099';
+
+      await storage.enqueue(enqueueInput(), { now: createdAt });
+      if (expectedState !== 'pending_local') {
+        await storage.markSending(clientEventId, { now: '2026-05-26T08:00:02.000Z' });
+        if (expectedState === 'failed_retryable') {
+          await storage.markFailedRetryable(clientEventId, {
+            errorCategory: 'network_unavailable',
+            now: '2026-05-26T08:00:03.000Z',
+            retryAfterAt: '2026-05-26T08:00:04.000Z',
+          });
+        } else {
+          await storage.markFailedPermanent(clientEventId, {
+            errorCategory: 'permission_denied',
+            now: '2026-05-26T08:00:03.000Z',
+          });
+        }
+      }
+      const before = await storage.getByClientEventId(clientEventId);
+
+      await expect(storage.removeIfState?.(clientEventId, expectedState, {
+        expectedCreatedBy: otherActorId,
+      })).resolves.toBe(false);
+      await expect(storage.getByClientEventId(clientEventId)).resolves.toEqual(before);
+      await expect(storage.removeIfState?.(clientEventId, expectedState, {
+        expectedCreatedBy: createdBy,
+      })).resolves.toBe(true);
+      await expect(storage.getByClientEventId(clientEventId)).resolves.toBeNull();
+    },
+  );
+
+  it.each([
+    'pending_local',
+    'sending',
+    'failed_retryable',
+    'failed_permanent',
+    'server_confirmed',
+  ] as const)(
+    'AC-P1-RECOVERY-10 atomically converts a colliding %s row into a non-insertable delete intent',
+    async (existingState) => {
+      const executor = new TestQueueSqlExecutor();
+      const storage = createQuickLogQueueStorage(executor);
+
+      await storage.enqueue(enqueueInput(), { now: createdAt });
+      if (existingState !== 'pending_local') {
+        await storage.markSending(clientEventId, { now: '2026-05-26T08:00:02.000Z' });
+      }
+      if (existingState === 'failed_retryable') {
+        await storage.markFailedRetryable(clientEventId, {
+          errorCategory: 'network_unavailable',
+          retryAfterAt: '2026-05-26T08:05:00.000Z',
+          now: '2026-05-26T08:00:03.000Z',
+        });
+      } else if (existingState === 'failed_permanent') {
+        await storage.markFailedPermanent(clientEventId, {
+          errorCategory: 'permission_denied',
+          now: '2026-05-26T08:00:03.000Z',
+        });
+      } else if (existingState === 'server_confirmed') {
+        await storage.resolveInFlightSuccess(clientEventId, {
+          now: '2026-05-26T08:00:03.000Z',
+        });
+      }
+
+      const outcome = await storage.enqueueDeletedBeforeSync(enqueueInput(), {
+        now: '2026-05-26T08:00:04.000Z',
+        retryAfterAt: '2026-05-26T08:00:09.000Z',
+      }).then(
+        (value) => ({ status: 'accepted' as const, value }),
+        (error: unknown) => ({ error, status: 'rejected' as const }),
+      );
+
+      if (outcome.status === 'rejected') {
+        expect(outcome.error).toBeInstanceOf(Error);
+        return;
+      }
+
+      expect(outcome.value).toMatchObject({
+        client_event_id: clientEventId,
+        state: 'deleted_before_sync',
+        retry_after_at: '2026-05-26T08:00:09.000Z',
+      });
+      await expect(storage.getByClientEventId(clientEventId)).resolves.toMatchObject({
+        state: 'deleted_before_sync',
+      });
+      await expect(storage.claimNextReadyToSend({
+        createdBy,
+        now: '2099-05-26T08:00:00.000Z',
+      })).resolves.toBeNull();
+    },
+  );
+
+  it.each([
+    {
+      label: 'household_id',
+      override: { household_id: '00000000-0000-4000-8000-000000000042' },
+    },
+    {
+      label: 'puppy_id',
+      override: { puppy_id: '00000000-0000-4000-8000-000000000043' },
+    },
+    {
+      label: 'event_type',
+      override: { event_type: 'potty', payload: { subtype: 'outside' } },
+    },
+    {
+      label: 'payload_version',
+      override: { payload_version: 2 },
+    },
+    {
+      label: 'occurred_at',
+      override: { occurred_at: '2026-05-26T08:00:30.000Z' },
+    },
+  ])(
+    'AC-P1-RECOVERY-10 rejects a destructive client-id collision with mismatched $label atomically',
+    async ({ override }) => {
+      const executor = new TestQueueSqlExecutor();
+      const storage = createQuickLogQueueStorage(executor);
+
+      await storage.enqueue(enqueueInput(), { now: createdAt });
+      const originalRow = executor.rows.get(clientEventId);
+      if (originalRow === undefined) throw new Error('Expected a synthetic queue row');
+
+      const outcome = await storage.enqueueDeletedBeforeSync(enqueueInput(override), {
+        now: '2026-05-26T08:00:04.000Z',
+        retryAfterAt: '2026-05-26T08:00:09.000Z',
+      }).then(
+        () => ({ status: 'accepted' as const }),
+        (error: unknown) => ({ error, status: 'rejected' as const }),
+      );
+
+      expect(outcome).toEqual({
+        error: expect.any(Error),
+        status: 'rejected',
+      });
+      expect(executor.rows.size).toBe(1);
+      expect(executor.rows.get(clientEventId)).toEqual(originalRow);
+      expect(executor.rows.get(clientEventId)?.state).toBe('pending_local');
+      await expect(storage.claimNextReadyToSend({
+        createdBy,
+        now: '2099-05-26T08:00:00.000Z',
+      })).resolves.toMatchObject({
+        client_event_id: clientEventId,
+        state: 'sending',
+      });
+    },
+  );
+
   it('AC-3/AC-4: persists and retries a v2 observation without changing its note or time', async () => {
     const executor = new TestQueueSqlExecutor();
     const storage = createQuickLogQueueStorage(executor);
@@ -742,6 +1253,139 @@ describe('Quick Log queue SQLite storage boundary', () => {
     });
   });
 
+  it.each([
+    'pending_local',
+    'failed_retryable',
+    'failed_permanent',
+  ] as const)(
+    'AC-P3-ACTOR-8 atomically rejects a foreign actor detail update for a %s row without changing private bytes',
+    async (state) => {
+      const executor = new TestQueueSqlExecutor();
+      const storage = createQuickLogQueueStorage(executor);
+      const updateDetails = requireActorAwareDetailUpdate(storage);
+      const foreignActorId = '00000000-0000-4000-8000-000000000099';
+      const privatePayload = {
+        note: 'Synthetic retained private context',
+        title: 'Synthetic retained title',
+      };
+
+      await storage.enqueue(enqueueInput({
+        event_type: 'observation',
+        payload: privatePayload,
+        payload_version: 2,
+      }), { now: createdAt });
+      if (state !== 'pending_local') {
+        await storage.markSending(clientEventId, {
+          now: '2026-05-26T08:00:02.000Z',
+        });
+        if (state === 'failed_retryable') {
+          await storage.markFailedRetryable(clientEventId, {
+            errorCategory: 'network_unavailable',
+            retryAfterAt: '2026-05-26T08:10:00.000Z',
+            now: '2026-05-26T08:00:03.000Z',
+          });
+        } else {
+          await storage.markFailedPermanent(clientEventId, {
+            errorCategory: 'permission_denied',
+            now: '2026-05-26T08:00:03.000Z',
+          });
+        }
+      }
+      const before = executor.rows.get(clientEventId);
+      const transactionsBefore = executor.exclusiveTransactionRuns;
+
+      await expect(updateDetails(clientEventId, {
+        expectedCreatedBy: foreignActorId,
+        isActorCurrent: () => true,
+        now: '2026-05-26T08:00:04.000Z',
+        occurredAt: '2026-05-26T07:40:00.000Z',
+        payload: {
+          note: 'Synthetic unauthorized replacement',
+          title: 'Synthetic unauthorized title',
+        },
+        payloadVersion: 2,
+      })).resolves.toBeNull();
+
+      expect(executor.exclusiveTransactionRuns - transactionsBefore).toBe(1);
+      expect(executor.rows.get(clientEventId)).toEqual(before);
+    },
+  );
+
+  it('AC-P3-ACTOR-8 rolls back a detail update when the expected actor is superseded during the awaited SQLite write', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    const updateDetails = requireActorAwareDetailUpdate(storage);
+    const secondaryActorId = '00000000-0000-4000-8000-000000000099';
+    let currentActorId = createdBy;
+    const writeGate = createStorageWriteGate();
+
+    await storage.enqueue(enqueueInput({
+      event_type: 'observation',
+      payload: {
+        note: 'Synthetic retained private context',
+        title: 'Synthetic retained title',
+      },
+      payload_version: 2,
+    }), { now: createdAt });
+    const before = executor.rows.get(clientEventId);
+    const transactionsBefore = executor.exclusiveTransactionRuns;
+    executor.afterNextDetailWrite = async () => {
+      writeGate.signal();
+      await writeGate.promise;
+    };
+
+    const updating = updateDetails(clientEventId, {
+      expectedCreatedBy: createdBy,
+      isActorCurrent: () => {
+        expect(executor.activeExclusiveTransactions).toBe(1);
+        return currentActorId === createdBy;
+      },
+      now: '2026-05-26T08:00:04.000Z',
+      occurredAt: '2026-05-26T07:40:00.000Z',
+      payload: {
+        note: 'Synthetic superseded replacement',
+        title: 'Synthetic superseded title',
+      },
+      payloadVersion: 2,
+    });
+
+    await writeGate.signaled;
+    currentActorId = secondaryActorId;
+    writeGate.resolve();
+
+    await expect(updating).resolves.toBeNull();
+    expect(executor.exclusiveTransactionRuns - transactionsBefore).toBe(1);
+    expect(executor.rows.get(clientEventId)).toEqual(before);
+  });
+
+  it('AC-P3-ACTOR-8 atomically updates details for the stable expected actor', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    const updateDetails = requireActorAwareDetailUpdate(storage);
+
+    await storage.enqueue(enqueueInput({
+      event_type: 'observation',
+      payload: { note: 'Synthetic original note', title: 'Synthetic original title' },
+      payload_version: 2,
+    }), { now: createdAt });
+
+    await expect(updateDetails(clientEventId, {
+      expectedCreatedBy: createdBy,
+      isActorCurrent: () => true,
+      now: '2026-05-26T08:00:04.000Z',
+      occurredAt: '2026-05-26T07:40:00.000Z',
+      payload: { note: 'Synthetic revised note', title: 'Synthetic revised title' },
+      payloadVersion: 2,
+    })).resolves.toMatchObject({
+      client_event_id: clientEventId,
+      created_by: createdBy,
+      occurred_at: '2026-05-26T07:40:00.000Z',
+      payload: { note: 'Synthetic revised note', title: 'Synthetic revised title' },
+      payload_version: 2,
+      state: 'pending_local',
+    });
+  });
+
   it('rejects new enqueue attempts without an original actor before writing a row', async () => {
     const executor = new TestQueueSqlExecutor();
     const storage = createQuickLogQueueStorage(executor);
@@ -785,6 +1429,98 @@ describe('Quick Log queue SQLite storage boundary', () => {
       state: 'failed_permanent',
       last_error_category: 'missing_context',
     });
+  });
+
+  it('AC-P3-LEGACY-2 atomically and idempotently quarantines all non-terminal actorless rows without changing identity or payload', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    const quarantine = requireLegacyMissingActorQuarantine(storage);
+    const quarantineAt = '2026-07-17T08:00:00.000Z';
+    const legacyStates = ['pending_local', 'sending', 'failed_retryable'] as const;
+    const legacyIds = legacyStates.map((state, index) =>
+      `evt_00000000-0000-4000-8000-00000000010${index}`);
+    const actorOwnedId = 'evt_00000000-0000-4000-8000-000000000110';
+    const permanentId = 'evt_00000000-0000-4000-8000-000000000111';
+    const confirmedId = 'evt_00000000-0000-4000-8000-000000000112';
+    const deletedId = 'evt_00000000-0000-4000-8000-000000000113';
+    const baseRow = rowFromParams([
+      clientEventId,
+      householdId,
+      puppyId,
+      null,
+      'feeding',
+      1,
+      '{"amount":"meal"}',
+      occurredAt,
+      'pending_local',
+      2,
+      'network_unavailable',
+      '2099-07-17T08:00:00.000Z',
+      createdAt,
+      createdAt,
+    ]);
+
+    legacyStates.forEach((state, index) => {
+      const rowId = legacyIds[index];
+      if (rowId === undefined) throw new Error('Expected synthetic legacy row id');
+      executor.rows.set(rowId, {
+        ...baseRow,
+        client_event_id: rowId,
+        state,
+      });
+    });
+    executor.rows.set(actorOwnedId, {
+      ...baseRow,
+      client_event_id: actorOwnedId,
+      created_by: createdBy,
+    });
+    executor.rows.set(permanentId, {
+      ...baseRow,
+      client_event_id: permanentId,
+      state: 'failed_permanent',
+    });
+    executor.rows.set(confirmedId, {
+      ...baseRow,
+      client_event_id: confirmedId,
+      state: 'server_confirmed',
+    });
+    executor.rows.set(deletedId, {
+      ...baseRow,
+      client_event_id: deletedId,
+      state: 'deleted_before_sync',
+    });
+    const originals = new Map(executor.rows);
+
+    await quarantine({ now: quarantineAt });
+
+    for (const rowId of legacyIds) {
+      const original = originals.get(rowId);
+      expect(executor.rows.get(rowId)).toEqual({
+        ...original,
+        state: 'failed_permanent',
+        retry_count: (original?.retry_count ?? 0) + 1,
+        last_error_category: 'missing_context',
+        retry_after_at: null,
+        updated_at: quarantineAt,
+      });
+    }
+    expect(executor.rows.get(actorOwnedId)).toEqual(originals.get(actorOwnedId));
+    expect(executor.rows.get(permanentId)).toEqual(originals.get(permanentId));
+    expect(executor.rows.get(confirmedId)).toEqual(originals.get(confirmedId));
+    expect(executor.rows.get(deletedId)).toEqual(originals.get(deletedId));
+
+    const afterFirstQuarantine = new Map(executor.rows);
+    await quarantine({ now: '2026-07-17T08:01:00.000Z' });
+    expect(executor.rows).toEqual(afterFirstQuarantine);
+
+    const freshExecutor = new TestQueueSqlExecutor();
+    const freshStorage = createQuickLogQueueStorage(freshExecutor);
+    const freshQuarantine = requireLegacyMissingActorQuarantine(freshStorage);
+    freshExecutor.rows.set(clientEventId, baseRow);
+    freshExecutor.failNextTransactionalRun = true;
+    await expect(freshQuarantine({ now: quarantineAt }))
+      .rejects.toThrow('synthetic transactional failure');
+    expect(freshExecutor.rows.get(clientEventId)).toEqual(baseRow);
   });
 
   it('rejects disallowed private and free-text persistence before writing a row', async () => {
@@ -921,6 +1657,154 @@ describe('Quick Log queue SQLite storage boundary', () => {
     expect(await storage.getByClientEventId(clientEventId)).toMatchObject({
       state: 'sending',
       updated_at: '2026-05-26T08:01:00.000Z',
+    });
+  });
+
+  it('AC-P1-RECOVERY-3 claims the next ready row only for the active actor', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    const otherActorId = '00000000-0000-4000-8000-000000000034';
+    const otherActorEventId = 'evt_00000000-0000-4000-8000-000000000035';
+    const activeActorEventId = 'evt_00000000-0000-4000-8000-000000000036';
+
+    await storage.enqueue(enqueueInput({
+      client_event_id: otherActorEventId,
+      created_by: otherActorId,
+      created_at: '2026-05-26T07:59:00.000Z',
+    }), { now: '2026-05-26T07:59:00.000Z' });
+    await storage.enqueue(enqueueInput({
+      client_event_id: activeActorEventId,
+      created_at: '2026-05-26T08:00:00.000Z',
+    }), { now: '2026-05-26T08:00:00.000Z' });
+
+    const activeActorClaim = {
+      createdBy,
+      now: '2026-05-26T08:01:00.000Z',
+    };
+    await expect(storage.claimNextReadyToSend(activeActorClaim)).resolves.toMatchObject({
+      client_event_id: activeActorEventId,
+      created_by: createdBy,
+      state: 'sending',
+    });
+    await expect(storage.getByClientEventId(otherActorEventId)).resolves.toMatchObject({
+      created_by: otherActorId,
+      state: 'pending_local',
+    });
+  });
+
+  it('AC-P1-RECOVERY-5 recovers stale sending rows after restart without resurrecting terminal rows', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    const staleSendingId = 'evt_00000000-0000-4000-8000-000000000031';
+    const confirmedId = 'evt_00000000-0000-4000-8000-000000000032';
+    const deletedId = 'evt_00000000-0000-4000-8000-000000000033';
+    const row = rowFromParams([
+      staleSendingId,
+      householdId,
+      puppyId,
+      createdBy,
+      'feeding',
+      1,
+      '{"amount":"meal"}',
+      occurredAt,
+      'sending',
+      1,
+      null,
+      null,
+      createdAt,
+      createdAt,
+    ]);
+
+    executor.userVersion = QUICK_LOG_QUEUE_SCHEMA_VERSION;
+    executor.columns.add('created_by');
+    executor.rows.set(staleSendingId, row);
+    executor.rows.set(confirmedId, {
+      ...row,
+      client_event_id: confirmedId,
+      state: 'server_confirmed',
+    });
+    executor.rows.set(deletedId, {
+      ...row,
+      client_event_id: deletedId,
+      state: 'deleted_before_sync',
+    });
+
+    await storage.initialize();
+
+    const visibleRecoverable = await storage.list({
+      states: ['pending_local', 'failed_retryable', 'failed_permanent'],
+    });
+    expect(visibleRecoverable.map((item) => item.client_event_id)).toEqual([staleSendingId]);
+    await expect(storage.claimNextReadyToSend({
+      now: '2026-05-26T08:02:00.000Z',
+    })).resolves.toMatchObject({
+      client_event_id: staleSendingId,
+      state: 'sending',
+    });
+    await expect(storage.claimNextReadyToSend({
+      now: '2026-05-26T08:02:01.000Z',
+    })).resolves.toBeNull();
+    await expect(storage.getByClientEventId(confirmedId)).resolves.toMatchObject({
+      state: 'server_confirmed',
+    });
+    await expect(storage.getByClientEventId(deletedId)).resolves.toMatchObject({
+      state: 'deleted_before_sync',
+    });
+  });
+
+  it('AC-P3-LEGACY-4 initializes then quarantines actorless sending rows with one total retry increment while recovering actor-owned rows', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    const quarantine = requireLegacyMissingActorQuarantine(storage);
+    const actorlessEventId = 'evt_00000000-0000-4000-8000-000000000114';
+    const actorOwnedEventId = 'evt_00000000-0000-4000-8000-000000000115';
+    const quarantineAt = '2026-07-17T09:00:00.000Z';
+    const originalRetryCount = 4;
+    const sendingRow = rowFromParams([
+      actorlessEventId,
+      householdId,
+      puppyId,
+      null,
+      'feeding',
+      1,
+      '{"amount":"meal"}',
+      occurredAt,
+      'sending',
+      originalRetryCount,
+      null,
+      null,
+      createdAt,
+      createdAt,
+    ]);
+
+    executor.userVersion = QUICK_LOG_QUEUE_SCHEMA_VERSION;
+    executor.columns.add('created_by');
+    executor.rows.set(actorlessEventId, sendingRow);
+    executor.rows.set(actorOwnedEventId, {
+      ...sendingRow,
+      client_event_id: actorOwnedEventId,
+      created_by: createdBy,
+    });
+
+    await storage.initialize();
+    await quarantine({ now: quarantineAt });
+
+    await expect(storage.getByClientEventId(actorlessEventId)).resolves.toMatchObject({
+      client_event_id: actorlessEventId,
+      created_by: null,
+      state: 'failed_permanent',
+      retry_count: originalRetryCount + 1,
+      last_error_category: 'missing_context',
+      retry_after_at: null,
+      updated_at: quarantineAt,
+    });
+    await expect(storage.getByClientEventId(actorOwnedEventId)).resolves.toMatchObject({
+      client_event_id: actorOwnedEventId,
+      created_by: createdBy,
+      state: 'failed_retryable',
+      retry_count: originalRetryCount + 1,
+      last_error_category: 'unknown',
+      retry_after_at: null,
     });
   });
 
@@ -1069,6 +1953,107 @@ describe('Quick Log queue SQLite storage boundary', () => {
         last_error_category: null,
       },
     });
+  });
+
+  it('AC-P3-ACTOR-4 atomically retries only the row owned by the expected actor', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    const manualRetryIfOwned = requireActorAwareManualRetry(storage);
+    const otherActorId = '00000000-0000-4000-8000-000000000099';
+
+    await storage.enqueue(enqueueInput(), { now: createdAt });
+    await storage.markSending(clientEventId, {
+      now: '2026-05-26T08:01:10.000Z',
+    });
+    await storage.markFailedRetryable(clientEventId, {
+      errorCategory: 'network_unavailable',
+      retryAfterAt: '2026-05-26T08:10:00.000Z',
+      now: '2026-05-26T08:01:11.000Z',
+    });
+    const beforeForeignAttempt = await storage.getByClientEventId(clientEventId);
+
+    await expect(manualRetryIfOwned(clientEventId, {
+      expectedCreatedBy: otherActorId,
+      isActorCurrent: () => true,
+      now: '2026-05-26T08:01:12.000Z',
+      recoverySurface: 'manual_retry',
+    })).resolves.toBeNull();
+    await expect(storage.getByClientEventId(clientEventId)).resolves.toEqual(
+      beforeForeignAttempt,
+    );
+
+    await expect(manualRetryIfOwned(clientEventId, {
+      expectedCreatedBy: createdBy,
+      isActorCurrent: () => true,
+      now: '2026-05-26T08:01:13.000Z',
+      recoverySurface: 'manual_retry',
+    })).resolves.toMatchObject({
+      client_event_id: clientEventId,
+      item: {
+        client_event_id: clientEventId,
+        created_by: createdBy,
+        state: 'sending',
+      },
+    });
+    await expect(storage.getByClientEventId(clientEventId)).resolves.toMatchObject({
+      client_event_id: clientEventId,
+      created_by: createdBy,
+      state: 'sending',
+    });
+  });
+
+  it('AC-P3-ACTOR-4 rolls back an owned Retry when actor liveness changes during its awaited SQLite write', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+    const manualRetryIfOwned = requireActorAwareManualRetry(storage);
+    const secondaryActorId = '00000000-0000-4000-8000-000000000099';
+    let currentActorId = createdBy;
+    let releaseWrite = (): void => {
+      throw new Error('Expected write release gate to be initialized');
+    };
+    let signalWrite = (): void => {
+      throw new Error('Expected write signal gate to be initialized');
+    };
+    const writeReached = new Promise<void>((resolve) => {
+      signalWrite = resolve;
+    });
+    const writeRelease = new Promise<void>((resolve) => {
+      releaseWrite = resolve;
+    });
+
+    await storage.enqueue(enqueueInput(), { now: createdAt });
+    await storage.markSending(clientEventId, {
+      now: '2026-05-26T08:01:10.000Z',
+    });
+    await storage.markFailedRetryable(clientEventId, {
+      errorCategory: 'network_unavailable',
+      retryAfterAt: '2026-05-26T08:10:00.000Z',
+      now: '2026-05-26T08:01:11.000Z',
+    });
+    const originalItem = await storage.getByClientEventId(clientEventId);
+    const transactionsBeforeRetry = executor.exclusiveTransactionRuns;
+    executor.afterNextQueueItemStateWrite = async () => {
+      signalWrite();
+      await writeRelease;
+    };
+
+    const retrying = manualRetryIfOwned(clientEventId, {
+      expectedCreatedBy: createdBy,
+      isActorCurrent: () => {
+        expect(executor.activeExclusiveTransactions).toBe(1);
+        return currentActorId === createdBy;
+      },
+      now: '2026-05-26T08:01:12.000Z',
+      recoverySurface: 'manual_retry',
+    });
+
+    await writeReached;
+    currentActorId = secondaryActorId;
+    releaseWrite();
+
+    await expect(retrying).resolves.toBeNull();
+    expect(executor.exclusiveTransactionRuns - transactionsBeforeRetry).toBe(1);
+    await expect(storage.getByClientEventId(clientEventId)).resolves.toEqual(originalItem);
   });
 
   it('supports manual retry and late-success delete race outcomes with the original ID', async () => {

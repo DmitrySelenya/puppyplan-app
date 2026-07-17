@@ -2,9 +2,13 @@ import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { QuickLogSurfaceCareContext } from './quick-log-event-view';
 import type { QuickLogCachedEventRow } from './quick-log';
 import { queryKeys } from './keys';
+import {
+  getQuickLogCareContextUserId,
+  isQuickLogRowVisibleToActor,
+} from './quick-log-actor-visibility';
+import type { QuickLogSurfaceCareContext } from './quick-log-event-view';
 
 const emptyRows: readonly QuickLogCachedEventRow[] = [];
 
@@ -14,6 +18,7 @@ export function useQuickLogCachedRows(
   const queryClient = useQueryClient();
   const householdId = careContext?.householdId ?? null;
   const puppyId = careContext?.puppyId ?? null;
+  const userId = getQuickLogCareContextUserId(careContext);
   const queryKey = useMemo<QueryKey | null>(() => {
     if (householdId === null || puppyId === null) {
       return null;
@@ -26,8 +31,8 @@ export function useQuickLogCachedRows(
       return null;
     }
 
-    return createCachedRowsSnapshotReader(queryClient, queryKey);
-  }, [queryClient, queryKey]);
+    return createCachedRowsSnapshotReader(queryClient, queryKey, userId);
+  }, [queryClient, queryKey, userId]);
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
@@ -62,12 +67,13 @@ function getEmptyRowsSnapshot(): readonly QuickLogCachedEventRow[] {
 function createCachedRowsSnapshotReader(
   queryClient: QueryClient,
   timelineRootKey: QueryKey,
+  userId: string | null,
 ): () => readonly QuickLogCachedEventRow[] {
   let previousSignature = '';
   let previousRows: readonly QuickLogCachedEventRow[] = emptyRows;
 
   return () => {
-    const rows = getCachedRowsForTimelineRoot(queryClient, timelineRootKey);
+    const rows = getCachedRowsForTimelineRoot(queryClient, timelineRootKey, userId);
 
     if (rows.length === 0) {
       previousSignature = '';
@@ -92,6 +98,7 @@ function createCachedRowsSnapshotReader(
 function getCachedRowsForTimelineRoot(
   queryClient: QueryClient,
   timelineRootKey: QueryKey,
+  userId: string | null,
 ): readonly QuickLogCachedEventRow[] {
   const matchingQueries = queryClient.getQueriesData<readonly QuickLogCachedEventRow[]>({
     exact: false,
@@ -101,6 +108,10 @@ function getCachedRowsForTimelineRoot(
 
   for (const [, rows] of matchingQueries) {
     for (const row of rows ?? emptyRows) {
+      if (!isQuickLogRowVisibleToActor(queryClient, row, userId)) {
+        continue;
+      }
+
       const currentRow = rowsByClientEventId.get(row.client_event_id);
 
       if (

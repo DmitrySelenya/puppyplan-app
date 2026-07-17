@@ -93,4 +93,3 @@ function selectedTrackerIdsOrDefault(
     ? trackerIds
     : defaultQuickLogTrackerIds;
 }
-

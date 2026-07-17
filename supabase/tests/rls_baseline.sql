@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(118);
+SELECT plan(126);
 
 CREATE SCHEMA IF NOT EXISTS tests;
 
@@ -104,6 +104,25 @@ BEGIN
   RETURN true;
 EXCEPTION
   WHEN insufficient_privilege OR check_violation OR with_check_option_violation THEN
+    RETURN false;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION tests.try_update_share_scope_selected_event_types(
+  target_share_scope_id uuid,
+  target_selected_event_types public.event_type[]
+)
+RETURNS boolean
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE public.share_scope
+  SET selected_event_types = target_selected_event_types
+  WHERE id = target_share_scope_id;
+
+  RETURN true;
+EXCEPTION
+  WHEN check_violation THEN
     RETURN false;
 END;
 $$;
@@ -1318,6 +1337,102 @@ SELECT is(
   false,
   'authenticated clients cannot directly send trusted sitter completion events'
 );
+
+SELECT tests.as_postgres();
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM pg_constraint
+    JOIN pg_class ON pg_class.oid = pg_constraint.conrelid
+    JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+    WHERE pg_namespace.nspname = 'public'
+      AND pg_class.relname = 'share_scope'
+      AND pg_constraint.conname = 'share_scope_selected_timeline_event_types_required'
+      AND pg_constraint.contype = 'c'$$,
+  ARRAY[1],
+  'selected timeline share scope has required event-types constraint'
+);
+
+SELECT is(
+  tests.try_update_share_scope_selected_event_types(
+    '00000000-0000-4000-8000-000000000802',
+    null
+  ),
+  false,
+  'selected timeline share scope rejects null selected event types'
+);
+
+SELECT is(
+  tests.try_update_share_scope_selected_event_types(
+    '00000000-0000-4000-8000-000000000802',
+    ARRAY[]::public.event_type[]
+  ),
+  false,
+  'selected timeline share scope rejects empty selected event types'
+);
+
+SELECT is(
+  tests.try_update_share_scope_selected_event_types(
+    '00000000-0000-4000-8000-000000000802',
+    ARRAY[
+      'potty'::public.event_type,
+      'training'::public.event_type,
+      'zoomies'::public.event_type
+    ]
+  ),
+  true,
+  'selected timeline share scope accepts explicit non-empty selected event types'
+);
+
+SELECT is(
+  tests.try_update_share_scope_selected_event_types(
+    '00000000-0000-4000-8000-000000000801',
+    null
+  ),
+  true,
+  'non-selected share scope preserves null selected event types'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000106');
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.share_selected_timeline
+    WHERE event_type = 'observation'$$,
+  ARRAY[0],
+  'accepted trainer selected timeline excludes observation without explicit selection'
+);
+
+SELECT tests.as_postgres();
+SELECT is(
+  tests.try_update_share_scope_selected_event_types(
+    '00000000-0000-4000-8000-000000000802',
+    ARRAY[
+      'potty'::public.event_type,
+      'training'::public.event_type,
+      'observation'::public.event_type,
+      'zoomies'::public.event_type
+    ]
+  ),
+  true,
+  'selected timeline share scope accepts explicit observation opt-in'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000106');
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.share_selected_timeline
+    WHERE event_type = 'observation'$$,
+  ARRAY[1],
+  'accepted trainer selected timeline includes explicitly selected sanitized observation'
+);
+
+SELECT tests.as_postgres();
+UPDATE public.share_scope
+SET selected_event_types = ARRAY[
+  'potty'::public.event_type,
+  'training'::public.event_type,
+  'zoomies'::public.event_type
+]
+WHERE id = '00000000-0000-4000-8000-000000000802';
 
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000106');
 SELECT isnt_empty(

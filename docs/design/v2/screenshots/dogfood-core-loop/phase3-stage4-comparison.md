@@ -21,4 +21,3 @@ Named implementation adjustment: the seven event kinds use a primitive-based two
 instead of a single native segmented row. The first SE render proved that one row clipped labels;
 the replacement preserves the approved information architecture, 44pt minimum targets, selected
 state, and Dynamic Type behavior.
-

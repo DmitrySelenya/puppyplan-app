@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { chmodSync, existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -62,6 +63,20 @@ function canonicalQuickTrackerMigrationSource() {
     .join('\n');
 }
 
+function selectedTimelineShareScopeHardeningMigrationPath() {
+  const paths = readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_.*(?:share.*scope.*selected.*timeline|selected.*timeline.*share.*scope).*\.sql$/u.test(filename))
+    .map((filename) => `${migrationDir}/${filename}`);
+
+  assert.equal(
+    paths.length,
+    1,
+    `expected exactly one new selected-timeline share-scope hardening migration, found ${paths.length}`,
+  );
+
+  return paths[0];
+}
+
 function viewBlock(source, viewName) {
   const match = source.match(new RegExp(`CREATE VIEW public\\.${viewName}\\n[\\s\\S]*?;`, 'u'));
   assert.ok(match, `missing ${viewName} view`);
@@ -98,6 +113,19 @@ function latestConstraintBlock(source, constraintName) {
   const matches = [
     ...source.matchAll(
       new RegExp(`ADD CONSTRAINT ${constraintName} CHECK \\([\\s\\S]*?\\);`, 'gu'),
+    ),
+  ];
+  assert.ok(matches.length > 0, `missing ${constraintName} constraint`);
+  return matches.at(-1)?.[0] ?? '';
+}
+
+function latestValidatedConstraintBlock(source, constraintName) {
+  const matches = [
+    ...source.matchAll(
+      new RegExp(
+        `ADD CONSTRAINT ${constraintName} CHECK \\([\\s\\S]*?\\)(?:\\s+NOT VALID)?\\s*;`,
+        'gu',
+      ),
     ),
   ];
   assert.ok(matches.length > 0, `missing ${constraintName} constraint`);
@@ -206,6 +234,45 @@ describe('Supabase baseline migration guardrails', () => {
       /event_log\.event_type = 'training'/u,
     );
     assert.doesNotMatch(migration, /CREATE TABLE|CREATE TYPE|DROP TABLE/u);
+  });
+
+  it('AC-P2-SHARE-2 AC-P2-SHARE-3 AC-P2-SHARE-5: hardens explicit selected timeline event types without historical rewrites', () => {
+    const migrationPath = selectedTimelineShareScopeHardeningMigrationPath();
+    const migration = readFileSync(migrationPath, 'utf8');
+    const source = allMigrationSource();
+    const constraint = latestValidatedConstraintBlock(
+      source,
+      'share_scope_selected_timeline_event_types_required',
+    );
+    const selectedTimelineProjection = functionBlock(source, 'current_share_selected_timeline');
+    const observationMigration = readFileSync(eventObservationPayloadV2MigrationPath, 'utf8');
+    const observationExecutableBody = observationMigration.slice(
+      observationMigration.indexOf('ALTER TYPE'),
+    );
+
+    assert.match(constraint, /scope\s*<>\s*'selected_timeline_range'\s+OR/iu);
+    assert.match(constraint, /selected_event_types\s+IS\s+NOT\s+NULL/iu);
+    assert.match(constraint, /cardinality\s*\(\s*selected_event_types\s*\)\s*>\s*0/iu);
+    assert.match(
+      migration,
+      /VALIDATE CONSTRAINT share_scope_selected_timeline_event_types_required/iu,
+    );
+    assert.doesNotMatch(
+      migration,
+      /\b(?:INSERT|UPDATE|DELETE|REVOKE|GRANT)\b|CREATE\s+POLICY|ALTER\s+POLICY|ROW\s+LEVEL\s+SECURITY/iu,
+    );
+    assert.match(
+      selectedTimelineProjection,
+      /event_log\.event_type\s*=\s*ANY\s*\(\s*share_scope\.selected_event_types\s*\)/iu,
+    );
+    assert.doesNotMatch(
+      selectedTimelineProjection,
+      /selected_event_types\s+IS\s+NULL/iu,
+    );
+    assert.equal(
+      createHash('sha256').update(observationExecutableBody).digest('hex'),
+      '28816edf86bca859f4136699ac0401812aadce57005496103e74a790e9f1fc09',
+    );
   });
 
   it('scopes event-backed share projections to the shared puppy', () => {
@@ -449,6 +516,26 @@ describe('Supabase baseline migration guardrails', () => {
 });
 
 describe('Supabase RLS pgTAP coverage guardrails', () => {
+  it('AC-P2-SHARE-2 AC-P2-SHARE-3 AC-P2-SHARE-5: locks eight explicit selected timeline assertions', () => {
+    const source = readFileSync(rlsTestPath, 'utf8');
+    const labels = [
+      'selected timeline share scope has required event-types constraint',
+      'selected timeline share scope rejects null selected event types',
+      'selected timeline share scope rejects empty selected event types',
+      'selected timeline share scope accepts explicit non-empty selected event types',
+      'non-selected share scope preserves null selected event types',
+      'accepted trainer selected timeline excludes observation without explicit selection',
+      'selected timeline share scope accepts explicit observation opt-in',
+      'accepted trainer selected timeline includes explicitly selected sanitized observation',
+    ];
+
+    assert.match(source, /SELECT plan\(126\);/u);
+
+    for (const label of labels) {
+      assert.equal(source.split(label).length - 1, 1, `${label} must appear exactly once`);
+    }
+  });
+
   it('covers denied invite, share, and share-scope mutations', () => {
     const source = readFileSync(rlsTestPath, 'utf8');
 

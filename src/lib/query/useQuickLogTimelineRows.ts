@@ -11,6 +11,11 @@ import { formatLocalCalendarDate } from '@/lib/i18n/format-date';
 import { createSupabaseEventLogRepository } from '@/lib/supabase/events';
 
 import { queryKeys, type TimelineFilters } from './keys';
+import {
+  getQuickLogCareContextUserId,
+  getQuickLogIntentOwner,
+  isQuickLogRowVisibleToActor,
+} from './quick-log-actor-visibility';
 import type { QuickLogSurfaceCareContext } from './quick-log-event-view';
 import type { QuickLogCachedEventRow } from './quick-log';
 
@@ -36,6 +41,7 @@ export function useQuickLogTimelineRows(
 ): QuickLogTimelineRowsResult {
   const householdId = careContext?.householdId ?? null;
   const puppyId = careContext?.puppyId ?? null;
+  const userId = getQuickLogCareContextUserId(careContext);
   const normalizedFilters = useNormalizedTimelineFilters(filters);
   const queryClient = useQueryClient();
   const queryKey = useMemo<QueryKey | null>(() => {
@@ -74,16 +80,43 @@ export function useQuickLogTimelineRows(
             queryClient,
             timelineRootKey,
             normalizedFilters,
+            userId,
+          );
+          const composedCachedRows = composeDurableRowsWithDeleteSentinels(
+            queryClient,
+            durableRows,
+            cachedRows,
+          );
+          retainDeleteSentinelsInTimelineRoot(
+            queryClient,
+            timelineRootKey,
+            queryKey,
+            composedCachedRows,
+            userId,
           );
 
-          return mergeDurableRowsWithLocalRows(durableRows, cachedRows);
+          return mergeDurableRowsWithLocalRows(
+            queryClient,
+            durableRows,
+            composedCachedRows,
+            userId,
+          );
         },
         queryKey,
       },
     ];
-  }, [householdId, normalizedFilters, puppyId, queryClient, queryKey, timelineRootKey]);
+  }, [householdId, normalizedFilters, puppyId, queryClient, queryKey, timelineRootKey, userId]);
   const results = useQueries({ queries });
   const query = results[0];
+  const actorVisibleQueryRows = filterRowsForActor(
+    queryClient,
+    query?.data ?? emptyRows,
+    userId,
+  );
+  const visibleQueryRows = actorVisibleQueryRows.some((row) =>
+    row.localSync?.state === 'deleted_before_sync')
+    ? actorVisibleQueryRows.filter((row) => row.localSync?.state !== 'deleted_before_sync')
+    : actorVisibleQueryRows;
 
   if (householdId === null || puppyId === null) {
     return {
@@ -96,7 +129,7 @@ export function useQuickLogTimelineRows(
   if (query === undefined || query.isLoading) {
     return {
       error: null,
-      rows: query?.data ?? emptyRows,
+      rows: visibleQueryRows,
       status: 'loading',
     };
   }
@@ -104,16 +137,71 @@ export function useQuickLogTimelineRows(
   if (query.isError) {
     return {
       error: query.error,
-      rows: query.data ?? emptyRows,
+      rows: visibleQueryRows,
       status: 'error',
     };
   }
 
   return {
     error: null,
-    rows: query.data ?? emptyRows,
+    rows: visibleQueryRows,
     status: 'ready',
   };
+}
+
+function retainDeleteSentinelsInTimelineRoot(
+  queryClient: QueryClient,
+  timelineRootKey: QueryKey,
+  activeTimelineKey: QueryKey,
+  cachedRows: readonly QuickLogCachedEventRow[],
+  userId: string | null,
+): void {
+  const deleteSentinels = cachedRows.filter((row) =>
+    row.localSync?.state === 'deleted_before_sync');
+  if (deleteSentinels.length === 0) {
+    return;
+  }
+
+  const deleteSentinelsByClientEventId = new Map(deleteSentinels.map((row) => [
+    row.client_event_id,
+    row,
+  ]));
+  const matchingQueries = queryClient.getQueriesData<QuickLogCachedEventRow[]>({
+    exact: false,
+    queryKey: timelineRootKey,
+  });
+  for (const [queryKey, rows] of matchingQueries) {
+    if (rows === undefined || isSameTimelineQueryKey(queryKey, activeTimelineKey)) {
+      continue;
+    }
+
+    let changed = false;
+    const reconciledRows = rows.map((row) => {
+      const sentinel = deleteSentinelsByClientEventId.get(row.client_event_id);
+      if (
+        sentinel === undefined
+        || row.household_id !== sentinel.household_id
+        || row.puppy_id !== sentinel.puppy_id
+      ) {
+        return row;
+      }
+
+      changed = true;
+      return sentinel;
+    });
+    if (changed) {
+      queryClient.setQueryData<QuickLogCachedEventRow[]>(queryKey, reconciledRows);
+    }
+  }
+
+  queryClient.setQueryData<QuickLogCachedEventRow[]>(timelineRootKey, (previousRows = []) => {
+    const retainedIds = new Set(deleteSentinels.map((row) => row.client_event_id));
+    return [
+      ...deleteSentinels,
+      ...filterRowsForActor(queryClient, previousRows, userId)
+        .filter((row) => !retainedIds.has(row.client_event_id)),
+    ];
+  });
 }
 
 function useNormalizedTimelineFilters(filters: TimelineFilters): TimelineFilters {
@@ -149,27 +237,75 @@ function isNonEmptyString(value: string | undefined): value is string {
   return value !== undefined && value !== '';
 }
 
-function mergeDurableRowsWithLocalRows(
+function composeDurableRowsWithDeleteSentinels(
+  queryClient: QueryClient,
   durableRows: readonly QuickLogCachedEventRow[],
   cachedRows: readonly QuickLogCachedEventRow[],
 ): readonly QuickLogCachedEventRow[] {
-  if (cachedRows.length === 0) {
-    return durableRows;
+  const durableRowsByClientEventId = new Map(durableRows
+    .filter((row) => row.localSync === undefined && row.deleted_at === null)
+    .map((row) => [row.client_event_id, row]));
+  let changed = false;
+  const composedRows = cachedRows.map((row) => {
+    if (row.localSync?.state !== 'deleted_before_sync') {
+      return row;
+    }
+
+    const durableRow = durableRowsByClientEventId.get(row.client_event_id);
+    if (
+      durableRow === undefined
+      || durableRow.created_by === getQuickLogIntentOwner(queryClient, row)
+    ) {
+      return row;
+    }
+
+    changed = true;
+    return {
+      ...durableRow,
+      localSync: row.localSync,
+    };
+  });
+
+  return changed ? composedRows : cachedRows;
+}
+
+function isSameTimelineQueryKey(left: QueryKey, right: QueryKey): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function mergeDurableRowsWithLocalRows(
+  queryClient: QueryClient,
+  durableRows: readonly QuickLogCachedEventRow[],
+  cachedRows: readonly QuickLogCachedEventRow[],
+  userId: string | null,
+): readonly QuickLogCachedEventRow[] {
+  const visibleDurableRowsForActor = filterRowsForActor(queryClient, durableRows, userId);
+  const visibleCachedRows = filterRowsForActor(queryClient, cachedRows, userId);
+  const retainedDeleteClientEventIds = new Set(cachedRows
+    .filter((row) => row.localSync?.state === 'deleted_before_sync')
+    .map((row) => row.client_event_id));
+  const visibleDurableRows = visibleDurableRowsForActor.filter((row) =>
+    !retainedDeleteClientEventIds.has(row.client_event_id));
+
+  if (visibleCachedRows.length === 0) {
+    return visibleDurableRows;
   }
 
-  const durableClientEventIds = new Set(durableRows.map((row) => row.client_event_id));
-  const durableIds = new Set(durableRows.map((row) => row.id));
-  const missingCachedRows = cachedRows.filter(
-    (row) => !durableClientEventIds.has(row.client_event_id) && !durableIds.has(row.id),
+  const durableClientEventIds = new Set(visibleDurableRows.map((row) => row.client_event_id));
+  const durableIds = new Set(visibleDurableRows.map((row) => row.id));
+  const missingCachedRows = visibleCachedRows.filter(
+    (row) => row.localSync?.state !== 'deleted_before_sync'
+      && !durableClientEventIds.has(row.client_event_id) && !durableIds.has(row.id),
   );
 
-  return [...missingCachedRows, ...durableRows].sort(compareRowsByNewestFirst);
+  return [...missingCachedRows, ...visibleDurableRows].sort(compareRowsByNewestFirst);
 }
 
 function getCachedTimelineRows(
   queryClient: QueryClient,
   timelineRootKey: QueryKey,
   filters: TimelineFilters,
+  userId: string | null,
 ): readonly QuickLogCachedEventRow[] {
   const matchingQueries = queryClient.getQueriesData<readonly QuickLogCachedEventRow[]>({
     exact: false,
@@ -180,7 +316,9 @@ function getCachedTimelineRows(
   for (const [, rows] of matchingQueries) {
     for (const row of rows ?? emptyRows) {
       if (
-        row.deleted_at === null
+        (row.localSync?.state === 'deleted_before_sync'
+          || isQuickLogRowVisibleToActor(queryClient, row, userId))
+        && row.deleted_at === null
         && rowMatchesTimelineFilters(row, filters)
       ) {
         const currentRow = rowsByClientEventId.get(row.client_event_id);
@@ -196,6 +334,17 @@ function getCachedTimelineRows(
   }
 
   return [...rowsByClientEventId.values()];
+}
+
+function filterRowsForActor(
+  queryClient: QueryClient,
+  rows: readonly QuickLogCachedEventRow[],
+  userId: string | null,
+): readonly QuickLogCachedEventRow[] {
+  const visibleRows = rows.filter((row) =>
+    isQuickLogRowVisibleToActor(queryClient, row, userId));
+
+  return visibleRows.length === rows.length ? rows : visibleRows;
 }
 
 function isPreferredLocalRowVersion(

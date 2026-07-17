@@ -99,7 +99,7 @@ export function createQuickLogRecentEvents(
   rows: readonly QuickLogCachedEventRow[],
 ): readonly QuickLogRecentEvent[] {
   return rows.flatMap((row) => {
-    if (row.deleted_at !== null) {
+    if (row.deleted_at !== null || row.localSync?.state === 'deleted_before_sync') {
       return [];
     }
 

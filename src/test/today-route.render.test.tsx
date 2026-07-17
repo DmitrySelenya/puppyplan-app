@@ -10,7 +10,9 @@ import DiaryRoute from '../../app/(tabs)/diary';
 
 const mockRouterPush = jest.fn();
 const mockDismissSnackbar = jest.fn();
+const mockReplaceSnackbar = jest.fn();
 const mockShowSnackbar = jest.fn();
+const mockCaptureException = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
 let capturedActions: QuickLogEventActionHandlers | undefined;
@@ -57,8 +59,19 @@ jest.mock('@/design/primitives/Snackbar', () => {
     ...actual,
     useSnackbar: () => ({
       dismissSnackbar: mockDismissSnackbar,
-      replaceSnackbar: jest.fn(),
+      replaceSnackbar: mockReplaceSnackbar,
       showSnackbar: mockShowSnackbar,
+    }),
+  };
+});
+
+jest.mock('@/lib/observability', () => {
+  const actual = jest.requireActual<typeof import('@/lib/observability')>('@/lib/observability');
+
+  return {
+    ...actual,
+    createObservabilityReporter: () => ({
+      captureException: mockCaptureException,
     }),
   };
 });
@@ -69,7 +82,9 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     capturedProps = undefined;
     mockRouterPush.mockClear();
     mockDismissSnackbar.mockReset();
+    mockReplaceSnackbar.mockReset();
     mockShowSnackbar.mockReset();
+    mockCaptureException.mockReset();
     await i18n.changeLanguage('en');
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
@@ -250,6 +265,500 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
       'quick-log-synced-delete:evt_00000000-0000-4000-8000-000000007101',
     ));
     expect(mutation.deleteLocal).not.toHaveBeenCalled();
+  });
+
+  it('AC-P1-RECOVERY-10 keeps a persistence-failed synced delete on Done and exposes existing Retry copy', async () => {
+    const persistenceFailure = new Error('Synthetic delete-intent persistence failure');
+    const mutation = {
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn()
+        .mockRejectedValueOnce(persistenceFailure)
+        .mockResolvedValueOnce(undefined),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      restoreSynced: jest.fn(),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(<AppProviders><DiaryRoute /></AppProviders>);
+    const request = {
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007102',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    } as const;
+
+    await Promise.resolve(capturedActions?.onDelete?.(request));
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      message: i18n.t('timeline.delete-failed'),
+      primaryAction: expect.objectContaining({
+        label: i18n.t('quick-log.failed.primary'),
+      }),
+      tone: 'error',
+    })));
+
+    const snackbarMessage = mockShowSnackbar.mock.calls[0]?.[0];
+    snackbarMessage.primaryAction.onPress();
+    await waitFor(() => expect(mutation.deleteSynced).toHaveBeenCalledTimes(2));
+    expect(mutation.deleteSynced).toHaveBeenLastCalledWith({
+      clientEventId: request.clientEventId,
+      eventType: request.eventType,
+      householdId: request.householdId,
+      puppyId: request.puppyId,
+      todayDate: request.todayDate,
+    });
+  });
+
+  it('AC-P1-RECOVERY-10 turns a successful persistence Retry into the normal reachable Undo snackbar', async () => {
+    const mutation = {
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn()
+        .mockRejectedValueOnce(new Error('Synthetic first persistence failure'))
+        .mockResolvedValueOnce(undefined),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      restoreSynced: jest.fn(async () => undefined),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(<AppProviders><DiaryRoute /></AppProviders>);
+    const request = {
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007104',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    } as const;
+
+    await Promise.resolve(capturedActions?.onDelete?.(request));
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      message: i18n.t('timeline.delete-failed'),
+      primaryAction: expect.objectContaining({ label: i18n.t('quick-log.failed.primary') }),
+      tone: 'error',
+    })));
+    const failureSnackbar = mockShowSnackbar.mock.calls[0]?.[0];
+    failureSnackbar.primaryAction.onPress();
+
+    await waitFor(() => {
+      const retrySuccessSnackbar = [
+        ...mockShowSnackbar.mock.calls.slice(1),
+        ...mockReplaceSnackbar.mock.calls,
+      ].map(([message]) => message).find((message) =>
+        message.message === i18n.t('timeline.delete-snackbar'));
+      expect(retrySuccessSnackbar).toEqual(expect.objectContaining({
+        durationMs: 5000,
+        hapticEvent: 'warning',
+        message: i18n.t('timeline.delete-snackbar'),
+        primaryAction: expect.objectContaining({
+          label: i18n.t('quick-log.snackbar.undo'),
+        }),
+        tone: 'warning',
+      }));
+    });
+
+    const undoSnackbar = [
+      ...mockShowSnackbar.mock.calls.slice(1),
+      ...mockReplaceSnackbar.mock.calls,
+    ].map(([message]) => message).find((message) =>
+      message.message === i18n.t('timeline.delete-snackbar'));
+    undoSnackbar.primaryAction.onPress();
+    await waitFor(() => expect(mutation.restoreSynced).toHaveBeenCalledWith({
+      clientEventId: request.clientEventId,
+      eventType: request.eventType,
+      householdId: request.householdId,
+      puppyId: request.puppyId,
+      todayDate: request.todayDate,
+    }));
+  });
+
+  it('AC-P1-RECOVERY-10 keeps a second synced-delete persistence Retry visibly failed and reports it', async () => {
+    const privateMarker = 'private-synced-delete-retry-marker';
+    const mutation = {
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn()
+        .mockRejectedValueOnce(new Error('Synthetic first persistence failure'))
+        .mockRejectedValueOnce(new Error(privateMarker)),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      restoreSynced: jest.fn(),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(<AppProviders><DiaryRoute /></AppProviders>);
+    const request = {
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007103',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    } as const;
+
+    await Promise.resolve(capturedActions?.onDelete?.(request));
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      message: i18n.t('timeline.delete-failed'),
+      primaryAction: expect.objectContaining({
+        label: i18n.t('quick-log.failed.primary'),
+      }),
+      tone: 'error',
+    })));
+
+    const firstFailure = mockShowSnackbar.mock.calls[0]?.[0];
+    firstFailure.primaryAction.onPress();
+
+    await waitFor(() => expect(mockReplaceSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      message: i18n.t('timeline.delete-failed'),
+      primaryAction: expect.objectContaining({
+        label: i18n.t('quick-log.failed.primary'),
+      }),
+      tone: 'error',
+    })));
+    expect(mockDismissSnackbar).not.toHaveBeenCalled();
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ operation: 'synced_delete_retry' }),
+    );
+    expect(JSON.stringify(mockCaptureException.mock.calls)).not.toContain(privateMarker);
+  });
+
+  it('AC-P3-ACTOR-2 dismisses and disables actor A Undo when the mutation/auth identity changes', async () => {
+    const actorAMutation = {
+      actorId: '00000000-0000-4000-8000-000000007003',
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(async () => undefined),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      restoreSynced: jest.fn(async () => undefined),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    const actorBMutation = {
+      ...actorAMutation,
+      actorId: '00000000-0000-4000-8000-000000007099',
+      deleteSynced: jest.fn(async () => undefined),
+      restoreSynced: jest.fn(async () => undefined),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: actorAMutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+    const screen = render(<AppProviders><DiaryRoute /></AppProviders>);
+    const request = {
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007105',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    } as const;
+
+    await Promise.resolve(capturedActions?.onDelete?.(request));
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      id: `quick-log-synced-delete:${request.clientEventId}`,
+      primaryAction: expect.objectContaining({
+        label: i18n.t('quick-log.snackbar.undo'),
+      }),
+    })));
+    const actorAUndo = mockShowSnackbar.mock.calls[0]?.[0].primaryAction.onPress;
+    mockDismissSnackbar.mockClear();
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: actorBMutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    screen.rerender(<AppProviders><DiaryRoute /></AppProviders>);
+    await waitFor(() => expect(mockDismissSnackbar).toHaveBeenCalledWith(
+      `quick-log-synced-delete:${request.clientEventId}`,
+    ));
+    actorAUndo();
+    await Promise.resolve();
+
+    expect({
+      actorARestores: actorAMutation.restoreSynced.mock.calls.length,
+      actorBRestores: actorBMutation.restoreSynced.mock.calls.length,
+    }).toEqual({
+      actorARestores: 0,
+      actorBRestores: 0,
+    });
+  });
+
+  it('AC-P3-ACTOR-2 dismisses and disables actor A persistence Retry when the mutation/auth identity changes', async () => {
+    const actorAMutation = {
+      actorId: '00000000-0000-4000-8000-000000007003',
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(async () => {
+        throw new Error('Synthetic actor A persistence failure');
+      }),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      restoreSynced: jest.fn(async () => undefined),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    const actorBMutation = {
+      ...actorAMutation,
+      actorId: '00000000-0000-4000-8000-000000007099',
+      deleteSynced: jest.fn(async () => undefined),
+      restoreSynced: jest.fn(async () => undefined),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: actorAMutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+    const screen = render(<AppProviders><DiaryRoute /></AppProviders>);
+    const request = {
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007106',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    } as const;
+
+    await Promise.resolve(capturedActions?.onDelete?.(request));
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      id: `quick-log-synced-delete-error:${request.clientEventId}`,
+      primaryAction: expect.objectContaining({
+        label: i18n.t('quick-log.failed.primary'),
+      }),
+    })));
+    const actorARetry = mockShowSnackbar.mock.calls[0]?.[0].primaryAction.onPress;
+    mockDismissSnackbar.mockClear();
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: actorBMutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    screen.rerender(<AppProviders><DiaryRoute /></AppProviders>);
+    await waitFor(() => expect(mockDismissSnackbar).toHaveBeenCalledWith(
+      `quick-log-synced-delete-error:${request.clientEventId}`,
+    ));
+    actorARetry();
+    await Promise.resolve();
+
+    expect({
+      actorADeletes: actorAMutation.deleteSynced.mock.calls.length,
+      actorBDeletes: actorBMutation.deleteSynced.mock.calls.length,
+    }).toEqual({
+      actorADeletes: 1,
+      actorBDeletes: 0,
+    });
+  });
+
+  it('AC-P3-ACTOR-6 dismisses and disables an active synced-delete Undo when its route unmounts without an auth rerender', async () => {
+    const mutation = {
+      actorId: '00000000-0000-4000-8000-000000007003',
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(async () => undefined),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      restoreSynced: jest.fn(async () => undefined),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+    const screen = render(<AppProviders><DiaryRoute /></AppProviders>);
+    const request = {
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007108',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    } as const;
+
+    await Promise.resolve(capturedActions?.onDelete?.(request));
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      id: `quick-log-synced-delete:${request.clientEventId}`,
+      primaryAction: expect.objectContaining({
+        label: i18n.t('quick-log.snackbar.undo'),
+      }),
+    })));
+    const retainedUndo = mockShowSnackbar.mock.calls[0]?.[0].primaryAction.onPress;
+    mockDismissSnackbar.mockClear();
+    mockReplaceSnackbar.mockClear();
+
+    screen.unmount();
+    expect(mockDismissSnackbar).toHaveBeenCalledTimes(1);
+    expect(mockDismissSnackbar).toHaveBeenCalledWith(
+      `quick-log-synced-delete:${request.clientEventId}`,
+    );
+    retainedUndo();
+    retainedUndo();
+    await Promise.resolve();
+
+    expect({
+      deleteCalls: mutation.deleteSynced.mock.calls.length,
+      replaceCalls: mockReplaceSnackbar.mock.calls.length,
+      restoreCalls: mutation.restoreSynced.mock.calls.length,
+    }).toEqual({
+      deleteCalls: 1,
+      replaceCalls: 0,
+      restoreCalls: 0,
+    });
+  });
+
+  it('AC-P3-ACTOR-6 dismisses and disables an active synced-delete error Retry when its route unmounts without an auth rerender', async () => {
+    const mutation = {
+      actorId: '00000000-0000-4000-8000-000000007003',
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(async () => {
+        throw new Error('Synthetic persistence failure');
+      }),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      restoreSynced: jest.fn(async () => undefined),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+    const screen = render(<AppProviders><DiaryRoute /></AppProviders>);
+    const request = {
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007109',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    } as const;
+
+    await Promise.resolve(capturedActions?.onDelete?.(request));
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      id: `quick-log-synced-delete-error:${request.clientEventId}`,
+      primaryAction: expect.objectContaining({
+        label: i18n.t('quick-log.failed.primary'),
+      }),
+    })));
+    const retainedRetry = mockShowSnackbar.mock.calls[0]?.[0].primaryAction.onPress;
+    mockDismissSnackbar.mockClear();
+    mockReplaceSnackbar.mockClear();
+    mockCaptureException.mockClear();
+
+    screen.unmount();
+    expect(mockDismissSnackbar).toHaveBeenCalledTimes(1);
+    expect(mockDismissSnackbar).toHaveBeenCalledWith(
+      `quick-log-synced-delete-error:${request.clientEventId}`,
+    );
+    retainedRetry();
+    retainedRetry();
+    await Promise.resolve();
+
+    expect({
+      captureCalls: mockCaptureException.mock.calls.length,
+      deleteCalls: mutation.deleteSynced.mock.calls.length,
+      replaceCalls: mockReplaceSnackbar.mock.calls.length,
+      restoreCalls: mutation.restoreSynced.mock.calls.length,
+    }).toEqual({
+      captureCalls: 0,
+      deleteCalls: 1,
+      replaceCalls: 0,
+      restoreCalls: 0,
+    });
+  });
+
+  it('AC-P3-ACTOR-2 AC-P3-ACTOR-6 retains the five-second Undo action when a same-actor rerender replaces the mutation port object', async () => {
+    const mutation = {
+      actorId: '00000000-0000-4000-8000-000000007003',
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(async () => undefined),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      restoreSynced: jest.fn(async () => undefined),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    const replacementMutation = {
+      ...mutation,
+      deleteSynced: jest.fn(async () => undefined),
+      restoreSynced: jest.fn(async () => undefined),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+    const screen = render(<AppProviders><DiaryRoute /></AppProviders>);
+    const request = {
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007107',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    } as const;
+
+    await Promise.resolve(capturedActions?.onDelete?.(request));
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      durationMs: 5000,
+      id: `quick-log-synced-delete:${request.clientEventId}`,
+    })));
+    const undo = mockShowSnackbar.mock.calls[0]?.[0].primaryAction.onPress;
+    mockDismissSnackbar.mockClear();
+
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: replacementMutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+    screen.rerender(<AppProviders><DiaryRoute /></AppProviders>);
+    expect(mockDismissSnackbar).not.toHaveBeenCalled();
+    undo();
+
+    await waitFor(() => expect(mutation.restoreSynced).toHaveBeenCalledTimes(1));
+    expect(mutation.restoreSynced).toHaveBeenCalledWith({
+      clientEventId: request.clientEventId,
+      eventType: request.eventType,
+      householdId: request.householdId,
+      puppyId: request.puppyId,
+      todayDate: request.todayDate,
+    });
+    expect(replacementMutation.restoreSynced).not.toHaveBeenCalled();
+  });
+
+  it('AC-P1-RECOVERY-10 leaves write actions unavailable when the queue cannot open', () => {
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: undefined,
+      mutationEvents: [],
+      status: 'unavailable',
+    });
+
+    render(<AppProviders><DiaryRoute /></AppProviders>);
+
+    expect(capturedActions).toBeUndefined();
+    expect(capturedProps?.onCheckOff).toBeUndefined();
   });
 
   it('derives the production Diary day number from the active puppy profile date', () => {

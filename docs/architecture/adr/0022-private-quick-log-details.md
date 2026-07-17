@@ -62,6 +62,12 @@ Choose Variant A with these hard boundaries:
 9. No new local-write queue is introduced. ADR-0021's shared-engine sequencing remains unchanged.
 10. Applying the migration to PuppyPlan Dev, regenerating DB types from a remote schema, and any
     production action require separate exact approval.
+11. Observation remains excluded from aggregate projections such as
+    `current_share_routine_summary`. On 2026-07-17 the owner/CTO resolved the selected-timeline
+    mismatch by requiring an explicit, non-null, non-empty `selected_event_types` opt-in. Migration
+    `20260717161449_harden_selected_timeline_share_scope.sql` enforces that invariant and removes the
+    null-as-all fallback from `current_share_selected_timeline()`; private note text remains
+    excluded.
 
 ## Последствия
 
@@ -82,3 +88,5 @@ Choose Variant A with these hard boundaries:
 - [x] Apply the separately approved additive migration to PuppyPlan Dev, regenerate hosted types,
   and review the generated diff (only the expected enum union and Constants entries changed).
 - [x] Complete and approve Stage 0 design locks before Quick Log UI implementation.
+- [x] Resolve selected-timeline Observation inclusion as explicit event-type opt-in and prepare the
+      additive contract/migration/projection/pgTAP hardening without applying it.

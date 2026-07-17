@@ -344,7 +344,7 @@ describe('profile, token, and share refinements', () => {
     }).success).toBe(false);
   });
 
-  it('requires selected timeline share scopes to include an ordered date window', () => {
+  it('AC-P2-SHARE-1: accepts a selected timeline record with explicit event types and ordered dates', () => {
     const scope = {
       id: uuidA,
       share_link_id: uuidB,
@@ -356,11 +356,56 @@ describe('profile, token, and share refinements', () => {
     };
 
     expect(shareScopeRecordSchema.safeParse(scope).success).toBe(true);
-    expect(shareScopeRecordSchema.safeParse({
-      ...scope,
+  });
+
+  it('AC-P2-SHARE-1: keeps reversed dates invalid for selected timeline records', () => {
+    const scope = {
+      id: uuidA,
+      share_link_id: uuidB,
+      scope: 'selected_timeline_range',
       timeline_from: '2026-05-25',
       timeline_to: '2026-05-24',
+      selected_event_types: ['training'],
+      created_at: '2026-05-17T08:35:00.000Z',
+    };
+
+    expect(shareScopeRecordSchema.safeParse(scope).success).toBe(false);
+  });
+
+  it('AC-P2-SHARE-1: rejects a selected timeline record with null selected event types', () => {
+    expect(shareScopeRecordSchema.safeParse({
+      id: uuidA,
+      share_link_id: uuidB,
+      scope: 'selected_timeline_range',
+      timeline_from: '2026-05-17',
+      timeline_to: '2026-05-24',
+      selected_event_types: null,
+      created_at: '2026-05-17T08:35:00.000Z',
     }).success).toBe(false);
+  });
+
+  it('AC-P2-SHARE-1: rejects a selected timeline record with empty selected event types', () => {
+    expect(shareScopeRecordSchema.safeParse({
+      id: uuidA,
+      share_link_id: uuidB,
+      scope: 'selected_timeline_range',
+      timeline_from: '2026-05-17',
+      timeline_to: '2026-05-24',
+      selected_event_types: [],
+      created_at: '2026-05-17T08:35:00.000Z',
+    }).success).toBe(false);
+  });
+
+  it('AC-P2-SHARE-1: keeps null selected event types valid for another share scope', () => {
+    expect(shareScopeRecordSchema.safeParse({
+      id: uuidA,
+      share_link_id: uuidB,
+      scope: 'routine_summary',
+      timeline_from: null,
+      timeline_to: null,
+      selected_event_types: null,
+      created_at: '2026-05-17T08:35:00.000Z',
+    }).success).toBe(true);
   });
 
   it('rejects invalid calendar dates instead of accepting regex-only matches', () => {
@@ -421,7 +466,9 @@ describe('privileged invite and share contracts', () => {
       scopes: [{ scope: 'selected_timeline_range' }],
       expires_at: '2026-05-24T23:59:59.000Z',
     }).success).toBe(false);
+  });
 
+  it('AC-P2-SHARE-1: accepts a selected timeline request with explicit event types and ordered dates', () => {
     expect(createShareLinkRequestSchema.safeParse({
       household_id: uuidB,
       puppy_id: uuidA,
@@ -434,5 +481,79 @@ describe('privileged invite and share contracts', () => {
       }],
       expires_at: '2026-05-24T23:59:59.000Z',
     }).success).toBe(true);
+  });
+
+  it('AC-P2-SHARE-1: rejects a selected timeline request that omits selected event types', () => {
+    expect(createShareLinkRequestSchema.safeParse({
+      household_id: uuidB,
+      puppy_id: uuidA,
+      role: 'trainer_viewer',
+      scopes: [{
+        scope: 'selected_timeline_range',
+        timeline_from: '2026-05-17',
+        timeline_to: '2026-05-24',
+      }],
+      expires_at: '2026-05-24T23:59:59.000Z',
+    }).success).toBe(false);
+  });
+
+  it('AC-P2-SHARE-1: rejects a selected timeline request with null selected event types', () => {
+    expect(createShareLinkRequestSchema.safeParse({
+      household_id: uuidB,
+      puppy_id: uuidA,
+      role: 'trainer_viewer',
+      scopes: [{
+        scope: 'selected_timeline_range',
+        timeline_from: '2026-05-17',
+        timeline_to: '2026-05-24',
+        selected_event_types: null,
+      }],
+      expires_at: '2026-05-24T23:59:59.000Z',
+    }).success).toBe(false);
+  });
+
+  it('AC-P2-SHARE-1: rejects a selected timeline request with empty selected event types', () => {
+    expect(createShareLinkRequestSchema.safeParse({
+      household_id: uuidB,
+      puppy_id: uuidA,
+      role: 'trainer_viewer',
+      scopes: [{
+        scope: 'selected_timeline_range',
+        timeline_from: '2026-05-17',
+        timeline_to: '2026-05-24',
+        selected_event_types: [],
+      }],
+      expires_at: '2026-05-24T23:59:59.000Z',
+    }).success).toBe(false);
+  });
+
+  it('AC-P2-SHARE-1: keeps unknown event types invalid for selected timeline requests', () => {
+    expect(createShareLinkRequestSchema.safeParse({
+      household_id: uuidB,
+      puppy_id: uuidA,
+      role: 'trainer_viewer',
+      scopes: [{
+        scope: 'selected_timeline_range',
+        timeline_from: '2026-05-17',
+        timeline_to: '2026-05-24',
+        selected_event_types: ['unknown_event'],
+      }],
+      expires_at: '2026-05-24T23:59:59.000Z',
+    }).success).toBe(false);
+  });
+
+  it('AC-P2-SHARE-1: keeps reversed dates invalid for selected timeline requests', () => {
+    expect(createShareLinkRequestSchema.safeParse({
+      household_id: uuidB,
+      puppy_id: uuidA,
+      role: 'trainer_viewer',
+      scopes: [{
+        scope: 'selected_timeline_range',
+        timeline_from: '2026-05-25',
+        timeline_to: '2026-05-24',
+        selected_event_types: ['training'],
+      }],
+      expires_at: '2026-05-24T23:59:59.000Z',
+    }).success).toBe(false);
   });
 });

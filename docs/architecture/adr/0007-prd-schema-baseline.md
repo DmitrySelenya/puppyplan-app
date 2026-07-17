@@ -71,3 +71,16 @@ Existing `event_log.payload` remains `jsonb`; payload-version-1 rows remain read
 payload-version-2 contracts may add bounded private note and sleep-action fields without a table
 split. Migration `20260711180000_event_observation_payload_v2.sql` is additive and does not rewrite
 existing data or change RLS. Applying it to PuppyPlan Dev remains a separate approval gate.
+
+### 2026-07-17: Explicit selected-timeline event-type scope
+
+Approved by the owner/CTO for PUP-33 as an additive privacy hardening. A
+`selected_timeline_range` share scope must contain an explicit, non-null, non-empty
+`selected_event_types` list. The named conditional CHECK preserves nullable values for other scope
+types, and `current_share_selected_timeline()` includes rows only when their event type is in that
+explicit list.
+
+Migration `20260717161449_harden_selected_timeline_share_scope.sql` adds and validates the
+conditional CHECK and replaces only the sanitized selected-timeline projection. It does not infer
+an all-types selection, backfill or delete data, change RLS, or change the generated database type:
+the column remains nullable because non-selected scopes may still store null.

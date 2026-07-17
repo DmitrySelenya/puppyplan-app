@@ -838,6 +838,79 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
+  it('AC-P1-RECOVERY-10 keeps a newer delete intent when an older ordinary success finalizer resumes', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    let releaseResolvedSuccess: (() => void) | undefined;
+    let signalResolvedSuccess: (() => void) | undefined;
+    const resolvedSuccessReached = new Promise<void>((resolve) => {
+      signalResolvedSuccess = resolve;
+    });
+    queue.resolveSuccessGate = new Promise<void>((resolve) => {
+      releaseResolvedSuccess = resolve;
+    });
+    queue.onResolvedSuccess = () => signalResolvedSuccess?.();
+    const options = createQuickLogMutationOptions({
+      createClientEventId: () => clientEventId,
+      events,
+      getSessionUserId: () => createdBy,
+      now: () => now,
+      queryClient,
+      queue,
+    });
+    const variables = createMutationVariables();
+    const context = await options.onMutate(variables);
+    const inserted = await options.mutationFn(variables);
+    const olderFinalizer = options.onSuccess(inserted, variables, context);
+
+    await resolvedSuccessReached;
+    expect(queue.items.get(clientEventId)?.state).toBe('server_confirmed');
+
+    await deleteSyncedQuickLogEvent({
+      actorId: createdBy,
+      clientEventId,
+      eventType: 'feeding',
+      householdId,
+      now: () => now,
+      puppyId,
+      queryClient,
+      queueRef: { current: queue },
+      todayDate,
+    });
+    expect(queue.items.get(clientEventId)?.state).toBe('deleted_before_sync');
+
+    releaseResolvedSuccess?.();
+    await olderFinalizer;
+
+    expect(queue.items.get(clientEventId)).toMatchObject({
+      client_event_id: clientEventId,
+      state: 'deleted_before_sync',
+    });
+    expect(readTimelineRows(queryClient)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+        localSync: expect.objectContaining({ state: 'deleted_before_sync' }),
+      }),
+    ]);
+
+    await retryLocalQuickLogEvent({
+      actorId: createdBy,
+      clientEventId,
+      events,
+      queryClient,
+      queueRef: { current: queue },
+      recoverySurface: 'manual_retry',
+    });
+
+    expect(events.inserts).toHaveLength(1);
+    expect(events.tombstones).toEqual([
+      expect.objectContaining({ clientEventId, householdId }),
+    ]);
+    expect(queue.items.has(clientEventId)).toBe(false);
+    expect(readTimelineRows(queryClient)).toEqual([]);
+  });
+
   it('AC-DIARY-DELETE-UNDO-3 restores synced server rows through the typed event repository and invalidates Diary history', async () => {
     const queryClient = createTestQueryClient();
     const events = new FakeQuickLogEventsRepository();
@@ -1194,12 +1267,17 @@ describe('Quick Log mutation lifecycle', () => {
     });
   });
 
-  it('does not invalidate event-derived queries after late-success cleanup fails', async () => {
+  it('AC-P3-ERROR-1 reports create cleanup failure without invalidating event-derived queries', async () => {
     const queryClient = createTestQueryClient();
     const queue = new FakeQuickLogQueueStorage();
     const events = new FakeQuickLogEventsRepository();
+    const privateMarker = 'private-create-cleanup-marker';
     const invalidations: unknown[] = [];
+    const observability = {
+      captureException: jest.fn(),
+    };
     const options = createQuickLogMutationOptions({
+      observability,
       queryClient,
       queue,
       events,
@@ -1222,10 +1300,7 @@ describe('Quick Log mutation lifecycle', () => {
       ...queuedItem,
       state: 'sending',
     });
-    events.tombstoneError = {
-      kind: 'network_unavailable',
-      retryAfterMs: null,
-    };
+    events.tombstoneError = new Error(privateMarker);
 
     await removeQuickLogOptimisticEvent({
       queryClient,
@@ -1246,6 +1321,113 @@ describe('Quick Log mutation lifecycle', () => {
     expect(queue.items.get(clientEventId)).toMatchObject({
       state: 'deleted_before_sync',
     });
+    expect(observability.captureException).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Quick Log queue recovery failed' }),
+      expect.objectContaining({
+        area: 'quick_log_queue',
+        operation: 'save_cleanup',
+      }),
+    );
+    expect(JSON.stringify(observability.captureException.mock.calls)).not.toContain(privateMarker);
+    expect(JSON.stringify(observability.captureException.mock.calls)).not.toContain(clientEventId);
+  });
+
+  it('AC-P3-ERROR-2 owns a create onError queue-read rejection without adopting a fallback row or effects', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const saveFailure = Object.assign(new Error('Synthetic insert unavailable'), {
+      kind: 'network_unavailable',
+      retryAfterMs: null,
+    });
+    const privateReadMarker = 'synthetic-private-create-on-error-read-marker';
+    const readFailure = new Error(privateReadMarker);
+    const analytics = {
+      trackQuickLogEvent: jest.fn(),
+    };
+    const observability = {
+      captureException: jest.fn(),
+    };
+    const invalidations: unknown[] = [];
+    jest.spyOn(queryClient, 'invalidateQueries').mockImplementation(async (filters) => {
+      invalidations.push(filters);
+    });
+    const retryableTransition = jest.spyOn(queue, 'markFailedRetryable');
+    const permanentTransition = jest.spyOn(queue, 'markFailedPermanent');
+    jest.spyOn(queue, 'getByClientEventId').mockRejectedValue(readFailure);
+    events.insertError = saveFailure;
+    const mutation = new MutationObserver(queryClient, createQuickLogMutationOptions({
+      analytics,
+      observability,
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    }));
+    const unhandledRejections: unknown[] = [];
+    const onUnhandledRejection = (reason: unknown): void => {
+      unhandledRejections.push(reason);
+    };
+    process.on('unhandledRejection', onUnhandledRejection);
+
+    try {
+      const outcome = await mutation.mutate(createMutationVariables()).then(
+        (data) => ({ data, status: 'resolved' as const }),
+        (error: unknown) => ({ error, status: 'rejected' as const }),
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(outcome).toEqual({ error: saveFailure, status: 'rejected' });
+      expect(queue.items.get(clientEventId)).toMatchObject({
+        client_event_id: clientEventId,
+        created_by: createdBy,
+        last_error_category: null,
+        retry_count: 0,
+        state: 'sending',
+      });
+      expect(readTimelineRows(queryClient)).toEqual([
+        expect.objectContaining({
+          client_event_id: clientEventId,
+          localSync: {
+            category: null,
+            retryCount: 0,
+            state: 'pending_local',
+          },
+        }),
+      ]);
+      expect(retryableTransition).not.toHaveBeenCalled();
+      expect(permanentTransition).not.toHaveBeenCalled();
+      expect(events.inserts).toHaveLength(1);
+      expect(analytics.trackQuickLogEvent.mock.calls).toEqual([[
+        {
+          name: 'pending_quick_log_created',
+          properties: {
+            connection_state: 'unknown',
+            event_type: 'feeding',
+          },
+        },
+      ]]);
+      expect(invalidations).toEqual([]);
+      expect(observability.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Quick Log queue recovery failed' }),
+        expect.objectContaining({
+          area: 'quick_log_queue',
+          operation: expect.any(String),
+        }),
+      );
+      expect(JSON.stringify(observability.captureException.mock.calls)).not.toContain(
+        privateReadMarker,
+      );
+      expect(JSON.stringify(observability.captureException.mock.calls)).not.toContain(
+        clientEventId,
+      );
+      expect(unhandledRejections).toEqual([]);
+    } finally {
+      process.removeListener('unhandledRejection', onUnhandledRejection);
+    }
   });
 
   it('keeps an undone row hidden after cleanup failure settles with an active Timeline observer', async () => {
@@ -2091,7 +2273,8 @@ class FakeQuickLogEventsRepository {
 
 class FakeQuickLogQueueStorage implements Pick<
   QuickLogQueueStorage,
-  'enqueue' | 'getByClientEventId' | 'markSending' | 'markFailedRetryable' | 'markFailedPermanent'
+  'initialize' | 'enqueue' | 'getByClientEventId' | 'list' | 'claimNextReadyToSend'
+  | 'markSending' | 'markFailedRetryable' | 'markFailedPermanent'
   | 'markDeletedBeforeSync' | 'manualRetry' | 'resolveInFlightSuccess' | 'remove' | 'updateDetails'
 > {
   public readonly items = new Map<string, QuickLogStoredQueueItem>();
@@ -2101,6 +2284,23 @@ class FakeQuickLogQueueStorage implements Pick<
   }[] = [];
   public enqueueGate: Promise<void> | null = null;
   public enqueueError: unknown = null;
+  public onResolvedSuccess: (() => void) | null = null;
+  public resolveSuccessGate: Promise<void> | null = null;
+
+  public async initialize(): Promise<void> {
+    return undefined;
+  }
+
+  public async list(
+    filter?: Readonly<{ states?: readonly QuickLogStoredQueueItem['state'][] }>,
+  ): Promise<QuickLogStoredQueueItem[]> {
+    return [...this.items.values()].filter((item) =>
+      filter?.states === undefined || filter.states.includes(item.state));
+  }
+
+  public async claimNextReadyToSend(): Promise<QuickLogStoredQueueItem | null> {
+    return null;
+  }
 
   public async enqueue(input: unknown): Promise<QuickLogStoredQueueItem> {
     if (this.enqueueError !== null) {
@@ -2121,6 +2321,23 @@ class FakeQuickLogQueueStorage implements Pick<
   public async getByClientEventId(clientEventIdValue: string): Promise<QuickLogStoredQueueItem | null> {
     return this.items.get(clientEventIdValue) ?? null;
   }
+
+  public enqueueDeletedBeforeSync = async (
+    input: unknown,
+    options: { now: string; retryAfterAt?: string },
+  ): Promise<QuickLogStoredQueueItem> => {
+    const item = createQueueItem({
+      ...(input as Partial<QuickLogStoredQueueItem>),
+      last_error_category: null,
+      retry_after_at: options.retryAfterAt ?? null,
+      retry_count: 0,
+      state: 'deleted_before_sync',
+      updated_at: options.now,
+    });
+
+    this.items.set(item.client_event_id, item);
+    return item;
+  };
 
   public async updateDetails(
     clientEventIdValue: string,
@@ -2232,6 +2449,10 @@ class FakeQuickLogQueueStorage implements Pick<
 
     if (resolution.outcome === 'server_confirmed') {
       this.items.set(clientEventIdValue, resolution.item);
+      this.onResolvedSuccess?.();
+      if (this.resolveSuccessGate !== null) {
+        await this.resolveSuccessGate;
+      }
     }
 
     return resolution;
@@ -2240,6 +2461,24 @@ class FakeQuickLogQueueStorage implements Pick<
   public async remove(clientEventIdValue: string): Promise<void> {
     this.items.delete(clientEventIdValue);
   }
+
+  public retainDeletedBeforeSync = async (
+    clientEventIdValue: string,
+    options: {
+      errorCategory: QuickLogQueueErrorCategory | string;
+      retryAfterAt: string | null;
+      now: string;
+    },
+  ): Promise<QuickLogStoredQueueItem> => {
+    return this.write(clientEventIdValue, (item) => ({
+      ...item,
+      last_error_category: options.errorCategory as QuickLogQueueErrorCategory,
+      retry_after_at: options.retryAfterAt,
+      retry_count: item.retry_count + 1,
+      state: 'deleted_before_sync',
+      updated_at: options.now,
+    }));
+  };
 
   private async write(
     clientEventIdValue: string,

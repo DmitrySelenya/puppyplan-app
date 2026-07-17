@@ -1,8 +1,10 @@
 -- PUP-31 / ADR-0022: add the neutral observation event vocabulary.
 -- Payload-version-2 validation remains at the typed application boundary; event_log.payload is
 -- intentionally still jsonb so payload-version-1 history remains readable.
--- This migration is additive only. It does not rewrite rows, alter RLS, or expose observation
--- events through trainer/share projections.
+-- This migration is additive only. It does not rewrite rows or alter RLS. Observation is excluded
+-- from aggregate projections such as current_share_routine_summary. Selected-timeline sharing
+-- follows the owner's explicit non-null, non-empty event-type selection, enforced by the later
+-- 20260717161449_harden_selected_timeline_share_scope.sql migration.
 
 ALTER TYPE public.event_type ADD VALUE IF NOT EXISTS 'observation' BEFORE 'walk';
 

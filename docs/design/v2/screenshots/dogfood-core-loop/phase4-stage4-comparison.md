@@ -29,4 +29,3 @@ Recovery note: a direct-link-only smoke has no navigation back stack, so reusing
 the primer left that component mounted. Process-isolated retries plus a read-only PuppyPlan Dev query
 proved the exact persisted rules: `daily`, `{days:[1,3,5]}`, and `never` with its date. The native hub
 capture confirms the same server-backed rows after restart.
-
