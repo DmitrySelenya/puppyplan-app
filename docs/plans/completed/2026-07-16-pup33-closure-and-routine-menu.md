@@ -4,11 +4,12 @@
 decisions locked on 2026-07-16, open the PR that closes the 35-commit PUP-33 branch, then build
 the §6.4 routine lifecycle menu on a fresh branch.
 
-**Status:** Active — handed to an autonomous agent by the owner on 2026-07-16.
+**Status:** Completed — all plan-owned Phases 1–4 verified; PUP-33 PR #32 and stacked PUP-34 PR #33
+are open for review. No merge, release, migration apply, or production action occurred.
 
-**Current phase:** Phase 4 — PUP-34 final review and authorized PR preparation.
+**Current phase:** Complete — PUP-34 is in review.
 
-**Plan type:** Active task plan.
+**Plan type:** Completed task plan.
 
 **Linear:** `PUP-33` owns Phases 1–3. Phase 4 gets its own issue (see Phase 4, step 1).
 
@@ -471,7 +472,7 @@ Most of the machinery already exists — this is wiring, not a new backend:
 6. [x] Full gate `GATE_EXIT=0`, then rebuild the bundle and verify every menu action live on the
        SE at default **and** AccessibilityL font scale, comparing against the brief. Evidence
        paths into the changelog.
-7. [ ] Commit; push and PR only per the same authorization pattern (opening allowed, merging not).
+7. [x] Commit; push and PR only per the same authorization pattern (opening allowed, merging not).
 
 **AC-P4-MENU-1:** every routine row in the Diary and the routine list exposes the lifecycle menu
 via its own affordance; the checkbox still only toggles done.
@@ -1902,6 +1903,14 @@ independently reproduced and hashed.
   `npm run check` again exited 0 with 104/104 Jest suites, 1228/1228 tests, Node 121/121, and all
   type/navigation/i18n/scaffold/token/privacy/text-hygiene gates green (lint 0 errors / 21 existing
   warnings). Linear PUP-34 now has the final verification summary; only authorized PR actions remain.
+- 2026-07-17 — Phase 4 and the complete plan are closed. Implementation commit `39e667d`
+  (`PUP-34: add routine lifecycle menu`) was pushed on the Linear branch, and stacked PR #33
+  (`PUP-34 Routine lifecycle menu: Edit, Pause/Resume, Delete`) was opened against the still-open
+  PUP-33 branch: https://github.com/DmitrySelenya/puppyplan-app/pull/33. The PR records PUP-35's
+  effective-dated-history limitation, the full local/native evidence, and the dependency on PR #32.
+  No merge, release, deploy, migration, production configuration, or store action occurred. The
+  final checklist is complete; this plan moves to `docs/plans/completed/`, and Linear PUP-34 moves
+  to `In Review` after this closure note is pushed.
 - 2026-07-18 — PR #32's GitHub `Local Gate` exposed a tests-only timezone portability defect in
   AC-P3-DATE-1: both cases passed on the Warsaw development host but failed on the UTC Ubuntu runner
   because Jest's sandboxed `process.env.TZ` mutation does not trigger Node's native timezone switch.
