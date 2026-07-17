@@ -6,7 +6,7 @@ the §6.4 routine lifecycle menu on a fresh branch.
 
 **Status:** Active — handed to an autonomous agent by the owner on 2026-07-16.
 
-**Current phase:** Phase 3 — final full-diff reviews before the authorized PUP-33 PR.
+**Current phase:** Phase 4 — PUP-34 lifecycle-menu design lock and pause-semantics verification.
 
 **Plan type:** Active task plan.
 
@@ -405,13 +405,13 @@ privacy-decision implementation. Do not weaken the preserved display-creator con
 real storage failure into `null`/success.
 
 - [x] Confirm Phases 1–2 landed and the full gate passes (`GATE_EXIT=0`).
-- [ ] Push any new commits to the existing branch
+- [x] Push any new commits to the existing branch
       (`dimaselenya/pup-33-diary-telegram-parity-trusted-writes-readable-notes-chat`).
-- [ ] `gh pr create` → base `main`. Title references PUP-33. Body: what the branch does (diary
+- [x] `gh pr create` → base `main`. Title references PUP-33. Body: what the branch does (diary
       parity, uncheck/restore, offline durability fix), the evidence from Phase 1, the two locked
       decisions, and the explicit note that the owner-device checklist remains open. No raw
       private data. End the body with the standard generation footer.
-- [ ] Link the PR in Linear PUP-33 (attachment or comment via the Linear MCP).
+- [x] Link the PR in Linear PUP-33 (attachment or comment via the Linear MCP).
 
 ## Phase 4 — §6.4 routine lifecycle menu (new branch, new issue)
 
@@ -426,9 +426,9 @@ Most of the machinery already exists — this is wiring, not a new backend:
 `useUpdateReminderScheduleMutation` in `src/lib/query/reminders.ts`, and an edit form at
 `app/(modals)/reminders/edit`.
 
-1. [ ] Create a Linear issue in the PuppyPlan team for this feature (authorized by the owner via
-       this plan), referencing brief §6.4/§5.1; branch from `main` (or from the PR branch if the
-       PR is not yet merged) with the issue's branch name.
+1. [x] Create Linear issue PUP-34 in the PuppyPlan team for this feature (authorized by the owner
+       via this plan), referencing brief §6.4/§5.1; branch from the unmerged PR branch with Linear's
+       `dimaselenya/pup-34-routine-lifecycle-menu-edit-pauseresume-delete` branch name.
 2. [ ] Read brief §5.1 + §6.4 and §8 (the BottomSheet caveat: `SheetSurface` is static-only — if
        the menu wants a sheet, either use the existing static pattern other menus use, or a native
        action sheet; **do not** build a new BottomSheet primitive inside this task). Follow the
@@ -1684,3 +1684,14 @@ brings slots back.
   lists exactly `20260717161449_harden_selected_timeline_share_scope.sql`, and applies nothing; all
   seven frozen AC-P2-SHARE hashes remain exact. Phases 1–2 and the Phase 3 local gate are closed;
   plan-authorized commit, push, and PR creation are next.
+- 2026-07-17 — Phase 3 is complete. Closure commit `d7969fc` was pushed to the existing PUP-33
+  branch and PR #32 (`PUP-33 Diary parity, durable offline writes, and selected-share privacy`) was
+  opened against `main`: https://github.com/DmitrySelenya/puppyplan-app/pull/32. The PR body records
+  live Phase 1 evidence, both owner decisions, full local/review evidence, unexecuted pgTAP/unapplied
+  migration, and the still-open owner-device checklist. Linear PUP-33 now links the PR and is `In
+  Review`; no merge, apply, release, or production action occurred.
+- 2026-07-17 — Phase 4 started as Linear PUP-34 (`Routine lifecycle menu: Edit, Pause/Resume,
+  Delete`) in `In Progress`, with the complete task contract and brief §5.1/§6.4/§8 references.
+  Linear generated branch `dimaselenya/pup-34-routine-lifecycle-menu-edit-pauseresume-delete`; it
+  will branch from the still-unmerged PUP-33 PR head as explicitly allowed by the plan. Design lock
+  and pause-semantics verification precede any Phase 4 tests or UI code.
