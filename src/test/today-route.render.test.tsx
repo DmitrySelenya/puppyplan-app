@@ -13,11 +13,20 @@ const mockDismissSnackbar = jest.fn();
 const mockReplaceSnackbar = jest.fn();
 const mockShowSnackbar = jest.fn();
 const mockCaptureException = jest.fn();
+const mockDeleteReminderMutate = jest.fn();
+const mockUseDeleteReminderMutation = jest.fn();
 const mockUseActiveCareContext = jest.fn();
 const mockUseQuickLogMutationPort = jest.fn();
+const mockUseToggleReminderEnabledMutation = jest.fn();
+const mockToggleReminderMutate = jest.fn();
 let capturedActions: QuickLogEventActionHandlers | undefined;
 type DiaryParityScreenProps = TodayScreenProps & Readonly<{
+  onDeleteReminder?: (reminderId: string) => void;
+  onEditReminder?: (reminderId: string) => void;
+  reminderLifecycleScopeKey?: string;
+  reminderMutationErrorId?: string;
   onShareText?: (text: string) => Promise<void> | void;
+  onToggleReminder?: (reminderId: string, enabled: boolean) => void;
 }>;
 
 let capturedProps: DiaryParityScreenProps | undefined;
@@ -49,6 +58,18 @@ jest.mock('@/lib/query/active-care-context', () => ({
 jest.mock('@/lib/query/quick-log', () => ({
   useQuickLogMutationPort: () => mockUseQuickLogMutationPort(),
 }));
+
+jest.mock('@/lib/query/reminders', () => {
+  const actual = jest.requireActual<typeof import('@/lib/query/reminders')>(
+    '@/lib/query/reminders',
+  );
+
+  return {
+    ...actual,
+    useDeleteReminderMutation: () => mockUseDeleteReminderMutation(),
+    useToggleReminderEnabledMutation: () => mockUseToggleReminderEnabledMutation(),
+  };
+});
 
 jest.mock('@/design/primitives/Snackbar', () => {
   const actual = jest.requireActual<typeof import('@/design/primitives/Snackbar')>(
@@ -85,6 +106,20 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     mockReplaceSnackbar.mockReset();
     mockShowSnackbar.mockReset();
     mockCaptureException.mockReset();
+    mockDeleteReminderMutate.mockReset();
+    mockToggleReminderMutate.mockReset();
+    mockUseDeleteReminderMutation.mockReturnValue({
+      isError: false,
+      isPending: false,
+      mutate: mockDeleteReminderMutate,
+      variables: undefined,
+    });
+    mockUseToggleReminderEnabledMutation.mockReturnValue({
+      isError: false,
+      isPending: false,
+      mutate: mockToggleReminderMutate,
+      variables: undefined,
+    });
     await i18n.changeLanguage('en');
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
@@ -815,6 +850,91 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     expect(mockRouterPush).toHaveBeenCalledWith('/quick-log/schedule');
   });
 
+  it('AC-P4-MENU-1 AC-P4-MENU-2 AC-P4-MENU-3 wires Diary lifecycle actions to edit and active-care mutations', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-07-03T08:30:00.000Z'));
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation: undefined,
+      mutationEvents: [],
+      status: 'unavailable',
+    });
+
+    try {
+      render(<AppProviders><DiaryRoute /></AppProviders>);
+      const reminderId = '00000000-0000-4000-8000-000000007901';
+
+      expect(capturedProps?.reminderLifecycleScopeKey).toBe([
+        '00000000-0000-4000-8000-000000007003',
+        '00000000-0000-4000-8000-000000007001',
+        '00000000-0000-4000-8000-000000007002',
+        'owner',
+      ].join(':'));
+
+      capturedProps?.onEditReminder?.(reminderId);
+      capturedProps?.onToggleReminder?.(reminderId, false);
+      capturedProps?.onToggleReminder?.(reminderId, true);
+      capturedProps?.onDeleteReminder?.(reminderId);
+
+      expect(mockRouterPush).toHaveBeenCalledWith({
+        pathname: '/reminders/edit',
+        params: { reminderId },
+      });
+      expect(mockToggleReminderMutate).toHaveBeenNthCalledWith(1, {
+        enabled: false,
+        householdId: '00000000-0000-4000-8000-000000007001',
+        puppyId: '00000000-0000-4000-8000-000000007002',
+        reminderId,
+        todayDate: '2026-06-09',
+      });
+      expect(mockToggleReminderMutate).toHaveBeenNthCalledWith(2, {
+        enabled: true,
+        householdId: '00000000-0000-4000-8000-000000007001',
+        puppyId: '00000000-0000-4000-8000-000000007002',
+        reminderId,
+        todayDate: '2026-06-09',
+      });
+      expect(mockDeleteReminderMutate).toHaveBeenCalledWith({
+        deletedAt: '2026-07-03T08:30:00.000Z',
+        householdId: '00000000-0000-4000-8000-000000007001',
+        puppyId: '00000000-0000-4000-8000-000000007002',
+        reminderId,
+        todayDate: '2026-06-09',
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it.each(['delete', 'toggle'] as const)(
+    'AC-P4-MENU-ERR exposes a scoped recoverable Diary error when the %s mutation fails',
+    (mutationKind) => {
+      mockUseQuickLogMutationPort.mockReturnValue({
+        mutation: undefined,
+        mutationEvents: [],
+        status: 'unavailable',
+      });
+      const failedMutation = {
+        isError: true,
+        isPending: false,
+        mutate: mutationKind === 'delete' ? mockDeleteReminderMutate : mockToggleReminderMutate,
+        variables: {
+          reminderId: '00000000-0000-4000-8000-000000007901',
+        },
+      };
+
+      if (mutationKind === 'delete') {
+        mockUseDeleteReminderMutation.mockReturnValue(failedMutation);
+      } else {
+        mockUseToggleReminderEnabledMutation.mockReturnValue(failedMutation);
+      }
+
+      render(<AppProviders><DiaryRoute /></AppProviders>);
+
+      expect(capturedProps?.reminderMutationErrorId)
+        .toBe('00000000-0000-4000-8000-000000007901');
+    },
+  );
+
   it('AC-P33-CORRECT opens update details with routing-only params and never places private content in the URL', () => {
     mockUseQuickLogMutationPort.mockReturnValue({
       mutation: {
@@ -911,6 +1031,9 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
 
     expect(capturedActions).toBeUndefined();
     expect(capturedProps?.onCheckOff).toBeUndefined();
+    expect(capturedProps?.onDeleteReminder).toBeUndefined();
+    expect(capturedProps?.onEditReminder).toBeUndefined();
     expect(capturedProps?.onShareText).toEqual(expect.any(Function));
+    expect(capturedProps?.onToggleReminder).toBeUndefined();
   });
 });

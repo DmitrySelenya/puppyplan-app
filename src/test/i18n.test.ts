@@ -144,6 +144,40 @@ describe('i18n scaffold resources', () => {
     }
   });
 
+  it('AC-P4-MENU-1 AC-P4-MENU-3 ships the complete lifecycle contract in EN/RU/ES', () => {
+    const requiredEnglishCopy = {
+      'reminders.lifecycle.cancel': 'Cancel',
+      'reminders.lifecycle.delete': 'Delete',
+      'reminders.lifecycle.delete-confirm-body': 'Existing Diary entries will stay.',
+      'reminders.lifecycle.delete-confirm-title': 'Delete this routine?',
+      'reminders.lifecycle.diary-entries-stay': 'Diary entries stay',
+      'reminders.lifecycle.edit': 'Edit routine',
+      'reminders.lifecycle.mutation-error-body':
+        'Your change wasn’t saved. Open routine actions and try again.',
+      'reminders.lifecycle.mutation-error-title': 'Routine update failed',
+      'reminders.lifecycle.open-actions-template': 'Routine actions for {title}',
+      'reminders.lifecycle.pause': 'Pause',
+      'reminders.lifecycle.paused-diary-hint': 'Paused routines do not appear in Diary.',
+      'reminders.lifecycle.paused-subtitle': 'Paused',
+      'reminders.lifecycle.resume': 'Resume',
+      'reminders.lifecycle.title': 'Routine actions',
+    } as const;
+
+    for (const [key, expectedEnglish] of Object.entries(requiredEnglishCopy)) {
+      const englishValue = resolveKey(i18nResources.en.translation, key);
+      expect(englishValue).toBe(expectedEnglish);
+
+      for (const locale of supportedLocales) {
+        const localizedValue = resolveKey(i18nResources[locale].translation, key);
+        expect(typeof localizedValue).toBe('string');
+        expect((localizedValue as string).trim().length).toBeGreaterThan(0);
+        expect(localizedValue).not.toBe(key);
+        expect(placeholderNames(localizedValue as string))
+          .toEqual(placeholderNames(expectedEnglish));
+      }
+    }
+  });
+
   it('keeps Pet hub quick tracker copy user-facing instead of implementation-facing', () => {
     const implementationLeakPattern = /add buttons|five|botones de Add|cinco|кнопок Add|пять/iu;
 

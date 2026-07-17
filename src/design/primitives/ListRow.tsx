@@ -24,6 +24,7 @@ export type ListRowProps = {
   selected?: boolean;
   style?: StyleProp<ViewStyle>;
   subtitle?: string;
+  testID?: string;
   title: string;
   titleNumberOfLines?: number;
   trailing?: ReactNode;
@@ -43,6 +44,7 @@ export function ListRow({
   selected = false,
   style,
   subtitle,
+  testID,
   title,
   titleNumberOfLines,
   trailing,
@@ -108,6 +110,7 @@ export function ListRow({
         disabled={disabled}
         onAccessibilityAction={onAccessibilityAction}
         onPress={onPress}
+        testID={testID}
         style={({ pressed }) => [
           rowStyle,
           pressed && !disabled ? styles.pressed : null,
@@ -124,6 +127,7 @@ export function ListRow({
       accessibilityLabel={accessibilityLabel}
       onAccessibilityAction={onAccessibilityAction}
       accessible={Boolean(accessibilityLabel)}
+      testID={testID}
       style={rowStyle}>
       {content}
     </View>

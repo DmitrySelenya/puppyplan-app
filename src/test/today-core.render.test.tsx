@@ -1,4 +1,4 @@
-import { Profiler, type ReactElement } from 'react';
+import { Profiler, type ComponentProps, type ComponentType, type ReactElement } from 'react';
 import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
@@ -15,6 +15,16 @@ import { createPuppyPlanQueryClient } from '@/lib/query/client';
 import { queryKeys, type TimelineFilters } from '@/lib/query/keys';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { TodayScreen } from '@/features/today/screens/TodayScreen';
+import { RoutineLifecycleMenu } from '@/design/primitives/RoutineLifecycleMenu';
+
+type Pup34TodayScreenProps = ComponentProps<typeof TodayScreen> & Readonly<{
+  onDeleteReminder?: (reminderId: string) => void;
+  onEditReminder?: (reminderId: string) => void;
+  onToggleReminder?: (reminderId: string, enabled: boolean) => void;
+  reminderMutationErrorId?: string;
+}>;
+
+const Pup34TodayScreen = TodayScreen as ComponentType<Pup34TodayScreenProps>;
 
 const mockListEvents = jest.fn();
 let mockFontScale = 1;
@@ -1311,6 +1321,307 @@ describe('Today core card rendering', () => {
     expect(screen.getByTestId('diary-planned-done')).toBeTruthy();
     expect(screen.getByText(i18n.t('today.plan.past-unmarked'))).toBeTruthy();
     expect(screen.getByText(i18n.t('today.plan.actual-template', { time: '10:12 AM' }))).toBeTruthy();
+  });
+
+  it.each([
+    { fontScale: 1, label: 'default text size' },
+    { fontScale: 2, label: 'AccessibilityL' },
+  ])('AC-P4-MENU-1 exposes an independent 44pt lifecycle overflow on every Diary routine at $label', async ({
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    const onCheckOff = jest.fn().mockResolvedValue(undefined);
+    renderWithQuery(
+      <Pup34TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem(),
+          createPlannedItem({
+            displayAt: '2026-06-12T09:00:00.000Z',
+            plannedAt: '2026-06-12T09:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002702',
+            scheduledFor: '2026-06-12T09:00:00.000Z',
+            status: 'past-unmarked',
+            time: '09:00',
+            trackerId: 'sleep',
+          }),
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            clientEventId: 'evt_00000000-0000-4000-8000-000000002706',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002703',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={onCheckOff}
+        onDeleteReminder={jest.fn()}
+        onEditReminder={jest.fn()}
+        onToggleReminder={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('diary-mixed-day-list')).toBeTruthy());
+    const overflowButtons = screen.getAllByRole('button', {
+      name: /^Routine actions for /,
+    });
+    expect(overflowButtons).toHaveLength(3);
+
+    for (const button of overflowButtons) {
+      const style = StyleSheet.flatten(button.props.style) ?? {};
+      expect(Math.max(style.width ?? 0, style.minWidth ?? 0)).toBeGreaterThanOrEqual(44);
+      expect(Math.max(style.height ?? 0, style.minHeight ?? 0)).toBeGreaterThanOrEqual(44);
+    }
+
+    fireEvent.press(screen.getByRole('button', { name: 'Routine actions for Feeding' }));
+    expect(onCheckOff).not.toHaveBeenCalled();
+    expect(screen.getByTestId('routine-lifecycle-modal').props.accessibilityViewIsModal).toBe(true);
+    expect(screen.getByTestId('routine-lifecycle-scrim')).toBeTruthy();
+    expect(screen.getByText('Edit routine')).toBeTruthy();
+    expect(screen.getByText('Pause')).toBeTruthy();
+    expect(screen.getByText('Delete')).toBeTruthy();
+    expect(screen.getByText('Diary entries stay')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+  });
+
+  it('AC-P4-MENU-1 wires Diary Edit and Pause to the selected reminder without toggling completion', async () => {
+    const reminderId = '00000000-0000-4000-8000-000000002701';
+    const onCheckOff = jest.fn().mockResolvedValue(undefined);
+    const onEditReminder = jest.fn();
+    const onToggleReminder = jest.fn();
+    const view = renderWithQuery(
+      <Pup34TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem({ reminderId })])}
+        dayModelStatus="ready"
+        onCheckOff={onCheckOff}
+        onDeleteReminder={jest.fn()}
+        onEditReminder={onEditReminder}
+        onToggleReminder={onToggleReminder}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    fireEvent.press(await screen.findByRole('button', { name: 'Routine actions for Feeding' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Edit routine' }));
+    expect(onEditReminder).toHaveBeenCalledWith(reminderId);
+    expect(onCheckOff).not.toHaveBeenCalled();
+
+    view.rerender(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={view.queryClient}>
+          <Pup34TodayScreen
+            careContext={careContext}
+            dayModel={createDayModel([createPlannedItem({ reminderId })])}
+            dayModelStatus="ready"
+            onCheckOff={onCheckOff}
+            onDeleteReminder={jest.fn()}
+            onEditReminder={onEditReminder}
+            onToggleReminder={onToggleReminder}
+            openTimeline={openTimeline}
+          />
+        </QueryClientProvider>
+      </I18nextProvider>,
+    );
+    fireEvent.press(await screen.findByRole('button', { name: 'Routine actions for Feeding' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Pause' }));
+    expect(onToggleReminder).toHaveBeenCalledWith(reminderId, false);
+    expect(onCheckOff).not.toHaveBeenCalled();
+  });
+
+  it('AC-P4-MENU-SCOPE dismisses an A selection across viewer and B care-context transitions', async () => {
+    const reminderA = '00000000-0000-4000-8000-000000002721';
+    const reminderB = '00000000-0000-4000-8000-000000002722';
+    const onToggleReminderB = jest.fn();
+    const view = renderWithQuery(
+      <Pup34TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem({ reminderId: reminderA })])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        onDeleteReminder={jest.fn()}
+        onEditReminder={jest.fn()}
+        onToggleReminder={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    fireEvent.press(await screen.findByRole('button', { name: 'Routine actions for Feeding' }));
+
+    view.rerender(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={view.queryClient}>
+          <Pup34TodayScreen
+            careContext={{ ...careContext, householdRole: 'viewer' }}
+            dayModel={createDayModel([createPlannedItem({ reminderId: reminderA })])}
+            dayModelStatus="ready"
+            openTimeline={openTimeline}
+          />
+        </QueryClientProvider>
+      </I18nextProvider>,
+    );
+    expect(screen.queryByTestId('routine-lifecycle-modal')).toBeNull();
+
+    view.rerender(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={view.queryClient}>
+          <Pup34TodayScreen
+            careContext={{
+              ...careContext,
+              householdId: '00000000-0000-4000-8000-000000002551',
+              puppyId: '00000000-0000-4000-8000-000000002552',
+            }}
+            dayModel={createDayModel([createPlannedItem({ reminderId: reminderB })])}
+            dayModelStatus="ready"
+            onCheckOff={jest.fn()}
+            onDeleteReminder={jest.fn()}
+            onEditReminder={jest.fn()}
+            onToggleReminder={onToggleReminderB}
+            openTimeline={openTimeline}
+          />
+        </QueryClientProvider>
+      </I18nextProvider>,
+    );
+
+    const stalePause = screen.queryByRole('button', { name: 'Pause' });
+    if (stalePause !== null) {
+      fireEvent.press(stalePause);
+    }
+    expect(onToggleReminderB).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('routine-lifecycle-modal')).toBeNull();
+  });
+
+  it('AC-P4-MENU-ERR keeps a localized reminder mutation error visible inside Diary', async () => {
+    const affectedReminderId = '00000000-0000-4000-8000-000000002731';
+    const unaffectedReminderId = '00000000-0000-4000-8000-000000002732';
+    renderWithQuery(
+      <Pup34TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem({ reminderId: affectedReminderId }),
+          createPlannedItem({
+            displayAt: '2026-06-12T09:00:00.000Z',
+            plannedAt: '2026-06-12T09:00:00.000Z',
+            reminderId: unaffectedReminderId,
+            scheduledFor: '2026-06-12T09:00:00.000Z',
+            time: '09:00',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        onDeleteReminder={jest.fn()}
+        onEditReminder={jest.fn()}
+        onToggleReminder={jest.fn()}
+        openTimeline={openTimeline}
+        reminderMutationErrorId={affectedReminderId}
+      />,
+    );
+
+    const error = await screen.findByTestId(
+      `diary-reminder-lifecycle-error-${affectedReminderId}`,
+    );
+    expect(error.props.accessibilityRole).toBe('alert');
+    expect(screen.getByText(i18n.t('reminders.lifecycle.mutation-error-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('reminders.lifecycle.mutation-error-body'))).toBeTruthy();
+    expect(screen.queryByTestId(`diary-reminder-lifecycle-error-${unaffectedReminderId}`))
+      .toBeNull();
+    expect(screen.getByTestId('diary-mixed-day-list')).toBeTruthy();
+  });
+
+  it('AC-P4-MENU-DESIGN uses the danger token for the initial Delete action', async () => {
+    renderWithQuery(
+      <Pup34TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem()])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        onDeleteReminder={jest.fn()}
+        onEditReminder={jest.fn()}
+        onToggleReminder={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    fireEvent.press(await screen.findByRole('button', { name: 'Routine actions for Feeding' }));
+
+    expect(StyleSheet.flatten(screen.getByText('Delete').props.style)?.color)
+      .toBe(tokens.color.status.danger);
+  });
+
+  it.each([
+    {
+      initialView: 'actions' as const,
+      mutationLabels: ['Edit routine', 'Pause', 'Delete'],
+    },
+    {
+      initialView: 'delete-confirmation' as const,
+      mutationLabels: ['Delete'],
+    },
+  ])(
+    'AC-P4-MENU-PENDING keeps Cancel dismissible while $initialView mutation actions are disabled',
+    ({ initialView, mutationLabels }) => {
+      const onClose = jest.fn();
+      render(
+        <I18nextProvider i18n={i18n}>
+          <RoutineLifecycleMenu
+            enabled
+            initialView={initialView}
+            onClose={onClose}
+            onDelete={jest.fn()}
+            onEdit={jest.fn()}
+            onToggleEnabled={jest.fn()}
+            pending
+            title="Synthetic routine"
+          />
+        </I18nextProvider>,
+      );
+
+      for (const label of mutationLabels) {
+        expect(screen.getByRole('button', { name: label }).props.accessibilityState)
+          .toEqual(expect.objectContaining({ disabled: true }));
+      }
+      const cancel = screen.getByRole('button', { name: 'Cancel' });
+      expect(cancel.props.accessibilityState)
+        .toEqual(expect.objectContaining({ disabled: false }));
+      fireEvent.press(cancel);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('AC-P4-MENU-3 reassures and requires confirmation before deleting a Diary routine', async () => {
+    const reminderId = '00000000-0000-4000-8000-000000002701';
+    const onDeleteReminder = jest.fn();
+    renderWithQuery(
+      <Pup34TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem({ reminderId })])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        onDeleteReminder={onDeleteReminder}
+        onEditReminder={jest.fn()}
+        onToggleReminder={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    fireEvent.press(await screen.findByRole('button', { name: 'Routine actions for Feeding' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(onDeleteReminder).not.toHaveBeenCalled();
+    expect(screen.getByText('Delete this routine?')).toBeTruthy();
+    expect(screen.getByText('Existing Diary entries will stay.')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onDeleteReminder).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Routine actions for Feeding' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
+    expect(onDeleteReminder).toHaveBeenCalledWith(reminderId);
   });
 
   it('AC-P33-UNCHECK takes the mark back off a done routine and deletes its linked event', async () => {

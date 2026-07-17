@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { reminderScheduleDraftSchema } from '@/contracts/reminders';
 import type { Reminder } from '@/contracts/supabase';
@@ -7,6 +7,7 @@ import {
   AppIcon,
   type AppIconName,
   AppText,
+  Button,
   Card,
   IconButton,
   ListGroup,
@@ -17,6 +18,7 @@ import {
   SegmentedControl,
   Stack,
   StatusPill,
+  RoutineLifecycleMenu,
   SwipeToDelete,
   type StatusPillTone,
   Toggle,
@@ -38,6 +40,13 @@ export type ReminderHubState =
   | 'offline-read'
   | 'pending-write';
 type ReminderSection = 'feeding' | 'health' | 'sitter' | 'other';
+type LifecycleSelection = Readonly<{
+  initialView: 'actions' | 'delete-confirmation';
+  reminder: Reminder;
+  scopeKey: string;
+  title: string;
+}>;
+type LifecycleSelectionRequest = Omit<LifecycleSelection, 'scopeKey'>;
 
 const trackerLabelKeys = {
   potty: 'quick-log.details.tabs.potty',
@@ -126,6 +135,7 @@ export type RemindersHubScreenProps = Readonly<{
   pendingToggleReminderId?: string;
   reminders?: readonly Reminder[];
   reviewState?: ReminderHubState;
+  lifecycleScopeKey?: string;
 }>;
 
 export function ConnectedRemindersHubScreen({
@@ -218,6 +228,12 @@ export function ConnectedRemindersHubScreen({
         ? toggleReminderMutation.variables?.reminderId
         : undefined}
       reminders={remindersQuery.data ?? []}
+      lifecycleScopeKey={[
+        careContext.userId,
+        careContext.householdId,
+        careContext.puppyId,
+        careContext.householdRole,
+      ].join(':')}
     />
   );
 }
@@ -232,12 +248,21 @@ export function RemindersHubScreen({
   pendingToggleReminderId,
   reminders = [],
   reviewState,
+  lifecycleScopeKey = 'static',
 }: RemindersHubScreenProps) {
   const { t } = useAppTranslation();
   const [segment, setSegment] = useState<ReminderSegment>('active');
+  const [lifecycleSelection, setLifecycleSelection] = useState<LifecycleSelection | null>(null);
+  const lifecycleActionsAvailable = onDeleteReminder !== undefined
+    && onEditReminder !== undefined
+    && onToggleReminder !== undefined;
   const visibleRows = reminders.filter((reminder) => reminder.enabled === (segment === 'active'));
   const groupedRows = groupReminders(visibleRows);
   const visibleState = reviewState ?? (visibleRows.length === 0 ? 'empty' : undefined);
+
+  useEffect(() => {
+    setLifecycleSelection(null);
+  }, [lifecycleActionsAvailable, lifecycleScopeKey]);
 
   return (
     <Screen contentStyle={styles.content}>
@@ -282,8 +307,13 @@ export function RemindersHubScreen({
                   {rows.map((reminder) => (
                     <ReminderRow
                       key={reminder.id}
-                      onDeleteReminder={onDeleteReminder}
-                      onEditReminder={onEditReminder}
+                      lifecycleOpen={lifecycleSelection?.scopeKey === lifecycleScopeKey
+                        && lifecycleSelection.reminder.id === reminder.id}
+                      onOpenLifecycle={lifecycleActionsAvailable
+                        ? (selection) => {
+                          setLifecycleSelection({ ...selection, scopeKey: lifecycleScopeKey });
+                        }
+                        : undefined}
                       onToggleReminder={onToggleReminder}
                       pending={pendingToggleReminderId === reminder.id
                         || pendingDeleteReminderId === reminder.id}
@@ -298,9 +328,41 @@ export function RemindersHubScreen({
         </Stack>
       ) : null}
 
+      {segment === 'off' && visibleState === undefined ? (
+        <AppText tone="secondary" variant="footnote">
+          {t('reminders.lifecycle.paused-diary-hint')}
+        </AppText>
+      ) : null}
+
       <AppText tone="secondary" variant="footnote">
         {t('reminders.footer-quiet-hours')}
       </AppText>
+
+      {lifecycleSelection !== null
+        && lifecycleSelection.scopeKey === lifecycleScopeKey
+        && onDeleteReminder !== undefined
+        && onEditReminder !== undefined
+        && onToggleReminder !== undefined ? (
+          <RoutineLifecycleMenu
+            enabled={lifecycleSelection.reminder.enabled}
+            initialView={lifecycleSelection.initialView}
+            onClose={() => {
+              setLifecycleSelection(null);
+            }}
+            onDelete={() => {
+              onDeleteReminder(lifecycleSelection.reminder.id);
+            }}
+            onEdit={() => {
+              onEditReminder(lifecycleSelection.reminder.id);
+            }}
+            onToggleEnabled={(enabled) => {
+              onToggleReminder(lifecycleSelection.reminder.id, enabled);
+            }}
+            pending={pendingDeleteReminderId === lifecycleSelection.reminder.id
+              || pendingToggleReminderId === lifecycleSelection.reminder.id}
+            title={lifecycleSelection.title}
+          />
+        ) : null}
     </Screen>
   );
 }
@@ -342,15 +404,15 @@ export function RemindersHubStatePreview({ state }: Readonly<{ state: ReminderHu
 }
 
 function ReminderRow({
-  onDeleteReminder,
-  onEditReminder,
+  lifecycleOpen,
+  onOpenLifecycle,
   onToggleReminder,
   pending,
   reminder,
   section,
 }: Readonly<{
-  onDeleteReminder?: (reminderId: string) => void;
-  onEditReminder?: (reminderId: string) => void;
+  lifecycleOpen: boolean;
+  onOpenLifecycle?: (selection: LifecycleSelectionRequest) => void;
   onToggleReminder?: (reminderId: string, enabled: boolean) => void;
   pending: boolean;
   reminder: Reminder;
@@ -361,25 +423,32 @@ function ReminderRow({
     trackerId: reminder.reminder_type,
     rule: reminder.schedule_rule,
   });
-  const isCanonical = canonicalResult.success;
   const title = canonicalResult.success
     ? canonicalResult.data.rule.title ?? t(trackerLabelKeys[canonicalResult.data.trackerId])
     : reminder.reminder_type;
   const subtitle = canonicalResult.success
     ? formatCanonicalSubtitle(canonicalResult.data.rule, t)
     : t('reminders.form.legacy-unsupported');
+  const openLifecycle = (initialView: LifecycleSelectionRequest['initialView'] = 'actions') => {
+    onOpenLifecycle?.({ initialView, reminder, title });
+  };
   const row = (
     <ListRow
-      accessibilityActions={onDeleteReminder && !pending ? [{ name: 'delete' }] : undefined}
-      accessibilityLabel={`${title}. ${subtitle}`}
-      leading={<AppIcon color={tokens.color.text.secondary} name={sectionIcon[section]} />}
-      onPress={isCanonical && onEditReminder ? () => onEditReminder(reminder.id) : undefined}
-      onAccessibilityAction={(event) => {
-        if (event.nativeEvent.actionName === 'delete' && !pending) {
-          onDeleteReminder?.(reminder.id);
-        }
-      }}
-      subtitle={subtitle}
+      leading={(
+        <View
+          style={[styles.reminderIcon, reminder.enabled
+            ? styles.activeReminderIcon
+            : styles.pausedReminderIcon]}
+          testID={`reminder-row-icon-${reminder.id}`}>
+          <AppIcon
+            color={reminder.enabled ? tokens.color.primary[700] : tokens.color.text.secondary}
+            name={sectionIcon[section]}
+            size={20}
+          />
+        </View>
+      )}
+      subtitle={reminder.enabled ? subtitle : t('reminders.lifecycle.paused-subtitle')}
+      testID={`reminder-row-${reminder.id}`}
       title={title}
       titleNumberOfLines={2}
       trailing={(
@@ -394,22 +463,46 @@ function ReminderRow({
               />
             </Stack>
           ) : null}
-          <Toggle
-            accessibilityLabel={title}
-            disabled={pending || onToggleReminder === undefined}
-            onValueChange={(enabled) => {
-              onToggleReminder?.(reminder.id, enabled);
-            }}
-            testID={`reminder-row-toggle-${reminder.id}`}
-            value={reminder.enabled}
-          />
+          {reminder.enabled ? (
+            <Toggle
+              accessibilityLabel={title}
+              disabled={pending || onToggleReminder === undefined}
+              onValueChange={(enabled) => {
+                onToggleReminder?.(reminder.id, enabled);
+              }}
+              testID={`reminder-row-toggle-${reminder.id}`}
+              value
+            />
+          ) : null}
+          {!reminder.enabled && !lifecycleOpen ? (
+            <Button
+              disabled={pending || onToggleReminder === undefined}
+              label={t('reminders.lifecycle.resume')}
+              onPress={() => {
+                onToggleReminder?.(reminder.id, true);
+              }}
+              style={styles.resumeButton}
+              variant="secondary"
+            />
+          ) : null}
+          {onOpenLifecycle !== undefined ? (
+            <IconButton
+              accessibilityLabel={t('reminders.lifecycle.open-actions-template', { title })}
+              disabled={pending}
+              icon={<AppIcon color={tokens.color.text.secondary} name="more" size={22} />}
+              onPress={() => {
+                openLifecycle();
+              }}
+              style={styles.lifecycleOverflow}
+            />
+          ) : null}
         </Stack>
       )}
       variant="settings"
     />
   );
 
-  if (!onDeleteReminder || pending) {
+  if (!onOpenLifecycle || pending) {
     return row;
   }
 
@@ -417,7 +510,7 @@ function ReminderRow({
     <SwipeToDelete
       deleteLabel={t('common.delete')}
       onDelete={() => {
-        onDeleteReminder(reminder.id);
+        openLifecycle('delete-confirmation');
       }}
       testID={`reminder-row-delete-${reminder.id}`}>
       {row}
@@ -486,7 +579,27 @@ function getSectionTitleKey(section: ReminderSection): I18nKey {
 }
 
 const styles = StyleSheet.create({
+  activeReminderIcon: {
+    backgroundColor: tokens.color.primary[50],
+  },
   content: {
     paddingBottom: tokens.layout.tabBarHeight + tokens.space[6],
+  },
+  lifecycleOverflow: {
+    height: tokens.layout.tapTargetMin,
+    width: tokens.layout.tapTargetMin,
+  },
+  pausedReminderIcon: {
+    backgroundColor: tokens.color.surface.sunken,
+  },
+  reminderIcon: {
+    alignItems: 'center',
+    borderRadius: tokens.radius.sm,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  resumeButton: {
+    minHeight: tokens.layout.tapTargetMin,
   },
 });

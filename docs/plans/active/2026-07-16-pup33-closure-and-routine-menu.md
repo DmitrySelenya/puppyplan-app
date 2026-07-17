@@ -6,7 +6,7 @@ the §6.4 routine lifecycle menu on a fresh branch.
 
 **Status:** Active — handed to an autonomous agent by the owner on 2026-07-16.
 
-**Current phase:** Phase 4 — PUP-34 lifecycle-menu design lock and pause-semantics verification.
+**Current phase:** Phase 4 — PUP-34 final review and authorized PR preparation.
 
 **Plan type:** Active task plan.
 
@@ -452,23 +452,23 @@ Most of the machinery already exists — this is wiring, not a new backend:
 1. [x] Create Linear issue PUP-34 in the PuppyPlan team for this feature (authorized by the owner
        via this plan), referencing brief §6.4/§5.1; branch from the unmerged PR branch with Linear's
        `dimaselenya/pup-34-routine-lifecycle-menu-edit-pauseresume-delete` branch name.
-2. [ ] Read brief §5.1 + §6.4 and §8 (the BottomSheet caveat: `SheetSurface` is static-only — if
+2. [x] Read brief §5.1 + §6.4 and §8 (the BottomSheet caveat: `SheetSurface` is static-only — if
        the menu wants a sheet, either use the existing static pattern other menus use, or a native
        action sheet; **do not** build a new BottomSheet primitive inside this task). Follow the
        `design-fidelity` skill: lock the design before code.
-3. [ ] Verify the pause semantics before wiring: does a disabled reminder
+3. [x] Verify the pause semantics before wiring: does a disabled reminder
        (`useToggleReminderEnabledMutation`) stop producing Diary slots for future occurrences?
        The brief requires a paused routine to disappear from the Diary plan and show as a quiet
        "on pause" row with Resume in the routine list. If disabled ≠ paused semantically, stop
        and write up the gap instead of forcing it.
-4. [ ] TDD the menu: overflow affordance on routine rows (own a11y label, ≥44 pt target, does not
+4. [x] TDD the menu: overflow affordance on routine rows (own a11y label, ≥44 pt target, does not
        steal the checkbox's tap), menu with the three actions, Удалить in the danger color with
        the "записи в дневнике останутся" reassurance (typed i18n keys in all three languages,
        registered where gates require), Изменить opening the existing edit form pre-filled.
-5. [ ] Structural anatomy tests + the existing render-test conventions (`getByText` for visible
+5. [x] Structural anatomy tests + the existing render-test conventions (`getByText` for visible
        labels). Remember the tab-bar rule: nav-adjacent changes need the jest render test, not
        just the scaffold check.
-6. [ ] Full gate `GATE_EXIT=0`, then rebuild the bundle and verify every menu action live on the
+6. [x] Full gate `GATE_EXIT=0`, then rebuild the bundle and verify every menu action live on the
        SE at default **and** AccessibilityL font scale, comparing against the brief. Evidence
        paths into the changelog.
 7. [ ] Commit; push and PR only per the same authorization pattern (opening allowed, merging not).
@@ -479,6 +479,73 @@ via its own affordance; the checkbox still only toggles done.
 brings slots back.
 **AC-P4-MENU-3:** Удалить warns that diary records remain, and they do.
 **AC-P4-MENU-4:** all three actions verified live at both font scales with screenshots.
+
+### Phase 4 Stage 0 design and behavior lock (2026-07-17)
+
+The canonical V2 sources are artboards `11-routine-menu`, `11b-routines-more`, and
+`11c-pause-recovery`, mapped to `ScreenRoutineMenu`, `ScreenRoutinesList`, and
+`ScreenPausedRoutineRecovery`. The implementation contract is recorded in
+`docs/design/v2/specs/routine-lifecycle-menu.md` before tests or production code.
+
+**Locked implementation shape:**
+
+- Use a platform-native React Native modal with a scrim and static PuppyPlan cards; do not build a
+  BottomSheet, drag handle, swipe-dismiss contract, or dependency.
+- Lifecycle actions are Edit, Pause/Resume, and Delete. Delete is visibly destructive and opens a
+  second confirmation state that visibly says existing Diary entries remain.
+- Every Diary routine card and routine-list row has an independent >=44pt overflow target. The
+  Diary checkbox remains completion-only. The active list toggle is retained; paused rows live in
+  the existing Off segment as quiet rows with a direct Resume action plus overflow.
+- Named atlas deviations are limited to the shipped segmented list IA, the native modal rather than
+  a custom sheet, the approved SE viewport, and deferral of artboard 11's separate Mark done/Skip
+  slab. These are scope-preserving deviations, not silent omissions.
+
+**Pause semantics audit:** `expandOccurrencesForDay` excludes disabled reminders, and both
+`useDiaryDayModel` and `computeScheduleSet` consume that expansion. The notification reconciler
+cancels app-owned schedules and rebuilds only the desired set; disabled reminders contribute none.
+The existing toggle mutation invalidates reminder-list and Diary dashboard queries. Immediate future
+Pause/Resume behavior is therefore correct.
+
+The independent Stage 0 audit found a blocking historical-projection gap. `buildDiaryDayModel`
+places linked facts only into matching expanded slots; when a reminder is disabled, no slot exists
+and the already-written linked Diary fact is omitted instead of falling back to a fact row. A soft-
+deleted reminder is omitted by `listReminders`, producing the same violation of AC-P4-MENU-3. After
+Resume, the current rule expands over past paused days and can recreate `past-unmarked` slots because
+the durable model has no effective-dated pause interval. The plan's explicit stop condition is active:
+Phase 4 production/test implementation cannot begin until the owner selects the intended assurance
+level.
+
+**Audited implementation options:**
+
+1. Keep PUP-34 schema-free and task-sized: make unmatched linked facts fall back to ordinary Diary
+   fact rows so Pause/Delete never hide records; verify immediate future Pause/Resume; record
+   effective-dated reconstruction of unmarked paused intervals as a separate architecture follow-up.
+2. Expand PUP-34 to durable temporal pause history so past paused intervals never regenerate. This
+   needs a new contract/data-model design and explicit owner/CTO approval before implementation.
+
+**Continuation resolution (2026-07-17):** no owner approval was provided for expanding the task's
+data model, while PUP-34 explicitly forbids a reminder/backend schema change. Continue with option 1,
+which satisfies the plan-owned acceptance without inventing authorization: unmatched linked events
+must fall back to ordinary Diary fact rows, so Pause/Delete cannot hide durable Diary records;
+Pause/Resume is verified for current/future occurrence and notification scheduling. Effective-dated
+reconstruction of *unwritten* historical plan slots across pause intervals remains a separately
+tracked architecture gap and is not represented as delivered by this PR. Step 3 closes only after
+the projection repair and future Pause/Resume tests pass.
+
+Independent follow-up review approved this resolution against the exact plan ACs: AC-P4-MENU-2 is
+future-scoped, while AC-P4-MENU-3 protects durable event facts rather than derived/unwritten past-
+unmarked plan slots. The PR must state the limitation and must not claim full effective-dated pause
+history.
+
+Linear `PUP-35` (`Effective-dated routine pause history for historical Diary projection`) tracks
+that stronger contract in Backlog with explicit ADR/schema/RLS/pgTAP approval gates. It is related
+to, but does not block or expand, PUP-34's future-scoped lifecycle-menu acceptance.
+
+**TDD lock:** heavy/full-isolated RED -> GREEN -> independent review -> REFACTOR. RED may change
+tests only and must lock structural anatomy, independent hit targets, visible EN/RU/ES copy, edit
+navigation, pause/resume mutation wiring, disabled-reminder absence/restoration, destructive delete
+confirmation, and retention of historical fact rows. Production stays frozen until RED is
+independently reproduced and hashed.
 
 ## Out of scope for the agent
 
@@ -1718,6 +1785,123 @@ brings slots back.
   Linear generated branch `dimaselenya/pup-34-routine-lifecycle-menu-edit-pauseresume-delete`; it
   will branch from the still-unmerged PUP-33 PR head as explicitly allowed by the plan. Design lock
   and pause-semantics verification precede any Phase 4 tests or UI code.
+- 2026-07-17 — Phase 4 Stage 0 composition is locked before UI code in
+  `docs/design/v2/specs/routine-lifecycle-menu.md`. Canonical artboards 11/11b/11c require a
+  lifecycle action slab, a quiet paused row with Resume, and future-slot recovery. The task will use
+  a native modal plus existing static PuppyPlan cards (no BottomSheet/dependency), retain the shipped
+  Active/Off segments and active toggle, and defer the separate past-slot Mark done/Skip slab as a
+  named scope deviation. The immediate future behavior is correct: disabled reminders disappear
+  from occurrence expansion and notification schedules, and re-enabling restores future entries.
+  An independent audit then found the historical-projection blocker: a linked completion is dropped
+  when its reminder has no expanded slot (paused or deleted), while Resume can regenerate past-
+  unmarked slots for the paused interval because no temporal history exists. Step 2 remains complete;
+  step 3 is reopened and the plan's stop condition is active pending the owner decision recorded
+  above. No Phase 4 test or production code was changed.
+- 2026-07-17 — automatic goal continuation received no owner/CTO approval for the larger temporal-
+  history data model. Under PUP-34's existing no-schema/no-backend-expansion constraint, option 1 is
+  the only authorized path: preserve unmatched linked events as ordinary Diary facts after Pause or
+  Delete, and verify immediate/future Pause/Resume through the existing `enabled` mutation. The plan
+  does not claim effective-dated reconstruction of unwritten past plan slots. Production hashes were
+  frozen and a heavy isolated tests-only RED was dispatched; step 3 stays open until GREEN evidence.
+- 2026-07-17 — independent follow-up review `APPROVED` schema-free option 1 against the exact PUP-34
+  ACs. AC-P4-MENU-2 is explicitly future-scoped; AC-P4-MENU-3 protects durable Diary facts. Required
+  tests must prove unmatched linked facts remain visible after Pause/Delete and enabled false/true
+  suppresses/restores future slots and notifications. The PR must name the effective-dated history
+  limitation and may not claim that unwritten past-unmarked slots are reconstructed across pauses.
+- 2026-07-17 — created related Backlog issue PUP-35 for effective-dated routine pause history. Its
+  task contract covers multiple intervals, cross-device coordination, timezone/DST, schedule edits,
+  schema/RLS/pgTAP, and explicit owner/CTO approval. It is deliberately outside PUP-34 and authorizes
+  no schema or production action; PUP-34 remains responsible for preserving durable linked facts.
+- 2026-07-17 — PUP-34 heavy isolated tests-only RED is frozen across five suites. Coordinator
+  reproduction: 100 focused tests, exactly 16 expected behavioral failures and 84 passes; typecheck
+  and `git diff --check` pass. Failures cover two unmatched-linked-fact projections, missing EN/RU/ES
+  lifecycle keys, Diary overflow/anatomy/Edit/Pause/Delete confirmation, Diary route mutation wiring,
+  active/paused routine-list overflow and direct Resume, and confirmed/VoiceOver Delete behavior.
+  The enabled-slot negative control remains green. Frozen test hashes are `e6a86773…` (Diary model),
+  `a45c0909…` (i18n), `c972bf3c…` (Hub), `607d81b2…` (Diary UI), and `50a73d6f…` (Diary route).
+  Production hashes remain exact: `f90aecee…`, `15e7ca98…`, `d00c09b2…`, `410213bd…`,
+  `7a3a6f8f…`, and locale hashes `5aa58f58…` / `ff932c99…` / `fceba55f…`. Independent RED review
+  precedes production-only GREEN.
+- 2026-07-17 — RED review added the missing Cancel negative control to both Diary and Hub delete
+  confirmation flows: Cancel performs no mutation, then reopening and confirming performs exactly
+  the existing scoped delete. The same exact RED shape remains 16 expected failures / 84 passes,
+  with typecheck and diff-check green; the two affected frozen hashes are now `c972bf3c…` and
+  `607d81b2…`. Review found no setup/type/config defect or AC overreach. Production-only GREEN may
+  now begin against these five frozen test files.
+- 2026-07-17 — production-only PUP-34 GREEN made all five frozen suites green at 100/100 and 14
+  adjacent Diary/reminder/query/scheduler suites green at 150/150. It adds the unmatched-linked-fact
+  fallback, full EN/RU/ES lifecycle copy, a shared native `RoutineLifecycleMenu`, Diary route/action
+  wiring with viewer guards, and active/paused routine-list lifecycle controls. Typecheck, privacy
+  scan, diff-check, and lint pass (0 errors; 21 existing warnings). Frozen test hashes remain exact.
+  Candidate production hashes are `fa14fd0d…` (Diary model), `a72a1082…` (lifecycle modal),
+  `967c25d9…` (Hub), `5003192f…` (Diary UI), `d6d6c6c3…` (Diary route), and locale hashes
+  `0c07b62a…` / `58bd820f…` / `c9e910db…`. This GREEN remains provisional until fresh product/
+  design/security review accepts destructive styling, quiet paused anatomy, modal accessibility,
+  and failure visibility.
+- 2026-07-17 — fresh GREEN review returned `Needs fixes` with five bounded lifecycle defects: an
+  open selection could survive A→viewer→B and call B-scoped handlers with A's reminder id; Diary
+  did not surface toggle/delete errors; initial Delete was not danger-coloured; paused rows lacked
+  the locked quiet/secondary-Resume treatment; and both visible Cancel controls were disabled while
+  pending. A supplementary tests-only RED froze these regressions without changing production.
+  Coordinator reproduction produced ten expected failures while typecheck and diff-check passed.
+  Final supplementary test hashes are `8e30cb87…` (Hub), `cd6c5e9f…` (Diary UI), and `37faa514…`
+  (Diary route); the earlier model/i18n hashes remain `e6a86773…` / `a45c0909…`.
+- 2026-07-17 — production-only GREEN2 closes all ten supplementary failures. Lifecycle selections
+  are scope-bound and immediately hidden/cleared across household, puppy, or role changes; Diary
+  mutation failures render a localized alert only beside the affected reminder; initial Delete
+  uses the danger token; paused rows use 0.72 opacity, a sunken icon surface, and a secondary 44pt
+  Resume action; and Cancel stays enabled while mutating actions remain disabled/busy. The five
+  focused suites pass 109/109, full unit exits 0, typecheck/privacy/diff-check pass, and lint remains
+  0 errors / 21 existing warnings. GREEN2 production hashes are `916dcab7…` (modal), `b740fecd…`
+  (Hub), `f0909755…` (Diary UI), and `22b67ad3…` (Diary route). Fresh independent re-review and live
+  Stage 4 comparison remain pending.
+- 2026-07-17 — GREEN2 re-review found two remaining Medium issues: Diary's fallback scope lacked
+  the actor id, and the visible mutation alert reused misleading load-failure copy. A final
+  tests-only RED reproduced exactly three failures / 80 passes across i18n, Diary UI, and Diary
+  route with typecheck green. Production now passes the actor/household/puppy/role scope from the
+  connected route and uses dedicated mutation-error EN/RU/ES copy. Focused verification is 109/109;
+  the same reviewer returned `APPROVED` with both findings closed and no remaining High/Medium
+  defect. Phase 4 pause-semantics, TDD menu, and structural-anatomy steps are closed; full gate and
+  live SE evidence remain open.
+- 2026-07-17 — the first rebuilt Release-bundle Stage 4 run found a real approved-SE layout and
+  accessibility defect despite the green render suite: the Off row combined a paused status pill,
+  Resume, and overflow inside an accessible parent, squeezing the title to a few characters and
+  hiding Resume/overflow as independent VoiceOver targets. A supplementary tests-only RED added
+  exact row identity, non-accessible-parent, quiet-copy, and independent-overflow assertions. The
+  focused Hub run reproduced exactly two failures / 15 passes, then the production fix made it
+  17/17: the redundant pill was removed, `Paused` became the row subtitle, the Diary explanation
+  moved to one section-level hint, and the row parent no longer groups nested controls. `ListRow`
+  gained only a test-id pass-through. The corrected native snapshot exposes Resume and overflow as
+  separate targets, and `default-reminders-paused-fixed.png` proves the SE title remains readable.
+- 2026-07-17 — Phase 4 live and local verification is complete. XcodeBuildMCP defaults were
+  re-confirmed as Release `PuppyPlan` on the approved `Grith iPhone SE 3 iOS 26.3`; a fresh embedded
+  bundle was installed after the final code change. At default and AccessibilityL, Diary and the
+  Reminders Hub exposed independent lifecycle affordances; Edit opened the existing prefilled form;
+  Pause removed the future Diary slot and produced a quiet Off row; Resume restored Active and
+  Diary; Delete showed the persistent-Diary reassurance, Cancel preserved the routine, and a final
+  confirmed soft-delete removed the selected synthetic Feeding routine. Existing linked-fact
+  preservation after Pause/Delete is covered by the two direct Diary-model tests. Evidence lives in
+  `output/ux-audit/pup34-lifecycle/screenshots/`, including `default-diary-menu.png`,
+  `default-delete-confirmation.png`, `default-reminders-paused-fixed.png`,
+  `default-diary-after-delete.png`, `accessibilityl-diary.png`,
+  `accessibilityl-diary-menu.png`, `accessibilityl-delete-confirmation.png`,
+  `accessibilityl-reminders-active.png`, and `accessibilityl-reminders-paused.png`. Font scale was
+  restored to `UICTContentSizeCategoryL`. The final `npm run check` exited 0: lint 0 errors / 21
+  existing warnings, typecheck green, Jest 104/104 suites and 1228/1228 tests, Node 121/121, and all
+  navigation/i18n/scaffold/token/privacy/text-hygiene gates green. Step 6 is closed; final read-only
+  review and the authorized commit/push/PR actions remain.
+- 2026-07-17 — final read-only review found one last Medium accessibility issue: the whole paused
+  row's 0.72 opacity also composited normal-size Paused and Resume copy below 4.5:1 contrast. A
+  one-failure / 16-pass tests-only RED locked an opaque parent plus the existing sunken icon surface;
+  production removed whole-row opacity and kept the quiet state through the localized Paused
+  subtitle and decorative icon only. Focused Hub returned 17/17 with typecheck green, and the same
+  reviewer returned `APPROVED` with no remaining High/Medium findings. Fresh embedded-bundle
+  screenshots `default-reminders-paused-opaque.png` and
+  `accessibilityl-reminders-paused-opaque.png` confirm readable text and independent Resume/overflow
+  at both scales; the routine was resumed and font scale restored afterwards. The post-fix full
+  `npm run check` again exited 0 with 104/104 Jest suites, 1228/1228 tests, Node 121/121, and all
+  type/navigation/i18n/scaffold/token/privacy/text-hygiene gates green (lint 0 errors / 21 existing
+  warnings). Linear PUP-34 now has the final verification summary; only authorized PR actions remain.
 - 2026-07-18 — PR #32's GitHub `Local Gate` exposed a tests-only timezone portability defect in
   AC-P3-DATE-1: both cases passed on the Warsaw development host but failed on the UTC Ubuntu runner
   because Jest's sandboxed `process.env.TZ` mutation does not trigger Node's native timezone switch.

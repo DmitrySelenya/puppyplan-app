@@ -68,6 +68,7 @@ export function buildDiaryDayModel(input: BuildDiaryDayModelInput): DiaryDayMode
     .sort(compareFacts);
   const linkedFactBySlot = new Map<string, DiaryDayFact>();
   const spontaneousFacts: DiaryDayFact[] = [];
+  const slotKeys = new Set(slots.map((slot) => slotKey(slot.reminderId, slot.scheduledFor)));
 
   for (const fact of facts) {
     const link = getReminderLinkFromPayload(fact.payload);
@@ -78,6 +79,11 @@ export function buildDiaryDayModel(input: BuildDiaryDayModelInput): DiaryDayMode
     }
 
     const key = slotKey(link.reminderId, link.scheduledFor);
+    if (!slotKeys.has(key)) {
+      spontaneousFacts.push(fact);
+      continue;
+    }
+
     if (!linkedFactBySlot.has(key)) {
       linkedFactBySlot.set(key, fact);
     }

@@ -1729,6 +1729,22 @@
     "actions": {
       "add": "Agregar recordatorio"
     },
+    "lifecycle": {
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "delete-confirm-body": "Las entradas existentes del Diario se conservarán.",
+      "delete-confirm-title": "¿Eliminar esta rutina?",
+      "diary-entries-stay": "Las entradas del Diario se conservarán",
+      "edit": "Editar rutina",
+      "mutation-error-body": "El cambio no se guardó. Abre las acciones de la rutina e inténtalo de nuevo.",
+      "mutation-error-title": "No se pudo actualizar la rutina",
+      "open-actions-template": "Acciones para la rutina {title}",
+      "pause": "Pausar",
+      "paused-diary-hint": "Las rutinas pausadas no aparecen en el Diario.",
+      "paused-subtitle": "Pausada",
+      "resume": "Reanudar",
+      "title": "Acciones de la rutina"
+    },
     "sections": {
       "feeding": "Alimentación",
       "health": "Salud",

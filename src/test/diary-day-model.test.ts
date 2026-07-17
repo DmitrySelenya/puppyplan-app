@@ -92,6 +92,70 @@ describe('buildDiaryDayModel', () => {
     })]);
   });
 
+  it.each([
+    {
+      label: 'paused',
+      reminders: [reminder({ enabled: false })],
+    },
+    {
+      label: 'deleted or otherwise absent',
+      reminders: [],
+    },
+  ])('AC-P4-MENU-3 keeps a linked Diary fact visible when its routine is $label', ({ reminders }) => {
+    const plannedAt = '2026-03-29T06:00:00.000Z';
+    const linkedFact = fact({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000000204',
+      eventType: 'feeding',
+      occurredAt: '2026-03-29T06:12:00.000Z',
+      payload: {
+        amount: 'meal',
+        reminder_link: { reminder_id: feedingId, scheduled_for: plannedAt },
+      },
+    });
+
+    const model = buildDiaryDayModel({
+      day: '2026-03-29',
+      facts: [linkedFact],
+      nowMs: Date.parse('2026-03-29T09:00:00.000Z'),
+      reminders,
+      timeZone: 'Europe/Warsaw',
+    });
+
+    expect(model.items).toEqual([{
+      clientEventId: linkedFact.clientEventId,
+      displayAt: linkedFact.occurredAt,
+      eventType: linkedFact.eventType,
+      kind: 'fact',
+      occurredAt: linkedFact.occurredAt,
+      payload: linkedFact.payload,
+    }]);
+  });
+
+  it('AC-P4-MENU-3 still folds a linked fact into exactly one planned row while the slot exists', () => {
+    const plannedAt = '2026-03-29T06:00:00.000Z';
+    const model = buildDiaryDayModel({
+      day: '2026-03-29',
+      facts: [fact({
+        clientEventId: 'evt_00000000-0000-4000-8000-000000000205',
+        eventType: 'feeding',
+        occurredAt: '2026-03-29T06:12:00.000Z',
+        payload: {
+          reminder_link: { reminder_id: feedingId, scheduled_for: plannedAt },
+        },
+      })],
+      nowMs: Date.parse('2026-03-29T09:00:00.000Z'),
+      reminders: [reminder()],
+      timeZone: 'Europe/Warsaw',
+    });
+
+    expect(model.items).toHaveLength(1);
+    expect(model.items[0]).toEqual(expect.objectContaining({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000000205',
+      kind: 'planned',
+      status: 'done',
+    }));
+  });
+
   it('AC-P5-4 does not auto-link a matching-kind spontaneous fact', () => {
     const model = buildDiaryDayModel({
       day: '2026-03-29',

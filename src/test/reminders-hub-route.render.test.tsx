@@ -1,7 +1,8 @@
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import type { Reminder } from '@/contracts/supabase';
+import { tokens } from '@/design/tokens';
 import { RemindersHubStatePreview } from '@/features/reminders/screens/RemindersHubScreen';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
@@ -117,8 +118,56 @@ describe('RemindersHubRoute', () => {
     expect(screen.getByText(i18n.t('reminders.form.legacy-unsupported'))).toBeTruthy();
     expect(screen.getByTestId('reminder-row-toggle-00000000-0000-4000-8000-000000005101').props.value)
       .toBe(true);
+    expect(screen.getByTestId('reminder-row-00000000-0000-4000-8000-000000005101').props.accessible)
+      .toBe(false);
+    const overflow = screen.getByRole('button', {
+      name: 'Routine actions for Morning feeding',
+    });
+    const overflowStyle = StyleSheet.flatten(overflow.props.style) ?? {};
+    expect(Math.max(overflowStyle.width ?? 0, overflowStyle.minWidth ?? 0))
+      .toBeGreaterThanOrEqual(44);
+    expect(Math.max(overflowStyle.height ?? 0, overflowStyle.minHeight ?? 0))
+      .toBeGreaterThanOrEqual(44);
 
     expect(screen.queryByText('DHPP booster')).toBeNull();
+  });
+
+  it('AC-P4-MENU-1 opens visible lifecycle actions and routes Edit for the selected active row', () => {
+    render(<RemindersHubRoute />, { wrapper: AppProviders });
+
+    fireEvent.press(screen.getByRole('button', {
+      name: 'Routine actions for Morning feeding',
+    }));
+
+    expect(screen.getByTestId('routine-lifecycle-modal').props.accessibilityViewIsModal).toBe(true);
+    expect(screen.getByText('Edit routine')).toBeTruthy();
+    expect(screen.getByText('Pause')).toBeTruthy();
+    expect(screen.getByText('Delete')).toBeTruthy();
+    expect(screen.getByText('Diary entries stay')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Edit routine' }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith({
+      pathname: '/reminders/edit',
+      params: { reminderId: '00000000-0000-4000-8000-000000005101' },
+    });
+    expect(mockToggleReminderMutate).not.toHaveBeenCalled();
+  });
+
+  it('AC-P4-MENU-2 pauses from the active-row menu with the active care context', () => {
+    render(<RemindersHubRoute />, { wrapper: AppProviders });
+
+    fireEvent.press(screen.getByRole('button', {
+      name: 'Routine actions for Morning feeding',
+    }));
+    fireEvent.press(screen.getByRole('button', { name: 'Pause' }));
+
+    expect(mockToggleReminderMutate).toHaveBeenCalledWith({
+      enabled: false,
+      householdId,
+      puppyId,
+      reminderId: '00000000-0000-4000-8000-000000005101',
+      todayDate: '2026-07-02',
+    });
   });
 
   it('AC-P4-ROUNDTRIP labels canonical daily, custom-day, and one-off rows accurately', () => {
@@ -153,15 +202,128 @@ describe('RemindersHubRoute', () => {
     expect(screen.getByText('Once · 2026-07-12 · 14:00')).toBeTruthy();
   });
 
-  it('AC-REM-HUB-3 switches to disabled reminders without rendering active rows', () => {
+  it('AC-P4-MENU-1 AC-P4-MENU-2 renders a quiet paused row with direct Resume and overflow', () => {
     render(<RemindersHubRoute />, { wrapper: AppProviders });
 
     fireEvent.press(screen.getByRole('tab', { name: i18n.t('reminders.segments.1') }));
 
     expect(screen.getByText('DHPP booster')).toBeTruthy();
-    expect(screen.getByTestId('reminder-row-toggle-00000000-0000-4000-8000-000000005102').props.value)
-      .toBe(false);
+    expect(screen.getByText('Paused')).toBeTruthy();
+    expect(screen.getByText('Paused routines do not appear in Diary.')).toBeTruthy();
+    expect(screen.queryByTestId('reminder-row-toggle-00000000-0000-4000-8000-000000005102'))
+      .toBeNull();
+    const pausedRow = screen.getByTestId(
+      'reminder-row-00000000-0000-4000-8000-000000005102',
+    );
+    expect(pausedRow.props.accessible).toBe(false);
+    expect(StyleSheet.flatten(pausedRow.props.style)?.opacity ?? 1).toBe(1);
+    expect(StyleSheet.flatten(screen.getByTestId(
+      'reminder-row-icon-00000000-0000-4000-8000-000000005102',
+    ).props.style)?.backgroundColor).toBe(tokens.color.surface.sunken);
+    expect(screen.queryByLabelText('Paused')).toBeNull();
+    const resume = screen.getByRole('button', { name: 'Resume' });
+    expect(resume).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: 'Routine actions for DHPP booster',
+    })).toBeTruthy();
     expect(screen.queryByText('Morning feeding')).toBeNull();
+
+    fireEvent.press(resume);
+    expect(mockToggleReminderMutate).toHaveBeenCalledWith({
+      enabled: true,
+      householdId,
+      puppyId,
+      reminderId: '00000000-0000-4000-8000-000000005102',
+      todayDate: '2026-07-02',
+    });
+  });
+
+  it('AC-P4-MENU-DESIGN renders the paused-row Resume action as secondary', () => {
+    render(<RemindersHubRoute />, { wrapper: AppProviders });
+    fireEvent.press(screen.getByRole('tab', { name: i18n.t('reminders.segments.1') }));
+
+    const resume = screen.getByRole('button', { name: 'Resume' });
+    const resumeStyle = StyleSheet.flatten(
+      typeof resume.props.style === 'function'
+        ? resume.props.style({ pressed: false })
+        : resume.props.style,
+    ) ?? {};
+    expect(resumeStyle.backgroundColor).toBe(tokens.color.primary[50]);
+    expect(resumeStyle.borderColor).toBe(tokens.color.primary[200]);
+  });
+
+  it('AC-P4-MENU-2 exposes Resume from a paused row lifecycle menu', () => {
+    render(<RemindersHubRoute />, { wrapper: AppProviders });
+    fireEvent.press(screen.getByRole('tab', { name: i18n.t('reminders.segments.1') }));
+    fireEvent.press(screen.getByRole('button', {
+      name: 'Routine actions for DHPP booster',
+    }));
+
+    expect(screen.getByText('Edit routine')).toBeTruthy();
+    expect(screen.getByText('Resume')).toBeTruthy();
+    expect(screen.getByText('Delete')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Resume' }));
+
+    expect(mockToggleReminderMutate).toHaveBeenCalledWith(expect.objectContaining({
+      enabled: true,
+      reminderId: '00000000-0000-4000-8000-000000005102',
+    }));
+  });
+
+  it('AC-P4-MENU-SCOPE drops an A selection across viewer and B care-context transitions', () => {
+    const view = render(<RemindersHubRoute />, { wrapper: AppProviders });
+    fireEvent.press(screen.getByRole('button', {
+      name: 'Routine actions for Morning feeding',
+    }));
+
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId,
+        householdRole: 'viewer',
+        puppyId,
+        selectedTrackerIds: ['feeding'],
+        todayDate: '2026-07-02',
+        userId,
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    view.rerender(<RemindersHubRoute />);
+    expect(screen.queryByTestId('routine-lifecycle-modal')).toBeNull();
+
+    const householdB = '00000000-0000-4000-8000-000000005021';
+    const puppyB = '00000000-0000-4000-8000-000000005022';
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: householdB,
+        householdRole: 'owner',
+        puppyId: puppyB,
+        selectedTrackerIds: ['feeding'],
+        todayDate: '2026-07-04',
+        userId,
+      },
+      puppy: null,
+      status: 'ready',
+    });
+    mockUseRemindersQuery.mockReturnValue({
+      data: [createReminder({
+        id: '00000000-0000-4000-8000-000000005121',
+        reminder_type: 'Evening feeding',
+        schedule_rule: { repeat: 'daily', time: '18:30' },
+      })],
+      isError: false,
+      isLoading: false,
+    });
+    view.rerender(<RemindersHubRoute />);
+
+    const stalePause = screen.queryByRole('button', { name: 'Pause' });
+    if (stalePause !== null) {
+      fireEvent.press(stalePause);
+    }
+    expect(mockToggleReminderMutate).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('routine-lifecycle-modal')).toBeNull();
   });
 
   it('AC-REM-HUB-4 keeps back and add actions wired to the modal routes', () => {
@@ -227,17 +389,29 @@ describe('RemindersHubRoute', () => {
     expect(screen.queryByText('Morning feeding')).toBeNull();
   });
 
-  it('AC-REM-DELETE-3 calls the soft-delete mutation with active care context and current timestamp', () => {
+  it('AC-P4-MENU-3 confirms the reassurance before soft-delete with active care context', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-07-03T08:30:00.000Z'));
 
     try {
       render(<RemindersHubRoute />, { wrapper: AppProviders });
 
-      fireEvent.press(screen.getByTestId(
-        'reminder-row-delete-00000000-0000-4000-8000-000000005101',
-        { includeHiddenElements: true },
-      ));
+      fireEvent.press(screen.getByRole('button', {
+        name: 'Routine actions for Morning feeding',
+      }));
+      fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
+
+      expect(mockDeleteReminderMutate).not.toHaveBeenCalled();
+      expect(screen.getByText('Delete this routine?')).toBeTruthy();
+      expect(screen.getByText('Existing Diary entries will stay.')).toBeTruthy();
+      fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+      expect(mockDeleteReminderMutate).not.toHaveBeenCalled();
+
+      fireEvent.press(screen.getByRole('button', {
+        name: 'Routine actions for Morning feeding',
+      }));
+      fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
+      fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
 
       expect(mockDeleteReminderMutate).toHaveBeenCalledWith({
         deletedAt: '2026-07-03T08:30:00.000Z',
@@ -251,20 +425,21 @@ describe('RemindersHubRoute', () => {
     }
   });
 
-  it('AC-REM-DELETE-3 exposes a VoiceOver parity delete action for reminder rows', () => {
+  it('AC-P4-MENU-3 keeps VoiceOver Delete reachable through the independent overflow', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-07-03T08:30:00.000Z'));
 
     try {
       render(<RemindersHubRoute />, { wrapper: AppProviders });
 
-      fireEvent(screen.getByLabelText(
-        `Morning feeding. ${i18n.t('reminders.form.legacy-unsupported')}`,
-      ), 'accessibilityAction', {
-        nativeEvent: {
-          actionName: 'delete',
-        },
-      });
+      fireEvent.press(screen.getByRole('button', {
+        name: 'Routine actions for Morning feeding',
+      }));
+      fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
+
+      expect(mockDeleteReminderMutate).not.toHaveBeenCalled();
+      expect(screen.getByText('Existing Diary entries will stay.')).toBeTruthy();
+      fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
 
       expect(mockDeleteReminderMutate).toHaveBeenCalledWith({
         deletedAt: '2026-07-03T08:30:00.000Z',
@@ -278,7 +453,7 @@ describe('RemindersHubRoute', () => {
     }
   });
 
-  it('AC-REM-DELETE-4 disables the toggle and hides the swipe action while a delete mutation is pending', () => {
+  it('AC-REM-DELETE-4 disables row controls while a delete mutation is pending', () => {
     mockUseDeleteReminderMutation.mockReturnValueOnce({
       isError: false,
       isPending: true,
@@ -298,6 +473,9 @@ describe('RemindersHubRoute', () => {
       .toBe(true);
     expect(screen.queryByTestId('reminder-row-delete-00000000-0000-4000-8000-000000005101'))
       .toBeNull();
+    expect(screen.getByRole('button', {
+      name: 'Routine actions for Morning feeding',
+    }).props.accessibilityState.disabled).toBe(true);
     expect(screen.getByTestId('reminder-row-pending-00000000-0000-4000-8000-000000005101')).toBeTruthy();
   });
 
