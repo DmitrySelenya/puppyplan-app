@@ -413,6 +413,29 @@ real storage failure into `null`/success.
       private data. End the body with the standard generation footer.
 - [x] Link the PR in Linear PUP-33 (attachment or comment via the Linear MCP).
 
+### Phase 3 PR CI portability follow-up (2026-07-18)
+
+GitHub's Ubuntu runner exposed a portability defect in the AC-P3-DATE-1 test seam: mutating
+`process.env.TZ` inside Jest's sandbox does not update Node's native local-time getters. The product
+already derives Delete and ordinary Retry dates through `formatLocalCalendarDate`; this follow-up
+must keep that real formatter and both cache/invalidation paths under test without changing CI/test
+configuration, production code, dependencies, or the acceptance assertions.
+
+- [x] Reproduce the PR #32 Local Gate failure under process-startup `TZ=UTC`: exactly the two
+      AC-P3-DATE-1 cases fail at the non-portable timezone activation assertion.
+- [x] Replace the runtime `process.env.TZ` mutation with an exact-timestamp Date-getter seam whose
+      Europe/Warsaw calendar parts come from `Intl.DateTimeFormat`, delegates all unrelated dates,
+      and restores every spy in `finally`.
+- [x] Prove GREEN independently under `TZ=UTC`: focused AC-P3-DATE-1 is 2/2 and the complete
+      `quick-log-mutation-port.test.tsx` suite is 123/123; isolated REFACTOR is a deliberate no-op.
+- [x] Run the fresh full local gate on the final diff: `npm run check` exits 0 with 104/104 Jest
+      suites and 1207/1207 tests, Node 121/121, and every scaffold/i18n/privacy/token/text gate green
+      (lint: 0 errors / 21 existing warnings).
+- [x] Complete final code/privacy/security diff review: independent verdict `Ready`, with no
+      Critical, High, or Medium findings and no privacy/security or release-guardrail issue.
+- [x] Create the owner-authorized local commit. Push, merge, migration apply, release, and production
+      actions remain unauthorized.
+
 ## Phase 4 — §6.4 routine lifecycle menu (new branch, new issue)
 
 The design brief ([§6.4](2026-06-27-diary-pet-nav-design-brief.md)) requires a lifecycle menu on
@@ -1695,3 +1718,17 @@ brings slots back.
   Linear generated branch `dimaselenya/pup-34-routine-lifecycle-menu-edit-pauseresume-delete`; it
   will branch from the still-unmerged PUP-33 PR head as explicitly allowed by the plan. Design lock
   and pause-semantics verification precede any Phase 4 tests or UI code.
+- 2026-07-18 — PR #32's GitHub `Local Gate` exposed a tests-only timezone portability defect in
+  AC-P3-DATE-1: both cases passed on the Warsaw development host but failed on the UTC Ubuntu runner
+  because Jest's sandboxed `process.env.TZ` mutation does not trigger Node's native timezone switch.
+  Heavy isolated RED reproduced exactly 2 failures / 121 skipped under process-startup `TZ=UTC`.
+  GREEN replaced only the unreliable test seam with exact-epoch local Date getters derived from
+  explicit Europe/Warsaw `Intl` parts, continued to execute the real `formatLocalCalendarDate`, and
+  preserved every Delete/Retry cache, invalidation, queue, and network assertion. Coordinator and
+  GREEN-context verification both pass focused 2/2 and full-file 123/123 under `TZ=UTC`; REFACTOR is
+  a deliberate no-op. Production/config/dependencies remain untouched. The fresh full local gate
+  exits 0 with 104/104 Jest suites, 1207/1207 tests, Node 121/121, and all remaining gates green.
+  Independent final diff review returned `Ready` with no Critical/High/Medium, privacy/security, or
+  release-guardrail finding. A second fresh post-review `npm run check` passed with the same evidence,
+  and the owner-authorized local commit records this follow-up. No push, merge, migration apply,
+  release, production, or other remote repository action occurred.

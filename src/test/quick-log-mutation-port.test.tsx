@@ -7,6 +7,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 
 import type { EventLogInsert } from '@/contracts/supabase';
 import { createQuickLogFeedbackController } from '@/features/quick-log/QuickLogFeedbackProvider';
+import { formatLocalCalendarDate } from '@/lib/i18n/format-date';
 import { createPuppyPlanQueryClient } from '@/lib/query/client';
 import { getQuickLogInvalidationKeys, queryKeys } from '@/lib/query/keys';
 import {
@@ -713,11 +714,11 @@ describe('useQuickLogMutationPort async failures', () => {
   });
 
   it('AC-P3-DATE-1 invalidates the device-local Today key when local Delete crosses UTC midnight', async () => {
-    await withTemporaryTimezone('Europe/Warsaw', async () => {
-      const occurredAt = '2026-07-17T23:30:00.000Z';
+    const occurredAt = '2026-07-17T23:30:00.000Z';
+    await withDateGettersInTimeZone(occurredAt, 'Europe/Warsaw', async () => {
       const localCalendarDate = '2026-07-18';
       const utcCalendarDate = '2026-07-17';
-      expect(new Date(occurredAt).getDate()).toBe(18);
+      expect(formatLocalCalendarDate(occurredAt)).toBe(localCalendarDate);
 
       const item = createRecoveryQueueItem({
         occurred_at: occurredAt,
@@ -1332,11 +1333,11 @@ describe('useQuickLogMutationPort async failures', () => {
   });
 
   it('AC-P3-DATE-1 replays and invalidates ordinary Retry in the device-local day across UTC midnight', async () => {
-    await withTemporaryTimezone('Europe/Warsaw', async () => {
-      const occurredAt = '2026-07-17T23:30:00.000Z';
+    const occurredAt = '2026-07-17T23:30:00.000Z';
+    await withDateGettersInTimeZone(occurredAt, 'Europe/Warsaw', async () => {
       const localCalendarDate = '2026-07-18';
       const utcCalendarDate = '2026-07-17';
-      expect(new Date(occurredAt).getDate()).toBe(18);
+      expect(formatLocalCalendarDate(occurredAt)).toBe(localCalendarDate);
 
       const item = createRecoveryQueueItem({
         occurred_at: occurredAt,
@@ -7923,21 +7924,59 @@ function createQueryClientWrapper(
   };
 }
 
-async function withTemporaryTimezone<TResult>(
+async function withDateGettersInTimeZone<TResult>(
+  timestamp: string,
   timeZone: string,
   run: () => Promise<TResult>,
 ): Promise<TResult> {
-  const previousTimeZone = process.env.TZ;
-  process.env.TZ = timeZone;
+  const targetEpoch = new Date(timestamp).getTime();
+  if (Number.isNaN(targetEpoch)) throw new Error('Expected a valid timestamp');
+
+  const dateParts = new Intl.DateTimeFormat('en-US', {
+    day: 'numeric',
+    month: 'numeric',
+    timeZone,
+    year: 'numeric',
+  }).formatToParts(targetEpoch);
+  const getDatePart = (type: 'day' | 'month' | 'year'): number => {
+    const part = dateParts.find((candidate) => candidate.type === type);
+    if (part === undefined) throw new Error(`Expected ${type} in formatted date`);
+    return Number(part.value);
+  };
+  const localYear = getDatePart('year');
+  const localMonth = getDatePart('month') - 1;
+  const localDate = getDatePart('day');
+  const originalGetFullYear = Date.prototype.getFullYear;
+  const originalGetMonth = Date.prototype.getMonth;
+  const originalGetDate = Date.prototype.getDate;
+  const getFullYearSpy = jest
+    .spyOn(Date.prototype, 'getFullYear')
+    .mockImplementation(function getFullYear(this: Date): number {
+      return this.getTime() === targetEpoch
+        ? localYear
+        : originalGetFullYear.call(this);
+    });
+  const getMonthSpy = jest
+    .spyOn(Date.prototype, 'getMonth')
+    .mockImplementation(function getMonth(this: Date): number {
+      return this.getTime() === targetEpoch
+        ? localMonth
+        : originalGetMonth.call(this);
+    });
+  const getDateSpy = jest
+    .spyOn(Date.prototype, 'getDate')
+    .mockImplementation(function getDate(this: Date): number {
+      return this.getTime() === targetEpoch
+        ? localDate
+        : originalGetDate.call(this);
+    });
 
   try {
     return await run();
   } finally {
-    if (previousTimeZone === undefined) {
-      delete process.env.TZ;
-    } else {
-      process.env.TZ = previousTimeZone;
-    }
+    getDateSpy.mockRestore();
+    getMonthSpy.mockRestore();
+    getFullYearSpy.mockRestore();
   }
 }
 
