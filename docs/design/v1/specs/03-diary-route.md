@@ -56,6 +56,8 @@ a redirect alias only. Legacy atlas `today/*` and `timeline/*` are fallback refe
 ## Accessibility
 
 - Route title and tab label say `Diary` in EN/RU/ES.
+- The large greeting inherits the system `title1` ceiling of `1.8`; greeting text remains complete
+  and scalable without a screen-local override.
 - Week day controls expose selected/today state without relying on color alone.
 - Mark-done, overflow/edit, and Quick Log/Add are separate 44pt+ touch targets.
 - Each event row label distinguishes planned routine from logged fact and includes time/source context.

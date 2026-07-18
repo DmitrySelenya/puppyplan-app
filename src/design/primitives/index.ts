@@ -1,6 +1,5 @@
 export {
   AppText,
-  APP_TEXT_MAX_FONT_SIZE_MULTIPLIER,
   type AppTextProps,
   type AppTextTone,
   type AppTextVariant,
@@ -87,6 +86,7 @@ export {
   type TrackerTileProps,
   type TrackerTileSize,
 } from '@/design/primitives/TrackerTile';
+export { WhenPicker, type WhenPickerProps } from '@/design/primitives/WhenPicker';
 export {
   WeekStrip,
   type WeekStripDay,

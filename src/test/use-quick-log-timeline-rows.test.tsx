@@ -26,6 +26,7 @@ const careContext = {
   householdRole: 'owner',
   puppyId,
   todayDate,
+  userId: createdBy,
 } as const;
 const testQueryClients: ReturnType<typeof createPuppyPlanQueryClient>[] = [];
 
@@ -132,6 +133,59 @@ describe('useQuickLogTimelineRows', () => {
     expect(observedStatus).toBe('loading');
   });
 
+  it('AC-P3-ACTOR-5 synchronously filters a foreign local row already stored as query data', () => {
+    const foreignActorId = '00000000-0000-4000-8000-000000001910';
+    const foreignDelete = createRow({
+      client_event_id: 'evt_foreign_private_delete',
+      created_by: foreignActorId,
+      event_type: 'observation',
+      id: '00000000-0000-4000-8000-000000001911',
+      localSync: {
+        state: 'deleted_before_sync',
+        category: 'network_unavailable',
+        retryCount: 2,
+      },
+      payload_version: 2,
+      payload: {
+        title: 'Synthetic actor A private title',
+        note: 'Synthetic actor A private note',
+      },
+    });
+    const sharedDurableRow = createRow({
+      client_event_id: 'evt_shared_durable_actor_a',
+      created_by: foreignActorId,
+      id: '00000000-0000-4000-8000-000000001912',
+    });
+    const currentActorLocalRow = createRow({
+      client_event_id: 'evt_current_actor_local',
+      id: '00000000-0000-4000-8000-000000001913',
+      localSync: {
+        state: 'pending_local',
+        category: null,
+        retryCount: 0,
+      },
+    });
+    const queryClient = createPuppyPlanQueryClient();
+    let observedRows: readonly QuickLogCachedEventRow[] = [];
+
+    queryClient.setQueryData(queryKeys.events.timeline(householdId, puppyId), [
+      foreignDelete,
+      sharedDurableRow,
+      currentActorLocalRow,
+    ]);
+
+    function RowsProbe() {
+      observedRows = useQuickLogTimelineRows(careContext).rows;
+
+      return null;
+    }
+
+    renderWithQuery(<RowsProbe />, queryClient);
+
+    expect(observedRows).toEqual([sharedDurableRow, currentActorLocalRow]);
+    expect(mockListEvents).not.toHaveBeenCalled();
+  });
+
   it('keeps merged local recovery rows sorted by newest occurrence first', async () => {
     const queryClient = createPuppyPlanQueryClient();
     const localRow = createRow({
@@ -150,6 +204,7 @@ describe('useQuickLogTimelineRows', () => {
       occurred_at: '2026-05-27T09:00:00.000Z',
     });
     let observedRows: readonly QuickLogCachedEventRow[] = [];
+    let observedStatus = '';
 
     queryClient.setQueryData(queryKeys.events.timeline(householdId, puppyId), [localRow], {
       updatedAt: 0,
@@ -170,6 +225,52 @@ describe('useQuickLogTimelineRows', () => {
         localRow.client_event_id,
       ]);
     });
+  });
+
+  it('AC-P1-RECOVERY-10 keeps a durable refetch from resurrecting a retained delete intent', async () => {
+    const queryClient = createPuppyPlanQueryClient();
+    const durableRow = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000001930',
+      id: '00000000-0000-4000-8000-000000001931',
+    });
+    const retainedDelete = createRow({
+      ...durableRow,
+      localSync: {
+        state: 'deleted_before_sync',
+        category: 'network_unavailable',
+        retryCount: 1,
+      },
+      updated_at: '2026-05-27T08:00:02.000Z',
+    });
+    let observedRows: readonly QuickLogCachedEventRow[] = [];
+    let observedStatus = '';
+
+    queryClient.setQueryData(
+      queryKeys.events.timeline(householdId, puppyId),
+      [retainedDelete],
+      { updatedAt: 0 },
+    );
+    mockListEvents.mockResolvedValue([durableRow]);
+
+    function RowsProbe() {
+      const result = useQuickLogTimelineRows(careContext, {
+        from: todayDate,
+        to: todayDate,
+      });
+      observedRows = result.rows;
+      observedStatus = result.status;
+
+      return null;
+    }
+
+    renderWithQuery(<RowsProbe />, queryClient);
+
+    await waitFor(() => expect(observedStatus).toBe('ready'));
+    expect(mockListEvents).toHaveBeenCalledTimes(1);
+    expect(observedRows).toEqual([]);
+    expect(queryClient.getQueryData<QuickLogCachedEventRow[]>(
+      queryKeys.events.timeline(householdId, puppyId),
+    )).toEqual([retainedDelete]);
   });
 
   it('matches local recovery rows against local calendar dates instead of UTC prefixes', async () => {

@@ -147,6 +147,179 @@ describe('QuickLogShell', () => {
       MAX_VISIBLE_QUICK_LOG_TRACKERS,
     );
     expect(screen.queryByText(i18n.t('common.close'))).toBeNull();
+    expect(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.log-with-details'),
+    })).toBeTruthy();
+  });
+
+  it('AC-1 opens a sleep second step and logs start/wake in the second tap', () => {
+    const mutation = createMutationPort();
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={mutation}
+        now={() => new Date('2026-05-27T08:30:00.000Z')}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.sleep'),
+    }));
+    expect(screen.getByText(i18n.t('quick-log.sleep-action.title'))).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sleep-action.start'),
+    }));
+
+    expect(mutation.mutate).toHaveBeenCalledWith(expect.objectContaining({
+      variables: expect.objectContaining({
+        detailDraft: expect.objectContaining({
+          action: 'start',
+          occurredAt: '2026-05-27T08:30:00.000Z',
+          trackerId: 'sleep',
+        }),
+        trackerId: 'sleep',
+      }),
+    }));
+  });
+
+  it('AC-P33-SLEEP-OPEN shows an open sleep so a second Start sleep is not logged blind', () => {
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={createMutationPort()}
+        now={() => new Date('2026-05-27T08:30:00.000Z')}
+        recentEvents={[{
+          occurredAtMs: Date.parse('2026-05-27T07:55:00.000Z'),
+          sleepAction: 'start',
+          trackerId: 'sleep',
+        }]}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.sleep'),
+    }));
+
+    expect(screen.getByTestId('quick-log-sleep-open-hint')).toBeTruthy();
+  });
+
+  it('AC-P33-SLEEP-OPEN treats a later wake as closing the interval', () => {
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={createMutationPort()}
+        now={() => new Date('2026-05-27T08:30:00.000Z')}
+        recentEvents={[{
+          occurredAtMs: Date.parse('2026-05-27T08:10:00.000Z'),
+          sleepAction: 'wake',
+          trackerId: 'sleep',
+        }, {
+          occurredAtMs: Date.parse('2026-05-27T07:55:00.000Z'),
+          sleepAction: 'start',
+          trackerId: 'sleep',
+        }]}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.sleep'),
+    }));
+
+    expect(screen.queryByTestId('quick-log-sleep-open-hint')).toBeNull();
+  });
+
+  it('AC-1 sends retrospective sleep and the visible detailed lane to the composer', () => {
+    const mutation = createMutationPort();
+    const openCreateDetails = jest.fn();
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={mutation}
+        openCreateDetails={openCreateDetails}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.trackers.sleep'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sleep-action.retrospective'),
+    }));
+    expect(openCreateDetails).toHaveBeenCalledWith({
+      sleepAction: 'retrospective',
+      trackerId: 'sleep',
+    });
+    expect(mutation.mutate).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('common.back') }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.log-with-details'),
+    }));
+    expect(openCreateDetails).toHaveBeenCalledWith({ trackerId: 'potty' });
+  });
+
+  it('AC-QN-POLISH carries the long-pressed tracker into the details form', () => {
+    const openCreateDetails = jest.fn();
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={createMutationPort()}
+        openCreateDetails={openCreateDetails}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent(screen.getByRole('button', { name: i18n.t('quick-log.trackers.walk') }), 'longPress');
+
+    expect(openCreateDetails).toHaveBeenCalledWith({ trackerId: 'walk' });
+  });
+
+  it('AC-QN-POLISH exposes the details shortcut as an accessibility action, not long-press only', () => {
+    const openCreateDetails = jest.fn();
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        mutation={createMutationPort()}
+        openCreateDetails={openCreateDetails}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    const walkTile = screen.getByRole('button', { name: i18n.t('quick-log.trackers.walk') });
+
+    expect(walkTile.props.accessibilityActions).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'details' })]),
+    );
+
+    fireEvent(walkTile, 'accessibilityAction', { nativeEvent: { actionName: 'details' } });
+
+    expect(openCreateDetails).toHaveBeenCalledWith({ trackerId: 'walk' });
+  });
+
+  it('AC-QN-POLISH opens details on a tracker the household actually uses', () => {
+    const openCreateDetails = jest.fn();
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={{
+          ...careContext,
+          selectedTrackerIds: ['walk', 'zoomies'],
+        }}
+        mutation={createMutationPort()}
+        openCreateDetails={openCreateDetails}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.sheet.log-with-details'),
+    }));
+
+    expect(openCreateDetails).toHaveBeenCalledWith({ trackerId: 'walk' });
   });
 
   it('maps canonical tracker ids to their glyphs', () => {
@@ -194,7 +367,7 @@ describe('QuickLogShell', () => {
     expect(closeSheet).toHaveBeenCalledTimes(1);
   });
 
-  it('AC-OB-PROMPT-RUNTIME schedules post-save prompts only after an actual tracker log', () => {
+  it('AC-P33-DOG-FAST AC-OB-PROMPT-RUNTIME saves a simple tracker on tap 3 of the global path', () => {
     const closeSheet = jest.fn();
     const mutation = createMutationPort();
     const onQuickLogSaved = jest.fn();

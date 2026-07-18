@@ -42,6 +42,18 @@ export const quickLogAction = {
   accessibilityHintKey: I18nKey;
 };
 
+export const noteAction = {
+  id: 'note',
+  href: '/quick-log/note',
+  labelKey: 'nav.note-slab',
+  accessibilityHintKey: 'nav.note-fab-hint',
+} as const satisfies {
+  id: string;
+  href: string;
+  labelKey: I18nKey;
+  accessibilityHintKey: I18nKey;
+};
+
 export const scheduleAction = {
   id: 'schedule',
   href: '/quick-log/schedule',
@@ -66,6 +78,7 @@ export const settingsRoutes = [
 
 export const modalRoutes = [
   quickLogAction.href,
+  noteAction.href,
   scheduleAction.href,
   '/quick-log/details',
   '/paywall',
@@ -178,6 +191,11 @@ export const plannedRouteFiles = [
     implementationStage: 'existing',
   },
   {
+    route: '/quick-log/note',
+    file: 'app/(sheets)/quick-log/note/index.tsx',
+    implementationStage: 'existing',
+  },
+  {
     route: '/pet/health-record-edit',
     file: 'app/(modals)/pet/health-record-edit/index.tsx',
     implementationStage: 'existing',
@@ -248,9 +266,24 @@ export const shellI18nKeys = [
   'today.states.empty-history.body',
   'today.history.section-title',
   'today.history.open-action',
+  'today.history.share-action',
+  'today.history.share-error',
   'today.history.delete-action',
   'today.history.item-actions',
+  'today.history.sleep-interval',
   'today.history.fact-a11y-label',
+  'today.history.fact-note-a11y-label',
+  'today.plan.actual-template',
+  'today.plan.check-failed',
+  'today.plan.check-off',
+  'today.plan.choose-potty',
+  'today.plan.past-unmarked',
+  'today.plan.planned-template',
+  'today.plan.potty-inside',
+  'today.plan.potty-outside',
+  'today.plan.potty-poop',
+  'today.plan.uncheck',
+  'today.plan.upcoming',
   'timeline.filter-chips.0',
   'timeline.filter-chips.1',
   'timeline.filter-chips.2',
@@ -565,6 +598,9 @@ export const shellI18nKeys = [
   'quick-log.sheet.dismiss',
   'quick-log.sheet.edit-trackers',
   'quick-log.sheet.edit-helper',
+  'quick-log.sheet.log-with-details',
+  'quick-log.sheet.details-action',
+  'quick-log.sheet.details-hint',
   'quick-log.sheet.unavailable.title',
   'quick-log.sheet.unavailable.body',
   'quick-log.sheet.unavailable.close',
@@ -573,6 +609,12 @@ export const shellI18nKeys = [
   'quick-log.sheet.permission-denied.close',
   'quick-log.potty-subtype.title',
   'quick-log.potty-subtype.body',
+  'quick-log.sleep-action.title',
+  'quick-log.sleep-action.body',
+  'quick-log.sleep-action.start',
+  'quick-log.sleep-action.wake',
+  'quick-log.sleep-action.retrospective',
+  'quick-log.sleep-action.open-since',
   'quick-log.duplicate-warning.title',
   'quick-log.duplicate-warning.question',
   'quick-log.duplicate-warning.primary-alt',

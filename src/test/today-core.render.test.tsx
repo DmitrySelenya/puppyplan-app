@@ -1,10 +1,15 @@
-import type { ReactElement } from 'react';
+import { Profiler, type ReactElement } from 'react';
 import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 
 import { tokens } from '@/design/tokens';
+import {
+  buildDiaryDayModel,
+  type DiaryDayModel,
+  type DiaryPlannedItem,
+} from '@/contracts/diary-day';
 import { i18n } from '@/lib/i18n';
 import { createPuppyPlanQueryClient } from '@/lib/query/client';
 import { queryKeys, type TimelineFilters } from '@/lib/query/keys';
@@ -12,6 +17,20 @@ import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
 import { TodayScreen } from '@/features/today/screens/TodayScreen';
 
 const mockListEvents = jest.fn();
+let mockFontScale = 1;
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({
+      fontScale: mockFontScale,
+      height: 667,
+      scale: 2,
+      width: 375,
+    }),
+  });
+});
 
 jest.mock('@/lib/supabase/events', () => ({
   ...jest.requireActual('@/lib/supabase/events'),
@@ -31,6 +50,7 @@ const careContext = {
   householdRole: 'owner',
   puppyId,
   todayDate,
+  userId: createdBy,
 } as const;
 
 const openTimeline = jest.fn();
@@ -55,8 +75,10 @@ function diaryHistoryTimelineKey(filters: TimelineFilters = {}) {
   return queryKeys.events.timeline(householdId, puppyId, filters);
 }
 
-function renderWithQuery(element: ReactElement) {
-  const queryClient = createPuppyPlanQueryClient();
+function renderWithQuery(
+  element: ReactElement,
+  queryClient: QueryClient = createPuppyPlanQueryClient(),
+) {
   testQueryClients.push(queryClient);
 
   return {
@@ -94,10 +116,31 @@ function createRow(
   };
 }
 
+function createPlannedItem(
+  overrides: Partial<DiaryPlannedItem> = {},
+): DiaryPlannedItem {
+  return {
+    displayAt: '2026-06-12T08:00:00.000Z',
+    kind: 'planned',
+    plannedAt: '2026-06-12T08:00:00.000Z',
+    reminderId: '00000000-0000-4000-8000-000000002701',
+    scheduledFor: '2026-06-12T08:00:00.000Z',
+    status: 'upcoming',
+    time: '08:00',
+    trackerId: 'feeding',
+    ...overrides,
+  };
+}
+
+function createDayModel(items: readonly DiaryDayModel['items'][number][]): DiaryDayModel {
+  return { day: todayDate, items, timeZone: 'UTC' };
+}
+
 describe('Today core card rendering', () => {
   let reduceMotionProbe: jest.SpyInstance;
 
   beforeEach(async () => {
+    mockFontScale = 1;
     mockListEvents.mockReset();
     mockListEvents.mockResolvedValue([]);
     openQuickLog.mockClear();
@@ -153,6 +196,45 @@ describe('Today core card rendering', () => {
       name: i18n.t('guidance.action-labels.read'),
     })).toBeNull();
     expect(JSON.stringify(toJSON())).toContain(i18n.t('today.hero.day-2-morning.title'));
+  });
+
+  it.each([
+    { fontScale: 1.999, heroAfterDayList: false },
+    { fontScale: 2, heroAfterDayList: true },
+  ])('AC-DT-2 AC-DT-3 AC-DT-4 places the full Diary hero around the day list at fontScale $fontScale', async ({
+    fontScale,
+    heroAfterDayList,
+  }) => {
+    mockFontScale = fontScale;
+    const { toJSON } = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem()])}
+        dayModelStatus="ready"
+        openQuickLog={openQuickLog}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-info-hero')).toBeTruthy();
+      expect(screen.getByTestId('diary-history-section')).toBeTruthy();
+    });
+
+    const hero = screen.getByTestId('diary-info-hero');
+    expect(hero.props.accessibilityRole).toBe('summary');
+    expect(screen.getAllByTestId('diary-info-hero')).toHaveLength(1);
+    expect(screen.getByText(i18n.t('today.hero.first-day.title'))).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('today.hero.first-day.primary'),
+    })).toBeTruthy();
+
+    const tree = JSON.stringify(toJSON());
+    const heroIndex = tree.indexOf('diary-info-hero');
+    const dayListIndex = tree.indexOf('diary-history-section');
+    expect(heroIndex).toBeGreaterThanOrEqual(0);
+    expect(dayListIndex).toBeGreaterThanOrEqual(0);
+    expect(heroAfterDayList ? heroIndex > dayListIndex : heroIndex < dayListIndex).toBe(true);
   });
 
   it('renders the loading state while active care events load', () => {
@@ -723,5 +805,1037 @@ describe('Today core card rendering', () => {
       expect(screen.getAllByTestId('diary-history-logged-fact')).toHaveLength(1);
     });
     expect(screen.queryByTestId('diary-history-day-2026-06-11')).toBeNull();
+  });
+
+  it('AC-P3-HISTORY-1 keeps an older failed delete sentinel visible as the only Retry-only history row', async () => {
+    const clientEventId = 'evt_00000000-0000-4000-8000-000000002801';
+    const durableRow = createRow({
+      client_event_id: clientEventId,
+      id: '00000000-0000-4000-8000-000000002802',
+      occurred_at: '2026-06-11T07:15:00.000Z',
+      updated_at: '2026-06-11T07:15:01.000Z',
+    });
+    const retainedDelete = createRow({
+      ...durableRow,
+      localSync: {
+        state: 'deleted_before_sync',
+        category: 'network_unavailable',
+        retryCount: 2,
+      },
+      updated_at: '2026-06-11T07:15:02.000Z',
+    });
+    const actions = {
+      onDelete: jest.fn(),
+      onEdit: jest.fn(),
+      onRetry: jest.fn(),
+      onUndo: jest.fn(),
+    };
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={actions}
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem()])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), []);
+      queryClient.setQueryData(diaryHistoryTimelineKey(), [durableRow]);
+      queryClient.setQueryData(timelineKeyForDate('2026-06-11'), [retainedDelete]);
+    });
+
+    await waitFor(() => expect(screen.getByTestId('diary-mixed-day-list')).toBeTruthy());
+    expect(screen.getByTestId('diary-planned-upcoming')).toBeTruthy();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.failed.primary'),
+    })).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('today.history.open-action'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-history-day-2026-06-11')).toBeTruthy();
+      expect(screen.getAllByTestId('diary-history-logged-fact')).toHaveLength(1);
+      expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
+    });
+    expect(screen.queryByText(i18n.t('timeline.actor-you'))).toBeNull();
+    expect(screen.queryByTestId('diary-history-swipe-delete')).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('today.history.item-actions'),
+    })).toBeNull();
+    expect(screen.queryByText(i18n.t('today.history.delete-action'))).toBeNull();
+    expect(screen.queryByText(i18n.t('common.edit'))).toBeNull();
+    expect(screen.queryByText(i18n.t('quick-log.snackbar.undo'))).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.failed.tertiary'),
+    })).toBeNull();
+
+    fireEvent.press(screen.getByTestId('diary-history-logged-fact'));
+    fireEvent.press(screen.getByTestId('diary-history-logged-fact-card'));
+    expect(actions.onEdit).not.toHaveBeenCalled();
+
+    const retryAction = screen.getByRole('button', {
+      name: i18n.t('quick-log.failed.primary'),
+    });
+    expect(screen.getAllByRole('button', {
+      name: i18n.t('quick-log.failed.primary'),
+    })).toHaveLength(1);
+    fireEvent.press(retryAction);
+    expect(actions.onRetry).toHaveBeenCalledTimes(1);
+    expect(actions.onRetry).toHaveBeenCalledWith(clientEventId, 'manual_retry', 'today');
+    expect(actions.onDelete).not.toHaveBeenCalled();
+    expect(actions.onEdit).not.toHaveBeenCalled();
+    expect(actions.onUndo).not.toHaveBeenCalled();
+  });
+
+  it('AC-P3-HISTORY-1 closes synced history actions when a newer failed delete sentinel takes over', async () => {
+    const clientEventId = 'evt_00000000-0000-4000-8000-000000002813';
+    const durableRow = createRow({
+      client_event_id: clientEventId,
+      id: '00000000-0000-4000-8000-000000002814',
+      occurred_at: '2026-06-11T09:15:00.000Z',
+      updated_at: '2026-06-11T09:15:01.000Z',
+    });
+    const retainedDelete = createRow({
+      ...durableRow,
+      localSync: {
+        state: 'deleted_before_sync',
+        category: 'network_unavailable',
+        retryCount: 1,
+      },
+      updated_at: '2026-06-11T09:15:02.000Z',
+    });
+    const actions = {
+      onDelete: jest.fn(),
+      onEdit: jest.fn(),
+      onRetry: jest.fn(),
+      onUndo: jest.fn(),
+    };
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={actions}
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem()])}
+        dayModelStatus="ready"
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), []);
+      queryClient.setQueryData(diaryHistoryTimelineKey(), [durableRow]);
+      queryClient.setQueryData(timelineKeyForDate('2026-06-11'), [durableRow]);
+    });
+
+    fireEvent.press(await screen.findByRole('button', {
+      name: i18n.t('today.history.open-action'),
+    }));
+
+    const itemActions = await screen.findByRole('button', {
+      name: i18n.t('today.history.item-actions'),
+    });
+    fireEvent.press(itemActions);
+    expect(screen.getByRole('button', { name: i18n.t('common.edit') })).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('today.history.delete-action'),
+    })).toBeTruthy();
+    fireEvent.press(screen.getByTestId('diary-history-logged-fact-card'));
+    expect(actions.onEdit).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      queryClient.setQueryData(timelineKeyForDate('2026-06-11'), [retainedDelete]);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
+      expect(screen.queryByRole('button', {
+        name: i18n.t('today.history.item-actions'),
+      })).toBeNull();
+      expect(screen.queryByRole('button', { name: i18n.t('common.edit') })).toBeNull();
+      expect(screen.queryByRole('button', {
+        name: i18n.t('today.history.delete-action'),
+      })).toBeNull();
+      expect(screen.queryByRole('button', {
+        name: i18n.t('quick-log.failed.tertiary'),
+      })).toBeNull();
+      expect(screen.queryByText(i18n.t('quick-log.snackbar.undo'))).toBeNull();
+    });
+
+    fireEvent.press(screen.getByTestId('diary-history-logged-fact'));
+    fireEvent.press(screen.getByTestId('diary-history-logged-fact-card'));
+    expect(actions.onEdit).toHaveBeenCalledTimes(1);
+
+    const retryAction = screen.getByRole('button', {
+      name: i18n.t('quick-log.failed.primary'),
+    });
+    expect(screen.getAllByRole('button', {
+      name: i18n.t('quick-log.failed.primary'),
+    })).toHaveLength(1);
+    fireEvent.press(retryAction);
+    expect(actions.onRetry).toHaveBeenCalledTimes(1);
+    expect(actions.onRetry).toHaveBeenCalledWith(clientEventId, 'manual_retry', 'today');
+    expect(actions.onDelete).not.toHaveBeenCalled();
+    expect(actions.onUndo).not.toHaveBeenCalled();
+  });
+
+  it('AC-P3-HISTORY-1 keeps an accepted older delete hidden while suppressing its durable history row', async () => {
+    const clientEventId = 'evt_00000000-0000-4000-8000-000000002803';
+    const durableRow = createRow({
+      client_event_id: clientEventId,
+      event_type: 'potty',
+      id: '00000000-0000-4000-8000-000000002804',
+      occurred_at: '2026-06-11T08:15:00.000Z',
+      payload: { subtype: 'outside' },
+      updated_at: '2026-06-11T08:15:01.000Z',
+    });
+    const retainedDelete = createRow({
+      ...durableRow,
+      localSync: {
+        state: 'deleted_before_sync',
+        category: null,
+        retryCount: 0,
+      },
+      updated_at: '2026-06-11T08:15:02.000Z',
+    });
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={{ onRetry: jest.fn() }}
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem()])}
+        dayModelStatus="ready"
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), []);
+      queryClient.setQueryData(diaryHistoryTimelineKey(), [durableRow]);
+      queryClient.setQueryData(timelineKeyForDate('2026-06-11'), [retainedDelete]);
+    });
+
+    fireEvent.press(await screen.findByRole('button', {
+      name: i18n.t('today.history.open-action'),
+    }));
+
+    await waitFor(() => expect(screen.getByTestId('diary-history-filter-bar')).toBeTruthy());
+    expect(screen.queryAllByTestId('diary-history-logged-fact')).toHaveLength(0);
+    expect(screen.queryByTestId('diary-history-day-2026-06-11')).toBeNull();
+    expect(screen.getByText(i18n.t('timeline.empty-filter'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('timeline.actor-you'))).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.failed.primary'),
+    })).toBeNull();
+  });
+
+  it('AC-P3-HISTORY-2 filters and deterministically dedupes failed history sentinels by client id', async () => {
+    const feedingClientEventId = 'evt_00000000-0000-4000-8000-000000002805';
+    const pottyClientEventId = 'evt_00000000-0000-4000-8000-000000002806';
+    const feedingDurable = createRow({
+      client_event_id: feedingClientEventId,
+      id: '00000000-0000-4000-8000-000000002807',
+      occurred_at: '2026-06-10T07:15:00.000Z',
+      updated_at: '2026-06-10T07:15:01.000Z',
+    });
+    const pottyDurable = createRow({
+      client_event_id: pottyClientEventId,
+      event_type: 'potty',
+      id: '00000000-0000-4000-8000-000000002808',
+      occurred_at: '2026-06-09T07:15:00.000Z',
+      payload: { subtype: 'outside' },
+      updated_at: '2026-06-09T07:15:01.000Z',
+    });
+    const feedingDeleteOlder = createRow({
+      ...feedingDurable,
+      localSync: {
+        state: 'deleted_before_sync',
+        category: 'network_unavailable',
+        retryCount: 1,
+      },
+      updated_at: '2026-06-10T07:15:02.000Z',
+    });
+    const feedingDeletePreferred = createRow({
+      ...feedingDeleteOlder,
+      localSync: {
+        state: 'deleted_before_sync',
+        category: 'server_5xx',
+        retryCount: 3,
+      },
+      updated_at: '2026-06-10T07:15:03.000Z',
+    });
+    const pottyDelete = createRow({
+      ...pottyDurable,
+      localSync: {
+        state: 'deleted_before_sync',
+        category: 'network_unavailable',
+        retryCount: 1,
+      },
+      updated_at: '2026-06-09T07:15:02.000Z',
+    });
+    const actions = { onRetry: jest.fn() };
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={actions}
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem()])}
+        dayModelStatus="ready"
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), []);
+      queryClient.setQueryData(diaryHistoryTimelineKey(), [feedingDurable, pottyDurable]);
+      queryClient.setQueryData(diaryHistoryTimelineKey({ eventTypes: ['feeding'] }), [
+        feedingDurable,
+      ]);
+      queryClient.setQueryData(timelineKeyForDate('2026-06-10'), [feedingDeleteOlder]);
+      queryClient.setQueryData(queryKeys.events.timeline(householdId, puppyId, {
+        eventTypes: ['feeding'],
+        from: '2026-06-10',
+        to: '2026-06-10',
+      }), [feedingDeletePreferred]);
+      queryClient.setQueryData(timelineKeyForDate('2026-06-09'), [pottyDelete]);
+    });
+
+    fireEvent.press(await screen.findByRole('button', {
+      name: i18n.t('today.history.open-action'),
+    }));
+    fireEvent.press(await screen.findByRole('tab', {
+      name: i18n.t('timeline.filter-chips.2'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('diary-history-logged-fact')).toHaveLength(1);
+      expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
+    });
+    expect(screen.queryByText(i18n.t('quick-log.trackers.potty-outside'))).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('quick-log.failed.primary'),
+    }));
+    expect(actions.onRetry).toHaveBeenCalledTimes(1);
+    expect(actions.onRetry).toHaveBeenCalledWith(
+      feedingClientEventId,
+      'manual_retry',
+      'today',
+    );
+  });
+
+  it('AC-P3-HISTORY-2 ignores a matching delete sentinel from another Timeline root', async () => {
+    const clientEventId = 'evt_00000000-0000-4000-8000-000000002809';
+    const durableRow = createRow({
+      client_event_id: clientEventId,
+      id: '00000000-0000-4000-8000-000000002810',
+      occurred_at: '2026-06-11T09:15:00.000Z',
+      updated_at: '2026-06-11T09:15:01.000Z',
+    });
+    const otherRootDelete = createRow({
+      ...durableRow,
+      household_id: '00000000-0000-4000-8000-000000002811',
+      localSync: {
+        state: 'deleted_before_sync',
+        category: 'network_unavailable',
+        retryCount: 1,
+      },
+      puppy_id: '00000000-0000-4000-8000-000000002812',
+      updated_at: '2026-06-11T09:15:02.000Z',
+    });
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={{ onRetry: jest.fn() }}
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem()])}
+        dayModelStatus="ready"
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), []);
+      queryClient.setQueryData(diaryHistoryTimelineKey(), [durableRow]);
+      queryClient.setQueryData(queryKeys.events.timeline(
+        otherRootDelete.household_id,
+        otherRootDelete.puppy_id,
+      ), [otherRootDelete]);
+    });
+
+    fireEvent.press(await screen.findByRole('button', {
+      name: i18n.t('today.history.open-action'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('diary-history-logged-fact')).toHaveLength(1);
+      expect(screen.getByText(i18n.t('timeline.actor-you'))).toBeTruthy();
+    });
+    expect(screen.queryByText(i18n.t('timeline.pills.failed'))).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.failed.primary'),
+    })).toBeNull();
+  });
+
+  it.each(['current day', 'history'] as const)(
+    'AC-P3-ACTOR-5 never renders a foreign local private v2 row in %s while preserving actor-owned local and shared durable rows',
+    (surface) => {
+      const foreignActorId = '00000000-0000-4000-8000-000000002820';
+      const occurredAt = surface === 'current day'
+        ? '2026-06-12T09:00:00.000Z'
+        : '2026-06-11T09:00:00.000Z';
+      const foreignLocalRow = createRow({
+        client_event_id: 'evt_foreign_private_delete',
+        created_by: foreignActorId,
+        event_type: 'observation',
+        id: '00000000-0000-4000-8000-000000002821',
+        localSync: {
+          state: 'deleted_before_sync',
+          category: 'network_unavailable',
+          retryCount: 2,
+        },
+        occurred_at: occurredAt,
+        payload_version: 2,
+        payload: {
+          title: 'Synthetic actor A private title',
+          note: 'Synthetic actor A private note',
+        },
+      });
+      const currentActorLocalRow = createRow({
+        client_event_id: 'evt_current_actor_local_observation',
+        event_type: 'observation',
+        id: '00000000-0000-4000-8000-000000002822',
+        localSync: {
+          state: 'failed_retryable',
+          category: 'request_timeout',
+          retryCount: 1,
+        },
+        occurred_at: occurredAt,
+        payload_version: 2,
+        payload: { title: 'Synthetic current actor local title' },
+      });
+      const sharedDurableRow = createRow({
+        client_event_id: 'evt_shared_durable_observation',
+        created_by: foreignActorId,
+        event_type: 'observation',
+        id: '00000000-0000-4000-8000-000000002823',
+        occurred_at: occurredAt,
+        payload_version: 2,
+        payload: { title: 'Synthetic shared durable title' },
+      });
+      const queryClient = createPuppyPlanQueryClient();
+      const rows = [foreignLocalRow, currentActorLocalRow, sharedDurableRow];
+      const dayModel = surface === 'current day'
+        ? buildDiaryDayModel({
+            day: todayDate,
+            facts: rows.map((row) => ({
+              clientEventId: row.client_event_id,
+              eventType: row.event_type,
+              occurredAt: row.occurred_at,
+              payload: row.payload,
+            })),
+            nowMs: Date.parse('2026-06-12T12:00:00.000Z'),
+            reminders: [],
+            timeZone: 'UTC',
+          })
+        : createDayModel([createPlannedItem()]);
+
+      queryClient.setQueryData(todayTimelineKey(), surface === 'current day' ? rows : []);
+      queryClient.setQueryData(queryKeys.events.timeline(householdId, puppyId, {
+        eventTypes: ['sleep'],
+        from: '2026-06-11',
+        to: '2026-06-11',
+      }), []);
+      queryClient.setQueryData(diaryHistoryTimelineKey(), surface === 'history' ? rows : []);
+
+      renderWithQuery(
+        <TodayScreen
+          actions={{ onRetry: jest.fn() }}
+          careContext={careContext}
+          dayModel={dayModel}
+          dayModelStatus="ready"
+          openTimeline={openTimeline}
+        />,
+        queryClient,
+      );
+
+      if (surface === 'history') {
+        fireEvent.press(screen.getByRole('button', {
+          name: i18n.t('today.history.open-action'),
+        }));
+      }
+
+      expect(screen.queryByText('Synthetic actor A private title')).toBeNull();
+      expect(screen.queryByText('Synthetic actor A private note')).toBeNull();
+      expect(screen.getByText('Synthetic current actor local title')).toBeTruthy();
+      expect(screen.getByText('Synthetic shared durable title')).toBeTruthy();
+      expect(mockListEvents).not.toHaveBeenCalled();
+    },
+  );
+
+  it('AC-P5-UI renders upcoming, neutral past-unmarked, and done planned rows', async () => {
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem(),
+          createPlannedItem({
+            displayAt: '2026-06-12T09:00:00.000Z',
+            plannedAt: '2026-06-12T09:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002702',
+            scheduledFor: '2026-06-12T09:00:00.000Z',
+            status: 'past-unmarked',
+            time: '09:00',
+            trackerId: 'sleep',
+          }),
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002703',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('diary-mixed-day-list')).toBeTruthy());
+    expect(screen.getByTestId('diary-planned-upcoming')).toBeTruthy();
+    expect(screen.getByTestId('diary-planned-past-unmarked')).toBeTruthy();
+    expect(screen.getByTestId('diary-planned-done')).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.plan.past-unmarked'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('today.plan.actual-template', { time: '10:12 AM' }))).toBeTruthy();
+  });
+
+  it('AC-P33-UNCHECK takes the mark back off a done routine and deletes its linked event', async () => {
+    const onDelete = jest.fn();
+    mockListEvents.mockResolvedValue([
+      createRow({
+        client_event_id: 'evt_00000000-0000-4000-8000-000000002710',
+        event_type: 'walk',
+        occurred_at: '2026-06-12T10:12:00.000Z',
+        payload: {},
+      }),
+    ]);
+
+    renderWithQuery(
+      <TodayScreen
+        actions={{ onDelete }}
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            clientEventId: 'evt_00000000-0000-4000-8000-000000002710',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002703',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    // The linked event arrives with the timeline query, not with the day model, so the way back
+    // only opens once it lands.
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t('today.plan.uncheck')).props.accessibilityState,
+      ).toMatchObject({ disabled: false });
+    });
+
+    // `done` is derived purely from a linked fact existing, so removing that fact is the exact
+    // inverse of the check-off. Without it a mis-tap on a 44pt checkbox was a one-way door: the
+    // handler was dropped at `done`, and the linked event never gets a row of its own to delete.
+    await act(async () => {
+      fireEvent.press(screen.getByRole('checkbox', { name: i18n.t('today.plan.uncheck') }));
+      await Promise.resolve();
+    });
+
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000002710',
+    }));
+  });
+
+  it('AC-P33-UNCHECK-6 does not delete the linked event twice when the checkbox is tapped twice', async () => {
+    // The row stays `done` until the delete settles and the day model catches up, so a second tap
+    // in that window would otherwise fire a second delete at the same event.
+    let settleDelete: (() => void) | undefined;
+    const onDelete = jest.fn().mockReturnValue(new Promise<void>((resolve) => {
+      settleDelete = resolve;
+    }));
+    mockListEvents.mockResolvedValue([
+      createRow({
+        client_event_id: 'evt_00000000-0000-4000-8000-000000002712',
+        event_type: 'walk',
+        occurred_at: '2026-06-12T10:12:00.000Z',
+        payload: {},
+      }),
+    ]);
+
+    renderWithQuery(
+      <TodayScreen
+        actions={{ onDelete }}
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            clientEventId: 'evt_00000000-0000-4000-8000-000000002712',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002704',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t('today.plan.uncheck')).props.accessibilityState,
+      ).toMatchObject({ disabled: false });
+    });
+
+    fireEvent.press(screen.getByRole('checkbox', { name: i18n.t('today.plan.uncheck') }));
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t('today.plan.uncheck')).props.accessibilityState,
+      ).toMatchObject({ disabled: true });
+    });
+    fireEvent.press(screen.getByRole('checkbox', { name: i18n.t('today.plan.uncheck') }));
+
+    expect(onDelete).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      settleDelete?.();
+      await Promise.resolve();
+    });
+  });
+
+  it('AC-P33-UNCHECK stops announcing a checkbox when the mark cannot be taken back', async () => {
+    mockListEvents.mockResolvedValue([]);
+
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            clientEventId: 'evt_00000000-0000-4000-8000-000000002711',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002704',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('diary-planned-done')).toBeTruthy());
+
+    // A read-only viewer has no way back, so the control must not keep promising a toggle it
+    // cannot honour: an enabled `checkbox` role that silently no-ops is the defect itself.
+    expect(screen.getByLabelText(i18n.t('today.plan.uncheck')).props.accessibilityState)
+      .toMatchObject({ checked: true, disabled: true });
+  });
+
+  it('AC-P5-POTTY asks subtype before checking off a generic potty routine', async () => {
+    const onCheckOff = jest.fn().mockResolvedValue(undefined);
+    const potty = createPlannedItem({ trackerId: 'potty' });
+    renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([potty])}
+        dayModelStatus="ready"
+        onCheckOff={onCheckOff}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    fireEvent.press(await screen.findByTestId(`diary-check-off-${potty.reminderId}`));
+    expect(screen.getByTestId('diary-potty-subtype')).toBeTruthy();
+    expect(onCheckOff).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('today.plan.potty-outside') }));
+    await waitFor(() => expect(onCheckOff).toHaveBeenCalledWith(potty, 'outside'));
+  });
+
+  it('AC-P5-RECOVERY keeps viewer read-only and exposes a retry after check-off failure', async () => {
+    const item = createPlannedItem();
+    const failing = jest.fn().mockRejectedValue(new Error('offline'));
+    const first = renderWithQuery(
+      <TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([item])}
+        dayModelStatus="ready"
+        onCheckOff={failing}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    fireEvent.press(await screen.findByTestId(`diary-check-off-${item.reminderId}`));
+    await waitFor(() => {
+      expect(screen.getByTestId('diary-check-off-error-persistence')).toBeTruthy();
+      expect(
+        screen.getByTestId(`diary-check-off-${item.reminderId}`).props.accessibilityState,
+      ).toMatchObject({ disabled: false });
+    });
+    expect(screen.getByTestId('diary-check-off-error-persistence').props.accessibilityRole)
+      .toBe('alert');
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    first.rerender(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={first.queryClient}>
+          <TodayScreen
+            careContext={{ ...careContext, householdRole: 'viewer' }}
+            dayModel={createDayModel([item])}
+            dayModelStatus="ready"
+            openTimeline={openTimeline}
+          />
+        </QueryClientProvider>
+      </I18nextProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('diary-mixed-day-list')).toBeTruthy());
+    expect(screen.queryByTestId(`diary-check-off-${item.reminderId}`)).toBeNull();
+  });
+
+  it('AC-P1-RECOVERY-8 removes an obsolete check-off failure when the same routine converges to done', async () => {
+    const item = createPlannedItem();
+    const linkedClientEventId = 'evt_00000000-0000-4000-8000-000000002714';
+    const failing = jest.fn().mockRejectedValue(new Error('offline'));
+    const actualLabel = i18n.t('today.plan.actual-template', { time: '10:12 AM' });
+    const failureLabel = i18n.t('today.plan.check-failed');
+    const committedFrames: Array<Readonly<{ actual: boolean; failure: boolean }>> = [];
+    let observeCommits = false;
+    const observeCommit = () => {
+      if (!observeCommits) return;
+      committedFrames.push({
+        actual: screen.queryByText(actualLabel) !== null,
+        failure: screen.queryByText(failureLabel) !== null,
+      });
+    };
+    const view = renderWithQuery(
+      <Profiler id="ac-p1-recovery-8" onRender={observeCommit}>
+        <TodayScreen
+          careContext={careContext}
+          dayModel={createDayModel([item])}
+          dayModelStatus="ready"
+          onCheckOff={failing}
+          openTimeline={openTimeline}
+        />
+      </Profiler>,
+    );
+
+    fireEvent.press(await screen.findByTestId(`diary-check-off-${item.reminderId}`));
+    await waitFor(() => {
+      expect(screen.getByText(failureLabel)).toBeTruthy();
+    });
+    observeCommits = true;
+
+    act(() => {
+      view.queryClient.setQueryData(todayTimelineKey(), [createRow({
+        client_event_id: linkedClientEventId,
+        occurred_at: '2026-06-12T10:12:00.000Z',
+      })]);
+    });
+    view.rerender(
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={view.queryClient}>
+          <Profiler id="ac-p1-recovery-8" onRender={observeCommit}>
+            <TodayScreen
+              careContext={careContext}
+              dayModel={createDayModel([createPlannedItem({
+                actualAt: '2026-06-12T10:12:00.000Z',
+                clientEventId: linkedClientEventId,
+                status: 'done',
+              })])}
+              dayModelStatus="ready"
+              onCheckOff={failing}
+              openTimeline={openTimeline}
+            />
+          </Profiler>
+        </QueryClientProvider>
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(actualLabel)).toBeTruthy();
+    });
+    expect(screen.queryByText(failureLabel)).toBeNull();
+    expect(committedFrames.length).toBeGreaterThan(0);
+    expect(committedFrames).not.toContainEqual({ actual: true, failure: true });
+  });
+
+  it('AC-P1-RECOVERY-9 keeps a reminder-linked local failure visible and actionable instead of showing Done', async () => {
+    const linkedClientEventId = 'evt_00000000-0000-4000-8000-000000002715';
+    const actions = {
+      onDelete: jest.fn(),
+      onRetry: jest.fn(),
+    };
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={actions}
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem({
+          actualAt: '2026-06-12T10:12:00.000Z',
+          clientEventId: linkedClientEventId,
+          status: 'done',
+        })])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [createRow({
+        client_event_id: linkedClientEventId,
+        localSync: {
+          state: 'failed_permanent',
+          category: 'server_5xx',
+          retryCount: 4,
+        },
+        occurred_at: '2026-06-12T10:12:00.000Z',
+      })]);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('quick-log.failed.persistent-banner'))).toBeTruthy();
+    });
+    expect(screen.getByTestId('diary-planned-done')).toBeTruthy();
+    expect(screen.queryByText(i18n.t('today.plan.actual-template', {
+      time: '10:12 AM',
+    }))).toBeNull();
+    expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.failed.primary'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('quick-log.failed.tertiary'))).toBeTruthy();
+  });
+
+  it('AC-P1-RECOVERY-10 renders an accepted delete intent as pending and never as ordinary Done', async () => {
+    const linkedClientEventId = 'evt_00000000-0000-4000-8000-000000002716';
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={{ onDelete: jest.fn(), onRetry: jest.fn() }}
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem({
+          actualAt: '2026-06-12T10:12:00.000Z',
+          clientEventId: linkedClientEventId,
+          status: 'done',
+        })])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [createRow({
+        client_event_id: linkedClientEventId,
+        localSync: {
+          state: 'deleted_before_sync',
+          category: null,
+          retryCount: 0,
+        },
+        occurred_at: '2026-06-12T10:12:00.000Z',
+      })]);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('today.states.pending-write.title'))).toBeTruthy();
+    });
+    expect(screen.queryByText(i18n.t('today.plan.actual-template', {
+      time: '10:12 AM',
+    }))).toBeNull();
+    expect(screen.queryByText(i18n.t('timeline.pills.synced'))).toBeNull();
+  });
+
+  it.each(['network_unavailable', 'permission_denied'] as const)(
+    'AC-P1-RECOVERY-10 keeps a retained %s delete failure actionable without ordinary Done',
+    async (category) => {
+      const linkedClientEventId = category === 'network_unavailable'
+        ? 'evt_00000000-0000-4000-8000-000000002717'
+        : 'evt_00000000-0000-4000-8000-000000002718';
+      const actions = {
+        onDelete: jest.fn(),
+        onRetry: jest.fn(),
+      };
+      const { queryClient } = renderWithQuery(
+        <TodayScreen
+          actions={actions}
+          careContext={careContext}
+          dayModel={createDayModel([createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            clientEventId: linkedClientEventId,
+            status: 'done',
+          })])}
+          dayModelStatus="ready"
+          onCheckOff={jest.fn()}
+          openTimeline={openTimeline}
+        />,
+      );
+
+      act(() => {
+        queryClient.setQueryData(todayTimelineKey(), [createRow({
+          client_event_id: linkedClientEventId,
+          localSync: {
+            state: 'deleted_before_sync',
+            category,
+            retryCount: 1,
+          },
+          occurred_at: '2026-06-12T10:12:00.000Z',
+        })]);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(i18n.t('quick-log.failed.primary'))).toBeTruthy();
+      });
+      expect(screen.getByText(i18n.t('timeline.pills.failed'))).toBeTruthy();
+      expect(screen.queryByText(i18n.t('quick-log.failed.tertiary'))).toBeNull();
+      expect(screen.queryByText(i18n.t('today.plan.actual-template', {
+        time: '10:12 AM',
+      }))).toBeNull();
+      fireEvent.press(screen.getByRole('button', {
+        name: i18n.t('quick-log.failed.primary'),
+      }));
+      expect(actions.onRetry).toHaveBeenCalledWith(
+        linkedClientEventId,
+        'manual_retry',
+        'today',
+      );
+      expect(actions.onDelete).not.toHaveBeenCalled();
+    },
+  );
+
+  it('AC-P1-RECOVERY-10 exposes Retry-only for a retained linked delete failure when the real day model is unmarked', async () => {
+    const reminderId = '00000000-0000-4000-8000-000000002719';
+    const scheduledFor = '2026-06-12T08:00:00.000Z';
+    const linkedClientEventId = 'evt_00000000-0000-4000-8000-000000002720';
+    const actions = {
+      onDelete: jest.fn(),
+      onRetry: jest.fn(),
+    };
+    const model = buildDiaryDayModel({
+      day: todayDate,
+      facts: [],
+      nowMs: Date.parse('2026-06-12T12:00:00.000Z'),
+      reminders: [{
+        enabled: true,
+        id: reminderId,
+        rule: { repeat: 'daily', time: '08:00' },
+        trackerId: 'feeding',
+      }],
+      timeZone: 'UTC',
+    });
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={actions}
+        careContext={careContext}
+        dayModel={model}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [createRow({
+        client_event_id: linkedClientEventId,
+        localSync: {
+          state: 'deleted_before_sync',
+          category: 'network_unavailable',
+          retryCount: 1,
+        },
+        occurred_at: '2026-06-12T08:12:00.000Z',
+        payload: {
+          amount: 'meal',
+          reminder_link: {
+            reminder_id: reminderId,
+            scheduled_for: scheduledFor,
+          },
+        },
+      })]);
+    });
+
+    const retry = await screen.findByRole('button', {
+      name: i18n.t('quick-log.failed.primary'),
+    });
+    expect(screen.queryByText(i18n.t('quick-log.failed.tertiary'))).toBeNull();
+    expect(screen.queryByText(i18n.t('today.plan.actual-template', {
+      time: '8:12 AM',
+    }))).toBeNull();
+    fireEvent.press(retry);
+    expect(actions.onRetry).toHaveBeenCalledWith(
+      linkedClientEventId,
+      'manual_retry',
+      'today',
+    );
+    expect(actions.onDelete).not.toHaveBeenCalled();
+  });
+
+  it('AC-P1-RECOVERY-10 ignores retained delete sentinels outside the selected local calendar day', async () => {
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={{ onDelete: jest.fn(), onRetry: jest.fn() }}
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem()])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(timelineKeyForDate('2026-06-11'), [
+        createRow({
+          client_event_id: 'evt_00000000-0000-4000-8000-000000002721',
+          localSync: {
+            state: 'deleted_before_sync',
+            category: null,
+            retryCount: 0,
+          },
+          occurred_at: '2026-06-11T12:00:00.000Z',
+        }),
+        createRow({
+          client_event_id: 'evt_00000000-0000-4000-8000-000000002722',
+          localSync: {
+            state: 'deleted_before_sync',
+            category: 'network_unavailable',
+            retryCount: 1,
+          },
+          occurred_at: '2026-06-11T13:00:00.000Z',
+        }),
+      ]);
+    });
+
+    await waitFor(() => {
+      expect(queryClient.getQueryData(timelineKeyForDate('2026-06-11'))).toHaveLength(2);
+    });
+    expect(screen.queryByText(i18n.t('today.states.pending-write.title'))).toBeNull();
+    expect(screen.queryByText(i18n.t('quick-log.failed.persistent-banner'))).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('quick-log.failed.primary'),
+    })).toBeNull();
   });
 });

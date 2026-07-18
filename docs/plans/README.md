@@ -14,6 +14,12 @@ Every file in `active/` must have a row in the Current Plans table below (enforc
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
+| Active task plan | [PUP-33 Branch Closure + Routine Lifecycle Menu](active/2026-07-16-pup33-closure-and-routine-menu.md) | `PUP-33`, Phase 4 gets its own issue | Phase 1 — offline check-off verification on the SE; handed to an autonomous agent |
+| Active task plan | [Diary — Take A Routine Mark Back Off](active/2026-07-15-diary-uncheck-routine.md) | `PUP-33` | Phase 1 complete; check → uncheck → re-check verified on the SE against a burned slot |
+| Active task plan | [Diary Telegram Parity — Make Real Logging Faster Than The Chat](active/2026-07-13-diary-telegram-parity.md) | `PUP-33` | Phase 0 — scoped duplicate fix implemented locally; owner-device legacy discard + fresh check-off and 20+ event verification remain |
+| Active task plan | [Dogfood Device Handoff — From Green Simulator To Two Household iPhones](active/2026-07-12-dogfood-device-handoff.md) | `PUP-32`, `PUP-30` physical acceptance | Phase 3 complete; awaiting owner two-iPhone install and open 8-item physical checklist in Phase 4 |
+| Active task plan | [Dogfood Core Loop — Quick Capture, Routine, Diary, Notifications](active/2026-07-11-dogfood-core-loop.md) | `PUP-29`, revised `PUP-31`, `PUP-30`, `PUP-32` | Phases 0–8 complete in the working tree; device/physical follow-up moved to the 2026-07-12 handoff plan |
+| Active reference | [Dogfooding Readiness — Schedule, Notifications, Backdating, Install](active/2026-07-10-dogfooding-readiness.md) | `PUP-28`..`PUP-32` | Historical completed PUP-28/PUP-30 evidence; unfinished execution is superseded by the 2026-07-11 core-loop plan |
 | Active follow-up plan | [Release Readiness — Deferred Gates Aggregator](active/2026-07-07-release-readiness.md) | no-Linear exception (aggregator) | Owns all deferred release/production/verification gates; each executed item gets its own issue |
 | Active task plan | [Health Offline Outbox](active/2026-07-04-health-offline-outbox.md) | no-Linear exception | Phase 5 — core complete locally; mutation-path wiring (enqueue-on-failure) in progress |
 | Active task plan | [V2 Tombstone RLS Follow-Up](active/2026-07-03-v2-tombstone-rls-follow-up.md) | no-Linear exception | Event Log follow-up complete locally; commit pending |
@@ -28,7 +34,7 @@ Every file in `active/` must have a row in the Current Plans table below (enforc
 | Active roadmap | [Redesign Resequencing](active/2026-06-17-redesign-resequencing.md) | no-Linear exception | Phase 3 — V2 intake underway; DEFER lane executes via the gaps coverage matrix and polish backlog |
 | Active roadmap | [Full PRD Native App Master Roadmap](active/2026-05-29-full-prd-native-app-master-roadmap.md) | `PUP-17` | Superseded in part by the 2026-07-07 V2 override (ADR-0020, resequencing, gaps doc); phase scopes/invariants/approvals remain valid |
 
-Completed plans live in [`completed/`](completed/) with their final status and merge evidence in each file's header; see the folder listing rather than a duplicated table here. Recent closures (2026-07-07 hygiene pass): phase-0 architecture cleanup, design handoff/gallery (PUP-7), post-PUP-18 next batch (PUP-19/20/21), PUP-22/23 Today+QuickLog+Timeline, both V1 design-fidelity plans, isolated TDD workflow (PUP-25), and Diary week-strip day selection (PR #29). Their deferred tails moved to the Release Readiness aggregator.
+Completed plans live in [`completed/`](completed/) with their final status and merge evidence in each file's header; see the folder listing rather than a duplicated table here. Recent closures include Quick Note Capture + Backdating Overhaul (2026-07-14); the 2026-07-07 hygiene pass closed phase-0 architecture cleanup, design handoff/gallery (PUP-7), post-PUP-18 next batch (PUP-19/20/21), PUP-22/23 Today+QuickLog+Timeline, both V1 design-fidelity plans, isolated TDD workflow (PUP-25), and Diary week-strip day selection (PR #29). Their deferred tails moved to the Release Readiness aggregator.
 
 ## Execution Order
 

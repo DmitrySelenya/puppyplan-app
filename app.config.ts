@@ -10,13 +10,24 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: 'light',
   ios: {
     ...config.ios,
+    appleTeamId: 'JK68NGR7WD',
+    bundleIdentifier: 'com.dmitry-selenya.puppyplan-app',
     supportsTablet: false,
   },
   android: {
     ...config.android,
+    package: 'com.dmitry_selenya.puppyplan_app',
     predictiveBackGestureEnabled: true,
   },
-  plugins: ['expo-router', 'expo-splash-screen', 'expo-sqlite', 'expo-secure-store', './plugins/with-ios-privacy-manifest'],
+  plugins: [
+    'expo-router',
+    'expo-splash-screen',
+    'expo-sqlite',
+    'expo-secure-store',
+    'expo-notifications',
+    '@react-native-community/datetimepicker',
+    './plugins/with-ios-privacy-manifest',
+  ],
   experiments: {
     typedRoutes: true,
   },

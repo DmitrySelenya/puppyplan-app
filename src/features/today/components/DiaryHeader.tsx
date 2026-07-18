@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppText } from '@/design/primitives/AppText';
 import { Avatar } from '@/design/primitives/Avatar';
@@ -35,6 +35,7 @@ export function DiaryHeader({
   timeOfDay = 'morning',
   todayDate,
 }: DiaryHeaderProps) {
+  const { fontScale } = useWindowDimensions();
   const { locale, t } = useAppTranslation();
   const name = puppyName?.trim();
   const keys = greetingKeys[timeOfDay];
@@ -43,9 +44,11 @@ export function DiaryHeader({
 
   return (
     <View style={styles.header} testID="diary-header">
-      <View style={styles.row}>
+      <View
+        style={[styles.row, fontScale >= 2 ? styles.accessibilityRow : null]}
+        testID="diary-header-row">
         <View style={styles.copy}>
-          <AppText variant="title1">{greeting}</AppText>
+          <AppText variant={fontScale >= 2 ? 'title2' : 'title1'}>{greeting}</AppText>
           {date ? (
             <AppText style={styles.date} tone="secondary" variant="footnote">
               {date}
@@ -80,6 +83,10 @@ function formatHeaderDate(todayDate: string | undefined, locale: string): string
 }
 
 const styles = StyleSheet.create({
+  accessibilityRow: {
+    alignItems: 'stretch',
+    flexDirection: 'column',
+  },
   copy: {
     flex: 1,
     minWidth: 0,

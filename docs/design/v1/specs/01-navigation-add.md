@@ -1,7 +1,12 @@
 # 01 — Navigation & Add
 Route: root tabs / Add overlay   Atlas: Open Design V2 boards `Split navigation`, `Add chooser overlay`
 Device sizes: iOS 390x844, Android 412x900, SE compact for native verification
-Allowed deviations: custom-rendered capsule chrome is permitted; routing and accessibility remain native (expo-router tabs + native roles).
+Allowed deviations: custom-rendered capsule chrome is permitted; routing and accessibility remain
+native (expo-router tabs + native roles). On iOS the visual capsule is deliberately not an
+accessible grouping node because a native `tablist` parent suppresses its accessible children.
+The three controls use native `button` role plus `selected` state on iOS because React Native maps
+the custom `tab` role to `UIAccessibilityTraitNone`, which omitted them from the Release VoiceOver
+action tree during SE Stage 4. Android retains the `tab` role.
 
 ## Anatomy — resting state
 
@@ -16,7 +21,7 @@ When Add is pressed, the chooser opens and ALL of the following happen together:
 1. **The three-tab capsule disappears entirely** — it is removed (faded/slid out), not merely dimmed. While the chooser is open there is no visible tab capsule.
 2. **The Add button morphs in place from `+` to `×`** — same position and size, the glyph cross-fades/rotates from plus to close. It does not move and is not replaced by a separate close control elsewhere.
 3. **Background dims** — a scrim sits over the page content behind the overlay. Blur is a progressive enhancement (requires `expo-blur`); scrim alone is the baseline and ships first.
-4. **Two slabs rise from the bottom**: `Quick Log` and `Schedule`. Each is a large, full-width tappable slab (not a small tile), stacked with clear separation. A **drag-handle** sits at the top of the sheet.
+4. **Three slabs rise from the bottom** in locked order: `Quick Log`, `Quick note`, `Schedule`. Each is a large, full-width tappable slab (not a small tile), stacked with clear separation. A **drag-handle** sits at the top of the sheet.
 
 Closing (tap `×`, tap the scrim, or drag the sheet down) reverses all four: slabs descend, scrim+blur clear, the capsule fades back in, and `×` morphs back to `+`.
 
@@ -30,14 +35,19 @@ Closing (tap `×`, tap the scrim, or drag the sheet down) reverses all four: sla
 
 ## States Covered
 
-- Resting nav; each active-tab example (Diary / Pet / More); Add-open overlay (capsule hidden, `×`, scrim+blur, two slabs + handle); closing/scrim-tap.
+- Resting nav; each active-tab example (Diary / Pet / More); Add-open overlay (capsule hidden, `×`, scrim+blur, three slabs + handle); closing/scrim-tap.
 
 ## Accessibility
 
-- Capsule is one `tablist` containing exactly three tabs.
+- The visual capsule is not independently focusable. It contains exactly three independently
+  focusable primary-navigation actions in Diary, Pet, More order; no parent accessibility node may
+  group them. They are selected-state buttons on iOS and tabs on Android.
 - Add is a separate button outside the tablist — never a fourth tab. Label `Add` when resting, `Close` (or localized equivalent) when the chooser is open.
 - Resting focus order: Diary, Pet, More, Add.
-- When the chooser is open: the capsule is removed from the accessibility tree, focus moves into the sheet, and the two slabs are buttons. Closing returns focus to the Add button.
+- At `fontScale >= 2`, the three tabs switch to icon-only visual chrome; each localized tab name
+  remains on its tab through `accessibilityLabel`, with selected state and focus order unchanged.
+- When the chooser is open: the capsule is removed from the accessibility tree, focus moves into the sheet, and the three slabs are buttons. Closing returns focus to the Add button.
+- Owner-approved tap budget (2026-07-14): a common one-step fact is `Add → Quick Log → tracker`, three taps total. Potty/Sleep may use one additional explicit result/action tap.
 
 ## Reduced motion
 

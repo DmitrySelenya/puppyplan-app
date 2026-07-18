@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import type { ScheduleRule } from '@/contracts/reminders';
 import {
   reminderSchema,
   type Reminder,
@@ -7,10 +8,9 @@ import {
 
 import { getSupabaseClient } from './client';
 
-export type ReminderScheduleRule = Readonly<{
-  repeat: 'daily';
-  time: string;
-}>;
+// Full contract shape (src/contracts/reminders.ts); the legacy hardcoded
+// `{ repeat: 'daily', time }` insert is a subset of it.
+export type ReminderScheduleRule = ScheduleRule;
 
 export type ReminderQuietHours = Readonly<{
   enabled: true;
@@ -42,11 +42,20 @@ export type ReminderDeleteUpdate = Readonly<{
   puppy_id: string;
 }>;
 
+export type ReminderScheduleUpdate = Readonly<{
+  id: string;
+  puppy_id: string;
+  reminder_type: string;
+  schedule_rule: ReminderScheduleRule;
+  timezone: string;
+}>;
+
 export type SupabaseReminderRepository = Readonly<{
   deleteReminder(update: ReminderDeleteUpdate): Promise<void>;
   insertReminder(insert: ReminderInsert): Promise<Reminder>;
   listReminders(input: Readonly<{ puppyId: string }>): Promise<readonly Reminder[]>;
   updateReminderEnabled(update: ReminderEnabledUpdate): Promise<Reminder>;
+  updateReminderSchedule(update: ReminderScheduleUpdate): Promise<Reminder>;
 }>;
 
 export type ReminderClient = Readonly<{
@@ -64,6 +73,10 @@ export type ReminderClient = Readonly<{
     error: unknown;
   }>>;
   updateReminderEnabled(update: ReminderEnabledUpdate): PromiseLike<Readonly<{
+    data: unknown;
+    error: unknown;
+  }>>;
+  updateReminderSchedule(update: ReminderScheduleUpdate): PromiseLike<Readonly<{
     data: unknown;
     error: unknown;
   }>>;
@@ -100,6 +113,15 @@ export function createSupabaseReminderRepository(
     },
     updateReminderEnabled: async (update) => {
       const response = await client.updateReminderEnabled(update);
+
+      if (response.error || response.data === null) {
+        throw new Error('reminder_update_failed');
+      }
+
+      return reminderSchema.parse(response.data);
+    },
+    updateReminderSchedule: async (update) => {
+      const response = await client.updateReminderSchedule(update);
 
       if (response.error || response.data === null) {
         throw new Error('reminder_update_failed');
@@ -155,5 +177,14 @@ function createDefaultReminderClient(): ReminderClient {
       .is('deleted_at', null)
       .select(reminderSelectColumns)
       .maybeSingle(),
+    updateReminderSchedule: ({ id, puppy_id, reminder_type, schedule_rule, timezone }) =>
+      getSupabaseClient()
+        .from('reminder')
+        .update({ reminder_type, schedule_rule, timezone })
+        .eq('id', id)
+        .eq('puppy_id', puppy_id)
+        .is('deleted_at', null)
+        .select(reminderSelectColumns)
+        .maybeSingle(),
   };
 }

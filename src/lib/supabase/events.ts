@@ -1,11 +1,13 @@
 import {
   eventPayloadSchemas,
+  eventPayloadSchemasV2,
   eventLogRecordSchema,
   type EventType,
   type EventLogInsert,
   type EventLogRecord,
   type JsonValue,
 } from '@/contracts/supabase';
+import { getReminderLinkFromPayload } from '@/contracts/reminders';
 import type { QuickLogQueueFailureKind } from '@/lib/queue';
 
 import { getSupabaseClient } from './client';
@@ -66,7 +68,9 @@ export type SupabaseEventLogRepository = Readonly<{
     householdId: string;
     clientEventId: string;
     eventType: EventType;
+    occurredAt?: string;
     payload: Record<string, JsonValue>;
+    payloadVersion?: 1 | 2;
   }>): Promise<EventLogRecord>;
 }>;
 
@@ -90,7 +94,9 @@ type EventLogClient = Readonly<{
   }>): PromiseLike<EventLogClientResponse>;
   updateEventLogPayloadById(input: Readonly<{
     id: string;
+    occurredAt?: string;
     payload: Record<string, JsonValue>;
+    payloadVersion?: 1 | 2;
   }>): PromiseLike<EventLogClientResponse>;
 }>;
 
@@ -231,7 +237,13 @@ export function createSupabaseEventLogRepository(
       return parseEventLogRecord(restoreResponse.data, 'restore');
     },
     updatePayloadByClientEventId: async (input) => {
-      const payload = parseEventPayload(input.eventType, input.payload, 'update_payload');
+      const payloadVersion = input.payloadVersion ?? 1;
+      const payload = parseEventPayload(
+        input.eventType,
+        payloadVersion,
+        input.payload,
+        'update_payload',
+      );
       const existing = await selectExistingEvent(client, {
         householdId: input.householdId,
         clientEventId: input.clientEventId,
@@ -251,7 +263,9 @@ export function createSupabaseEventLogRepository(
 
       const updateResponse = await client.updateEventLogPayloadById({
         id: existing.id,
+        occurredAt: input.occurredAt,
         payload,
+        payloadVersion: input.payloadVersion,
       });
 
       if (updateResponse.error) {
@@ -328,6 +342,8 @@ function createDefaultEventLogClient(): EventLogClient {
       .from('event_log')
       .update({
         payload: input.payload,
+        ...(input.payloadVersion === undefined ? {} : { payload_version: input.payloadVersion }),
+        ...(input.occurredAt === undefined ? {} : { occurred_at: input.occurredAt }),
       })
       .eq('id', input.id)
       .select('*')
@@ -339,13 +355,32 @@ export function isQuickLogIdempotentDuplicate(
   insert: EventLogInsert,
   existing: EventLogRecord,
 ): boolean {
-  return insert.household_id === existing.household_id
+  if (existing.deleted_at !== null) {
+    return false;
+  }
+
+  const hasMatchingRoutingIdentity = insert.household_id === existing.household_id
     && insert.client_event_id === existing.client_event_id
     && insert.created_by === existing.created_by
     && insert.puppy_id === existing.puppy_id
     && insert.event_type === existing.event_type
-    && insert.payload_version === existing.payload_version
-    && insert.occurred_at === existing.occurred_at;
+    && insert.payload_version === existing.payload_version;
+
+  if (!hasMatchingRoutingIdentity) {
+    return false;
+  }
+
+  const insertReminderLink = getReminderLinkFromPayload(insert.payload);
+  const existingReminderLink = getReminderLinkFromPayload(existing.payload);
+
+  if (insertReminderLink !== null || existingReminderLink !== null) {
+    return insertReminderLink !== null
+      && existingReminderLink !== null
+      && insertReminderLink.reminderId === existingReminderLink.reminderId
+      && insertReminderLink.scheduledFor === existingReminderLink.scheduledFor;
+  }
+
+  return insert.occurred_at === existing.occurred_at;
 }
 
 export function classifyQuickLogSupabaseError(
@@ -518,10 +553,12 @@ function parseEventLogRecords(value: unknown): readonly EventLogRecord[] {
 
 function parseEventPayload(
   eventType: EventType,
+  payloadVersion: 1 | 2,
   payload: Record<string, JsonValue>,
   phase: QuickLogSupabaseErrorPhase,
 ): Record<string, JsonValue> {
-  const result = eventPayloadSchemas[eventType].safeParse(payload);
+  const result = (payloadVersion === 1 ? eventPayloadSchemas : eventPayloadSchemasV2)[eventType]
+    .safeParse(payload);
 
   if (!result.success) {
     throw createQuickLogSupabaseFailure({

@@ -29,6 +29,12 @@ Approved additive profile fields:
 
 - `public.puppy.quick_tracker_ids` stores the ordered selected Quick Log tracker ids for `PUP-21`. It is constrained to allowed ids, uniqueness, at least 1 entry, and at most 5 entries, and remains under existing `puppy` owner insert/update RLS.
 
+Approved additive event vocabulary:
+
+- `public.event_type` adds neutral `observation` for `PUP-31` under ADR-0022. Observation payloads
+  use the strict version-2 application contract and remain excluded from training-note and broad
+  routine-summary projections.
+
 ## Rejected Schema Changes
 
 Rejected:
@@ -83,6 +89,12 @@ Policy shape requirements:
 
 ## Payload Versioning
 
-`payload_version` starts at `1`. Breaking changes add a new Zod union branch; old versions remain readable.
+`payload_version` supports `1` and `2`. Version 1 rows remain readable; detailed notes, sleep
+actions, and neutral observations use the strict version-2 Zod union. The additive migration keeps
+the database check aligned without rewriting historical rows.
 
 No ad hoc version branching in UI components. Parse at the contract/data boundary.
+
+ADR-0022 permits strict payload-version-2 event branches with an optional trimmed private note up
+to 500 characters. Version-1 rows remain readable. Notes are not exposed through analytics, logs,
+notifications, observability, or broad sharing projections.

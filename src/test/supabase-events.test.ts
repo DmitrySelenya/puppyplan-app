@@ -7,6 +7,8 @@ import {
   createSupabaseEventLogRepository,
   isQuickLogIdempotentDuplicate,
 } from '@/lib/supabase/events';
+import { createQuickLogEventInsert } from '@/contracts/quick-log';
+import { createReminderCheckOffClientEventId } from '@/contracts/reminders';
 import type { EventLogInsert, EventLogRecord } from '@/contracts/supabase';
 
 const householdId = '00000000-0000-4000-8000-000000000101';
@@ -14,6 +16,11 @@ const puppyId = '00000000-0000-4000-8000-000000000102';
 const createdBy = '00000000-0000-4000-8000-000000000103';
 const clientEventId = 'evt_00000000-0000-4000-8000-000000000104';
 const occurredAt = '2026-05-26T08:00:00.000Z';
+const reminderId = '00000000-0000-4000-8000-000000000108';
+const otherReminderId = '00000000-0000-4000-8000-000000000109';
+const scheduledFor = '2026-05-26T07:45:00.000Z';
+const otherScheduledFor = '2026-05-26T17:45:00.000Z';
+const syntheticObservationTitle = 'Synthetic routine';
 
 const insert: EventLogInsert = {
   household_id: householdId,
@@ -37,6 +44,37 @@ const serverRow: EventLogRecord = {
   updated_at: '2026-05-26T08:00:01.000Z',
 };
 
+const reminderCheckOffInsert = createQuickLogEventInsert({
+  client_event_id: createReminderCheckOffClientEventId({ reminderId, scheduledFor }),
+  created_by: createdBy,
+  household_id: householdId,
+  occurred_at: occurredAt,
+  puppy_id: puppyId,
+  reminder_link: {
+    reminder_id: reminderId,
+    scheduled_for: scheduledFor,
+  },
+  title: syntheticObservationTitle,
+  tracker_id: 'observation',
+});
+
+const reminderCheckOffServerRow: EventLogRecord = {
+  id: '00000000-0000-4000-8000-000000000110',
+  ...reminderCheckOffInsert,
+  occurred_at: '2026-05-26T07:59:00.000Z',
+  payload: {
+    title: syntheticObservationTitle,
+    reminder_link: {
+      reminder_id: reminderId,
+      scheduled_for: scheduledFor,
+    },
+  },
+  version: 1,
+  deleted_at: null,
+  created_at: '2026-05-26T07:59:01.000Z',
+  updated_at: '2026-05-26T07:59:01.000Z',
+};
+
 describe('Quick Log Supabase event wrappers', () => {
   it('keeps the wrapper free of forbidden double assertions', () => {
     const source = readFileSync(join(process.cwd(), 'src/lib/supabase/events.ts'), 'utf8');
@@ -53,14 +91,71 @@ describe('Quick Log Supabase event wrappers', () => {
     })).toBe(true);
   });
 
-  it('rejects an idempotent duplicate when routing identity differs', () => {
+  it('AC-F1-5: preserves reminder_link in an Observation v2 insert', () => {
+    expect(reminderCheckOffInsert).toEqual({
+      client_event_id: createReminderCheckOffClientEventId({ reminderId, scheduledFor }),
+      created_by: createdBy,
+      event_type: 'observation',
+      household_id: householdId,
+      occurred_at: occurredAt,
+      payload_version: 2,
+      payload: {
+        title: syntheticObservationTitle,
+        reminder_link: {
+          reminder_id: reminderId,
+          scheduled_for: scheduledFor,
+        },
+      },
+      puppy_id: puppyId,
+    });
+  });
+
+  it('AC-F1-1: accepts the same live reminder check-off when only occurred_at differs', () => {
+    expect(isQuickLogIdempotentDuplicate(
+      reminderCheckOffInsert,
+      reminderCheckOffServerRow,
+    )).toBe(true);
+  });
+
+  it.each([
+    ['occurred_at', { occurred_at: '2026-05-26T08:00:02.000Z' }],
+    ['actor', { created_by: '00000000-0000-4000-8000-000000000106' }],
+    ['payload version', { payload_version: 2 as const }],
+  ])('AC-F1-2/ERR-F1-1: rejects a spontaneous reused id with changed %s', (_field, override) => {
     expect(isQuickLogIdempotentDuplicate(insert, {
       ...serverRow,
-      created_by: '00000000-0000-4000-8000-000000000106',
+      ...override,
+    })).toBe(false);
+  });
+
+  it('AC-F1-3: rejects a matching reminder check-off when the existing row is tombstoned', () => {
+    expect(isQuickLogIdempotentDuplicate(reminderCheckOffInsert, {
+      ...reminderCheckOffServerRow,
+      deleted_at: '2026-05-26T08:01:00.000Z',
+    })).toBe(false);
+  });
+
+  it.each([
+    ['reminder id', { reminder_id: otherReminderId, scheduled_for: scheduledFor }],
+    ['scheduled instant', { reminder_id: reminderId, scheduled_for: otherScheduledFor }],
+  ])('EC-F1-1: rejects a check-off with a different %s', (_field, reminderLink) => {
+    expect(isQuickLogIdempotentDuplicate(reminderCheckOffInsert, {
+      ...reminderCheckOffServerRow,
+      payload: {
+        title: syntheticObservationTitle,
+        reminder_link: reminderLink,
+      },
+    })).toBe(false);
+  });
+
+  it('rejects an idempotent duplicate when the colliding row is a different logical event', () => {
+    expect(isQuickLogIdempotentDuplicate(insert, {
+      ...serverRow,
+      event_type: 'observation',
     })).toBe(false);
     expect(isQuickLogIdempotentDuplicate(insert, {
       ...serverRow,
-      occurred_at: '2026-05-26T08:00:02.000Z',
+      puppy_id: '00000000-0000-4000-8000-000000000107',
     })).toBe(false);
   });
 
@@ -205,6 +300,37 @@ describe('Quick Log Supabase event wrappers', () => {
       `eq:client_event_id:${clientEventId}`,
       'maybeSingle',
     ]);
+  });
+
+  it('AC-F1-1: resolves a reminder check-off 23505 to the first writer row', async () => {
+    const client = new RecordingEventLogClient([
+      { data: null, error: { code: '23505', status: 409 }, status: 409 },
+      { data: reminderCheckOffServerRow, error: null, status: 200 },
+    ]);
+    const repository = createSupabaseEventLogRepository(client);
+
+    await expect(repository.insertEvent(reminderCheckOffInsert))
+      .resolves.toEqual(reminderCheckOffServerRow);
+  });
+
+  it('AC-F1-3: rejects a reminder check-off 23505 when the first row is tombstoned', async () => {
+    const client = new RecordingEventLogClient([
+      { data: null, error: { code: '23505', status: 409 }, status: 409 },
+      {
+        data: {
+          ...reminderCheckOffServerRow,
+          deleted_at: '2026-05-26T08:01:00.000Z',
+        },
+        error: null,
+        status: 200,
+      },
+    ]);
+    const repository = createSupabaseEventLogRepository(client);
+
+    await expect(repository.insertEvent(reminderCheckOffInsert)).rejects.toMatchObject({
+      kind: 'invalid_payload',
+      retryAfterMs: null,
+    });
   });
 
   it('rejects an insert 23505 when the existing row identity does not match', async () => {

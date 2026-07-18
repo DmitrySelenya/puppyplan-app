@@ -3,6 +3,7 @@ import {
   deepLinkPlaceholders,
   developmentOnlyRoutes,
   modalRoutes,
+  noteAction,
   plannedRouteFiles,
   primaryTabs,
   quickLogAction,
@@ -52,6 +53,22 @@ describe('navigation contract', () => {
   it('exposes a schedule chooser action distinct from quick log', () => {
     expect(scheduleAction.href).not.toBe(quickLogAction.href);
     expect(modalRoutes).toContain(scheduleAction.href);
+  });
+
+  it('AC-QN-SLAB: exposes a quick note chooser action distinct from quick log and schedule', () => {
+    expect(new Set([quickLogAction.id, noteAction.id, scheduleAction.id]).size).toBe(3);
+    expect(new Set([quickLogAction.href, noteAction.href, scheduleAction.href]).size).toBe(3);
+    expect(modalRoutes).toContain(noteAction.href);
+    expect(primaryTabs.map((tab) => tab.href)).not.toContain(noteAction.href);
+    expect(plannedRouteFiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          route: '/quick-log/note',
+          file: 'app/(sheets)/quick-log/note/index.tsx',
+          implementationStage: 'existing',
+        }),
+      ]),
+    );
   });
 
   it('keeps invite and share token placeholders as route patterns only', () => {

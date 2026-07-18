@@ -49,7 +49,10 @@ export type SnackbarController = Readonly<{
 const SnackbarContext = createContext<SnackbarController | null>(null);
 const SnackbarActivityContext = createContext(false);
 export const SNACKBAR_DEFAULT_DURATION_MS = 4_000;
-export const SNACKBAR_BOTTOM_OFFSET_WITH_FAB = tokens.layout.bottomInsetFab;
+// Nav bottom padding + the FAB/capsule thumb-zone block + one space[4] gap, so the
+// snackbar hugs the capsule nav instead of floating over list rows mid-screen.
+export const SNACKBAR_BOTTOM_OFFSET_WITH_FAB =
+  tokens.space[2] + tokens.component.fab.size + tokens.space[4];
 
 export function SnackbarProvider({ children }: PropsWithChildren) {
   const [message, setMessage] = useState<SnackbarMessage | null>(null);

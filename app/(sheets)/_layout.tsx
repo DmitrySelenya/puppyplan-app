@@ -7,6 +7,7 @@ export default function SheetLayout() {
         name="quick-log/index"
         options={{ contentStyle: { backgroundColor: 'transparent' } }}
       />
+      <Stack.Screen name="quick-log/note/index" />
       <Stack.Screen name="quick-log/schedule/index" />
     </Stack>
   );

@@ -87,6 +87,101 @@ describe('Quick Log event view model', () => {
       });
     }
   });
+
+  it.each([
+    [
+      'training',
+      { topic: 'settling', duration_bucket: 'short', note: 'Synthetic training note' },
+      'quick-log.details.tabs.training',
+    ],
+    [
+      'observation',
+      { title: 'Calm greeting', note: 'Synthetic observation note' },
+      null,
+    ],
+  ] as const)('AC-P33-READ exposes the canonical title and private note for authenticated %s readback', (
+    eventType,
+    payload,
+    titleKey,
+  ) => {
+    const event = createQuickLogEventView(createRow({
+      event_type: eventType,
+      payload_version: 2,
+      payload,
+    }), { t, todayDate });
+
+    expect(event).toMatchObject({
+      eventType,
+      note: payload.note,
+      title: titleKey === null ? 'Calm greeting' : i18n.t(titleKey),
+    });
+  });
+
+  it('AC-P33-READ reads a title-less observation note as the row title without a duplicate preview', () => {
+    const event = createQuickLogEventView(createRow({
+      event_type: 'observation',
+      payload_version: 2,
+      payload: { note: 'Synthetic quick note' },
+    }), { t, todayDate });
+
+    expect(event).toMatchObject({
+      eventType: 'observation',
+      title: 'Synthetic quick note',
+      // The row title is normally a generated label ("Slept 10:56 PM–11:56 AM"), which the card sets
+      // in the Lora display face. Free prose has to declare itself so the card can stop doing that.
+      titleKind: 'prose',
+    });
+    expect(event?.note).toBeUndefined();
+  });
+
+  it('AC-P33-READ marks a generated row label as a label, not prose', () => {
+    const event = createQuickLogEventView(createRow({
+      event_type: 'potty',
+      payload_version: 2,
+      payload: { subtype: 'outside' },
+    }), { t, todayDate });
+
+    expect(event?.titleKind).toBe('label');
+  });
+
+  it("AC-P33-READ marks an observation's own title as a label", () => {
+    const event = createQuickLogEventView(createRow({
+      event_type: 'observation',
+      payload_version: 2,
+      payload: { note: 'Synthetic note body', title: 'Calm greeting' },
+    }), { t, todayDate });
+
+    // A typed title is capped at 80 characters and is a title by intent, so it keeps the display
+    // face. Only a note standing in for one is prose.
+    expect(event).toMatchObject({ title: 'Calm greeting', titleKind: 'label' });
+  });
+
+  it.each([
+    ['start', undefined, 'quick-log.details.sleep.action.start'],
+    ['wake', undefined, 'quick-log.details.sleep.action.wake'],
+    ['retrospective', 90, 'quick-log.details.sleep.action.retrospective'],
+  ] as const)('AC-P33-SLEEP reads %s as an explicit sleep action', (
+    action,
+    durationMinutes,
+    titleKey,
+  ) => {
+    const event = createQuickLogEventView(createRow({
+      event_type: 'sleep',
+      payload_version: 2,
+      payload: {
+        action,
+        ...(durationMinutes === undefined ? {} : { duration_minutes: durationMinutes }),
+        note: 'Synthetic sleep note',
+      },
+    }), { t, todayDate });
+
+    expect(event).toMatchObject({
+      ...(durationMinutes === undefined ? {} : { durationMinutes }),
+      eventType: 'sleep',
+      note: 'Synthetic sleep note',
+      title: i18n.t(titleKey),
+    });
+  });
 });
 
 function createRow(

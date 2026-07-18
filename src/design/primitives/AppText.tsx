@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from 'react';
 import type { StyleProp, TextProps, TextStyle } from 'react-native';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions } from 'react-native';
 
 import { designFontFamilies } from '@/design/fonts';
 import { tokens } from '@/design/tokens';
@@ -39,7 +39,22 @@ export type AppTextProps = PropsWithChildren<
   }
 >;
 
-export const APP_TEXT_MAX_FONT_SIZE_MULTIPLIER = 3;
+export const APP_TEXT_MAX_FONT_SIZE_MULTIPLIER_BY_VARIANT = {
+  body: 2,
+  bodyEmph: 2,
+  callout: 2,
+  caption: 1.5,
+  code: 1.5,
+  display: 1.8,
+  footnote: 1.5,
+  headline: 1.8,
+  label: 1.5,
+  subheadline: 2,
+  title: 1.8,
+  title1: 1.8,
+  title2: 1.8,
+  title3: 1.8,
+} as const satisfies Record<AppTextVariant, number>;
 
 export function AppText({
   allowFontScaling = true,
@@ -51,15 +66,26 @@ export function AppText({
   variant = 'body',
   ...props
 }: AppTextProps) {
-  const multiplier = maxFontSizeMultiplier ?? APP_TEXT_MAX_FONT_SIZE_MULTIPLIER;
+  const { fontScale } = useWindowDimensions();
+  const multiplier = maxFontSizeMultiplier ?? APP_TEXT_MAX_FONT_SIZE_MULTIPLIER_BY_VARIANT[variant];
   const numericStyle = numeric || variant === 'code' ? styles.numeric : null;
+  const naturalLineHeightStyle = allowFontScaling && fontScale >= 2 && multiplier !== 1
+    ? { lineHeight: undefined }
+    : null;
 
   return (
     <Text
       {...props}
       allowFontScaling={allowFontScaling}
       maxFontSizeMultiplier={multiplier}
-      style={[styles.base, toneStyles[tone], variantStyles[variant], numericStyle, style]}>
+      style={[
+        styles.base,
+        toneStyles[tone],
+        variantStyles[variant],
+        numericStyle,
+        style,
+        naturalLineHeightStyle,
+      ]}>
       {children}
     </Text>
   );

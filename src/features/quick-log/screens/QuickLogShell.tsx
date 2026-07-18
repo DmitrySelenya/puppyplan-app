@@ -8,7 +8,8 @@ import {
   type QuickLogTrackerId,
 } from '@/contracts/quick-log';
 import type { QuickLogDuplicateCareWarningPayload } from '@/contracts/business-rules';
-import { eventPayloadSchemas } from '@/contracts/supabase';
+import { eventPayloadSchemas, eventPayloadSchemasV2 } from '@/contracts/supabase';
+import { formatDurationMinutes } from '@/lib/datetime/duration-label';
 import { AppIcon } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
@@ -54,6 +55,10 @@ export type QuickLogShellProps = Readonly<{
   now?: () => Date;
   onQuickLogSaved?: () => void;
   openDetails?: (request: QuickLogEventEditRequest) => void;
+  openCreateDetails?: (request: Readonly<{
+    sleepAction?: 'retrospective';
+    trackerId: 'potty' | 'feeding' | 'sleep' | 'walk' | 'zoomies' | 'training' | 'observation';
+  }>) => void;
   recentEvent?: QuickLogRecentEvent | null;
   recentEvents?: readonly QuickLogRecentEvent[];
   snackbar?: QuickLogSnackbarPort;
@@ -94,7 +99,7 @@ export function createQuickLogRecentEvents(
   rows: readonly QuickLogCachedEventRow[],
 ): readonly QuickLogRecentEvent[] {
   return rows.flatMap((row) => {
-    if (row.deleted_at !== null) {
+    if (row.deleted_at !== null || row.localSync?.state === 'deleted_before_sync') {
       return [];
     }
 
@@ -106,13 +111,48 @@ export function createQuickLogRecentEvents(
     }
 
     const payload = createRecentEventPayload(row, trackerId);
+    const sleepAction = createRecentSleepAction(row, trackerId);
 
     return [{
       occurredAtMs,
       ...(payload === undefined ? {} : { payload }),
+      ...(sleepAction === undefined ? {} : { sleepAction }),
       trackerId,
     }];
   }).sort((left, right) => right.occurredAtMs - left.occurredAtMs);
+}
+
+function createRecentSleepAction(
+  row: QuickLogCachedEventRow,
+  trackerId: QuickLogTrackerId,
+): 'start' | 'wake' | 'retrospective' | undefined {
+  if (trackerId !== 'sleep') {
+    return undefined;
+  }
+
+  const payloadResult = eventPayloadSchemasV2.sleep.safeParse(row.payload);
+
+  return payloadResult.success ? payloadResult.data.action : undefined;
+}
+
+/**
+ * The moment an unclosed sleep began, or null when the puppy is awake.
+ *
+ * Without this the sleep step looks identical whether or not a sleep is already running, so a
+ * second Start sleep silently opens a duplicate interval over the first.
+ */
+export function getOpenSleepStartMs(
+  recentEvents: readonly QuickLogRecentEvent[] | undefined,
+): number | null {
+  const latestSleep = (recentEvents ?? [])
+    .filter((event) => event.trackerId === 'sleep' && event.sleepAction !== undefined)
+    .reduce<QuickLogRecentEvent | null>(
+      (latest, event) =>
+        latest === null || event.occurredAtMs > latest.occurredAtMs ? event : latest,
+      null,
+    );
+
+  return latestSleep?.sleepAction === 'start' ? latestSleep.occurredAtMs : null;
 }
 
 function createQuickLogMutationLocalEventViews(
@@ -233,6 +273,7 @@ function QuickLogShellContent({
   now,
   onQuickLogSaved,
   openDetails,
+  openCreateDetails,
   recentEvent = null,
   recentEvents = [],
 }: QuickLogShellProps & {
@@ -240,6 +281,7 @@ function QuickLogShellContent({
 }) {
   const { t } = useAppTranslation();
   const [pottySubtypePickerOpen, setPottySubtypePickerOpen] = useState(false);
+  const [sleepActionPickerOpen, setSleepActionPickerOpen] = useState(false);
   const isViewOnly = careContext?.householdRole === 'viewer';
   const readyCareContext = mutation === undefined || isViewOnly
     ? null
@@ -324,6 +366,8 @@ function QuickLogShellContent({
           ? controller.cancelDuplicate
           : pottySubtypePickerOpen
             ? () => setPottySubtypePickerOpen(false)
+            : sleepActionPickerOpen
+              ? () => setSleepActionPickerOpen(false)
             : closeSheet
       }>
       <SheetSurface
@@ -332,6 +376,8 @@ function QuickLogShellContent({
             ? t('quick-log.duplicate-warning.title')
             : pottySubtypePickerOpen
               ? t('quick-log.potty-subtype.title')
+              : sleepActionPickerOpen
+                ? t('quick-log.sleep-action.title')
             : t('quick-log.sheet.title')
         }>
         {controller.duplicateWarning ? (
@@ -349,6 +395,20 @@ function QuickLogShellContent({
                 trackerId: 'potty',
               });
             }}
+          />
+        ) : sleepActionPickerOpen ? (
+          <SleepActionPicker
+            nowMs={(now?.() ?? new Date()).getTime()}
+            onBack={() => setSleepActionPickerOpen(false)}
+            onRetrospective={() => openCreateDetails?.({
+              sleepAction: 'retrospective',
+              trackerId: 'sleep',
+            })}
+            onSelect={(sleepAction) => {
+              setSleepActionPickerOpen(false);
+              controller.logTracker({ sleepAction, trackerId: 'sleep' });
+            }}
+            openSleepStartMs={getOpenSleepStartMs(recentEvents)}
           />
         ) : (
           <>
@@ -373,6 +433,13 @@ function QuickLogShellContent({
             <Stack direction="horizontal" gap="sm" wrap>
               {selectedTrackerIds.map((trackerId) => (
                 <TrackerTile
+                  accessibilityActions={openCreateDetails === undefined ? undefined : [{
+                    label: t('quick-log.sheet.details-action'),
+                    name: 'details',
+                  }]}
+                  accessibilityHint={openCreateDetails === undefined
+                    ? undefined
+                    : t('quick-log.sheet.details-hint')}
                   accessibilityLabel={t(getQuickLogTrackerLabelKey(trackerId))}
                   icon={(
                     <AppIcon
@@ -383,9 +450,20 @@ function QuickLogShellContent({
                   )}
                   key={trackerId}
                   label={t(getQuickLogTrackerLabelKey(trackerId))}
+                  onAccessibilityAction={(event) => {
+                    if (event.nativeEvent.actionName === 'details') {
+                      openCreateDetails?.({ trackerId });
+                    }
+                  }}
+                  onLongPress={() => openCreateDetails?.({ trackerId })}
                   onPress={() => {
                     if (trackerId === 'potty') {
                       setPottySubtypePickerOpen(true);
+                      return;
+                    }
+
+                    if (trackerId === 'sleep') {
+                      setSleepActionPickerOpen(true);
                       return;
                     }
 
@@ -395,6 +473,15 @@ function QuickLogShellContent({
                 />
               ))}
             </Stack>
+            <Button
+              label={t('quick-log.sheet.log-with-details')}
+              onPress={() => openCreateDetails?.({
+                // Open on a tracker this household actually uses; 'feeding' was hardcoded and
+                // may not even be in their grid.
+                trackerId: selectedTrackerIds[0] ?? 'feeding',
+              })}
+              variant="secondary"
+            />
             <QuickLogLocalEvents
               events={visibleLocalEvents}
               onDelete={controller.deleteLocal}
@@ -405,6 +492,55 @@ function QuickLogShellContent({
         )}
       </SheetSurface>
     </QuickLogSheetFrame>
+  );
+}
+
+function SleepActionPicker({
+  nowMs,
+  onBack,
+  onRetrospective,
+  onSelect,
+  openSleepStartMs,
+}: Readonly<{
+  nowMs: number;
+  onBack: () => void;
+  onRetrospective: () => void;
+  onSelect: (action: 'start' | 'wake') => void;
+  openSleepStartMs: number | null;
+}>) {
+  const { locale, t } = useAppTranslation();
+
+  return (
+    <Stack gap="md">
+      <Stack align="flex-start" direction="horizontal" gap="sm" justify="space-between" wrap>
+        <SheetHeader style={styles.title} title={t('quick-log.sleep-action.title')} />
+        <Button label={t('common.back')} onPress={onBack} variant="tertiary" />
+      </Stack>
+      <AppText tone="secondary">{t('quick-log.sleep-action.body')}</AppText>
+      {openSleepStartMs === null ? null : (
+        <AppText testID="quick-log-sleep-open-hint" tone="secondary" variant="footnote">
+          {t('quick-log.sleep-action.open-since', {
+            duration: formatDurationMinutes(
+              Math.round((nowMs - openSleepStartMs) / 60_000),
+              t,
+            ),
+            time: new Intl.DateTimeFormat(locale, {
+              hour: 'numeric',
+              minute: '2-digit',
+            }).format(new Date(openSleepStartMs)),
+          })}
+        </AppText>
+      )}
+      <Stack gap="sm">
+        <Button label={t('quick-log.sleep-action.start')} onPress={() => onSelect('start')} />
+        <Button label={t('quick-log.sleep-action.wake')} onPress={() => onSelect('wake')} />
+        <Button
+          label={t('quick-log.sleep-action.retrospective')}
+          onPress={onRetrospective}
+          variant="secondary"
+        />
+      </Stack>
+    </Stack>
   );
 }
 

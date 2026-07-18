@@ -58,3 +58,29 @@ Migration `supabase/migrations/20260623120000_canonical_quick_log_tracker_taxono
 - rewriting existing potty `event_log` payloads from legacy `quick_action = pee_outside|pee_inside|poop` to canonical `subtype = outside|inside|poop`, while leaving already-canonical subtype payloads unchanged.
 
 Reason: V2 collapses three potty tiles into one operational tracker while keeping subtype as event data. This stays within the ADR-0007 table model, avoids new tables, preserves history, and keeps RLS ownership on the existing `puppy` and `event_log` policies.
+
+### 2026-07-11: Neutral observation event type and payload version 2
+
+Approved for PUP-31 under ADR-0022.
+
+`public.event_type` adds `observation`. Observation is a neutral factual event and requires a short
+title or non-empty private note at the typed contract boundary. It is not training, diagnosis, or
+health guidance and is excluded from training-note and broad routine-summary projections.
+
+Existing `event_log.payload` remains `jsonb`; payload-version-1 rows remain readable. Strict
+payload-version-2 contracts may add bounded private note and sleep-action fields without a table
+split. Migration `20260711180000_event_observation_payload_v2.sql` is additive and does not rewrite
+existing data or change RLS. Applying it to PuppyPlan Dev remains a separate approval gate.
+
+### 2026-07-17: Explicit selected-timeline event-type scope
+
+Approved by the owner/CTO for PUP-33 as an additive privacy hardening. A
+`selected_timeline_range` share scope must contain an explicit, non-null, non-empty
+`selected_event_types` list. The named conditional CHECK preserves nullable values for other scope
+types, and `current_share_selected_timeline()` includes rows only when their event type is in that
+explicit list.
+
+Migration `20260717161449_harden_selected_timeline_share_scope.sql` adds and validates the
+conditional CHECK and replaces only the sanitized selected-timeline projection. It does not infer
+an all-types selection, backfill or delete data, change RLS, or change the generated database type:
+the column remains nullable because non-selected scopes may still store null.

@@ -27,6 +27,7 @@ export type ButtonProps = Omit<PressableProps, 'children' | 'onPress' | 'style'>
 export function Button({
   accessibilityHint,
   accessibilityLabel,
+  accessibilityState,
   disabled = false,
   label,
   labelMaxFontSizeMultiplier,
@@ -51,7 +52,7 @@ export function Button({
       accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="button"
-      accessibilityState={{ busy: loading, disabled: isDisabled }}
+      accessibilityState={{ ...accessibilityState, busy: loading, disabled: isDisabled }}
       blockPresses={loading}
       disabled={isDisabled}
       onPress={blocksPress ? undefined : onPress}
@@ -95,11 +96,14 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   label: {
+    flexShrink: 1,
     textAlign: 'center',
   },
   labelFrame: {
     alignItems: 'center',
+    flexShrink: 1,
     justifyContent: 'center',
+    minWidth: 0,
   },
   loadingIndicator: {
     position: 'absolute',

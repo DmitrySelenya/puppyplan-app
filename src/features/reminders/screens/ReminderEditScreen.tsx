@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
+import { reminderScheduleDraftSchema } from '@/contracts/reminders';
 import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
@@ -15,11 +16,17 @@ import { TextField } from '@/design/primitives/TextField';
 import { Toggle } from '@/design/primitives/Toggle';
 import { tokens } from '@/design/tokens';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+import { createExpoReminderNotificationAdapter } from '@/lib/notifications/expoReminderNotificationAdapter';
+import type { NotificationPermissionStatus } from '@/lib/notifications/localReminderSync';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 import {
   type ReminderCreateDraft,
   useCreateReminderMutation,
+  useRemindersQuery,
+  useUpdateReminderScheduleMutation,
 } from '@/lib/query/reminders';
+
+import { RoutineEditorScreen } from './RoutineEditorScreen';
 
 type ReminderCategoryOption = Readonly<{
   icon: AppIconName;
@@ -88,12 +95,14 @@ export function ReminderEditScreen({
   isSaving = false,
   onClose,
   onSaveReminder,
+  permissionStatus = 'undetermined',
   reviewState,
 }: Readonly<{
   isSaving?: boolean;
   onClose: () => void;
   onSaveReminder?: (draft: Pick<ReminderCreateDraft, 'reminderName' | 'respectQuietHours'>) =>
     Promise<void> | void;
+  permissionStatus?: NotificationPermissionStatus;
   reviewState?: ReminderEditReviewState;
 }>) {
   const { t } = useAppTranslation();
@@ -231,18 +240,32 @@ export function ReminderEditScreen({
 
       <TrustedSitterChecklistReminderCard />
       <QuietHoursCard />
-      <ReminderPermissionDeniedCard onOpenSettings={handleOpenNotificationSettings} />
+      {permissionStatus === 'denied' ? (
+        <ReminderPermissionDeniedCard onOpenSettings={handleOpenNotificationSettings} />
+      ) : null}
     </Screen>
   );
 }
 
 export function ConnectedReminderEditScreen({
   onClose,
+  reminderId,
 }: Readonly<{
   onClose: () => void;
+  reminderId?: string;
 }>) {
+  const { t } = useAppTranslation();
+  const notificationAdapter = useMemo(
+    () => createExpoReminderNotificationAdapter(t),
+    [t],
+  );
   const activeCare = useActiveCareContext();
   const createReminder = useCreateReminderMutation();
+  const updateReminder = useUpdateReminderScheduleMutation();
+  const remindersQuery = useRemindersQuery(
+    activeCare.careContext?.householdId,
+    activeCare.careContext?.puppyId,
+  );
 
   if (activeCare.status === 'loading') {
     return (
@@ -263,20 +286,54 @@ export function ConnectedReminderEditScreen({
   }
 
   const careContext = activeCare.careContext;
+  const existingReminder = reminderId === undefined
+    ? undefined
+    : remindersQuery.data?.find((reminder) => reminder.id === reminderId);
+  const existingDraftResult = existingReminder === undefined
+    ? undefined
+    : reminderScheduleDraftSchema.safeParse({
+      trackerId: existingReminder.reminder_type,
+      rule: existingReminder.schedule_rule,
+    });
+
+  if (reminderId !== undefined && remindersQuery.isLoading) {
+    return <ReminderEditScreen onClose={onClose} reviewState="loading" />;
+  }
+
+  if (reminderId !== undefined && (remindersQuery.isError || existingDraftResult?.success !== true)) {
+    return <ReminderEditScreen onClose={onClose} reviewState="offline-read" />;
+  }
 
   return (
-    <ReminderEditScreen
-      isSaving={createReminder.isPending}
-      onClose={onClose}
-      onSaveReminder={(draft) => createReminder.mutateAsync({
-        householdId: careContext.householdId,
-        puppyId: careContext.puppyId,
-        reminderName: draft.reminderName,
-        respectQuietHours: draft.respectQuietHours,
-        todayDate: careContext.todayDate,
-        userId: careContext.userId,
-      }).then(() => undefined)}
-      reviewState={createReminder.isError ? 'error' : undefined}
+    <RoutineEditorScreen
+      initialDraft={existingDraftResult?.success === true ? existingDraftResult.data : undefined}
+      isSaving={createReminder.isPending || updateReminder.isPending}
+      mode={careContext.householdRole === 'viewer'
+        ? 'viewer'
+        : reminderId === undefined ? 'create' : 'edit'}
+      onCancel={onClose}
+      onSave={(schedule) => reminderId === undefined
+        ? createReminder.mutateAsync({
+          householdId: careContext.householdId,
+          puppyId: careContext.puppyId,
+          reminderName: schedule.rule.title ?? schedule.trackerId,
+          schedule,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          todayDate: careContext.todayDate,
+          userId: careContext.userId,
+        }).then(() => undefined)
+        : updateReminder.mutateAsync({
+          householdId: careContext.householdId,
+          puppyId: careContext.puppyId,
+          reminderId,
+          schedule,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          todayDate: careContext.todayDate,
+        }).then(() => undefined)}
+      onSaved={onClose}
+      onRequestNotifications={async () => {
+        await notificationAdapter.requestPermission();
+      }}
     />
   );
 }

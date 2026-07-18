@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  noteAction,
   primaryTabs,
   quickLogAction,
   scheduleAction,
@@ -31,6 +32,14 @@ const TAB_ICON = {
   'pet/index': 'paw',
   'more/index': 'more',
 } as const satisfies Record<(typeof primaryTabs)[number]['routeName'], AppIconName>;
+
+/**
+ * Tab labels keep scaling with the system font, but only this far. The capsule has to stay a
+ * capsule beside the Add control on the narrowest supported phone, and an unbounded `caption`
+ * at accessibility XXXL would burst it. Bounding the label is the cheaper trade than deleting
+ * it: an icon-only tab bar withholds the tab names from the people who asked for larger text.
+ */
+export const NAV_TAB_LABEL_MAX_FONT_SCALE = 1.5;
 
 const primaryTabCount = primaryTabs.length;
 const capsuleSlotMinWidth =
@@ -101,8 +110,6 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
         testID="nav-capsule-slot">
         {!open ? (
           <View
-            accessible
-            accessibilityRole="tablist"
             style={styles.capsule}
             testID="nav-capsule">
             {primaryTabs.map((tab) => {
@@ -114,8 +121,9 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
 
               return (
                 <Touchable
+                  accessible
                   accessibilityLabel={t(tab.labelKey)}
-                  accessibilityRole="tab"
+                  accessibilityRole={Platform.OS === 'ios' ? 'button' : 'tab'}
                   accessibilityState={{ selected }}
                   key={tab.routeName}
                   minTarget="thumb"
@@ -144,6 +152,8 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
                     size={tokens.component.tabBar.icon}
                   />
                   <AppText
+                    maxFontSizeMultiplier={NAV_TAB_LABEL_MAX_FONT_SCALE}
+                    numberOfLines={1}
                     style={selected ? styles.activeLabel : undefined}
                     tone={tone}
                     variant="caption">
@@ -179,6 +189,10 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
       {open ? (
         <Chooser
           onClose={() => setOpen(false)}
+          onNote={() => {
+            setOpen(false);
+            router.push(noteAction.href);
+          }}
           onQuickLog={() => {
             setOpen(false);
             router.push(quickLogAction.href);
@@ -195,20 +209,29 @@ export function CapsuleTabBar({ state, navigation }: CapsuleTabBarProps) {
   );
 }
 
+/**
+ * The morphed close control floats above the chooser sheet, so the sheet reserves the control's
+ * footprint at its bottom edge; otherwise the last slab renders underneath it.
+ */
+const closeControlClearance = tokens.component.fab.size + (tokens.space[2] * 2);
+
 function Chooser({
   onClose,
+  onNote,
   onQuickLog,
   onSchedule,
   progress,
   reducedMotion,
 }: {
   onClose: () => void;
+  onNote: () => void;
   onQuickLog: () => void;
   onSchedule: () => void;
   progress: SharedValue<number>;
   reducedMotion: boolean;
 }) {
   const { t } = useAppTranslation();
+  const insets = useSafeAreaInsets();
   const scrimStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
   }));
@@ -240,7 +263,9 @@ function Chooser({
           testID="nav-scrim"
         />
       </Animated.View>
-      <Animated.View style={[styles.sheet, sheetStyle]}>
+      <Animated.View
+        style={[styles.sheet, sheetStyle, { paddingBottom: closeControlClearance + insets.bottom }]}
+        testID="nav-chooser-sheet">
         <View
           style={styles.dragHandle}
           testID="nav-drag-handle"
@@ -253,6 +278,15 @@ function Chooser({
           onPress={onQuickLog}
           subtitle={t('nav.quick-log-slab-subtitle')}
           title={t('nav.quick-log-slab')}
+        />
+        <Slab
+          accessibilityHint={t('nav.note-slab-subtitle')}
+          icon="docText"
+          iconColor={tokens.color.primary[700]}
+          iconTint={tokens.color.primary[50]}
+          onPress={onNote}
+          subtitle={t('nav.note-slab-subtitle')}
+          title={t('nav.note-slab')}
         />
         <Slab
           accessibilityHint={t('nav.schedule-slab-subtitle')}
@@ -292,7 +326,8 @@ function Slab({
       accessibilityRole="button"
       minTarget="thumb"
       onPress={onPress}
-      style={styles.slab}>
+      style={styles.slab}
+      testID="nav-slab">
       <View style={[styles.slabIcon, { backgroundColor: iconTint }]}>
         <AppIcon color={iconColor} name={icon} size={tokens.component.tabBar.icon} />
       </View>

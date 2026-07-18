@@ -3,6 +3,8 @@ Route: `/pet`, `/pet/health-record-edit`
 Atlas: `health/*`, `more/14-2-*` refs + Open Design V2 Pet boards
 Device sizes: iOS 390x844, Android 412x900, SE compact for native verification
 Allowed deviations: old standalone Health/Profile screens are folded into Pet.
+Breed and weight remain honestly unavailable until their existing deferred contracts land; Pet
+must still show the active puppy's real name and age, and must not render a no-op Add weight action.
 
 ## Anatomy
 
@@ -11,6 +13,8 @@ Allowed deviations: old standalone Health/Profile screens are folded into Pet.
   Pet as a single `Pet settings` entry, but it must not duplicate separate primary Puppy Profile or
   Quick Trackers rows.
 - Growth: current weight and add-weight affordance. No chart for beta.
+- Growth: show current weight only when the durable profile contract supplies it. Until then show
+  the missing value without an actionable Add weight control.
 - Health: visible block, not hidden behind a collapsed row.
 - Health rows: vaccinations, deworming/preventive care, vet visits, add record.
 - Minimal CRUD: add/edit record, delete with undo, status transition Template -> Confirmed -> Done.

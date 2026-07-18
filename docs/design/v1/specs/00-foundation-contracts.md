@@ -26,6 +26,10 @@ Allowed deviations: section is a contract/reference board, not a production rout
 - Status is never color-only.
 - Icon-only controls require labels.
 - Dynamic Type fallback for bottom nav labels: icon-only after AX threshold with full accessibility labels.
+- `AppText` variant ceilings are part of the primitive contract: display/title/headline `1.8`;
+  body/body-emphasis/callout/subheadline `2.0`; footnote/caption/label/code `1.5`.
+- Fixed chrome may use an explicit ceiling only when its full localized accessibility label,
+  role, and state remain available. Diary's fixed WeekStrip numerals use `1.5`.
 
 ## Notes / Deferred
 

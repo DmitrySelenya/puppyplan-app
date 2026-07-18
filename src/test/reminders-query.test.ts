@@ -2,13 +2,16 @@ import type { Reminder } from '@/contracts/supabase';
 import {
   createReminderCreateMutationOptions,
   createReminderDeleteMutationOptions,
+  createReminderScheduleUpdateMutationOptions,
   createReminderToggleMutationOptions,
   createRemindersQueryOptions,
   toReminderInsert,
   toReminderDeleteUpdate,
+  toReminderScheduleUpdate,
   toReminderToggleUpdate,
   type ReminderCreateDraft,
   type ReminderDeleteDraft,
+  type ReminderScheduleUpdateDraft,
   type ReminderToggleDraft,
 } from '@/lib/query/reminders';
 import {
@@ -309,6 +312,155 @@ describe('reminder query mutation contract', () => {
   });
 });
 
+describe('full schedule contract create/update (PUP-28 Phase 2)', () => {
+  const scheduleDraft: ReminderCreateDraft = {
+    householdId,
+    puppyId,
+    reminderName: 'ignored-when-schedule-present',
+    schedule: {
+      trackerId: 'feeding',
+      rule: {
+        repeat: 'weekdays',
+        time: '08:00',
+        amount: { value: 60, unit: 'g' },
+      },
+    },
+    timezone: 'Europe/Belgrade',
+    todayDate: '2026-07-02',
+    userId,
+  };
+
+  it('AC-REM-SCHED-1 builds a full-contract insert from a schedule draft', () => {
+    expect(toReminderInsert(scheduleDraft)).toEqual({
+      assigned_to: null,
+      created_by: userId,
+      enabled: true,
+      puppy_id: puppyId,
+      quiet_hours: null,
+      reminder_type: 'feeding',
+      schedule_rule: {
+        repeat: 'weekdays',
+        time: '08:00',
+        amount: { value: 60, unit: 'g' },
+      },
+      timezone: 'Europe/Belgrade',
+      trusted_sitter_visible: false,
+    });
+  });
+
+  it('AC-P4-4 persists one-off observation title and note in schedule_rule', () => {
+    expect(toReminderInsert({
+      ...scheduleDraft,
+      schedule: {
+        trackerId: 'observation',
+        rule: {
+          date: '2026-07-12',
+          note: 'Synthetic private context',
+          repeat: 'never',
+          time: '18:30',
+          title: 'Check calm greeting',
+        },
+      },
+    })).toEqual(expect.objectContaining({
+      reminder_type: 'observation',
+      schedule_rule: {
+        date: '2026-07-12',
+        note: 'Synthetic private context',
+        repeat: 'never',
+        time: '18:30',
+        title: 'Check calm greeting',
+      },
+    }));
+  });
+
+  it('AC-REM-SCHED-1 rejects an invalid schedule draft instead of inserting it', () => {
+    expect(() => toReminderInsert({
+      ...scheduleDraft,
+      schedule: {
+        trackerId: 'potty',
+        rule: { repeat: 'daily', time: '08:00', amount: { value: 5, unit: 'min' } },
+      },
+    })).toThrow();
+  });
+
+  it('AC-REM-SCHED-1 requires an explicit timezone with a schedule draft (no silent UTC)', () => {
+    expect(() => toReminderInsert({
+      ...scheduleDraft,
+      timezone: undefined,
+    })).toThrow('reminder_schedule_requires_timezone');
+  });
+
+  it('AC-REM-SCHED-2 updates a reminder schedule through the typed wrapper', async () => {
+    const client = createClient({ updateData: reminder });
+    const repository = createSupabaseReminderRepository({
+      ...client,
+      updateReminderSchedule: jest.fn().mockResolvedValue({ data: reminder, error: null }),
+    });
+
+    const update = toReminderScheduleUpdate(scheduleUpdateDraft);
+
+    await expect(repository.updateReminderSchedule(update)).resolves.toEqual(reminder);
+    expect(update).toEqual({
+      id: reminder.id,
+      puppy_id: puppyId,
+      reminder_type: 'feeding',
+      schedule_rule: {
+        repeat: 'weekdays',
+        time: '08:00',
+        amount: { value: 60, unit: 'g' },
+      },
+      timezone: 'Europe/Belgrade',
+    });
+  });
+
+  it('AC-REM-SCHED-2 surfaces schedule update failures instead of returning stale rows', async () => {
+    const client = createClient({});
+    const repository = createSupabaseReminderRepository({
+      ...client,
+      updateReminderSchedule: jest.fn().mockResolvedValue({ data: null, error: { code: '500' } }),
+    });
+
+    await expect(
+      repository.updateReminderSchedule(toReminderScheduleUpdate(scheduleUpdateDraft)),
+    ).rejects.toThrow('reminder_update_failed');
+  });
+
+  it('AC-REM-SCHED-3 invalidates reminder list and current Diary dashboard after schedule update', async () => {
+    const invalidateQueries = jest.fn().mockResolvedValue(undefined);
+    const updateReminderSchedule = jest.fn().mockResolvedValue(reminder);
+    const options = createReminderScheduleUpdateMutationOptions({
+      queryClient: { invalidateQueries },
+      repository: { updateReminderSchedule },
+    });
+
+    await expect(options.mutationFn(scheduleUpdateDraft)).resolves.toEqual(reminder);
+    await options.onSuccess(reminder, scheduleUpdateDraft);
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['reminders', householdId, puppyId],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['today', householdId, puppyId, '2026-07-02'],
+    });
+  });
+});
+
+const scheduleUpdateDraft: ReminderScheduleUpdateDraft = {
+  householdId,
+  puppyId,
+  reminderId: '00000000-0000-4000-8000-000000004004',
+  schedule: {
+    trackerId: 'feeding',
+    rule: {
+      repeat: 'weekdays',
+      time: '08:00',
+      amount: { value: 60, unit: 'g' },
+    },
+  },
+  timezone: 'Europe/Belgrade',
+  todayDate: '2026-07-02',
+};
+
 function createClient({
   deleteCount,
   deleteData,
@@ -319,6 +471,8 @@ function createClient({
   listError = null,
   updateData,
   updateError = null,
+  scheduleData,
+  scheduleError = null,
 }: Readonly<{
   deleteCount?: number | null;
   deleteData?: unknown;
@@ -329,9 +483,12 @@ function createClient({
   listError?: unknown;
   updateData?: unknown;
   updateError?: unknown;
+  scheduleData?: unknown;
+  scheduleError?: unknown;
 }>): jest.Mocked<ReminderClient> & Readonly<{
   deleteReminder: jest.Mock;
   updateReminderEnabled: jest.Mock;
+  updateReminderSchedule: jest.Mock;
 }> {
   return {
     deleteReminder: jest.fn().mockResolvedValue({
@@ -350,6 +507,10 @@ function createClient({
     updateReminderEnabled: jest.fn().mockResolvedValue({
       data: updateData,
       error: updateError,
+    }),
+    updateReminderSchedule: jest.fn().mockResolvedValue({
+      data: scheduleData,
+      error: scheduleError,
     }),
   };
 }

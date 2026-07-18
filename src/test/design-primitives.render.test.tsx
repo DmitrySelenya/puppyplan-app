@@ -7,7 +7,7 @@ import EventEmitter from 'react-native/Libraries/vendor/emitter/EventEmitter';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
-import { AppText } from '@/design/primitives/AppText';
+import { AppText, type AppTextVariant } from '@/design/primitives/AppText';
 import { AppIcon } from '@/design/primitives/AppIcon';
 import { Avatar } from '@/design/primitives/Avatar';
 import { Button } from '@/design/primitives/Button';
@@ -20,6 +20,7 @@ import { ListGroup } from '@/design/primitives/ListGroup';
 import { ListRow } from '@/design/primitives/ListRow';
 import { PendingDot } from '@/design/primitives/PendingDot';
 import { Screen } from '@/design/primitives/Screen';
+import { ScreenHeader } from '@/design/primitives/ScreenHeader';
 import { SegmentedControl } from '@/design/primitives/SegmentedControl';
 import { SectionHeader } from '@/design/primitives/SectionHeader';
 import { SheetHeader } from '@/design/primitives/SheetHeader';
@@ -45,6 +46,16 @@ import {
 import { configureDesignHaptics, haptic } from '@/design/haptics';
 import { motionPresets, pressedScaleStyle, useReducedMotion } from '@/design/motion';
 import { tokens } from '@/design/tokens';
+
+let mockFontScale = 1;
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({ fontScale: mockFontScale, height: 667, scale: 2, width: 375 }),
+  });
+});
 
 function primitiveTypeContractChecks() {
   return (
@@ -121,18 +132,73 @@ function SnackbarControllerProbe({
 }
 
 describe('design primitives', () => {
+  beforeEach(() => {
+    mockFontScale = 1;
+  });
+
   afterEach(() => {
     configureDesignHaptics(null);
   });
 
-  it('keeps AppText scalable for Dynamic Type readiness', () => {
+  it('AC-DT-1 AC-DT-3 AC-DT-4 applies the exact scalable ceiling policy to every text variant', () => {
+    const expectedCeilings: Record<AppTextVariant, number> = {
+      body: 2,
+      bodyEmph: 2,
+      callout: 2,
+      caption: 1.5,
+      code: 1.5,
+      display: 1.8,
+      footnote: 1.5,
+      headline: 1.8,
+      label: 1.5,
+      subheadline: 2,
+      title: 1.8,
+      title1: 1.8,
+      title2: 1.8,
+      title3: 1.8,
+    };
+
+    render(
+      <>
+        {Object.entries(expectedCeilings).map(([variant]) => (
+          <AppText key={variant} variant={variant as AppTextVariant}>{variant}</AppText>
+        ))}
+      </>,
+    );
+
+    for (const [variant, ceiling] of Object.entries(expectedCeilings)) {
+      const text = screen.getByText(variant);
+      expect(text.props.allowFontScaling).toBe(true);
+      expect(text.props.maxFontSizeMultiplier).toBe(ceiling);
+    }
+  });
+
+  it('AC-DT-1 AC-DT-3 preserves an explicit ceiling override without disabling scaling', () => {
+    render(<AppText maxFontSizeMultiplier={1.6}>Fixed chrome override</AppText>);
+
+    expect(screen.getByText('Fixed chrome override').props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      maxFontSizeMultiplier: 1.6,
+    }));
+  });
+
+  it('AC-DT-1 AC-DT-3 applies the body policy to the default variant', () => {
+    render(<AppText>Default body copy</AppText>);
+
+    expect(screen.getByText('Default body copy').props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      maxFontSizeMultiplier: 2,
+    }));
+  });
+
+  it('keeps AppText token styling for Dynamic Type readiness', () => {
     render(<AppText variant="title">Shell title</AppText>);
 
     const title = screen.getByText('Shell title');
     const style = StyleSheet.flatten(title.props.style);
 
     expect(title.props.allowFontScaling).toBe(true);
-    expect(title.props.maxFontSizeMultiplier).toBe(3);
+    expect(title.props.maxFontSizeMultiplier).toBe(1.8);
     expect(style.color).toBe(tokens.color.text.primary);
     expect(style.fontSize).toBe(tokens.typography.scale.title1.fontSize);
     expect(style.letterSpacing).toBe(0);
@@ -279,6 +345,9 @@ describe('design primitives', () => {
     expect(MIN_TOUCH_TARGET_BY_PLATFORM.android).toBe(48);
     expect(THUMB_TOUCH_TARGET).toBe(tokens.layout.tapTargetThumbZone);
     expect(tokens.layout.bottomInsetFab).toBe(120);
+    expect(SNACKBAR_BOTTOM_OFFSET_WITH_FAB).toBe(
+      tokens.space[2] + tokens.component.fab.size + tokens.space[4],
+    );
     expect(DEFAULT_HIT_SLOP).toEqual({ bottom: 10, left: 10, right: 10, top: 10 });
     expect(getHitSlopForVisualSize(tokens.icon.specs.size)).toEqual(DEFAULT_HIT_SLOP);
     expect(motionPresets.tap.durationMs).toBe(tokens.motion.duration.fast);
@@ -577,10 +646,124 @@ describe('design primitives', () => {
     const trackerStyle = flattenViewStyle(tracker.props.style);
 
     expect(buttonLabel.props.numberOfLines).toBeUndefined();
-    expect(buttonLabel.props.maxFontSizeMultiplier).toBe(3);
+    expect(buttonLabel.props.maxFontSizeMultiplier).toBe(1.8);
     expect(trackerStyle.height).toBeUndefined();
     expect(trackerStyle.minHeight).toBe(tokens.component.trackerTile.threeCol.height);
     expect(trackerStyle.width).toBe(tokens.component.trackerTile.threeCol.width);
+  });
+
+  it.each([
+    { fontScale: 1.999, expectedCompactWidth: undefined, expectedLines: 3, expectedThreeColumnWidth: tokens.component.trackerTile.threeCol.width },
+    { fontScale: 2, expectedCompactWidth: '100%', expectedLines: undefined, expectedThreeColumnWidth: '100%' },
+  ])('AC-DT-2A AC-DT-2B AC-DT-2E adapts tracker choices at fontScale $fontScale', ({
+    expectedCompactWidth,
+    expectedLines,
+    expectedThreeColumnWidth,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(
+      <>
+        <TrackerTile
+          accessibilityLabel="Feeding choice"
+          label="Feeding"
+          onPress={jest.fn()}
+          selected
+          size="threeColumn"
+          testID="fast-lane-choice"
+        />
+        <TrackerTile
+          accessibilityLabel="Observation routine choice"
+          label="Observation"
+          onPress={jest.fn()}
+          selected={false}
+          size="compact"
+          testID="routine-choice"
+        />
+      </>,
+    );
+
+    expect(flattenViewStyle(screen.getByTestId('fast-lane-choice').props.style).width)
+      .toBe(expectedThreeColumnWidth);
+    expect(flattenViewStyle(screen.getByTestId('routine-choice').props.style).width)
+      .toBe(expectedCompactWidth);
+    expect(screen.getByText('Feeding').props.numberOfLines).toBe(expectedLines);
+    expect(screen.getByText('Observation').props.numberOfLines).toBe(expectedLines);
+    expect(screen.getByRole('button', { name: 'Feeding choice' }).props.accessibilityState)
+      .toEqual(expect.objectContaining({ disabled: false, selected: true }));
+    expect(screen.getByRole('button', { name: 'Observation routine choice' }).props.accessibilityState)
+      .toEqual(expect.objectContaining({ disabled: false, selected: false }));
+  });
+
+  it.each([
+    { fontScale: 1.999, expectedDirection: 'row', expectedTitleLines: 1 },
+    { fontScale: 2, expectedDirection: 'column', expectedTitleLines: undefined },
+  ])('AC-DT-2C AC-DT-2E adapts ScreenHeader without losing controls at fontScale $fontScale', ({
+    expectedDirection,
+    expectedTitleLines,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(
+      <ScreenHeader
+        backLabel="More"
+        onBack={jest.fn()}
+        testID="adaptive-header"
+        title="Reminders"
+        trailing={<IconButton accessibilityLabel="Add reminder" icon={<View />} onPress={jest.fn()} />}
+      />,
+    );
+
+    expect(StyleSheet.flatten(screen.getByTestId('adaptive-header').props.style).flexDirection)
+      .toBe(expectedDirection);
+    expect(screen.getByRole('header', { name: 'Reminders' }).props.numberOfLines)
+      .toBe(expectedTitleLines);
+    expect(screen.getByRole('button', { name: 'More' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add reminder' })).toBeTruthy();
+  });
+
+  it.each([
+    { fontScale: 1.999, expectedDirection: 'row', expectedTitleLines: 2 },
+    { fontScale: 2, expectedDirection: 'column', expectedTitleLines: undefined },
+  ])('AC-DT-2C AC-DT-2E preserves a complete reminder row at fontScale $fontScale', ({
+    expectedDirection,
+    expectedTitleLines,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    const title = 'ОченьДлинноеНазваниеРутиныДляЩенка';
+    render(
+      <ListRow
+        accessibilityActions={[{ name: 'delete' }]}
+        accessibilityLabel={`${title}. Every day`}
+        onAccessibilityAction={jest.fn()}
+        onPress={jest.fn()}
+        subtitle="Every day"
+        title={title}
+        titleNumberOfLines={2}
+        trailing={(
+          <View
+            accessibilityLabel="Toggle routine"
+            accessibilityRole="switch"
+            accessibilityState={{ checked: true }}
+            testID="toggle-routine"
+          />
+        )}
+        variant="settings"
+      />,
+    );
+
+    const row = screen.getByRole('button', { name: `${title}. Every day` });
+    expect(flattenViewStyle(row.props.style).flexDirection).toBe(expectedDirection);
+    expect(screen.getByText(title).props.children).toBe(title);
+    expect(screen.getByText(title).props.numberOfLines).toBe(expectedTitleLines);
+    expect(row.props.accessibilityActions).toEqual([{ name: 'delete' }]);
+    expect(screen.getByTestId('toggle-routine', { includeHiddenElements: true }).props)
+      .toEqual(expect.objectContaining({
+        accessibilityLabel: 'Toggle routine',
+        accessibilityRole: 'switch',
+        accessibilityState: { checked: true },
+      }));
   });
 
   it('renders card, list row, tracker, status, segmented, and sheet surfaces from tokens', () => {
@@ -692,6 +875,56 @@ describe('design primitives', () => {
     const tabStyle = flattenViewStyle(vaccinationsTab.props.style);
 
     expect(tabStyle.paddingHorizontal).toBeLessThanOrEqual(tokens.space[1]);
+  });
+
+  it('AC-QN-FIX-COMPACT opts into intrinsic label width without changing equal-width defaults', () => {
+    render(
+      <>
+        <SegmentedControl
+          accessibilityLabel="Default distribution"
+          onValueChange={jest.fn()}
+          options={[
+            { label: 'Default first', value: 'first' },
+            { label: 'Default second', value: 'second' },
+          ]}
+          value="first"
+        />
+        <SegmentedControl
+          accessibilityLabel="Sleep event"
+          distribution="content"
+          onValueChange={jest.fn()}
+          options={[
+            { label: 'Start sleep', value: 'start' },
+            { label: 'Wake up', value: 'wake' },
+            { label: 'Add completed sleep', value: 'retrospective' },
+          ]}
+          value="start"
+        />
+      </>,
+    );
+
+    const defaultStyle = flattenViewStyle(
+      screen.getByRole('tab', { name: 'Default first' }).props.style,
+    );
+    const startStyle = flattenViewStyle(
+      screen.getByRole('tab', { name: 'Start sleep' }).props.style,
+    );
+    const completedStyle = flattenViewStyle(
+      screen.getByRole('tab', { name: 'Add completed sleep' }).props.style,
+    );
+
+    expect(defaultStyle.flex).toBe(1);
+    expect(defaultStyle.flexBasis).toBeUndefined();
+    // The opt-in auto basis keeps each label's intrinsic width in the allocation. Applying this
+    // globally would regress equal-width filters elsewhere in the design system.
+    expect(startStyle).toEqual(expect.objectContaining({
+      flexBasis: 'auto',
+      flexGrow: 1,
+    }));
+    expect(completedStyle).toEqual(expect.objectContaining({
+      flexBasis: 'auto',
+      flexGrow: 1,
+    }));
   });
 
   it('keeps health row metadata in the copy column so long titles are not squeezed', () => {

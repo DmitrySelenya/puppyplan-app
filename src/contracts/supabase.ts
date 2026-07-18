@@ -16,6 +16,7 @@ export const eventTypes = [
   'potty',
   'feeding',
   'sleep',
+  'observation',
   'walk',
   'zoomies',
   'training',
@@ -103,8 +104,7 @@ export const nonEmptyStringSchema = z.string().trim().min(1);
 export const boundedPayloadStringSchema = z.string().trim().min(1).max(64);
 export const hashSchema = z.string().regex(/^sha256:[A-Za-z0-9._:-]+$/);
 export const tokenLast4Schema = z.string().regex(/^[A-Za-z0-9_-]{4}$/);
-// Upgrade path: split into a z.union(...) when payload_version 2 is introduced.
-export const payloadVersionSchema = z.literal(1);
+export const payloadVersionSchema = z.union([z.literal(1), z.literal(2)]);
 export const positiveVersionSchema = z.number().int().positive();
 
 export const householdMembershipRoleSchema = z.enum(householdMembershipRoles);
@@ -142,25 +142,37 @@ export const puppyQuickTrackerIdsSchema = z.array(puppyQuickTrackerIdSchema)
     });
   });
 
+// Present when the event is a routine check-off: links the fact to its planned slot.
+// One nested object (not loose keys) so the linkage is atomic; absence = spontaneous log.
+export const reminderLinkPayloadSchema = z.object({
+  reminder_id: uuidSchema,
+  scheduled_for: timestampSchema,
+}).strict();
+
 export const pottyEventPayloadSchema = z.object({
   subtype: z.enum(['outside', 'inside', 'poop']),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 }).strict();
 
 export const feedingEventPayloadSchema = z.object({
   amount: z.enum(['meal', 'snack', 'water']),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 }).strict();
 
 export const sleepEventPayloadSchema = z.object({
   sleep_kind: z.enum(['nap', 'overnight']),
   duration_minutes: z.number().int().min(1).max(1440).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 }).strict();
 
 export const walkEventPayloadSchema = z.object({
   duration_minutes: z.number().int().min(1).max(1440).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 }).strict();
 
 export const zoomiesEventPayloadSchema = z.object({
   intensity: z.enum(['low', 'medium', 'high']).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
 }).strict();
 
 export const trainingEventPayloadSchema = z.object({
@@ -172,6 +184,72 @@ export const healthRecordReferenceEventPayloadSchema = z.object({
   health_record_id: uuidSchema,
 }).strict();
 
+export const eventNoteSchema = z.string().trim().min(1).max(500);
+export const eventTitleSchema = z.string().trim().min(1).max(80);
+export const sleepActionSchema = z.enum(['start', 'wake', 'retrospective']);
+
+const withEventNote = <T extends z.ZodRawShape>(shape: T) => z.object({
+  ...shape,
+  note: eventNoteSchema.optional(),
+}).strict();
+
+export const pottyEventPayloadSchemaV2 = withEventNote({
+  subtype: z.enum(['outside', 'inside', 'poop']),
+  reminder_link: reminderLinkPayloadSchema.optional(),
+});
+export const feedingEventPayloadSchemaV2 = withEventNote({
+  amount: z.enum(['meal', 'snack', 'water']),
+  reminder_link: reminderLinkPayloadSchema.optional(),
+});
+export const sleepEventPayloadSchemaV2 = withEventNote({
+  action: sleepActionSchema,
+  duration_minutes: z.number().int().min(1).max(1440).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
+}).superRefine((payload, context) => {
+  if (payload.action === 'retrospective' && payload.duration_minutes === undefined) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Retrospective sleep requires duration_minutes.',
+      path: ['duration_minutes'],
+    });
+  }
+
+  if (payload.action !== 'retrospective' && payload.duration_minutes !== undefined) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Start and wake sleep actions cannot include duration_minutes.',
+      path: ['duration_minutes'],
+    });
+  }
+});
+export const walkEventPayloadSchemaV2 = withEventNote({
+  duration_minutes: z.number().int().min(1).max(1440).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
+});
+export const zoomiesEventPayloadSchemaV2 = withEventNote({
+  intensity: z.enum(['low', 'medium', 'high']).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
+});
+export const trainingEventPayloadSchemaV2 = withEventNote({
+  topic: z.enum(['recall', 'sit', 'crate', 'leash', 'settling', 'other']),
+  duration_bucket: z.enum(['short', 'medium', 'long']).optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
+});
+export const observationEventPayloadSchema = z.object({
+  title: eventTitleSchema.optional(),
+  note: eventNoteSchema.optional(),
+}).strict().refine((payload) => payload.title !== undefined || payload.note !== undefined, {
+  message: 'Observation requires a title or note.',
+});
+export const observationEventPayloadSchemaV2 = z.object({
+  title: eventTitleSchema.optional(),
+  note: eventNoteSchema.optional(),
+  reminder_link: reminderLinkPayloadSchema.optional(),
+}).strict().refine((payload) => payload.title !== undefined || payload.note !== undefined, {
+  message: 'Observation requires a title or note.',
+});
+export const healthRecordReferenceEventPayloadSchemaV2 = healthRecordReferenceEventPayloadSchema;
+
 export const eventPayloadSchemas = {
   potty: pottyEventPayloadSchema,
   feeding: feedingEventPayloadSchema,
@@ -179,8 +257,20 @@ export const eventPayloadSchemas = {
   walk: walkEventPayloadSchema,
   zoomies: zoomiesEventPayloadSchema,
   training: trainingEventPayloadSchema,
+  observation: z.never(),
   health_record_reference: healthRecordReferenceEventPayloadSchema,
 } as const;
+
+export const eventPayloadSchemasV2 = {
+  potty: pottyEventPayloadSchemaV2,
+  feeding: feedingEventPayloadSchemaV2,
+  sleep: sleepEventPayloadSchemaV2,
+  walk: walkEventPayloadSchemaV2,
+  zoomies: zoomiesEventPayloadSchemaV2,
+  training: trainingEventPayloadSchemaV2,
+  observation: observationEventPayloadSchemaV2,
+  health_record_reference: healthRecordReferenceEventPayloadSchemaV2,
+} as const satisfies Record<EventType, z.ZodTypeAny>;
 
 export const householdRecordSchema = z.object({
   id: uuidSchema,
@@ -352,7 +442,7 @@ export const selectedTimelineShareScopeInputSchema = z.object({
   scope: z.literal('selected_timeline_range'),
   timeline_from: dateSchema,
   timeline_to: dateSchema,
-  selected_event_types: z.array(eventTypeSchema).min(1).nullable().optional(),
+  selected_event_types: z.array(eventTypeSchema).min(1),
 }).strict().refine((scope) => scope.timeline_from <= scope.timeline_to, {
   message: 'selected_timeline_range requires an ordered timeline_from/timeline_to range.',
   path: ['timeline_from'],
@@ -396,6 +486,14 @@ export const shareScopeRecordSchema = z.object({
   {
     message: 'selected_timeline_range requires an ordered timeline_from/timeline_to range.',
     path: ['timeline_from'],
+  },
+).refine(
+  (scope) =>
+    scope.scope !== 'selected_timeline_range'
+    || (scope.selected_event_types !== null && scope.selected_event_types.length > 0),
+  {
+    message: 'selected_timeline_range requires explicit selected_event_types.',
+    path: ['selected_event_types'],
   },
 );
 
@@ -523,6 +621,7 @@ export type ShareScope = z.infer<typeof shareScopeSchema>;
 export type EventType = z.infer<typeof eventTypeSchema>;
 export type PuppyQuickTrackerId = z.infer<typeof puppyQuickTrackerIdSchema>;
 export type EventPayloadSchemas = typeof eventPayloadSchemas;
+export type EventPayloadSchemasV2 = typeof eventPayloadSchemasV2;
 export type EventLogRecord = z.infer<typeof eventLogRecordSchema>;
 export type EventLogInsert = z.infer<typeof eventLogInsertSchema>;
 export type MinimalQuickLogQueueItem = z.infer<typeof minimalQuickLogQueueItemSchema>;
@@ -558,10 +657,12 @@ function isValidCalendarDate(value: string): boolean {
 }
 
 function validateEventPayload(
-  event: { event_type: EventType; payload: Record<string, JsonValue> },
+  event: { event_type: EventType; payload_version: 1 | 2; payload: Record<string, JsonValue> },
   context: z.RefinementCtx,
 ): void {
-  const payloadResult = eventPayloadSchemas[event.event_type].safeParse(event.payload);
+  const payloadResult = (event.payload_version === 1
+    ? eventPayloadSchemas
+    : eventPayloadSchemasV2)[event.event_type].safeParse(event.payload);
 
   if (payloadResult.success) {
     return;
@@ -573,4 +674,15 @@ function validateEventPayload(
       path: ['payload', ...issue.path],
     });
   }
+}
+
+export function parseEventPayload(
+  eventType: EventType,
+  payloadVersion: 1 | 2,
+  payload: unknown,
+): Record<string, JsonValue> {
+  const result = (payloadVersion === 1 ? eventPayloadSchemas : eventPayloadSchemasV2)[eventType]
+    .parse(payload);
+
+  return result as Record<string, JsonValue>;
 }

@@ -10,6 +10,7 @@ import {
 } from '@/contracts/quick-log';
 import type { ActivePuppyProfile } from '@/contracts/supabase';
 import { useAuth } from '@/lib/auth';
+import { useTodayDate } from '@/lib/datetime/today-date';
 
 import { useActivePuppyQuery } from './puppy';
 
@@ -22,7 +23,9 @@ export type ActiveCareContextResult = Readonly<{
 export function useActiveCareContext(): ActiveCareContextResult {
   const auth = useAuth();
   const puppyQuery = useActivePuppyQuery();
-  const todayDate = getTodayDate();
+  // Overnight routines cross midnight with the app open, so the day has to tick rather than be
+  // frozen at mount.
+  const todayDate = useTodayDate();
 
   return useMemo(() => {
     if (auth.status === 'loading' || puppyQuery.isLoading) {
@@ -89,12 +92,4 @@ function selectedTrackerIdsOrDefault(
   return trackerIds && trackerIds.length > 0
     ? trackerIds
     : defaultQuickLogTrackerIds;
-}
-
-export function getTodayDate(now: Date = new Date()): string {
-  const year = String(now.getFullYear()).padStart(4, '0');
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
 }

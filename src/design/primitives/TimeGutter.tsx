@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { designFontFamilies } from '@/design/fonts';
 import { AppText } from '@/design/primitives/AppText';
 
-const GUTTER_WIDTH = 46;
+const GUTTER_WIDTH = 62;
 
 export type TimeGutterProps = {
   /** A clock time such as "7:15 am"; the meridiem is rendered smaller below. */
@@ -17,12 +17,25 @@ export function TimeGutter({ time, testID }: TimeGutterProps) {
   const [clock, meridiem] = normalizedTime.split(/\s+/, 2);
 
   return (
-    <View style={styles.gutter} testID={testID}>
-      <AppText numeric style={styles.clock} tone="secondary" variant="footnote">
+    <View
+      style={styles.gutter}
+      testID={testID}>
+      <AppText
+        maxFontSizeMultiplier={1.3}
+        numeric
+        numberOfLines={1}
+        style={styles.clock}
+        tone="secondary"
+        variant="footnote">
         {clock}
       </AppText>
       {meridiem ? (
-        <AppText style={styles.meridiem} tone="secondary" variant="caption">
+        <AppText
+          maxFontSizeMultiplier={1.3}
+          numberOfLines={1}
+          style={styles.meridiem}
+          tone="secondary"
+          variant="caption">
           {meridiem}
         </AppText>
       ) : null}

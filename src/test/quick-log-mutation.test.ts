@@ -19,9 +19,11 @@ import type {
 } from '@/lib/queue';
 import {
   applyQuickLogQueueTransition,
+  createManualQuickLogRetry,
   resolveQuickLogInFlightSuccess,
 } from '@/lib/queue';
 import type { EventLogInsert, EventLogRecord, JsonValue } from '@/contracts/supabase';
+import { createReminderCheckOffClientEventId } from '@/contracts/reminders';
 
 const householdId = '00000000-0000-4000-8000-000000000201';
 const puppyId = '00000000-0000-4000-8000-000000000202';
@@ -84,6 +86,40 @@ describe('Quick Log mutation lifecycle', () => {
         created_by: createdBy,
       }),
     ]);
+  });
+
+  it('threads a routine check-off link into the enqueued and inserted event payload (PUP-28)', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const reminderId = '00000000-0000-4000-8000-000000000301';
+    const scheduledFor = '2026-05-26T08:00:00.000Z';
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+    const variables = {
+      householdId,
+      puppyId,
+      trackerId: 'feeding' as const,
+      occurredAt,
+      todayDate,
+      reminderLink: { reminderId, scheduledFor },
+    };
+
+    await options.onMutate?.(variables);
+    await options.mutationFn?.(variables);
+
+    const expectedLink = { reminder_id: reminderId, scheduled_for: scheduledFor };
+    expect(queue.items.get(clientEventId)?.payload).toMatchObject({ reminder_link: expectedLink });
+    expect(events.inserts[0]?.payload).toMatchObject({
+      amount: 'meal',
+      reminder_link: expectedLink,
+    });
   });
 
   it('uses a caller-provided client id when the sheet needs an immediate details target', async () => {
@@ -165,6 +201,54 @@ describe('Quick Log mutation lifecycle', () => {
       event_type: 'potty',
       payload: {
         subtype: 'outside',
+      },
+    });
+  });
+
+  it('AC-2/AC-5 enqueues a backdated detailed observation unchanged before send', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const options = createQuickLogMutationOptions({
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    });
+    const variables = {
+      detailDraft: {
+        note: 'Synthetic private context',
+        occurredAt,
+        title: 'Calm greeting',
+        trackerId: 'observation' as const,
+      },
+      householdId,
+      occurredAt,
+      puppyId,
+      trackerId: 'observation' as const,
+      todayDate,
+    };
+
+    const context = await options.onMutate(variables);
+    await expect(options.mutationFn(variables)).resolves.toMatchObject({
+      event_type: 'observation',
+      occurred_at: occurredAt,
+      payload_version: 2,
+      payload: {
+        note: 'Synthetic private context',
+        title: 'Calm greeting',
+      },
+    });
+
+    expect(context.queuedItem).toMatchObject({
+      event_type: 'observation',
+      occurred_at: occurredAt,
+      payload_version: 2,
+      payload: {
+        note: 'Synthetic private context',
+        title: 'Calm greeting',
       },
     });
   });
@@ -754,6 +838,79 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
+  it('AC-P1-RECOVERY-10 keeps a newer delete intent when an older ordinary success finalizer resumes', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    let releaseResolvedSuccess: (() => void) | undefined;
+    let signalResolvedSuccess: (() => void) | undefined;
+    const resolvedSuccessReached = new Promise<void>((resolve) => {
+      signalResolvedSuccess = resolve;
+    });
+    queue.resolveSuccessGate = new Promise<void>((resolve) => {
+      releaseResolvedSuccess = resolve;
+    });
+    queue.onResolvedSuccess = () => signalResolvedSuccess?.();
+    const options = createQuickLogMutationOptions({
+      createClientEventId: () => clientEventId,
+      events,
+      getSessionUserId: () => createdBy,
+      now: () => now,
+      queryClient,
+      queue,
+    });
+    const variables = createMutationVariables();
+    const context = await options.onMutate(variables);
+    const inserted = await options.mutationFn(variables);
+    const olderFinalizer = options.onSuccess(inserted, variables, context);
+
+    await resolvedSuccessReached;
+    expect(queue.items.get(clientEventId)?.state).toBe('server_confirmed');
+
+    await deleteSyncedQuickLogEvent({
+      actorId: createdBy,
+      clientEventId,
+      eventType: 'feeding',
+      householdId,
+      now: () => now,
+      puppyId,
+      queryClient,
+      queueRef: { current: queue },
+      todayDate,
+    });
+    expect(queue.items.get(clientEventId)?.state).toBe('deleted_before_sync');
+
+    releaseResolvedSuccess?.();
+    await olderFinalizer;
+
+    expect(queue.items.get(clientEventId)).toMatchObject({
+      client_event_id: clientEventId,
+      state: 'deleted_before_sync',
+    });
+    expect(readTimelineRows(queryClient)).toEqual([
+      expect.objectContaining({
+        client_event_id: clientEventId,
+        localSync: expect.objectContaining({ state: 'deleted_before_sync' }),
+      }),
+    ]);
+
+    await retryLocalQuickLogEvent({
+      actorId: createdBy,
+      clientEventId,
+      events,
+      queryClient,
+      queueRef: { current: queue },
+      recoverySurface: 'manual_retry',
+    });
+
+    expect(events.inserts).toHaveLength(1);
+    expect(events.tombstones).toEqual([
+      expect.objectContaining({ clientEventId, householdId }),
+    ]);
+    expect(queue.items.has(clientEventId)).toBe(false);
+    expect(readTimelineRows(queryClient)).toEqual([]);
+  });
+
   it('AC-DIARY-DELETE-UNDO-3 restores synced server rows through the typed event repository and invalidates Diary history', async () => {
     const queryClient = createTestQueryClient();
     const events = new FakeQuickLogEventsRepository();
@@ -845,7 +1002,7 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
-  it('saves Quick Log detail drafts to the synced event payload and updates cached rows', async () => {
+  it('AC-6 saves synced details with payload version and occurred time, then updates cache', async () => {
     const queryClient = createTestQueryClient();
     const events = new FakeQuickLogEventsRepository();
     const invalidations: unknown[] = [];
@@ -861,6 +1018,8 @@ describe('Quick Log mutation lifecycle', () => {
       clientEventId,
       draft: {
         amount: 'water',
+        note: 'Synthetic private context',
+        occurredAt: '2026-05-26T07:40:00.000Z',
         trackerId: 'feeding',
       },
       eventType: 'feeding',
@@ -876,9 +1035,12 @@ describe('Quick Log mutation lifecycle', () => {
         clientEventId,
         eventType: 'feeding',
         householdId,
+        occurredAt: '2026-05-26T07:40:00.000Z',
         payload: {
           amount: 'water',
+          note: 'Synthetic private context',
         },
+        payloadVersion: 2,
       },
     ]);
     expect(readTimelineRows(queryClient)).toEqual([
@@ -886,7 +1048,10 @@ describe('Quick Log mutation lifecycle', () => {
         client_event_id: clientEventId,
         payload: {
           amount: 'water',
+          note: 'Synthetic private context',
         },
+        payload_version: 2,
+        occurred_at: '2026-05-26T07:40:00.000Z',
       }),
     ]);
     expect(invalidations).toEqual([
@@ -894,6 +1059,58 @@ describe('Quick Log mutation lifecycle', () => {
       { queryKey: queryKeys.events.timelineRoot(householdId, puppyId), exact: false },
       { queryKey: queryKeys.puppy.summary(householdId, puppyId), exact: true },
       { queryKey: queryKeys.events.duplicateWarningSource(householdId, puppyId, 'feeding'), exact: true },
+    ]);
+  });
+
+  it('AC-6 updates pending-local details through the same contract without a server write', async () => {
+    const queryClient = createTestQueryClient();
+    const events = new FakeQuickLogEventsRepository();
+    const queue = new FakeQuickLogQueueStorage();
+    queue.items.set(clientEventId, createQueueItem({
+      client_event_id: clientEventId,
+      state: 'pending_local',
+    }));
+    queryClient.setQueryData(queryKeys.events.timelineRoot(householdId, puppyId), [
+      {
+        ...serverRow(),
+        localSync: {
+          category: null,
+          retryCount: 0,
+          state: 'pending_local' as const,
+        },
+      },
+    ]);
+
+    await saveQuickLogDetailsDraft({
+      clientEventId,
+      draft: {
+        amount: 'water',
+        note: 'Synthetic pending context',
+        occurredAt: '2026-05-26T07:40:00.000Z',
+        trackerId: 'feeding',
+      },
+      eventType: 'feeding',
+      events,
+      householdId,
+      puppyId,
+      queryClient,
+      queue,
+      todayDate,
+    });
+
+    expect(events.payloadUpdates).toEqual([]);
+    expect(queue.items.get(clientEventId)).toMatchObject({
+      occurred_at: '2026-05-26T07:40:00.000Z',
+      payload: { amount: 'water', note: 'Synthetic pending context' },
+      payload_version: 2,
+      state: 'pending_local',
+    });
+    expect(readTimelineRows(queryClient)).toEqual([
+      expect.objectContaining({
+        occurred_at: '2026-05-26T07:40:00.000Z',
+        payload: { amount: 'water', note: 'Synthetic pending context' },
+        payload_version: 2,
+      }),
     ]);
   });
 
@@ -1050,12 +1267,17 @@ describe('Quick Log mutation lifecycle', () => {
     });
   });
 
-  it('does not invalidate event-derived queries after late-success cleanup fails', async () => {
+  it('AC-P3-ERROR-1 reports create cleanup failure without invalidating event-derived queries', async () => {
     const queryClient = createTestQueryClient();
     const queue = new FakeQuickLogQueueStorage();
     const events = new FakeQuickLogEventsRepository();
+    const privateMarker = 'private-create-cleanup-marker';
     const invalidations: unknown[] = [];
+    const observability = {
+      captureException: jest.fn(),
+    };
     const options = createQuickLogMutationOptions({
+      observability,
       queryClient,
       queue,
       events,
@@ -1078,10 +1300,7 @@ describe('Quick Log mutation lifecycle', () => {
       ...queuedItem,
       state: 'sending',
     });
-    events.tombstoneError = {
-      kind: 'network_unavailable',
-      retryAfterMs: null,
-    };
+    events.tombstoneError = new Error(privateMarker);
 
     await removeQuickLogOptimisticEvent({
       queryClient,
@@ -1102,6 +1321,113 @@ describe('Quick Log mutation lifecycle', () => {
     expect(queue.items.get(clientEventId)).toMatchObject({
       state: 'deleted_before_sync',
     });
+    expect(observability.captureException).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Quick Log queue recovery failed' }),
+      expect.objectContaining({
+        area: 'quick_log_queue',
+        operation: 'save_cleanup',
+      }),
+    );
+    expect(JSON.stringify(observability.captureException.mock.calls)).not.toContain(privateMarker);
+    expect(JSON.stringify(observability.captureException.mock.calls)).not.toContain(clientEventId);
+  });
+
+  it('AC-P3-ERROR-2 owns a create onError queue-read rejection without adopting a fallback row or effects', async () => {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+    const events = new FakeQuickLogEventsRepository();
+    const saveFailure = Object.assign(new Error('Synthetic insert unavailable'), {
+      kind: 'network_unavailable',
+      retryAfterMs: null,
+    });
+    const privateReadMarker = 'synthetic-private-create-on-error-read-marker';
+    const readFailure = new Error(privateReadMarker);
+    const analytics = {
+      trackQuickLogEvent: jest.fn(),
+    };
+    const observability = {
+      captureException: jest.fn(),
+    };
+    const invalidations: unknown[] = [];
+    jest.spyOn(queryClient, 'invalidateQueries').mockImplementation(async (filters) => {
+      invalidations.push(filters);
+    });
+    const retryableTransition = jest.spyOn(queue, 'markFailedRetryable');
+    const permanentTransition = jest.spyOn(queue, 'markFailedPermanent');
+    jest.spyOn(queue, 'getByClientEventId').mockRejectedValue(readFailure);
+    events.insertError = saveFailure;
+    const mutation = new MutationObserver(queryClient, createQuickLogMutationOptions({
+      analytics,
+      observability,
+      queryClient,
+      queue,
+      events,
+      getSessionUserId: () => createdBy,
+      createClientEventId: () => clientEventId,
+      now: () => now,
+    }));
+    const unhandledRejections: unknown[] = [];
+    const onUnhandledRejection = (reason: unknown): void => {
+      unhandledRejections.push(reason);
+    };
+    process.on('unhandledRejection', onUnhandledRejection);
+
+    try {
+      const outcome = await mutation.mutate(createMutationVariables()).then(
+        (data) => ({ data, status: 'resolved' as const }),
+        (error: unknown) => ({ error, status: 'rejected' as const }),
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(outcome).toEqual({ error: saveFailure, status: 'rejected' });
+      expect(queue.items.get(clientEventId)).toMatchObject({
+        client_event_id: clientEventId,
+        created_by: createdBy,
+        last_error_category: null,
+        retry_count: 0,
+        state: 'sending',
+      });
+      expect(readTimelineRows(queryClient)).toEqual([
+        expect.objectContaining({
+          client_event_id: clientEventId,
+          localSync: {
+            category: null,
+            retryCount: 0,
+            state: 'pending_local',
+          },
+        }),
+      ]);
+      expect(retryableTransition).not.toHaveBeenCalled();
+      expect(permanentTransition).not.toHaveBeenCalled();
+      expect(events.inserts).toHaveLength(1);
+      expect(analytics.trackQuickLogEvent.mock.calls).toEqual([[
+        {
+          name: 'pending_quick_log_created',
+          properties: {
+            connection_state: 'unknown',
+            event_type: 'feeding',
+          },
+        },
+      ]]);
+      expect(invalidations).toEqual([]);
+      expect(observability.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Quick Log queue recovery failed' }),
+        expect.objectContaining({
+          area: 'quick_log_queue',
+          operation: expect.any(String),
+        }),
+      );
+      expect(JSON.stringify(observability.captureException.mock.calls)).not.toContain(
+        privateReadMarker,
+      );
+      expect(JSON.stringify(observability.captureException.mock.calls)).not.toContain(
+        clientEventId,
+      );
+      expect(unhandledRejections).toEqual([]);
+    } finally {
+      process.removeListener('unhandledRejection', onUnhandledRejection);
+    }
   });
 
   it('keeps an undone row hidden after cleanup failure settles with an active Timeline observer', async () => {
@@ -1370,22 +1696,49 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
   });
 
-  it('manual retry resends the existing queued event and emits recovery telemetry', async () => {
+  it('AC-F1-4: manual retry replaces a permanent local failure with the first writer row', async () => {
     const queryClient = createTestQueryClient();
     const queue = new FakeQuickLogQueueStorage();
     const events = new FakeQuickLogEventsRepository();
+    const reminderId = '00000000-0000-4000-8000-000000000301';
+    const scheduledFor = '2026-05-26T07:45:00.000Z';
+    const observationClientEventId = createReminderCheckOffClientEventId({
+      reminderId,
+      scheduledFor,
+    });
+    const observationPayload = {
+      title: 'Synthetic routine',
+      reminder_link: {
+        reminder_id: reminderId,
+        scheduled_for: scheduledFor,
+      },
+    };
+    const firstWriterRow = {
+      ...serverRow(),
+      client_event_id: observationClientEventId,
+      event_type: 'observation' as const,
+      id: '00000000-0000-4000-8000-000000000208',
+      occurred_at: '2026-05-26T07:59:00.000Z',
+      payload: observationPayload,
+      payload_version: 2 as const,
+    };
     const analytics = {
       trackQuickLogEvent: jest.fn(),
     };
 
-    queue.items.set(clientEventId, createQueueItem({
-      state: 'failed_retryable',
-      last_error_category: 'network_unavailable',
-      retry_count: 1,
+    events.insertRow = firstWriterRow;
+    queue.items.set(observationClientEventId, createQueueItem({
+      client_event_id: observationClientEventId,
+      event_type: 'observation',
+      state: 'failed_permanent',
+      last_error_category: 'invalid_payload',
+      payload: observationPayload,
+      payload_version: 2,
+      retry_count: 3,
     }));
 
     await retryLocalQuickLogEvent({
-      clientEventId,
+      clientEventId: observationClientEventId,
       events,
       analytics,
       now: () => now,
@@ -1401,7 +1754,7 @@ describe('Quick Log mutation lifecycle', () => {
 
     expect(queue.manualRetryCalls).toEqual([
       {
-        clientEventId,
+        clientEventId: observationClientEventId,
         options: expect.objectContaining({
           recoverySurface: 'manual_retry',
         }),
@@ -1409,31 +1762,33 @@ describe('Quick Log mutation lifecycle', () => {
     ]);
     expect(events.inserts).toEqual([
       expect.objectContaining({
-        client_event_id: clientEventId,
+        client_event_id: observationClientEventId,
         created_by: createdBy,
-        event_type: 'feeding',
+        event_type: 'observation',
+        payload: observationPayload,
+        payload_version: 2,
       }),
     ]);
-    expect(queue.items.has(clientEventId)).toBe(false);
+    expect(queue.items.has(observationClientEventId)).toBe(false);
     expect(readTimelineRows(queryClient)).toEqual([
-      expect.objectContaining({
-        client_event_id: clientEventId,
+      {
+        ...firstWriterRow,
         localSync: undefined,
-      }),
+      },
     ]);
     expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
       name: 'offline_or_failed_log_recovered',
       properties: {
-        event_type: 'feeding',
+        event_type: 'observation',
         recovery_surface: 'manual_retry',
-        retry_count_bucket: 'one',
+        retry_count_bucket: 'three_or_more',
       },
     });
     expect(analytics.trackQuickLogEvent).toHaveBeenCalledWith({
       name: 'event_logged',
       properties: {
         connection_state: 'unknown',
-        event_type: 'feeding',
+        event_type: 'observation',
         save_result: 'server_confirmed',
         source_surface: 'timeline',
       },
@@ -1482,6 +1837,178 @@ describe('Quick Log mutation lifecycle', () => {
       createClientEventId: () => clientEventId,
       now: () => now,
     });
+  });
+});
+
+describe('re-checking a routine the owner had un-checked', () => {
+  const reminderId = '00000000-0000-4000-8000-000000000401';
+  const scheduledFor = '2026-05-26T08:00:00.000Z';
+  const checkOffId = createReminderCheckOffClientEventId({ reminderId, scheduledFor });
+  const reminderLink = { reminder_id: reminderId, scheduled_for: scheduledFor };
+
+  function checkOffVariables() {
+    return {
+      clientEventId: checkOffId,
+      detailDraft: { amount: 'meal' as const, trackerId: 'feeding' as const },
+      householdId,
+      occurredAt,
+      puppyId,
+      reminderLink: { reminderId, scheduledFor },
+      todayDate,
+      trackerId: 'feeding' as const,
+    };
+  }
+
+  function tombstoneRefusal(): Error {
+    // What `insertEvent` throws when the colliding row is a tombstone it refuses to resurrect.
+    const failure = new Error('Quick Log Supabase event request failed') as Error & {
+      kind: string;
+      retryAfterMs: number | null;
+    };
+
+    failure.kind = 'invalid_payload';
+    failure.retryAfterMs = null;
+
+    return failure;
+  }
+
+  function harness(events: FakeQuickLogEventsRepository) {
+    const queryClient = createTestQueryClient();
+    const queue = new FakeQuickLogQueueStorage();
+
+    return {
+      queue,
+      queryClient,
+      options: createQuickLogMutationOptions({
+        createClientEventId: () => checkOffId,
+        events,
+        getSessionUserId: () => createdBy,
+        now: () => now,
+        queryClient,
+        queue,
+      }),
+    };
+  }
+
+  it('AC-P33-UNCHECK-3 restores the slot row instead of leaving the re-check failed', async () => {
+    const events = new FakeQuickLogEventsRepository();
+    const { options } = harness(events);
+
+    // The owner took this mark off, so the slot's row is tombstoned under the same deterministic
+    // id. `insertEvent` refuses to resurrect it by design (af63f2c keeps a tombstoned collision
+    // visibly failed), which on its own would burn the slot forever.
+    events.insertError = tombstoneRefusal();
+    events.existingRow = {
+      ...serverRow(),
+      client_event_id: checkOffId,
+      deleted_at: now,
+      payload: { reminder_link: reminderLink },
+    };
+
+    const variables = checkOffVariables();
+    await options.onMutate?.(variables);
+
+    await expect(options.mutationFn?.(variables)).resolves.toMatchObject({
+      deleted_at: null,
+    });
+    expect(events.restores).toEqual([{ clientEventId: checkOffId, householdId }]);
+  });
+
+  it('AC-P33-UNCHECK-3 costs no extra round trip when the slot is free', async () => {
+    const events = new FakeQuickLogEventsRepository();
+    const { options } = harness(events);
+    const variables = checkOffVariables();
+
+    await options.onMutate?.(variables);
+    await options.mutationFn?.(variables);
+
+    expect(events.inserts).toHaveLength(1);
+    // The restore rides on the insert's own failure, so the common check-off never looks the row up.
+    expect(events.selects).toEqual([]);
+    expect(events.restores).toEqual([]);
+  });
+
+  it('AC-P33-UNCHECK-4 leaves a spontaneous tombstoned collision visibly failed', async () => {
+    const events = new FakeQuickLogEventsRepository();
+    const { options } = harness(events);
+
+    events.insertError = tombstoneRefusal();
+    events.existingRow = {
+      ...serverRow(),
+      client_event_id: clientEventId,
+      deleted_at: now,
+      payload: {},
+    };
+
+    // No reminder link: nothing here says "put this slot's mark back", so the refusal stands.
+    const variables = {
+      clientEventId,
+      householdId,
+      occurredAt,
+      puppyId,
+      todayDate,
+      trackerId: 'feeding' as const,
+    };
+    await options.onMutate?.(variables);
+
+    await expect(options.mutationFn?.(variables)).rejects.toMatchObject({
+      kind: 'invalid_payload',
+    });
+    expect(events.restores).toEqual([]);
+  });
+
+  it('AC-P33-UNCHECK-5 keeps an offline check-off in the durable queue instead of dropping it', async () => {
+    const events = new FakeQuickLogEventsRepository();
+    const { options, queue, queryClient } = harness(events);
+    const offline = Object.assign(new TypeError('Network request failed'), {
+      kind: 'network_unavailable',
+      retryAfterMs: null,
+    });
+
+    // Offline, every call throws — including the lookup the restore path would want. The tap must
+    // still survive as a queued, retryable item rather than vanishing.
+    events.insertError = offline;
+    events.selectError = offline;
+
+    const variables = checkOffVariables();
+    const context = await options.onMutate?.(variables);
+    const error = await options.mutationFn?.(variables).catch((thrown: unknown) => thrown);
+    await options.onError?.(error, variables, context);
+
+    expect(queue.items.get(checkOffId)).toMatchObject({
+      client_event_id: checkOffId,
+      state: 'failed_retryable',
+    });
+    expect(queryClient.getQueryData(
+      queryKeys.events.timelineRoot(householdId, puppyId),
+    )).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        client_event_id: checkOffId,
+        localSync: expect.objectContaining({ state: 'failed_retryable' }),
+      }),
+    ]));
+  });
+
+  it('AC-P33-UNCHECK-5 surfaces a failed restore rather than reporting the mark as back on', async () => {
+    const events = new FakeQuickLogEventsRepository();
+    const { options } = harness(events);
+
+    events.insertError = tombstoneRefusal();
+    events.existingRow = {
+      ...serverRow(),
+      client_event_id: checkOffId,
+      deleted_at: now,
+      payload: { reminder_link: reminderLink },
+    };
+    events.restoreError = Object.assign(new TypeError('Network request failed'), {
+      kind: 'network_unavailable',
+      retryAfterMs: null,
+    });
+
+    const variables = checkOffVariables();
+    await options.onMutate?.(variables);
+
+    await expect(options.mutationFn?.(variables)).rejects.toBeInstanceOf(Error);
   });
 });
 
@@ -1629,17 +2156,40 @@ class FakeQuickLogEventsRepository {
     householdId: string;
     clientEventId: string;
     eventType: string;
+    occurredAt?: string;
     payload: Record<string, JsonValue>;
+    payloadVersion?: 1 | 2;
   }[] = [];
   public readonly restores: {
     householdId: string;
     clientEventId: string;
   }[] = [];
+  public readonly selects: {
+    householdId: string;
+    clientEventId: string;
+  }[] = [];
   public insertError: unknown = null;
   public insertGate: Promise<void> | null = null;
+  public insertRow: EventLogRecord | null = null;
+  public existingRow: EventLogRecord | null = null;
   public restoreRow: EventLogRecord | null = null;
   public tombstoneError: unknown = null;
   public payloadUpdateError: unknown = null;
+  public selectError: unknown = null;
+  public restoreError: unknown = null;
+
+  public async selectExistingEvent(input: {
+    householdId: string;
+    clientEventId: string;
+  }): Promise<EventLogRecord | null> {
+    this.selects.push(input);
+
+    if (this.selectError !== null) {
+      throw this.selectError;
+    }
+
+    return this.existingRow;
+  }
 
 	  public async insertEvent(insert: EventLogInsert): Promise<EventLogRecord> {
 	    this.inserts.push(insert);
@@ -1652,7 +2202,7 @@ class FakeQuickLogEventsRepository {
       throw this.insertError;
     }
 
-	    return {
+	    return this.insertRow ?? {
 	      ...serverRow(),
 	      ...insert,
 	      version: 1,
@@ -1685,6 +2235,10 @@ class FakeQuickLogEventsRepository {
   }): Promise<EventLogRecord> {
     this.restores.push(input);
 
+    if (this.restoreError !== null) {
+      throw this.restoreError;
+    }
+
     return this.restoreRow ?? {
       ...serverRow(),
       deleted_at: null,
@@ -1696,7 +2250,9 @@ class FakeQuickLogEventsRepository {
     householdId: string;
     clientEventId: string;
     eventType: string;
+    occurredAt?: string;
     payload: Record<string, JsonValue>;
+    payloadVersion?: 1 | 2;
   }): Promise<EventLogRecord> {
     this.payloadUpdates.push(input);
 
@@ -1707,7 +2263,9 @@ class FakeQuickLogEventsRepository {
     return {
       ...serverRow(),
       event_type: input.eventType as EventLogRecord['event_type'],
+      occurred_at: input.occurredAt ?? serverRow().occurred_at,
       payload: input.payload,
+      payload_version: input.payloadVersion ?? 1,
       updated_at: now,
     };
   }
@@ -1715,8 +2273,9 @@ class FakeQuickLogEventsRepository {
 
 class FakeQuickLogQueueStorage implements Pick<
   QuickLogQueueStorage,
-  'enqueue' | 'getByClientEventId' | 'markSending' | 'markFailedRetryable' | 'markFailedPermanent'
-  | 'markDeletedBeforeSync' | 'manualRetry' | 'resolveInFlightSuccess' | 'remove'
+  'initialize' | 'enqueue' | 'getByClientEventId' | 'list' | 'claimNextReadyToSend'
+  | 'markSending' | 'markFailedRetryable' | 'markFailedPermanent'
+  | 'markDeletedBeforeSync' | 'manualRetry' | 'resolveInFlightSuccess' | 'remove' | 'updateDetails'
 > {
   public readonly items = new Map<string, QuickLogStoredQueueItem>();
   public readonly manualRetryCalls: {
@@ -1725,6 +2284,23 @@ class FakeQuickLogQueueStorage implements Pick<
   }[] = [];
   public enqueueGate: Promise<void> | null = null;
   public enqueueError: unknown = null;
+  public onResolvedSuccess: (() => void) | null = null;
+  public resolveSuccessGate: Promise<void> | null = null;
+
+  public async initialize(): Promise<void> {
+    return undefined;
+  }
+
+  public async list(
+    filter?: Readonly<{ states?: readonly QuickLogStoredQueueItem['state'][] }>,
+  ): Promise<QuickLogStoredQueueItem[]> {
+    return [...this.items.values()].filter((item) =>
+      filter?.states === undefined || filter.states.includes(item.state));
+  }
+
+  public async claimNextReadyToSend(): Promise<QuickLogStoredQueueItem | null> {
+    return null;
+  }
 
   public async enqueue(input: unknown): Promise<QuickLogStoredQueueItem> {
     if (this.enqueueError !== null) {
@@ -1744,6 +2320,41 @@ class FakeQuickLogQueueStorage implements Pick<
 
   public async getByClientEventId(clientEventIdValue: string): Promise<QuickLogStoredQueueItem | null> {
     return this.items.get(clientEventIdValue) ?? null;
+  }
+
+  public enqueueDeletedBeforeSync = async (
+    input: unknown,
+    options: { now: string; retryAfterAt?: string },
+  ): Promise<QuickLogStoredQueueItem> => {
+    const item = createQueueItem({
+      ...(input as Partial<QuickLogStoredQueueItem>),
+      last_error_category: null,
+      retry_after_at: options.retryAfterAt ?? null,
+      retry_count: 0,
+      state: 'deleted_before_sync',
+      updated_at: options.now,
+    });
+
+    this.items.set(item.client_event_id, item);
+    return item;
+  };
+
+  public async updateDetails(
+    clientEventIdValue: string,
+    options: {
+      now: string;
+      occurredAt: string;
+      payload: Record<string, JsonValue>;
+      payloadVersion: 1 | 2;
+    },
+  ): Promise<QuickLogStoredQueueItem> {
+    return this.write(clientEventIdValue, (item) => ({
+      ...item,
+      occurred_at: options.occurredAt,
+      payload: options.payload,
+      payload_version: options.payloadVersion,
+      updated_at: options.now,
+    }));
   }
 
   public async markSending(
@@ -1810,12 +2421,15 @@ class FakeQuickLogQueueStorage implements Pick<
       options,
     });
 
-    return {
-      client_event_id: clientEventIdValue,
-      bypasses_delay: true as const,
-      recovery_surface: options.recoverySurface,
-      item: await this.markSending(clientEventIdValue, options),
-    };
+    const item = this.items.get(clientEventIdValue);
+    if (!item) {
+      throw new Error('Missing queue item');
+    }
+
+    const retry = createManualQuickLogRetry(item, options);
+    this.items.set(clientEventIdValue, retry.item);
+
+    return retry;
   }
 
   public async resolveInFlightSuccess(
@@ -1835,6 +2449,10 @@ class FakeQuickLogQueueStorage implements Pick<
 
     if (resolution.outcome === 'server_confirmed') {
       this.items.set(clientEventIdValue, resolution.item);
+      this.onResolvedSuccess?.();
+      if (this.resolveSuccessGate !== null) {
+        await this.resolveSuccessGate;
+      }
     }
 
     return resolution;
@@ -1843,6 +2461,24 @@ class FakeQuickLogQueueStorage implements Pick<
   public async remove(clientEventIdValue: string): Promise<void> {
     this.items.delete(clientEventIdValue);
   }
+
+  public retainDeletedBeforeSync = async (
+    clientEventIdValue: string,
+    options: {
+      errorCategory: QuickLogQueueErrorCategory | string;
+      retryAfterAt: string | null;
+      now: string;
+    },
+  ): Promise<QuickLogStoredQueueItem> => {
+    return this.write(clientEventIdValue, (item) => ({
+      ...item,
+      last_error_category: options.errorCategory as QuickLogQueueErrorCategory,
+      retry_after_at: options.retryAfterAt,
+      retry_count: item.retry_count + 1,
+      state: 'deleted_before_sync',
+      updated_at: options.now,
+    }));
+  };
 
   private async write(
     clientEventIdValue: string,

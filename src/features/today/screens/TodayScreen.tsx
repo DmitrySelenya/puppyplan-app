@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
+import type { DiaryDayModel, DiaryPlannedItem } from '@/contracts/diary-day';
+import { getReminderLinkFromPayload } from '@/contracts/reminders';
+import type { QuickLogPottySubtype } from '@/contracts/quick-log';
 import {
   buildTodayPlan,
   type TodayPlan,
@@ -9,6 +12,7 @@ import {
 } from '@/contracts/today';
 import {
   eventPayloadSchemas,
+  eventPayloadSchemasV2,
   type EventType,
 } from '@/contracts/supabase';
 import { AppIcon, type AppIconName } from '@/design/primitives/AppIcon';
@@ -18,9 +22,9 @@ import { Card } from '@/design/primitives/Card';
 import { DayDivider } from '@/design/primitives/DayDivider';
 import { EmptyIllustration } from '@/design/primitives/EmptyIllustration';
 import { FactCard } from '@/design/primitives/FactCard';
-import { IconButton } from '@/design/primitives/IconButton';
 import { type EventAccent } from '@/design/primitives/IconChip';
 import { InfoHero } from '@/design/primitives/InfoHero';
+import { RoutineCard } from '@/design/primitives/RoutineCard';
 import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
@@ -29,6 +33,7 @@ import { Touchable } from '@/design/primitives/Touchable';
 import { WeekStrip, type WeekStripDay } from '@/design/primitives/WeekStrip';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation, type I18nKey } from '@/lib/i18n';
+import { createObservabilityReporter } from '@/lib/observability';
 import {
   calendarDateToUtc,
   formatLocalCalendarDate,
@@ -46,7 +51,14 @@ import {
   type QuickLogSurfaceCareContext,
 } from '@/lib/query/quick-log-event-view';
 import type { QuickLogCachedEventRow } from '@/lib/query/quick-log';
-import { useQuickLogTimelineRows } from '@/lib/query/useQuickLogTimelineRows';
+import { useQuickLogCachedRows } from '@/lib/query/useQuickLogCachedRows';
+import {
+  useQuickLogTimelineRows,
+  type QuickLogTimelineRowsStatus,
+} from '@/lib/query/useQuickLogTimelineRows';
+import { formatDurationMinutes } from '@/lib/datetime/duration-label';
+import { formatDiaryDayExport } from '@/lib/diary/day-export';
+import { createDiarySleepPresentationItems } from '@/lib/diary/sleep-intervals';
 
 import { DiaryHeader } from '../components/DiaryHeader';
 import {
@@ -65,6 +77,13 @@ export type TodayScreenStateOverride =
 export type TodayScreenProps = Readonly<{
   actions?: QuickLogEventActionHandlers;
   careContext?: QuickLogSurfaceCareContext | null;
+  dayModel?: DiaryDayModel | null;
+  dayModelStatus?: 'error' | 'loading' | 'ready' | 'unavailable';
+  onCheckOff?: (
+    item: DiaryPlannedItem,
+    pottySubtype?: QuickLogPottySubtype,
+  ) => Promise<void>;
+  onShareText?: (text: string) => Promise<void> | void;
   openOnboarding?: () => void;
   openQuickLog?: () => void;
   openTimeline: () => void;
@@ -130,10 +149,122 @@ const diaryHistoryFilterSpecs = [
     value: 'sleep',
   },
 ] as const satisfies readonly DiaryHistoryFilterSpec[];
+const diaryObservability = createObservabilityReporter();
+
+function combineTimelineStatuses(
+  currentDayStatus: QuickLogTimelineRowsStatus,
+  previousDaySleepStatus: QuickLogTimelineRowsStatus,
+): QuickLogTimelineRowsStatus {
+  if (currentDayStatus === 'error' || previousDaySleepStatus === 'error') {
+    return 'error';
+  }
+
+  if (currentDayStatus === 'loading' || previousDaySleepStatus === 'loading') {
+    return 'loading';
+  }
+
+  if (currentDayStatus === 'unavailable' || previousDaySleepStatus === 'unavailable') {
+    return 'unavailable';
+  }
+
+  return 'ready';
+}
+
+/**
+ * The day feed and the previous-day sleep lookup are separate queries whose windows can overlap,
+ * so a row must not be able to reach the list twice.
+ */
+function dedupeRowsByClientEventId(
+  rows: readonly QuickLogCachedEventRow[],
+): readonly QuickLogCachedEventRow[] {
+  const byClientEventId = new Map<string, QuickLogCachedEventRow>();
+
+  for (const row of rows) {
+    byClientEventId.set(row.client_event_id, row);
+  }
+
+  return [...byClientEventId.values()];
+}
+
+function mergeDiaryHistoryRowsWithRetainedDeletes(
+  historyRows: readonly QuickLogCachedEventRow[],
+  cachedRows: readonly QuickLogCachedEventRow[],
+  filters: TimelineFilters,
+): readonly QuickLogCachedEventRow[] {
+  const retainedDeletesByClientEventId = new Map<string, QuickLogCachedEventRow>();
+
+  for (const row of cachedRows) {
+    if (
+      row.localSync?.state === 'deleted_before_sync'
+      && (filters.eventTypes === undefined || filters.eventTypes.includes(row.event_type))
+    ) {
+      retainedDeletesByClientEventId.set(row.client_event_id, row);
+    }
+  }
+
+  const visibleRows = [
+    ...historyRows.filter((row) => !retainedDeletesByClientEventId.has(row.client_event_id)),
+    ...[...retainedDeletesByClientEventId.values()].filter(
+      (row) => row.localSync?.category !== null,
+    ),
+  ];
+
+  return visibleRows.sort((left, right) => {
+    const occurredDelta = Date.parse(right.occurred_at) - Date.parse(left.occurred_at);
+
+    return occurredDelta !== 0
+      ? occurredDelta
+      : right.client_event_id.localeCompare(left.client_event_id);
+  });
+}
+
+function createDiaryEventRows(
+  rows: readonly QuickLogCachedEventRow[],
+  input: Readonly<{
+    displayDate?: string;
+    locale: string;
+    t: ReturnType<typeof useAppTranslation>['t'];
+    todayDate: string;
+  }>,
+): readonly DiaryEventRow[] {
+  return createDiarySleepPresentationItems(rows, {
+    displayDate: input.displayDate,
+  }).flatMap((item) => {
+    const row = item.kind === 'sleep-interval' ? item.wakeRow : item.row;
+    const event = createQuickLogEventView(row, input);
+    if (event === null) {
+      return [];
+    }
+    if (item.kind === 'event') {
+      return [{ event, row }];
+    }
+
+    const formatter = new Intl.DateTimeFormat(input.locale, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    return [{
+      event: {
+        ...event,
+        note: event.note ?? createQuickLogEventView(item.startRow, input)?.note,
+        title: input.t('today.history.sleep-interval', {
+          duration: formatDurationMinutes(item.durationMinutes, input.t),
+          end: formatter.format(new Date(item.endedAt)),
+          start: formatter.format(new Date(item.startedAt)),
+        }),
+      },
+      row,
+    }];
+  });
+}
 
 export function TodayScreen({
   actions = emptyActions,
   careContext = null,
+  dayModel = null,
+  dayModelStatus = 'unavailable',
+  onCheckOff,
+  onShareText,
   openOnboarding,
   openQuickLog,
   openTimeline,
@@ -142,10 +273,12 @@ export function TodayScreen({
   todayPlanInput,
 }: TodayScreenProps) {
   const { locale, t } = useAppTranslation();
+  const { fontScale } = useWindowDimensions();
   const [diaryHistoryOpen, setDiaryHistoryOpen] = useState(false);
   const [selectedHistoryFilter, setSelectedHistoryFilter] =
     useState<DiaryHistoryFilterValue>('all');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [shareError, setShareError] = useState(false);
   const selectedCalendarDate = careContext === null
     ? null
     : selectedDate ?? careContext.todayDate;
@@ -171,13 +304,54 @@ export function TodayScreen({
         to: selectedCalendarDate,
       },
   );
+  // An overnight sleep starts the evening before the day it is read on, so the previous day's
+  // sleep rows are pulled in as pairing input only. They never enter the day's own feed or plan.
+  const previousDaySleepRows = useQuickLogTimelineRows(
+    careContext,
+    careContext === null || selectedCalendarDate === null
+      ? undefined
+      : {
+        eventTypes: ['sleep'],
+        from: shiftCalendarDate(selectedCalendarDate, -1),
+        to: shiftCalendarDate(selectedCalendarDate, -1),
+      },
+  );
   const historyTimelineRows = useQuickLogTimelineRows(
     diaryHistoryOpen && isViewingToday ? careContext : null,
     historyFilters,
   );
-  const rows = timelineRows.rows;
-  const visibleRows = diaryHistoryOpen ? historyTimelineRows.rows : rows;
-  const visibleTimelineStatus = diaryHistoryOpen ? historyTimelineRows.status : timelineRows.status;
+  const cachedRows = useQuickLogCachedRows(careContext);
+  const retainedDeleteRows = cachedRows.filter((row) =>
+    row.localSync?.state === 'deleted_before_sync'
+    && selectedCalendarDate !== null
+    && formatLocalCalendarDate(row.occurred_at) === selectedCalendarDate);
+  const rows = dedupeRowsByClientEventId([
+    ...retainedDeleteRows,
+    ...timelineRows.rows,
+  ]);
+  const dayTimelineStatus = combineTimelineStatuses(
+    timelineRows.status,
+    previousDaySleepRows.status,
+  );
+  const sleepPairingReady = timelineRows.status === 'ready'
+    && previousDaySleepRows.status === 'ready';
+  const currentDayRowsForDisplay = timelineRows.status !== 'ready'
+    ? []
+    : previousDaySleepRows.status === 'ready'
+      ? rows
+      : rows.filter((row) => row.event_type !== 'sleep');
+  const visibleRows = diaryHistoryOpen
+    ? mergeDiaryHistoryRowsWithRetainedDeletes(
+      historyTimelineRows.rows,
+      cachedRows,
+      historyFilters,
+    )
+    : sleepPairingReady
+      ? dedupeRowsByClientEventId([...previousDaySleepRows.rows, ...rows])
+      : currentDayRowsForDisplay;
+  const visibleTimelineStatus = diaryHistoryOpen
+    ? historyTimelineRows.status
+    : dayTimelineStatus;
   const todayPlanSourceInput = useMemo(() => careContext === null || !isViewingToday
     ? null
     : createTodayPlanInput({
@@ -204,7 +378,14 @@ export function TodayScreen({
     );
   }
 
-  const todayEventRows = rows.flatMap((row) => {
+  const selectedDayEventRows = currentDayRowsForDisplay.flatMap((row) => {
+    if (
+      selectedCalendarDate === null
+      || formatLocalCalendarDate(row.occurred_at) !== selectedCalendarDate
+    ) {
+      return [];
+    }
+
     const event = createQuickLogEventView(row, {
       locale,
       t,
@@ -213,35 +394,77 @@ export function TodayScreen({
 
     return event === null ? [] : [{ event, row }];
   });
-  const eventRows = visibleRows.flatMap((row) => {
-    const event = createQuickLogEventView(row, {
-      locale,
-      t,
-      todayDate: careContext.todayDate,
-    });
-
-    return event === null ? [] : [{ event, row }];
+  const eventRows = createDiaryEventRows(visibleRows, {
+    displayDate: diaryHistoryOpen || selectedCalendarDate === null
+      ? undefined
+      : selectedCalendarDate,
+    locale,
+    t,
+    todayDate: careContext.todayDate,
   });
-  const todayEventViews = todayEventRows.map((eventRow) => eventRow.event);
+  const todayEventViews = selectedDayEventRows.map((eventRow) => eventRow.event);
   const eventViews = eventRows.map((eventRow) => eventRow.event);
   const todayStatus = getTodayStatusState({
     careContext,
     eventViews: todayEventViews,
-    rows,
+    rows: currentDayRowsForDisplay,
     screenState,
-    timelineStatus: timelineRows.status,
+    timelineStatus: dayTimelineStatus,
   });
   const showTodayPlan = todayPlan !== null
     && todayStatus !== 'all-done'
     && screenState !== 'cold-start'
     && screenState !== 'empty-history'
     && screenState !== 'pending-write'
-    && !(timelineRows.status === 'loading' && rows.length === 0);
+    && !(dayTimelineStatus === 'loading' && currentDayRowsForDisplay.length === 0);
   const showQuickLogSection = diaryHistoryOpen
+    || (dayModel?.items.length ?? 0) > 0
     || eventViews.length > 0
-    || timelineRows.status === 'error'
+    || dayTimelineStatus === 'error'
     || hasPendingLocalRows(rows)
     || shouldShowQuickLogFailedBanner(rows);
+  const infoHero = showTodayPlan && todayPlan !== null ? (
+    <DiaryInfoHero
+      hero={todayPlan.hero}
+      onPrimaryAction={openQuickLog}
+    />
+  ) : null;
+  const shareSelectedDay = onShareText === undefined || selectedDayEventRows.length === 0
+    ? null
+    : (
+      <Stack align="flex-start" gap="xs">
+        <Button
+          label={t('today.history.share-action')}
+          onPress={() => {
+            const text = formatDiaryDayExport({
+              items: selectedDayEventRows.map(({ event, row }) => ({
+                clientEventId: event.clientEventId,
+                note: event.note,
+                occurredAt: row.occurred_at,
+                title: event.title,
+              })),
+              locale,
+              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            });
+            setShareError(false);
+            void (async () => {
+              try {
+                await onShareText(text);
+              } catch {
+                setShareError(true);
+              }
+            })();
+          }}
+          testID="diary-share-day"
+          variant="tertiary"
+        />
+        {shareError ? (
+          <AppText accessibilityRole="alert" style={styles.shareError} variant="footnote">
+            {t('today.history.share-error')}
+          </AppText>
+        ) : null}
+      </Stack>
+    );
 
   return (
     <Screen contentStyle={styles.content}>
@@ -259,6 +482,7 @@ export function TodayScreen({
         selectedDate={selectedCalendarDate ?? careContext.todayDate}
         todayDate={careContext.todayDate}
       />
+      {shareSelectedDay}
       {isViewingToday ? (
         <>
           <DiaryClayState
@@ -271,12 +495,7 @@ export function TodayScreen({
             || (todayStatus === 'empty' && todayPlan !== null)
             ? null
             : <TodayStatusCard state={todayStatus} />}
-          {showTodayPlan && todayPlan !== null ? (
-            <DiaryInfoHero
-              hero={todayPlan.hero}
-              onPrimaryAction={openQuickLog}
-            />
-          ) : null}
+          {fontScale < 2 ? infoHero : null}
           {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
           {shouldShowQuickLogFailedBanner(rows) ? (
             <Card
@@ -340,6 +559,14 @@ export function TodayScreen({
                   </Card>
                 )}
               </>
+            ) : dayModel !== null && dayModel.items.length > 0 ? (
+              <DiaryMixedDayRows
+                actions={actions}
+                eventRows={eventRows}
+                locale={locale}
+                model={dayModel}
+                onCheckOff={onCheckOff}
+              />
             ) : eventViews.length > 0 ? (
               eventRows.map(({ event, row }) => (
                 <DiaryFactRow
@@ -349,7 +576,7 @@ export function TodayScreen({
                   row={row}
                 />
               ))
-            ) : visibleTimelineStatus === 'error' ? (
+            ) : visibleTimelineStatus === 'error' || dayModelStatus === 'error' ? (
               <Card
                 accessibilityLabel={t('errors.load-failed')}
                 accessibilityLiveRegion="polite"
@@ -366,6 +593,7 @@ export function TodayScreen({
             )}
           </Stack>
           ) : null}
+          {fontScale >= 2 ? infoHero : null}
         </>
       ) : (
         <DiarySelectedDayTimeline
@@ -380,6 +608,282 @@ export function TodayScreen({
       )}
     </Screen>
   );
+}
+
+const plannedTrackerLabelKeys = {
+  potty: 'quick-log.details.tabs.potty',
+  feeding: 'quick-log.details.tabs.feeding',
+  sleep: 'quick-log.details.tabs.sleep',
+  walk: 'quick-log.details.tabs.walk',
+  zoomies: 'quick-log.details.tabs.zoomies',
+  training: 'quick-log.details.tabs.training',
+  observation: 'quick-log.details.tabs.observation',
+} as const;
+
+function DiaryMixedDayRows({
+  actions,
+  eventRows,
+  locale,
+  model,
+  onCheckOff,
+}: Readonly<{
+  actions: QuickLogEventActionHandlers;
+  eventRows: readonly DiaryEventRow[];
+  locale: string;
+  model: DiaryDayModel;
+  onCheckOff?: (
+    item: DiaryPlannedItem,
+    pottySubtype?: QuickLogPottySubtype,
+  ) => Promise<void>;
+}>) {
+  const { t } = useAppTranslation();
+  const [checkingKey, setCheckingKey] = useState<string | null>(null);
+  const [checkOffError, setCheckOffError] = useState<Readonly<{
+    category: 'auth' | 'queue' | 'validation' | 'persistence';
+    key: string;
+  }> | null>(null);
+  const [pottyItem, setPottyItem] = useState<DiaryPlannedItem | null>(null);
+  const eventRowsById = new Map(
+    eventRows.map((eventRow) => [eventRow.event.clientEventId, eventRow]),
+  );
+  const failedDeleteRowsByReminderKey = new Map<string, DiaryEventRow>();
+
+  for (const eventRow of eventRows) {
+    if (
+      eventRow.row.localSync?.state !== 'deleted_before_sync'
+      || eventRow.row.localSync.category === null
+    ) {
+      continue;
+    }
+
+    const reminderLink = getReminderLinkFromPayload(eventRow.row.payload);
+    if (reminderLink !== null) {
+      failedDeleteRowsByReminderKey.set(
+        `${reminderLink.reminderId}|${reminderLink.scheduledFor}`,
+        eventRow,
+      );
+    }
+  }
+
+  useEffect(() => {
+    if (checkOffError === null) {
+      return;
+    }
+
+    const matchingItemIsDone = model.items.some((item) => item.kind !== 'fact'
+      && `${item.reminderId}|${item.scheduledFor}` === checkOffError.key
+      && item.status === 'done');
+
+    if (matchingItemIsDone) {
+      setCheckOffError(null);
+    }
+  }, [checkOffError, model.items]);
+
+  // Taking a mark back off is the same slot going busy as putting one on, so it holds the same
+  // key. Without it the tap has nothing to latch: `onDelete` settles over the network, and until
+  // the row stops being `done` every further tap fires another delete against the same event.
+  const uncheck = async (item: DiaryPlannedItem, event: QuickLogEventView) => {
+    const onDelete = actions.onDelete;
+
+    if (onDelete === undefined) {
+      return;
+    }
+
+    const key = `${item.reminderId}|${item.scheduledFor}`;
+    setCheckingKey(key);
+    setCheckOffError(null);
+
+    try {
+      await onDelete(createQuickLogDeleteRequest(event));
+    } finally {
+      setCheckingKey(null);
+    }
+  };
+
+  const complete = async (item: DiaryPlannedItem, subtype?: QuickLogPottySubtype) => {
+    if (onCheckOff === undefined) {
+      return;
+    }
+
+    const key = `${item.reminderId}|${item.scheduledFor}`;
+    setCheckingKey(key);
+    setCheckOffError(null);
+    setPottyItem(null);
+
+    try {
+      await onCheckOff(item, subtype);
+    } catch (error) {
+      diaryObservability.captureException(error, {
+        area: 'quick_log',
+        errorCategory: classifyDiaryCheckOffError(error) === 'validation'
+          ? 'invalid_payload'
+          : 'unknown',
+        operation: 'diary_routine_checkoff',
+      });
+      setCheckOffError({ category: classifyDiaryCheckOffError(error), key });
+    } finally {
+      setCheckingKey(null);
+    }
+  };
+
+  return (
+    <Stack gap="sm" testID="diary-mixed-day-list">
+      {model.items.map((item) => {
+        if (item.kind === 'fact') {
+          const eventRow = eventRowsById.get(item.clientEventId);
+          return eventRow === undefined ? null : (
+            <DiaryFactRow
+              actions={actions}
+              event={eventRow.event}
+              key={`fact-${item.clientEventId}`}
+              row={eventRow.row}
+            />
+          );
+        }
+
+        const key = `${item.reminderId}|${item.scheduledFor}`;
+        const title = item.title ?? t(plannedTrackerLabelKeys[item.trackerId]);
+        const plannedTime = formatDiaryInstant(item.plannedAt, locale, model.timeZone);
+        const actualTime = item.actualAt === undefined
+          ? null
+          : formatDiaryInstant(item.actualAt, locale, model.timeZone);
+        const statusLabel = item.status === 'done' && actualTime !== null
+          ? t('today.plan.actual-template', { time: actualTime })
+          : item.status === 'past-unmarked'
+            ? t('today.plan.past-unmarked')
+            : t('today.plan.upcoming');
+        const isGenericPotty = item.trackerId === 'potty'
+          && item.variant !== 'outside'
+          && item.variant !== 'inside'
+          && item.variant !== 'poop';
+        const canCheckOff = item.status !== 'done'
+          && onCheckOff !== undefined
+          && checkingKey !== key;
+        // `done` is derived from a linked fact existing, so deleting that fact is the exact
+        // inverse of the check-off. The linked fact is folded into this row and never gets a
+        // fact row of its own, so this checkbox is the only affordance that can undo the mark.
+        const linkedEventRow = item.status === 'done' && item.clientEventId !== undefined
+          ? eventRowsById.get(item.clientEventId)
+          : undefined;
+        const failedLinkedEventRow = (
+          linkedEventRow?.event.status === 'failed'
+          || linkedEventRow?.row.localSync?.state === 'deleted_before_sync'
+        )
+          ? linkedEventRow
+          : failedDeleteRowsByReminderKey.get(key);
+        const canUncheck = linkedEventRow !== undefined
+          && actions.onDelete !== undefined
+          && checkingKey !== key;
+        const visual = getPlannedCardVisual(item);
+
+        return (
+          <Stack gap="xs" key={`planned-${key}`}>
+            <View testID={`diary-planned-${item.status}`}>
+              {failedLinkedEventRow === undefined ? (
+                <RoutineCard
+                  accent={visual.accent}
+                  accessibilityLabel={`${title}. ${t('today.plan.planned-template', {
+                    time: plannedTime,
+                  })}. ${statusLabel}`}
+                  checkboxLabel={item.status === 'done'
+                    ? t('today.plan.uncheck')
+                    : t('today.plan.check-off')}
+                  checkboxTestID={onCheckOff !== undefined && item.status !== 'done'
+                    ? `diary-check-off-${item.reminderId}`
+                    : undefined}
+                  icon={visual.icon}
+                  meta={item.status === 'upcoming' ? undefined : statusLabel}
+                  onToggleDone={canCheckOff ? () => {
+                    if (isGenericPotty) {
+                      setPottyItem(item);
+                    } else {
+                      void complete(item);
+                    }
+                  } : canUncheck ? () => {
+                    void uncheck(item, linkedEventRow.event);
+                  } : undefined}
+                  state={item.status === 'done'
+                    ? 'done'
+                    : item.status === 'past-unmarked' ? 'past' : 'upcoming'}
+                  time={plannedTime}
+                  title={title}
+                />
+              ) : (
+                <DiaryFactRow
+                  actions={actions}
+                  event={failedLinkedEventRow.event}
+                  row={failedLinkedEventRow.row}
+                />
+              )}
+            </View>
+            {pottyItem?.reminderId === item.reminderId
+              && pottyItem.scheduledFor === item.scheduledFor ? (
+              <Stack gap="sm" testID="diary-potty-subtype">
+                <AppText variant="bodyEmph">{t('today.plan.choose-potty')}</AppText>
+                <Stack direction="horizontal" gap="sm" wrap>
+                  <Button
+                    label={t('today.plan.potty-outside')}
+                    onPress={() => { void complete(item, 'outside'); }}
+                    variant="secondary"
+                  />
+                  <Button
+                    label={t('today.plan.potty-inside')}
+                    onPress={() => { void complete(item, 'inside'); }}
+                    variant="secondary"
+                  />
+                  <Button
+                    label={t('today.plan.potty-poop')}
+                    onPress={() => { void complete(item, 'poop'); }}
+                    variant="secondary"
+                  />
+                </Stack>
+              </Stack>
+            ) : null}
+            {checkOffError?.key === key && item.status !== 'done' ? (
+              <View
+                accessibilityRole="alert"
+                testID={`diary-check-off-error-${checkOffError.category}`}>
+                <Stack gap="sm">
+                  <AppText>{t('today.plan.check-failed')}</AppText>
+                  <Button
+                    label={t('quick-log.failed.primary')}
+                    onPress={() => { void complete(item); }}
+                    variant="secondary"
+                  />
+                </Stack>
+              </View>
+            ) : null}
+          </Stack>
+        );
+      })}
+    </Stack>
+  );
+}
+
+function classifyDiaryCheckOffError(
+  error: unknown,
+): 'auth' | 'queue' | 'validation' | 'persistence' {
+  if (!(error instanceof Error)) {
+    return 'persistence';
+  }
+  if (error.message === 'Quick Log requires an authenticated session') {
+    return 'auth';
+  }
+  if (error.message === 'Quick Log queue is not ready') {
+    return 'queue';
+  }
+  if (error.name === 'ZodError' || error.message.startsWith('reminder_')) {
+    return 'validation';
+  }
+  return 'persistence';
+}
+
+function formatDiaryInstant(timestamp: string, locale: string, timeZone: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone,
+  }).format(new Date(timestamp));
 }
 
 function DiaryHistoryFilterBar({
@@ -701,12 +1205,16 @@ function DiaryInfoHero({
   const { t } = useAppTranslation();
   const copy = todayHeroCopy[hero.variant];
   const body = hero.variant === 'first_day' ? '' : t(copy.bodyKey);
-  const message = body.trim() ? `${t(copy.titleKey)}\n${body}` : t(copy.titleKey);
+  const title = t(copy.titleKey);
   const primaryKey = 'primaryKey' in copy ? copy.primaryKey : undefined;
 
   return (
     <Stack gap="sm">
-      <InfoHero message={message} testID="diary-info-hero" />
+      {body.trim() ? (
+        <InfoHero message={body} testID="diary-info-hero" title={title} />
+      ) : (
+        <InfoHero message={title} testID="diary-info-hero" />
+      )}
       {primaryKey === undefined || onPrimaryAction === undefined ? null : (
         <Button
           label={t(primaryKey)}
@@ -863,7 +1371,7 @@ function getTodayStatusState(input: Readonly<{
     return 'permission-denied';
   }
 
-  if (input.timelineStatus === 'loading' && input.rows.length === 0) {
+  if (input.timelineStatus === 'loading') {
     return 'loading';
   }
 
@@ -994,11 +1502,18 @@ function getTodayTimeOfDay(now: Date): NonNullable<TodayPlanInput['timeOfDay']> 
   return 'evening';
 }
 
+/**
+ * v1 payload schemas are strict, so a v2 payload (which may carry a note) fails to parse against
+ * them and silently degrades to 'other' — an outside pee then reads as an indoor accident. Parse
+ * against the schema family the row was actually written with.
+ */
 function getTodayQuickAction(
   row: QuickLogCachedEventRow,
 ): NonNullable<TodayPlanInput['lastEvents']>[number]['quickAction'] {
+  const schemas = row.payload_version === 1 ? eventPayloadSchemas : eventPayloadSchemasV2;
+
   if (row.event_type === 'potty') {
-    const payloadResult = eventPayloadSchemas.potty.safeParse(row.payload);
+    const payloadResult = schemas.potty.safeParse(row.payload);
 
     if (!payloadResult.success) {
       return 'other';
@@ -1016,7 +1531,7 @@ function getTodayQuickAction(
   }
 
   if (row.event_type === 'feeding') {
-    const payloadResult = eventPayloadSchemas.feeding.safeParse(row.payload);
+    const payloadResult = schemas.feeding.safeParse(row.payload);
 
     return payloadResult.success && payloadResult.data.amount === 'meal'
       ? 'meal'
@@ -1024,9 +1539,18 @@ function getTodayQuickAction(
   }
 
   if (row.event_type === 'sleep') {
-    const payloadResult = eventPayloadSchemas.sleep.safeParse(row.payload);
+    // v1 modelled a nap as sleep_kind; v2 replaced it with a start/wake/retrospective action.
+    if (row.payload_version === 1) {
+      const payloadResult = eventPayloadSchemas.sleep.safeParse(row.payload);
 
-    return payloadResult.success && payloadResult.data.sleep_kind === 'nap'
+      return payloadResult.success && payloadResult.data.sleep_kind === 'nap'
+        ? 'nap'
+        : 'other';
+    }
+
+    const payloadResult = eventPayloadSchemasV2.sleep.safeParse(row.payload);
+
+    return payloadResult.success && payloadResult.data.action === 'retrospective'
       ? 'nap'
       : 'other';
   }
@@ -1036,7 +1560,12 @@ function getTodayQuickAction(
 
 function hasPendingLocalRows(rows: readonly QuickLogCachedEventRow[]): boolean {
   return rows.some((row) =>
-    row.localSync?.state === 'pending_local' || row.localSync?.state === 'sending');
+    row.localSync?.state === 'pending_local'
+    || row.localSync?.state === 'sending'
+    || (
+      row.localSync?.state === 'deleted_before_sync'
+      && row.localSync.category === null
+    ));
 }
 
 function formatLocalHourMinute(occurredAt: string): string {
@@ -1152,29 +1681,49 @@ function DiaryFactRow({
   const onEdit = actions.onEdit;
   const onRetry = actions.onRetry;
   const onUndo = actions.onUndo;
+  const [actionsOpen, setActionsOpen] = useState(false);
   const editRequest = event.status === 'synced' ? createQuickLogEditRequest(event) : null;
   const visual = getFactCardVisual(row);
+  const isDeleteIntent = row.localSync?.state === 'deleted_before_sync';
   const canSwipeDelete = event.status === 'synced' && onDelete !== undefined;
   const deleteLabel = t('today.history.delete-action');
   const factCard = (
     <FactCard
       accent={visual.accent}
       accessibilityActions={canSwipeDelete ? [{ name: 'delete', label: deleteLabel }] : undefined}
-      accessibilityLabel={t('today.history.fact-a11y-label', {
-        caption: event.status === 'synced' ? event.actorLabel : event.statusLabel,
-        time: event.occurredAtLabel,
-        title: event.title,
-      })}
+      accessibilityLabel={event.note === undefined
+        ? t('today.history.fact-a11y-label', {
+            caption: event.status === 'synced' ? event.actorLabel : event.statusLabel,
+            time: event.occurredAtLabel,
+            title: event.title,
+          })
+        : t('today.history.fact-note-a11y-label', {
+            caption: event.status === 'synced' ? event.actorLabel : event.statusLabel,
+            note: event.note,
+            time: event.occurredAtLabel,
+            title: event.title,
+          })}
       caption={event.status === 'synced' ? event.actorLabel : event.statusLabel}
       icon={visual.icon}
+      note={event.note}
       onAccessibilityAction={canSwipeDelete ? (accessibilityEvent) => {
         if (accessibilityEvent.nativeEvent.actionName === 'delete' && onDelete !== undefined) {
           onDelete(createQuickLogDeleteRequest(event));
         }
       } : undefined}
+      actionsLabel={editRequest !== null && (onEdit !== undefined || onDelete !== undefined)
+        ? t('today.history.item-actions')
+        : undefined}
+      onActionsPress={editRequest !== null && (onEdit !== undefined || onDelete !== undefined)
+        ? () => { setActionsOpen((open) => !open); }
+        : undefined}
+      onPress={editRequest !== null && onEdit !== undefined
+        ? () => { onEdit(editRequest); }
+        : undefined}
       testID="diary-history-logged-fact"
       time={event.occurredAtLabel}
       title={event.title}
+      titleKind={event.titleKind}
     />
   );
 
@@ -1196,24 +1745,26 @@ function DiaryFactRow({
             </SwipeToDelete>
           ) : factCard}
         </View>
-        {editRequest !== null && onEdit !== undefined ? (
-          <IconButton
-            accessibilityLabel={t('today.history.item-actions')}
-            icon={
-              <AppIcon
-                color={tokens.color.text.secondary}
-                name="more"
-                size={22}
-              />
-            }
-            onPress={() => {
-              onEdit(editRequest);
-            }}
-            style={styles.eventActionsButton}
-          />
-        ) : null}
       </Stack>
-      {event.status === 'failed' && (onRetry !== undefined || onDelete !== undefined) ? (
+      {actionsOpen && editRequest !== null ? (
+        <Stack direction="horizontal" gap="sm" wrap>
+          {onEdit !== undefined ? (
+            <Button
+              label={t('common.edit')}
+              onPress={() => { onEdit(editRequest); }}
+              variant="secondary"
+            />
+          ) : null}
+          {onDelete !== undefined ? (
+            <Button
+              label={deleteLabel}
+              onPress={() => { onDelete(createQuickLogDeleteRequest(event)); }}
+              variant="destructive"
+            />
+          ) : null}
+        </Stack>
+      ) : null}
+      {event.status === 'failed' && (onRetry !== undefined || (!isDeleteIntent && onDelete !== undefined)) ? (
         <Stack direction="horizontal" gap="sm" wrap>
           {onRetry !== undefined ? (
             <Button
@@ -1224,7 +1775,7 @@ function DiaryFactRow({
               variant="secondary"
             />
           ) : null}
-          {onDelete !== undefined ? (
+          {!isDeleteIntent && onDelete !== undefined ? (
             <Button
               label={t('quick-log.failed.tertiary')}
               onPress={() => {
@@ -1235,7 +1786,7 @@ function DiaryFactRow({
           ) : null}
         </Stack>
       ) : null}
-      {event.status === 'pending' && (onUndo !== undefined || onDelete !== undefined) ? (
+      {event.status === 'pending' && !isDeleteIntent && (onUndo !== undefined || onDelete !== undefined) ? (
         <Stack direction="horizontal" gap="sm" wrap>
           {onUndo !== undefined ? (
             <Button
@@ -1259,6 +1810,44 @@ function DiaryFactRow({
       ) : null}
     </Stack>
   );
+}
+
+function getPlannedCardVisual(
+  item: DiaryPlannedItem,
+): { accent: EventAccent; icon: AppIconName } {
+  if (item.trackerId === 'feeding') {
+    return { accent: 'clay', icon: 'bowl' };
+  }
+
+  if (item.trackerId === 'walk') {
+    return { accent: 'clay', icon: 'walk' };
+  }
+
+  if (item.trackerId === 'sleep') {
+    return { accent: 'mauve', icon: 'moon' };
+  }
+
+  if (item.trackerId === 'zoomies') {
+    return { accent: 'honey', icon: 'ball' };
+  }
+
+  if (item.trackerId === 'training') {
+    return { accent: 'clay', icon: 'trainingPaw' };
+  }
+
+  if (item.trackerId === 'potty') {
+    if (item.variant === 'outside') {
+      return { accent: 'honey', icon: 'water' };
+    }
+
+    if (item.variant === 'poop') {
+      return { accent: 'honey', icon: 'poop' };
+    }
+
+    return { accent: 'honey', icon: 'pottyInside' };
+  }
+
+  return { accent: 'honey', icon: 'paw' };
 }
 
 function getFactCardVisual(
@@ -1375,6 +1964,9 @@ const styles = StyleSheet.create({
   },
   infoHeroAction: {
     alignSelf: 'flex-start',
+  },
+  shareError: {
+    color: tokens.color.status.danger,
   },
   sectionTitle: {
     flexShrink: 1,

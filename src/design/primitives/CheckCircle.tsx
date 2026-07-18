@@ -30,7 +30,9 @@ export function CheckCircle({
     <Touchable
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
+      // A checkbox with no handler still looks and announces like one, so a tap on it is a silent
+      // no-op: the control promises a toggle it cannot honour. If there is no way back, say so.
+      accessibilityState={{ checked, disabled: onPress === undefined }}
       minTarget="none"
       onPress={onPress}
       style={styles.hit}

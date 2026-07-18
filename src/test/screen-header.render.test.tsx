@@ -6,6 +6,14 @@ import { ScreenHeader } from '@/design/primitives/ScreenHeader';
 import { MIN_TOUCH_TARGET } from '@/design/a11y';
 import { tokens } from '@/design/tokens';
 
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({ fontScale: 1, height: 667, scale: 2, width: 375 }),
+  });
+});
+
 describe('ScreenHeader primitive', () => {
   it('renders a centered title using the nav-title type scale', () => {
     render(<ScreenHeader title="Puppy profile" />);

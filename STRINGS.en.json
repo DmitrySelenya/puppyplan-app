@@ -10,6 +10,9 @@
   },
 
   "common": {
+    "duration-hours-minutes": "{hours} hr {minutes} min",
+    "duration-hours": "{hours} hr",
+    "duration-minutes": "{minutes} min",
     "save": "Save",
     "cancel": "Cancel",
     "cancel-action": "Cancel",
@@ -54,14 +57,14 @@
         "quick-trackers-states": "Quick Tracker settings loading, error, empty, and owner-only states.",
         "more-settings": "More hub, profile entry, tracker settings, notification note, privacy, account removal, and Plus placeholder.",
         "quick-log-sheet": "Quick Log sheet, subtype choices, duplicate warning, local pending, failed retry, and access states.",
-                "quick-log-details": "Quick Log details loading, saving, error, offline, and view-only states.",
+        "quick-log-details": "Quick Log details loading, saving, error, offline, and view-only states.",
         "health-v2": "Health list, empty, edit, detail, review, delete, and weight entry states.",
         "reminders-hub": "Reminders hub route with active durable rows for native handoff.",
         "reminders-hub-states": "Reminders hub loading, saving, error, offline, and empty states.",
         "reminder-edit": "Reminder edit route with loading, pending save, error, and offline read states.",
-      "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
-      "privacy-account-states": "Privacy and account loading, saving, error, offline, and sign-in-required states.",
-      "help-support-states": "Help and support loading, pending note, error, and offline read states.",
+        "notification-preferences": "Notification preferences route with loading, pending save, error, and offline read states.",
+        "privacy-account-states": "Privacy and account loading, saving, error, offline, and sign-in-required states.",
+        "help-support-states": "Help and support loading, pending note, error, and offline read states.",
         "household-states": "Manage household loading, pending access, error, and offline read states.",
         "paywall-states": "PuppyPlan Plus loading, pending purchase, error, offline, and active subscription states.",
         "invite-accept-states": "Accept invite loading, unavailable, retry, and already-member states.",
@@ -257,6 +260,9 @@
   "nav": {
     "quick-log-slab": "Quick Log",
     "quick-log-slab-subtitle": "Log what already happened",
+    "note-slab": "Quick note",
+    "note-slab-subtitle": "Write it down now, sort it out later",
+    "note-fab-hint": "Opens a note with a time you can change",
     "schedule-slab": "Schedule",
     "schedule-slab-subtitle": "A routine or one-time reminder",
     "schedule-fab-hint": "Opens scheduling options"
@@ -364,6 +370,19 @@
   },
 
   "today": {
+    "plan": {
+      "check-off": "Mark done",
+      "uncheck": "Mark not done",
+      "planned-template": "Planned {time}",
+      "actual-template": "Done {time}",
+      "past-unmarked": "Not logged",
+      "upcoming": "Upcoming",
+      "choose-potty": "What happened?",
+      "potty-outside": "Pee outside",
+      "potty-inside": "Pee inside",
+      "potty-poop": "Poop",
+      "check-failed": "Could not mark this routine. Try again."
+    },
     "section-now": "Now",
     "section-next": "Next",
     "section-yesterday-recap": "What we learned yesterday",
@@ -475,8 +494,18 @@
     "missed-reminder-card": {
       "title": "Reminder: feeding at {time}",
       "body": "If this already happened, mark it as done.",
-      "actions": ["Done", "Snooze", "Skip", "Edit", "Stop reminding"],
-      "snooze-options": ["15 min", "30 min", "1 hour"],
+      "actions": [
+        "Done",
+        "Snooze",
+        "Skip",
+        "Edit",
+        "Stop reminding"
+      ],
+      "snooze-options": [
+        "15 min",
+        "30 min",
+        "1 hour"
+      ],
       "done-snackbar": "Logged"
     },
     "sleep-banner": {
@@ -505,9 +534,13 @@
     "history": {
       "section-title": "Today",
       "open-action": "Review history",
+      "share-action": "Share day",
+      "share-error": "The day could not be shared. Try again.",
       "delete-action": "Delete entry",
       "item-actions": "Diary item actions",
-      "fact-a11y-label": "{title}, {time}, {caption}"
+      "sleep-interval": "Slept {start}–{end} · {duration}",
+      "fact-a11y-label": "{title}, {time}, {caption}",
+      "fact-note-a11y-label": "{title}, {time}, {caption}. Note: {note}"
     },
     "daily-cards": {
       "first-day-banner": "The first day is about observing, not results.",
@@ -633,6 +666,9 @@
       "title": "What happened?",
       "dismiss": "Dismiss Quick Log",
       "edit-trackers": "Edit trackers",
+      "log-with-details": "Log with details",
+      "details-action": "Log with details",
+      "details-hint": "Logs now. Long press to add details.",
       "edit-screen-title": "Your quick trackers",
       "edit-helper": "Up to 5 trackers. Change them from More.",
       "permission-denied": {
@@ -649,6 +685,14 @@
     "potty-subtype": {
       "title": "Choose potty type",
       "body": "Pick the exact potty event before saving."
+    },
+    "sleep-action": {
+      "title": "Sleep",
+      "body": "Choose what happened.",
+      "start": "Start sleep",
+      "wake": "Wake up",
+      "retrospective": "Slept retrospectively",
+      "open-since": "Asleep since {time} · {duration}"
     },
     "trackers": {
       "potty": "Potty",
@@ -670,7 +714,13 @@
       "context-label": "Context",
       "note-label": "Note",
       "photo-label": "Photo",
-      "context-options": ["After sleep", "After eating", "Walk", "Play", "Not sure"]
+      "context-options": [
+        "After sleep",
+        "After eating",
+        "Walk",
+        "Play",
+        "Not sure"
+      ]
     },
     "feeding": {
       "title": "Fed",
@@ -685,7 +735,12 @@
       "start-now": "Start now",
       "already-slept": "Already slept",
       "how-long": "About how long?",
-      "duration-chips": ["15 min", "30", "1 hr", "2 hr"]
+      "duration-chips": [
+        "15 min",
+        "30",
+        "1 hr",
+        "2 hr"
+      ]
     },
     "zoomies": {
       "title": "Zoomies",
@@ -694,7 +749,11 @@
       "context-label": "Context",
       "context-default": "After sleep",
       "duration-label": "Duration",
-      "duration-options": ["<5", "5–15", "15+"],
+      "duration-options": [
+        "<5",
+        "5–15",
+        "15+"
+      ],
       "note-label": "Note"
     },
     "snackbar": {
@@ -708,13 +767,74 @@
     },
     "details": {
       "title": "Add details",
+      "edit-title": "Edit entry",
+      "edit-save": "Save changes",
       "variant-label": "Detail type",
       "save": "Save details",
+      "persistence-error": "Details could not be saved. Your draft is still here. Try again.",
       "skip": "Skip details",
+      "audit": {
+        "title": "Entry details",
+        "actor-you": "Logged by you",
+        "actor-household": "Logged by a household member",
+        "created": "Created {value}",
+        "updated": "Edited {value}",
+        "version": "Version {version}"
+      },
+      "read-only": {
+        "duration-minutes": "{count} min"
+      },
       "tabs": {
+        "potty": "Potty",
         "feeding": "Feeding",
         "sleep": "Sleep",
-        "zoomies": "Zoomies"
+        "walk": "Walk",
+        "zoomies": "Zoomies",
+        "training": "Training",
+        "observation": "Observation"
+      },
+      "when": {
+        "label": "When",
+        "hint": "Pick a day and time",
+        "now": "Now",
+        "minus-15": "−15m",
+        "minus-30": "−30m",
+        "minus-60": "−1h",
+        "future-error": "Time cannot be in the future.",
+        "too-old-error": "Time must be within the last 7 days."
+      },
+      "note": {
+        "label": "Private note",
+        "helper": "Private · {count} / 500"
+      },
+      "observation": {
+        "title-label": "Title",
+        "required-error": "Add a title or private note."
+      },
+      "potty": {
+        "subtype-label": "What happened?",
+        "subtype": {
+          "outside": "Outside",
+          "inside": "Inside",
+          "poop": "Poop"
+        }
+      },
+      "training": {
+        "topic-label": "Training topic",
+        "topic": {
+          "recall": "Recall",
+          "sit": "Sit",
+          "crate": "Crate",
+          "leash": "Leash",
+          "settling": "Settling",
+          "other": "Other"
+        },
+        "duration-label": "Session length",
+        "duration": {
+          "short": "Short",
+          "medium": "Medium",
+          "long": "Long"
+        }
       },
       "feeding": {
         "amount-label": "What was offered?",
@@ -725,13 +845,19 @@
         }
       },
       "sleep": {
-        "duration-label": "About how long?",
-        "duration": {
-          "none": "Not sure",
-          "15": "15 min",
-          "30": "30 min",
-          "60": "1 hr"
-        }
+        "action-label": "Sleep event",
+        "action": {
+          "start": "Start sleep",
+          "wake": "Wake up",
+          "retrospective": "Add completed sleep"
+        },
+        "duration-label": "About how long? (minutes)",
+        "start-label": "Fell asleep",
+        "end-label": "Woke up",
+        "start-placeholder": "Choose time",
+        "range-missing-error": "Add when the sleep started.",
+        "range-error": "Wake-up time must be after the sleep started.",
+        "range-too-long-error": "One sleep cannot be longer than 24 hours."
       },
       "zoomies": {
         "intensity-label": "How intense?",
@@ -742,38 +868,42 @@
           "high": "High"
         }
       },
-            "states": {
-                "loading": {
-                    "status": "Checking",
-                    "title": "Loading details",
-                    "body": "We are checking the current care context before details are saved."
-                },
-                "pending-write": {
-                    "status": "Saving",
-                    "title": "Saving details",
-                    "body": "The routine event is already logged; this optional detail is catching up."
-                },
-                "saving": {
-                    "title": "Saving details",
-                    "body": "The routine event is already logged; this optional detail is catching up."
-                },
-                "error": {
-                    "status": "Needs attention",
-                    "title": "Details did not save",
-                    "body": "The original Quick Log entry stays saved. Try the details again later."
-                },
-                "offline-read": {
-                    "status": "Offline",
-                    "title": "Showing saved details",
-                    "body": "You can review the detail form. Saving waits until the connection is back."
-                },
-                "permission-denied": {
-                    "status": "View only",
-                    "title": "Details are not editable",
-                    "body": "Ask the household owner for caregiver access before changing Quick Log details."
-                }
-            }
+      "walk": {
+        "duration-label": "Duration in minutes",
+        "duration-error": "Enter a whole number of minutes, from 1 to 1440."
+      },
+      "states": {
+        "loading": {
+          "status": "Checking",
+          "title": "Loading details",
+          "body": "We are checking the current care context before details are saved."
         },
+        "pending-write": {
+          "status": "Saving",
+          "title": "Saving details",
+          "body": "The routine event is already logged; this optional detail is catching up."
+        },
+        "saving": {
+          "title": "Saving details",
+          "body": "The routine event is already logged; this optional detail is catching up."
+        },
+        "error": {
+          "status": "Needs attention",
+          "title": "Details did not save",
+          "body": "The original Quick Log entry stays saved. Try the details again later."
+        },
+        "offline-read": {
+          "status": "Offline",
+          "title": "Showing saved details",
+          "body": "You can review the detail form. Saving waits until the connection is back."
+        },
+        "permission-denied": {
+          "status": "View only",
+          "title": "Details are not editable",
+          "body": "Ask the household owner for caregiver access before changing Quick Log details."
+        }
+      }
+    },
     "pending": {
       "label": "Saving"
     },
@@ -798,15 +928,44 @@
     }
   },
 
+  "quick-note": {
+    "title": "Quick note",
+    "when-label": "When",
+    "when-hint": "Pick a day and time",
+    "note-label": "Private note",
+    "note-helper": "Private · {count} / 500",
+    "add": "Add",
+    "required-error": "Write a note first.",
+    "persistence-error": "The note could not be saved. Your text is still here. Try again.",
+    "saved-announcement": "Note added",
+    "discard-title": "Discard this note?",
+    "discard-body": "Your text has not been saved yet.",
+    "keep-editing": "Keep editing",
+    "discard": "Discard"
+  },
+
   "timeline": {
     "title": "Events",
     "close": "Close",
     "section-today": "Today · {weekday}",
     "section-yesterday": "Yesterday · {weekday}",
     "section-date": "{date} · {weekday}",
-    "filter-chips": ["All", "Potty", "Feeding", "Sleep", "Walk", "Zoomies", "Health"],
+    "filter-chips": [
+      "All",
+      "Potty",
+      "Feeding",
+      "Sleep",
+      "Walk",
+      "Zoomies",
+      "Health"
+    ],
     "range-default": "Today",
-    "range-options": ["Today", "3 days", "Week", "Custom"],
+    "range-options": [
+      "Today",
+      "3 days",
+      "Week",
+      "Custom"
+    ],
     "range-custom-title": "Pick a range",
     "empty": "No events yet.",
     "empty-filter-title": "Nothing here",
@@ -838,10 +997,20 @@
       "secondary": "Cancel"
     },
     "delete-snackbar": "Entry deleted.",
+    "delete-failed": "Couldn't delete. Try again?",
     "more-actions": "More actions",
-    "swipe-actions": ["Edit", "Delete"],
-    "overflow-actions": ["Edit", "Delete"],
-    "pending-overflow-actions": ["Cancel sending", "Delete"]
+    "swipe-actions": [
+      "Edit",
+      "Delete"
+    ],
+    "overflow-actions": [
+      "Edit",
+      "Delete"
+    ],
+    "pending-overflow-actions": [
+      "Cancel sending",
+      "Delete"
+    ]
   },
 
   "sharing": {
@@ -850,8 +1019,17 @@
       "contract-header-excludes": "Not included:",
       "disclosure-can-close": "You can close access at any time.",
       "expiry-label": "Link expiry",
-      "expiry-options": ["24 hours", "7 days", "14 days"],
-      "trainer-expiry-options": ["7 days", "30 days", "90 days", "No expiry (not recommended)"],
+      "expiry-options": [
+        "24 hours",
+        "7 days",
+        "14 days"
+      ],
+      "trainer-expiry-options": [
+        "7 days",
+        "30 days",
+        "90 days",
+        "No expiry (not recommended)"
+      ],
       "no-expiry-warning": "Setting an expiry is better. A link without one stays open until you close it yourself.",
       "until-date": "Expires {date}",
       "active-until": "Active through {date}",
@@ -978,8 +1156,15 @@
         "badge-pending": "Pending",
         "badge-expired": "Expired",
         "badge-revoked": "Revoked",
-        "member-overflow": ["Change role", "Close access"],
-        "pending-overflow": ["Copy link", "Send again", "Revoke"],
+        "member-overflow": [
+          "Change role",
+          "Close access"
+        ],
+        "pending-overflow": [
+          "Copy link",
+          "Send again",
+          "Revoke"
+        ],
         "revoke-confirm": {
           "title": "Close access for {name}?",
           "body": "{name} will no longer see {puppyName}'s data. You can reverse this by sending a new invite.",
@@ -1239,7 +1424,11 @@
       "sample-vaccine-2": "Rabies — 5 May",
       "sample-active-date": "24 May",
       "sample-recipient": "vet visit",
-      "overflow": ["Copy link", "Extend expiry", "Close access"],
+      "overflow": [
+        "Copy link",
+        "Extend expiry",
+        "Close access"
+      ],
       "revoke-confirm": {
         "title": "Close access to this card?",
         "body": "The link will stop working right away. Snapshots and files you've already sent will stay with the recipient.",
@@ -1309,8 +1498,17 @@
       "quick-trackers-meta": "Pick up to 5 for Today and Quick Log",
       "quick-trackers-a11y": "Quick trackers. Pick up to 5 for Today and Quick Log."
     },
-    "segments": ["All", "Vaccinations", "Treatments", "Visits"],
-    "filter-chips": ["Templates", "Confirmed", "Done"],
+    "segments": [
+      "All",
+      "Vaccinations",
+      "Treatments",
+      "Visits"
+    ],
+    "filter-chips": [
+      "Templates",
+      "Confirmed",
+      "Done"
+    ],
     "rows": {
       "current-section": "May 2026",
       "previous-section": "April 2026",
@@ -1373,7 +1571,11 @@
       "field-date": "Date",
       "field-status": "Status",
       "default-date": "Today",
-      "status-segments": ["Template", "Confirmed", "Done"],
+      "status-segments": [
+        "Template",
+        "Confirmed",
+        "Done"
+      ],
       "field-clinic": "Clinic or vet (optional)",
       "field-note": "Note (optional)",
       "urgent-toggle": "Mark as urgent",
@@ -1438,7 +1640,12 @@
       "add": "Add"
     },
     "status-transitions": {
-      "stages": ["Template", "Needs vet review", "Confirmed", "Done"],
+      "stages": [
+        "Template",
+        "Needs vet review",
+        "Confirmed",
+        "Done"
+      ],
       "now-template": "Now: {currentLabel} · Next: {nextLabel}",
       "complete-label": "Complete",
       "hint": "You can change this manually any time",
@@ -1531,7 +1738,14 @@
 
   "reminders": {
     "screen-title": "Reminders",
-    "segments": ["Active", "Off"],
+    "local-notification": {
+      "title": "Puppy routine",
+      "body": "Time for {{activity}}"
+    },
+    "segments": [
+      "Active",
+      "Off"
+    ],
     "segments-a11y": "Reminder status",
     "actions": {
       "add": "Add reminder"
@@ -1546,6 +1760,9 @@
     "footer-quiet-hours": "Quiet hours — in Notification settings.",
     "empty": "Your reminders will show up here",
     "row-subtitle-daily-template": "Every day · {time}",
+    "row-subtitle-weekdays-template": "Weekdays · {time}",
+    "row-subtitle-custom-template": "{days} · {time}",
+    "row-subtitle-once-template": "Once · {date} · {time}",
     "row-pending": "Syncing",
     "states": {
       "loading": {
@@ -1591,13 +1808,61 @@
       "category-health-hint": "Used for reminders to discuss an entry with your vet",
       "field-time": "Time",
       "field-repeat": "Repeat",
-      "repeat-options": ["Every day", "Weekdays", "Custom schedule"],
+      "repeat-options": [
+        "Every day",
+        "Weekdays",
+        "Custom schedule"
+      ],
       "field-tz": "Time zone",
       "tz-auto-example": "Europe/Berlin (auto)",
       "toggle-quiet": "Respect quiet hours",
       "toggle-sound": "Sound",
       "hint": "This reminder runs locally on this device. Turn on push in Settings to get it even when the app is closed.",
       "error-no-days": "Pick at least one day",
+      "routine": {
+        "title": "Routine",
+        "optional-title": "Optional title",
+        "observation-title": "Title",
+        "private-note": "Private note",
+        "event": "Event",
+        "event-required": "Choose an event to continue.",
+        "invalid-details": "Check the highlighted routine details.",
+        "observation-required": "Add a short title or note for this observation.",
+        "repeat-never": "Once",
+        "repeat-daily": "Every day",
+        "repeat-weekdays": "Weekdays",
+        "repeat-custom": "Custom",
+        "weekdays": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "variant": "Detail type",
+        "variants": {
+          "outside": "Outside pee",
+          "inside": "Inside pee",
+          "poop": "Poop",
+          "play": "Play",
+          "training": "Training"
+        },
+        "date": "Date",
+        "amount": "Amount (g)",
+        "duration": "Duration (min)",
+        "discard-title": "Discard routine changes?",
+        "discard-body": "Your unsaved routine changes will be lost.",
+        "keep-editing": "Keep editing",
+        "discard": "Discard",
+        "save-error": "Could not save. Your routine is still here.",
+        "retry": "Try again",
+        "saved-title": "Routine saved",
+        "saved-body": "The routine is active. Turn on notifications when you are ready.",
+        "not-now": "Not now"
+      },
+      "legacy-unsupported": "Legacy routine · notifications off",
       "permission-banner": "Notifications are off. The reminder will be saved, but it won't make a sound",
       "states": {
         "loading": {
@@ -1638,12 +1903,22 @@
       "title-sitter": "Sitter: evening checklist",
       "example-title": "Feeding: 7:30 am",
       "example-body": "A gentle start to {puppyName}'s day.",
-      "actions": ["Done", "Snooze 10 min", "Skip"]
+      "actions": [
+        "Done",
+        "Snooze 10 min",
+        "Skip"
+      ]
     },
     "card": {
       "example-title": "Feeding · 7:30 am",
       "example-body": "A gentle start to the day",
-      "actions": ["Done", "Snooze", "Skip", "Edit", "Stop"],
+      "actions": [
+        "Done",
+        "Snooze",
+        "Skip",
+        "Edit",
+        "Stop"
+      ],
       "done-summary": "Done at {time}",
       "snoozed-summary": "Snoozed until {time}",
       "skipped-summary": "Skipped",
@@ -1653,7 +1928,11 @@
       "title-example": "Evening checklist · 7:00 pm",
       "subtitle-template": "{n} items · sitter: {name}",
       "progress-a11y-template": "{completed} of {total} checklist items complete",
-      "actions": ["Open checklist", "Mark all done", "Skip"],
+      "actions": [
+        "Open checklist",
+        "Mark all done",
+        "Skip"
+      ],
       "completed-summary": "Done · {time} · {name}"
     },
     "permission-denied": {
@@ -1665,14 +1944,21 @@
     "missed": {
       "section": "Not logged today",
       "row-template": "Feeding {time} · not logged",
-      "actions": ["Mark done", "Skip"],
+      "actions": [
+        "Mark done",
+        "Skip"
+      ],
       "repeating-hint": "You can move the time or turn the reminder off"
     }
   },
 
   "guidance": {
     "eyebrow-template": "Tip of the day · {current} of {total}",
-    "actions": ["Read", "Tried it", "Skip"],
+    "actions": [
+      "Read",
+      "Tried it",
+      "Skip"
+    ],
     "read-summary": "Read: {title}",
     "practiced-summary": "Tried: {title}",
     "skip-timeline-event": "Tip skipped",
@@ -1911,7 +2197,15 @@
           "body": "You can keep viewing shared care details without changing this setup."
         }
       },
-      "items": ["Feeding", "Potty", "Sleep", "Walk", "Weight", "Play", "Biting"]
+      "items": [
+        "Feeding",
+        "Potty",
+        "Sleep",
+        "Walk",
+        "Weight",
+        "Play",
+        "Biting"
+      ]
     },
     "notifications": {
       "screen-title": "Notifications",

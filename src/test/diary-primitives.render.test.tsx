@@ -1,9 +1,10 @@
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { designFontFamilies } from '@/design/fonts';
 import {
   AppText,
+  Button,
   CheckCircle,
   DayDivider,
   EmptyIllustration,
@@ -17,6 +18,19 @@ import {
   type WeekStripDay,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
+import { DiaryHeader } from '@/features/today/components/DiaryHeader';
+import { i18n } from '@/lib/i18n';
+import { AppProviders } from '@/lib/providers/AppProviders';
+
+let mockFontScale = 1;
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
+    value: () => ({ fontScale: mockFontScale, height: 667, scale: 2, width: 375 }),
+  });
+});
 
 function flatten(node: { props: { style?: unknown } }) {
   return StyleSheet.flatten(node.props.style as never) as Record<string, unknown>;
@@ -60,10 +74,70 @@ describe('IconChip', () => {
 });
 
 describe('TimeGutter', () => {
-  it('splits a clock time into number and meridiem', () => {
+  beforeEach(() => {
+    mockFontScale = 1;
+  });
+
+  it.each([
+    { expectedWidth: 62, fontScale: 1 },
+    { expectedWidth: 62, fontScale: 1.9 },
+    { expectedWidth: 62, fontScale: 2 },
+  ])('AC-P33-GUTTER keeps the complete time gutter content-safe at fontScale $fontScale', ({
+    expectedWidth,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(<TimeGutter time="7:30 AM" testID="adaptive-time-gutter" />);
+
+    const gutterStyle = flatten(screen.getByTestId('adaptive-time-gutter'));
+    const clock = screen.getByText('7:30');
+    const meridiem = screen.getByText('AM');
+
+    expect(gutterStyle.width).toBe(expectedWidth);
+    expect(gutterStyle.alignItems).toBe('flex-end');
+    expect(clock.props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      children: '7:30',
+      maxFontSizeMultiplier: 1.3,
+      numberOfLines: 1,
+    }));
+    expect(StyleSheet.flatten(clock.props.style).fontVariant).toEqual(['tabular-nums']);
+    expect(meridiem.props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      children: 'AM',
+      maxFontSizeMultiplier: 1.3,
+      numberOfLines: 1,
+    }));
+  });
+
+  it('AC-DT-2 AC-DT-3 AC-DT-4 keeps full fixed-gutter clock text scalable within 1.3', () => {
     render(<TimeGutter time="7:15 am" />);
-    expect(screen.getByText('7:15')).toBeTruthy();
-    expect(screen.getByText('am')).toBeTruthy();
+    expect(screen.getByText('7:15').props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      children: '7:15',
+      maxFontSizeMultiplier: 1.3,
+      numberOfLines: 1,
+    }));
+    expect(screen.getByText('am').props).toEqual(expect.objectContaining({
+      allowFontScaling: true,
+      children: 'am',
+      maxFontSizeMultiplier: 1.3,
+      numberOfLines: 1,
+    }));
+  });
+
+  it('AC-P33-DOG-DIARY-AX delegates scaled TimeGutter line height to native metrics while preserving base overrides', () => {
+    const base = render(<TimeGutter time="7:30 AM" />);
+
+    expect(flatten(screen.getByText('7:30')).lineHeight).toBe(16);
+    expect(flatten(screen.getByText('AM')).lineHeight).toBe(12);
+
+    base.unmount();
+    mockFontScale = 3;
+    render(<TimeGutter time="7:30 AM" />);
+
+    expect(flatten(screen.getByText('7:30')).lineHeight).toBeUndefined();
+    expect(flatten(screen.getByText('AM')).lineHeight).toBeUndefined();
   });
 
   it('renders the clock in the display (Lora) family', () => {
@@ -110,6 +184,16 @@ describe('WeekStrip', () => {
     expect(screen.queryAllByRole('tab')).toHaveLength(0);
     expect(screen.queryAllByRole('button')).toHaveLength(0);
     expect(screen.getByLabelText('Thu 14').props.accessibilityState?.selected).toBeUndefined();
+    for (const day of WEEK_DAYS) {
+      expect(screen.getByText(day.dow).props).toEqual(expect.objectContaining({
+        allowFontScaling: true,
+        maxFontSizeMultiplier: 1.5,
+      }));
+      expect(screen.getByText(String(day.day)).props).toEqual(expect.objectContaining({
+        allowFontScaling: true,
+        maxFontSizeMultiplier: 1.5,
+      }));
+    }
     // Selected day number is rendered on the clay fill (on-primary text).
     expect(flatten(screen.getByText('14')).color).toBe(tokens.color.text.onPrimary);
   });
@@ -133,8 +217,37 @@ describe('InfoHero', () => {
   it('renders the guidance message with a summary role', () => {
     render(<InfoHero message="Puppies around 9 weeks sleep 18-20 hours." testID="hero" />);
     expect(screen.getByText('Puppies around 9 weeks sleep 18-20 hours.')).toBeTruthy();
+    expect(screen.getByText('Puppies around 9 weeks sleep 18-20 hours.').props).toEqual(
+      expect.objectContaining({ allowFontScaling: true, maxFontSizeMultiplier: 2 }),
+    );
     expect(screen.getByTestId('hero').props.accessibilityRole).toBe('summary');
     expect(flatten(screen.getByTestId('hero')).borderRadius).toBe(tokens.radius.hero);
+  });
+
+  it('AC-P33-HERO sets a guidance title in the display face above the body', () => {
+    render(
+      <InfoHero
+        message="Diary stays quiet when logs are current."
+        testID="hero"
+        title="Keep the rhythm visible"
+      />,
+    );
+
+    // Fusing the title into the message string renders it as the first line of the paragraph:
+    // same face, same size, same tone. The title has to carry the display face to read as a title.
+    expect(flatten(screen.getByText('Keep the rhythm visible')).fontFamily)
+      .toBe(designFontFamilies.display.semibold);
+    expect(flatten(screen.getByText('Diary stays quiet when logs are current.')).fontFamily)
+      .toBe(designFontFamilies.text.regular);
+  });
+
+  it('AC-P33-HERO subordinates the body tone only when a title is present', () => {
+    const { rerender } = render(<InfoHero message="Standalone tip." testID="hero" />);
+    const standaloneColor = flatten(screen.getByText('Standalone tip.')).color;
+
+    rerender(<InfoHero message="Body copy." testID="hero" title="A title" />);
+
+    expect(flatten(screen.getByText('Body copy.')).color).not.toBe(standaloneColor);
   });
 });
 
@@ -240,6 +353,42 @@ describe('FactCard', () => {
     expect(screen.getByText('Play')).toBeTruthy();
     expect(screen.getByText('Logged · 10 min')).toBeTruthy();
   });
+
+  it('AC-P33-READ AC-P33-CORRECT renders a two-line note preview and separate row/actions buttons', () => {
+    const onActionsPress = jest.fn();
+    const onPress = jest.fn();
+
+    render(
+      <FactCard
+        accessibilityLabel="Observation, 2:32 pm, Synthetic private context"
+        actionsLabel="Fact actions"
+        caption="Logged · 10 min"
+        icon="paw"
+        note="Synthetic private context"
+        onActionsPress={onActionsPress}
+        onPress={onPress}
+        testID="noted-fact"
+        time="2:32 pm"
+        title="Observation"
+      />,
+    );
+
+    const row = screen.getByRole('button', {
+      name: 'Observation, 2:32 pm, Synthetic private context',
+    });
+    const actions = screen.getByRole('button', { name: 'Fact actions' });
+    const note = screen.getByText('Synthetic private context');
+
+    expect(note.props).toEqual(expect.objectContaining({ numberOfLines: 2 }));
+    expect(flatten(note).color).toBe(tokens.color.text.primary);
+    expect(flatten(actions).minHeight).toBeGreaterThanOrEqual(44);
+    expect(flatten(actions).minWidth).toBeGreaterThanOrEqual(44);
+
+    fireEvent.press(row);
+    fireEvent.press(actions);
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(onActionsPress).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('SwipeToDelete', () => {
@@ -264,5 +413,108 @@ describe('SwipeToDelete', () => {
 
     fireEvent.press(action);
     expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Diary XXXL accessibility anatomy', () => {
+  it('AC-P33-DOG-DIARY-AX stacks anatomy, keeps full labels, and delegates scaled line height to native metrics', async () => {
+    mockFontScale = 1;
+    await i18n.changeLanguage('en');
+    const shareLabel = i18n.t('today.history.share-action');
+    const reviewLabel = i18n.t('today.history.open-action');
+    const base = render(
+      <AppProviders>
+        <AppText testID="base-footnote-line-height" variant="footnote">
+          Synthetic base footnote
+        </AppText>
+        <AppText testID="base-headline-line-height" variant="headline">
+          Synthetic base headline
+        </AppText>
+      </AppProviders>,
+    );
+
+    expect(flatten(screen.getByTestId('base-footnote-line-height')).lineHeight).toBe(
+      tokens.typography.scale.footnote.lineHeight,
+    );
+    expect(flatten(screen.getByTestId('base-headline-line-height')).lineHeight).toBe(
+      tokens.typography.scale.headline.lineHeight,
+    );
+
+    base.unmount();
+    mockFontScale = 3;
+
+    render(
+      <AppProviders>
+        <DiaryHeader
+          puppyName="Synthetic long puppy name"
+          timeOfDay="morning"
+          todayDate="2026-07-14"
+        />
+        <WeekStrip
+          accessibilityLabel="Synthetic week"
+          days={WEEK_DAYS}
+          onSelectDay={jest.fn()}
+          selectedIndex={1}
+          todayIndex={1}
+          testID="ax-week-strip"
+        />
+        <FactCard
+          accessibilityLabel="Synthetic full fact accessibility label"
+          actionsLabel="Synthetic full fact actions label"
+          caption="Synthetic complete caption that must remain readable"
+          icon="paw"
+          onActionsPress={jest.fn()}
+          testID="ax-fact"
+          time="10:35 AM"
+          title="Synthetic complete fact title that must remain readable"
+        />
+        <Button label={shareLabel} onPress={jest.fn()} testID="ax-share-day" />
+        <Button label={reviewLabel} onPress={jest.fn()} testID="ax-review-history" />
+        <AppText testID="ax-footnote-line-height" variant="footnote">
+          Synthetic XXXL footnote
+        </AppText>
+        <AppText testID="ax-headline-line-height" variant="headline">
+          Synthetic XXXL headline
+        </AppText>
+        <AppText
+          allowFontScaling={false}
+          testID="ax-static-footnote-line-height"
+          variant="footnote">
+          Synthetic non-scaling footnote
+        </AppText>
+      </AppProviders>,
+    );
+
+    expect(flatten(screen.getByTestId('diary-header-row'))).toEqual(expect.objectContaining({
+      alignItems: 'stretch',
+      flexDirection: 'column',
+    }));
+    expect(screen.UNSAFE_getByType(ScrollView).props).toEqual(expect.objectContaining({
+      horizontal: true,
+      showsHorizontalScrollIndicator: false,
+    }));
+    expect(screen.getAllByRole('button').filter((node) =>
+      WEEK_DAYS.some((day) => day.accessibilityLabel === node.props.accessibilityLabel),
+    )).toHaveLength(7);
+    expect(flatten(screen.getByTestId('ax-fact'))).toEqual(expect.objectContaining({
+      alignItems: 'stretch',
+      flexDirection: 'column',
+    }));
+    expect(screen.getByText('Synthetic complete fact title that must remain readable').props)
+      .toEqual(expect.objectContaining({
+        children: 'Synthetic complete fact title that must remain readable',
+      }));
+    expect(screen.getByText('Synthetic complete caption that must remain readable').props)
+      .toEqual(expect.objectContaining({
+        children: 'Synthetic complete caption that must remain readable',
+      }));
+    expect(screen.getByRole('button', { name: 'Synthetic full fact actions label' })).toBeTruthy();
+    expect(screen.getByText(shareLabel).props.children).toBe(shareLabel);
+    expect(screen.getByText(reviewLabel).props.children).toBe(reviewLabel);
+    expect(flatten(screen.getByTestId('ax-footnote-line-height')).lineHeight).toBeUndefined();
+    expect(flatten(screen.getByTestId('ax-headline-line-height')).lineHeight).toBeUndefined();
+    expect(flatten(screen.getByTestId('ax-static-footnote-line-height')).lineHeight).toBe(
+      tokens.typography.scale.footnote.lineHeight,
+    );
   });
 });

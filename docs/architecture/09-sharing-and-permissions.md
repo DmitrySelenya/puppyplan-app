@@ -40,7 +40,7 @@ Excluded by default:
 - private comments;
 - billing/account data.
 
-`selected_timeline_range` and `routine_summary` are whitelist projections. They do not include notes unless the exact scope and per-item shareable flag allow it.
+`selected_timeline_range` and `routine_summary` are whitelist projections. They do not include notes unless the exact scope and per-item shareable flag allow it. A `selected_timeline_range` scope must store an explicit, non-null, non-empty `selected_event_types` list; null never means all current or future event types.
 
 Projection implementation must be one of:
 

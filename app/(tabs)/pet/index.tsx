@@ -34,6 +34,7 @@ export default function PetRoute() {
       onOpenQuickTrackers={() => {
         router.push('/settings/quick-trackers');
       }}
+      puppy={activeCare.puppy}
       reviewState={reviewState}
     />
   );

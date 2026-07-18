@@ -8,7 +8,10 @@ export type SupabasePublicConfig = {
 
 type SupabasePublicEnv = Record<string, string | undefined>;
 
-export function readSupabasePublicConfig(source: SupabasePublicEnv = process.env): SupabasePublicConfig {
+export function readSupabasePublicConfig(source: SupabasePublicEnv = {
+  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
+}): SupabasePublicConfig {
   const url = readRequiredEnv(source, SUPABASE_URL_ENV);
   const publishableKey = readRequiredEnv(source, SUPABASE_PUBLISHABLE_KEY_ENV);
 

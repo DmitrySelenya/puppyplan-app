@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { MIN_TOUCH_TARGET } from '@/design/a11y';
 import { AppIcon } from '@/design/primitives/AppIcon';
@@ -31,9 +31,12 @@ export function ScreenHeader({
   title,
   trailing,
 }: ScreenHeaderProps) {
+  const { fontScale } = useWindowDimensions();
+  const usesAccessibilityLayout = fontScale >= 2;
+
   return (
     <View
-      style={styles.root}
+      style={[styles.root, usesAccessibilityLayout ? styles.accessibilityRoot : null]}
       testID={testID}>
       <View style={styles.side}>
         {onBack ? (
@@ -63,7 +66,7 @@ export function ScreenHeader({
         accessibilityRole="header"
         adjustsFontSizeToFit
         minimumFontScale={0.8}
-        numberOfLines={1}
+        numberOfLines={usesAccessibilityLayout ? undefined : 1}
         style={styles.title}
         variant="title1">
         {title}
@@ -80,6 +83,10 @@ export function ScreenHeader({
 }
 
 const styles = StyleSheet.create({
+  accessibilityRoot: {
+    alignItems: 'stretch',
+    flexDirection: 'column',
+  },
   backChevron: {
     transform: [{ scaleX: -1 }],
   },

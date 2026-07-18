@@ -17,6 +17,7 @@ export type SegmentedControlOption<Value extends string> = {
 export type SegmentedControlProps<Value extends string> = {
   accessibilityLabel: string;
   disabled?: boolean;
+  distribution?: 'content' | 'equal';
   onValueChange: (value: Value) => void;
   options: readonly SegmentedControlOption<Value>[];
   style?: StyleProp<ViewStyle>;
@@ -26,6 +27,7 @@ export type SegmentedControlProps<Value extends string> = {
 export function SegmentedControl<Value extends string>({
   accessibilityLabel,
   disabled = false,
+  distribution = 'equal',
   onValueChange,
   options,
   style,
@@ -56,6 +58,7 @@ export function SegmentedControl<Value extends string>({
             }}
             style={({ pressed }) => [
               styles.option,
+              distribution === 'content' ? styles.contentOption : styles.equalOption,
               selected ? styles.selectedOption : null,
               pressed && !optionDisabled ? styles.pressedOption : null,
               pressedScaleStyle(pressed && !optionDisabled, reducedMotion),
@@ -78,13 +81,19 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.4,
   },
+  contentOption: {
+    flexBasis: 'auto',
+    flexGrow: 1,
+  },
+  equalOption: {
+    flex: 1,
+  },
   label: {
     color: tokens.color.text.secondary,
   },
   option: {
     alignItems: 'center',
     borderRadius: tokens.radius.sm,
-    flex: 1,
     justifyContent: 'center',
     paddingHorizontal: tokens.space[1],
     paddingVertical: tokens.space[2],
