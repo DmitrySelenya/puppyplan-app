@@ -4,8 +4,9 @@
 decisions locked on 2026-07-16, open the PR that closes the 35-commit PUP-33 branch, then build
 the §6.4 routine lifecycle menu on a fresh branch.
 
-**Status:** Completed — all plan-owned Phases 1–4 verified; PUP-33 PR #32 and stacked PUP-34 PR #33
-are open for review. No merge, release, migration apply, or production action occurred.
+**Status:** Completed — all plan-owned Phases 1–4 verified; PUP-33 PR #32 was squash-merged into
+`main`, and PUP-34 PR #33 was rebased onto `main` and remains open, clean, and mergeable. PUP-34 was
+not merged; no release, migration apply, or production action occurred.
 
 **Current phase:** Complete — PUP-34 is in review.
 
@@ -1925,3 +1926,11 @@ independently reproduced and hashed.
   release-guardrail finding. A second fresh post-review `npm run check` passed with the same evidence,
   and the owner-authorized local commit records this follow-up. No push, merge, migration apply,
   release, production, or other remote repository action occurred.
+- 2026-07-19 — post-rebase status documentation was reconciled after PR #32's authorized squash
+  merge (`4ed70c8`) and PR #33's authorized rebase/force-with-lease update (`07af2e6` → `812fb8f`).
+  PR #33 now targets `main` directly with 19 changed files and is `CLEAN` / `MERGEABLE`; its prior
+  GitHub gate was fully green. The design spec now records the already-completed Stage 4 native PASS,
+  and this plan no longer describes merged PR #32 as open or PR #33 as stacked. This follow-up is
+  documentation-only. Its fresh `npm run check` exited 0: lint has 0 errors / 21 existing warnings,
+  typecheck, Jest, Node 121/121, and all navigation/i18n/scaffold/plan-index/token/privacy/text-hygiene
+  gates passed. PUP-34 remains unmerged and no release, migration apply, or production action occurred.

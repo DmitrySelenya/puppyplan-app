@@ -9,8 +9,9 @@ Source components: `docs/design/v2/reference/diary-create.screens.jsx` and
 Device sizes: canonical 393x852 artboards; approved iPhone SE 3 compact portrait at 375x667
 is the implementation and screenshot target.
 Status: Stage 0 composition locked for PUP-34 on 2026-07-17. The schema-free projection repair
-below is selected under the plan's no-backend/schema constraint; Stage 4 native comparison is
-pending.
+below is selected under the plan's no-backend/schema constraint. Stage 4 native comparison passed
+on the approved iPhone SE at default and AccessibilityL content sizes; evidence is recorded in the
+completed plan and `output/ux-audit/pup34-lifecycle/screenshots/`.
 
 ## Allowed deviations
 
