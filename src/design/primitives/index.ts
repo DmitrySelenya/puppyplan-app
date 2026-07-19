@@ -43,6 +43,10 @@ export {
   type RoutineCardProps,
   type RoutineCardState,
 } from '@/design/primitives/RoutineCard';
+export {
+  RoutineLifecycleMenu,
+  type RoutineLifecycleMenuProps,
+} from '@/design/primitives/RoutineLifecycleMenu';
 export { Screen, type ScreenProps } from '@/design/primitives/Screen';
 export { ScreenHeader, type ScreenHeaderProps } from '@/design/primitives/ScreenHeader';
 export {

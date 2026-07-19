@@ -10,11 +10,17 @@ import { useSyncedQuickLogDeleteUndo } from '@/features/quick-log/useSyncedQuick
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 import { useDiaryDayModel } from '@/lib/query/diary-day';
 import { useQuickLogMutationPort } from '@/lib/query/quick-log';
+import {
+  useDeleteReminderMutation,
+  useToggleReminderEnabledMutation,
+} from '@/lib/query/reminders';
 
 export default function DiaryRoute() {
   const activeCare = useActiveCareContext();
   const quickLogMutation = useQuickLogMutationPort();
   const mutation = quickLogMutation.mutation;
+  const deleteReminderMutation = useDeleteReminderMutation();
+  const toggleReminderMutation = useToggleReminderEnabledMutation();
   const createDetailed = mutation?.createDetailed;
   const diaryDay = useDiaryDayModel(
     activeCare.careContext,
@@ -25,6 +31,13 @@ export default function DiaryRoute() {
   const canWriteQuickLogEvents = mutation !== undefined
     && activeCare.careContext !== null
     && activeCare.careContext.householdRole !== 'viewer';
+  const canManageReminders = activeCare.careContext !== null
+    && activeCare.careContext.householdRole !== 'viewer';
+  const reminderMutationErrorId = deleteReminderMutation.isError
+    ? deleteReminderMutation.variables?.reminderId
+    : toggleReminderMutation.isError
+      ? toggleReminderMutation.variables?.reminderId
+      : undefined;
 
   return (
     <TodayScreen
@@ -67,8 +80,42 @@ export default function DiaryRoute() {
             pottySubtype,
           }));
         }}
+      onDeleteReminder={!canManageReminders ? undefined : (reminderId) => {
+        const careContext = activeCare.careContext;
+        if (careContext === null) {
+          return;
+        }
+
+        deleteReminderMutation.mutate({
+          deletedAt: new Date().toISOString(),
+          householdId: careContext.householdId,
+          puppyId: careContext.puppyId,
+          reminderId,
+          todayDate: careContext.todayDate,
+        });
+      }}
+      onEditReminder={!canManageReminders ? undefined : (reminderId) => {
+        router.push({
+          pathname: '/reminders/edit',
+          params: { reminderId },
+        });
+      }}
       onShareText={async (message) => {
         await Share.share({ message });
+      }}
+      onToggleReminder={!canManageReminders ? undefined : (reminderId, enabled) => {
+        const careContext = activeCare.careContext;
+        if (careContext === null) {
+          return;
+        }
+
+        toggleReminderMutation.mutate({
+          enabled,
+          householdId: careContext.householdId,
+          puppyId: careContext.puppyId,
+          reminderId,
+          todayDate: careContext.todayDate,
+        });
       }}
       openOnboarding={() => {
         router.push('/onboarding');
@@ -80,6 +127,21 @@ export default function DiaryRoute() {
         router.push('/quick-log/schedule');
       }}
       puppyName={activeCare.puppy?.name}
+      pendingDeleteReminderId={deleteReminderMutation.isPending
+        ? deleteReminderMutation.variables?.reminderId
+        : undefined}
+      pendingToggleReminderId={toggleReminderMutation.isPending
+        ? toggleReminderMutation.variables?.reminderId
+        : undefined}
+      reminderLifecycleScopeKey={activeCare.careContext === null
+        ? 'unavailable'
+        : [
+          activeCare.careContext.userId,
+          activeCare.careContext.householdId,
+          activeCare.careContext.puppyId,
+          activeCare.careContext.householdRole,
+        ].join(':')}
+      reminderMutationErrorId={reminderMutationErrorId}
       todayPlanInput={activeCare.careContext === null || activeCare.puppy === null
         ? undefined
         : createTodayPlanInputFromPuppy({

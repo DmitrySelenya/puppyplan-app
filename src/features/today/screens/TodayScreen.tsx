@@ -25,6 +25,7 @@ import { FactCard } from '@/design/primitives/FactCard';
 import { type EventAccent } from '@/design/primitives/IconChip';
 import { InfoHero } from '@/design/primitives/InfoHero';
 import { RoutineCard } from '@/design/primitives/RoutineCard';
+import { RoutineLifecycleMenu } from '@/design/primitives/RoutineLifecycleMenu';
 import { Screen } from '@/design/primitives/Screen';
 import { Stack } from '@/design/primitives/Stack';
 import { StatusPill } from '@/design/primitives/StatusPill';
@@ -83,11 +84,18 @@ export type TodayScreenProps = Readonly<{
     item: DiaryPlannedItem,
     pottySubtype?: QuickLogPottySubtype,
   ) => Promise<void>;
+  onDeleteReminder?: (reminderId: string) => void;
+  onEditReminder?: (reminderId: string) => void;
   onShareText?: (text: string) => Promise<void> | void;
+  onToggleReminder?: (reminderId: string, enabled: boolean) => void;
   openOnboarding?: () => void;
   openQuickLog?: () => void;
   openTimeline: () => void;
   puppyName?: string;
+  pendingDeleteReminderId?: string;
+  pendingToggleReminderId?: string;
+  reminderLifecycleScopeKey?: string;
+  reminderMutationErrorId?: string;
   screenState?: TodayScreenStateOverride;
   todayPlanInput?: Partial<TodayPlanInput>;
 }>;
@@ -264,11 +272,18 @@ export function TodayScreen({
   dayModel = null,
   dayModelStatus = 'unavailable',
   onCheckOff,
+  onDeleteReminder,
+  onEditReminder,
   onShareText,
+  onToggleReminder,
   openOnboarding,
   openQuickLog,
   openTimeline,
   puppyName,
+  pendingDeleteReminderId,
+  pendingToggleReminderId,
+  reminderLifecycleScopeKey: suppliedReminderLifecycleScopeKey,
+  reminderMutationErrorId,
   screenState,
   todayPlanInput,
 }: TodayScreenProps) {
@@ -284,6 +299,14 @@ export function TodayScreen({
     : selectedDate ?? careContext.todayDate;
   const isViewingToday = careContext !== null
     && selectedCalendarDate === careContext.todayDate;
+  const reminderLifecycleScopeKey = suppliedReminderLifecycleScopeKey
+    ?? (careContext === null
+      ? 'unavailable'
+      : [
+        careContext.householdId,
+        careContext.puppyId,
+        careContext.householdRole,
+      ].join(':'));
 
   useEffect(() => {
     setSelectedDate(careContext?.todayDate ?? null);
@@ -566,6 +589,13 @@ export function TodayScreen({
                 locale={locale}
                 model={dayModel}
                 onCheckOff={onCheckOff}
+                onDeleteReminder={onDeleteReminder}
+                onEditReminder={onEditReminder}
+                onToggleReminder={onToggleReminder}
+                pendingDeleteReminderId={pendingDeleteReminderId}
+                pendingToggleReminderId={pendingToggleReminderId}
+                reminderLifecycleScopeKey={reminderLifecycleScopeKey}
+                reminderMutationErrorId={reminderMutationErrorId}
               />
             ) : eventViews.length > 0 ? (
               eventRows.map(({ event, row }) => (
@@ -626,6 +656,13 @@ function DiaryMixedDayRows({
   locale,
   model,
   onCheckOff,
+  onDeleteReminder,
+  onEditReminder,
+  onToggleReminder,
+  pendingDeleteReminderId,
+  pendingToggleReminderId,
+  reminderLifecycleScopeKey,
+  reminderMutationErrorId,
 }: Readonly<{
   actions: QuickLogEventActionHandlers;
   eventRows: readonly DiaryEventRow[];
@@ -635,6 +672,13 @@ function DiaryMixedDayRows({
     item: DiaryPlannedItem,
     pottySubtype?: QuickLogPottySubtype,
   ) => Promise<void>;
+  onDeleteReminder?: (reminderId: string) => void;
+  onEditReminder?: (reminderId: string) => void;
+  onToggleReminder?: (reminderId: string, enabled: boolean) => void;
+  pendingDeleteReminderId?: string;
+  pendingToggleReminderId?: string;
+  reminderLifecycleScopeKey: string;
+  reminderMutationErrorId?: string;
 }>) {
   const { t } = useAppTranslation();
   const [checkingKey, setCheckingKey] = useState<string | null>(null);
@@ -643,6 +687,14 @@ function DiaryMixedDayRows({
     key: string;
   }> | null>(null);
   const [pottyItem, setPottyItem] = useState<DiaryPlannedItem | null>(null);
+  const [lifecycleSelection, setLifecycleSelection] = useState<Readonly<{
+    reminderId: string;
+    scopeKey: string;
+    title: string;
+  }> | null>(null);
+  const lifecycleActionsAvailable = onDeleteReminder !== undefined
+    && onEditReminder !== undefined
+    && onToggleReminder !== undefined;
   const eventRowsById = new Map(
     eventRows.map((eventRow) => [eventRow.event.clientEventId, eventRow]),
   );
@@ -664,6 +716,10 @@ function DiaryMixedDayRows({
       );
     }
   }
+
+  useEffect(() => {
+    setLifecycleSelection(null);
+  }, [lifecycleActionsAvailable, reminderLifecycleScopeKey]);
 
   useEffect(() => {
     if (checkOffError === null) {
@@ -793,6 +849,13 @@ function DiaryMixedDayRows({
                     : undefined}
                   icon={visual.icon}
                   meta={item.status === 'upcoming' ? undefined : statusLabel}
+                  onOverflow={lifecycleActionsAvailable ? () => {
+                    setLifecycleSelection({
+                      reminderId: item.reminderId,
+                      scopeKey: reminderLifecycleScopeKey,
+                      title,
+                    });
+                  } : undefined}
                   onToggleDone={canCheckOff ? () => {
                     if (isGenericPotty) {
                       setPottyItem(item);
@@ -807,6 +870,9 @@ function DiaryMixedDayRows({
                     : item.status === 'past-unmarked' ? 'past' : 'upcoming'}
                   time={plannedTime}
                   title={title}
+                  overflowLabel={lifecycleActionsAvailable
+                    ? t('reminders.lifecycle.open-actions-template', { title })
+                    : undefined}
                 />
               ) : (
                 <DiaryFactRow
@@ -853,9 +919,50 @@ function DiaryMixedDayRows({
                 </Stack>
               </View>
             ) : null}
+            {reminderMutationErrorId === item.reminderId ? (
+              <View
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert"
+                testID={`diary-reminder-lifecycle-error-${item.reminderId}`}>
+                <Card>
+                  <Stack gap="xs">
+                    <AppText variant="bodyEmph">
+                      {t('reminders.lifecycle.mutation-error-title')}
+                    </AppText>
+                    <AppText tone="secondary">
+                      {t('reminders.lifecycle.mutation-error-body')}
+                    </AppText>
+                  </Stack>
+                </Card>
+              </View>
+            ) : null}
           </Stack>
         );
       })}
+      {lifecycleSelection !== null
+        && lifecycleSelection.scopeKey === reminderLifecycleScopeKey
+        && onDeleteReminder !== undefined
+        && onEditReminder !== undefined
+        && onToggleReminder !== undefined ? (
+          <RoutineLifecycleMenu
+            enabled
+            onClose={() => {
+              setLifecycleSelection(null);
+            }}
+            onDelete={() => {
+              onDeleteReminder(lifecycleSelection.reminderId);
+            }}
+            onEdit={() => {
+              onEditReminder(lifecycleSelection.reminderId);
+            }}
+            onToggleEnabled={(enabled) => {
+              onToggleReminder(lifecycleSelection.reminderId, enabled);
+            }}
+            pending={pendingDeleteReminderId === lifecycleSelection.reminderId
+              || pendingToggleReminderId === lifecycleSelection.reminderId}
+            title={lifecycleSelection.title}
+          />
+        ) : null}
     </Stack>
   );
 }

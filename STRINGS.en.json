@@ -1750,6 +1750,22 @@
     "actions": {
       "add": "Add reminder"
     },
+    "lifecycle": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "delete-confirm-body": "Existing Diary entries will stay.",
+      "delete-confirm-title": "Delete this routine?",
+      "diary-entries-stay": "Diary entries stay",
+      "edit": "Edit routine",
+      "mutation-error-body": "Your change wasn’t saved. Open routine actions and try again.",
+      "mutation-error-title": "Routine update failed",
+      "open-actions-template": "Routine actions for {title}",
+      "pause": "Pause",
+      "paused-diary-hint": "Paused routines do not appear in Diary.",
+      "paused-subtitle": "Paused",
+      "resume": "Resume",
+      "title": "Routine actions"
+    },
     "sections": {
       "feeding": "Feeding",
       "health": "Health",
