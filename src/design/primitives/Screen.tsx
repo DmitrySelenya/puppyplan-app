@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react';
+import { forwardRef, type PropsWithChildren } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { Edges } from 'react-native-safe-area-context';
@@ -14,14 +14,14 @@ export type ScreenProps = PropsWithChildren<{
   style?: StyleProp<ViewStyle>;
 }>;
 
-export function Screen({
+export const Screen = forwardRef<ScrollView, ScreenProps>(function Screen({
   children,
   contentStyle,
   edges = ['top'],
   modal = false,
   scroll = true,
   style,
-}: ScreenProps) {
+}, ref) {
   return (
     <SafeAreaView
       accessibilityViewIsModal={modal}
@@ -29,7 +29,7 @@ export function Screen({
       importantForAccessibility={modal ? 'yes' : undefined}
       style={[styles.safeArea, style]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={[styles.content, contentStyle]}>
+        <ScrollView ref={ref} contentContainerStyle={[styles.content, contentStyle]}>
           {children}
         </ScrollView>
       ) : (
@@ -37,7 +37,7 @@ export function Screen({
       )}
     </SafeAreaView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   content: {

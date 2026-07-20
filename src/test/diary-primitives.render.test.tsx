@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet } from 'react-native';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import { designFontFamilies } from '@/design/fonts';
 import {
@@ -42,8 +42,77 @@ const WEEK_DAYS: WeekStripDay[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Su
     day: 11 + index,
     dow,
     key: dow,
+    testID: `week-day-${index}`,
   }),
 );
+
+function getWeekStripScrollToSpy() {
+  return jest.mocked(ScrollView.prototype.scrollTo);
+}
+
+function getWeekStripScrollView() {
+  return screen.UNSAFE_getByType(ScrollView);
+}
+
+function expectWeekStripNotScrollable() {
+  const scrollView = screen.UNSAFE_queryByType(ScrollView);
+
+  if (scrollView) {
+    expect(scrollView.props.scrollEnabled).toBe(false);
+  }
+}
+
+function measureWeekStripViewport(width: number) {
+  const viewport = screen.getByTestId('week-strip');
+
+  act(() => {
+    viewport.props.onLayout?.({
+      nativeEvent: { layout: { height: 58, width, x: 0, y: 0 } },
+    });
+  });
+}
+
+function measureWeekStripContent(width: number) {
+  const content = screen.queryByTestId('week-strip-content');
+  const scrollView = screen.UNSAFE_queryByType(ScrollView);
+
+  act(() => {
+    if (content?.props.onLayout) {
+      content.props.onLayout({
+        nativeEvent: { layout: { height: 58, width, x: 0, y: 0 } },
+      });
+      return;
+    }
+
+    scrollView?.props.onContentSizeChange?.(width, 58);
+  });
+}
+
+function measureWeekStripDay(index: number, x: number, width = 64) {
+  const day = screen.getByTestId(`week-day-${index}`);
+
+  act(() => {
+    day.props.onLayout?.({
+      nativeEvent: {
+        layout: { height: 58, width, x, y: 0 },
+      },
+    });
+  });
+}
+
+function renderMeasuredWeekStrip(selectedIndex = 6, fontScale = 3) {
+  mockFontScale = fontScale;
+
+  return render(
+    <WeekStrip
+      accessibilityLabel="Week"
+      days={WEEK_DAYS}
+      onSelectDay={jest.fn()}
+      selectedIndex={selectedIndex}
+      testID="week-strip"
+    />,
+  );
+}
 
 describe('IconChip', () => {
   it('maps each accent family to its Clay background', () => {
@@ -172,6 +241,10 @@ describe('CheckCircle', () => {
 });
 
 describe('WeekStrip', () => {
+  beforeEach(() => {
+    mockFontScale = 1;
+  });
+
   it('renders non-interactive labelled days without tab semantics', () => {
     render(
       <WeekStrip
@@ -212,6 +285,181 @@ describe('WeekStrip', () => {
     );
     fireEvent.press(screen.getByRole('button', { name: 'Mon 11' }));
     expect(onSelectDay).toHaveBeenCalledWith(0);
+  });
+
+  it('AC-P36-2 preserves the default seven-day anatomy, geometry, targets, and selected state', () => {
+    render(
+      <WeekStrip
+        accessibilityLabel="Week"
+        days={WEEK_DAYS}
+        onSelectDay={jest.fn()}
+        selectedIndex={3}
+        testID="week-strip"
+        todayIndex={3}
+      />,
+    );
+
+    const strip = screen.queryByTestId('week-strip-content') ?? screen.getByTestId('week-strip');
+    const geometry = StyleSheet.flatten(
+      (strip.props.contentContainerStyle ?? strip.props.style) as never,
+    ) as Record<string, unknown>;
+    const dayButtons = screen.getAllByRole('button').filter((node) =>
+      WEEK_DAYS.some((day) => day.accessibilityLabel === node.props.accessibilityLabel));
+
+    expect(geometry).toEqual(expect.objectContaining({
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: tokens.space[3],
+    }));
+    expect(dayButtons).toHaveLength(7);
+    for (const [index, button] of dayButtons.entries()) {
+      expect(flatten(button)).toEqual(expect.objectContaining({
+        minHeight: 58,
+        minWidth: 44,
+      }));
+      expect(button.props.accessibilityState).toEqual(expect.objectContaining({
+        selected: index === 3,
+      }));
+    }
+  });
+
+  it('AC-P36-2 enables scrolling from measured overflow even below the large-text threshold', () => {
+    renderMeasuredWeekStrip(6, 1);
+
+    const scrollTo = getWeekStripScrollToSpy();
+    scrollTo.mockClear();
+    expectWeekStripNotScrollable();
+    measureWeekStripViewport(320);
+    measureWeekStripContent(600);
+    measureWeekStripDay(6, 480);
+
+    expect(getWeekStripScrollView().props).toEqual(expect.objectContaining({
+      horizontal: true,
+      scrollEnabled: true,
+      showsHorizontalScrollIndicator: false,
+    }));
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-P36-2 keeps exact-fit large-text content non-scrollable', () => {
+    renderMeasuredWeekStrip();
+
+    const scrollTo = getWeekStripScrollToSpy();
+    scrollTo.mockClear();
+    measureWeekStripViewport(512);
+    measureWeekStripContent(512);
+    measureWeekStripDay(6, 448);
+
+    expectWeekStripNotScrollable();
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(flatten(screen.getByTestId('week-day-6'))).toEqual(expect.objectContaining({
+      minHeight: 58,
+      minWidth: 44,
+      width: 64,
+    }));
+  });
+
+  it('AC-P36-2 waits for viewport, content, and selected-cell measurements before scrolling', () => {
+    renderMeasuredWeekStrip();
+
+    const scrollTo = getWeekStripScrollToSpy();
+    scrollTo.mockClear();
+
+    expectWeekStripNotScrollable();
+    measureWeekStripViewport(320);
+    expectWeekStripNotScrollable();
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    measureWeekStripContent(600);
+    expect(getWeekStripScrollView().props).toEqual(expect.objectContaining({
+      horizontal: true,
+      scrollEnabled: true,
+      showsHorizontalScrollIndicator: false,
+    }));
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    measureWeekStripDay(6, 480);
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-P36-2 scrolls the selected last day into the valid visible and clamped range', () => {
+    renderMeasuredWeekStrip();
+
+    const scrollTo = getWeekStripScrollToSpy();
+    scrollTo.mockClear();
+    measureWeekStripViewport(320);
+    measureWeekStripContent(600);
+    measureWeekStripDay(6, 480);
+
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    const firstArgument = scrollTo.mock.calls[0]?.[0];
+    expect(firstArgument).toEqual(expect.objectContaining({ x: expect.any(Number) }));
+    const x = typeof firstArgument === 'object' && firstArgument !== null
+      ? firstArgument.x ?? Number.NaN
+      : Number.NaN;
+    expect(x).toBeGreaterThanOrEqual(480 + 64 - 320);
+    expect(x).toBeLessThanOrEqual(Math.min(480, 600 - 320));
+  });
+
+  it('AC-P36-2 scrolls back to the start when selection changes to the measured first day', () => {
+    const view = renderMeasuredWeekStrip();
+
+    const scrollTo = getWeekStripScrollToSpy();
+    scrollTo.mockClear();
+    measureWeekStripViewport(320);
+    measureWeekStripContent(600);
+    measureWeekStripDay(6, 480);
+    scrollTo.mockClear();
+
+    view.rerender(
+      <WeekStrip
+        accessibilityLabel="Week"
+        days={WEEK_DAYS}
+        onSelectDay={jest.fn()}
+        selectedIndex={0}
+        testID="week-strip"
+      />,
+    );
+    measureWeekStripDay(0, 0);
+
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ x: 0 }));
+  });
+
+  it('AC-P36-2 waits for the current selected-cell layout after ordered day keys change', () => {
+    const view = renderMeasuredWeekStrip();
+    const scrollTo = getWeekStripScrollToSpy();
+    const nextWeekDays = WEEK_DAYS.map((entry) => ({
+      ...entry,
+      key: `next-${entry.key}`,
+    }));
+
+    scrollTo.mockClear();
+    measureWeekStripViewport(320);
+    measureWeekStripContent(600);
+    measureWeekStripDay(6, 480);
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    scrollTo.mockClear();
+
+    view.rerender(
+      <WeekStrip
+        accessibilityLabel="Week"
+        days={nextWeekDays}
+        onSelectDay={jest.fn()}
+        selectedIndex={6}
+        testID="week-strip"
+      />,
+    );
+    measureWeekStripContent(680);
+
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    measureWeekStripDay(6, 600);
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+
+    measureWeekStripContent(680);
+    measureWeekStripDay(6, 600);
+    expect(scrollTo).toHaveBeenCalledTimes(1);
   });
 });
 

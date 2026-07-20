@@ -1,17 +1,26 @@
 import { createElement } from 'react';
 import { render } from '@testing-library/react-native';
+import { getLocales } from 'expo-localization';
 
 import { shellI18nKeys } from '@/contracts/navigation';
 import {
   i18n,
   i18nResources,
+  resolveStartupLocale,
   supportedLocales,
   t as typedT,
+  toSupportedLocale,
   useAppTranslation,
   type I18nKey,
   type I18nTOptions,
   type SupportedLocale,
 } from '@/lib/i18n';
+
+jest.mock('expo-localization', () => ({
+  getLocales: jest.fn(() => [{ languageTag: 'ru-RU' }]),
+}));
+
+const mockGetLocales = jest.mocked(getLocales);
 
 type AssertTrue<T extends true> = T;
 type AssertFalse<T extends false> = T;
@@ -94,6 +103,53 @@ describe('i18n scaffold resources', () => {
   it('keeps the MVP startup locales in the expected order', () => {
     expect(supportedLocales).toEqual(['en', 'ru', 'es']);
     expect(Object.keys(i18nResources).sort()).toEqual(['en', 'es', 'ru']);
+  });
+
+  it.each([
+    ['ru-RU', 'ru'],
+    ['es-419', 'es'],
+    ['de-DE', 'en'],
+    ['', 'en'],
+    [undefined, 'en'],
+  ] as const)(
+    'AC-P36-1 ERR-P36-I18N-1 resolves device locale %p to %s without throwing',
+    (deviceLocale, expectedLocale) => {
+      expect(toSupportedLocale(deviceLocale)).toBe(expectedLocale);
+    },
+  );
+
+  it.each([
+    [[{ languageTag: 'ru-RU' }], 'ru'],
+    [[{ languageTag: 'es-419' }], 'es'],
+    [[{ languageTag: 'de-DE' }], 'en'],
+    [[], 'en'],
+    [undefined, 'en'],
+  ] as const)(
+    'AC-P36-1 ERR-P36-I18N-1 safely resolves startup locale data %p to %s',
+    (locales, expectedLocale) => {
+      expect(resolveStartupLocale(locales)).toBe(expectedLocale);
+    },
+  );
+
+  it('AC-P36-1 reads the device locale once and exposes its supported cold-start locale', () => {
+    let hookLocale: SupportedLocale | undefined;
+
+    function TranslationProbe() {
+      hookLocale = useAppTranslation().locale;
+      return null;
+    }
+
+    render(createElement(TranslationProbe));
+
+    expect({
+      deviceLocaleReads: mockGetLocales.mock.calls.length,
+      hookLocale,
+      i18nLocale: toSupportedLocale(i18n.resolvedLanguage ?? i18n.language),
+    }).toEqual({
+      deviceLocaleReads: 1,
+      hookLocale: 'ru',
+      i18nLocale: 'ru',
+    });
   });
 
   it.each(supportedLocales)('resolves every shell key for %s', async (locale) => {

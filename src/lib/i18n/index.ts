@@ -1,4 +1,5 @@
 import { createInstance } from 'i18next';
+import { getLocales } from 'expo-localization';
 import { initReactI18next, useTranslation } from 'react-i18next';
 
 import en from '../../../STRINGS.en.json';
@@ -28,6 +29,9 @@ type StringLeafPaths<Value, Prefix extends string = ''> = Value extends string
 
 export const supportedLocales = ['en', 'ru', 'es'] as const;
 export type SupportedLocale = (typeof supportedLocales)[number];
+type StartupLocale = Readonly<{
+  languageTag?: string;
+}>;
 export type I18nKey = StringLeafPaths<typeof en>;
 export type I18nTOptions = Record<string, string | number | boolean>;
 export type AppTranslate = (key: I18nKey, options?: I18nTOptions) => string;
@@ -41,6 +45,8 @@ export const i18nResources = {
 const i18n = createInstance();
 
 if (!i18n.isInitialized) {
+  const startupLocale = resolveStartupLocale(getLocales());
+
   void i18n.use(initReactI18next).init({
     fallbackLng: 'en',
     initImmediate: false,
@@ -49,7 +55,7 @@ if (!i18n.isInitialized) {
       prefix: '{',
       suffix: '}',
     },
-    lng: 'en',
+    lng: startupLocale,
     resources: i18nResources,
   });
 }
@@ -62,6 +68,12 @@ export function toSupportedLocale(locale: string | undefined): SupportedLocale {
   return supportedLocales.includes(baseLocale as SupportedLocale)
     ? baseLocale as SupportedLocale
     : 'en';
+}
+
+export function resolveStartupLocale(
+  locales: readonly StartupLocale[] | undefined,
+): SupportedLocale {
+  return toSupportedLocale(locales?.[0]?.languageTag);
 }
 
 export function useAppTranslation() {

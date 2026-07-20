@@ -32,7 +32,7 @@ This lock **replaces `docs/design/v2/specs/today-v2.md`**, whose anatomy (large-
 
 ## Anatomy (top → bottom) — `ScreenDiaryDay`
 1. **DiaryHeader** — greeting (`title-1`, Lora, e.g. "Good morning, {name}") + date (`footnote`, text/secondary) on the left; `Avatar` (initial, size `lg`, tone `accent`) on the right; optional **recap** line below (`footnote`, text/secondary, e.g. "Since yesterday: last sleep at 9:30 pm, walk at 10:00 pm."). Container padding `8 / 16 / 14`.
-2. **WeekStrip** — 7 columns Mon–Sun. Each: DOW label (`caption`; selected → text/primary, else text/secondary) above a **38pt circle** (Lora 16/700). Selected → `primary/600` fill, `text/on-primary`, soft clay shadow. Today-but-not-selected → 5pt `primary/600` dot under the circle. Column min 44×58; strip padding `0 / 12`, margin-bottom `18`. Whole strip `role=group`, per-day a11y label "`{dow} {n}, today, selected`".
+2. **WeekStrip** — 7 columns Mon–Sun. Each: DOW label (`caption`; selected → text/primary, else text/secondary) above a **38pt circle** (Lora 16/700). Selected → `primary/600` fill, `text/on-primary`, soft clay shadow. Today-but-not-selected → 5pt `primary/600` dot under the circle. Column min 44×58; strip padding `0 / 12`, margin-bottom `18`. Whole strip `role=group`, per-day a11y label "`{dow} {n}, today, selected`". Default geometry remains the same `space-between` row with 12pt horizontal padding and 44×58 minimum targets. At large text, cells remain fixed, non-shrinking 64pt columns. Horizontal scrolling is enabled only when measured content width is greater than measured viewport width; exact-fit content remains non-scrollable. After viewport, content, and selected-cell layout are all known, the strip brings the complete selected cell on-screen on initial layout and selection changes using a content-bounds-clamped offset. It issues no scroll command before those measurements exist.
 3. Scroll content (horizontal padding `16`, bottom inset `tokens.layout.bottomInsetFab`):
    - **InfoHero** (optional guidance) — `info-tint` bg, `info.circle` @24 in `status/info`, `callout` body in text/primary. Radius `20`, padding `15/16`, margin-bottom `18`.
    - **Section title "Today"** — `title-3`, padding-bottom `12`.
@@ -41,7 +41,13 @@ This lock **replaces `docs/design/v2/specs/today-v2.md`**, whose anatomy (large-
        - `done` — card bg `sage/100`, `elev/1`; CheckCircle filled `sage/500` + `check` in on-primary; IconChip forced `sage` accent.
        - `upcoming` — card bg `surface/raised`, `elev/1`; CheckCircle empty (2pt `primary/400` ring); IconChip uses the row accent.
        - `past` — card bg `surface/raised`, **no shadow**, opacity `0.78`; CheckCircle quiet (`stroke/strong` ring); IconChip quiet (`surface/base` bg, `text/secondary` icon); TimeGutter quiet.
-     - **FactCard** (a logged spontaneous fact, not checkable). TimeGutter + card bg `surface/sunken`, radius `18`, padding `11/13`, gap `12`: IconChip (default `honey`) + title (`headline`) + caption (`footnote`, e.g. "Logged · 10 min" / "Spontaneous"). No checkbox, no overflow.
+     - **FactCard** (a logged spontaneous fact, not checkable). TimeGutter + card bg `surface/sunken`, radius `18`, padding `11/13`, gap `12`: IconChip (default `honey`) + title (`headline`) + caption (`footnote`, e.g. "Logged · 10 min" / "Spontaneous"). No checkbox. Read-only facts have no overflow; synced actionable facts expose the 44pt actions overflow that opens Edit/Delete.
+       - For a synced fact, expanded inline **Delete** is a two-step action. It replaces that
+         fact's Edit/Delete actions with the existing typed
+         `timeline.delete-confirm.{title,body,primary,secondary}` confirmation. **Cancel** restores
+         the same fact's Edit/Delete actions; **Confirm** issues the existing typed delete request
+         exactly once and closes the confirmation. Swipe-to-delete and the accessibility delete
+         action remain direct and do not open this inline confirmation.
 4. **TabBar** — existing `CapsuleTabBar`, active = `diary`. (Already V2-correct; not part of this rebuild.)
 
 ## Accent map (`IconChip` / card accents)

@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+import type { LayoutChangeEvent } from 'react-native';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { designFontFamilies } from '@/design/fonts';
@@ -8,6 +10,18 @@ import { tokens } from '@/design/tokens';
 
 const CIRCLE_SIZE = 38;
 const DOT_SIZE = 5;
+
+type DayLayout = {
+  generation: string;
+  index: number;
+  width: number;
+  x: number;
+};
+
+type WidthMeasurement = {
+  generation: string;
+  width: number;
+};
 
 export type WeekStripDay = {
   /** Composed, localized a11y label, e.g. "Thu 14, today, selected". */
@@ -40,6 +54,153 @@ export function WeekStrip({
 }: WeekStripProps) {
   const { fontScale } = useWindowDimensions();
   const accessibilityLayout = fontScale >= 2;
+  const layoutGeneration = JSON.stringify([
+    accessibilityLayout,
+    days.map((entry) => entry.key),
+  ]);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const dayLayoutsRef = useRef(new Map<number, Omit<DayLayout, 'index'>>());
+  const lastScrollCommandRef = useRef<string | null>(null);
+  const [contentMeasurement, setContentMeasurement] = useState<WidthMeasurement | null>(null);
+  const [selectedDayLayout, setSelectedDayLayout] = useState<DayLayout | null>(null);
+  const [viewportMeasurement, setViewportMeasurement] = useState<WidthMeasurement | null>(null);
+  const contentWidth = contentMeasurement?.generation === layoutGeneration
+    ? contentMeasurement.width
+    : null;
+  const viewportWidth = viewportMeasurement?.generation === layoutGeneration
+    ? viewportMeasurement.width
+    : null;
+  const scrollEnabled = contentWidth !== null
+    && viewportWidth !== null
+    && contentWidth > viewportWidth;
+
+  useEffect(() => {
+    for (const [index, measurement] of dayLayoutsRef.current) {
+      if (measurement.generation !== layoutGeneration) {
+        dayLayoutsRef.current.delete(index);
+      }
+    }
+
+    lastScrollCommandRef.current = null;
+    setContentMeasurement((currentMeasurement) =>
+      currentMeasurement?.generation === layoutGeneration ? currentMeasurement : null);
+    setSelectedDayLayout((currentLayout) =>
+      currentLayout?.generation === layoutGeneration ? currentLayout : null);
+    setViewportMeasurement((currentMeasurement) => {
+      if (!currentMeasurement || currentMeasurement.generation === layoutGeneration) {
+        return currentMeasurement;
+      }
+
+      return { generation: layoutGeneration, width: currentMeasurement.width };
+    });
+  }, [layoutGeneration]);
+
+  useEffect(() => {
+    const measuredLayout = dayLayoutsRef.current.get(selectedIndex);
+
+    setSelectedDayLayout((currentLayout) => {
+      if (!measuredLayout || measuredLayout.generation !== layoutGeneration) {
+        return null;
+      }
+
+      if (
+        currentLayout?.generation === layoutGeneration
+        && currentLayout.index === selectedIndex
+        && currentLayout.width === measuredLayout.width
+        && currentLayout.x === measuredLayout.x
+      ) {
+        return currentLayout;
+      }
+
+      return { index: selectedIndex, ...measuredLayout };
+    });
+  }, [layoutGeneration, selectedIndex]);
+
+  useEffect(() => {
+    if (
+      !scrollEnabled
+      || contentWidth === null
+      || viewportWidth === null
+      || selectedDayLayout?.generation !== layoutGeneration
+      || selectedDayLayout?.index !== selectedIndex
+    ) {
+      lastScrollCommandRef.current = null;
+      return;
+    }
+
+    const maxOffset = contentWidth - viewportWidth;
+    const selectedRightEdge = selectedDayLayout.x + selectedDayLayout.width;
+    const x = Math.min(Math.max(selectedRightEdge - viewportWidth, 0), maxOffset);
+    const commandKey = [
+      layoutGeneration,
+      selectedIndex,
+      viewportWidth,
+      contentWidth,
+      selectedDayLayout.x,
+      selectedDayLayout.width,
+      x,
+    ].join(':');
+
+    if (lastScrollCommandRef.current === commandKey) {
+      return;
+    }
+
+    lastScrollCommandRef.current = commandKey;
+    scrollViewRef.current?.scrollTo({ animated: false, x, y: 0 });
+  }, [
+    contentWidth,
+    layoutGeneration,
+    scrollEnabled,
+    selectedDayLayout,
+    selectedIndex,
+    viewportWidth,
+  ]);
+
+  const handleContentLayout = (event: LayoutChangeEvent) => {
+    const measuredWidth = event.nativeEvent.layout.width;
+    setContentMeasurement((currentMeasurement) =>
+      currentMeasurement?.generation === layoutGeneration
+        && currentMeasurement.width === measuredWidth
+        ? currentMeasurement
+        : { generation: layoutGeneration, width: measuredWidth });
+  };
+
+  const handleContentSizeChange = (width: number) => {
+    setContentMeasurement((currentMeasurement) =>
+      currentMeasurement?.generation === layoutGeneration && currentMeasurement.width === width
+        ? currentMeasurement
+        : { generation: layoutGeneration, width });
+  };
+
+  const handleDayLayout = (index: number, event: LayoutChangeEvent) => {
+    const { width, x } = event.nativeEvent.layout;
+    const currentLayout = dayLayoutsRef.current.get(index);
+
+    if (
+      currentLayout?.generation === layoutGeneration
+      && currentLayout.width === width
+      && currentLayout.x === x
+    ) {
+      return;
+    }
+
+    const nextLayout = { generation: layoutGeneration, width, x };
+    dayLayoutsRef.current.set(index, nextLayout);
+
+    if (index === selectedIndex) {
+      setSelectedDayLayout({ index, ...nextLayout });
+    }
+  };
+
+  const handleViewportLayout = (event: LayoutChangeEvent) => {
+    const measuredWidth = event.nativeEvent.layout.width;
+    setViewportMeasurement((currentMeasurement) =>
+      currentMeasurement?.generation === layoutGeneration
+        && currentMeasurement.width === measuredWidth
+        ? currentMeasurement
+        : { generation: layoutGeneration, width: measuredWidth });
+  };
+
   const dayButtons = days.map((entry, index) => {
     const isSelected = index === selectedIndex;
     const isToday = index === todayIndex;
@@ -51,6 +212,7 @@ export function WeekStrip({
         accessibilityState={onSelectDay ? { selected: isSelected } : undefined}
         key={entry.key}
         minTarget="none"
+        onLayout={(event) => handleDayLayout(index, event)}
         onPress={onSelectDay ? () => onSelectDay(index) : undefined}
         style={[styles.day, accessibilityLayout ? styles.accessibilityDay : null]}
         testID={entry.testID}>
@@ -76,26 +238,23 @@ export function WeekStrip({
     );
   });
 
-  if (accessibilityLayout) {
-    return (
-      <ScrollView
-        accessibilityLabel={accessibilityLabel}
-        contentContainerStyle={styles.accessibilityStrip}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        testID={testID}>
-        {dayButtons}
-      </ScrollView>
-    );
-  }
-
   return (
-    <View
+    <ScrollView
       accessibilityLabel={accessibilityLabel}
-      style={styles.strip}
+      horizontal
+      onContentSizeChange={handleContentSizeChange}
+      onLayout={handleViewportLayout}
+      ref={scrollViewRef}
+      scrollEnabled={scrollEnabled}
+      showsHorizontalScrollIndicator={false}
       testID={testID}>
-      {dayButtons}
-    </View>
+      <View
+        onLayout={handleContentLayout}
+        style={accessibilityLayout ? styles.accessibilityStrip : styles.strip}
+        testID="week-strip-content">
+        {dayButtons}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -106,8 +265,10 @@ const styles = StyleSheet.create({
     width: 64,
   },
   accessibilityStrip: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     gap: tokens.space[2],
+    minWidth: '100%',
     paddingHorizontal: tokens.space[3],
   },
   circle: {
@@ -161,6 +322,7 @@ const styles = StyleSheet.create({
   strip: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    minWidth: '100%',
     paddingHorizontal: tokens.space[3],
   },
 });

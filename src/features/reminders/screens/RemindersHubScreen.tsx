@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { reminderScheduleDraftSchema } from '@/contracts/reminders';
+import { expandOccurrencesForDay, reminderScheduleDraftSchema } from '@/contracts/reminders';
 import type { Reminder } from '@/contracts/supabase';
 import {
   AppIcon,
@@ -24,7 +24,9 @@ import {
   Toggle,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
+import { useSnackbar } from '@/design/primitives/Snackbar';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+import { formatCalendarDate } from '@/lib/i18n/format-date';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 import {
   useDeleteReminderMutation,
@@ -40,7 +42,9 @@ export type ReminderHubState =
   | 'offline-read'
   | 'pending-write';
 type ReminderSection = 'feeding' | 'health' | 'sitter' | 'other';
+type OneOffScheduleProjection = 'not-applicable' | 'future' | 'expired' | 'unavailable';
 type LifecycleSelection = Readonly<{
+  canEdit: boolean;
   initialView: 'actions' | 'delete-confirmation';
   reminder: Reminder;
   scopeKey: string;
@@ -132,6 +136,8 @@ export type RemindersHubScreenProps = Readonly<{
   onEditReminder?: (reminderId: string) => void;
   onToggleReminder?: (reminderId: string, enabled: boolean) => void;
   pendingDeleteReminderId?: string;
+  mutationErrorReminderId?: string;
+  onClearMutationError?: () => void;
   pendingToggleReminderId?: string;
   reminders?: readonly Reminder[];
   reviewState?: ReminderHubState;
@@ -148,6 +154,8 @@ export function ConnectedRemindersHubScreen({
   onEditReminder?: (reminderId: string) => void;
 }>) {
   const activeCare = useActiveCareContext();
+  const { t } = useAppTranslation();
+  const { showSnackbar } = useSnackbar();
   const remindersQuery = useRemindersQuery(
     activeCare.careContext?.householdId,
     activeCare.careContext?.puppyId,
@@ -188,7 +196,7 @@ export function ConnectedRemindersHubScreen({
     );
   }
 
-  if (remindersQuery.isError || toggleReminderMutation.isError || deleteReminderMutation.isError) {
+  if (remindersQuery.isError) {
     return (
       <RemindersHubScreen
         onAddReminder={onAddReminder}
@@ -198,11 +206,21 @@ export function ConnectedRemindersHubScreen({
     );
   }
 
+  // A failed lifecycle mutation stays a row-level recoverable error; durable rows keep rendering.
+  const mutationErrorReminderId = deleteReminderMutation.isError
+    ? deleteReminderMutation.variables?.reminderId
+    : toggleReminderMutation.isError
+      ? toggleReminderMutation.variables?.reminderId
+      : undefined;
+
   return (
     <RemindersHubScreen
       onAddReminder={onAddReminder}
       onBack={onBack}
       onDeleteReminder={canManage ? (reminderId) => {
+        if (toggleReminderMutation.isError) {
+          toggleReminderMutation.reset();
+        }
         deleteReminderMutation.mutate({
           deletedAt: new Date().toISOString(),
           householdId: careContext.householdId,
@@ -213,12 +231,32 @@ export function ConnectedRemindersHubScreen({
       } : undefined}
       onEditReminder={canManage ? onEditReminder : undefined}
       onToggleReminder={canManage ? (reminderId, enabled) => {
-        toggleReminderMutation.mutate({
+        if (deleteReminderMutation.isError) {
+          deleteReminderMutation.reset();
+        }
+        const variables = {
           enabled,
           householdId: careContext.householdId,
           puppyId: careContext.puppyId,
           reminderId,
           todayDate: careContext.todayDate,
+        };
+
+        if (enabled) {
+          toggleReminderMutation.mutate(variables);
+          return;
+        }
+
+        toggleReminderMutation.mutate(variables, {
+          onSuccess: () => {
+            const message = t('reminders.lifecycle.paused-snackbar');
+            showSnackbar({
+              accessibilityLabel: message,
+              id: 'reminder-lifecycle-paused',
+              message,
+              tone: 'info',
+            });
+          },
         });
       } : undefined}
       pendingDeleteReminderId={deleteReminderMutation.isPending
@@ -227,6 +265,11 @@ export function ConnectedRemindersHubScreen({
       pendingToggleReminderId={toggleReminderMutation.isPending
         ? toggleReminderMutation.variables?.reminderId
         : undefined}
+      mutationErrorReminderId={mutationErrorReminderId}
+      onClearMutationError={() => {
+        deleteReminderMutation.reset();
+        toggleReminderMutation.reset();
+      }}
       reminders={remindersQuery.data ?? []}
       lifecycleScopeKey={[
         careContext.userId,
@@ -239,8 +282,10 @@ export function ConnectedRemindersHubScreen({
 }
 
 export function RemindersHubScreen({
+  mutationErrorReminderId,
   onAddReminder,
   onBack,
+  onClearMutationError,
   onDeleteReminder,
   onEditReminder,
   onToggleReminder,
@@ -307,10 +352,10 @@ export function RemindersHubScreen({
                   {rows.map((reminder) => (
                     <ReminderRow
                       key={reminder.id}
-                      lifecycleOpen={lifecycleSelection?.scopeKey === lifecycleScopeKey
-                        && lifecycleSelection.reminder.id === reminder.id}
+                      mutationError={mutationErrorReminderId === reminder.id}
                       onOpenLifecycle={lifecycleActionsAvailable
                         ? (selection) => {
+                          onClearMutationError?.();
                           setLifecycleSelection({ ...selection, scopeKey: lifecycleScopeKey });
                         }
                         : undefined}
@@ -352,9 +397,9 @@ export function RemindersHubScreen({
             onDelete={() => {
               onDeleteReminder(lifecycleSelection.reminder.id);
             }}
-            onEdit={() => {
+            onEdit={lifecycleSelection.canEdit ? () => {
               onEditReminder(lifecycleSelection.reminder.id);
-            }}
+            } : undefined}
             onToggleEnabled={(enabled) => {
               onToggleReminder(lifecycleSelection.reminder.id, enabled);
             }}
@@ -404,21 +449,21 @@ export function RemindersHubStatePreview({ state }: Readonly<{ state: ReminderHu
 }
 
 function ReminderRow({
-  lifecycleOpen,
+  mutationError,
   onOpenLifecycle,
   onToggleReminder,
   pending,
   reminder,
   section,
 }: Readonly<{
-  lifecycleOpen: boolean;
+  mutationError: boolean;
   onOpenLifecycle?: (selection: LifecycleSelectionRequest) => void;
   onToggleReminder?: (reminderId: string, enabled: boolean) => void;
   pending: boolean;
   reminder: Reminder;
   section: ReminderSection;
 }>) {
-  const { t } = useAppTranslation();
+  const { locale, t } = useAppTranslation();
   const canonicalResult = reminderScheduleDraftSchema.safeParse({
     trackerId: reminder.reminder_type,
     rule: reminder.schedule_rule,
@@ -426,22 +471,34 @@ function ReminderRow({
   const title = canonicalResult.success
     ? canonicalResult.data.rule.title ?? t(trackerLabelKeys[canonicalResult.data.trackerId])
     : reminder.reminder_type;
-  const subtitle = canonicalResult.success
-    ? formatCanonicalSubtitle(canonicalResult.data.rule, t)
+  const scheduleProjection: OneOffScheduleProjection = canonicalResult.success
+    ? projectCanonicalOneOffSchedule(reminder, canonicalResult.data)
+    : 'not-applicable';
+  const canonicalSubtitle = canonicalResult.success
+    ? formatCanonicalSubtitle(canonicalResult.data.rule, locale, t)
     : t('reminders.form.legacy-unsupported');
+  // The marker leads so the two-line subtitle clamp truncates the schedule tail, never the state.
+  const subtitle = scheduleProjection === 'unavailable'
+    ? t('reminders.row-schedule-unavailable')
+    : scheduleProjection === 'expired'
+      ? `${t('reminders.row-expired')} · ${canonicalSubtitle}`
+      : canonicalSubtitle;
+  const quiet = !reminder.enabled
+    || scheduleProjection === 'expired'
+    || scheduleProjection === 'unavailable';
   const openLifecycle = (initialView: LifecycleSelectionRequest['initialView'] = 'actions') => {
-    onOpenLifecycle?.({ initialView, reminder, title });
+    onOpenLifecycle?.({ canEdit: canonicalResult.success, initialView, reminder, title });
   };
   const row = (
     <ListRow
       leading={(
         <View
-          style={[styles.reminderIcon, reminder.enabled
-            ? styles.activeReminderIcon
-            : styles.pausedReminderIcon]}
+          style={[styles.reminderIcon, quiet
+            ? styles.pausedReminderIcon
+            : styles.activeReminderIcon]}
           testID={`reminder-row-icon-${reminder.id}`}>
           <AppIcon
-            color={reminder.enabled ? tokens.color.primary[700] : tokens.color.text.secondary}
+            color={quiet ? tokens.color.text.secondary : tokens.color.primary[700]}
             name={sectionIcon[section]}
             size={20}
           />
@@ -474,7 +531,7 @@ function ReminderRow({
               value
             />
           ) : null}
-          {!reminder.enabled && !lifecycleOpen ? (
+          {!reminder.enabled ? (
             <Button
               disabled={pending || onToggleReminder === undefined}
               label={t('reminders.lifecycle.resume')}
@@ -502,11 +559,7 @@ function ReminderRow({
     />
   );
 
-  if (!onOpenLifecycle || pending) {
-    return row;
-  }
-
-  return (
+  const content = !onOpenLifecycle || pending ? row : (
     <SwipeToDelete
       deleteLabel={t('common.delete')}
       onDelete={() => {
@@ -516,10 +569,36 @@ function ReminderRow({
       {row}
     </SwipeToDelete>
   );
+
+  if (!mutationError) {
+    return content;
+  }
+
+  return (
+    <Stack gap="xs">
+      {content}
+      <View
+        accessibilityLiveRegion="polite"
+        accessibilityRole="alert"
+        testID={`hub-reminder-lifecycle-error-${reminder.id}`}>
+        <Card>
+          <Stack gap="xs">
+            <AppText variant="bodyEmph">
+              {t('reminders.lifecycle.mutation-error-title')}
+            </AppText>
+            <AppText tone="secondary">
+              {t('reminders.lifecycle.mutation-error-body')}
+            </AppText>
+          </Stack>
+        </Card>
+      </View>
+    </Stack>
+  );
 }
 
 function formatCanonicalSubtitle(
   rule: ReturnType<typeof reminderScheduleDraftSchema.parse>['rule'],
+  locale: ReturnType<typeof useAppTranslation>['locale'],
   t: ReturnType<typeof useAppTranslation>['t'],
 ): string {
   if (rule.repeat === 'daily') {
@@ -529,13 +608,59 @@ function formatCanonicalSubtitle(
     return t('reminders.row-subtitle-weekdays-template', { time: rule.time });
   }
   if (rule.repeat === 'never') {
-    return t('reminders.row-subtitle-once-template', { date: rule.date ?? '', time: rule.time });
+    return t('reminders.row-subtitle-once-template', {
+      date: formatCalendarDate(rule.date ?? '', locale),
+      time: rule.time,
+    });
   }
 
   const days = rule.repeat.days
     .map((day) => t(weekdayLabelKeys[day - 1]).slice(0, 2))
     .join(', ');
   return t('reminders.row-subtitle-custom-template', { days, time: rule.time });
+}
+
+function projectCanonicalOneOffSchedule(
+  reminder: Reminder,
+  schedule: ReturnType<typeof reminderScheduleDraftSchema.parse>,
+): OneOffScheduleProjection {
+  if (!reminder.enabled || schedule.rule.repeat !== 'never' || schedule.rule.date === undefined) {
+    return 'not-applicable';
+  }
+
+  if (!isValidIanaTimeZone(reminder.timezone)) {
+    return 'unavailable';
+  }
+
+  const [occurrence] = expandOccurrencesForDay({
+    day: schedule.rule.date,
+    reminders: [{
+      enabled: true,
+      id: reminder.id,
+      rule: schedule.rule,
+      trackerId: schedule.trackerId,
+    }],
+    timeZone: reminder.timezone,
+  });
+
+  if (occurrence === undefined) {
+    return 'unavailable';
+  }
+
+  return Date.parse(occurrence.scheduledFor) <= Date.now() ? 'expired' : 'future';
+}
+
+function isValidIanaTimeZone(timeZone: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone }).format();
+    return true;
+  } catch (error) {
+    if (!(error instanceof RangeError)) {
+      throw error;
+    }
+
+    return false;
+  }
 }
 
 function groupReminders(reminders: readonly Reminder[]): Record<ReminderSection, Reminder[]> {

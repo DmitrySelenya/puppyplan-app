@@ -41,6 +41,7 @@
     "expo-constants": "~55.0.16",
     "expo-font": "~55.0.8",
     "expo-linking": "~55.0.16",
+    "expo-localization": "~55.0.17",
     "expo-notifications": "~55.0.24",
     "expo-router": "~55.0.16",
     "expo-secure-store": "~55.0.15",

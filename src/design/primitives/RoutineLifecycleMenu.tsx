@@ -5,6 +5,7 @@ import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
 import { Stack } from '@/design/primitives/Stack';
+import { Touchable } from '@/design/primitives/Touchable';
 import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 
@@ -13,7 +14,8 @@ export type RoutineLifecycleMenuProps = Readonly<{
   initialView?: 'actions' | 'delete-confirmation';
   onClose: () => void;
   onDelete: () => void;
-  onEdit: () => void;
+  /** Omitted for rows that cannot open the edit form (legacy, non-canonical schedules). */
+  onEdit?: () => void;
   onToggleEnabled: (enabled: boolean) => void;
   pending?: boolean;
   title: string;
@@ -52,7 +54,16 @@ export function RoutineLifecycleMenu({
         accessibilityViewIsModal
         style={styles.overlay}
         testID="routine-lifecycle-modal">
-        <View style={styles.scrim} testID="routine-lifecycle-scrim" />
+        <Touchable
+          accessibilityElementsHidden
+          accessibilityLabel={t('reminders.lifecycle.cancel')}
+          accessibilityRole="button"
+          importantForAccessibility="no-hide-descendants"
+          minTarget="none"
+          onPress={onClose}
+          style={styles.scrim}
+          testID="routine-lifecycle-scrim"
+        />
         <View style={styles.frame}>
           <Card style={styles.card}>
             <Stack gap="md">
@@ -62,11 +73,20 @@ export function RoutineLifecycleMenu({
                     ? t('reminders.lifecycle.delete-confirm-title')
                     : t('reminders.lifecycle.title')}
                 </AppText>
-                <AppText tone="secondary" variant="body">
-                  {confirmingDelete
-                    ? t('reminders.lifecycle.delete-confirm-body')
-                    : title}
-                </AppText>
+                {confirmingDelete ? (
+                  <>
+                    <AppText numberOfLines={2} tone="secondary" variant="body">
+                      {title}
+                    </AppText>
+                    <AppText tone="secondary" variant="body">
+                      {t('reminders.lifecycle.delete-confirm-body')}
+                    </AppText>
+                  </>
+                ) : (
+                  <AppText tone="secondary" variant="body">
+                    {title}
+                  </AppText>
+                )}
               </Stack>
 
               {confirmingDelete ? (
@@ -88,14 +108,24 @@ export function RoutineLifecycleMenu({
                 </Stack>
               ) : (
                 <Stack gap="sm">
-                  <Button
-                    disabled={pending}
-                    label={t('reminders.lifecycle.edit')}
-                    onPress={() => {
-                      finish(onEdit);
-                    }}
-                    variant="secondary"
-                  />
+                  {onEdit !== undefined ? (
+                    <Button
+                      disabled={pending}
+                      label={t('reminders.lifecycle.edit')}
+                      onPress={() => {
+                        finish(onEdit);
+                      }}
+                      variant="secondary"
+                    />
+                  ) : (
+                    <AppText
+                      numberOfLines={1}
+                      style={styles.reassurance}
+                      tone="secondary"
+                      variant="footnote">
+                      {t('reminders.lifecycle.legacy-no-edit')}
+                    </AppText>
+                  )}
                   <Button
                     disabled={pending}
                     label={enabled
