@@ -7,10 +7,13 @@
 tap closes the sheet; the sheet must always offer an explicit close affordance; the Diary time
 gutter must match the artboard at default type size without breaking the no-truncation lock.
 
-**Status:** Active — all three findings implemented, `npm run check` green, natively verified on
-the SE sim. Awaiting owner review before commit/PR.
+**Status:** Completed — merged to `main` via PR #34 (squash `33d6e8c`) on 2026-07-20. All three
+findings shipped: session-scoped Quick Log pipeline (Finding 1, critical silent-data-loss fix),
+explicit sheet close control (Finding 2), left-aligned time gutter (Finding 3). `npm run check`
+green on CI (Local Gate), natively verified on the SE sim (Feeding chip-log persists across app
+relaunch). Linear PUP-37 closed.
 
-**Current phase:** Phase 5 complete except commit/PR (owner-gated).
+**Current phase:** Done.
 
 **Architecture:** Client-only. Moves ownership of the Quick Log mutation pipeline (queue handle,
 drain loop, mutation port, session-epoch guard) from four route components into one
