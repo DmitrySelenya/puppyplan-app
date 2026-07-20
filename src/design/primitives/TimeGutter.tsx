@@ -11,7 +11,7 @@ export type TimeGutterProps = {
   testID?: string;
 };
 
-/** Right-aligned time column that anchors a Diary event row. */
+/** Left-aligned time column that anchors a Diary event row. */
 export function TimeGutter({ time, testID }: TimeGutterProps) {
   const normalizedTime = time.trim().replaceAll('\u00a0', ' ').replaceAll('\u202f', ' ');
   const [clock, meridiem] = normalizedTime.split(/\s+/, 2);
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   gutter: {
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     flexShrink: 0,
     paddingRight: 9,
     width: GUTTER_WIDTH,

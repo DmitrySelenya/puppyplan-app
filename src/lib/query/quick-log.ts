@@ -1,4 +1,14 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import {
   useMutation,
@@ -841,7 +851,38 @@ export function createQuickLogMutationOptions(
   };
 }
 
+// PUP-37: the Quick Log mutation pipeline (queue handle, drain loop, session epoch, mutation
+// events) is session-scoped. `QuickLogPipelineProvider` hosts exactly one pipeline for the app
+// session so a consuming route unmounting cannot bump the session epoch and supersede an
+// in-flight durable write.
+const QuickLogPipelineContext = createContext<UseQuickLogMutationPortResult | null>(null);
+
+export function QuickLogPipelineProvider(
+  props: Readonly<{ children?: ReactNode }>,
+): ReactNode {
+  const pipeline = useQuickLogPipeline();
+
+  // This module is .ts (no JSX); createElement keeps the provider colocated with the pipeline.
+  return createElement(
+    QuickLogPipelineContext.Provider,
+    { value: pipeline },
+    props.children,
+  );
+}
+
 export function useQuickLogMutationPort(): UseQuickLogMutationPortResult {
+  const pipeline = useContext(QuickLogPipelineContext);
+
+  if (pipeline === null) {
+    throw new Error(
+      'useQuickLogMutationPort must be used within a QuickLogPipelineProvider',
+    );
+  }
+
+  return pipeline;
+}
+
+function useQuickLogPipeline(): UseQuickLogMutationPortResult {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const queueRef = useRef<QuickLogQueueStorage | null>(null);

@@ -12,6 +12,7 @@ import { createPuppyPlanQueryClient } from '@/lib/query/client';
 import { getQuickLogInvalidationKeys, queryKeys } from '@/lib/query/keys';
 import {
   deleteSyncedQuickLogEvent,
+  QuickLogPipelineProvider,
   removeQuickLogOptimisticEvent,
   replayQuickLogQueueItemToCache,
   restoreSyncedQuickLogEvent,
@@ -4799,7 +4800,9 @@ describe('useQuickLogMutationPort async failures', () => {
       };
       const harness = createRecoveryQueueHarness([], { claimEnabled: false });
       const queryClient = createTestQueryClient();
-      const wrapper = createQueryClientWrapper(queryClient);
+      // This case renders only cache-reader hooks; a pipeline provider would run recovery/drain
+      // against the staged cache and drift the asserted ownership rows.
+      const wrapper = createPlainQueryClientWrapper(queryClient);
       const timelineRootKey = queryKeys.events.timelineRoot(item.household_id, item.puppy_id);
       const timelineKey = queryKeys.events.timeline(item.household_id, item.puppy_id, {
         from: '2026-07-16',
@@ -6603,7 +6606,7 @@ describe('useQuickLogMutationPort async failures', () => {
     }, {
       from: '2026-07-16',
       to: '2026-07-16',
-    }), { wrapper });
+    }), { wrapper: createPlainQueryClientWrapper(queryClient) });
 
     try {
       await waitFor(() => {
@@ -6656,7 +6659,7 @@ describe('useQuickLogMutationPort async failures', () => {
     }, {
       from: '2026-07-16',
       to: '2026-07-16',
-    }), { wrapper });
+    }), { wrapper: createPlainQueryClientWrapper(queryClient) });
 
     try {
       await waitFor(() => {
@@ -7916,6 +7919,24 @@ function createQueryClientWrapper(
   queryClient: QueryClient,
 ): (props: Readonly<{ children: ReactNode }>) => ReactNode {
   return function QueryClientWrapper({ children }: Readonly<{ children: ReactNode }>): ReactNode {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <QuickLogPipelineProvider>
+          {children}
+        </QuickLogPipelineProvider>
+      </QueryClientProvider>
+    );
+  };
+}
+
+// Pure cache-reader hooks (`useQuickLogCachedRows`, `useQuickLogTimelineRows`) do not consume the
+// pipeline context. Wrapping them in `QuickLogPipelineProvider` would spawn a second session
+// pipeline against the shared query client — an extra recovery hydration that double-counts
+// `listEvents` and mutates the test's staged cache. Render readers under the query client alone.
+function createPlainQueryClientWrapper(
+  queryClient: QueryClient,
+): (props: Readonly<{ children: ReactNode }>) => ReactNode {
+  return function PlainQueryClientWrapper({ children }: Readonly<{ children: ReactNode }>): ReactNode {
     return (
       <QueryClientProvider client={queryClient}>
         {children}

@@ -14,6 +14,7 @@ Every file in `active/` must have a row in the Current Plans table below (enforc
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
+| Active task plan | [Quick Log Durable-Write Lifecycle, Sheet Exit, Time Gutter](active/2026-07-19-quick-log-durable-write-lifecycle.md) | `PUP-37` | Findings 1-3 implemented, `npm run check` green, natively verified on the SE sim; awaiting owner review before commit/PR |
 | Active task plan | [Diary — Take A Routine Mark Back Off](active/2026-07-15-diary-uncheck-routine.md) | `PUP-33` | Phase 1 complete; check → uncheck → re-check verified on the SE against a burned slot |
 | Active task plan | [Diary Telegram Parity — Make Real Logging Faster Than The Chat](active/2026-07-13-diary-telegram-parity.md) | `PUP-33` | Phase 0 — scoped duplicate fix implemented locally; owner-device legacy discard + fresh check-off and 20+ event verification remain |
 | Active task plan | [Dogfood Device Handoff — From Green Simulator To Two Household iPhones](active/2026-07-12-dogfood-device-handoff.md) | `PUP-32`, `PUP-30` physical acceptance | Phase 3 complete; awaiting owner two-iPhone install and open 8-item physical checklist in Phase 4 |
