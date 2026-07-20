@@ -14,6 +14,7 @@ import { AppIcon } from '@/design/primitives/AppIcon';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Card } from '@/design/primitives/Card';
+import { IconButton } from '@/design/primitives/IconButton';
 import { Screen } from '@/design/primitives/Screen';
 import { SheetHeader } from '@/design/primitives/SheetHeader';
 import { SheetSurface } from '@/design/primitives/SheetSurface';
@@ -417,6 +418,12 @@ function QuickLogShellContent({
               direction="horizontal"
               gap="sm"
               justify="space-between">
+              <IconButton
+                accessibilityLabel={t('quick-log.sheet.dismiss')}
+                icon={<AppIcon name="close" />}
+                onPress={closeSheet}
+                testID="quick-log-sheet-close"
+              />
               <SheetHeader
                 style={styles.title}
                 title={t('quick-log.sheet.title')}

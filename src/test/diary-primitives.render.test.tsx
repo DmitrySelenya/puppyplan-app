@@ -82,7 +82,7 @@ describe('TimeGutter', () => {
     { expectedWidth: 62, fontScale: 1 },
     { expectedWidth: 62, fontScale: 1.9 },
     { expectedWidth: 62, fontScale: 2 },
-  ])('AC-P33-GUTTER keeps the complete time gutter content-safe at fontScale $fontScale', ({
+  ])('AC-P33-GUTTER AC-P37-3 keeps the complete time gutter content-safe and left-aligned at fontScale $fontScale', ({
     expectedWidth,
     fontScale,
   }) => {
@@ -93,8 +93,10 @@ describe('TimeGutter', () => {
     const clock = screen.getByText('7:30');
     const meridiem = screen.getByText('AM');
 
+    // AC-P37-3: width stays 62pt so no localized time truncates, but the time is left-aligned to
+    // the screen-edge side so short times no longer leave a large dead zone on the left.
     expect(gutterStyle.width).toBe(expectedWidth);
-    expect(gutterStyle.alignItems).toBe('flex-end');
+    expect(gutterStyle.alignItems).toBe('flex-start');
     expect(clock.props).toEqual(expect.objectContaining({
       allowFontScaling: true,
       children: '7:30',

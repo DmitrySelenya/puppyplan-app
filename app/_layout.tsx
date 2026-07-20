@@ -11,6 +11,7 @@ import { QuickLogFeedbackProvider } from '@/features/quick-log/QuickLogFeedbackP
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { LocalReminderSync } from '@/lib/notifications/LocalReminderSyncProvider';
 import { AppProviders } from '@/lib/providers/AppProviders';
+import { QuickLogPipelineProvider } from '@/lib/query/quick-log';
 
 export default function RootLayout() {
   return (
@@ -21,16 +22,18 @@ export default function RootLayout() {
             <AuthRouteGate />
             <LocalReminderSync />
             <QuickLogFeedbackProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="sign-in" />
-                <Stack.Screen name="onboarding/index" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="(sheets)" options={{ presentation: 'transparentModal' }} />
-                <Stack.Screen name="(modals)" options={{ presentation: 'fullScreenModal' }} />
-                <Stack.Screen name="invite/[token]" />
-                <Stack.Screen name="share/[token]" />
-              </Stack>
+              <QuickLogPipelineProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="sign-in" />
+                  <Stack.Screen name="onboarding/index" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="(sheets)" options={{ presentation: 'transparentModal' }} />
+                  <Stack.Screen name="(modals)" options={{ presentation: 'fullScreenModal' }} />
+                  <Stack.Screen name="invite/[token]" />
+                  <Stack.Screen name="share/[token]" />
+                </Stack>
+              </QuickLogPipelineProvider>
             </QuickLogFeedbackProvider>
           </AuthProvider>
         </DesignFontGate>

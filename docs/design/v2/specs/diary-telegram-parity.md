@@ -47,7 +47,10 @@ Allowed deviations:
 - Existing Clay V2 surfaces, typography, event accents, spacing, and elevation only.
 - Touch targets are at least 44pt; primary Add remains 56pt-capable.
 - Fact-note copy uses primary text on the sunken surface for AA contrast.
-- Time gutter is 62pt at all supported font scales; no valid localized time may truncate.
+- Time gutter is 62pt at all supported font scales; no valid localized time may truncate. The
+  time is left-aligned within that column (owner decision 2026-07-20, PUP-37): short times sit on
+  the screen-edge side instead of leaving a large dead zone there. Width stays 62pt so the
+  no-truncation guarantee is unchanged; only the alignment moved from right to left.
 
 ## States covered
 

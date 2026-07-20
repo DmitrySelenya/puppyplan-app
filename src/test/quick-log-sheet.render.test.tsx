@@ -132,9 +132,15 @@ describe('QuickLogShell', () => {
     expect(screen.getByTestId('quick-log-sheet-scrim')).toBeTruthy();
     expect(screen.getByTestId('quick-log-sheet-anchor')).toBeTruthy();
     expect(screen.getByTestId('sheet-drag-handle', { includeHiddenElements: true })).toBeTruthy();
-    expect(screen.getByRole('button', {
+    // AC-P37-2: the main sheet state exposes an explicit header close control, so a scrim
+    // covered by tall pending/failed cards is never the only way out.
+    expect(screen.getByTestId('quick-log-sheet-close')).toBeTruthy();
+    expect(screen.getByTestId('quick-log-sheet-close').props.accessibilityRole).toBe('button');
+    expect(screen.getByTestId('quick-log-sheet-close').props.accessibilityLabel)
+      .toBe(i18n.t('quick-log.sheet.dismiss'));
+    expect(screen.getAllByRole('button', {
       name: i18n.t('quick-log.sheet.dismiss'),
-    })).toBeTruthy();
+    })).toHaveLength(2);
     expect(screen.queryByRole('button', {
       name: i18n.t('common.close'),
     })).toBeNull();
@@ -348,7 +354,7 @@ describe('QuickLogShell', () => {
     })).toBeTruthy();
   });
 
-  it('wires the sheet dismiss affordance to the route close handler', () => {
+  it('wires the sheet scrim affordance to the route close handler', () => {
     const closeSheet = jest.fn();
 
     renderWithQuickLogFeedback(
@@ -360,9 +366,24 @@ describe('QuickLogShell', () => {
       />,
     );
 
-    fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('quick-log.sheet.dismiss'),
-    }));
+    fireEvent.press(screen.getByTestId('quick-log-sheet-scrim'));
+
+    expect(closeSheet).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-P37-2 wires the explicit header close control to the route close handler', () => {
+    const closeSheet = jest.fn();
+
+    renderWithQuickLogFeedback(
+      <QuickLogShell
+        careContext={careContext}
+        closeSheet={closeSheet}
+        mutation={createMutationPort()}
+        snackbar={createSnackbarPort()}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('quick-log-sheet-close'));
 
     expect(closeSheet).toHaveBeenCalledTimes(1);
   });
@@ -382,9 +403,7 @@ describe('QuickLogShell', () => {
       />,
     );
 
-    fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('quick-log.sheet.dismiss'),
-    }));
+    fireEvent.press(screen.getByTestId('quick-log-sheet-scrim'));
 
     expect(onQuickLogSaved).not.toHaveBeenCalled();
 
