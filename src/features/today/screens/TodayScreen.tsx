@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { shouldShowQuickLogFailedBanner } from '@/contracts/business-rules';
@@ -84,6 +84,7 @@ export type TodayScreenProps = Readonly<{
     item: DiaryPlannedItem,
     pottySubtype?: QuickLogPottySubtype,
   ) => Promise<void>;
+  onClearReminderMutationError?: () => void;
   onDeleteReminder?: (reminderId: string) => void;
   onEditReminder?: (reminderId: string) => void;
   onShareText?: (text: string) => Promise<void> | void;
@@ -272,6 +273,7 @@ export function TodayScreen({
   dayModel = null,
   dayModelStatus = 'unavailable',
   onCheckOff,
+  onClearReminderMutationError,
   onDeleteReminder,
   onEditReminder,
   onShareText,
@@ -289,6 +291,7 @@ export function TodayScreen({
 }: TodayScreenProps) {
   const { locale, t } = useAppTranslation();
   const { fontScale } = useWindowDimensions();
+  const screenRef = useRef<ScrollView>(null);
   const [diaryHistoryOpen, setDiaryHistoryOpen] = useState(false);
   const [selectedHistoryFilter, setSelectedHistoryFilter] =
     useState<DiaryHistoryFilterValue>('all');
@@ -307,6 +310,13 @@ export function TodayScreen({
         careContext.puppyId,
         careContext.householdRole,
       ].join(':'));
+  const revealDeleteConfirmation = useCallback((target: View) => {
+    screenRef.current?.scrollResponderScrollNativeHandleToKeyboard(
+      target,
+      tokens.layout.bottomInsetFab,
+      true,
+    );
+  }, []);
 
   useEffect(() => {
     setSelectedDate(careContext?.todayDate ?? null);
@@ -490,7 +500,7 @@ export function TodayScreen({
     );
 
   return (
-    <Screen contentStyle={styles.content}>
+    <Screen ref={screenRef} contentStyle={styles.content}>
       <DiaryHeader
         puppyName={puppyName}
         timeOfDay={todayPlanInput?.timeOfDay}
@@ -566,6 +576,7 @@ export function TodayScreen({
                     actions={actions}
                     eventRows={eventRows}
                     locale={locale}
+                    onRevealDeleteConfirmation={revealDeleteConfirmation}
                     t={t}
                     todayDate={careContext.todayDate}
                   />
@@ -588,7 +599,9 @@ export function TodayScreen({
                 eventRows={eventRows}
                 locale={locale}
                 model={dayModel}
+                onRevealDeleteConfirmation={revealDeleteConfirmation}
                 onCheckOff={onCheckOff}
+                onClearReminderMutationError={onClearReminderMutationError}
                 onDeleteReminder={onDeleteReminder}
                 onEditReminder={onEditReminder}
                 onToggleReminder={onToggleReminder}
@@ -603,6 +616,7 @@ export function TodayScreen({
                   actions={actions}
                   event={event}
                   key={event.clientEventId}
+                  onRevealDeleteConfirmation={revealDeleteConfirmation}
                   row={row}
                 />
               ))
@@ -630,6 +644,7 @@ export function TodayScreen({
           actions={actions}
           eventRows={eventRows}
           locale={locale}
+          onRevealDeleteConfirmation={revealDeleteConfirmation}
           selectedDate={selectedCalendarDate}
           status={visibleTimelineStatus}
           t={t}
@@ -655,7 +670,9 @@ function DiaryMixedDayRows({
   eventRows,
   locale,
   model,
+  onRevealDeleteConfirmation,
   onCheckOff,
+  onClearReminderMutationError,
   onDeleteReminder,
   onEditReminder,
   onToggleReminder,
@@ -668,10 +685,12 @@ function DiaryMixedDayRows({
   eventRows: readonly DiaryEventRow[];
   locale: string;
   model: DiaryDayModel;
+  onRevealDeleteConfirmation: (target: View) => void;
   onCheckOff?: (
     item: DiaryPlannedItem,
     pottySubtype?: QuickLogPottySubtype,
   ) => Promise<void>;
+  onClearReminderMutationError?: () => void;
   onDeleteReminder?: (reminderId: string) => void;
   onEditReminder?: (reminderId: string) => void;
   onToggleReminder?: (reminderId: string, enabled: boolean) => void;
@@ -716,6 +735,13 @@ function DiaryMixedDayRows({
       );
     }
   }
+
+  // A multi-slot routine (e.g. feeding several times a day) failed exactly one mutation, so the
+  // visible error anchors to its first slot of the day instead of repeating under every slot.
+  const reminderMutationErrorAnchor = reminderMutationErrorId === undefined
+    ? undefined
+    : model.items.find((item) => item.kind === 'planned'
+      && item.reminderId === reminderMutationErrorId);
 
   useEffect(() => {
     setLifecycleSelection(null);
@@ -792,6 +818,7 @@ function DiaryMixedDayRows({
               actions={actions}
               event={eventRow.event}
               key={`fact-${item.clientEventId}`}
+              onRevealDeleteConfirmation={onRevealDeleteConfirmation}
               row={eventRow.row}
             />
           );
@@ -850,6 +877,12 @@ function DiaryMixedDayRows({
                   icon={visual.icon}
                   meta={item.status === 'upcoming' ? undefined : statusLabel}
                   onOverflow={lifecycleActionsAvailable ? () => {
+                    if (pendingDeleteReminderId === item.reminderId
+                      || pendingToggleReminderId === item.reminderId) {
+                      return;
+                    }
+
+                    onClearReminderMutationError?.();
                     setLifecycleSelection({
                       reminderId: item.reminderId,
                       scopeKey: reminderLifecycleScopeKey,
@@ -878,6 +911,7 @@ function DiaryMixedDayRows({
                 <DiaryFactRow
                   actions={actions}
                   event={failedLinkedEventRow.event}
+                  onRevealDeleteConfirmation={onRevealDeleteConfirmation}
                   row={failedLinkedEventRow.row}
                 />
               )}
@@ -919,7 +953,7 @@ function DiaryMixedDayRows({
                 </Stack>
               </View>
             ) : null}
-            {reminderMutationErrorId === item.reminderId ? (
+            {reminderMutationErrorAnchor === item ? (
               <View
                 accessibilityLiveRegion="polite"
                 accessibilityRole="alert"
@@ -1042,12 +1076,14 @@ function DiaryHistoryDayGroups({
   actions,
   eventRows,
   locale,
+  onRevealDeleteConfirmation,
   t,
   todayDate,
 }: Readonly<{
   actions: QuickLogEventActionHandlers;
   eventRows: readonly DiaryEventRow[];
   locale: string;
+  onRevealDeleteConfirmation: (target: View) => void;
   t: ReturnType<typeof useAppTranslation>['t'];
   todayDate: string;
 }>) {
@@ -1066,6 +1102,7 @@ function DiaryHistoryDayGroups({
               actions={actions}
               event={event}
               key={event.clientEventId}
+              onRevealDeleteConfirmation={onRevealDeleteConfirmation}
               row={row}
             />
           ))}
@@ -1079,6 +1116,7 @@ function DiarySelectedDayTimeline({
   actions,
   eventRows,
   locale,
+  onRevealDeleteConfirmation,
   selectedDate,
   status,
   t,
@@ -1087,6 +1125,7 @@ function DiarySelectedDayTimeline({
   actions: QuickLogEventActionHandlers;
   eventRows: readonly DiaryEventRow[];
   locale: string;
+  onRevealDeleteConfirmation: (target: View) => void;
   selectedDate: string | null;
   status: 'error' | 'loading' | 'ready' | 'unavailable';
   t: ReturnType<typeof useAppTranslation>['t'];
@@ -1110,6 +1149,7 @@ function DiarySelectedDayTimeline({
             actions={actions}
             event={event}
             key={event.clientEventId}
+            onRevealDeleteConfirmation={onRevealDeleteConfirmation}
             row={row}
           />
         ))
@@ -1777,10 +1817,12 @@ function formatDiaryHistoryDate(calendarDate: string, locale: string): string {
 function DiaryFactRow({
   actions,
   event,
+  onRevealDeleteConfirmation,
   row,
 }: Readonly<{
   actions: QuickLogEventActionHandlers;
   event: QuickLogEventView;
+  onRevealDeleteConfirmation: (target: View) => void;
   row: QuickLogCachedEventRow;
 }>) {
   const { t } = useAppTranslation();
@@ -1789,11 +1831,17 @@ function DiaryFactRow({
   const onRetry = actions.onRetry;
   const onUndo = actions.onUndo;
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const editRequest = event.status === 'synced' ? createQuickLogEditRequest(event) : null;
   const visual = getFactCardVisual(row);
   const isDeleteIntent = row.localSync?.state === 'deleted_before_sync';
   const canSwipeDelete = event.status === 'synced' && onDelete !== undefined;
   const deleteLabel = t('today.history.delete-action');
+  const handleDeleteConfirmationTarget = useCallback((target: View | null) => {
+    if (target !== null) {
+      onRevealDeleteConfirmation(target);
+    }
+  }, [onRevealDeleteConfirmation]);
   const factCard = (
     <FactCard
       accent={visual.accent}
@@ -1822,7 +1870,12 @@ function DiaryFactRow({
         ? t('today.history.item-actions')
         : undefined}
       onActionsPress={editRequest !== null && (onEdit !== undefined || onDelete !== undefined)
-        ? () => { setActionsOpen((open) => !open); }
+        ? () => {
+            if (actionsOpen) {
+              setDeleteConfirmationOpen(false);
+            }
+            setActionsOpen(!actionsOpen);
+          }
         : undefined}
       onPress={editRequest !== null && onEdit !== undefined
         ? () => { onEdit(editRequest); }
@@ -1853,7 +1906,7 @@ function DiaryFactRow({
           ) : factCard}
         </View>
       </Stack>
-      {actionsOpen && editRequest !== null ? (
+      {actionsOpen && editRequest !== null && !deleteConfirmationOpen ? (
         <Stack direction="horizontal" gap="sm" wrap>
           {onEdit !== undefined ? (
             <Button
@@ -1865,11 +1918,46 @@ function DiaryFactRow({
           {onDelete !== undefined ? (
             <Button
               label={deleteLabel}
-              onPress={() => { onDelete(createQuickLogDeleteRequest(event)); }}
+              onPress={() => { setDeleteConfirmationOpen(true); }}
               variant="destructive"
             />
           ) : null}
         </Stack>
+      ) : null}
+      {deleteConfirmationOpen && onDelete !== undefined ? (
+        <View ref={handleDeleteConfirmationTarget} collapsable={false}>
+          <Card
+            accessible={false}
+            testID="diary-history-delete-confirmation">
+            <Stack gap="sm">
+              <AppText
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert"
+                variant="headline">
+                {t('timeline.delete-confirm.title')}
+              </AppText>
+              <AppText tone="secondary" variant="footnote">
+                {t('timeline.delete-confirm.body')}
+              </AppText>
+              <Stack direction="horizontal" gap="sm" wrap>
+                <Button
+                  label={t('timeline.delete-confirm.primary')}
+                  onPress={() => {
+                    setDeleteConfirmationOpen(false);
+                    setActionsOpen(false);
+                    onDelete(createQuickLogDeleteRequest(event));
+                  }}
+                  variant="destructive"
+                />
+                <Button
+                  label={t('timeline.delete-confirm.secondary')}
+                  onPress={() => { setDeleteConfirmationOpen(false); }}
+                  variant="tertiary"
+                />
+              </Stack>
+            </Stack>
+          </Card>
+        </View>
       ) : null}
       {event.status === 'failed' && (onRetry !== undefined || (!isDeleteIntent && onDelete !== undefined)) ? (
         <Stack direction="horizontal" gap="sm" wrap>

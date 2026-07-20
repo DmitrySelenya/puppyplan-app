@@ -1,6 +1,6 @@
 import { Profiler, type ComponentProps, type ComponentType, type ReactElement } from 'react';
-import { AccessibilityInfo, StyleSheet } from 'react-native';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { AccessibilityInfo, ScrollView, StyleSheet } from 'react-native';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 
@@ -171,6 +171,142 @@ describe('Today core card rendering', () => {
 
     testQueryClients.length = 0;
   });
+
+  it('AC-P36-5 confirms a synced Diary fact deletion inline before mutating', async () => {
+    const revealConfirmation = jest
+      .spyOn(ScrollView.prototype, 'scrollResponderScrollNativeHandleToKeyboard')
+      .mockImplementation(() => undefined);
+    const row = createRow({
+      client_event_id: 'evt_00000000-0000-4000-8000-000000002599',
+      id: '00000000-0000-4000-8000-000000002598',
+    });
+    const actions = {
+      onDelete: jest.fn(),
+      onEdit: jest.fn(),
+    };
+    mockListEvents.mockResolvedValue([row]);
+
+    renderWithQuery(
+      <TodayScreen
+        actions={actions}
+        careContext={careContext}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    fireEvent.press(await screen.findByRole('button', {
+      name: i18n.t('today.history.open-action'),
+    }));
+    const historyDayHeader = await screen.findByTestId(`diary-history-day-${todayDate}`);
+    let historyDayContainer = historyDayHeader.parent;
+    while (
+      historyDayContainer !== null
+      && within(historyDayContainer).queryByTestId('diary-history-logged-fact') === null
+    ) {
+      historyDayContainer = historyDayContainer.parent;
+    }
+    if (historyDayContainer === null) {
+      throw new Error('diary_history_day_container_unavailable');
+    }
+    const historyDay = within(historyDayContainer);
+    const factRow = historyDay.getByTestId('diary-history-logged-fact');
+    fireEvent.press(within(factRow).getByRole('button', {
+      name: i18n.t('today.history.item-actions'),
+    }));
+    fireEvent.press(historyDay.getByRole('button', {
+      name: i18n.t('today.history.delete-action'),
+    }));
+
+    expect(actions.onDelete).not.toHaveBeenCalled();
+    const deleteConfirmation = historyDay.getByTestId('diary-history-delete-confirmation');
+    expect(deleteConfirmation.props.accessible).toBe(false);
+    const deleteConfirmationTitle = within(deleteConfirmation).getByText(
+      i18n.t('timeline.delete-confirm.title'),
+    );
+    expect(deleteConfirmationTitle.props.accessibilityRole).toBe('alert');
+    expect(deleteConfirmationTitle.props.accessibilityLiveRegion).toBe('polite');
+    expect(within(deleteConfirmation).getByText(i18n.t('timeline.delete-confirm.body'))).toBeTruthy();
+    expect(within(deleteConfirmation).getByRole('button', {
+      name: i18n.t('timeline.delete-confirm.primary'),
+    })).toBeTruthy();
+    expect(within(deleteConfirmation).getByRole('button', {
+      name: i18n.t('timeline.delete-confirm.secondary'),
+    })).toBeTruthy();
+    expect(revealConfirmation).toHaveBeenCalledWith(
+      expect.anything(),
+      tokens.layout.bottomInsetFab,
+      true,
+    );
+    fireEvent.press(within(deleteConfirmation).getByRole('button', {
+      name: i18n.t('timeline.delete-confirm.secondary'),
+    }));
+
+    expect(actions.onDelete).not.toHaveBeenCalled();
+    expect(historyDay.getByTestId('diary-history-logged-fact')).toBeTruthy();
+    expect(historyDay.getByRole('button', { name: i18n.t('common.edit') })).toBeTruthy();
+    expect(historyDay.getByRole('button', {
+      name: i18n.t('today.history.delete-action'),
+    })).toBeTruthy();
+
+    fireEvent.press(historyDay.getByRole('button', {
+      name: i18n.t('today.history.delete-action'),
+    }));
+    fireEvent.press(historyDay.getByRole('button', {
+      name: i18n.t('timeline.delete-confirm.primary'),
+    }));
+
+    expect(actions.onDelete).toHaveBeenCalledTimes(1);
+    expect(actions.onDelete).toHaveBeenCalledWith({
+      clientEventId: row.client_event_id,
+      eventType: 'feeding',
+      householdId,
+      puppyId,
+      status: 'synced',
+      todayDate,
+    });
+    expect(historyDay.queryByText(i18n.t('timeline.delete-confirm.title'))).toBeNull();
+  });
+
+  it.each(['accessibility', 'swipe'] as const)(
+    'AC-P36-5 keeps the synced Diary fact %s delete path direct without opening inline confirmation',
+    async (path) => {
+      const row = createRow({
+        client_event_id: `evt_00000000-0000-4000-8000-00000000259${path === 'accessibility' ? '6' : '7'}`,
+        id: `00000000-0000-4000-8000-00000000259${path === 'accessibility' ? '4' : '5'}`,
+      });
+      const onDelete = jest.fn();
+      mockListEvents.mockResolvedValue([row]);
+
+      renderWithQuery(
+        <TodayScreen
+          actions={{ onDelete }}
+          careContext={careContext}
+          openTimeline={openTimeline}
+        />,
+      );
+
+      const factRow = await screen.findByTestId('diary-history-logged-fact');
+      if (path === 'accessibility') {
+        fireEvent(factRow, 'accessibilityAction', { nativeEvent: { actionName: 'delete' } });
+      } else {
+        fireEvent.press(screen.getByTestId(
+          'diary-history-swipe-delete',
+          { includeHiddenElements: true },
+        ));
+      }
+
+      expect(onDelete).toHaveBeenCalledTimes(1);
+      expect(onDelete).toHaveBeenCalledWith({
+        clientEventId: row.client_event_id,
+        eventType: 'feeding',
+        householdId,
+        puppyId,
+        status: 'synced',
+        todayDate,
+      });
+      expect(screen.queryByText(i18n.t('timeline.delete-confirm.title'))).toBeNull();
+    },
+  );
 
   it('renders one Clay info-hero tip for the day\'s single priority signal', async () => {
     const { queryClient, toJSON } = renderWithQuery(
@@ -1381,12 +1517,17 @@ describe('Today core card rendering', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Routine actions for Feeding' }));
     expect(onCheckOff).not.toHaveBeenCalled();
     expect(screen.getByTestId('routine-lifecycle-modal').props.accessibilityViewIsModal).toBe(true);
-    expect(screen.getByTestId('routine-lifecycle-scrim')).toBeTruthy();
+    // The scrim is intentionally hidden from assistive tech; Cancel is the accessible dismissal.
+    expect(screen.getByTestId('routine-lifecycle-scrim', { includeHiddenElements: true }))
+      .toBeTruthy();
     expect(screen.getByText('Edit routine')).toBeTruthy();
     expect(screen.getByText('Pause')).toBeTruthy();
     expect(screen.getByText('Delete')).toBeTruthy();
     expect(screen.getByText('Diary entries stay')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('routine-lifecycle-scrim', { includeHiddenElements: true }));
+    expect(screen.queryByTestId('routine-lifecycle-modal')).toBeNull();
   });
 
   it('AC-P4-MENU-1 wires Diary Edit and Pause to the selected reminder without toggling completion', async () => {
@@ -1531,6 +1672,88 @@ describe('Today core card rendering', () => {
     expect(screen.queryByTestId(`diary-reminder-lifecycle-error-${unaffectedReminderId}`))
       .toBeNull();
     expect(screen.getByTestId('diary-mixed-day-list')).toBeTruthy();
+  });
+
+  it('AC-P4-MENU-ERR renders one error card for a multi-slot routine, not one per slot', async () => {
+    const affectedReminderId = '00000000-0000-4000-8000-000000002731';
+    renderWithQuery(
+      <Pup34TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem({ reminderId: affectedReminderId }),
+          createPlannedItem({
+            displayAt: '2026-06-12T13:00:00.000Z',
+            plannedAt: '2026-06-12T13:00:00.000Z',
+            reminderId: affectedReminderId,
+            scheduledFor: '2026-06-12T13:00:00.000Z',
+            time: '13:00',
+          }),
+          createPlannedItem({
+            displayAt: '2026-06-12T18:00:00.000Z',
+            plannedAt: '2026-06-12T18:00:00.000Z',
+            reminderId: affectedReminderId,
+            scheduledFor: '2026-06-12T18:00:00.000Z',
+            time: '18:00',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        onDeleteReminder={jest.fn()}
+        onEditReminder={jest.fn()}
+        onToggleReminder={jest.fn()}
+        openTimeline={openTimeline}
+        reminderMutationErrorId={affectedReminderId}
+      />,
+    );
+
+    await screen.findByTestId(`diary-reminder-lifecycle-error-${affectedReminderId}`);
+    expect(screen.getAllByTestId(`diary-reminder-lifecycle-error-${affectedReminderId}`))
+      .toHaveLength(1);
+    expect(screen.getAllByText(i18n.t('reminders.lifecycle.mutation-error-title')))
+      .toHaveLength(1);
+  });
+
+  it('AC-P4-MENU-ERR clears the mutation error when routine actions reopen', async () => {
+    const reminderId = '00000000-0000-4000-8000-000000002731';
+    const onClearReminderMutationError = jest.fn();
+    renderWithQuery(
+      <Pup34TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem({ reminderId })])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        onClearReminderMutationError={onClearReminderMutationError}
+        onDeleteReminder={jest.fn()}
+        onEditReminder={jest.fn()}
+        onToggleReminder={jest.fn()}
+        openTimeline={openTimeline}
+        reminderMutationErrorId={reminderId}
+      />,
+    );
+
+    fireEvent.press(await screen.findByRole('button', { name: 'Routine actions for Feeding' }));
+    expect(onClearReminderMutationError).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('routine-lifecycle-modal')).toBeTruthy();
+  });
+
+  it('AC-P4-MENU-PENDING ignores the overflow while that routine mutation is in flight', async () => {
+    const reminderId = '00000000-0000-4000-8000-000000002731';
+    renderWithQuery(
+      <Pup34TodayScreen
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem({ reminderId })])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        onDeleteReminder={jest.fn()}
+        onEditReminder={jest.fn()}
+        onToggleReminder={jest.fn()}
+        openTimeline={openTimeline}
+        pendingToggleReminderId={reminderId}
+      />,
+    );
+
+    fireEvent.press(await screen.findByRole('button', { name: 'Routine actions for Feeding' }));
+    expect(screen.queryByTestId('routine-lifecycle-modal')).toBeNull();
   });
 
   it('AC-P4-MENU-DESIGN uses the danger token for the initial Delete action', async () => {

@@ -1934,3 +1934,13 @@ independently reproduced and hashed.
   documentation-only. Its fresh `npm run check` exited 0: lint has 0 errors / 21 existing warnings,
   typecheck, Jest, Node 121/121, and all navigation/i18n/scaffold/plan-index/token/privacy/text-hygiene
   gates passed. PUP-34 remains unmerged and no release, migration apply, or production action occurred.
+- 2026-07-19 — an independent deep review of the PUP-34 branch produced a bounded follow-up on the
+  same branch: reminder-list toggle/delete failures now render the same localized row-level error
+  card Diary uses instead of replacing the whole hub with the load-failure state; the Diary error
+  card anchors to one slot for multi-slot routines instead of repeating per slot; reopening a
+  routine's actions clears the retained mutation error in both surfaces; legacy non-canonical rows
+  hide Edit (their form cannot prefill) while keeping Pause/Delete; the modal scrim dismisses like
+  Cancel; the Diary overflow ignores taps while that routine's mutation is in flight; and the RU
+  lifecycle copy now uses «напоминание» to match the hub's surface terminology instead of «режим».
+  The spec's mutation-error and deviation sections were updated to match. No schema, dependency,
+  release, or production action occurred.

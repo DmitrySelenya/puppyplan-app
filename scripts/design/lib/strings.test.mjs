@@ -220,6 +220,24 @@ test("destructive confirmation prompts name their configured required word", () 
   assert.equal(getPath(readJson("STRINGS.es.json"), "more.privacy.delete-sheet.confirm-input-word"), "ELIMINAR");
 });
 
+test("paused snackbar names the real Reminders screen title and Off segment label", () => {
+  for (const localeFile of ["STRINGS.en.json", "STRINGS.ru.json", "STRINGS.es.json"]) {
+    const strings = readJson(localeFile);
+    const snackbar = getPath(strings, "reminders.lifecycle.paused-snackbar");
+    const screenTitle = getPath(strings, "reminders.screen-title");
+    const offSegment = getPath(strings, "reminders.segments.1");
+
+    assert.ok(
+      snackbar.includes(screenTitle),
+      `${localeFile} paused snackbar must name the screen ${JSON.stringify(screenTitle)}`,
+    );
+    assert.ok(
+      snackbar.includes(offSegment),
+      `${localeFile} paused snackbar must name the segment ${JSON.stringify(offSegment)}`,
+    );
+  }
+});
+
 test("Spanish copy uses the informal register for cited user-facing strings", () => {
   const spanish = readJson("STRINGS.es.json");
   const forbiddenPatterns = [

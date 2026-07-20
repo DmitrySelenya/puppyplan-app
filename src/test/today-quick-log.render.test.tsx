@@ -274,7 +274,7 @@ describe('Today Quick Log state integration', () => {
     });
   });
 
-  it('AC-P33-READ AC-P33-CORRECT renders note readback, opens edit on row press, and exposes visible Edit/Delete actions', async () => {
+  it('AC-P33-READ AC-P33-CORRECT AC-P36-5 renders note readback and confirms visible Delete inline', async () => {
     const notedRow = createRow({
       event_type: 'observation',
       payload: {
@@ -338,7 +338,7 @@ describe('Today Quick Log state integration', () => {
     actions.onEdit.mockClear();
 
     fireEvent.press(itemActions);
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('common.edit') })).toBeTruthy();
     const deleteAction = screen.getByRole('button', {
       name: i18n.t('today.history.delete-action'),
     });
@@ -355,6 +355,28 @@ describe('Today Quick Log state integration', () => {
     ).toBe(tokens.color.status.danger);
     expect(actions.onEdit).not.toHaveBeenCalled();
     fireEvent.press(deleteAction);
+    expect(actions.onDelete).not.toHaveBeenCalled();
+    expect(screen.getByTestId('diary-history-delete-confirmation')).toBeTruthy();
+    expect(screen.getByText(i18n.t('timeline.delete-confirm.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('timeline.delete-confirm.body'))).toBeTruthy();
+    expect(screen.getByRole('button', {
+      name: i18n.t('timeline.delete-confirm.primary'),
+    })).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('timeline.delete-confirm.secondary'),
+    }));
+
+    expect(actions.onDelete).not.toHaveBeenCalled();
+    expect(screen.getByTestId('diary-history-logged-fact')).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('common.edit') })).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('today.history.delete-action'),
+    }));
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('timeline.delete-confirm.primary'),
+    }));
+
+    expect(actions.onDelete).toHaveBeenCalledTimes(1);
     expect(actions.onDelete).toHaveBeenCalledWith({
       clientEventId: 'evt_00000000-0000-4000-8000-000000001505',
       eventType: 'observation',

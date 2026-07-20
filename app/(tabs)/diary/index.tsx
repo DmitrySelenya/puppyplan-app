@@ -1,12 +1,14 @@
 import { router } from 'expo-router';
 import { Share } from 'react-native';
 
+import { useSnackbar } from '@/design/primitives/Snackbar';
 import {
   TodayScreen,
   createTodayPlanInputFromPuppy,
 } from '@/features/today/screens/TodayScreen';
 import { createDiaryCheckOffVariables } from '@/features/today/createReminderCheckOff';
 import { useSyncedQuickLogDeleteUndo } from '@/features/quick-log/useSyncedQuickLogDeleteUndo';
+import { useAppTranslation } from '@/lib/i18n';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
 import { useDiaryDayModel } from '@/lib/query/diary-day';
 import { useQuickLogMutationPort } from '@/lib/query/quick-log';
@@ -16,6 +18,8 @@ import {
 } from '@/lib/query/reminders';
 
 export default function DiaryRoute() {
+  const { t } = useAppTranslation();
+  const { showSnackbar } = useSnackbar();
   const activeCare = useActiveCareContext();
   const quickLogMutation = useQuickLogMutationPort();
   const mutation = quickLogMutation.mutation;
@@ -80,6 +84,10 @@ export default function DiaryRoute() {
             pottySubtype,
           }));
         }}
+      onClearReminderMutationError={() => {
+        deleteReminderMutation.reset();
+        toggleReminderMutation.reset();
+      }}
       onDeleteReminder={!canManageReminders ? undefined : (reminderId) => {
         const careContext = activeCare.careContext;
         if (careContext === null) {
@@ -109,12 +117,29 @@ export default function DiaryRoute() {
           return;
         }
 
-        toggleReminderMutation.mutate({
+        const variables = {
           enabled,
           householdId: careContext.householdId,
           puppyId: careContext.puppyId,
           reminderId,
           todayDate: careContext.todayDate,
+        };
+
+        if (enabled) {
+          toggleReminderMutation.mutate(variables);
+          return;
+        }
+
+        toggleReminderMutation.mutate(variables, {
+          onSuccess: () => {
+            const message = t('reminders.lifecycle.paused-snackbar');
+            showSnackbar({
+              accessibilityLabel: message,
+              id: 'reminder-lifecycle-paused',
+              message,
+              tone: 'info',
+            });
+          },
         });
       }}
       openOnboarding={() => {
