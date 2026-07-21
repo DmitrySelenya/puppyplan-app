@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Plan type:** Task plan
-**Current phase:** Phase C fixed (re-check deadlock); B indicator redesign + device verification next
+**Current phase:** A/B/C landed (silent uncheck, in-row sync spinner, re-check fix); device verification next
 **Linear:** `PUP-38`
 
 Findings from a live dogfood session on 2026-07-21 (physical iPhone 13, iOS 26.5.2,
@@ -36,12 +36,21 @@ Branch: `dimaselenya/pup-38-fix-live-dogfood-diary-findings-2026-07-21-redundant
   failures (no silent data loss). `TodayScreen.uncheck` prefers `onUncheck ?? onDelete`. Tests:
   screen routes un-check to `onUncheck` not `onDelete`; route un-check deletes with no snackbar;
   a failed un-check still surfaces the error.
-- [x] **Phase B — Subtle sync indicator.** Replaced the `hasPendingLocalRows` `TodayStatusCard`
-  ("Идёт синхронизация" title+body) with a `PendingDot` in `DiaryHeader` (`syncing` prop), by the
-  avatar, carrying the sync status only as an `accessibilityLabel` (no visible text). The synthetic
-  `screenState="pending-write"` dev-preview path is unchanged. Tests: DiaryHeader shows the dot only
-  while syncing (with a11y label, no visible text) incl. the no-avatar case; TodayScreen shows the
-  dot (not the card) when local writes are pending.
+- [x] **Phase B — In-row sync spinner (owner-directed redesign).** The first pass replaced the heavy
+  `TodayStatusCard` with a `PendingDot` by the avatar; owner rejected it on device ("абсолютно не
+  информативная" + the avatar isn't always visible). Redesigned per the owner's locked choice
+  ("спиннер в чекбоксе"): while a routine's check-off write is still reaching the server, the tapped
+  `CheckCircle` shows an `ActivityIndicator` spinner in a bordered ring (no premature green fill) and
+  reads `accessibilityState.busy`; `RoutineCard` holds the row off the done (sage) fill until the
+  write settles. `TodayScreen` derives `routineSyncing` from the linked fact's `localSync.state`
+  (`pending_local`/`sending`) and passes it down, and emits the checkbox `testID` while syncing so the
+  spinner is addressable. The `DiaryHeader` dot (commit `698b5db`) is removed; the heavy status card
+  stays gone. Standalone pending quick-log facts keep their own inline `timeline.pills.pending` label,
+  so no pending write loses feedback. Uses `accessibilityState.busy` (native), so no new i18n string.
+  Tests: `CheckCircle`/`RoutineCard` spinner anatomy (bordered ring, busy, card off the done fill);
+  `TodayScreen` spins the checkbox while a done routine's linked write is `pending_local`; background
+  pending write stays off the heavy card and shows its own pending label; DiaryHeader dot tests
+  removed.
 - [x] **Phase C — Re-check-after-uncheck deadlock (root cause found + fixed).** On-device the "slow
   sync" complaint decomposed into two things: (1) device→Supabase network is healthy/fast (45 QUIC
   requests, 0 failures, ~430 ms, status 200) and cross-device sync works, so it is **not**
@@ -81,4 +90,9 @@ weaken checks; no schema changes; no private data in logs/evidence.
   row sharing the deterministic check-off id. Fixed by making a re-check supersede an un-synced
   delete (identity-guarded DELETE+INSERT), mirroring the delete path. RED→GREEN via `AC-38C-1` /
   `EC-38C-1`; corrected the pre-existing idempotency test that had codified the buggy behavior.
-  Finding B (dot) redesign into a real animated in-row sync indicator still open.
+- 2026-07-21: Finding B redesigned per owner ("спиннер в чекбоксе"). Removed the rejected
+  `DiaryHeader` `PendingDot`; added a `syncing` state to `CheckCircle`/`RoutineCard` (spinner in a
+  bordered ring, `accessibilityState.busy`, card held off the done fill) wired from the linked fact's
+  `localSync` state in `TodayScreen`. Standalone pending facts keep their inline `pills.pending`
+  label. Primitives-first with anatomy + screen wiring tests; DiaryHeader dot tests removed. Device
+  verification of A/B/C on the rebuilt Release still pending.

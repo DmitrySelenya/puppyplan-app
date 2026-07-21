@@ -102,22 +102,4 @@ describe('DiaryHeader', () => {
     expect(screen.getByText('Since yesterday: two naps and a walk.')).toBeTruthy();
   });
 
-  it('PUP-38-B shows a subtle text-free sync dot with an a11y label only while syncing', () => {
-    const { rerender } = renderHeader(<DiaryHeader puppyName={SYNTHETIC_NAME} />);
-    expect(screen.queryByTestId('diary-sync-indicator')).toBeNull();
-
-    rerender(<AppProviders><DiaryHeader puppyName={SYNTHETIC_NAME} syncing /></AppProviders>);
-
-    const indicator = screen.getByTestId('diary-sync-indicator');
-    // Screen readers hear the status; sighted users see only a dot, no "Syncing" text.
-    expect(indicator.props.accessibilityLabel).toBe(i18n.t('today.states.pending-write.status'));
-    expect(screen.queryByText(i18n.t('today.states.pending-write.status'))).toBeNull();
-  });
-
-  it('PUP-38-B shows the sync dot even when no pet name (no avatar) is present', () => {
-    renderHeader(<DiaryHeader syncing timeOfDay="midday" />);
-
-    expect(screen.getByTestId('diary-sync-indicator')).toBeTruthy();
-    expect(screen.queryByLabelText(SYNTHETIC_NAME)).toBeNull();
-  });
 });

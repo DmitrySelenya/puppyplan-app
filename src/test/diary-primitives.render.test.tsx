@@ -238,6 +238,21 @@ describe('CheckCircle', () => {
     render(<CheckCircle accessibilityLabel="Mark done" checked={false} quiet testID="quiet" />);
     expect(flatten(screen.getByTestId('quiet-ring')).borderColor).toBe(tokens.color.stroke.strong);
   });
+
+  it('PUP-38-B while syncing shows a spinner in a bordered ring and marks the checkbox busy', () => {
+    render(
+      <CheckCircle accessibilityLabel="Saving" checked onPress={() => {}} syncing testID="s" />,
+    );
+
+    // The just-tapped control itself shows the loading indicator — not the avatar, not a static dot.
+    expect(screen.getByTestId('s-spinner')).toBeTruthy();
+    const box = screen.getByRole('checkbox', { name: 'Saving' });
+    expect(box.props.accessibilityState.busy).toBe(true);
+    // While saving the ring stays bordered-and-empty (no premature green fill) until confirmed.
+    const ring = flatten(screen.getByTestId('s-ring'));
+    expect(ring.backgroundColor).toBeUndefined();
+    expect(ring.borderColor).toBe(tokens.color.primary[400]);
+  });
 });
 
 describe('WeekStrip', () => {
@@ -568,6 +583,25 @@ describe('RoutineCard', () => {
       <RoutineCard {...base} accessibilityLabel="Nap, past" state="past" testID="r" title="Nap" />,
     );
     expect(flatten(screen.getByTestId('r-card')).opacity).toBe(0.78);
+  });
+
+  it('PUP-38-B syncing shows the check-off spinner and holds the card off the done fill', () => {
+    render(
+      <RoutineCard
+        {...base}
+        accessibilityLabel="Walk, saving"
+        checkboxTestID="rc"
+        state="done"
+        syncing
+        testID="r"
+        title="Walk"
+      />,
+    );
+
+    expect(screen.getByTestId('rc-spinner')).toBeTruthy();
+    expect(screen.getByRole('checkbox').props.accessibilityState.busy).toBe(true);
+    // Not settled yet: the card must not read as done (sage) while the write is still in flight.
+    expect(flatten(screen.getByTestId('r-card')).backgroundColor).toBe(tokens.color.surface.raised);
   });
 
   it('renders the notifications-off row when reminderOff is set', () => {

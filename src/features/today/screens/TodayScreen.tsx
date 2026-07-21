@@ -502,7 +502,6 @@ export function TodayScreen({
     <Screen ref={screenRef} contentStyle={styles.content}>
       <DiaryHeader
         puppyName={puppyName}
-        syncing={hasPendingLocalRows(rows)}
         timeOfDay={todayPlanInput?.timeOfDay}
         todayDate={careContext.todayDate}
       />
@@ -858,6 +857,11 @@ function DiaryMixedDayRows({
         const canUncheck = linkedEventRow !== undefined
           && (actions.onUncheck ?? actions.onDelete) !== undefined
           && checkingKey !== key;
+        // The check-off write is still reaching the server: show the spinner on the checkbox itself
+        // until the linked fact settles (server-confirmed clears its local sync state).
+        const linkedSyncState = linkedEventRow?.row.localSync?.state;
+        const routineSyncing = linkedSyncState === 'pending_local'
+          || linkedSyncState === 'sending';
         const visual = getPlannedCardVisual(item);
 
         return (
@@ -872,7 +876,8 @@ function DiaryMixedDayRows({
                   checkboxLabel={item.status === 'done'
                     ? t('today.plan.uncheck')
                     : t('today.plan.check-off')}
-                  checkboxTestID={onCheckOff !== undefined && item.status !== 'done'
+                  checkboxTestID={(onCheckOff !== undefined && item.status !== 'done')
+                    || routineSyncing
                     ? `diary-check-off-${item.reminderId}`
                     : undefined}
                   icon={visual.icon}
@@ -902,6 +907,7 @@ function DiaryMixedDayRows({
                   state={item.status === 'done'
                     ? 'done'
                     : item.status === 'past-unmarked' ? 'past' : 'upcoming'}
+                  syncing={routineSyncing}
                   time={plannedTime}
                   title={title}
                   overflowLabel={lifecycleActionsAvailable

@@ -625,7 +625,7 @@ describe('Today core card rendering', () => {
     expect(screen.getByLabelText(`${i18n.t('today.states.offline-read.title')}. ${i18n.t('today.states.offline-read.body')}`)).toBeTruthy();
   });
 
-  it('PUP-38-B shows a subtle text-free sync indicator (not a full card) when local writes wait to sync', async () => {
+  it('PUP-38-B keeps a background pending write off the heavy status card (row carries its own pending label)', async () => {
     mockListEvents.mockResolvedValue([]);
     const { queryClient } = renderWithQuery(
       <TodayScreen
@@ -646,12 +646,12 @@ describe('Today core card rendering', () => {
       ]);
     });
 
+    // The pending row shows its own inline status; the header shows no static sync dot...
     await waitFor(() => {
-      expect(screen.getByTestId('diary-sync-indicator')).toBeTruthy();
+      expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
     });
-    // The dot carries the sync status only as an assistive-tech label — no visible text...
-    expect(screen.getByLabelText(i18n.t('today.states.pending-write.status'))).toBeTruthy();
-    // ...and the heavy "Идёт синхронизация" title/body card is gone.
+    expect(screen.queryByTestId('diary-sync-indicator')).toBeNull();
+    // ...and the heavy "Идёт синхронизация" title/body card never appears for a background write.
     expect(screen.queryByText(i18n.t('today.states.pending-write.title'))).toBeNull();
     expect(screen.queryByText(i18n.t('today.states.pending-write.body'))).toBeNull();
   });
@@ -2249,12 +2249,51 @@ describe('Today core card rendering', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('diary-sync-indicator')).toBeTruthy();
+      expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
     });
     expect(screen.queryByText(i18n.t('today.plan.actual-template', {
       time: '10:12 AM',
     }))).toBeNull();
     expect(screen.queryByText(i18n.t('timeline.pills.synced'))).toBeNull();
+  });
+
+  it('PUP-38-B spins the routine checkbox while its check-off write is still syncing', async () => {
+    const linkedClientEventId = 'evt_00000000-0000-4000-8000-000000002720';
+    const reminderId = 'rem_00000000-0000-4000-8000-000000002721';
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={{ onDelete: jest.fn(), onRetry: jest.fn() }}
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem({
+          actualAt: '2026-06-12T10:12:00.000Z',
+          clientEventId: linkedClientEventId,
+          reminderId,
+          status: 'done',
+        })])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [createRow({
+        client_event_id: linkedClientEventId,
+        localSync: {
+          state: 'pending_local',
+          category: null,
+          retryCount: 0,
+        },
+        occurred_at: '2026-06-12T10:12:00.000Z',
+      })]);
+    });
+
+    // The tapped checkbox itself shows the spinner and reads busy until the write settles.
+    await waitFor(() => {
+      expect(screen.getByTestId(`diary-check-off-${reminderId}-spinner`)).toBeTruthy();
+    });
+    expect(screen.getByTestId(`diary-check-off-${reminderId}`).props.accessibilityState.busy)
+      .toBe(true);
   });
 
   it.each(['network_unavailable', 'permission_denied'] as const)(

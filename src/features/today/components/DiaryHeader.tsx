@@ -2,7 +2,6 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppText } from '@/design/primitives/AppText';
 import { Avatar } from '@/design/primitives/Avatar';
-import { PendingDot } from '@/design/primitives/PendingDot';
 import { useAppTranslation, type I18nKey } from '@/lib/i18n';
 
 export type DiaryHeaderTimeOfDay = 'morning' | 'midday' | 'evening';
@@ -10,8 +9,6 @@ export type DiaryHeaderTimeOfDay = 'morning' | 'midday' | 'evening';
 export type DiaryHeaderProps = Readonly<{
   puppyName?: string;
   recap?: string;
-  /** Background sync in progress: shown as a subtle, text-free dot by the avatar. */
-  syncing?: boolean;
   timeOfDay?: DiaryHeaderTimeOfDay;
   todayDate?: string;
 }>;
@@ -35,7 +32,6 @@ const greetingKeys = {
 export function DiaryHeader({
   puppyName,
   recap,
-  syncing = false,
   timeOfDay = 'morning',
   todayDate,
 }: DiaryHeaderProps) {
@@ -59,18 +55,8 @@ export function DiaryHeader({
             </AppText>
           ) : null}
         </View>
-        {syncing || name ? (
-          <View style={styles.trailing}>
-            {syncing ? (
-              <PendingDot
-                accessibilityLabel={t('today.states.pending-write.status')}
-                testID="diary-sync-indicator"
-              />
-            ) : null}
-            {name ? (
-              <Avatar initials={name.slice(0, 1)} label={name} size="lg" tone="accent" />
-            ) : null}
-          </View>
+        {name ? (
+          <Avatar initials={name.slice(0, 1)} label={name} size="lg" tone="accent" />
         ) : null}
       </View>
       {recap ? (
@@ -116,10 +102,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     justifyContent: 'space-between',
-  },
-  trailing: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
   },
 });
