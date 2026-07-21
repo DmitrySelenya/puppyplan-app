@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Plan type:** Task plan
-**Current phase:** Phase C — investigate slow sync (A + B done, pending device verification)
+**Current phase:** Phase C fixed (re-check deadlock); B indicator redesign + device verification next
 **Linear:** `PUP-38`
 
 Findings from a live dogfood session on 2026-07-21 (physical iPhone 13, iOS 26.5.2,
@@ -42,8 +42,25 @@ Branch: `dimaselenya/pup-38-fix-live-dogfood-diary-findings-2026-07-21-redundant
   `screenState="pending-write"` dev-preview path is unchanged. Tests: DiaryHeader shows the dot only
   while syncing (with a11y label, no visible text) incl. the no-avatar case; TodayScreen shows the
   dot (not the card) when local writes are pending.
-- [ ] **Phase C — Slow-sync investigation.** On-device diagnosis; record findings here; propose fix
-  as a separate decision. No code change without a recorded root cause.
+- [x] **Phase C — Re-check-after-uncheck deadlock (root cause found + fixed).** On-device the "slow
+  sync" complaint decomposed into two things: (1) device→Supabase network is healthy/fast (45 QUIC
+  requests, 0 failures, ~430 ms, status 200) and cross-device sync works, so it is **not**
+  network-bound; (2) the real defect is a client-side queue deadlock — after check→uncheck, the
+  routine could not be re-checked until an app restart. **Root cause:** the check-off uses a
+  deterministic `client_event_id` (`reminderId + scheduledFor`); an un-check before sync leaves a
+  terminal `deleted_before_sync` row with that id; a re-check called `enqueueQueueItem`'s bare
+  `INSERT OR IGNORE`, which silently no-op'd on the collision and returned the stale delete → the
+  mutation then ran `markSending` on a `deleted_before_sync` item, an invalid transition that threw
+  "Не удалось отметить"; the terminal row lingered until restart. `enqueueDeletedQueueItem` had
+  already been hardened (DELETE+INSERT so a delete supersedes a prior insert) but the reverse
+  asymmetry — a re-check superseding a pending delete — was never fixed. **Fix:** `enqueueQueueItem`
+  now, inside its transaction, overrides an existing `deleted_before_sync` row (identity-guarded)
+  before inserting the fresh `pending_local` write, so the re-check wins; every other existing state
+  keeps the idempotent double-tap no-op. Extracted `assertMatchingQueueClientEventIdentity` shared by
+  both enqueue paths. Tests: `AC-38C-1` (re-check after un-sync-delete yields a claimable
+  `pending_local` write), `EC-38C-1` (mismatched-identity collision rejects atomically, delete intent
+  intact), and the former "keeps enqueue idempotent … deleted rows" test corrected to assert the
+  re-check now supersedes the un-synced delete (its failed-row idempotency half is unchanged).
 - [ ] **Verification.** `npm run check` green; rebuilt Release re-driven on the iPhone with synthetic
   data; owner-reviewed screenshots for A + B.
 
@@ -58,3 +75,10 @@ weaken checks; no schema changes; no private data in logs/evidence.
 - 2026-07-21: Plan created from the live dogfood session. Finding 0 (hero CTA) already fixed on the
   batch branch (`f03f705`). PUP-38 opened (In Progress). A + B queued for this pass; C is a
   defect-stop investigation.
+- 2026-07-21: Phase C resolved. Diagnosed on-device (network healthy, cross-device sync works, JS
+  logs OS-redacted) and at the code level: re-check-after-uncheck deadlocked because
+  `enqueueQueueItem` used bare `INSERT OR IGNORE` against a lingering terminal `deleted_before_sync`
+  row sharing the deterministic check-off id. Fixed by making a re-check supersede an un-synced
+  delete (identity-guarded DELETE+INSERT), mirroring the delete path. RED→GREEN via `AC-38C-1` /
+  `EC-38C-1`; corrected the pre-existing idempotency test that had codified the buggy behavior.
+  Finding B (dot) redesign into a real animated in-row sync indicator still open.
