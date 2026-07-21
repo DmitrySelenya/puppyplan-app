@@ -70,8 +70,13 @@ Branch: `dimaselenya/pup-38-fix-live-dogfood-diary-findings-2026-07-21-redundant
   `pending_local` write), `EC-38C-1` (mismatched-identity collision rejects atomically, delete intent
   intact), and the former "keeps enqueue idempotent … deleted rows" test corrected to assert the
   re-check now supersedes the un-synced delete (its failed-row idempotency half is unchanged).
-- [ ] **Verification.** `npm run check` green; rebuilt Release re-driven on the iPhone with synthetic
-  data; owner-reviewed screenshots for A + B.
+- [~] **Verification.** `npm run check` green. Rebuilt Release re-driven on the SE simulator
+  (5C46B6CC…) with synthetic data on 2026-07-21: Finding 0 (InfoHero guidance-only, no CTA), Finding
+  B (clay spinner in a bordered ring on a light card while the check-off syncs → green check on the
+  sage done card once settled, on both the first check and the re-check), Finding A (un-check silent,
+  reverts to empty with no "Запись удалена" toast), and the Phase C re-check fix (checking the same
+  slot again after an un-check succeeds — spinner reappears then settles green, no "Не удалось
+  отметить", no restart) all confirmed. Device (iPhone 13) re-verification still pending.
 
 ## Ground rules
 
