@@ -314,6 +314,87 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     expect(mutation.deleteLocal).not.toHaveBeenCalled();
   });
 
+  it('PUP-38-A un-checking a routine deletes the synced event without any delete snackbar', async () => {
+    const mutation = {
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn(async () => undefined),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      restoreSynced: jest.fn(async () => undefined),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <DiaryRoute />
+      </AppProviders>,
+    );
+
+    const request = {
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007111',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    } as const;
+
+    await Promise.resolve(capturedActions?.onUncheck?.(request));
+
+    await waitFor(() => expect(mutation.deleteSynced).toHaveBeenCalledWith(expect.objectContaining({
+      clientEventId: request.clientEventId,
+    })));
+    // Un-check is a plain toggle: the delete happened, but no "Entry deleted / Undo" snackbar.
+    expect(mockShowSnackbar).not.toHaveBeenCalled();
+    expect(mutation.deleteLocal).not.toHaveBeenCalled();
+  });
+
+  it('PUP-38-A surfaces a failed un-check delete instead of failing silently', async () => {
+    const mutation = {
+      deleteLocal: jest.fn(),
+      deleteSynced: jest.fn()
+        .mockRejectedValueOnce(new Error('Synthetic un-check delete failure'))
+        .mockResolvedValueOnce(undefined),
+      mutate: jest.fn(),
+      retry: jest.fn(),
+      restoreSynced: jest.fn(),
+      updateDetails: jest.fn(),
+      undo: jest.fn(),
+    };
+    mockUseQuickLogMutationPort.mockReturnValue({
+      mutation,
+      mutationEvents: [],
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <DiaryRoute />
+      </AppProviders>,
+    );
+
+    await Promise.resolve(capturedActions?.onUncheck?.({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000007112',
+      eventType: 'feeding',
+      householdId: '00000000-0000-4000-8000-000000007001',
+      puppyId: '00000000-0000-4000-8000-000000007002',
+      status: 'synced',
+      todayDate: '2026-06-09',
+    }));
+
+    // Silent means silent on success only — a failed un-check must still be surfaced, never lost.
+    await waitFor(() => expect(mockShowSnackbar).toHaveBeenCalledWith(expect.objectContaining({
+      message: i18n.t('timeline.delete-failed'),
+      tone: 'error',
+    })));
+  });
+
   it('AC-P1-RECOVERY-10 keeps a persistence-failed synced delete on Done and exposes existing Retry copy', async () => {
     const persistenceFailure = new Error('Synthetic delete-intent persistence failure');
     const mutation = {

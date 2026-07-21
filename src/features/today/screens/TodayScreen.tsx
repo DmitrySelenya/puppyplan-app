@@ -502,6 +502,7 @@ export function TodayScreen({
     <Screen ref={screenRef} contentStyle={styles.content}>
       <DiaryHeader
         puppyName={puppyName}
+        syncing={hasPendingLocalRows(rows)}
         timeOfDay={todayPlanInput?.timeOfDay}
         todayDate={careContext.todayDate}
       />
@@ -528,7 +529,6 @@ export function TodayScreen({
             ? null
             : <TodayStatusCard state={todayStatus} />}
           {fontScale < 2 ? infoHero : null}
-          {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
           {shouldShowQuickLogFailedBanner(rows) ? (
             <Card
               accessibilityLabel={t('quick-log.failed.persistent-banner')}
@@ -764,9 +764,11 @@ function DiaryMixedDayRows({
   // key. Without it the tap has nothing to latch: `onDelete` settles over the network, and until
   // the row stops being `done` every further tap fires another delete against the same event.
   const uncheck = async (item: DiaryPlannedItem, event: QuickLogEventView) => {
-    const onDelete = actions.onDelete;
+    // Un-check deletes the auto-created fact but stays silent (no delete snackbar). Falls back to
+    // onDelete for callers that do not provide the dedicated silent handler.
+    const takeMarkOff = actions.onUncheck ?? actions.onDelete;
 
-    if (onDelete === undefined) {
+    if (takeMarkOff === undefined) {
       return;
     }
 
@@ -775,7 +777,7 @@ function DiaryMixedDayRows({
     setCheckOffError(null);
 
     try {
-      await onDelete(createQuickLogDeleteRequest(event));
+      await takeMarkOff(createQuickLogDeleteRequest(event));
     } finally {
       setCheckingKey(null);
     }
@@ -854,7 +856,7 @@ function DiaryMixedDayRows({
           ? linkedEventRow
           : failedDeleteRowsByReminderKey.get(key);
         const canUncheck = linkedEventRow !== undefined
-          && actions.onDelete !== undefined
+          && (actions.onUncheck ?? actions.onDelete) !== undefined
           && checkingKey !== key;
         const visual = getPlannedCardVisual(item);
 

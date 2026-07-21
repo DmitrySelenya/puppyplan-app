@@ -625,7 +625,7 @@ describe('Today core card rendering', () => {
     expect(screen.getByLabelText(`${i18n.t('today.states.offline-read.title')}. ${i18n.t('today.states.offline-read.body')}`)).toBeTruthy();
   });
 
-  it('renders the pending-write state when local care events are waiting to sync', async () => {
+  it('PUP-38-B shows a subtle text-free sync indicator (not a full card) when local writes wait to sync', async () => {
     mockListEvents.mockResolvedValue([]);
     const { queryClient } = renderWithQuery(
       <TodayScreen
@@ -647,10 +647,13 @@ describe('Today core card rendering', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('today.states.pending-write.title'))).toBeTruthy();
+      expect(screen.getByTestId('diary-sync-indicator')).toBeTruthy();
     });
-    expect(screen.getByText(i18n.t('today.states.pending-write.status'))).toBeTruthy();
-    expect(screen.getByLabelText(`${i18n.t('today.states.pending-write.title')}. ${i18n.t('today.states.pending-write.body')}`)).toBeTruthy();
+    // The dot carries the sync status only as an assistive-tech label — no visible text...
+    expect(screen.getByLabelText(i18n.t('today.states.pending-write.status'))).toBeTruthy();
+    // ...and the heavy "Идёт синхронизация" title/body card is gone.
+    expect(screen.queryByText(i18n.t('today.states.pending-write.title'))).toBeNull();
+    expect(screen.queryByText(i18n.t('today.states.pending-write.body'))).toBeNull();
   });
 
   it('renders the synthetic pending-write Diary state without needing queued local rows', async () => {
@@ -1898,6 +1901,59 @@ describe('Today core card rendering', () => {
     }));
   });
 
+  it('PUP-38-A routes un-check through the silent onUncheck handler when provided', async () => {
+    const onUncheck = jest.fn();
+    const onDelete = jest.fn();
+    mockListEvents.mockResolvedValue([
+      createRow({
+        client_event_id: 'evt_00000000-0000-4000-8000-000000002714',
+        event_type: 'walk',
+        occurred_at: '2026-06-12T10:12:00.000Z',
+        payload: {},
+      }),
+    ]);
+
+    renderWithQuery(
+      <TodayScreen
+        actions={{ onDelete, onUncheck }}
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            clientEventId: 'evt_00000000-0000-4000-8000-000000002714',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002705',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t('today.plan.uncheck')).props.accessibilityState,
+      ).toMatchObject({ disabled: false });
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole('checkbox', { name: i18n.t('today.plan.uncheck') }));
+      await Promise.resolve();
+    });
+
+    // Un-check must use the silent handler; the entry-deleting onDelete path is not taken.
+    expect(onUncheck).toHaveBeenCalledWith(expect.objectContaining({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000002714',
+    }));
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
   it('AC-P33-UNCHECK-6 does not delete the linked event twice when the checkbox is tapped twice', async () => {
     // The row stays `done` until the delete settles and the day model catches up, so a second tap
     // in that window would otherwise fire a second delete at the same event.
@@ -2193,7 +2249,7 @@ describe('Today core card rendering', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('today.states.pending-write.title'))).toBeTruthy();
+      expect(screen.getByTestId('diary-sync-indicator')).toBeTruthy();
     });
     expect(screen.queryByText(i18n.t('today.plan.actual-template', {
       time: '10:12 AM',

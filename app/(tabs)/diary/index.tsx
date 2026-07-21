@@ -49,6 +49,7 @@ export default function DiaryRoute() {
         ? undefined
         : {
           onDelete,
+          onUncheck: (request) => onDelete(request, { silent: true }),
           onEdit: (request) => {
             router.push({
               pathname: '/quick-log/details',
