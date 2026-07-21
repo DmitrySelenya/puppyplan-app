@@ -415,28 +415,23 @@
       "first-day": {
         "eyebrow": "Inicio",
         "title": "Registra tu primer evento: toma unos cinco segundos.",
-        "body": "Empieza con el primer baño, comida o descanso.",
-        "primary": "Empezar"
+        "body": "Empieza con el primer baño, comida o descanso."
       },
       "day-2-morning": {
         "title": "Revisión del ritmo matutino",
-        "body": "La primera salida, comida y descanso hacen que el segundo día sea más fácil de leer.",
-        "primary": "Registrar la mañana"
+        "body": "La primera salida, comida y descanso hacen que el segundo día sea más fácil de leer."
       },
       "accident-recovery": {
         "title": "Reinicia tras un pipí dentro",
-        "body": "Sin culpas. La pista útil suele ser sueño, comida, juego o una salida corta.",
-        "primary": "Planificar la salida"
+        "body": "Sin culpas. La pista útil suele ser sueño, comida, juego o una salida corta."
       },
       "missed-reminder": {
         "title": "Vista previa de rutina pendiente",
-        "body": "Esta tarjeta sintética muestra dónde aparecerá una rutina aún sin marcar cuando se lancen los recordatorios.",
-        "primary": "Solo vista previa"
+        "body": "Esta tarjeta sintética muestra dónde aparecerá una rutina aún sin marcar cuando se lancen los recordatorios."
       },
       "day-7-weekly-rhythm": {
         "title": "Una semana de ritmo",
-        "body": "La tarjeta semanal destaca patrones repetidos de comida, baño y sueño desde los cuidados registrados.",
-        "primary": "Revisar la semana"
+        "body": "La tarjeta semanal destaca patrones repetidos de comida, baño y sueño desde los cuidados registrados."
       },
       "steady-day": {
         "title": "Mantén visible el ritmo",

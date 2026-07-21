@@ -826,7 +826,7 @@ describe('DiaryRoute Quick Log recovery wiring', () => {
     });
   });
 
-  it('wires the Diary hero primary action to the Quick Log modal', () => {
+  it('wires the Diary quick-log action to the Quick Log modal', () => {
     mockUseQuickLogMutationPort.mockReturnValue({
       mutation: undefined,
       mutationEvents: [],

@@ -9,7 +9,6 @@ import type {
 import {
   AppText,
   AppIcon,
-  Button,
   Card,
   ListGroup,
   ListRow,
@@ -39,7 +38,6 @@ type CopyPair = Readonly<{
 
 type HeroCopy = CopyPair & Readonly<{
   eyebrowKey: I18nKey;
-  primaryKey?: I18nKey;
 }>;
 
 type StatusCopy = CopyPair & Readonly<{
@@ -47,16 +45,13 @@ type StatusCopy = CopyPair & Readonly<{
 }>;
 
 export function TodayPlanCards({
-  onHeroPrimaryAction,
   plan,
 }: Readonly<{
-  onHeroPrimaryAction?: () => void;
   plan: TodayPlan;
 }>) {
   return (
     <Stack gap="md">
       <TodayHeroCard
-        onPrimaryAction={onHeroPrimaryAction}
         variant={plan.hero.variant}
       />
       <TodayDailyCardList cards={plan.dailyCards.map((card) => ({
@@ -72,10 +67,8 @@ export function TodayPlanCards({
 }
 
 export function TodayHeroCard({
-  onPrimaryAction,
   variant,
 }: Readonly<{
-  onPrimaryAction?: () => void;
   variant: TodayHeroVariant;
 }>) {
   const { t } = useAppTranslation();
@@ -97,13 +90,6 @@ export function TodayHeroCard({
         </AppText>
         <AppText variant="title3">{t(copy.titleKey)}</AppText>
         {body.trim() ? <AppText tone="secondary">{body}</AppText> : null}
-        {copy.primaryKey === undefined || onPrimaryAction === undefined ? null : (
-          <Button
-            label={t(copy.primaryKey)}
-            onPress={onPrimaryAction}
-            variant="primary"
-          />
-        )}
       </Stack>
     </Card>
   );
@@ -284,31 +270,26 @@ export const todayHeroCopy = {
   accident_recovery: {
     bodyKey: 'today.hero.accident-recovery.body',
     eyebrowKey: 'today.hero.eyebrow',
-    primaryKey: 'today.hero.accident-recovery.primary',
     titleKey: 'today.hero.accident-recovery.title',
   },
   day_2_morning: {
     bodyKey: 'today.hero.day-2-morning.body',
     eyebrowKey: 'today.hero.eyebrow',
-    primaryKey: 'today.hero.day-2-morning.primary',
     titleKey: 'today.hero.day-2-morning.title',
   },
   day_7_weekly_rhythm: {
     bodyKey: 'today.hero.day-7-weekly-rhythm.body',
     eyebrowKey: 'today.hero.eyebrow',
-    primaryKey: 'today.hero.day-7-weekly-rhythm.primary',
     titleKey: 'today.hero.day-7-weekly-rhythm.title',
   },
   first_day: {
     bodyKey: 'today.hero.first-day.body',
     eyebrowKey: 'today.hero.first-day.eyebrow',
-    primaryKey: 'today.hero.first-day.primary',
     titleKey: 'today.hero.first-day.title',
   },
   missed_reminder: {
     bodyKey: 'today.hero.missed-reminder.body',
     eyebrowKey: 'today.deferred.synthetic-badge',
-    primaryKey: 'today.hero.missed-reminder.primary',
     titleKey: 'today.hero.missed-reminder.title',
   },
   steady_day: {

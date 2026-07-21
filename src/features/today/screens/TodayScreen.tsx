@@ -459,7 +459,6 @@ export function TodayScreen({
   const infoHero = showTodayPlan && todayPlan !== null ? (
     <DiaryInfoHero
       hero={todayPlan.hero}
-      onPrimaryAction={openQuickLog}
     />
   ) : null;
   const shareSelectedDay = onShareText === undefined || selectedDayEventRows.length === 0
@@ -1344,33 +1343,18 @@ function DiaryWeekStrip({
 /** Collapses the day's single priority signal (`plan.hero`) into one Clay guidance tip. */
 function DiaryInfoHero({
   hero,
-  onPrimaryAction,
 }: Readonly<{
   hero: TodayPlan['hero'];
-  onPrimaryAction?: () => void;
 }>) {
   const { t } = useAppTranslation();
   const copy = todayHeroCopy[hero.variant];
   const body = hero.variant === 'first_day' ? '' : t(copy.bodyKey);
   const title = t(copy.titleKey);
-  const primaryKey = 'primaryKey' in copy ? copy.primaryKey : undefined;
 
-  return (
-    <Stack gap="sm">
-      {body.trim() ? (
-        <InfoHero message={body} testID="diary-info-hero" title={title} />
-      ) : (
-        <InfoHero message={title} testID="diary-info-hero" />
-      )}
-      {primaryKey === undefined || onPrimaryAction === undefined ? null : (
-        <Button
-          label={t(primaryKey)}
-          onPress={onPrimaryAction}
-          style={styles.infoHeroAction}
-          variant="primary"
-        />
-      )}
-    </Stack>
+  return body.trim() ? (
+    <InfoHero message={body} testID="diary-info-hero" title={title} />
+  ) : (
+    <InfoHero message={title} testID="diary-info-hero" />
   );
 }
 
@@ -2156,9 +2140,6 @@ const styles = StyleSheet.create({
   historyFilterScroller: {
     marginHorizontal: -tokens.layout.screenPaddingPhone,
     paddingHorizontal: tokens.layout.screenPaddingPhone,
-  },
-  infoHeroAction: {
-    alignSelf: 'flex-start',
   },
   shareError: {
     color: tokens.color.status.danger,

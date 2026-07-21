@@ -423,28 +423,23 @@
       "first-day": {
         "eyebrow": "Start",
         "title": "Log your first event — it takes about five seconds.",
-        "body": "Start with a first potty, meal, or nap.",
-        "primary": "Start"
+        "body": "Start with a first potty, meal, or nap."
       },
       "day-2-morning": {
         "title": "Morning rhythm check",
-        "body": "Use the first break, meal, and nap to make day two easier to read.",
-        "primary": "Log the morning"
+        "body": "Use the first break, meal, and nap to make day two easier to read."
       },
       "accident-recovery": {
         "title": "Reset after an indoor pee",
-        "body": "Skip blame. The next useful cue is usually sleep, food, play, or a short outside break.",
-        "primary": "Plan the next break"
+        "body": "Skip blame. The next useful cue is usually sleep, food, play, or a short outside break."
       },
       "missed-reminder": {
         "title": "Past routine slot preview",
-        "body": "This synthetic card shows where a past unchecked routine will sit after reminders ship.",
-        "primary": "Preview only"
+        "body": "This synthetic card shows where a past unchecked routine will sit after reminders ship."
       },
       "day-7-weekly-rhythm": {
         "title": "One week of rhythm",
-        "body": "The weekly card highlights repeated feeding, potty, and sleep patterns from logged care.",
-        "primary": "Review the week"
+        "body": "The weekly card highlights repeated feeding, potty, and sleep patterns from logged care."
       },
       "steady-day": {
         "title": "Keep the rhythm visible",

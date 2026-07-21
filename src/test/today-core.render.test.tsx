@@ -371,9 +371,6 @@ describe('Today core card rendering', () => {
     expect(hero.props.accessibilityRole).toBe('summary');
     expect(screen.getAllByTestId('diary-info-hero')).toHaveLength(1);
     expect(screen.getByText(i18n.t('today.hero.first-day.title'))).toBeTruthy();
-    expect(screen.getByRole('button', {
-      name: i18n.t('today.hero.first-day.primary'),
-    })).toBeTruthy();
 
     const tree = JSON.stringify(toJSON());
     const heroIndex = tree.indexOf('diary-info-hero');
@@ -395,7 +392,7 @@ describe('Today core card rendering', () => {
     expect(screen.getAllByText(i18n.t('today.states.loading.title')).length).toBeGreaterThan(0);
   });
 
-  it('wires the hero primary CTA to the Quick Log action', async () => {
+  it('renders the Diary hero as guidance without a redundant primary CTA', async () => {
     renderWithQuery(
       <TodayScreen
         careContext={careContext}
@@ -408,11 +405,10 @@ describe('Today core card rendering', () => {
       expect(screen.getByText(i18n.t('today.hero.first-day.title'))).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('today.hero.first-day.primary'),
-    }));
-
-    expect(openQuickLog).toHaveBeenCalledTimes(1);
+    // The hero CTA duplicated the "+" FAB (both opened Quick Log) and was removed so the
+    // FAB is the single add entry point. "Start" was the old first-day CTA label (suite forces EN).
+    expect(screen.queryByRole('button', { name: 'Start' })).toBeNull();
+    expect(openQuickLog).not.toHaveBeenCalled();
   });
 
   it('renders the design first-day plan instead of a separate empty card without events', async () => {
