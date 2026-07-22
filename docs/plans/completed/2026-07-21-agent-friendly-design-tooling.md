@@ -6,7 +6,9 @@
 
 **Plan type:** Completed task plan
 
-**Current phase:** Completed — direct local `main` integration approved on 2026-07-22; final integration evidence pending
+**Current phase:** Completed — feature commit `ba75981` fast-forwarded into local `main` on 2026-07-22
+
+**Integration evidence:** Local `main` contains `ba75981` (`PUP-39: add agent-friendly design catalog tooling`). No PR or remote push was performed.
 
 **Linear:** `PUP-39` — `dimaselenya/pup-39-add-agent-friendly-native-design-catalog-and-diagnostics`
 
@@ -289,6 +291,7 @@ No app routes, features, UI render output, i18n, Supabase, migrations, generated
 
 ## Changelog
 
+- 2026-07-22: User approved direct local integration. Feature commit `ba75981` was fast-forwarded into local `main`; no PR or remote push was performed.
 - 2026-07-22: Pre-merge review reproduced malformed catalog paths escaping into filesystem calls and invalid JSON producing a stack trace. Added RED coverage for malformed array items, invalid JSON, and repository inspection failures; GREEN/REFACTOR now returns machine-clean errors and 24/24 targeted tests pass. Exported canonical `FABProps`/`SnackbarProviderProps` and aligned PuppyHeader accessibility guidance with the real component.
 - 2026-07-21: Completed Phase 5 verification. Targeted catalog/CLI 21/21, Node 143/143, typecheck, scaffold/privacy/tokens/text hygiene, CLI smoke, doctor, and diff check passed. Lint retained 21 baseline warnings and no errors. Full check reproduced the baseline Jest open-handle hang after 1275/1275 passing tests.
 - 2026-07-21: Final review hardened runtime category validation, malformed-catalog diagnostics, direct/local runtime export coverage, explicit failure for unsupported export-all/default barrel syntax, deterministic code-point sorting, and machine-clean npm JSON examples.
