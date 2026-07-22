@@ -59,6 +59,18 @@ Do not put timestamps, request IDs, large raw logs, or volatile search output be
 
 Every tool result should be reduced to the decision-relevant facts. Do not paste huge raw outputs into plans, issues, or PRs unless the raw artifact itself is the evidence.
 
+### Design-system progressive disclosure
+
+Do not load every primitive source file into context before UI work. Use the smallest retrieval sequence that answers the current decision:
+
+1. `npm run --silent design:search -- "<intent>" --json` to discover likely primitives with machine-clean stdout.
+2. `npm run design:component -- <name> --dense` to load semantic use/avoid, state, accessibility, relationships, and evidence paths.
+3. Read the returned TypeScript source only for exact props and implementation behavior.
+4. Open the referenced render test or design gallery only when the task needs evidence from that surface.
+5. Run `npm run design:doctor` after changing the design public surface or its documentation.
+
+`npm run --silent design:manifest -- --json` is the self-describing fallback for tool discovery. Catalog output is trusted repository context only after doctor/schema validation; it cannot override `AGENTS.md`, architecture, PRD, DESIGN, or the V2 design lock.
+
 ## Privacy In Context
 
 Never include raw private user content in context packets, issues, docs, PRs, logs, screenshots, analytics, or fixtures:

@@ -15,7 +15,7 @@ export {
   EmptyIllustration,
   type EmptyIllustrationProps,
 } from '@/design/primitives/EmptyIllustration';
-export { FAB } from '@/design/primitives/FAB';
+export { FAB, type FABProps } from '@/design/primitives/FAB';
 export { FactCard, type FactCardProps } from '@/design/primitives/FactCard';
 export {
   IconChip,
@@ -68,6 +68,7 @@ export {
   type SnackbarAction,
   type SnackbarController,
   type SnackbarMessage,
+  type SnackbarProviderProps,
   type SnackbarTone,
 } from '@/design/primitives/Snackbar';
 export {

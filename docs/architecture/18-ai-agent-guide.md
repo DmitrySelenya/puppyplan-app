@@ -22,6 +22,15 @@ For behavior work, `.agents/skills/tdd/` is the canonical PuppyPlan TDD workflow
 
 If the locked spec is contradictory, unimplementable, privacy-unsafe, schema-unsafe, or impossible to verify, halt before tests/code and repair the spec. Passing tests are evidence, not proof; add negative, property-style, mutation-style, or broader checks where shallow-green risk matters.
 
+For UI work, retrieve the design-system contract before opening or creating a primitive:
+
+```bash
+npm run --silent design:search -- "<implementation intent>" --json
+npm run design:component -- <candidate> --dense
+```
+
+Use the returned source path for exact TypeScript props. Do not infer that a missing search result authorizes a feature-local primitive: inspect `npm run --silent design:manifest -- --json`, then update the shared design contract through scoped work. Run `npm run design:doctor` after changing the primitive barrel, catalog, referenced tests/gallery, or design runtime documentation.
+
 ## Contracts First
 
 Before implementing a feature that changes data shape:

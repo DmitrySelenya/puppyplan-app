@@ -9,7 +9,7 @@ import { Touchable } from '@/design/primitives/Touchable';
 import { elevationStyle } from '@/design/primitives/elevationStyle';
 import { tokens } from '@/design/tokens';
 
-type FABProps = {
+export type FABProps = {
   accessibilityHint: string;
   accessibilityLabel: string;
   onPress: () => void;
