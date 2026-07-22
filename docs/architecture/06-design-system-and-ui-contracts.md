@@ -44,7 +44,7 @@ Required primitives:
 - `TrackerTile`
 - `Touchable`
 
-PUP-9 Phase 5 shipped the first native runtime layer: `AppText`, `Screen`, `Touchable`, `Button`, `IconButton`, `Card`, `FAB`, `SheetSurface`, `StatusPill`, `ListRow`, `TrackerTile`, and `SegmentedControl`, plus design-owned a11y, motion, haptics, and native elevation helpers. `SheetSurface` is only a static sheet/panel surface; it does not provide Android focus trapping or background focus isolation. Full `BottomSheet`/`Modal` behavior remains deferred until current dependencies support it or a scoped follow-up approves an implementation path. `Snackbar`, `InlineAlert`, `FormField`, `Avatar`, `TabBar` configuration wrapper, `EmptyState`, and `SkeletonLoader` are still required future primitives and must land through scoped follow-up work, not opportunistic feature-local copies.
+The current public runtime surface is the barrel in `src/design/primitives/index.ts`; its agent-readable inventory is `src/design/catalog/catalog.json` and is verified by `npm run design:doctor`. Historical phase lists are not the current inventory. `SheetSurface` is only a static sheet/panel surface; it does not provide Android focus trapping or background focus isolation. Full `BottomSheet`/`Modal` behavior remains deferred until current dependencies support it or a scoped follow-up approves an implementation path. Missing primitives such as `InlineAlert` and `SkeletonLoader` must land through scoped follow-up work, not opportunistic feature-local copies.
 
 Required extended components:
 
@@ -113,3 +113,13 @@ Haptics are a best-effort enhancement; adapter failures must be contained inside
 ## Component Inventory
 
 MVP uses a `_dev/components` route for living component inspection. Storybook is Phase 1 unless component count grows beyond 40 or design QA needs it enough to justify ADR-0014.
+
+The visual gallery and the semantic catalog serve different jobs:
+
+- `/_dev/components` shows native rendered states.
+- `npm run design:search -- "<intent>"` discovers primitives before coding.
+- `npm run design:component -- <name> --dense` returns semantic use/avoid/a11y guidance and points to canonical TypeScript props.
+- `npm run --silent design:manifest -- --json` exposes the versioned machine-readable component/CLI surface without npm lifecycle prose on stdout.
+- `npm run design:doctor` enforces catalog schema, relationships, evidence paths, public barrel coverage, and README inventory drift.
+
+Every new runtime value export from `src/design/primitives/index.ts` must receive a catalog entry or an explicit ignored-export reason. Optional test/gallery gaps may warn; broken schema, missing declared paths, unaccounted exports, or stale generated inventory fail the gate.

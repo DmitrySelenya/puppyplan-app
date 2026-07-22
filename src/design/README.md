@@ -1,10 +1,30 @@
 # Design Runtime
 
-`src/design` is the only UI infrastructure zone.
+`src/design` is the only UI infrastructure zone. Runtime UI must import generated tokens through `src/design/tokens.ts` and compose shared controls from `src/design/primitives`, `src/design/a11y`, `src/design/motion`, and `src/design/haptics`.
 
-PUP-9 implements the Phase 5 native primitive layer on top of the PUP-8 generated token pipeline. Runtime UI must import generated tokens through `src/design/tokens.ts` and compose shared controls from `src/design/primitives`, `src/design/a11y`, `src/design/motion`, and `src/design/haptics`.
+## Agent Discovery
 
-Current primitive coverage includes text, scroll/fixed screens, touchable wrappers, buttons, icon buttons, cards, list rows, segmented controls, tracker tiles, status pills, static sheet surfaces, and the Quick Log FAB. These are intentionally UI infrastructure only; product flows, Quick Log behavior, Supabase/RLS, i18n Phase 6, bottom-sheet behavior, snackbars, inline alerts, form fields, avatars, tab-bar wrappers, empty states, skeleton loaders, and the design gallery remain separate scoped work.
+Before adding or choosing UI infrastructure, search by intent instead of guessing a primitive name:
+
+```bash
+npm run design:search -- "settings row with chevron"
+npm run design:component -- ListRow --dense
+npm run --silent design:manifest -- --json
+npm run design:doctor
+```
+
+- `design:search` ranks semantic matches and supports `--json` and `--limit`.
+- `design:component` accepts the canonical name or a documented alias and supports `--brief`, `--dense`, `--full`, and `--json`.
+- `design:manifest` exposes the versioned component and command inventory for tools.
+- `design:doctor` checks schema, references, relationships, public export coverage, and this inventory marker. `FAIL` exits 1; optional coverage gaps remain actionable `WARN` results with exit 0.
+
+The catalog lives in `src/design/catalog/catalog.json`. It documents intent, when-to-use, avoid guidance, states, accessibility, relationships, and evidence paths. It deliberately does not copy prop names or defaults: the TypeScript source path and `propsType` reported by `design:component` point to the canonical syntax.
+
+<!-- DESIGN-CATALOG:START -->
+Catalog version 1.0.0. Cataloged runtime components (37): `AppIcon`, `AppText`, `Avatar`, `Button`, `Card`, `CheckCircle`, `DayDivider`, `EmptyIllustration`, `EmptyState`, `FAB`, `FactCard`, `IconButton`, `IconChip`, `InfoHero`, `ListGroup`, `ListRow`, `PendingDot`, `PuppyHeader`, `RoutineCard`, `RoutineLifecycleMenu`, `Screen`, `ScreenHeader`, `SectionHeader`, `SegmentedControl`, `SheetHeader`, `SheetSurface`, `SnackbarProvider`, `Stack`, `StatusPill`, `SwipeToDelete`, `TextField`, `TimeGutter`, `Toggle`, `Touchable`, `TrackerTile`, `WeekStrip`, `WhenPicker`
+<!-- DESIGN-CATALOG:END -->
+
+The catalog follows the real public barrel in `src/design/primitives/index.ts`; it is not a substitute for the design gallery or render tests. Full focus-trapping `BottomSheet`/`Modal`, `InlineAlert`, and `SkeletonLoader` behavior remains deferred until a scoped follow-up approves the native implementation path.
 
 `Screen` remains scroll-first for placeholder shell content, defaults safe-area handling to the top edge only, and has a design-owned non-scrolling variant for future fixed-height flows. Do not bypass `src/design` to import raw `Pressable`, raw colors, raw spacing, direct haptics, or business-error alerts from feature code.
 
