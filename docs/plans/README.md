@@ -14,6 +14,7 @@ Every file in `active/` must have a row in the Current Plans table below (enforc
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
+| Active reference | [Household Invite — Make The Second Family Member Actually Join](active/2026-07-23-household-invite-design.md) | `PUP-___` (TBD) | Design locked (brainstorm 2026-07-23); token-gated bootstrap + 3 SECURITY DEFINER RPCs + sha256 constraint relax; needs Linear issue then implementation plan |
 | Active task plan | [Dogfood Diary Follow-Ups (2026-07-21)](active/2026-07-21-dogfood-diary-followups.md) | `PUP-38` | Phases 0/A/B/C landed (hero CTA, silent uncheck, in-row sync spinner, re-check-after-uncheck fix); device verification of A/B/C next |
 | Active task plan | [Diary — Take A Routine Mark Back Off](active/2026-07-15-diary-uncheck-routine.md) | `PUP-33` | Phase 1 complete; check → uncheck → re-check verified on the SE against a burned slot |
 | Active task plan | [Diary Telegram Parity — Make Real Logging Faster Than The Chat](active/2026-07-13-diary-telegram-parity.md) | `PUP-33` | Phase 0 — scoped duplicate fix implemented locally; owner-device legacy discard + fresh check-off and 20+ event verification remain |
