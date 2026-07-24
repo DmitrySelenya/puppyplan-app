@@ -19,6 +19,9 @@ const puppyQuickTrackerNonEmptyMigrationPath =
   'supabase/migrations/20260609120000_puppy_quick_tracker_ids_non_empty.sql';
 const eventObservationPayloadV2MigrationPath =
   'supabase/migrations/20260711180000_event_observation_payload_v2.sql';
+const householdInviteAdrPath =
+  'docs/architecture/adr/0023-household-invite-token-sha256.md';
+const adrIndexPath = 'docs/architecture/ADR_INDEX.md';
 const rlsTestPath = 'supabase/tests/rls_baseline.sql';
 const remoteCliPath = 'scripts/supabase/run-remote-cli.mjs';
 const supabaseContractPath = 'src/contracts/supabase.ts';
@@ -61,6 +64,31 @@ function canonicalQuickTrackerMigrationSource() {
   return canonicalQuickTrackerMigrationPaths()
     .map((path) => readFileSync(path, 'utf8'))
     .join('\n');
+}
+
+function householdInviteMigrationPath() {
+  const paths = readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_household_invite_rpcs\.sql$/u.test(filename))
+    .map((filename) => `${migrationDir}/${filename}`);
+
+  assert.equal(
+    paths.length,
+    1,
+    `expected exactly one household invite RPC migration, found ${paths.length}`,
+  );
+
+  return paths[0];
+}
+
+function namedFunctionBlock(source, functionName) {
+  const match = source.match(
+    new RegExp(
+      `CREATE OR REPLACE FUNCTION public\\.${functionName}\\([\\s\\S]*?\\n\\$\\$;`,
+      'u',
+    ),
+  );
+  assert.ok(match, `missing ${functionName} function`);
+  return match[0];
 }
 
 function selectedTimelineShareScopeHardeningMigrationPath() {
@@ -627,6 +655,114 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
         `RLS selected-tracker fixtures still use legacy id: ${rejectedLegacyId}`,
       );
     }
+  });
+});
+
+describe('PUP-42 Phase 0 household invite migration guardrails', () => {
+  it('defines authenticated-only SECURITY DEFINER RPCs with pinned search paths', () => {
+    const migration = readFileSync(householdInviteMigrationPath(), 'utf8');
+    const expectedSignatures = [
+      [
+        'create_household_invite',
+        /p_role text DEFAULT 'caregiver', p_ttl interval DEFAULT '7 days'/u,
+        /RETURNS TABLE \(token text, expires_at timestamptz\)/u,
+      ],
+      [
+        'accept_household_invite',
+        /p_token text/u,
+        /RETURNS TABLE \(household_id uuid, role text\)/u,
+      ],
+      [
+        'revoke_household_invite',
+        /p_invite_id uuid/u,
+        /RETURNS boolean/u,
+      ],
+    ];
+
+    for (const [name, argumentsPattern, returnPattern] of expectedSignatures) {
+      const block = namedFunctionBlock(migration, name);
+
+      assert.match(block, argumentsPattern);
+      assert.match(block, returnPattern);
+      assert.match(block, /SECURITY DEFINER\s+SET search_path = ''/u);
+      assert.match(block, /auth\.uid\(\)/u);
+      assert.match(
+        migration,
+        new RegExp(`REVOKE ALL ON FUNCTION public\\.${name}\\([^;]+\\) FROM PUBLIC;`, 'u'),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `REVOKE ALL ON FUNCTION public\\.${name}\\([^;]+\\) FROM anon, authenticated;`,
+          'u',
+        ),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `GRANT EXECUTE ON FUNCTION public\\.${name}\\([^;]+\\) TO authenticated;`,
+          'u',
+        ),
+      );
+    }
+  });
+
+  it('generates a 256-bit token once and stores only its SHA-256 digest', () => {
+    const migration = readFileSync(householdInviteMigrationPath(), 'utf8');
+    const createBlock = namedFunctionBlock(migration, 'create_household_invite');
+    const acceptBlock = namedFunctionBlock(migration, 'accept_household_invite');
+
+    assert.match(
+      createBlock,
+      /v_token := encode\(extensions\.gen_random_bytes\(32\), 'hex'\);/u,
+    );
+    assert.match(
+      createBlock,
+      /'sha256:' \|\| encode\(extensions\.digest\(v_token, 'sha256'\), 'hex'\)/u,
+    );
+    assert.match(createBlock, /right\(v_token, 4\)/u);
+    assert.match(createBlock, /INSERT INTO public\.invite/u);
+    assert.match(createBlock, /INSERT INTO app_private\.invite_secret/u);
+    assert.match(
+      createBlock,
+      /FROM public\.household AS household[\s\S]*?FOR UPDATE OF household;/u,
+    );
+    assert.doesNotMatch(createBlock, /token_hash\s*\)\s*VALUES\s*\([^)]*\bv_token\b/u);
+    assert.match(
+      acceptBlock,
+      /'sha256:' \|\| encode\(extensions\.digest\(p_token, 'sha256'\), 'hex'\)/u,
+    );
+    assert.match(acceptBlock, /ERRCODE = 'P4201'/u);
+    assert.match(acceptBlock, /ERRCODE = 'P4202'/u);
+    assert.match(acceptBlock, /ERRCODE = 'P4203'/u);
+  });
+
+  it('keeps Argon2 fixtures valid while admitting only exact lowercase SHA-256 digests', () => {
+    const migration = readFileSync(householdInviteMigrationPath(), 'utf8');
+    const source = allMigrationSource();
+    const constraint = latestConstraintBlock(source, 'invite_secret_token_hash_format');
+
+    assert.match(
+      migration,
+      /DROP CONSTRAINT invite_secret_token_hash_format/u,
+    );
+    assert.match(constraint, /argon2id:/u);
+    assert.match(constraint, /\\\$argon2id\\\$/u);
+    assert.match(constraint, /sha256:\[0-9a-f\]\{64\}/u);
+    assert.doesNotMatch(constraint, /\[A-F\]/u);
+  });
+
+  it('records the SHA-256 security decision and indexes ADR-0023', () => {
+    const adr = readFileSync(householdInviteAdrPath, 'utf8');
+    const index = readFileSync(adrIndexPath, 'utf8');
+
+    assert.match(adr, /256[- ]bit CSPRNG/iu);
+    assert.match(adr, /sha-?256/iu);
+    assert.match(adr, /argon2/iu);
+    assert.match(adr, /pgcrypto/iu);
+    assert.match(adr, /plaintext token.*once/iu);
+    assert.match(adr, /ADR-0017/u);
+    assert.match(index, /adr\/0023-household-invite-token-sha256\.md/u);
   });
 });
 

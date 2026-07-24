@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Plan type:** Design (brainstorm output; feeds an implementation plan)
-**Current phase:** Phase 0 — migration/ADR RED
+**Current phase:** Phase 1 — RLS/pgTAP RED
 **Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
 **Owner:** Dmitry
 **Date:** 2026-07-23
@@ -313,11 +313,11 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 
 ### Phase 0 — migration and ADR
 
-- [ ] RED: add focused static migration/ADR guardrail assertions.
-- [ ] GREEN: add the constraint migration and create/accept/revoke RPCs.
-- [ ] Add ADR-0023 and update the ADR index.
-- [ ] Run focused verification and full `npm run check`.
-- [ ] Record evidence/changelog/Linear and commit Phase 0.
+- [x] RED: add focused static migration/ADR guardrail assertions.
+- [x] GREEN: add the constraint migration and create/accept/revoke RPCs.
+- [x] Add ADR-0023 and update the ADR index.
+- [x] Run focused verification and full `npm run check`.
+- [x] Record evidence/changelog/Linear and commit Phase 0.
 
 ### Phase 1 — RLS/pgTAP
 
@@ -409,6 +409,23 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
   Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
   13 pre-existing warnings.
 
+### 2026-07-24 — Phase 0 migration and ADR
+
+- RED: `node --test --test-name-pattern "PUP-42 Phase 0"
+  scripts/checks/supabase-baseline.test.mjs` failed 4/4 because the migration and ADR did not
+  exist.
+- GREEN: the same focused command passed 4/4 after adding the three authenticated-only
+  `SECURITY DEFINER` RPCs, exact SHA-256 token handling, compatible hash CHECK, and ADR-0023.
+- `npm run supabase:guardrails`: passed 37/37 tests; generated database types stayed unchanged.
+- Review: the pre-commit concurrency pass found that locking only one owner's membership would
+  not serialize two co-owners. The migration now also locks the household row, and the focused
+  guardrail requires that lock.
+- Full gate: `npm run check` passed with 106 Jest suites / 1,276 tests and 150 Node tests.
+  Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
+  13 pre-existing warnings.
+- Remote migration apply, database advisors, and database-backed pgTAP were not run; they remain
+  approval-gated. Phase 1 adds the pgTAP source and local static coverage.
+
 ## Changelog
 
 - **2026-07-24 — preflight:** created the `main`-based Linear branch/worktree, restored the two
@@ -420,3 +437,6 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 - **2026-07-24 — baseline prerequisite:** added test-only mutation-cache GC configuration and its
   focused regression test, installed the approved clipboard module, and restored a fully green
   local gate before Phase 0.
+- **2026-07-24 — Phase 0:** added the household invite RPC migration, exact
+  `sha256:[0-9a-f]{64}` compatibility, privacy-safe typed SQLSTATEs, least-privilege function
+  grants, co-owner-safe serialization, ADR-0023, and static migration/ADR guardrails.
