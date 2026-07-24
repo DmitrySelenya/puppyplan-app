@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Plan type:** Design (brainstorm output; feeds an implementation plan)
-**Current phase:** Phase 4 — owner create-link UI RED
+**Current phase:** Phase 5 — invitee accept and manual paste UI RED
 **Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
 **Owner:** Dmitry
 **Date:** 2026-07-23
@@ -23,8 +23,8 @@ Root cause is architectural, not a bug:
 - No invite **create/accept/revoke** RPCs exist. Only read/projection share RPCs
   (`current_share_link_metadata` etc.) and `listPendingInvites` in
   `src/lib/supabase/household-access.ts` (a read).
-- `src/features/more/screens/HouseholdAccessScreen.tsx` "Пригласить" button is a stub:
-  `onPress={() => setActionUnavailableVisible(true)}` → "actions unavailable".
+- `src/features/more/screens/HouseholdAccessScreen.tsx` "Пригласить" button is a no-op stub:
+  `onPress={() => undefined}`.
 - The DB tables already exist (`public.invite`, `app_private.invite_secret`,
   `20260524202620_mvp_schema_baseline.sql`) and RLS forbids direct client inserts
   (`rls_baseline.sql:1230`), so writes must go through a `SECURITY DEFINER` RPC.
@@ -261,7 +261,7 @@ security decision, **not** a check weakened to make a test pass.
 
 - **Owner** `HouseholdAccessScreen`: replace the stub. "Пригласить" → call `createInvite`,
   show the `puppyplan://invite/<token>` link + a copy action and the `token_last4` for
-  confirmation. New i18n keys (EN/RU/ES) replacing `actions-unavailable`.
+  confirmation. Add typed owner-flow i18n keys in EN/RU/ES.
 - **Invitee** `InviteAcceptScreen` (`src/features/linking/screens/InviteAcceptScreen.tsx`):
   already has loading / load-error / expired / already-member states; wire the real accept
   mutation to its `onAccept`. Add the manual paste-link/code fallback field.
@@ -345,11 +345,11 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 
 ### Phase 4 — owner create-link UI
 
-- [ ] Refresh `07-2-manage-household.md` from proposed to approved Stage 0.
-- [ ] RED: owner create/loading/error/link/copy anatomy and behavior tests.
-- [ ] GREEN: wire create mutation, link/last4 display, native copy action, and EN/RU/ES copy.
-- [ ] Run focused tests, i18n/design gates, and full `npm run check`.
-- [ ] Record evidence/changelog/Linear and commit Phase 4.
+- [x] Refresh `07-2-manage-household.md` from proposed to approved Stage 0.
+- [x] RED: owner create/loading/error/link/copy anatomy and behavior tests.
+- [x] GREEN: wire create mutation, link/last4 display, native copy action, and EN/RU/ES copy.
+- [x] Run focused tests, i18n/design gates, and full `npm run check`.
+- [x] Record evidence/changelog/Linear and commit Phase 4.
 
 ### Phase 5 — invitee accept and manual paste UI
 
@@ -483,6 +483,22 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
   Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
   13 pre-existing warnings.
 
+### 2026-07-24 — Phase 4 owner create-link UI
+
+- RED: the focused More settings render suite failed the new create/link/copy/error/owner-role
+  assertions against the previous no-op invite button.
+- GREEN: `npm run test:unit -- src/test/more-settings.render.test.tsx` passed 46/46 tests,
+  including actual mutation pending state, exact custom-scheme link construction, privacy-safe
+  last-four confirmation, copy success, surfaced create/copy errors, and non-owner denial.
+- The generated plaintext link is held only in transient component state and intentionally
+  rendered to its creating owner. It is absent from durable storage, cache keys, logs, analytics,
+  test output, and documentation fixtures.
+- The approved `expo-clipboard` module is isolated behind `src/lib/clipboard.ts`; feature UI
+  continues to use only design primitives and typed EN/RU/ES strings.
+- Full gate: `npm run check` passed with 108 Jest suites / 1,311 tests and 151 Node tests.
+  Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
+  13 pre-existing warnings.
+
 ## Changelog
 
 - **2026-07-24 — preflight:** created the `main`-based Linear branch/worktree, restored the two
@@ -506,3 +522,6 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 - **2026-07-24 — Phase 3:** added SecureStore-backed pending intent with local expiry, auth
   accept-before-bootstrap orchestration, durable neutral fallback, contextual error reporting,
   and accepted-household-scoped active puppy selection.
+- **2026-07-24 — Phase 4:** replaced the owner invite no-op with a real create mutation,
+  transient custom-scheme link and last-four confirmation, native copy feedback, owner-only
+  busy/disabled states, surfaced privacy-safe failures, and typed EN/RU/ES copy.

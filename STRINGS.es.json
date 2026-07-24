@@ -1138,6 +1138,16 @@
         "pending-invite-caregiver": "Cuidador pendiente",
         "pending-invite-viewer": "Observador pendiente",
         "invite-cta": "Invitar",
+        "invite-link": {
+          "title": "El enlace de invitación está listo",
+          "body": "Envía este enlace de un solo uso al familiar que ayudará con el cuidado.",
+          "accessibility-label": "Enlace de invitación para cuidador de la familia",
+          "last4": "El código del enlace termina en {last4}",
+          "copy": "Copiar enlace",
+          "copy-success": "Enlace de invitación copiado.",
+          "copy-error": "No se pudo copiar el enlace. Selecciónalo arriba y cópialo manualmente.",
+          "create-error": "No se pudo crear la invitación. Comprueba tu conexión e inténtalo de nuevo."
+        },
         "badge-owner": "Dueño",
         "badge-caregiver": "cuidador",
         "badge-viewer": "Espectador",

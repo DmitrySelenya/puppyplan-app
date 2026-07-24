@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import {
@@ -19,12 +19,17 @@ import {
   type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
-import type { InviteRecord } from '@/contracts/supabase';
+import type { CreateInviteResponse, InviteRecord } from '@/contracts/supabase';
+import { copyTextToClipboard } from '@/lib/clipboard';
 import { type AppTranslate, type I18nKey, type SupportedLocale, useAppTranslation } from '@/lib/i18n';
 import { useActiveCareContext } from '@/lib/query/active-care-context';
-import { useHouseholdInvitesQuery } from '@/lib/query/household-access';
+import {
+  useCreateHouseholdInviteMutation,
+  useHouseholdInvitesQuery,
+} from '@/lib/query/household-access';
 
 export type HouseholdAccessScreenProps = Readonly<{
+  copyInviteLink?: (link: string) => Promise<void>;
   onBack?: () => void;
   reviewState?: HouseholdAccessReviewState;
 }>;
@@ -107,12 +112,17 @@ const householdRoleBadge: Record<HouseholdRole, Readonly<{
 };
 
 export function HouseholdAccessScreen({
+  copyInviteLink = copyTextToClipboard,
   onBack,
   reviewState,
 }: HouseholdAccessScreenProps) {
   const { locale, t } = useAppTranslation();
   const activeCare = useActiveCareContext();
+  const createInvite = useCreateHouseholdInviteMutation();
   const householdInvites = useHouseholdInvitesQuery(activeCare.careContext?.householdId);
+  const [createdInvite, setCreatedInvite] = useState<CreateInviteResponse>();
+  const [createFailed, setCreateFailed] = useState(false);
+  const [copyState, setCopyState] = useState<'idle' | 'success' | 'error'>('idle');
   const visibleReviewState = reviewState
     ?? getHouseholdAccessReviewState(activeCare.status, householdInvites.isLoading, householdInvites.isError);
   const livePendingInvites: readonly InviteRecord[] = householdInvites.data ?? [];
@@ -123,6 +133,35 @@ export function HouseholdAccessScreen({
   }));
   const currentMemberRole: HouseholdRole = activeCare.careContext?.householdRole ?? 'owner';
   const currentMemberBadge = householdRoleBadge[currentMemberRole];
+  const inviteLink = createdInvite
+    ? `puppyplan://invite/${createdInvite.token}`
+    : undefined;
+
+  async function handleCreateInvite() {
+    setCreateFailed(false);
+    setCopyState('idle');
+    setCreatedInvite(undefined);
+
+    try {
+      setCreatedInvite(await createInvite.mutateAsync());
+    } catch {
+      setCreateFailed(true);
+    }
+  }
+
+  async function handleCopyInviteLink() {
+    if (!inviteLink) {
+      return;
+    }
+
+    setCopyState('idle');
+    try {
+      await copyInviteLink(inviteLink);
+      setCopyState('success');
+    } catch {
+      setCopyState('error');
+    }
+  }
 
   return (
     <Screen contentStyle={styles.content}>
@@ -204,9 +243,70 @@ export function HouseholdAccessScreen({
         </Stack>
       </Card>
 
+      {createdInvite && inviteLink ? (
+        <Card
+          accessibilityLabel={t('sharing.family.manage.invite-link.title')}
+          testID="household-invite-link-card">
+          <Stack gap="sm">
+            <AppText variant="headline">
+              {t('sharing.family.manage.invite-link.title')}
+            </AppText>
+            <AppText tone="secondary" variant="body">
+              {t('sharing.family.manage.invite-link.body')}
+            </AppText>
+            <AppText
+              accessibilityLabel={t('sharing.family.manage.invite-link.accessibility-label')}
+              selectable
+              testID="household-invite-link"
+              tone="link"
+              variant="code">
+              {inviteLink}
+            </AppText>
+            <AppText tone="secondary" variant="footnote">
+              {t('sharing.family.manage.invite-link.last4', {
+                last4: createdInvite.token.slice(-4),
+              })}
+            </AppText>
+            <Button
+              label={t('sharing.family.manage.invite-link.copy')}
+              onPress={handleCopyInviteLink}
+              variant="secondary"
+            />
+            {copyState === 'success' ? (
+              <AppText
+                accessibilityLiveRegion="polite"
+                testID="household-invite-copy-success"
+                tone="secondary"
+                variant="footnote">
+                {t('sharing.family.manage.invite-link.copy-success')}
+              </AppText>
+            ) : null}
+            {copyState === 'error' ? (
+              <AppText
+                accessibilityRole="alert"
+                testID="household-invite-copy-error"
+                variant="footnote">
+                {t('sharing.family.manage.invite-link.copy-error')}
+              </AppText>
+            ) : null}
+          </Stack>
+        </Card>
+      ) : null}
+
+      {createFailed ? (
+        <AppText
+          accessibilityRole="alert"
+          testID="household-invite-create-error"
+          variant="footnote">
+          {t('sharing.family.manage.invite-link.create-error')}
+        </AppText>
+      ) : null}
+
       <Button
+        disabled={currentMemberRole !== 'owner'}
         label={t('sharing.family.manage.invite-cta')}
-        onPress={() => undefined}
+        loading={createInvite.isPending}
+        onPress={handleCreateInvite}
       />
     </Screen>
   );
