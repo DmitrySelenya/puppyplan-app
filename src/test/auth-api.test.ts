@@ -1,6 +1,7 @@
 // src/test/auth-api.test.ts
 import {
   getCurrentUser,
+  OtpRequestError,
   requestEmailOtp,
   signInWithPassword,
   signOut,
@@ -49,6 +50,41 @@ describe('auth api', () => {
     mockAuth({ signInWithOtp: jest.fn(async () => ({ error: { message: 'rate limited' } })) });
 
     await expect(requestEmailOtp('owner@example.com')).rejects.toThrow('auth_request_otp_failed');
+  });
+
+  it('AC-1 AC-4 flags a 429 OTP request failure as rate_limited without leaking the message', async () => {
+    mockAuth({
+      signInWithOtp: jest.fn(async () => ({ error: { message: 'boom', status: 429 } })),
+    });
+
+    await expect(requestEmailOtp('owner@example.com')).rejects.toMatchObject({
+      name: 'OtpRequestError',
+      message: 'auth_request_otp_failed',
+      reason: 'rate_limited',
+    });
+    await expect(requestEmailOtp('owner@example.com')).rejects.toBeInstanceOf(OtpRequestError);
+  });
+
+  it('AC-2 flags an over_email_send_rate_limit code as rate_limited regardless of status', async () => {
+    mockAuth({
+      signInWithOtp: jest.fn(async () => ({
+        error: { message: 'boom', code: 'over_email_send_rate_limit' },
+      })),
+    });
+
+    await expect(requestEmailOtp('owner@example.com')).rejects.toMatchObject({
+      reason: 'rate_limited',
+    });
+  });
+
+  it('AC-3 flags any other OTP request failure as unknown', async () => {
+    mockAuth({
+      signInWithOtp: jest.fn(async () => ({ error: { message: 'boom', status: 500 } })),
+    });
+
+    await expect(requestEmailOtp('owner@example.com')).rejects.toMatchObject({
+      reason: 'unknown',
+    });
   });
 
   it('verifies an OTP and returns the session user', async () => {

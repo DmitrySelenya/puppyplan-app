@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { AccessibilityInfo } from 'react-native';
 
 import { SignInScreenView } from '@/features/auth/screens/SignInScreen';
+import { OtpRequestError } from '@/lib/auth';
 import { i18n } from '@/lib/i18n';
 
 let reduceMotionProbe: jest.SpyInstance;
@@ -96,6 +97,22 @@ describe('SignInScreenView', () => {
     fireEvent.press(screen.getByText(i18n.t('auth.code.cta')));
 
     await waitFor(() => expect(screen.getByText(i18n.t('auth.errors.verify-failed'))).toBeTruthy());
+  });
+
+  it('AC-5 shows the rate-limit copy when the code request is throttled', async () => {
+    const actions = {
+      ...makeActions(),
+      requestCode: jest.fn(async () => {
+        throw new OtpRequestError('rate_limited');
+      }),
+    };
+    render(<SignInScreenView actions={actions} />);
+
+    fireEvent.changeText(screen.getByLabelText(i18n.t('auth.email.label')), 'owner@example.com');
+    fireEvent.press(screen.getByText(i18n.t('auth.email.cta')));
+
+    await waitFor(() => expect(screen.getByText(i18n.t('auth.errors.rate-limited'))).toBeTruthy());
+    expect(screen.queryByText(i18n.t('auth.errors.request-failed'))).toBeNull();
   });
 
   it('keeps debug sign-in hidden unless the dev account action is enabled', () => {

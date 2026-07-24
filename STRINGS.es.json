@@ -122,6 +122,7 @@
       "invalid-code": "Escribe el código de 6 dígitos.",
       "debug-sign-in-failed": "No pudimos iniciar sesión con la cuenta de depuración. Revisa las credenciales locales de desarrollo.",
       "request-failed": "No pudimos enviar el código. Revisa tu conexión e inténtalo otra vez.",
+      "rate-limited": "Demasiadas solicitudes de código para este correo. Espera un momento e inténtalo otra vez.",
       "verify-failed": "Ese código no funcionó. Solicita uno nuevo e inténtalo otra vez."
     }
   },
