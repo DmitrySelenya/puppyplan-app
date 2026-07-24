@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 
+import { householdInviteInputSchema } from '@/contracts/supabase';
 import {
   AppIcon,
   type AppIconName,
@@ -10,10 +11,16 @@ import {
   Screen,
   Stack,
   StatusPill,
+  TextField,
   type StatusPillTone,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
+import { useAuth } from '@/lib/auth';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+import { useAcceptHouseholdInviteMutation } from '@/lib/query/household-access';
+import { pendingHouseholdInviteController } from '@/lib/storage/pendingHouseholdInvite';
+import { usePersistPendingHouseholdInvite } from '@/lib/storage/usePendingHouseholdInvite';
+import { isHouseholdInviteUnavailableError } from '@/lib/supabase/household-access';
 
 export type InviteAcceptReviewState =
   | 'loading'
@@ -65,7 +72,14 @@ const inviteAcceptStateMeta: Record<InviteAcceptReviewState, InviteAcceptStateMe
 };
 
 export type InviteAcceptScreenProps = Readonly<{
+  acceptDisabled?: boolean;
+  acceptPending?: boolean;
+  fallbackError?: boolean;
+  fallbackPending?: boolean;
   inviteToken?: string;
+  onAccept?: () => void;
+  onContinueWithoutInvite?: () => void;
+  onManualInviteToken?: (token: string) => void;
   ownerName?: string;
   puppyName?: string;
   reviewState?: InviteAcceptReviewState;
@@ -74,14 +88,176 @@ export type InviteAcceptScreenProps = Readonly<{
 const defaultOwnerName = 'Owner';
 const defaultPuppyName = 'Puppy';
 
+export type ConnectedInviteAcceptScreenProps = Readonly<{
+  initialInviteToken?: string;
+  onAccepted: () => void;
+  onOpenSignIn: () => void;
+}>;
+
+type LiveInviteAcceptState = 'idle' | 'error' | 'unavailable';
+
+export function ConnectedInviteAcceptScreen({
+  initialInviteToken,
+  onAccepted,
+  onOpenSignIn,
+}: ConnectedInviteAcceptScreenProps) {
+  const auth = useAuth();
+  const acceptInvite = useAcceptHouseholdInviteMutation();
+  const [selectedToken, setSelectedToken] = useState(initialInviteToken);
+  const [hasManualReplacement, setHasManualReplacement] = useState(false);
+  const [liveState, setLiveState] = useState<LiveInviteAcceptState>('idle');
+  const [fallbackPending, setFallbackPending] = useState(false);
+  const [fallbackError, setFallbackError] = useState(false);
+  const persistenceStatus = usePersistPendingHouseholdInvite(selectedToken);
+
+  useEffect(() => {
+    setSelectedToken(initialInviteToken);
+    setHasManualReplacement(false);
+    setLiveState('idle');
+    setFallbackError(false);
+  }, [initialInviteToken]);
+
+  const storedInviteUnavailable =
+    auth.householdInviteStatus === 'unavailable' && !hasManualReplacement;
+  const reviewState: InviteAcceptReviewState | undefined =
+    liveState === 'unavailable' || storedInviteUnavailable || persistenceStatus === 'invalid'
+      ? 'expired'
+      : liveState === 'error' || persistenceStatus === 'error'
+        ? 'load-error'
+        : persistenceStatus === 'loading'
+          ? 'loading'
+          : undefined;
+  const authCanAcceptDirectly =
+    auth.status === 'signedIn' || auth.householdInviteStatus === 'unavailable';
+  const acceptDisabled =
+    selectedToken === undefined
+    || persistenceStatus !== 'ready'
+    || reviewState === 'expired'
+    || (auth.status === 'loading' && !authCanAcceptDirectly);
+
+  async function handleAccept() {
+    if (selectedToken === undefined || persistenceStatus !== 'ready') {
+      return;
+    }
+
+    setLiveState('idle');
+    setFallbackError(false);
+
+    if (auth.status === 'signedOut') {
+      onOpenSignIn();
+      return;
+    }
+
+    if (!authCanAcceptDirectly) {
+      setLiveState('error');
+      return;
+    }
+
+    try {
+      const acceptedInvite = await acceptInvite.mutateAsync({ token: selectedToken });
+      await auth.completeHouseholdInviteAcceptance(acceptedInvite.household_id);
+      onAccepted();
+    } catch (error) {
+      if (isHouseholdInviteUnavailableError(error)) {
+        try {
+          await pendingHouseholdInviteController.markUnavailable();
+          setLiveState('unavailable');
+        } catch {
+          setLiveState('error');
+        }
+        return;
+      }
+
+      setLiveState('error');
+    }
+  }
+
+  function handleManualInviteToken(token: string) {
+    setSelectedToken(token);
+    setHasManualReplacement(true);
+    setLiveState('idle');
+    setFallbackError(false);
+  }
+
+  async function handleContinueWithoutInvite() {
+    setFallbackPending(true);
+    setFallbackError(false);
+
+    try {
+      if (auth.status === 'signedOut') {
+        await pendingHouseholdInviteController.clear();
+        onOpenSignIn();
+        return;
+      }
+
+      if (auth.householdInviteStatus === 'unavailable') {
+        await auth.continueWithoutHouseholdInvite();
+      } else if (auth.status !== 'signedIn') {
+        throw new Error('household_invite_fallback_not_ready');
+      }
+
+      onAccepted();
+    } catch {
+      setFallbackError(true);
+    } finally {
+      setFallbackPending(false);
+    }
+  }
+
+  return (
+    <InviteAcceptScreen
+      acceptDisabled={acceptDisabled}
+      acceptPending={acceptInvite.isPending}
+      fallbackError={fallbackError}
+      fallbackPending={fallbackPending}
+      inviteToken={selectedToken}
+      onAccept={() => void handleAccept()}
+      onContinueWithoutInvite={() => void handleContinueWithoutInvite()}
+      onManualInviteToken={handleManualInviteToken}
+      reviewState={reviewState}
+    />
+  );
+}
+
 export function InviteAcceptScreen({
+  acceptDisabled = false,
+  acceptPending = false,
+  fallbackError = false,
+  fallbackPending = false,
+  onAccept,
+  onContinueWithoutInvite,
+  onManualInviteToken,
   ownerName = defaultOwnerName,
   puppyName = defaultPuppyName,
   reviewState,
 }: InviteAcceptScreenProps) {
   const { t } = useAppTranslation();
+  const [manualInput, setManualInput] = useState('');
+  const [manualInputInvalid, setManualInputInvalid] = useState(false);
+  const [manualInputReady, setManualInputReady] = useState(false);
   const translationOptions = { ownerName, puppyName };
-  const isLoadingInvite = reviewState === 'loading';
+  const isLoadingInvite = reviewState === 'loading' || acceptPending;
+
+  function handleManualInputChange(value: string) {
+    setManualInput(value);
+    setManualInputInvalid(false);
+    setManualInputReady(false);
+  }
+
+  function handleManualInviteSubmit() {
+    const parsedInput = householdInviteInputSchema.safeParse(manualInput);
+
+    if (!parsedInput.success) {
+      setManualInputInvalid(true);
+      setManualInputReady(false);
+      return;
+    }
+
+    onManualInviteToken?.(parsedInput.data);
+    setManualInput('');
+    setManualInputInvalid(false);
+    setManualInputReady(true);
+  }
 
   return (
     <Screen contentStyle={styles.content}>
@@ -137,13 +313,71 @@ export function InviteAcceptScreen({
           </AppText>
         </Card>
 
+        <Card testID="invite-manual-input-card">
+          <Stack gap="sm">
+            <AppText variant="headline">
+              {t('sharing.family.accepted.manual.title')}
+            </AppText>
+            <AppText tone="secondary" variant="body">
+              {t('sharing.family.accepted.manual.body')}
+            </AppText>
+            <TextField
+              autoCapitalize="none"
+              autoCorrect={false}
+              errorText={manualInputInvalid
+                ? t('sharing.family.accepted.manual.invalid')
+                : undefined}
+              label={t('sharing.family.accepted.manual.label')}
+              onChangeText={handleManualInputChange}
+              placeholder={t('sharing.family.accepted.manual.placeholder')}
+              secureTextEntry
+              value={manualInput}
+            />
+            <Button
+              disabled={onManualInviteToken === undefined}
+              label={t('sharing.family.accepted.manual.submit')}
+              onPress={handleManualInviteSubmit}
+              variant="secondary"
+            />
+            {manualInputReady ? (
+              <AppText
+                accessibilityLiveRegion="polite"
+                testID="invite-manual-input-ready"
+                tone="secondary"
+                variant="footnote">
+                {t('sharing.family.accepted.manual.ready')}
+              </AppText>
+            ) : null}
+          </Stack>
+        </Card>
+
+        {reviewState === 'expired' && onContinueWithoutInvite ? (
+          <Button
+            label={t('sharing.family.accepted.create-own')}
+            loading={fallbackPending}
+            onPress={onContinueWithoutInvite}
+            variant="secondary"
+          />
+        ) : null}
+
+        {fallbackError ? (
+          <AppText
+            accessibilityRole="alert"
+            testID="invite-create-own-error"
+            variant="footnote">
+            {t('sharing.family.accepted.create-own-error')}
+          </AppText>
+        ) : null}
+
         <Stack gap="sm">
           <Button
+            disabled={acceptDisabled || onAccept === undefined}
             label={t('sharing.family.accepted.accept')}
             loading={isLoadingInvite}
-            onPress={() => undefined}
+            onPress={onAccept ?? (() => undefined)}
           />
           <Button
+            disabled
             label={t('sharing.family.accepted.decline')}
             onPress={() => undefined}
             variant="tertiary"

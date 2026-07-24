@@ -105,6 +105,12 @@ export const boundedPayloadStringSchema = z.string().trim().min(1).max(64);
 export const hashSchema = z.string().regex(/^sha256:[A-Za-z0-9._:-]+$/);
 export const tokenLast4Schema = z.string().regex(/^[A-Za-z0-9_-]{4}$/);
 export const householdInviteTokenSchema = z.string().regex(/^[0-9a-f]{64}$/);
+export const householdInviteInputSchema = z.string()
+  .trim()
+  .transform((input) => input.startsWith('puppyplan://invite/')
+    ? input.slice('puppyplan://invite/'.length)
+    : input)
+  .pipe(householdInviteTokenSchema);
 export const householdInviteRpcErrorCodeSchema = z.enum(['P4201', 'P4202', 'P4203']);
 export const payloadVersionSchema = z.union([z.literal(1), z.literal(2)]);
 export const positiveVersionSchema = z.number().int().positive();

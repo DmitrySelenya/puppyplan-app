@@ -1097,6 +1097,17 @@
         "already-member-cta": "Abierto",
         "load-error": "No se pudo cargar la invitación. Comprueba tu conexión.",
         "neutral-unavailable": "Esta invitación ya no está disponible. Pídele a {ownerName} que envíe una nueva.",
+        "manual": {
+          "title": "¿Tienes otra invitación?",
+          "body": "Pega un enlace de invitación de PuppyPlan o su código.",
+          "label": "Enlace o código de invitación",
+          "placeholder": "Pégalo aquí",
+          "submit": "Usar esta invitación",
+          "invalid": "Introduce un enlace de invitación de PuppyPlan o un código válido.",
+          "ready": "La invitación está lista para aceptar."
+        },
+        "create-own": "Crear tu propia familia",
+        "create-own-error": "No se pudo crear tu familia. Comprueba tu conexión e inténtalo de nuevo.",
         "states": {
           "loading": {
             "status": "Comprobando",

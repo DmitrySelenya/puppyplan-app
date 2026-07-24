@@ -210,6 +210,39 @@ describe('AuthProvider', () => {
     expect(bootstrap).not.toHaveBeenCalled();
   });
 
+  it('AC-PUP42-INVITEE-2 activates a manually accepted household without fallback bootstrap', async () => {
+    const acceptedHouseholdId = '00000000-0000-4000-8000-000000000205';
+    const bootstrap = jest.fn();
+    const clearPendingInvite = jest.fn(async () => undefined);
+    const { deps } = makeDeps({
+      bootstrap,
+      clearPendingInvite,
+      getCurrentUser: jest.fn(async () => user),
+      readPendingInvite: jest.fn(async () => ({ status: 'unavailable' as const })),
+    });
+
+    render(
+      <AuthProvider dependencies={deps}>
+        <Probe />
+        <CompleteInviteProbe householdId={acceptedHouseholdId} />
+      </AuthProvider>,
+    );
+    await flushAuthEffects();
+
+    await waitFor(() => {
+      expect(screen.getByText('loading:none:none:unavailable')).toBeTruthy();
+    });
+    await act(async () => {
+      screen.getByText('complete-household-invite').props.onPress();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(`signedIn:${userId}:${acceptedHouseholdId}:none`)).toBeTruthy();
+    });
+    expect(clearPendingInvite).toHaveBeenCalledTimes(1);
+    expect(bootstrap).not.toHaveBeenCalled();
+  });
+
   it('AC-PUP42-AUTH-4 signs out on unclassified acceptance failures', async () => {
     const acceptInvite = jest.fn(async () => {
       throw new Error('household_invite_accept_failed');
@@ -297,4 +330,14 @@ function FallbackProbe() {
   const { continueWithoutHouseholdInvite } = useAuth();
 
   return <Text onPress={() => void continueWithoutHouseholdInvite()}>continue-without-invite</Text>;
+}
+
+function CompleteInviteProbe({ householdId }: Readonly<{ householdId: string }>) {
+  const { completeHouseholdInviteAcceptance } = useAuth();
+
+  return (
+    <Text onPress={() => void completeHouseholdInviteAcceptance(householdId)}>
+      complete-household-invite
+    </Text>
+  );
 }

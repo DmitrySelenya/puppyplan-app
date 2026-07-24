@@ -16,7 +16,7 @@ import type {
   BootstrapResult,
   SessionUser,
 } from '@/contracts/auth';
-import type { AcceptInviteResponse } from '@/contracts/supabase';
+import { uuidSchema, type AcceptInviteResponse } from '@/contracts/supabase';
 import {
   createObservabilityReporter,
   type ObservabilityReporter,
@@ -35,6 +35,7 @@ import { ensureUserBootstrapped } from './bootstrap';
 
 export type AuthContextValue = Readonly<{
   activeHouseholdId: string | null;
+  completeHouseholdInviteAcceptance: (householdId: string) => Promise<void>;
   continueWithoutHouseholdInvite: () => Promise<void>;
   householdInviteStatus: 'none' | 'unavailable';
   status: AuthStatus;
@@ -219,6 +220,32 @@ export function AuthProvider({
     };
   }, [deps]);
 
+  const completeHouseholdInviteAcceptance = useCallback(async (
+    householdId: string,
+  ): Promise<void> => {
+    const acceptedHouseholdId = uuidSchema.parse(householdId);
+    const nextUser = user ?? fallbackUser.current;
+
+    if (nextUser === null) {
+      throw new Error('household_invite_authenticated_user_unavailable');
+    }
+
+    const sequence = applyUserSequence.current + 1;
+    applyUserSequence.current = sequence;
+    await deps.clearPendingInvite();
+
+    if (applyUserSequence.current !== sequence) {
+      throw new Error('household_invite_acceptance_superseded');
+    }
+
+    fallbackUser.current = null;
+    bootstrappedUserIds.current.add(nextUser.id);
+    setActiveHouseholdId(acceptedHouseholdId);
+    setHouseholdInviteStatus('none');
+    setUser(nextUser);
+    setStatus('signedIn');
+  }, [deps, user]);
+
   const continueWithoutHouseholdInvite = useCallback(async (): Promise<void> => {
     const nextUser = fallbackUser.current;
 
@@ -289,6 +316,7 @@ export function AuthProvider({
   const value = useMemo<AuthContextValue>(
     () => ({
       activeHouseholdId,
+      completeHouseholdInviteAcceptance,
       continueWithoutHouseholdInvite,
       householdInviteStatus,
       status,
@@ -299,6 +327,7 @@ export function AuthProvider({
     }),
     [
       activeHouseholdId,
+      completeHouseholdInviteAcceptance,
       continueWithoutHouseholdInvite,
       householdInviteStatus,
       status,

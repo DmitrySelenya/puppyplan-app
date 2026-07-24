@@ -10,6 +10,7 @@ import {
   eventLogRecordSchema,
   eventTypes,
   householdMembershipRoles,
+  householdInviteInputSchema,
   minimalQuickLogQueueItemSchema,
   puppyQuickTrackerIds,
   puppyQuickTrackerIdsSchema,
@@ -56,6 +57,27 @@ describe('Supabase contract vocabulary', () => {
 });
 
 describe('household invite RPC contracts', () => {
+  it('AC-PUP42-INVITEE-1 parses a raw token or exact PuppyPlan invite link', () => {
+    const token = 'a'.repeat(64);
+
+    expect(householdInviteInputSchema.parse(token)).toBe(token);
+    expect(householdInviteInputSchema.parse(`  puppyplan://invite/${token}  `)).toBe(token);
+  });
+
+  it('AC-PUP42-INVITEE-1 rejects malformed, uppercase, or decorated invite input', () => {
+    const token = 'a'.repeat(64);
+
+    for (const input of [
+      'A'.repeat(64),
+      `https://example.com/invite/${token}`,
+      `puppyplan://invite/${token}?source=copy`,
+      `puppyplan://invite/${token}/`,
+      '',
+    ]) {
+      expect(householdInviteInputSchema.safeParse(input).success).toBe(false);
+    }
+  });
+
   it('AC-PUP42-CLIENT-1 accepts the one-time token create response', () => {
     expect(createInviteResponseSchema.parse({
       token: 'a'.repeat(64),

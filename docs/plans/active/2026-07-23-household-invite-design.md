@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Plan type:** Design (brainstorm output; feeds an implementation plan)
-**Current phase:** Phase 5 — invitee accept and manual paste UI RED
+**Current phase:** Phase 6 — owner checklist and completion audit
 **Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
 **Owner:** Dmitry
 **Date:** 2026-07-23
@@ -353,11 +353,11 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 
 ### Phase 5 — invitee accept and manual paste UI
 
-- [ ] Refresh `07-1-accept-invite.md` from proposed to approved Stage 0.
-- [ ] RED: deep-link/manual input, sign-in handoff, accept/unavailable/fallback anatomy and behavior.
-- [ ] GREEN: wire real accept flow, manual paste parser, typed errors, fallback, and EN/RU/ES copy.
-- [ ] Run focused tests, i18n/design gates, and full `npm run check`.
-- [ ] Record evidence/changelog/Linear and commit Phase 5.
+- [x] Refresh `07-1-accept-invite.md` from proposed to approved Stage 0.
+- [x] RED: deep-link/manual input, sign-in handoff, accept/unavailable/fallback anatomy and behavior.
+- [x] GREEN: wire real accept flow, manual paste parser, typed errors, fallback, and EN/RU/ES copy.
+- [x] Run focused tests, i18n/design gates, and full `npm run check`.
+- [x] Record evidence/changelog/Linear and commit Phase 5.
 
 ### Phase 6 — owner device verification and completion audit
 
@@ -499,6 +499,25 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
   Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
   13 pre-existing warnings.
 
+### 2026-07-24 — Phase 5 invitee accept and manual paste UI
+
+- RED: focused contract/auth/screen/route suites failed six behavior assertions because manual
+  input parsing, screen callbacks, accepted-household activation, and route orchestration did not
+  exist.
+- GREEN: the focused four-suite command passed 68/68 tests; route coverage separately passed 8/8
+  cases for authenticated acceptance, OTP handoff, typed unavailable, unclassified failure,
+  manual replacement, explicit fallback, stale-intent clearing, and cleanup failure.
+- The exact input contract accepts only a lowercase 64-hex raw token or exact
+  `puppyplan://invite/<token>` form after trimming. Manual input is masked and never copied into
+  rendered text, cache keys, logs, analytics, or docs.
+- Signed-out acceptance opens OTP only after SecureStore persistence reports ready. Authenticated
+  acceptance calls the real mutation, clears pending intent, activates the returned household,
+  and opens Diary. An unavailable invite can reach normal bootstrap only through the explicit
+  create-your-own action.
+- Full gate: `npm run check` passed with 109 Jest suites / 1,325 tests and 151 Node tests.
+  Lint reported 0 errors and 21 pre-existing warnings; privacy scan and text hygiene passed;
+  Design Doctor reported 0 failures and 13 pre-existing warnings.
+
 ## Changelog
 
 - **2026-07-24 — preflight:** created the `main`-based Linear branch/worktree, restored the two
@@ -525,3 +544,6 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 - **2026-07-24 — Phase 4:** replaced the owner invite no-op with a real create mutation,
   transient custom-scheme link and last-four confirmation, native copy feedback, owner-only
   busy/disabled states, surfaced privacy-safe failures, and typed EN/RU/ES copy.
+- **2026-07-24 — Phase 5:** added exact raw/link parsing, masked manual fallback input, real
+  authenticated accept mutation wiring, accepted-household activation, SecureStore-gated OTP
+  handoff, neutral unavailable handling, and explicit create-your-own bootstrap fallback.

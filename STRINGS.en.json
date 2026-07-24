@@ -1109,6 +1109,17 @@
         "already-member-cta": "Open",
         "load-error": "Couldn't load the invite. Check your connection.",
         "neutral-unavailable": "This invite is no longer available. Ask {ownerName} to send a new one.",
+        "manual": {
+          "title": "Have another invite?",
+          "body": "Paste a PuppyPlan invite link or its code.",
+          "label": "Invite link or code",
+          "placeholder": "Paste it here",
+          "submit": "Use this invite",
+          "invalid": "Enter a valid PuppyPlan invite link or code.",
+          "ready": "Invite is ready to accept."
+        },
+        "create-own": "Create your own household",
+        "create-own-error": "Could not create your household. Check your connection and try again.",
         "states": {
           "loading": {
             "status": "Checking",

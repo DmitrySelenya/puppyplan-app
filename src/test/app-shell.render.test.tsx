@@ -235,4 +235,68 @@ describe('app shell screens', () => {
     }).some((button) => button.props.accessibilityState.busy)).toBe(true);
     expect(screen.queryByText(/raw-(loading|error|expired|member)-token/i)).toBeNull();
   });
+
+  it('PUP-42 invokes the real accept boundary supplied to the invite screen', () => {
+    const onAccept = jest.fn();
+
+    renderWithProviders(
+      <InviteAcceptScreen
+        inviteToken={'a'.repeat(64)}
+        onAccept={onAccept}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.accepted.accept'),
+    }));
+    expect(onAccept).toHaveBeenCalledTimes(1);
+  });
+
+  it('PUP-42 parses manual PuppyPlan links and surfaces invalid input', () => {
+    const onManualInviteToken = jest.fn();
+    const token = 'b'.repeat(64);
+
+    renderWithProviders(
+      <InviteAcceptScreen
+        onManualInviteToken={onManualInviteToken}
+        reviewState="expired"
+      />,
+    );
+
+    const input = screen.getByLabelText(i18n.t('sharing.family.accepted.manual.label'));
+    expect(input.props.secureTextEntry).toBe(true);
+    fireEvent.changeText(input, 'not-an-invite');
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.accepted.manual.submit'),
+    }));
+    expect(screen.getByText(i18n.t('sharing.family.accepted.manual.invalid'))).toBeTruthy();
+    expect(onManualInviteToken).not.toHaveBeenCalled();
+
+    fireEvent.changeText(input, `puppyplan://invite/${token}`);
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.accepted.manual.submit'),
+    }));
+    expect(onManualInviteToken).toHaveBeenCalledWith(token);
+  });
+
+  it('PUP-42 exposes create-your-own only from the unavailable invite state', () => {
+    const onContinueWithoutInvite = jest.fn();
+
+    renderWithProviders(
+      <>
+        <InviteAcceptScreen
+          onContinueWithoutInvite={onContinueWithoutInvite}
+          reviewState="expired"
+        />
+        <InviteAcceptScreen onContinueWithoutInvite={jest.fn()} />
+      </>,
+    );
+
+    const fallbackButtons = screen.getAllByRole('button', {
+      name: i18n.t('sharing.family.accepted.create-own'),
+    });
+    expect(fallbackButtons).toHaveLength(1);
+    fireEvent.press(fallbackButtons[0]);
+    expect(onContinueWithoutInvite).toHaveBeenCalledTimes(1);
+  });
 });
