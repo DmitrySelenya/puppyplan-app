@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(126);
+SELECT plan(139);
 
 CREATE SCHEMA IF NOT EXISTS tests;
 
@@ -690,7 +690,12 @@ VALUES
   ('00000000-0000-4000-8000-000000000104', 'authenticated', 'authenticated', 'outsider@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
   ('00000000-0000-4000-8000-000000000105', 'authenticated', 'authenticated', 'revoked@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
   ('00000000-0000-4000-8000-000000000106', 'authenticated', 'authenticated', 'trainer@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
-  ('00000000-0000-4000-8000-000000000107', 'authenticated', 'authenticated', 'second-owner@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now());
+  ('00000000-0000-4000-8000-000000000107', 'authenticated', 'authenticated', 'second-owner@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
+  ('00000000-0000-4000-8000-000000000108', 'authenticated', 'authenticated', 'invitee-valid@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
+  ('00000000-0000-4000-8000-000000000109', 'authenticated', 'authenticated', 'invitee-expired@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
+  ('00000000-0000-4000-8000-000000000110', 'authenticated', 'authenticated', 'invitee-revoked@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
+  ('00000000-0000-4000-8000-000000000111', 'authenticated', 'authenticated', 'invitee-accepted@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
+  ('00000000-0000-4000-8000-000000000112', 'authenticated', 'authenticated', 'invitee-reuse@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now());
 
 INSERT INTO public.household (id, created_by, display_name)
 VALUES
@@ -851,7 +856,7 @@ INSERT INTO app_private.invite_secret (
 )
 VALUES (
   '00000000-0000-4000-8000-000000000702',
-  'argon2id:invite-hash',
+  'sha256:' || repeat('0', 64),
   '0002'
 );
 
@@ -2254,6 +2259,248 @@ SELECT results_eq(
   'SELECT count(*)::int FROM public.subscription_entitlement',
   ARRAY[0],
   'caregiver cannot read subscription entitlement'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
+SELECT results_eq(
+  $$SELECT length(token)::int, expires_at > now()
+    FROM public.create_household_invite('caregiver', interval '7 days')$$,
+  $$VALUES (64, true)$$,
+  'owner can create a 64-character caregiver invite'
+);
+
+SELECT tests.as_postgres();
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.invite
+    WHERE household_id = '00000000-0000-4000-8000-000000000201'
+      AND accepted_at IS NULL
+      AND revoked_at IS NULL
+      AND expires_at > now()$$,
+  ARRAY[1],
+  'create leaves exactly one active household invite'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
+SELECT throws_ok(
+  $$SELECT * FROM public.create_household_invite('caregiver', interval '7 days')$$,
+  '42501',
+  'create_household_invite requires one owned household',
+  'caregiver cannot create household invites'
+);
+
+SELECT tests.as_postgres();
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM app_private.invite_secret
+    WHERE invite_id = '00000000-0000-4000-8000-000000000702'
+      AND token_hash = 'sha256:' || repeat('0', 64)$$,
+  ARRAY[1],
+  'invite secret accepts exact lowercase sha256 hash format'
+);
+
+INSERT INTO public.invite (
+  id,
+  household_id,
+  token_last4,
+  role,
+  expires_at,
+  accepted_at,
+  accepted_by,
+  revoked_at,
+  revoked_by,
+  created_by
+)
+VALUES
+  (
+    '00000000-0000-4000-8000-000000000703',
+    '00000000-0000-4000-8000-000000000201',
+    'aaaa',
+    'caregiver',
+    now() + interval '7 days',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '00000000-0000-4000-8000-000000000101'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000704',
+    '00000000-0000-4000-8000-000000000201',
+    'bbbb',
+    'caregiver',
+    now() - interval '1 minute',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '00000000-0000-4000-8000-000000000101'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000705',
+    '00000000-0000-4000-8000-000000000201',
+    'cccc',
+    'caregiver',
+    now() + interval '7 days',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '00000000-0000-4000-8000-000000000101'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000706',
+    '00000000-0000-4000-8000-000000000201',
+    'dddd',
+    'caregiver',
+    now() + interval '7 days',
+    now(),
+    '00000000-0000-4000-8000-000000000111',
+    NULL,
+    NULL,
+    '00000000-0000-4000-8000-000000000101'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000708',
+    '00000000-0000-4000-8000-000000000201',
+    'eeee',
+    'caregiver',
+    now() + interval '7 days',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '00000000-0000-4000-8000-000000000101'
+  );
+
+INSERT INTO app_private.invite_secret (
+  invite_id,
+  token_hash,
+  token_last4
+)
+VALUES
+  (
+    '00000000-0000-4000-8000-000000000703',
+    'sha256:' || encode(extensions.digest(repeat('a', 64), 'sha256'), 'hex'),
+    'aaaa'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000704',
+    'sha256:' || encode(extensions.digest(repeat('b', 64), 'sha256'), 'hex'),
+    'bbbb'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000705',
+    'sha256:' || encode(extensions.digest(repeat('c', 64), 'sha256'), 'hex'),
+    'cccc'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000706',
+    'sha256:' || encode(extensions.digest(repeat('d', 64), 'sha256'), 'hex'),
+    'dddd'
+  );
+
+SELECT lives_ok(
+  $$INSERT INTO app_private.invite_secret (invite_id, token_hash, token_last4)
+    VALUES (
+      '00000000-0000-4000-8000-000000000708',
+      'argon2id:phase1-compatibility',
+      'eeee'
+    )$$,
+  'invite secret preserves Argon2id hash compatibility'
+);
+
+INSERT INTO public.household_membership (
+  id,
+  household_id,
+  user_id,
+  role,
+  invited_by,
+  accepted_at
+)
+VALUES (
+  '00000000-0000-4000-8000-000000000307',
+  '00000000-0000-4000-8000-000000000201',
+  '00000000-0000-4000-8000-000000000111',
+  'caregiver',
+  '00000000-0000-4000-8000-000000000101',
+  now()
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
+SELECT throws_ok(
+  $$SELECT public.revoke_household_invite('00000000-0000-4000-8000-000000000705')$$,
+  '42501',
+  'revoke_household_invite requires household ownership',
+  'non-owner cannot revoke household invites'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
+SELECT is(
+  public.revoke_household_invite('00000000-0000-4000-8000-000000000705'),
+  true,
+  'owner can revoke household invites'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000110');
+SELECT throws_ok(
+  $$SELECT * FROM public.accept_household_invite(repeat('c', 64))$$,
+  'P4202',
+  'household invite is unavailable',
+  'revoked household invite cannot be accepted'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000108');
+SELECT results_eq(
+  $$SELECT household_id, role
+    FROM public.accept_household_invite(repeat('a', 64))$$,
+  $$VALUES (
+    '00000000-0000-4000-8000-000000000201'::uuid,
+    'caregiver'::text
+  )$$,
+  'valid household invite returns owner household and caregiver role'
+);
+
+SELECT results_eq(
+  $$SELECT household_id, user_id, role::text
+    FROM public.household_membership
+    WHERE household_id = '00000000-0000-4000-8000-000000000201'
+      AND user_id = '00000000-0000-4000-8000-000000000108'
+      AND accepted_at IS NOT NULL
+      AND revoked_at IS NULL$$,
+  $$VALUES (
+    '00000000-0000-4000-8000-000000000201'::uuid,
+    '00000000-0000-4000-8000-000000000108'::uuid,
+    'caregiver'::text
+  )$$,
+  'accepting household invite adds caregiver membership'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000109');
+SELECT throws_ok(
+  $$SELECT * FROM public.accept_household_invite(repeat('b', 64))$$,
+  'P4202',
+  'household invite is unavailable',
+  'expired household invite cannot be accepted'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000112');
+SELECT throws_ok(
+  $$SELECT * FROM public.accept_household_invite(repeat('d', 64))$$,
+  'P4203',
+  'household invite was already used',
+  'reused household invite is rejected for a different user'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000111');
+SELECT results_eq(
+  $$SELECT household_id, role
+    FROM public.accept_household_invite(repeat('d', 64))$$,
+  $$VALUES (
+    '00000000-0000-4000-8000-000000000201'::uuid,
+    'caregiver'::text
+  )$$,
+  'accepted household invite retry is idempotent for the same user'
 );
 
 SELECT throws_ok(

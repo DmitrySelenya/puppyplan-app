@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Plan type:** Design (brainstorm output; feeds an implementation plan)
-**Current phase:** Phase 1 — RLS/pgTAP RED
+**Current phase:** Phase 2 — contracts/repository/mutations RED
 **Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
 **Owner:** Dmitry
 **Date:** 2026-07-23
@@ -321,10 +321,10 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 
 ### Phase 1 — RLS/pgTAP
 
-- [ ] RED: add owner/non-owner/create/accept/expired/revoked/reused/direct-write/hash-format cases.
-- [ ] GREEN: complete pgTAP fixtures/helpers without weakening existing direct-write denial.
-- [ ] Run static Supabase guardrails; record that remote pgTAP is approval-gated.
-- [ ] Run full `npm run check`, record evidence/changelog/Linear, and commit Phase 1.
+- [x] RED: add owner/non-owner/create/accept/expired/revoked/reused/direct-write/hash-format cases.
+- [x] GREEN: complete pgTAP fixtures/helpers without weakening existing direct-write denial.
+- [x] Run static Supabase guardrails; record that remote pgTAP is approval-gated.
+- [x] Run full `npm run check`, record evidence/changelog/Linear, and commit Phase 1.
 
 ### Phase 2 — contracts, repository, and mutations
 
@@ -426,6 +426,25 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 - Remote migration apply, database advisors, and database-backed pgTAP were not run; they remain
   approval-gated. Phase 1 adds the pgTAP source and local static coverage.
 
+### 2026-07-24 — Phase 1 RLS/pgTAP coverage
+
+- RED: `node --test --test-name-pattern "covers household invite RPC"
+  scripts/checks/supabase-baseline.test.mjs` failed because all 13 required pgTAP labels were
+  absent.
+- GREEN: the same command passed after adding owner create, caregiver denial, owner-only revoke,
+  caregiver membership acceptance, expired/revoked/reused rejection, same-user idempotency,
+  direct-write denial retention, and SHA-256/Argon2 compatibility cases.
+- pgTAP plan count increased from 126 to 139; source contains exactly 139 assertion calls.
+- Fixtures derive synthetic token digests at runtime with `extensions.digest(repeat(...), 'sha256')`;
+  no plaintext invite value is persisted or printed.
+- `npm run supabase:guardrails`: passed 38/38 local static/typegen tests.
+- Database-backed pgTAP was not executed because applying the Phase 0 migration to a hosted
+  Supabase project is approval-gated and this repository intentionally has no Docker-backed local
+  aggregate gate.
+- Full gate: `npm run check` passed with 106 Jest suites / 1,276 tests and 151 Node tests.
+  Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
+  13 pre-existing warnings.
+
 ## Changelog
 
 - **2026-07-24 — preflight:** created the `main`-based Linear branch/worktree, restored the two
@@ -440,3 +459,6 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 - **2026-07-24 — Phase 0:** added the household invite RPC migration, exact
   `sha256:[0-9a-f]{64}` compatibility, privacy-safe typed SQLSTATEs, least-privilege function
   grants, co-owner-safe serialization, ADR-0023, and static migration/ADR guardrails.
+- **2026-07-24 — Phase 1:** expanded the pgTAP contract from 126 to 139 assertions for invite RPC
+  authorization, lifecycle, membership, idempotency, direct-write denial, and both accepted secret
+  hash formats; hosted execution remains explicitly unverified.

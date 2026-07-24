@@ -557,7 +557,7 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
       'accepted trainer selected timeline includes explicitly selected sanitized observation',
     ];
 
-    assert.match(source, /SELECT plan\(126\);/u);
+    assert.match(source, /SELECT plan\(139\);/u);
 
     for (const label of labels) {
       assert.equal(source.split(label).length - 1, 1, `${label} must appear exactly once`);
@@ -655,6 +655,37 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
         `RLS selected-tracker fixtures still use legacy id: ${rejectedLegacyId}`,
       );
     }
+  });
+
+  it('covers household invite RPC permissions, lifecycle, membership, and hash formats', () => {
+    const source = readFileSync(rlsTestPath, 'utf8');
+    const labels = [
+      'owner can create a 64-character caregiver invite',
+      'create leaves exactly one active household invite',
+      'caregiver cannot create household invites',
+      'non-owner cannot revoke household invites',
+      'owner can revoke household invites',
+      'revoked household invite cannot be accepted',
+      'valid household invite returns owner household and caregiver role',
+      'accepting household invite adds caregiver membership',
+      'expired household invite cannot be accepted',
+      'reused household invite is rejected for a different user',
+      'accepted household invite retry is idempotent for the same user',
+      'invite secret accepts exact lowercase sha256 hash format',
+      'invite secret preserves Argon2id hash compatibility',
+      'authenticated owner cannot directly create household invites',
+    ];
+
+    for (const label of labels) {
+      assert.equal(source.split(label).length - 1, 1, `${label} must appear exactly once`);
+    }
+
+    assert.match(source, /public\.create_household_invite\('caregiver', interval '7 days'\)/u);
+    assert.match(source, /public\.accept_household_invite\(repeat\('a', 64\)\)/u);
+    assert.match(source, /extensions\.digest\(repeat\('a', 64\), 'sha256'\)/u);
+    assert.match(source, /'P4202'/u);
+    assert.match(source, /'P4203'/u);
+    assert.doesNotMatch(source, /argon2id:invite-hash/u);
   });
 });
 
