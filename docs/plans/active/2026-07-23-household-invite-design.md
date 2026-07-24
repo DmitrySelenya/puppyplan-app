@@ -2,13 +2,14 @@
 
 **Status:** Active
 **Plan type:** Design (brainstorm output; feeds an implementation plan)
+**Current phase:** Preflight / Senior Pass Gate 1 — awaiting owner decisions before behavior work
 **Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
 **Owner:** Dmitry
 **Date:** 2026-07-23
 
 ## Problem
 
-During live dogfooding, the owner's wife installed the app on her iPhone ("Annie")
+During live dogfooding, a second family member installed the app on another iPhone
 and could not join the owner's household. The first screen after install is the
 email-OTP sign-in (the "family code" screen she saw). When she enters a code, the
 post-sign-in path calls `bootstrap_current_user`, which — keyed on `auth.uid()` —
@@ -33,6 +34,140 @@ Root cause is architectural, not a bug:
 The owner generates an invite link; the invitee opens it, signs in, and lands **inside
 the owner's household as a caregiver** with full record access to the same puppy — never
 in a stray empty household.
+
+## Task contract
+
+### Acceptance criteria
+
+- **AC-1 — owner creates one caregiver link.** An authenticated household owner can create
+  one active caregiver invite with a seven-day default TTL. The client receives a
+  `puppyplan://invite/<token>` link whose token is returned once, never logged, and never
+  durably retained by the owner flow.
+- **AC-2 — server-enforced access.** A non-owner cannot create or revoke an invite; normal
+  clients still cannot insert/update/delete `public.invite` or read
+  `app_private.invite_secret`.
+- **AC-3 — token-gated bootstrap.** A valid pending invite is persisted before OTP sign-in.
+  After authentication it is accepted before `bootstrap_current_user`; successful acceptance
+  skips bootstrap, so no new empty household is created.
+- **AC-4 — same household and puppy.** Acceptance creates one accepted caregiver membership
+  in the owner's existing household and makes that accepted household the invitee's active
+  care context, including when an older stray empty household already exists. The orphan is
+  not deleted in this slice.
+- **AC-5 — neutral unavailable fallback.** Invalid, expired, revoked, or consumed tokens map
+  to one typed unavailable client state without revealing which condition occurred.
+  `InviteAcceptScreen` offers a create-your-own fallback that runs normal bootstrap only after
+  the invite path has failed.
+- **AC-6 — owner UI.** The owner invite action exposes the generated link, `token_last4`, and
+  a native copy action with loading, success, and surfaced error states.
+- **AC-7 — invitee UI.** The invite screen accepts the deep-link token or a manually pasted
+  PuppyPlan link/raw token, surfaces invalid input, and uses the real acceptance mutation for
+  an already-authenticated user.
+- **AC-8 — language and privacy.** All new user-facing copy is typed and present in EN/RU/ES.
+  No raw token, puppy name, note, email, provider name, or production data enters logs,
+  analytics, docs, screenshots, cache keys, or verification evidence.
+
+### Error cases
+
+- **ERR-1:** missing authentication at any write RPC is rejected.
+- **ERR-2:** invalid role or non-positive TTL is rejected.
+- **ERR-3:** invalid, expired, revoked, or consumed token returns a typed error at the database
+  boundary and one neutral unavailable state at the UI boundary.
+- **ERR-4:** persistence, RPC, parsing, copy, bootstrap, and cache-invalidation failures are
+  surfaced with stable privacy-safe categories; none are swallowed to `null`, `[]`, or
+  `undefined`.
+- **ERR-5:** a genuine unclassified invite/bootstrap failure keeps the existing auth cleanup
+  path and signs the user out.
+
+### Constraints
+
+- No dependency, remote migration, push, PR, merge, production, or release action without the
+  exact owner approval required by `AGENTS.md`.
+- RPCs mirror `bootstrap_current_user`: `SECURITY DEFINER`, `SET search_path = ''`, explicit
+  authentication/role checks, `PUBLIC`/`anon` revoke, authenticated grant.
+- The only designed constraint change is adding exact
+  `^sha256:[0-9a-f]{64}$` support to `invite_secret_token_hash_format`, justified by the new
+  ADR and tests.
+- Feature UI uses only `src/design` primitives; `app/` remains route/orchestration wiring.
+- No lint/test/type configuration weakening, ignore directive, `any`, `as unknown as`, or
+  generated native-file edit.
+
+### Out of scope
+
+- Viewer invites, email binding, resend/revoke UI, universal links, member cleanup, household
+  switcher UI, and deletion of a pre-existing stray household.
+- Remote Supabase verification, app install, simulator/device execution, push, PR, or merge.
+
+### Likely files
+
+- `supabase/migrations/<timestamp>_household_invite_rpcs.sql`
+- `supabase/tests/rls_baseline.sql`
+- `docs/architecture/adr/0023-household-invite-token-sha256.md`
+- `docs/architecture/ADR_INDEX.md`
+- `src/contracts/supabase.ts`, `src/contracts/auth.ts`
+- `src/lib/supabase/household-access.ts`, `src/lib/query/household-access.ts`
+- `src/lib/auth/context.tsx`, `src/lib/storage/pendingHouseholdInvite.ts`
+- `src/lib/supabase/puppies.ts`
+- `app/invite/[token].tsx`, `app/invite/index.tsx`
+- `src/features/more/screens/HouseholdAccessScreen.tsx`
+- `src/features/linking/screens/InviteAcceptScreen.tsx`
+- `STRINGS.en.json`, `STRINGS.ru.json`, `STRINGS.es.json`
+- Focused contract/repository/query/auth/storage/render tests under `src/test/`
+
+### Verification
+
+- RED/GREEN focused Jest tests for every client behavior change.
+- Static Supabase guardrails and pgTAP source assertions; actual remote pgTAP execution remains
+  approval-gated.
+- `npm run check` before each phase commit.
+- `git diff --check`, privacy scan, design doctor, and a requirement-by-requirement final audit.
+- Owner-run two-device checklist in Phase 6; no install or device run by the implementation agent.
+
+## Senior Pass Gate 1 — contour
+
+- **Intent:** restore the actual shared-care loop, not merely generate a link. The invited
+  account must operate on the owner's durable household and puppy immediately after OTP.
+- **Surfaces:** owner manage-household default/loading/create-pending/create-error/link-created/
+  copy-success/copy-error; invitee valid/loading/sign-in/accept-pending/already-member/
+  unavailable/manual-input-invalid/manual-input-valid; normal no-invite bootstrap.
+- **Lifecycle:** create revokes the prior active invite; accept is single-consume but idempotent
+  for an existing membership; pending intent has a local expiry and is cleared after resolution;
+  abandoned auth does not create a household; unavailable fallback is the only path that resumes
+  normal bootstrap.
+- **Existing stray household:** current `selectActiveMembership` chooses the oldest membership.
+  Therefore inserting a new caregiver membership alone would leave the dogfooding invitee on the
+  older empty household. Phase 3 must explicitly activate/select the newly accepted household
+  without deleting the orphan.
+- **Offline/error:** there is no offline invite acceptance. Persistence and network failures are
+  explicit retry/error states and never optimistic membership success.
+- **Blast radius:** invite/secret constraints, RLS grants, auth state and routing, active puppy
+  selection, household-invite query-key shape/invalidation, i18n parity/budgets, and existing
+  invite/manage render anatomy.
+- **Better approach:** keep the token-gated bootstrap design, but carry the accepted
+  `household_id` into active-care selection so the pre-existing stray-household edge case meets
+  the same-puppy outcome. Cleanup remains a separate operation.
+
+Owner alignment for this Gate 1 contour is pending.
+
+## Design Fidelity Stage 0 — proposed lock
+
+- **Atlas:** `v2.family.01` (`docs/design/v2/screenshots/06-family.png`), default, 924x540
+  composite family/sharing board.
+- **Spec cards to refresh after owner alignment:**
+  `docs/design/v1/specs/07-1-accept-invite.md` and
+  `docs/design/v1/specs/07-2-manage-household.md`.
+- **Routes:** `/settings/household`, `/invite/[token]`, and neutral `/invite` fallback.
+- **States:** owner default/create-pending/create-error/link-created/copy result; invitee
+  valid/accept-pending/unavailable/already-member/manual-input error; SE compact primary.
+- **Proposed allowed deviations:** caregiver-only; custom-scheme link instead of email; generated
+  link shown only to the owner; manual paste field; neutral create-your-own fallback; no viewer,
+  resend, revoke UI, or member roster expansion.
+- **Primitives:** existing `Screen`, `ScreenHeader`, `Card`, `Stack`, `AppText`, `Button`,
+  `TextField`, `StatusPill`, `ListGroup`, `ListRow`, `Avatar`, `AppIcon`, and `IconButton`.
+- **Stage 4:** implementation agent does not install/run the app per owner instruction. Native
+  screenshot comparison stays explicitly owner-run in the Phase 6 checklist and cannot be
+  self-recorded as PASS.
+
+Stage 0 is proposed, not approved, until the Gate 1 owner response.
 
 ## Non-goals (YAGNI — deferred)
 
@@ -162,15 +297,105 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 
 ## Rollout (implementation phases — for the follow-up plan)
 
-0. Migration + three RPCs + constraint relax + ADR.
-1. RLS/pgTAP tests green.
-2. Contracts + repository + mutations.
-3. Token-gated bootstrap in `auth/context.tsx` + pending-token persistence.
-4. Owner create-link UI + i18n.
-5. Invitee accept UI + manual-paste fallback + i18n.
-6. Device verification on both iPhones (owner creates link → Annie joins → sees same puppy).
+### Preflight
+
+- [x] Read `AGENTS.md`, `CLAUDE.md`, PUP-42, this plan, relevant PRD/DESIGN/architecture/ADRs,
+  the V2 family atlas, existing spec cards, implementation files, and tests.
+- [x] Create the isolated worktree from `main` using Linear's exact branch name.
+- [x] Move PUP-42 to In Progress and record preflight evidence in Linear.
+- [x] Build/query project-graph context and verify surfaced files in source.
+- [ ] Receive owner alignment for the Gate 1 contour and proposed Stage 0 lock.
+- [ ] Receive approval for reduced-assurance lightweight TDD because isolated agent contexts are
+  unavailable.
+- [ ] Receive approval for the exact `expo-clipboard` dependency addition.
+- [ ] Resolve the main-branch QueryClient mutation-GC timer prerequisite so
+  `npm run check` exits green.
+
+### Phase 0 — migration and ADR
+
+- [ ] RED: add focused static migration/ADR guardrail assertions.
+- [ ] GREEN: add the constraint migration and create/accept/revoke RPCs.
+- [ ] Add ADR-0023 and update the ADR index.
+- [ ] Run focused verification and full `npm run check`.
+- [ ] Record evidence/changelog/Linear and commit Phase 0.
+
+### Phase 1 — RLS/pgTAP
+
+- [ ] RED: add owner/non-owner/create/accept/expired/revoked/reused/direct-write/hash-format cases.
+- [ ] GREEN: complete pgTAP fixtures/helpers without weakening existing direct-write denial.
+- [ ] Run static Supabase guardrails; record that remote pgTAP is approval-gated.
+- [ ] Run full `npm run check`, record evidence/changelog/Linear, and commit Phase 1.
+
+### Phase 2 — contracts, repository, and mutations
+
+- [ ] RED: response/error contracts, repository methods, and mutation invalidation.
+- [ ] GREEN: implement create/accept/revoke boundary methods and
+  `['sharing','household-invites']`-rooted invalidation.
+- [ ] Run focused tests and full `npm run check`.
+- [ ] Record evidence/changelog/Linear and commit Phase 2.
+
+### Phase 3 — token-gated bootstrap and active household
+
+- [ ] RED: pending-token persistence/expiry, accept-before-bootstrap, no-token bootstrap,
+  unavailable fallback, genuine-failure sign-out, and accepted-household activation.
+- [ ] GREEN: implement pending intent, auth orchestration, neutral fallback, and post-accept
+  active-household selection.
+- [ ] Run focused tests and full `npm run check`.
+- [ ] Record evidence/changelog/Linear and commit Phase 3.
+
+### Phase 4 — owner create-link UI
+
+- [ ] Refresh `07-2-manage-household.md` from proposed to approved Stage 0.
+- [ ] RED: owner create/loading/error/link/copy anatomy and behavior tests.
+- [ ] GREEN: wire create mutation, link/last4 display, native copy action, and EN/RU/ES copy.
+- [ ] Run focused tests, i18n/design gates, and full `npm run check`.
+- [ ] Record evidence/changelog/Linear and commit Phase 4.
+
+### Phase 5 — invitee accept and manual paste UI
+
+- [ ] Refresh `07-1-accept-invite.md` from proposed to approved Stage 0.
+- [ ] RED: deep-link/manual input, sign-in handoff, accept/unavailable/fallback anatomy and behavior.
+- [ ] GREEN: wire real accept flow, manual paste parser, typed errors, fallback, and EN/RU/ES copy.
+- [ ] Run focused tests, i18n/design gates, and full `npm run check`.
+- [ ] Record evidence/changelog/Linear and commit Phase 5.
+
+### Phase 6 — owner device verification and completion audit
+
+- [ ] Produce a synthetic-data two-device checklist; do not install or run the app.
+- [ ] Run Senior Pass Gate 2, adversarial diff review, privacy/security review, and final full gate.
+- [ ] Record remote/device/Stage-4 items as owner-run and unverified until the owner supplies evidence.
+- [ ] Record final evidence/changelog/Linear and commit Phase 6.
 
 ## Approvals still required (not covered by "do what's best")
 
+- Reduced-assurance lightweight RED/GREEN/REFACTOR for this high-risk auth/RLS slice because
+  isolated agent contexts are unavailable in this task.
+- Adding `expo-clipboard` with `npx expo install expo-clipboard` for native copy-link behavior.
+- Reusing the one-line QueryClient mutation-GC timer fix and focused test currently present as
+  uncommitted PUP-41 work, or waiting until that fix lands on `main`.
+- Gate 1 contour/Stage 0 alignment, including activating the newly accepted household when an
+  older stray empty household exists.
 - Applying the migration to any remote/hosted Supabase project (Release Guardrail).
 - Pushing the branch / opening a PR / merging to main.
+
+## Verification evidence
+
+### 2026-07-24 — preflight baseline
+
+- `npm install`: exit 0; no dependency change in the worktree.
+- `npm run check`: **not green**. Lint completed with 0 errors and 21 pre-existing warnings;
+  typecheck completed; Jest reported 105/105 suites and 1,275/1,275 tests passed, then failed to
+  exit because a QueryClient mutation garbage-collection timer remains alive. The process was
+  terminated after the result and open-handle warning; node/scaffold checks pass when run
+  separately.
+- Root cause confirmed read-only against the current PUP-41 working tree: its uncommitted
+  `src/lib/query/client.ts` change applies the existing test-only `gcTime = Infinity` to mutation
+  defaults, with `src/test/query-client.test.ts` covering both query and mutation defaults.
+- No PUP-42 product tests or implementation started before the required owner decisions.
+
+## Changelog
+
+- **2026-07-24 — preflight:** created the `main`-based Linear branch/worktree, restored the two
+  existing PUP-42 design commits, moved Linear to In Progress, assembled the minimum context
+  package, recorded the task contract/Gate 1 contour/proposed Stage 0 lock, and documented the
+  baseline open-handle blocker plus pending approvals. No behavior code changed.
