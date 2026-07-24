@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Plan type:** Design (brainstorm output; feeds an implementation plan)
-**Current phase:** Preflight / Senior Pass Gate 1 — awaiting owner decisions before behavior work
+**Current phase:** Phase 0 — migration/ADR RED
 **Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
 **Owner:** Dmitry
 **Date:** 2026-07-23
@@ -146,9 +146,9 @@ in a stray empty household.
   `household_id` into active-care selection so the pre-existing stray-household edge case meets
   the same-puppy outcome. Cleanup remains a separate operation.
 
-Owner alignment for this Gate 1 contour is pending.
+Owner aligned with this Gate 1 contour on 2026-07-24.
 
-## Design Fidelity Stage 0 — proposed lock
+## Design Fidelity Stage 0 — approved lock
 
 - **Atlas:** `v2.family.01` (`docs/design/v2/screenshots/06-family.png`), default, 924x540
   composite family/sharing board.
@@ -158,7 +158,7 @@ Owner alignment for this Gate 1 contour is pending.
 - **Routes:** `/settings/household`, `/invite/[token]`, and neutral `/invite` fallback.
 - **States:** owner default/create-pending/create-error/link-created/copy result; invitee
   valid/accept-pending/unavailable/already-member/manual-input error; SE compact primary.
-- **Proposed allowed deviations:** caregiver-only; custom-scheme link instead of email; generated
+- **Allowed deviations:** caregiver-only; custom-scheme link instead of email; generated
   link shown only to the owner; manual paste field; neutral create-your-own fallback; no viewer,
   resend, revoke UI, or member roster expansion.
 - **Primitives:** existing `Screen`, `ScreenHeader`, `Card`, `Stack`, `AppText`, `Button`,
@@ -167,7 +167,7 @@ Owner alignment for this Gate 1 contour is pending.
   screenshot comparison stays explicitly owner-run in the Phase 6 checklist and cannot be
   self-recorded as PASS.
 
-Stage 0 is proposed, not approved, until the Gate 1 owner response.
+Stage 0 was approved with the Gate 1 contour on 2026-07-24.
 
 ## Non-goals (YAGNI — deferred)
 
@@ -304,11 +304,11 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 - [x] Create the isolated worktree from `main` using Linear's exact branch name.
 - [x] Move PUP-42 to In Progress and record preflight evidence in Linear.
 - [x] Build/query project-graph context and verify surfaced files in source.
-- [ ] Receive owner alignment for the Gate 1 contour and proposed Stage 0 lock.
-- [ ] Receive approval for reduced-assurance lightweight TDD because isolated agent contexts are
+- [x] Receive owner alignment for the Gate 1 contour and proposed Stage 0 lock.
+- [x] Receive approval for reduced-assurance lightweight TDD because isolated agent contexts are
   unavailable.
-- [ ] Receive approval for the exact `expo-clipboard` dependency addition.
-- [ ] Resolve the main-branch QueryClient mutation-GC timer prerequisite so
+- [x] Receive approval for the exact `expo-clipboard` dependency addition.
+- [x] Resolve the main-branch QueryClient mutation-GC timer prerequisite so
   `npm run check` exits green.
 
 ### Phase 0 — migration and ADR
@@ -368,15 +368,17 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 
 ## Approvals still required (not covered by "do what's best")
 
-- Reduced-assurance lightweight RED/GREEN/REFACTOR for this high-risk auth/RLS slice because
-  isolated agent contexts are unavailable in this task.
-- Adding `expo-clipboard` with `npx expo install expo-clipboard` for native copy-link behavior.
-- Reusing the one-line QueryClient mutation-GC timer fix and focused test currently present as
-  uncommitted PUP-41 work, or waiting until that fix lands on `main`.
-- Gate 1 contour/Stage 0 alignment, including activating the newly accepted household when an
-  older stray empty household exists.
 - Applying the migration to any remote/hosted Supabase project (Release Guardrail).
 - Pushing the branch / opening a PR / merging to main.
+
+## Approvals granted
+
+- **2026-07-24:** reduced-assurance lightweight RED/GREEN/REFACTOR for this auth/RLS slice because
+  isolated agent contexts are unavailable.
+- **2026-07-24:** add SDK-compatible `expo-clipboard@~55.0.14`.
+- **2026-07-24:** reuse the focused QueryClient mutation-GC timer fix/test as a prerequisite.
+- **2026-07-24:** Gate 1 contour and Stage 0 lock, including activation of the newly accepted
+  household when an older stray empty household exists.
 
 ## Verification evidence
 
@@ -393,9 +395,28 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
   defaults, with `src/test/query-client.test.ts` covering both query and mutation defaults.
 - No PUP-42 product tests or implementation started before the required owner decisions.
 
+### 2026-07-24 — approved baseline prerequisite RED/GREEN
+
+- TDD mode: lightweight; reduced assurance explicitly approved because isolated agent contexts are
+  unavailable.
+- RED: `npm run test:unit -- --runTestsByPath src/test/query-client.test.ts` failed 1/1 because
+  mutation `gcTime` was `undefined`.
+- GREEN: the same command passed 1/1 after applying the existing test-only `gcTime` to mutation
+  defaults.
+- Dependency: `npx expo install expo-clipboard` installed the SDK 55-compatible `~55.0.14`
+  range (resolved to `55.0.15` in the lockfile); npm audit reported 0 vulnerabilities.
+- Full gate: `npm run check` passed with 106 Jest suites / 1,276 tests and 146 Node tests.
+  Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
+  13 pre-existing warnings.
+
 ## Changelog
 
 - **2026-07-24 — preflight:** created the `main`-based Linear branch/worktree, restored the two
   existing PUP-42 design commits, moved Linear to In Progress, assembled the minimum context
   package, recorded the task contract/Gate 1 contour/proposed Stage 0 lock, and documented the
   baseline open-handle blocker plus pending approvals. No behavior code changed.
+- **2026-07-24 — owner alignment:** approved lightweight TDD with reduced assurance,
+  `expo-clipboard@~55.0.14`, the QueryClient timer prerequisite, and the Gate 1/Stage 0 contour.
+- **2026-07-24 — baseline prerequisite:** added test-only mutation-cache GC configuration and its
+  focused regression test, installed the approved clipboard module, and restored a fully green
+  local gate before Phase 0.
