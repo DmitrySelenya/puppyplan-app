@@ -1,8 +1,8 @@
 # Household Invite — Make The Second Family Member Actually Join
 
-**Status:** Active
-**Plan type:** Design (brainstorm output; feeds an implementation plan)
-**Current phase:** Phase 6 — owner checklist and completion audit
+**Status:** Completed
+**Plan type:** Completed task plan
+**Current phase:** Completed locally — owner-run remote/database/device acceptance remains pending
 **Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
 **Owner:** Dmitry
 **Date:** 2026-07-23
@@ -361,10 +361,10 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 
 ### Phase 6 — owner device verification and completion audit
 
-- [ ] Produce a synthetic-data two-device checklist; do not install or run the app.
-- [ ] Run Senior Pass Gate 2, adversarial diff review, privacy/security review, and final full gate.
-- [ ] Record remote/device/Stage-4 items as owner-run and unverified until the owner supplies evidence.
-- [ ] Record final evidence/changelog/Linear and commit Phase 6.
+- [x] Produce a synthetic-data two-device checklist; do not install or run the app.
+- [x] Run Senior Pass Gate 2, adversarial diff review, privacy/security review, and final full gate.
+- [x] Record remote/device/Stage-4 items as owner-run and unverified until the owner supplies evidence.
+- [x] Record final evidence/changelog/Linear and commit Phase 6.
 
 ## Approvals still required (not covered by "do what's best")
 
@@ -518,6 +518,27 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
   Lint reported 0 errors and 21 pre-existing warnings; privacy scan and text hygiene passed;
   Design Doctor reported 0 failures and 13 pre-existing warnings.
 
+### 2026-07-24 — Phase 6 completion audit and owner handoff
+
+- The sequential five-pass deep review is recorded in
+  `docs/reviews/2026-07-24-pup-42-deep-review.md`. It covered RPC/RLS security, token privacy,
+  auth lifecycle, cache behavior, client contracts/tests, platform boundaries, and UI/i18n.
+- Review RED/GREEN fixed a P1 lifecycle gap: `loading + unavailable` now routes from OTP to the
+  neutral `/invite/unavailable` surface instead of remaining on sign-in. The focused auth,
+  navigation, invite-route, and app-shell suites passed 44/44 tests after the fix.
+- Review also replaced raw English live-screen fallback nouns with privacy-safe generic typed
+  copy covered in EN/RU/ES. The focused invite/app-shell command passed 23/23 tests.
+- `npm run supabase:guardrails`: 38/38 local static/typegen tests passed.
+- `node scripts/checks/privacy-scan.mjs`, `git diff --check`, forbidden-ignore scan, and removal
+  scan for the old unavailable-action stub passed.
+- Final `npm run check`: passed with 109 Jest suites / 1,329 tests and 151 Node tests. Lint
+  reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
+  13 pre-existing warnings.
+- The synthetic two-device/native checklist is
+  `docs/dogfood/2026-07-24-pup-42-household-invite-device-checklist.md`. Remote migration apply,
+  database-backed pgTAP, hosted typegen diff, physical devices, accessibility, and native Stage 4
+  were not run and remain owner-run verification gates.
+
 ## Changelog
 
 - **2026-07-24 — preflight:** created the `main`-based Linear branch/worktree, restored the two
@@ -547,3 +568,7 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 - **2026-07-24 — Phase 5:** added exact raw/link parsing, masked manual fallback input, real
   authenticated accept mutation wiring, accepted-household activation, SecureStore-gated OTP
   handoff, neutral unavailable handling, and explicit create-your-own bootstrap fallback.
+- **2026-07-24 — Phase 6:** completed Senior Pass Gate 2 and the five-pass deep review; fixed the
+  post-OTP unavailable-route lifecycle and localized generic privacy-safe invite copy; added the
+  owner two-device/native checklist; passed the final full local gate; and handed the remaining
+  approval-gated remote/device evidence to the owner.

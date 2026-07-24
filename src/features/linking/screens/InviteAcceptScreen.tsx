@@ -85,9 +85,6 @@ export type InviteAcceptScreenProps = Readonly<{
   reviewState?: InviteAcceptReviewState;
 }>;
 
-const defaultOwnerName = 'Owner';
-const defaultPuppyName = 'Puppy';
-
 export type ConnectedInviteAcceptScreenProps = Readonly<{
   initialInviteToken?: string;
   onAccepted: () => void;
@@ -227,15 +224,23 @@ export function InviteAcceptScreen({
   onAccept,
   onContinueWithoutInvite,
   onManualInviteToken,
-  ownerName = defaultOwnerName,
-  puppyName = defaultPuppyName,
+  ownerName,
+  puppyName,
   reviewState,
 }: InviteAcceptScreenProps) {
   const { t } = useAppTranslation();
   const [manualInput, setManualInput] = useState('');
   const [manualInputInvalid, setManualInputInvalid] = useState(false);
   const [manualInputReady, setManualInputReady] = useState(false);
-  const translationOptions = { ownerName, puppyName };
+  const header = ownerName !== undefined && puppyName !== undefined
+    ? t('sharing.family.accepted.header', { ownerName, puppyName })
+    : t('sharing.family.accepted.header-generic');
+  const firstIncludedItem = puppyName !== undefined
+    ? t('sharing.family.accepted.caregiver-included-bullets.0', { puppyName })
+    : t('sharing.family.accepted.caregiver-included-first-generic');
+  const disclosure = ownerName !== undefined
+    ? t('sharing.family.accepted.disclosure', { ownerName })
+    : t('sharing.family.accepted.disclosure-generic');
   const isLoadingInvite = reviewState === 'loading' || acceptPending;
 
   function handleManualInputChange(value: string) {
@@ -265,7 +270,7 @@ export function InviteAcceptScreen({
         <Stack gap="sm">
           <AppIcon color={tokens.color.primary[700]} filled name="personCluster" size={36} />
           <AppText variant="title">
-            {t('sharing.family.accepted.header', translationOptions)}
+            {header}
           </AppText>
           <AppText tone="secondary" variant="headline">
             {t('sharing.family.accepted.role-caregiver')}
@@ -279,7 +284,7 @@ export function InviteAcceptScreen({
               iconColor={tokens.color.primary[700]}
               title={t('sharing.family.accepted.what-included')}>
               <Bullet icon="check" iconColor={tokens.color.primary[700]}>
-                {t('sharing.family.accepted.caregiver-included-bullets.0', { puppyName })}
+                {firstIncludedItem}
               </Bullet>
               <Bullet icon="check" iconColor={tokens.color.primary[700]}>
                 {t('sharing.family.accepted.caregiver-included-bullets.1')}
@@ -309,7 +314,7 @@ export function InviteAcceptScreen({
 
         <Card style={styles.disclosureCard} variant="mutedTemplate">
           <AppText tone="secondary" variant="body">
-            {t('sharing.family.accepted.disclosure', { ownerName })}
+            {disclosure}
           </AppText>
         </Card>
 

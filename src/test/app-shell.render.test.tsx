@@ -210,6 +210,25 @@ describe('app shell screens', () => {
     expect(screen.queryByText(/raw-invite-token-for-test/i)).toBeNull();
   });
 
+  it.each(['en', 'ru', 'es'] as const)(
+    'localizes privacy-safe generic invite copy when metadata is unavailable in %s',
+    async (locale) => {
+      await i18n.changeLanguage(locale);
+
+      renderWithProviders(<InviteAcceptScreen />);
+
+      expect(screen.getByText(i18n.t(
+        'sharing.family.accepted.header-generic',
+      ))).toBeTruthy();
+      expect(screen.getByText(i18n.t(
+        'sharing.family.accepted.caregiver-included-first-generic',
+      ))).toBeTruthy();
+      expect(screen.getByText(i18n.t(
+        'sharing.family.accepted.disclosure-generic',
+      ))).toBeTruthy();
+    },
+  );
+
   it('AC-SHARE-ACCEPT-STATES renders deterministic invite loading, error, expired, and already-member states', () => {
     renderWithProviders(
       <>

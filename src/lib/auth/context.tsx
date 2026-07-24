@@ -14,6 +14,7 @@ import { AppState, type AppStateStatus, type NativeEventSubscription } from 'rea
 import type {
   AuthStatus,
   BootstrapResult,
+  HouseholdInviteStatus,
   SessionUser,
 } from '@/contracts/auth';
 import { uuidSchema, type AcceptInviteResponse } from '@/contracts/supabase';
@@ -37,7 +38,7 @@ export type AuthContextValue = Readonly<{
   activeHouseholdId: string | null;
   completeHouseholdInviteAcceptance: (householdId: string) => Promise<void>;
   continueWithoutHouseholdInvite: () => Promise<void>;
-  householdInviteStatus: 'none' | 'unavailable';
+  householdInviteStatus: HouseholdInviteStatus;
   status: AuthStatus;
   user: SessionUser | null;
   signOut: () => Promise<void>;

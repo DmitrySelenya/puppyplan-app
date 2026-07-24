@@ -1088,6 +1088,7 @@
       },
       "accepted": {
         "header": "{ownerName} is inviting you to help care for {puppyName}",
+        "header-generic": "You are invited to help care for a puppy",
         "role-caregiver": "Your role: Caregiver",
         "role-viewer": "Your role: Viewer",
         "what-included": "What you'll have access to",
@@ -1097,11 +1098,13 @@
           "Log feedings, walks, potty breaks",
           "Create reminders"
         ],
+        "caregiver-included-first-generic": "Today and the puppy's timeline",
         "caregiver-excluded-bullets": [
           "Subscription billing",
           "Owner's private notes"
         ],
         "disclosure": "{ownerName} can close your access at any time.",
+        "disclosure-generic": "The household owner can close your access at any time.",
         "accept": "Accept",
         "decline": "Decline",
         "decline-confirm-title": "Decline this invite?",

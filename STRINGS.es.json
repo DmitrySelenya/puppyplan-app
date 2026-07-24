@@ -1076,6 +1076,7 @@
       },
       "accepted": {
         "header": "{ownerName} te invita a ayudar a cuidar de {puppyName}",
+        "header-generic": "Te invitan a ayudar a cuidar de un cachorro",
         "role-caregiver": "Tu rol: Cuidador",
         "role-viewer": "Tu rol: espectador",
         "what-included": "A qué tendrás acceso",
@@ -1085,11 +1086,13 @@
           "Registrar comidas, paseos y pausas para ir al baño.",
           "Crear recordatorios"
         ],
+        "caregiver-included-first-generic": "Hoy y la cronología del cachorro",
         "caregiver-excluded-bullets": [
           "Facturación de suscripción",
           "Notas privadas del propietario"
         ],
         "disclosure": "{ownerName} puede cerrar tu acceso en cualquier momento.",
+        "disclosure-generic": "El propietario de la familia puede cerrar tu acceso en cualquier momento.",
         "accept": "Aceptar",
         "decline": "Rechazar",
         "decline-confirm-title": "¿Rechazar esta invitación?",

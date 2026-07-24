@@ -39,6 +39,8 @@ export type SessionUser = z.infer<typeof sessionUserSchema>;
 
 export const authStatuses = ['loading', 'signedOut', 'signedIn'] as const;
 export type AuthStatus = (typeof authStatuses)[number];
+export const householdInviteStatuses = ['none', 'unavailable'] as const;
+export type HouseholdInviteStatus = (typeof householdInviteStatuses)[number];
 
 // SECURITY DEFINER bootstrap_current_user(text) returns one row.
 export const bootstrapResultSchema = z
