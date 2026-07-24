@@ -48,6 +48,12 @@ export class HouseholdInviteError extends Error {
   }
 }
 
+export function isHouseholdInviteUnavailableError(
+  error: unknown,
+): error is HouseholdInviteError {
+  return error instanceof HouseholdInviteError;
+}
+
 export function createSupabaseHouseholdAccessRepository(
   client: HouseholdAccessClient = createDefaultHouseholdAccessClient(),
 ): SupabaseHouseholdAccessRepository {

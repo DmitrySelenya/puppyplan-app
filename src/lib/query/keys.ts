@@ -16,7 +16,12 @@ export type QuickLogInvalidationInput = Readonly<{
 
 export const queryKeys = {
   puppy: {
-    active: (userId: string) => ['puppy', 'active', uuidSchema.parse(userId)] as const,
+    active: (userId: string, householdId: string) => [
+      'puppy',
+      'active',
+      uuidSchema.parse(userId),
+      uuidSchema.parse(householdId),
+    ] as const,
     detail: (puppyId: string) => ['puppy', puppyId] as const,
     summary: (householdId: string, puppyId: string) =>
       ['puppy', householdId, puppyId, 'summary'] as const,

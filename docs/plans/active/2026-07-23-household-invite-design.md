@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Plan type:** Design (brainstorm output; feeds an implementation plan)
-**Current phase:** Phase 3 — token-gated bootstrap RED
+**Current phase:** Phase 4 — owner create-link UI RED
 **Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
 **Owner:** Dmitry
 **Date:** 2026-07-23
@@ -336,12 +336,12 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 
 ### Phase 3 — token-gated bootstrap and active household
 
-- [ ] RED: pending-token persistence/expiry, accept-before-bootstrap, no-token bootstrap,
+- [x] RED: pending-token persistence/expiry, accept-before-bootstrap, no-token bootstrap,
   unavailable fallback, genuine-failure sign-out, and accepted-household activation.
-- [ ] GREEN: implement pending intent, auth orchestration, neutral fallback, and post-accept
+- [x] GREEN: implement pending intent, auth orchestration, neutral fallback, and post-accept
   active-household selection.
-- [ ] Run focused tests and full `npm run check`.
-- [ ] Record evidence/changelog/Linear and commit Phase 3.
+- [x] Run focused tests and full `npm run check`.
+- [x] Record evidence/changelog/Linear and commit Phase 3.
 
 ### Phase 4 — owner create-link UI
 
@@ -463,6 +463,26 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
   Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
   13 pre-existing warnings.
 
+### 2026-07-24 — Phase 3 token-gated bootstrap and active household
+
+- RED: six focused suites failed because pending-intent storage/hook, accept-before-bootstrap,
+  neutral unavailable state, explicit fallback, and household-scoped puppy selection did not
+  exist.
+- GREEN: the focused storage/auth/query/repository command passed 29/29 tests; strict TypeScript
+  and the privacy scan passed.
+- The deep-link hook validates and persists the 256-bit token in SecureStore before auth. Local
+  expiry and typed server rejection replace it with a durable token-free unavailable marker;
+  only the explicit fallback clears that marker and resumes normal bootstrap.
+- Successful acceptance skips bootstrap, clears the pending intent, and carries the accepted
+  `household_id` into the auth context and active-puppy query key. Membership selection is now
+  scoped to that exact household instead of the oldest membership, covering the pre-existing
+  stray-household edge case without deleting data.
+- Unclassified persistence/accept/bootstrap failures retain catch→signOut and report scrubbed
+  auth operation context; cleanup failures are also reported rather than swallowed.
+- Full gate: `npm run check` passed with 108 Jest suites / 1,306 tests and 151 Node tests.
+  Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
+  13 pre-existing warnings.
+
 ## Changelog
 
 - **2026-07-24 — preflight:** created the `main`-based Linear branch/worktree, restored the two
@@ -483,3 +503,6 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 - **2026-07-24 — Phase 2:** added strict create/accept/revoke RPC contracts, generated function
   signatures, typed invite lifecycle errors, shared-client repository methods, and TanStack
   mutations that invalidate the privacy-safe `['sharing','household-invites']` root.
+- **2026-07-24 — Phase 3:** added SecureStore-backed pending intent with local expiry, auth
+  accept-before-bootstrap orchestration, durable neutral fallback, contextual error reporting,
+  and accepted-household-scoped active puppy selection.

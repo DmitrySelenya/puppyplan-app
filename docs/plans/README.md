@@ -14,7 +14,7 @@ Every file in `active/` must have a row in the Current Plans table below (enforc
 
 | Status | Plan | Linear | Current phase / next action |
 | --- | --- | --- | --- |
-| Active task plan | [Household Invite — Make The Second Family Member Actually Join](active/2026-07-23-household-invite-design.md) | `PUP-42` | Phase 3 — token-gated bootstrap RED |
+| Active task plan | [Household Invite — Make The Second Family Member Actually Join](active/2026-07-23-household-invite-design.md) | `PUP-42` | Phase 4 — owner create-link UI RED |
 | Active task plan | [Diary — Take A Routine Mark Back Off](active/2026-07-15-diary-uncheck-routine.md) | `PUP-33` | Phase 1 complete; check → uncheck → re-check verified on the SE against a burned slot |
 | Active task plan | [Diary Telegram Parity — Make Real Logging Faster Than The Chat](active/2026-07-13-diary-telegram-parity.md) | `PUP-33` | Phase 0 — scoped duplicate fix implemented locally; owner-device legacy discard + fresh check-off and 20+ event verification remain |
 | Active task plan | [Dogfood Device Handoff — From Green Simulator To Two Household iPhones](active/2026-07-12-dogfood-device-handoff.md) | `PUP-32`, `PUP-30` physical acceptance | Phase 3 complete; awaiting owner two-iPhone install and open 8-item physical checklist in Phase 4 |
