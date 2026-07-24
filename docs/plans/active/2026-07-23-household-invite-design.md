@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Plan type:** Design (brainstorm output; feeds an implementation plan)
-**Linear:** TBD — needs its own `PUP-___` issue (feature is distinct from PUP-38)
+**Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
 **Owner:** Dmitry
 **Date:** 2026-07-23
 
