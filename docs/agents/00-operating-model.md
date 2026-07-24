@@ -37,6 +37,16 @@ For solo development, the final reviewer is the user. Agent self-review is usefu
 10. For any UI, screen, design-system, visual-state, or navigation-surface work, complete the Design Fidelity Gate before treating the batch as done or starting the next roadmap batch.
 11. Put verification evidence in the PR and Linear issue. Move the issue to `In Review` only when the work is ready for review.
 
+## Verification Verdict
+
+Every verification claim ends with one explicit verdict, per claim (for example per acceptance criterion), never an unlabelled "looks fine":
+
+- **VERIFIED** — checked with fresh evidence captured the same way for the baseline and the change (command output, native screenshot vs atlas, RLS test, reproduction). Link or paste the evidence.
+- **NOT VERIFIED** — evidence shows the claim is false or the change regressed. State exactly what failed.
+- **INCONCLUSIVE** — verification could not run or the signal is ambiguous (missing/unauthorized tooling, flaky, shallow-green). Say why and what would resolve it.
+
+`INCONCLUSIVE` is a valid, expected outcome and must never be silently rounded up to `VERIFIED`. This vocabulary is agent-neutral: it applies to any reviewer or tool (Claude Code, Codex, CI, or a human), so verification status reads the same across them.
+
 ## Design Fidelity Gate
 
 This gate is mandatory for every batch that creates, changes, or claims completion for UI surfaces. Passing functional tests is not enough.
