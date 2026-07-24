@@ -1,5 +1,7 @@
 import {
+  acceptInviteResponseSchema,
   activePuppyProfileSchema,
+  createInviteResponseSchema,
   createInviteRequestSchema,
   createShareLinkRequestSchema,
   dateSchema,
@@ -12,6 +14,7 @@ import {
   puppyQuickTrackerIds,
   puppyQuickTrackerIdsSchema,
   puppyProfileSchema,
+  revokeInviteResponseSchema,
   shareScopeRecordSchema,
   shareScopes,
   supabaseMvpTableNames,
@@ -49,6 +52,53 @@ describe('Supabase contract vocabulary', () => {
       'health_summary',
       'puppy_profile',
     ]);
+  });
+});
+
+describe('household invite RPC contracts', () => {
+  it('AC-PUP42-CLIENT-1 accepts the one-time token create response', () => {
+    expect(createInviteResponseSchema.parse({
+      token: 'a'.repeat(64),
+      expires_at: '2026-07-31T12:00:00.000Z',
+    })).toEqual({
+      token: 'a'.repeat(64),
+      expires_at: '2026-07-31T12:00:00.000Z',
+    });
+  });
+
+  it('AC-PUP42-CLIENT-1 rejects malformed or non-lowercase invite tokens', () => {
+    expect(createInviteResponseSchema.safeParse({
+      token: 'A'.repeat(64),
+      expires_at: '2026-07-31T12:00:00.000Z',
+    }).success).toBe(false);
+    expect(createInviteResponseSchema.safeParse({
+      token: 'a'.repeat(63),
+      expires_at: '2026-07-31T12:00:00.000Z',
+    }).success).toBe(false);
+  });
+
+  it('AC-PUP42-CLIENT-1 accepts only caregiver/viewer invite acceptance roles', () => {
+    expect(acceptInviteResponseSchema.parse({
+      household_id: uuidA,
+      role: 'caregiver',
+    })).toEqual({
+      household_id: uuidA,
+      role: 'caregiver',
+    });
+    expect(acceptInviteResponseSchema.safeParse({
+      household_id: uuidA,
+      role: 'owner',
+    }).success).toBe(false);
+  });
+
+  it('AC-PUP42-CLIENT-1 keeps revoke results boolean and all responses strict', () => {
+    expect(revokeInviteResponseSchema.parse(true)).toBe(true);
+    expect(revokeInviteResponseSchema.safeParse('true').success).toBe(false);
+    expect(createInviteResponseSchema.safeParse({
+      token: 'a'.repeat(64),
+      expires_at: '2026-07-31T12:00:00.000Z',
+      token_hash: 'must-not-cross-client-boundary',
+    }).success).toBe(false);
   });
 });
 

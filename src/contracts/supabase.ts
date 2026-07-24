@@ -104,6 +104,8 @@ export const nonEmptyStringSchema = z.string().trim().min(1);
 export const boundedPayloadStringSchema = z.string().trim().min(1).max(64);
 export const hashSchema = z.string().regex(/^sha256:[A-Za-z0-9._:-]+$/);
 export const tokenLast4Schema = z.string().regex(/^[A-Za-z0-9_-]{4}$/);
+export const householdInviteTokenSchema = z.string().regex(/^[0-9a-f]{64}$/);
+export const householdInviteRpcErrorCodeSchema = z.enum(['P4201', 'P4202', 'P4203']);
 export const payloadVersionSchema = z.union([z.literal(1), z.literal(2)]);
 export const positiveVersionSchema = z.number().int().positive();
 
@@ -422,6 +424,18 @@ export const createInviteRequestSchema = z.object({
   expires_at: timestampSchema,
 }).strict();
 
+export const createInviteResponseSchema = z.object({
+  ['token']: householdInviteTokenSchema,
+  expires_at: timestampSchema,
+}).strict();
+
+export const acceptInviteResponseSchema = z.object({
+  household_id: uuidSchema,
+  role: inviteRoleSchema,
+}).strict();
+
+export const revokeInviteResponseSchema = z.boolean();
+
 export const routineSummaryShareScopeInputSchema = z.object({
   scope: z.literal('routine_summary'),
 }).strict();
@@ -627,6 +641,9 @@ export type EventLogInsert = z.infer<typeof eventLogInsertSchema>;
 export type MinimalQuickLogQueueItem = z.infer<typeof minimalQuickLogQueueItemSchema>;
 export type InviteRecord = z.infer<typeof inviteRecordSchema>;
 export type CreateInviteRequest = z.infer<typeof createInviteRequestSchema>;
+export type CreateInviteResponse = z.infer<typeof createInviteResponseSchema>;
+export type AcceptInviteResponse = z.infer<typeof acceptInviteResponseSchema>;
+export type HouseholdInviteRpcErrorCode = z.infer<typeof householdInviteRpcErrorCodeSchema>;
 export type CreateShareLinkRequest = z.infer<typeof createShareLinkRequestSchema>;
 export type ShareScopeInput = z.infer<typeof shareScopeInputSchema>;
 export type PuppyProfile = z.infer<typeof puppyProfileSchema>;

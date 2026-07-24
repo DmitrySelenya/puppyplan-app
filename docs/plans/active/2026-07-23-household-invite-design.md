@@ -2,7 +2,7 @@
 
 **Status:** Active
 **Plan type:** Design (brainstorm output; feeds an implementation plan)
-**Current phase:** Phase 2 — contracts/repository/mutations RED
+**Current phase:** Phase 3 — token-gated bootstrap RED
 **Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
 **Owner:** Dmitry
 **Date:** 2026-07-23
@@ -328,11 +328,11 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 
 ### Phase 2 — contracts, repository, and mutations
 
-- [ ] RED: response/error contracts, repository methods, and mutation invalidation.
-- [ ] GREEN: implement create/accept/revoke boundary methods and
+- [x] RED: response/error contracts, repository methods, and mutation invalidation.
+- [x] GREEN: implement create/accept/revoke boundary methods and
   `['sharing','household-invites']`-rooted invalidation.
-- [ ] Run focused tests and full `npm run check`.
-- [ ] Record evidence/changelog/Linear and commit Phase 2.
+- [x] Run focused tests and full `npm run check`.
+- [x] Record evidence/changelog/Linear and commit Phase 2.
 
 ### Phase 3 — token-gated bootstrap and active household
 
@@ -445,6 +445,24 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
   Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
   13 pre-existing warnings.
 
+### 2026-07-24 — Phase 2 contracts, repository, and mutations
+
+- RED: the three focused suites failed 18 new assertions because invite RPC response contracts,
+  typed acceptance errors, repository writes, rooted query keys, and mutation invalidation did
+  not exist.
+- GREEN: `npm run test:unit -- --runTestsByPath src/test/supabase-contracts.test.ts
+  src/test/household-access-repository.test.ts src/test/household-access-query.test.ts` passed
+  51/51 tests; `npm run typecheck` passed.
+- The generated database artifact was synchronized locally with the three Phase 0 RPC signatures;
+  hosted type generation remains approval-gated until the migration is applied to an approved
+  non-production project.
+- Privacy review: the one-time plaintext token is validated at the repository boundary, never put
+  in a query key or log, and never accepted as an RPC response field alongside a secret hash.
+  `privacy-scan` passes without a rule exemption.
+- Full gate: `npm run check` passed with 106 Jest suites / 1,293 tests and 151 Node tests.
+  Lint reported 0 errors and 21 pre-existing warnings; Design Doctor reported 0 failures and
+  13 pre-existing warnings.
+
 ## Changelog
 
 - **2026-07-24 — preflight:** created the `main`-based Linear branch/worktree, restored the two
@@ -462,3 +480,6 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
 - **2026-07-24 — Phase 1:** expanded the pgTAP contract from 126 to 139 assertions for invite RPC
   authorization, lifecycle, membership, idempotency, direct-write denial, and both accepted secret
   hash formats; hosted execution remains explicitly unverified.
+- **2026-07-24 — Phase 2:** added strict create/accept/revoke RPC contracts, generated function
+  signatures, typed invite lifecycle errors, shared-client repository methods, and TanStack
+  mutations that invalidate the privacy-safe `['sharing','household-invites']` root.
