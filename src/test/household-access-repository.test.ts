@@ -83,12 +83,19 @@ describe('Supabase household access repository', () => {
     },
   );
 
-  it('AC-PUP42-CLIENT-2 accepts through the RPC boundary and parses the membership', async () => {
+  it.each([
+    ['owner', 'already_member'],
+    ['caregiver', 'accepted'],
+    ['viewer', 'already_member'],
+  ] as const)(
+    'AC-F4: accepts through the RPC boundary and preserves %s / %s',
+    async (role, outcome) => {
     const client = createClient();
     client.acceptInvite.mockResolvedValue({
       data: [{
         household_id: householdId,
-        role: 'caregiver',
+        role,
+        outcome,
       }],
       error: null,
     });
@@ -96,9 +103,27 @@ describe('Supabase household access repository', () => {
 
     await expect(repository.acceptInvite({ token: 'b'.repeat(64) })).resolves.toEqual({
       household_id: householdId,
-      role: 'caregiver',
+      role,
+      outcome,
     });
     expect(client.acceptInvite).toHaveBeenCalledWith({ token: 'b'.repeat(64) });
+    },
+  );
+
+  it('ERR-F3: surfaces an unknown acceptance outcome at the repository boundary', async () => {
+    const client = createClient();
+    client.acceptInvite.mockResolvedValue({
+      data: [{
+        household_id: householdId,
+        role: 'caregiver',
+        outcome: 'replaced_membership',
+      }],
+      error: null,
+    });
+    const repository = createSupabaseHouseholdAccessRepository(client);
+
+    await expect(repository.acceptInvite({ token: 'b'.repeat(64) }))
+      .rejects.toThrow('household_invite_accept_failed');
   });
 
   it('AC-PUP42-CLIENT-3 rejects malformed tokens as typed invalid errors before RPC', async () => {

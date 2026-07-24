@@ -4,6 +4,7 @@ export type { Database } from './database.types';
 
 export const householdMembershipRoles = ['owner', 'caregiver', 'viewer'] as const;
 export const inviteRoles = ['caregiver', 'viewer'] as const;
+export const householdInviteAcceptanceOutcomes = ['accepted', 'already_member'] as const;
 export const shareRoles = ['trainer_viewer'] as const;
 export const shareScopes = [
   'routine_summary',
@@ -117,6 +118,8 @@ export const positiveVersionSchema = z.number().int().positive();
 
 export const householdMembershipRoleSchema = z.enum(householdMembershipRoles);
 export const inviteRoleSchema = z.enum(inviteRoles);
+export const householdInviteAcceptanceOutcomeSchema =
+  z.enum(householdInviteAcceptanceOutcomes);
 export const shareRoleSchema = z.enum(shareRoles);
 export const shareScopeSchema = z.enum(shareScopes);
 export const eventTypeSchema = z.enum(eventTypes);
@@ -437,7 +440,8 @@ export const createInviteResponseSchema = z.object({
 
 export const acceptInviteResponseSchema = z.object({
   household_id: uuidSchema,
-  role: inviteRoleSchema,
+  role: householdMembershipRoleSchema,
+  outcome: householdInviteAcceptanceOutcomeSchema,
 }).strict();
 
 export const revokeInviteResponseSchema = z.boolean();
@@ -636,6 +640,8 @@ export const minimalQuickLogQueueItemSchema = z.object({
 
 export type HouseholdMembershipRole = z.infer<typeof householdMembershipRoleSchema>;
 export type InviteRole = z.infer<typeof inviteRoleSchema>;
+export type HouseholdInviteAcceptanceOutcome =
+  z.infer<typeof householdInviteAcceptanceOutcomeSchema>;
 export type ShareRole = z.infer<typeof shareRoleSchema>;
 export type ShareScope = z.infer<typeof shareScopeSchema>;
 export type EventType = z.infer<typeof eventTypeSchema>;

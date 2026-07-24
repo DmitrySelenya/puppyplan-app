@@ -572,3 +572,8 @@ CSPRNG tokens. Cross-link ADR-0017 (bootstrap) and the share-RPC ADR.
   post-OTP unavailable-route lifecycle and localized generic privacy-safe invite copy; added the
   owner two-device/native checklist; passed the final full local gate; and handed the remaining
   approval-gated remote/device evidence to the owner.
+- **2026-07-24 — native follow-up:** the first distinct-account acceptance reached the owner's
+  populated household, but a later cold Release launch exposed that `bootstrap_current_user`
+  still treated only owner membership as initialized and created a stray empty household for a
+  caregiver. The active follow-up plan now owns a separate membership-aware bootstrap migration,
+  pgTAP coverage, honest caregiver household UI, and repeated cold-launch verification.

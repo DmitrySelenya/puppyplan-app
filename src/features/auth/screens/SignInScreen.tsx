@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { emailSchema, otpCodeSchema } from '@/contracts/auth';
+import { OtpRequestError } from '@/lib/auth';
 import { AppText } from '@/design/primitives/AppText';
 import { Button } from '@/design/primitives/Button';
 import { Screen } from '@/design/primitives/Screen';
@@ -16,6 +17,7 @@ type AuthErrorKey =
   | 'auth.errors.invalid-code'
   | 'auth.errors.invalid-email'
   | 'auth.errors.debug-sign-in-failed'
+  | 'auth.errors.rate-limited'
   | 'auth.errors.request-failed'
   | 'auth.errors.verify-failed';
 
@@ -50,8 +52,12 @@ export function SignInScreenView({ actions }: SignInScreenViewProps) {
       await actions.requestCode(parsed.data);
       flow.goToCode(parsed.data);
       setCodeInput('');
-    } catch {
-      setErrorKey('auth.errors.request-failed');
+    } catch (error) {
+      setErrorKey(
+        error instanceof OtpRequestError && error.reason === 'rate_limited'
+          ? 'auth.errors.rate-limited'
+          : 'auth.errors.request-failed',
+      );
     }
   };
 
@@ -85,6 +91,7 @@ export function SignInScreenView({ actions }: SignInScreenViewProps) {
   const emailErrorText =
     errorKey === 'auth.errors.invalid-email' ||
     errorKey === 'auth.errors.request-failed' ||
+    errorKey === 'auth.errors.rate-limited' ||
     errorKey === 'auth.errors.debug-sign-in-failed'
     ? t(errorKey)
     : undefined;

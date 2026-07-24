@@ -40,6 +40,7 @@ function makeDeps(overrides: Partial<AuthProviderDependencies> = {}) {
     bootstrap: jest.fn(async () => ({ household_id: 'h', created: true })),
     acceptInvite: jest.fn(async () => ({
       household_id: '00000000-0000-4000-8000-000000000202',
+      outcome: 'accepted' as const,
       role: 'caregiver' as const,
     })),
     clearPendingInvite: jest.fn(async () => undefined),
@@ -112,10 +113,44 @@ describe('AuthProvider', () => {
     expect(bootstrap).toHaveBeenCalledTimes(1);
   });
 
+  it('AC-F14 coalesces restored-session and auth-event resolution for the same user', async () => {
+    const householdId = '00000000-0000-4000-8000-000000000201';
+    let resolveBootstrap: (value: { household_id: string; created: boolean }) => void = () => {};
+    const bootstrapResult = new Promise<{ household_id: string; created: boolean }>((resolve) => {
+      resolveBootstrap = resolve;
+    });
+    const bootstrap = jest.fn(() => bootstrapResult);
+    const { deps, emit } = makeDeps({
+      bootstrap,
+      getCurrentUser: jest.fn(async () => user),
+    });
+
+    renderProvider(deps);
+    await flushAuthEffects();
+    await waitFor(() => expect(bootstrap).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      emit(user);
+      await Promise.resolve();
+    });
+
+    expect(bootstrap).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveBootstrap({ household_id: householdId, created: false });
+      await bootstrapResult;
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(`signedIn:${userId}:${householdId}:none`)).toBeTruthy();
+    });
+  });
+
   it('AC-PUP42-AUTH-2 accepts a pending invite before auth bootstrap and activates its household', async () => {
     const invitedHouseholdId = '00000000-0000-4000-8000-000000000202';
     const acceptInvite = jest.fn(async () => ({
       household_id: invitedHouseholdId,
+      outcome: 'accepted' as const,
       role: 'caregiver' as const,
     }));
     const bootstrap = jest.fn(async () => ({
@@ -142,6 +177,37 @@ describe('AuthProvider', () => {
     });
     expect(acceptInvite).toHaveBeenCalledWith({ token: 'b'.repeat(64) });
     expect(clearPendingInvite).toHaveBeenCalledTimes(1);
+    expect(bootstrap).not.toHaveBeenCalled();
+  });
+
+  it('AC-F4: keeps an already-member owner in the accepted household without bootstrap', async () => {
+    const existingHouseholdId = '00000000-0000-4000-8000-000000000202';
+    const acceptInvite = jest.fn(async () => ({
+      household_id: existingHouseholdId,
+      outcome: 'already_member' as const,
+      role: 'owner' as const,
+    }));
+    const bootstrap = jest.fn(async () => ({
+      household_id: '00000000-0000-4000-8000-000000000203',
+      created: true,
+    }));
+    const { deps } = makeDeps({
+      acceptInvite,
+      bootstrap,
+      getCurrentUser: jest.fn(async () => user),
+      readPendingInvite: jest.fn(async () => ({
+        status: 'pending' as const,
+        inviteToken: 'd'.repeat(64),
+      })),
+    });
+
+    renderProvider(deps);
+    await flushAuthEffects();
+
+    await waitFor(() => {
+      expect(screen.getByText(`signedIn:${userId}:${existingHouseholdId}:none`)).toBeTruthy();
+    });
+    expect(acceptInvite).toHaveBeenCalledWith({ token: 'd'.repeat(64) });
     expect(bootstrap).not.toHaveBeenCalled();
   });
 

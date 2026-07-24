@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 
 import {
   pendingHouseholdInviteRecordSchema,
+  type PendingHouseholdInviteRecord,
 } from '@/contracts/auth';
 import { householdInviteTokenSchema } from '@/contracts/supabase';
 import {
@@ -9,7 +10,8 @@ import {
   type ObservabilityReporter,
 } from '@/lib/observability';
 
-const pendingHouseholdInviteKey = 'puppyplan:pending-household-intent:v1';
+// Expo SecureStore rejects keys containing characters outside [A-Za-z0-9._-].
+const pendingHouseholdInviteKey = 'puppyplan.pending-household-intent.v1';
 const pendingHouseholdInviteTtlMs = 7 * 24 * 60 * 60 * 1000;
 
 export type PendingHouseholdInviteStore = Readonly<{
@@ -55,6 +57,17 @@ export function createPendingHouseholdInviteController(
     throw error;
   };
 
+  const writeUnavailableMarker = async (): Promise<void> => {
+    try {
+      await store.setItem(
+        pendingHouseholdInviteKey,
+        JSON.stringify({ state: 'unavailable' }),
+      );
+    } catch (error) {
+      reportAndRethrow(error, 'write');
+    }
+  };
+
   return {
     clear: async () => {
       try {
@@ -64,14 +77,7 @@ export function createPendingHouseholdInviteController(
       }
     },
     markUnavailable: async () => {
-      try {
-        await store.setItem(
-          pendingHouseholdInviteKey,
-          JSON.stringify({ state: 'unavailable' }),
-        );
-      } catch (error) {
-        reportAndRethrow(error, 'write');
-      }
+      await writeUnavailableMarker();
     },
     persist: async (inviteToken) => {
       const parsedInviteToken = householdInviteTokenSchema.parse(inviteToken);
@@ -91,34 +97,51 @@ export function createPendingHouseholdInviteController(
       }
     },
     read: async () => {
+      let storedValue: string | null;
+
       try {
-        const storedValue = await store.getItem(pendingHouseholdInviteKey);
-
-        if (storedValue === null) {
-          return { status: 'none' };
-        }
-
-        const record = pendingHouseholdInviteRecordSchema.parse(JSON.parse(storedValue));
-
-        if (record.state === 'unavailable') {
-          return { status: 'unavailable' };
-        }
-
-        if (new Date(record.expiresAt).getTime() <= now().getTime()) {
-          await store.setItem(
-            pendingHouseholdInviteKey,
-            JSON.stringify({ state: 'unavailable' }),
-          );
-          return { status: 'unavailable' };
-        }
-
-        return {
-          status: 'pending',
-          inviteToken: record.inviteToken,
-        };
+        storedValue = await store.getItem(pendingHouseholdInviteKey);
       } catch (error) {
         return reportAndRethrow(error, 'read');
       }
+
+      if (storedValue === null) {
+        return { status: 'none' };
+      }
+
+      let record: PendingHouseholdInviteRecord;
+
+      try {
+        record = pendingHouseholdInviteRecordSchema.parse(JSON.parse(storedValue));
+      } catch {
+        observability.captureException(
+          new Error('pending_household_intent_invalid_record'),
+          {
+            area: 'auth',
+            operation: 'pending_household_intent_read',
+            tags: {
+              reason: 'invalid-record',
+              storage: 'secure-store',
+            },
+          },
+        );
+        await writeUnavailableMarker();
+        return { status: 'unavailable' };
+      }
+
+      if (record.state === 'unavailable') {
+        return { status: 'unavailable' };
+      }
+
+      if (new Date(record.expiresAt).getTime() <= now().getTime()) {
+        await writeUnavailableMarker();
+        return { status: 'unavailable' };
+      }
+
+      return {
+        status: 'pending',
+        inviteToken: record.inviteToken,
+      };
     },
   };
 }

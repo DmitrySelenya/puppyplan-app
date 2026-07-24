@@ -259,12 +259,16 @@ function getQuickLogDetailsStatus(input: Readonly<{
     return 'pending-write';
   }
 
+  if (input.activeCare.careContext?.householdRole === 'viewer') {
+    return 'permission-denied';
+  }
+
   if (
     input.activeCare.status === 'empty'
     || input.quickLogMutationStatus === 'unavailable'
-    || input.activeCare.careContext?.householdRole === 'viewer'
+    || input.activeCare.careContext === null
   ) {
-    return 'permission-denied';
+    return 'error';
   }
 
   return 'ready';

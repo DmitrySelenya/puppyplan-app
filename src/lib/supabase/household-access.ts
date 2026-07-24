@@ -78,7 +78,13 @@ export function createSupabaseHouseholdAccessRepository(
         throw new Error('household_invite_accept_failed');
       }
 
-      return acceptInviteResponseSchema.parse(unwrapRpcRow(response.data));
+      const acceptedInvite = acceptInviteResponseSchema.safeParse(unwrapRpcRow(response.data));
+
+      if (!acceptedInvite.success) {
+        throw new Error('household_invite_accept_failed');
+      }
+
+      return acceptedInvite.data;
     },
     createInvite: async () => {
       const response = await client.createInvite({});

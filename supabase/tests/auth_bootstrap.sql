@@ -3,7 +3,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(9);
+SELECT plan(16);
 
 CREATE SCHEMA IF NOT EXISTS tests;
 
@@ -49,7 +49,9 @@ GRANT SELECT, INSERT ON tests.bootstrap_seen_households TO authenticated;
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES
   ('00000000-0000-4000-8000-0000000a0001', 'authenticated', 'authenticated', 'bootstrap-a@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
-  ('00000000-0000-4000-8000-0000000a0002', 'authenticated', 'authenticated', 'bootstrap-b@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now());
+  ('00000000-0000-4000-8000-0000000a0002', 'authenticated', 'authenticated', 'bootstrap-b@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
+  ('00000000-0000-4000-8000-0000000a0003', 'authenticated', 'authenticated', 'bootstrap-c@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now()),
+  ('00000000-0000-4000-8000-0000000a0004', 'authenticated', 'authenticated', 'bootstrap-d@example.test', now(), '{}'::jsonb, '{}'::jsonb, now(), now());
 
 -- Function shape: SECURITY DEFINER with a pinned empty search_path.
 SELECT results_eq(
@@ -59,6 +61,21 @@ SELECT results_eq(
       AND 'search_path=""' = ANY(coalesce(p.proconfig, ARRAY[]::text[]))$$,
   ARRAY[1],
   'bootstrap_current_user is SECURITY DEFINER with a pinned empty search_path'
+);
+
+SELECT ok(
+  position(
+    'pg_advisory_xact_lock' IN
+    pg_get_functiondef('public.bootstrap_current_user(text)'::regprocedure)
+  ) > 0
+  AND position(
+    'pg_advisory_xact_lock' IN
+    pg_get_functiondef('public.bootstrap_current_user(text)'::regprocedure)
+  ) < position(
+    'SELECT hm.household_id' IN
+    pg_get_functiondef('public.bootstrap_current_user(text)'::regprocedure)
+  ),
+  'bootstrap serializes each user before resolving membership'
 );
 
 -- First call creates a household + owner membership.
@@ -91,6 +108,31 @@ SELECT 'user_a', household_id
 FROM public.household_membership
 WHERE user_id = '00000000-0000-4000-8000-0000000a0001'
 LIMIT 1;
+
+INSERT INTO public.puppy (id, household_id, name, age_weeks_estimate)
+SELECT
+  '00000000-0000-4000-8000-0000000a0101',
+  household_id,
+  'Synthetic puppy',
+  12
+FROM tests.bootstrap_seen_households
+WHERE user_label = 'user_a';
+
+INSERT INTO public.household_membership (
+  household_id,
+  user_id,
+  role,
+  invited_by,
+  accepted_at
+)
+SELECT
+  household_id,
+  '00000000-0000-4000-8000-0000000a0003',
+  'caregiver',
+  '00000000-0000-4000-8000-0000000a0001',
+  now()
+FROM tests.bootstrap_seen_households
+WHERE user_label = 'user_a';
 
 SELECT tests.as_auth('00000000-0000-4000-8000-0000000a0001');
 
@@ -130,6 +172,69 @@ SELECT results_eq(
     WHERE user_id = '00000000-0000-4000-8000-0000000a0002' AND role = 'owner'$$,
   ARRAY[1],
   'second user has exactly one owner membership'
+);
+
+-- An invitee's accepted caregiver membership is a valid bootstrap target.
+SELECT tests.as_auth('00000000-0000-4000-8000-0000000a0003');
+SELECT is(
+  (SELECT created FROM public.bootstrap_current_user(NULL)),
+  false,
+  'caregiver bootstrap reuses an accepted household'
+);
+
+SELECT is(
+  (SELECT household_id FROM public.bootstrap_current_user(NULL)),
+  (SELECT household_id FROM tests.bootstrap_seen_households WHERE user_label = 'user_a'),
+  'caregiver bootstrap returns the shared household'
+);
+
+SELECT results_eq(
+  $$SELECT count(*)::int FROM public.household_membership
+    WHERE user_id = '00000000-0000-4000-8000-0000000a0003' AND role = 'owner'$$,
+  ARRAY[0],
+  'caregiver bootstrap does not create a stray owner membership'
+);
+
+-- Recover deterministically when an older empty owner household already exists.
+SELECT tests.as_auth('00000000-0000-4000-8000-0000000a0004');
+SELECT public.bootstrap_current_user(NULL);
+
+SELECT tests.as_postgres();
+INSERT INTO public.household_membership (
+  household_id,
+  user_id,
+  role,
+  invited_by,
+  accepted_at
+)
+SELECT
+  household_id,
+  '00000000-0000-4000-8000-0000000a0004',
+  'caregiver',
+  '00000000-0000-4000-8000-0000000a0001',
+  now()
+FROM tests.bootstrap_seen_households
+WHERE user_label = 'user_a';
+
+SELECT tests.as_auth('00000000-0000-4000-8000-0000000a0004');
+SELECT is(
+  (SELECT created FROM public.bootstrap_current_user(NULL)),
+  false,
+  'bootstrap with an older empty household does not create another household'
+);
+
+SELECT is(
+  (SELECT household_id FROM public.bootstrap_current_user(NULL)),
+  (SELECT household_id FROM tests.bootstrap_seen_households WHERE user_label = 'user_a'),
+  'bootstrap prefers the accepted household that has an active puppy'
+);
+
+SELECT results_eq(
+  $$SELECT count(*)::int FROM public.household_membership
+    WHERE user_id = '00000000-0000-4000-8000-0000000a0004'
+      AND accepted_at IS NOT NULL AND revoked_at IS NULL$$,
+  ARRAY[2],
+  'bootstrap leaves existing memberships unchanged'
 );
 
 -- Anonymous SQL role lacks EXECUTE on the function.

@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(139);
+SELECT plan(144);
 
 CREATE SCHEMA IF NOT EXISTS tests;
 
@@ -2371,6 +2371,54 @@ VALUES
     NULL,
     NULL,
     '00000000-0000-4000-8000-000000000101'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000709',
+    '00000000-0000-4000-8000-000000000201',
+    '1111',
+    'caregiver',
+    now() + interval '7 days',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '00000000-0000-4000-8000-000000000101'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000710',
+    '00000000-0000-4000-8000-000000000201',
+    '2222',
+    'caregiver',
+    now() + interval '7 days',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '00000000-0000-4000-8000-000000000101'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000711',
+    '00000000-0000-4000-8000-000000000201',
+    '3333',
+    'caregiver',
+    now() + interval '7 days',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    '00000000-0000-4000-8000-000000000101'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000712',
+    '00000000-0000-4000-8000-000000000201',
+    '4444',
+    'caregiver',
+    now() + interval '7 days',
+    now(),
+    '00000000-0000-4000-8000-000000000105',
+    NULL,
+    NULL,
+    '00000000-0000-4000-8000-000000000101'
   );
 
 INSERT INTO app_private.invite_secret (
@@ -2398,6 +2446,26 @@ VALUES
     '00000000-0000-4000-8000-000000000706',
     'sha256:' || encode(extensions.digest(repeat('d', 64), 'sha256'), 'hex'),
     'dddd'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000709',
+    'sha256:' || encode(extensions.digest(repeat('1', 64), 'sha256'), 'hex'),
+    '1111'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000710',
+    'sha256:' || encode(extensions.digest(repeat('2', 64), 'sha256'), 'hex'),
+    '2222'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000711',
+    'sha256:' || encode(extensions.digest(repeat('3', 64), 'sha256'), 'hex'),
+    '3333'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000712',
+    'sha256:' || encode(extensions.digest(repeat('4', 64), 'sha256'), 'hex'),
+    '4444'
   );
 
 SELECT lives_ok(
@@ -2427,6 +2495,57 @@ VALUES (
   now()
 );
 
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000101');
+SELECT results_eq(
+  $$SELECT household_id, role, outcome
+    FROM public.accept_household_invite(repeat('1', 64))$$,
+  $$VALUES (
+    '00000000-0000-4000-8000-000000000201'::uuid,
+    'owner'::text,
+    'already_member'::text
+  )$$,
+  'AC-F1 existing owner keeps actual role and receives already-member outcome'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
+SELECT results_eq(
+  $$SELECT household_id, role, outcome
+    FROM public.accept_household_invite(repeat('2', 64))$$,
+  $$VALUES (
+    '00000000-0000-4000-8000-000000000201'::uuid,
+    'caregiver'::text,
+    'already_member'::text
+  )$$,
+  'AC-F1 existing caregiver keeps actual role and receives already-member outcome'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000103');
+SELECT results_eq(
+  $$SELECT household_id, role, outcome
+    FROM public.accept_household_invite(repeat('3', 64))$$,
+  $$VALUES (
+    '00000000-0000-4000-8000-000000000201'::uuid,
+    'viewer'::text,
+    'already_member'::text
+  )$$,
+  'AC-F1 existing viewer keeps actual role and receives already-member outcome'
+);
+
+SELECT tests.as_postgres();
+SELECT results_eq(
+  $$SELECT count(*)::int
+    FROM public.invite
+    WHERE id IN (
+      '00000000-0000-4000-8000-000000000709',
+      '00000000-0000-4000-8000-000000000710',
+      '00000000-0000-4000-8000-000000000711'
+    )
+      AND accepted_at IS NULL
+      AND accepted_by IS NULL$$,
+  ARRAY[3],
+  'AC-F1 existing members leave unused household invites unconsumed'
+);
+
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000102');
 SELECT throws_ok(
   $$SELECT public.revoke_household_invite('00000000-0000-4000-8000-000000000705')$$,
@@ -2452,13 +2571,14 @@ SELECT throws_ok(
 
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000108');
 SELECT results_eq(
-  $$SELECT household_id, role
+  $$SELECT household_id, role, outcome
     FROM public.accept_household_invite(repeat('a', 64))$$,
   $$VALUES (
     '00000000-0000-4000-8000-000000000201'::uuid,
-    'caregiver'::text
+    'caregiver'::text,
+    'accepted'::text
   )$$,
-  'valid household invite returns owner household and caregiver role'
+  'AC-F2 new member receives accepted outcome in owner household as caregiver'
 );
 
 SELECT results_eq(
@@ -2494,13 +2614,22 @@ SELECT throws_ok(
 
 SELECT tests.as_auth('00000000-0000-4000-8000-000000000111');
 SELECT results_eq(
-  $$SELECT household_id, role
+  $$SELECT household_id, role, outcome
     FROM public.accept_household_invite(repeat('d', 64))$$,
   $$VALUES (
     '00000000-0000-4000-8000-000000000201'::uuid,
-    'caregiver'::text
+    'caregiver'::text,
+    'already_member'::text
   )$$,
-  'accepted household invite retry is idempotent for the same user'
+  'AC-F3 accepted household invite retry returns actual role and already-member outcome'
+);
+
+SELECT tests.as_auth('00000000-0000-4000-8000-000000000105');
+SELECT throws_ok(
+  $$SELECT * FROM public.accept_household_invite(repeat('4', 64))$$,
+  'P4203',
+  'household invite was already used',
+  'AC-F3 consumed invite is unavailable after accepted membership is revoked'
 );
 
 SELECT throws_ok(

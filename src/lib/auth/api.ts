@@ -4,6 +4,18 @@ import { getSupabaseClient } from '@/lib/supabase';
 
 export type AuthChangeHandler = (user: SessionUser | null) => void;
 
+export type OtpRequestFailureReason = 'rate_limited' | 'unknown';
+
+export class OtpRequestError extends Error {
+  readonly reason: OtpRequestFailureReason;
+
+  constructor(reason: OtpRequestFailureReason) {
+    super('auth_request_otp_failed');
+    this.name = 'OtpRequestError';
+    this.reason = reason;
+  }
+}
+
 type MinimalSession = { user: { id: string; email?: string | null } } | null;
 
 export function toSessionUser(session: MinimalSession): SessionUser | null {
@@ -17,6 +29,16 @@ export function toSessionUser(session: MinimalSession): SessionUser | null {
   });
 }
 
+function classifyOtpRequestFailure(
+  error: Readonly<{ status?: number; code?: string }>,
+): OtpRequestFailureReason {
+  if (error.status === 429 || error.code === 'over_email_send_rate_limit') {
+    return 'rate_limited';
+  }
+
+  return 'unknown';
+}
+
 export async function requestEmailOtp(email: string): Promise<void> {
   const { error } = await getSupabaseClient().auth.signInWithOtp({
     email,
@@ -24,7 +46,7 @@ export async function requestEmailOtp(email: string): Promise<void> {
   });
 
   if (error) {
-    throw new Error('auth_request_otp_failed');
+    throw new OtpRequestError(classifyOtpRequestFailure(error));
   }
 }
 
@@ -77,7 +99,13 @@ export async function signOut(): Promise<void> {
 
 export function subscribeToAuthChanges(handler: AuthChangeHandler): () => void {
   const { data } = getSupabaseClient().auth.onAuthStateChange((_event, session) => {
-    handler(toSessionUser(session));
+    // Map synchronously, but run the handler on a later task. supabase-js holds an
+    // internal auth lock for the duration of the onAuthStateChange callback; if the
+    // handler awaits any other Supabase call (e.g. the bootstrap/accept RPCs in the
+    // auth provider), that call deadlocks against the lock and resolves without a
+    // session — silently signing the user out right after a successful sign-in.
+    const user = toSessionUser(session);
+    setTimeout(() => handler(user), 0);
   });
 
   return () => data.subscription.unsubscribe();

@@ -5,6 +5,8 @@ Allowed deviations: PUP-42 wires authenticated caregiver acceptance and post-acc
 Signed-out acceptance hands off to the existing OTP screen only after the token is securely
 persisted. Decline RPC remains deferred. Loading/error/expired/already-member review templates stay
 available alongside the live states.
+PUP-42 follow-up makes `already_member` a live outcome with the caller's actual household role.
+Terminal unavailable/already-member anatomy never repeats an unverified caregiver claim.
 
 ## Anatomy (top -> bottom)
 - Invite header — owner invites the viewer to care for the puppy, no raw token shown.
@@ -15,8 +17,9 @@ available alongside the live states.
 - Secondary CTA — Decline.
 - Manual fallback card — masked PuppyPlan link/raw-code field, validation feedback, and use-link
   action.
-- Unavailable fallback — explicit create-your-own action that runs normal bootstrap only after
-  invite rejection.
+- Alternate owner path — explicit create-your-own action on a valid or unavailable invite. It
+  clears the pending invite and reaches normal bootstrap only after a direct user action.
+- Already-member completion — localized state plus Open CTA into the existing household.
 
 ## Tokens
 - Card surfaces: `surface.raised`.
@@ -30,6 +33,8 @@ available alongside the live states.
   states.
 - Live persistence/sign-in handoff, authenticated accept pending/success/unavailable, manual input
   invalid/ready, and create-your-own pending/error — PUP-42 states.
+- Existing owner/caregiver/viewer acceptance — live already-member state using the actual
+  membership role without consuming the unused link.
 - Decline RPC and provider metadata lookup — deferred.
 
 ## Accessibility
@@ -38,8 +43,10 @@ available alongside the live states.
 - Load error uses alert semantics.
 - Manual input is masked, disables autocorrection/capitalization, and exposes localized invalid
   feedback.
-- The create-your-own action appears only for an unavailable invite and is never an automatic
-  fallback.
+- The create-your-own action appears for valid and unavailable invite entry and is never an
+  automatic fallback.
+- Expired/unavailable and already-member states do not expose the caregiver role row, access
+  preview, or owner-revocation disclosure from the unverified invite offer.
 - Included/excluded content uses visible text and icons; color is not the only signal.
 - Route must never display the invite token.
 
@@ -47,5 +54,5 @@ available alongside the live states.
 - Live token handling keeps plaintext invite tokens out of analytics, logs, cache keys, docs,
   screenshots, and rendered copy. The masked manual field and SecureStore pending intent are the
   only invitee-side holders.
-- Native Stage 4 comparison remains owner-run in the Phase 6 checklist; the implementation agent
-  does not install or run the app.
+- Native Stage 4 requires a fresh embedded Release bundle on the approved SE profile; stale
+  installed-bundle screenshots are reproduction evidence only.

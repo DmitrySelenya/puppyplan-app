@@ -80,6 +80,48 @@ function householdInviteMigrationPath() {
   return paths[0];
 }
 
+function householdInviteOutcomeMigrationPath() {
+  const paths = readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_household_invite_already_member_outcome\.sql$/u.test(filename))
+    .map((filename) => `${migrationDir}/${filename}`);
+
+  assert.equal(
+    paths.length,
+    1,
+    `expected exactly one household invite outcome migration, found ${paths.length}`,
+  );
+
+  return paths[0];
+}
+
+function bootstrapMembershipResolutionMigrationPath() {
+  const paths = readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_bootstrap_current_user_membership_resolution\.sql$/u.test(filename))
+    .map((filename) => `${migrationDir}/${filename}`);
+
+  assert.equal(
+    paths.length,
+    1,
+    `expected exactly one bootstrap membership resolution migration, found ${paths.length}`,
+  );
+
+  return paths[0];
+}
+
+function bootstrapSerializationMigrationPath() {
+  const paths = readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_bootstrap_current_user_serialization\.sql$/u.test(filename))
+    .map((filename) => `${migrationDir}/${filename}`);
+
+  assert.equal(
+    paths.length,
+    1,
+    `expected exactly one bootstrap serialization migration, found ${paths.length}`,
+  );
+
+  return paths[0];
+}
+
 function namedFunctionBlock(source, functionName) {
   const match = source.match(
     new RegExp(
@@ -557,7 +599,7 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
       'accepted trainer selected timeline includes explicitly selected sanitized observation',
     ];
 
-    assert.match(source, /SELECT plan\(139\);/u);
+    assert.match(source, /SELECT plan\(144\);/u);
 
     for (const label of labels) {
       assert.equal(source.split(label).length - 1, 1, `${label} must appear exactly once`);
@@ -666,11 +708,16 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
       'non-owner cannot revoke household invites',
       'owner can revoke household invites',
       'revoked household invite cannot be accepted',
-      'valid household invite returns owner household and caregiver role',
+      'AC-F1 existing owner keeps actual role and receives already-member outcome',
+      'AC-F1 existing caregiver keeps actual role and receives already-member outcome',
+      'AC-F1 existing viewer keeps actual role and receives already-member outcome',
+      'AC-F1 existing members leave unused household invites unconsumed',
+      'AC-F2 new member receives accepted outcome in owner household as caregiver',
       'accepting household invite adds caregiver membership',
       'expired household invite cannot be accepted',
       'reused household invite is rejected for a different user',
-      'accepted household invite retry is idempotent for the same user',
+      'AC-F3 accepted household invite retry returns actual role and already-member outcome',
+      'AC-F3 consumed invite is unavailable after accepted membership is revoked',
       'invite secret accepts exact lowercase sha256 hash format',
       'invite secret preserves Argon2id hash compatibility',
       'authenticated owner cannot directly create household invites',
@@ -794,6 +841,113 @@ describe('PUP-42 Phase 0 household invite migration guardrails', () => {
     assert.match(adr, /plaintext token.*once/iu);
     assert.match(adr, /ADR-0017/u);
     assert.match(index, /adr\/0023-household-invite-token-sha256\.md/u);
+  });
+});
+
+describe('PUP-42 follow-up household invite outcome migration guardrails', () => {
+  it('AC-F1 AC-F2 AC-F3: preserves active membership roles and consumes only new-member invites', () => {
+    const migration = readFileSync(householdInviteOutcomeMigrationPath(), 'utf8');
+    const acceptBlock = namedFunctionBlock(migration, 'accept_household_invite');
+    const existingMemberBranch = acceptBlock.match(
+      /IF v_membership_role IS NOT NULL THEN[\s\S]*?RETURN;\s+END IF;/u,
+    )?.[0] ?? '';
+
+    assert.match(
+      migration,
+      /DROP FUNCTION public\.accept_household_invite\(text\);/u,
+    );
+    assert.match(
+      acceptBlock,
+      /RETURNS TABLE \(household_id uuid, role text, outcome text\)/u,
+    );
+    assert.match(acceptBlock, /SECURITY DEFINER\s+SET search_path = ''/u);
+    assert.match(existingMemberBranch, /role := v_membership_role::text;/u);
+    assert.match(existingMemberBranch, /outcome := 'already_member';/u);
+    assert.doesNotMatch(existingMemberBranch, /UPDATE public\.invite/u);
+    assert.match(acceptBlock, /outcome := 'accepted';/u);
+    assert.ok(
+      acceptBlock.indexOf(existingMemberBranch) < acceptBlock.indexOf('UPDATE public.invite'),
+      'existing-member return must happen before invite consumption',
+    );
+    assert.match(
+      migration,
+      /REVOKE ALL ON FUNCTION public\.accept_household_invite\(text\) FROM PUBLIC;/u,
+    );
+    assert.match(
+      migration,
+      /REVOKE ALL ON FUNCTION public\.accept_household_invite\(text\) FROM anon, authenticated;/u,
+    );
+    assert.match(
+      migration,
+      /GRANT EXECUTE ON FUNCTION public\.accept_household_invite\(text\) TO authenticated;/u,
+    );
+  });
+});
+
+describe('PUP-42 cold-start bootstrap migration guardrails', () => {
+  it('reuses accepted memberships and prefers a household with an active puppy', () => {
+    const migration = readFileSync(bootstrapMembershipResolutionMigrationPath(), 'utf8');
+    const bootstrapBlock = namedFunctionBlock(migration, 'bootstrap_current_user');
+    const existingMembershipBranch = bootstrapBlock.match(
+      /IF v_household_id IS NOT NULL THEN[\s\S]*?RETURN;\s+END IF;/u,
+    )?.[0] ?? '';
+
+    assert.match(bootstrapBlock, /RETURNS TABLE \(household_id uuid, created boolean\)/u);
+    assert.match(bootstrapBlock, /SECURITY DEFINER\s+SET search_path = ''/u);
+    assert.match(bootstrapBlock, /hm\.accepted_at IS NOT NULL/u);
+    assert.match(bootstrapBlock, /hm\.revoked_at IS NULL/u);
+    assert.match(
+      bootstrapBlock,
+      /EXISTS \([\s\S]*?FROM public\.puppy p[\s\S]*?p\.deleted_at IS NULL[\s\S]*?\) DESC/u,
+    );
+    assert.match(bootstrapBlock, /hm\.created_at ASC/u);
+    assert.doesNotMatch(bootstrapBlock, /hm\.role = 'owner'/u);
+    assert.match(existingMembershipBranch, /created := false;/u);
+    assert.ok(
+      bootstrapBlock.indexOf(existingMembershipBranch)
+        < bootstrapBlock.indexOf('INSERT INTO public.household'),
+      'an accepted membership must return before household creation',
+    );
+    assert.match(
+      migration,
+      /REVOKE ALL ON FUNCTION public\.bootstrap_current_user\(text\) FROM PUBLIC;/u,
+    );
+    assert.match(
+      migration,
+      /REVOKE ALL ON FUNCTION public\.bootstrap_current_user\(text\) FROM anon, authenticated;/u,
+    );
+    assert.match(
+      migration,
+      /GRANT EXECUTE ON FUNCTION public\.bootstrap_current_user\(text\) TO authenticated;/u,
+    );
+  });
+});
+
+describe('PUP-42 bootstrap serialization migration guardrails', () => {
+  it('AC-F15 serializes bootstrap per authenticated user before membership resolution', () => {
+    const migration = readFileSync(bootstrapSerializationMigrationPath(), 'utf8');
+    const bootstrapBlock = namedFunctionBlock(migration, 'bootstrap_current_user');
+    const lockCall = 'PERFORM pg_catalog.pg_advisory_xact_lock(';
+    const membershipLookup = 'SELECT hm.household_id';
+
+    assert.match(bootstrapBlock, /v_user_id uuid := auth\.uid\(\);/u);
+    assert.match(
+      bootstrapBlock,
+      /PERFORM pg_catalog\.pg_advisory_xact_lock\(\s*pg_catalog\.hashtextextended\(v_user_id::text, 0\)\s*\);/u,
+    );
+    assert.ok(
+      bootstrapBlock.indexOf(lockCall) < bootstrapBlock.indexOf(membershipLookup),
+      'the per-user transaction lock must be acquired before membership resolution',
+    );
+    assert.match(bootstrapBlock, /SECURITY DEFINER\s+SET search_path = ''/u);
+    assert.match(
+      migration,
+      /REVOKE ALL ON FUNCTION public\.bootstrap_current_user\(text\) FROM PUBLIC;/u,
+    );
+    assert.match(
+      migration,
+      /GRANT EXECUTE ON FUNCTION public\.bootstrap_current_user\(text\) TO authenticated;/u,
+    );
   });
 });
 

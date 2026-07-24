@@ -17,6 +17,7 @@ describe('pending household invite storage', () => {
       inviteToken,
     });
     expect(store.setItem).toHaveBeenCalledTimes(1);
+    expect(store.setItem.mock.calls[0][0]).toMatch(/^[A-Za-z0-9._-]+$/);
     expect(store.setItem.mock.calls[0][1]).toContain('"expiresAt":"2026-07-31T09:00:00.000Z"');
   });
 
@@ -28,10 +29,10 @@ describe('pending household invite storage', () => {
     now = new Date('2026-07-31T09:00:00.001Z');
 
     await expect(controller.read()).resolves.toEqual({ status: 'unavailable' });
-    expect(values.get('puppyplan:pending-household-intent:v1')).toBe(
+    expect(values.get('puppyplan.pending-household-intent.v1')).toBe(
       JSON.stringify({ state: 'unavailable' }),
     );
-    expect(values.get('puppyplan:pending-household-intent:v1')).not.toContain(inviteToken);
+    expect(values.get('puppyplan.pending-household-intent.v1')).not.toContain(inviteToken);
   });
 
   it('AC-PUP42-AUTH-3 keeps unavailable state across reload until explicit fallback', async () => {
@@ -41,9 +42,43 @@ describe('pending household invite storage', () => {
     await controller.markUnavailable();
 
     await expect(controller.read()).resolves.toEqual({ status: 'unavailable' });
-    expect(values.get('puppyplan:pending-household-intent:v1')).not.toContain(inviteToken);
+    expect(values.get('puppyplan.pending-household-intent.v1')).not.toContain(inviteToken);
     await controller.clear();
     await expect(controller.read()).resolves.toEqual({ status: 'none' });
+  });
+
+  it('AC-PUP42-AUTH-3 converts an invalid stored intent into a token-free unavailable fallback', async () => {
+    const invalidStoredToken = 'private-invalid-stored-token';
+    const captureException = jest.fn();
+    const { store, values } = createHarness();
+    const controller = createPendingHouseholdInviteController({
+      observability: { captureException },
+      store,
+    });
+    values.set(
+      'puppyplan.pending-household-intent.v1',
+      JSON.stringify({
+        state: 'pending',
+        inviteToken: invalidStoredToken,
+      }),
+    );
+
+    await expect(controller.read()).resolves.toEqual({ status: 'unavailable' });
+    expect(values.get('puppyplan.pending-household-intent.v1')).toBe(
+      JSON.stringify({ state: 'unavailable' }),
+    );
+    expect(captureException).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'pending_household_intent_invalid_record' }),
+      {
+        area: 'auth',
+        operation: 'pending_household_intent_read',
+        tags: {
+          reason: 'invalid-record',
+          storage: 'secure-store',
+        },
+      },
+    );
+    expect(JSON.stringify(captureException.mock.calls)).not.toContain(invalidStoredToken);
   });
 
   it('AC-PUP42-AUTH-4 surfaces and reports persistence failures without private payloads', async () => {

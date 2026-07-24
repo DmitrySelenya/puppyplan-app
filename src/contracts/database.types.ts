@@ -898,6 +898,7 @@ export type Database = {
         Args: { p_token: string }
         Returns: {
           household_id: string
+          outcome: string
           role: string
         }[]
       }

@@ -70,6 +70,7 @@ describe('household access query contracts', () => {
     const invalidateQueries = jest.fn().mockResolvedValue(undefined);
     const acceptInvite = jest.fn().mockResolvedValue({
       household_id: householdId,
+      outcome: 'accepted',
       role: 'caregiver',
     });
     const input = { token: 'd'.repeat(64) };
@@ -82,6 +83,11 @@ describe('household access query contracts', () => {
     await options.onSuccess(result, input);
 
     expect(acceptInvite).toHaveBeenCalledWith(input);
+    expect(result).toEqual({
+      household_id: householdId,
+      outcome: 'accepted',
+      role: 'caregiver',
+    });
     expectInviteRootInvalidation(invalidateQueries);
   });
 

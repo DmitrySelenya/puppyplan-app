@@ -78,6 +78,7 @@ export type InviteAcceptScreenProps = Readonly<{
   fallbackPending?: boolean;
   inviteToken?: string;
   onAccept?: () => void;
+  onAlreadyMember?: () => void;
   onContinueWithoutInvite?: () => void;
   onManualInviteToken?: (token: string) => void;
   ownerName?: string;
@@ -91,7 +92,7 @@ export type ConnectedInviteAcceptScreenProps = Readonly<{
   onOpenSignIn: () => void;
 }>;
 
-type LiveInviteAcceptState = 'idle' | 'error' | 'unavailable';
+type LiveInviteAcceptState = 'idle' | 'error' | 'unavailable' | 'already-member';
 
 export function ConnectedInviteAcceptScreen({
   initialInviteToken,
@@ -117,7 +118,9 @@ export function ConnectedInviteAcceptScreen({
   const storedInviteUnavailable =
     auth.householdInviteStatus === 'unavailable' && !hasManualReplacement;
   const reviewState: InviteAcceptReviewState | undefined =
-    liveState === 'unavailable' || storedInviteUnavailable || persistenceStatus === 'invalid'
+    liveState === 'already-member'
+      ? 'already-member'
+      : liveState === 'unavailable' || storedInviteUnavailable || persistenceStatus === 'invalid'
       ? 'expired'
       : liveState === 'error' || persistenceStatus === 'error'
         ? 'load-error'
@@ -153,6 +156,10 @@ export function ConnectedInviteAcceptScreen({
     try {
       const acceptedInvite = await acceptInvite.mutateAsync({ token: selectedToken });
       await auth.completeHouseholdInviteAcceptance(acceptedInvite.household_id);
+      if (acceptedInvite.outcome === 'already_member') {
+        setLiveState('already-member');
+        return;
+      }
       onAccepted();
     } catch (error) {
       if (isHouseholdInviteUnavailableError(error)) {
@@ -189,7 +196,9 @@ export function ConnectedInviteAcceptScreen({
 
       if (auth.householdInviteStatus === 'unavailable') {
         await auth.continueWithoutHouseholdInvite();
-      } else if (auth.status !== 'signedIn') {
+      } else if (auth.status === 'signedIn') {
+        await pendingHouseholdInviteController.clear();
+      } else {
         throw new Error('household_invite_fallback_not_ready');
       }
 
@@ -209,6 +218,7 @@ export function ConnectedInviteAcceptScreen({
       fallbackPending={fallbackPending}
       inviteToken={selectedToken}
       onAccept={() => void handleAccept()}
+      onAlreadyMember={onAccepted}
       onContinueWithoutInvite={() => void handleContinueWithoutInvite()}
       onManualInviteToken={handleManualInviteToken}
       reviewState={reviewState}
@@ -222,6 +232,7 @@ export function InviteAcceptScreen({
   fallbackError = false,
   fallbackPending = false,
   onAccept,
+  onAlreadyMember,
   onContinueWithoutInvite,
   onManualInviteToken,
   ownerName,
@@ -242,6 +253,7 @@ export function InviteAcceptScreen({
     ? t('sharing.family.accepted.disclosure', { ownerName })
     : t('sharing.family.accepted.disclosure-generic');
   const isLoadingInvite = reviewState === 'loading' || acceptPending;
+  const showsInviteOffer = reviewState === undefined || reviewState === 'loading';
 
   function handleManualInputChange(value: string) {
     setManualInput(value);
@@ -267,96 +279,104 @@ export function InviteAcceptScreen({
   return (
     <Screen contentStyle={styles.content}>
       <Stack gap="lg">
-        <Stack gap="sm">
-          <AppIcon color={tokens.color.primary[700]} filled name="personCluster" size={36} />
-          <AppText variant="title">
-            {header}
-          </AppText>
-          <AppText tone="secondary" variant="headline">
-            {t('sharing.family.accepted.role-caregiver')}
-          </AppText>
-        </Stack>
+        {showsInviteOffer ? (
+          <>
+            <Stack gap="sm">
+              <AppIcon color={tokens.color.primary[700]} filled name="personCluster" size={36} />
+              <AppText variant="title">
+                {header}
+              </AppText>
+              <AppText tone="secondary" variant="headline">
+                {t('sharing.family.accepted.role-caregiver')}
+              </AppText>
+            </Stack>
 
-        <Card testID="invite-accept-preview-card">
-          <Stack gap="md">
-            <PreviewBlock
-              icon="check"
-              iconColor={tokens.color.primary[700]}
-              title={t('sharing.family.accepted.what-included')}>
-              <Bullet icon="check" iconColor={tokens.color.primary[700]}>
-                {firstIncludedItem}
-              </Bullet>
-              <Bullet icon="check" iconColor={tokens.color.primary[700]}>
-                {t('sharing.family.accepted.caregiver-included-bullets.1')}
-              </Bullet>
-              <Bullet icon="check" iconColor={tokens.color.primary[700]}>
-                {t('sharing.family.accepted.caregiver-included-bullets.2')}
-              </Bullet>
-            </PreviewBlock>
+            <Card testID="invite-accept-preview-card">
+              <Stack gap="md">
+                <PreviewBlock
+                  icon="check"
+                  iconColor={tokens.color.primary[700]}
+                  title={t('sharing.family.accepted.what-included')}>
+                  <Bullet icon="check" iconColor={tokens.color.primary[700]}>
+                    {firstIncludedItem}
+                  </Bullet>
+                  <Bullet icon="check" iconColor={tokens.color.primary[700]}>
+                    {t('sharing.family.accepted.caregiver-included-bullets.1')}
+                  </Bullet>
+                  <Bullet icon="check" iconColor={tokens.color.primary[700]}>
+                    {t('sharing.family.accepted.caregiver-included-bullets.2')}
+                  </Bullet>
+                </PreviewBlock>
 
-            <Stack style={styles.divider} />
+                <Stack style={styles.divider} />
 
-            <PreviewBlock
-              icon="lock"
-              iconColor={tokens.color.text.tertiary}
-              title={t('sharing.family.accepted.what-excluded')}>
-              <Bullet icon="lock" iconColor={tokens.color.text.tertiary}>
-                {t('sharing.family.accepted.caregiver-excluded-bullets.0')}
-              </Bullet>
-              <Bullet icon="lock" iconColor={tokens.color.text.tertiary}>
-                {t('sharing.family.accepted.caregiver-excluded-bullets.1')}
-              </Bullet>
-            </PreviewBlock>
-          </Stack>
-        </Card>
+                <PreviewBlock
+                  icon="lock"
+                  iconColor={tokens.color.text.tertiary}
+                  title={t('sharing.family.accepted.what-excluded')}>
+                  <Bullet icon="lock" iconColor={tokens.color.text.tertiary}>
+                    {t('sharing.family.accepted.caregiver-excluded-bullets.0')}
+                  </Bullet>
+                  <Bullet icon="lock" iconColor={tokens.color.text.tertiary}>
+                    {t('sharing.family.accepted.caregiver-excluded-bullets.1')}
+                  </Bullet>
+                </PreviewBlock>
+              </Stack>
+            </Card>
+          </>
+        ) : null}
 
         {reviewState ? <InviteAcceptStatePreview state={reviewState} /> : null}
 
-        <Card style={styles.disclosureCard} variant="mutedTemplate">
-          <AppText tone="secondary" variant="body">
-            {disclosure}
-          </AppText>
-        </Card>
-
-        <Card testID="invite-manual-input-card">
-          <Stack gap="sm">
-            <AppText variant="headline">
-              {t('sharing.family.accepted.manual.title')}
-            </AppText>
+        {showsInviteOffer ? (
+          <Card style={styles.disclosureCard} variant="mutedTemplate">
             <AppText tone="secondary" variant="body">
-              {t('sharing.family.accepted.manual.body')}
+              {disclosure}
             </AppText>
-            <TextField
-              autoCapitalize="none"
-              autoCorrect={false}
-              errorText={manualInputInvalid
-                ? t('sharing.family.accepted.manual.invalid')
-                : undefined}
-              label={t('sharing.family.accepted.manual.label')}
-              onChangeText={handleManualInputChange}
-              placeholder={t('sharing.family.accepted.manual.placeholder')}
-              secureTextEntry
-              value={manualInput}
-            />
-            <Button
-              disabled={onManualInviteToken === undefined}
-              label={t('sharing.family.accepted.manual.submit')}
-              onPress={handleManualInviteSubmit}
-              variant="secondary"
-            />
-            {manualInputReady ? (
-              <AppText
-                accessibilityLiveRegion="polite"
-                testID="invite-manual-input-ready"
-                tone="secondary"
-                variant="footnote">
-                {t('sharing.family.accepted.manual.ready')}
-              </AppText>
-            ) : null}
-          </Stack>
-        </Card>
+          </Card>
+        ) : null}
 
-        {reviewState === 'expired' && onContinueWithoutInvite ? (
+        {reviewState !== 'already-member' ? (
+          <Card testID="invite-manual-input-card">
+            <Stack gap="sm">
+              <AppText variant="headline">
+                {t('sharing.family.accepted.manual.title')}
+              </AppText>
+              <AppText tone="secondary" variant="body">
+                {t('sharing.family.accepted.manual.body')}
+              </AppText>
+              <TextField
+                autoCapitalize="none"
+                autoCorrect={false}
+                errorText={manualInputInvalid
+                  ? t('sharing.family.accepted.manual.invalid')
+                  : undefined}
+                label={t('sharing.family.accepted.manual.label')}
+                onChangeText={handleManualInputChange}
+                placeholder={t('sharing.family.accepted.manual.placeholder')}
+                secureTextEntry
+                value={manualInput}
+              />
+              <Button
+                disabled={onManualInviteToken === undefined}
+                label={t('sharing.family.accepted.manual.submit')}
+                onPress={handleManualInviteSubmit}
+                variant="secondary"
+              />
+              {manualInputReady ? (
+                <AppText
+                  accessibilityLiveRegion="polite"
+                  testID="invite-manual-input-ready"
+                  tone="secondary"
+                  variant="footnote">
+                  {t('sharing.family.accepted.manual.ready')}
+                </AppText>
+              ) : null}
+            </Stack>
+          </Card>
+        ) : null}
+
+        {(reviewState === undefined || reviewState === 'expired') && onContinueWithoutInvite ? (
           <Button
             label={t('sharing.family.accepted.create-own')}
             loading={fallbackPending}
@@ -374,20 +394,28 @@ export function InviteAcceptScreen({
           </AppText>
         ) : null}
 
-        <Stack gap="sm">
+        {reviewState === 'already-member' ? (
           <Button
-            disabled={acceptDisabled || onAccept === undefined}
-            label={t('sharing.family.accepted.accept')}
-            loading={isLoadingInvite}
-            onPress={onAccept ?? (() => undefined)}
+            disabled={onAlreadyMember === undefined}
+            label={t('sharing.family.accepted.already-member-cta')}
+            onPress={onAlreadyMember ?? (() => undefined)}
           />
-          <Button
-            disabled
-            label={t('sharing.family.accepted.decline')}
-            onPress={() => undefined}
-            variant="tertiary"
-          />
-        </Stack>
+        ) : (
+          <Stack gap="sm">
+            <Button
+              disabled={acceptDisabled || onAccept === undefined}
+              label={t('sharing.family.accepted.accept')}
+              loading={isLoadingInvite}
+              onPress={onAccept ?? (() => undefined)}
+            />
+            <Button
+              disabled
+              label={t('sharing.family.accepted.decline')}
+              onPress={() => undefined}
+              variant="tertiary"
+            />
+          </Stack>
+        )}
       </Stack>
     </Screen>
   );

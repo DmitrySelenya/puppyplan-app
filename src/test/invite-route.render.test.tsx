@@ -56,6 +56,7 @@ describe('PUP-42 invite route', () => {
     mockMutateAsync.mockReset();
     mockMutateAsync.mockResolvedValue({
       household_id: acceptedHouseholdId,
+      outcome: 'accepted',
       role: 'caregiver',
     });
     mockClearPendingInvite.mockReset();
@@ -95,6 +96,61 @@ describe('PUP-42 invite route', () => {
       expect(mockCompleteHouseholdInviteAcceptance).toHaveBeenCalledWith(acceptedHouseholdId);
       expect(mockRouterReplace).toHaveBeenCalledWith('/diary');
     });
+  });
+
+  it('AC-F5: shows the live already-member state before opening the existing household', async () => {
+    mockMutateAsync.mockResolvedValue({
+      household_id: acceptedHouseholdId,
+      outcome: 'already_member',
+      role: 'owner',
+    });
+
+    render(
+      <AppProviders>
+        <InviteTokenRoute />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.accepted.accept'),
+    }));
+
+    await waitFor(() => {
+      expect(mockCompleteHouseholdInviteAcceptance).toHaveBeenCalledWith(acceptedHouseholdId);
+      expect(screen.getByTestId('invite-accept-state-already-member')).toBeTruthy();
+    });
+    expect(screen.queryByText(i18n.t('sharing.family.accepted.role-caregiver'))).toBeNull();
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.accepted.already-member-cta'),
+    }));
+    expect(mockRouterReplace).toHaveBeenCalledWith('/diary');
+  });
+
+  it('AC-F6: offers the create-own path for a valid signed-out invite', async () => {
+    mockUseAuth.mockReturnValue({
+      completeHouseholdInviteAcceptance: mockCompleteHouseholdInviteAcceptance,
+      continueWithoutHouseholdInvite: mockContinueWithoutHouseholdInvite,
+      householdInviteStatus: 'none',
+      status: 'signedOut',
+    });
+
+    render(
+      <AppProviders>
+        <InviteTokenRoute />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.accepted.create-own'),
+    }));
+
+    await waitFor(() => {
+      expect(mockClearPendingInvite).toHaveBeenCalledTimes(1);
+      expect(mockRouterPush).toHaveBeenCalledWith('/sign-in');
+    });
+    expect(mockMutateAsync).not.toHaveBeenCalled();
   });
 
   it('hands a securely persisted invite to the existing OTP sign-in route', () => {
@@ -159,6 +215,8 @@ describe('PUP-42 invite route', () => {
       expect(mockMarkInviteUnavailable).toHaveBeenCalledTimes(1);
       expect(screen.getByTestId('invite-accept-state-expired')).toBeTruthy();
     });
+    expect(screen.queryByTestId('invite-accept-preview-card')).toBeNull();
+    expect(screen.queryByText(i18n.t('sharing.family.accepted.role-caregiver'))).toBeNull();
     expect(mockCompleteHouseholdInviteAcceptance).not.toHaveBeenCalled();
     expect(mockRouterReplace).not.toHaveBeenCalled();
   });

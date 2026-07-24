@@ -983,7 +983,7 @@ describe('More settings entries', () => {
     );
 
     expect(screen.getByText(i18n.t('sharing.family.manage.screen-title'))).toBeTruthy();
-    expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.title')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.title'))).toHaveLength(1);
     expect(screen.getByText(i18n.t('sharing.family.manage.section-members'))).toBeTruthy();
     expect(screen.getByText(i18n.t('sharing.family.manage.member-you'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('sharing.family.manage.badge-owner')).length).toBeGreaterThanOrEqual(1);
@@ -999,7 +999,7 @@ describe('More settings entries', () => {
 
     expect(screen.getByText(i18n.t('sharing.family.manage.section-invites'))).toBeTruthy();
     expect(screen.getByText(i18n.t('sharing.family.manage.invites-empty'))).toBeTruthy();
-    expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.body')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.body'))).toHaveLength(1);
     expect(screen.getByRole('button', { name: i18n.t('sharing.family.manage.invite-cta') })).toBeTruthy();
     expect(screen.queryByText(/@/)).toBeNull();
   });
@@ -1140,7 +1140,7 @@ describe('More settings entries', () => {
     expect(screen.queryByText(/synthetic clipboard failure/i)).toBeNull();
   });
 
-  it('PUP-42 disables invite creation for non-owner household members', () => {
+  it('AC-F7: non-owner household members see honest access copy without owner invite controls', () => {
     mockUseActiveCareContext.mockReturnValue({
       careContext: {
         authState: 'authenticated',
@@ -1161,10 +1161,63 @@ describe('More settings entries', () => {
       </AppProviders>,
     );
 
-    expect(screen.getByRole('button', {
+    expect(screen.getByText(
+      i18n.t('sharing.family.manage.non-owner-intro-title'),
+    )).toBeTruthy();
+    expect(screen.getByText(
+      i18n.t('sharing.family.manage.non-owner-intro-body'),
+    )).toBeTruthy();
+    expect(screen.getByText(
+      i18n.t('sharing.family.manage.non-owner-member-subtitle'),
+    )).toBeTruthy();
+    expect(screen.getByText(
+      i18n.t('sharing.family.manage.badge-caregiver'),
+    )).toBeTruthy();
+    expect(screen.queryByText(
+      i18n.t('sharing.family.today-prompt.title'),
+    )).toBeNull();
+    expect(screen.queryByText(
+      i18n.t('sharing.common.disclosure-can-close'),
+    )).toBeNull();
+    expect(screen.queryByText(
+      i18n.t('sharing.family.manage.section-invites'),
+    )).toBeNull();
+    expect(screen.queryByText(
+      i18n.t('sharing.family.manage.invites-empty'),
+    )).toBeNull();
+    expect(screen.queryByRole('button', {
       name: i18n.t('sharing.family.manage.invite-cta'),
-    }).props.accessibilityState.disabled).toBe(true);
+    })).toBeNull();
+    expect(mockUseHouseholdInvitesQuery).toHaveBeenCalledWith(undefined);
   });
+
+  it.each([
+    ['loading', 'loading'],
+    ['error', 'error'],
+    ['empty', 'empty'],
+  ] as const)(
+    'AC-F7: %s active-care state hides the unverified owner shell',
+    (activeCareStatus, expectedState) => {
+      mockUseActiveCareContext.mockReturnValue({
+        careContext: null,
+        puppy: null,
+        status: activeCareStatus,
+      });
+
+      render(
+        <AppProviders>
+          <HouseholdAccessScreen />
+        </AppProviders>,
+      );
+
+      expect(screen.getByTestId(`household-state-${expectedState}`)).toBeTruthy();
+      expect(screen.queryByTestId('household-intro-card')).toBeNull();
+      expect(screen.queryByText(i18n.t('sharing.family.manage.member-you'))).toBeNull();
+      expect(screen.queryByRole('button', {
+        name: i18n.t('sharing.family.manage.invite-cta'),
+      })).toBeNull();
+    },
+  );
 
   it('PUP-42 exposes a busy invite action while creation is pending', () => {
     mockUseCreateHouseholdInviteMutation.mockReturnValue({

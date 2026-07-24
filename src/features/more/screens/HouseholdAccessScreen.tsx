@@ -38,6 +38,7 @@ export type HouseholdAccessReviewState =
   | 'loading'
   | 'pending-write'
   | 'error'
+  | 'empty'
   | 'offline-read';
 
 type HouseholdAccessStateMeta = Readonly<{
@@ -54,6 +55,13 @@ const householdAccessStateMeta: Record<
   HouseholdAccessReviewState,
   HouseholdAccessStateMeta
 > = {
+  empty: {
+    bodyKey: 'sharing.family.manage.states.empty.body',
+    icon: 'personCluster',
+    statusKey: 'sharing.family.manage.states.empty.status',
+    titleKey: 'sharing.family.manage.states.empty.title',
+    tone: 'template',
+  },
   error: {
     bodyKey: 'sharing.family.manage.states.error.body',
     icon: 'warningTriangle',
@@ -119,7 +127,11 @@ export function HouseholdAccessScreen({
   const { locale, t } = useAppTranslation();
   const activeCare = useActiveCareContext();
   const createInvite = useCreateHouseholdInviteMutation();
-  const householdInvites = useHouseholdInvitesQuery(activeCare.careContext?.householdId);
+  const ownerHouseholdId = activeCare.status === 'ready'
+    && activeCare.careContext?.householdRole === 'owner'
+    ? activeCare.careContext.householdId
+    : undefined;
+  const householdInvites = useHouseholdInvitesQuery(ownerHouseholdId);
   const [createdInvite, setCreatedInvite] = useState<CreateInviteResponse>();
   const [createFailed, setCreateFailed] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'success' | 'error'>('idle');
@@ -131,8 +143,6 @@ export function HouseholdAccessScreen({
     id: invite.id,
     title: getPendingInviteTitle(invite, t),
   }));
-  const currentMemberRole: HouseholdRole = activeCare.careContext?.householdRole ?? 'owner';
-  const currentMemberBadge = householdRoleBadge[currentMemberRole];
   const inviteLink = createdInvite
     ? `puppyplan://invite/${createdInvite.token}`
     : undefined;
@@ -163,6 +173,39 @@ export function HouseholdAccessScreen({
     }
   }
 
+  const blockingReviewState = visibleReviewState
+    ?? (activeCare.status !== 'ready' || activeCare.careContext === null ? 'error' : undefined);
+
+  if (blockingReviewState !== undefined || activeCare.careContext === null) {
+    return (
+      <Screen contentStyle={styles.content}>
+        {onBack ? (
+          <ScreenHeader
+            backLabel={t('more.screen-title')}
+            onBack={onBack}
+            title={t('sharing.family.manage.screen-title')}
+          />
+        ) : (
+          <ScreenHeader title={t('sharing.family.manage.screen-title')} />
+        )}
+        <HouseholdAccessStatePreview state={blockingReviewState ?? 'error'} />
+      </Screen>
+    );
+  }
+
+  const currentMemberRole: HouseholdRole = activeCare.careContext.householdRole;
+  const currentMemberBadge = householdRoleBadge[currentMemberRole];
+  const isOwner = currentMemberRole === 'owner';
+  const introTitleKey: I18nKey = isOwner
+    ? 'sharing.family.today-prompt.title'
+    : 'sharing.family.manage.non-owner-intro-title';
+  const introBodyKey: I18nKey = isOwner
+    ? 'sharing.family.today-prompt.body'
+    : 'sharing.family.manage.non-owner-intro-body';
+  const memberSubtitleKey: I18nKey = isOwner
+    ? 'sharing.common.disclosure-can-close'
+    : 'sharing.family.manage.non-owner-member-subtitle';
+
   return (
     <Screen contentStyle={styles.content}>
       {onBack ? (
@@ -177,15 +220,15 @@ export function HouseholdAccessScreen({
 
       {visibleReviewState ? <HouseholdAccessStatePreview state={visibleReviewState} /> : null}
 
-      <Card accessibilityLabel={t('sharing.family.today-prompt.title')} testID="household-intro-card">
+      <Card accessibilityLabel={t(introTitleKey)} testID="household-intro-card">
         <Stack gap="sm" style={styles.introLayout}>
           <View style={styles.iconBubble}>
             <AppIcon color={tokens.color.primary[700]} name="personCluster" size={24} />
           </View>
           <Stack gap="xs" style={styles.introCopy}>
-            <AppText variant="headline">{t('sharing.family.today-prompt.title')}</AppText>
+            <AppText variant="headline">{t(introTitleKey)}</AppText>
             <AppText tone="secondary" variant="body">
-              {t('sharing.family.today-prompt.body')}
+              {t(introBodyKey)}
             </AppText>
           </Stack>
         </Stack>
@@ -195,7 +238,7 @@ export function HouseholdAccessScreen({
         <MemberRow
           avatarTone="accent"
           name={t('sharing.family.manage.member-you')}
-          subtitle={t('sharing.common.disclosure-can-close')}
+          subtitle={t(memberSubtitleKey)}
           trailing={(
             <HouseholdStatusPill
               iconName={currentMemberBadge.iconName}
@@ -206,44 +249,37 @@ export function HouseholdAccessScreen({
         />
       </HouseholdSection>
 
-      <HouseholdSection title={t('sharing.family.manage.section-invites')}>
-        {pendingInviteRows.length === 0 ? (
-          <ListRow
-            title={t('sharing.family.manage.invites-empty')}
-            variant="settings"
-          />
-        ) : pendingInviteRows.map((invite) => (
-          <MemberRow
-            avatarTone="auto"
-            key={invite.id}
-            name={invite.title}
-            subtitle={t('sharing.family.manage.pending-until', {
-              date: invite.date,
-            })}
-            trailing={(
-              <Stack gap="sm" style={styles.trailingCluster}>
-                <HouseholdStatusPill
-                  iconName="calendar"
-                  label={t('sharing.family.manage.badge-pending')}
-                  tone="needsVetReview"
-                />
-                <OverflowButton />
-              </Stack>
-            )}
-          />
-        ))}
-      </HouseholdSection>
+      {isOwner ? (
+        <HouseholdSection title={t('sharing.family.manage.section-invites')}>
+          {pendingInviteRows.length === 0 ? (
+            <ListRow
+              title={t('sharing.family.manage.invites-empty')}
+              variant="settings"
+            />
+          ) : pendingInviteRows.map((invite) => (
+            <MemberRow
+              avatarTone="auto"
+              key={invite.id}
+              name={invite.title}
+              subtitle={t('sharing.family.manage.pending-until', {
+                date: invite.date,
+              })}
+              trailing={(
+                <Stack gap="sm" style={styles.trailingCluster}>
+                  <HouseholdStatusPill
+                    iconName="calendar"
+                    label={t('sharing.family.manage.badge-pending')}
+                    tone="needsVetReview"
+                  />
+                  <OverflowButton />
+                </Stack>
+              )}
+            />
+          ))}
+        </HouseholdSection>
+      ) : null}
 
-      <Card style={styles.ownerHintCard} variant="mutedTemplate">
-        <Stack gap="xs">
-          <AppText variant="headline">{t('sharing.family.today-prompt.title')}</AppText>
-          <AppText tone="secondary" variant="body">
-            {t('sharing.family.today-prompt.body')}
-          </AppText>
-        </Stack>
-      </Card>
-
-      {createdInvite && inviteLink ? (
+      {isOwner && createdInvite && inviteLink ? (
         <Card
           accessibilityLabel={t('sharing.family.manage.invite-link.title')}
           testID="household-invite-link-card">
@@ -293,7 +329,7 @@ export function HouseholdAccessScreen({
         </Card>
       ) : null}
 
-      {createFailed ? (
+      {isOwner && createFailed ? (
         <AppText
           accessibilityRole="alert"
           testID="household-invite-create-error"
@@ -302,12 +338,13 @@ export function HouseholdAccessScreen({
         </AppText>
       ) : null}
 
-      <Button
-        disabled={currentMemberRole !== 'owner'}
-        label={t('sharing.family.manage.invite-cta')}
-        loading={createInvite.isPending}
-        onPress={handleCreateInvite}
-      />
+      {isOwner ? (
+        <Button
+          label={t('sharing.family.manage.invite-cta')}
+          loading={createInvite.isPending}
+          onPress={handleCreateInvite}
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -323,6 +360,10 @@ function getHouseholdAccessReviewState(
 
   if (activeCareStatus === 'error' || invitesError) {
     return 'error';
+  }
+
+  if (activeCareStatus === 'empty') {
+    return 'empty';
   }
 
   return undefined;
@@ -484,9 +525,6 @@ const styles = StyleSheet.create({
   overflowButton: {
     minHeight: tokens.space[10] + tokens.space[1],
     minWidth: tokens.space[10] + tokens.space[1],
-  },
-  ownerHintCard: {
-    backgroundColor: tokens.color.surface.sunken,
   },
   sectionTitle: {
     textTransform: 'uppercase',

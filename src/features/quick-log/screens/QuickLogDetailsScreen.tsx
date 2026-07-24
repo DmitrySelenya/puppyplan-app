@@ -453,7 +453,7 @@ export function QuickLogDetailsScreen({
           ) : null}
           <Stack direction="horizontal" gap="sm" wrap>
             <Button
-              disabled={status === 'permission-denied' || isSaving}
+              disabled={status !== 'ready' || isSaving}
               label={t(isEditing ? 'quick-log.details.edit-save' : 'quick-log.details.save')}
               loading={isSaving}
               onPress={submit}

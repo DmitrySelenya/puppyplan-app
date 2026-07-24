@@ -108,6 +108,25 @@ export function AuthProvider({
 
   useEffect(() => {
     let active = true;
+    const inFlightResolutionByUserId = new Map<string, Promise<AuthHouseholdResolution>>();
+
+    const resolveUserOnce = (userId: string): Promise<AuthHouseholdResolution> => {
+      const inFlightResolution = inFlightResolutionByUserId.get(userId);
+
+      if (inFlightResolution) {
+        return inFlightResolution;
+      }
+
+      const resolution = resolveAuthenticatedUser(deps);
+      inFlightResolutionByUserId.set(userId, resolution);
+      const clearIfCurrent = () => {
+        if (inFlightResolutionByUserId.get(userId) === resolution) {
+          inFlightResolutionByUserId.delete(userId);
+        }
+      };
+      void resolution.then(clearIfCurrent, clearIfCurrent);
+      return resolution;
+    };
 
     const applyUser = (nextUser: SessionUser | null) => {
       const sequence = applyUserSequence.current + 1;
@@ -119,6 +138,7 @@ export function AuthProvider({
       }
 
       if (!nextUser) {
+        inFlightResolutionByUserId.clear();
         bootstrappedUserIds.current.clear();
         fallbackUser.current = null;
         setActiveHouseholdId(null);
@@ -137,7 +157,7 @@ export function AuthProvider({
       setUser(null);
       setStatus('loading');
 
-      void resolveAuthenticatedUser(deps)
+      void resolveUserOnce(nextUser.id)
         .then(async (resolution) => {
           if (!isCurrent()) {
             return;
@@ -217,6 +237,7 @@ export function AuthProvider({
 
     return () => {
       active = false;
+      inFlightResolutionByUserId.clear();
       unsubscribe();
     };
   }, [deps]);

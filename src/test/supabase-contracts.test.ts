@@ -99,17 +99,39 @@ describe('household invite RPC contracts', () => {
     }).success).toBe(false);
   });
 
-  it('AC-PUP42-CLIENT-1 accepts only caregiver/viewer invite acceptance roles', () => {
-    expect(acceptInviteResponseSchema.parse({
-      household_id: uuidA,
-      role: 'caregiver',
-    })).toEqual({
-      household_id: uuidA,
-      role: 'caregiver',
-    });
+  it.each([
+    ['owner', 'already_member'],
+    ['caregiver', 'accepted'],
+    ['viewer', 'already_member'],
+  ] as const)(
+    'AC-F4: accepts actual %s membership role with the typed %s outcome',
+    (role, outcome) => {
+      expect(acceptInviteResponseSchema.parse({
+        household_id: uuidA,
+        role,
+        outcome,
+      })).toEqual({
+        household_id: uuidA,
+        role,
+        outcome,
+      });
+    },
+  );
+
+  it('ERR-F3: rejects missing or unknown invite acceptance outcomes and roles', () => {
     expect(acceptInviteResponseSchema.safeParse({
       household_id: uuidA,
-      role: 'owner',
+      role: 'caregiver',
+    }).success).toBe(false);
+    expect(acceptInviteResponseSchema.safeParse({
+      household_id: uuidA,
+      role: 'caregiver',
+      outcome: 'replaced_membership',
+    }).success).toBe(false);
+    expect(acceptInviteResponseSchema.safeParse({
+      household_id: uuidA,
+      role: 'administrator',
+      outcome: 'already_member',
     }).success).toBe(false);
   });
 

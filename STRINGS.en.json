@@ -124,6 +124,7 @@
       "invalid-code": "Enter the 6-digit code.",
       "debug-sign-in-failed": "The debug account sign-in didn't work. Check the local dev credentials.",
       "request-failed": "We couldn't send a code. Check your connection and try again.",
+      "rate-limited": "Too many code requests for this email. Please wait a bit and try again.",
       "verify-failed": "That code didn't work. Request a new one and try again."
     }
   },
@@ -1155,6 +1156,9 @@
       },
       "manage": {
         "screen-title": "Family and access",
+        "non-owner-intro-title": "Care is shared here",
+        "non-owner-intro-body": "You can log care for this puppy. The household owner manages family access.",
+        "non-owner-member-subtitle": "The household owner manages access.",
         "section-members": "Members",
         "section-invites": "Invites",
         "member-you": "You",
@@ -1197,6 +1201,11 @@
         },
         "revoked-toast": "Access for {name} is closed.",
         "states": {
+          "empty": {
+            "status": "Not ready",
+            "title": "Household access is not available yet",
+            "body": "Finish setting up your household before managing members and invites."
+          },
           "loading": {
             "status": "Checking",
             "title": "Loading household access",

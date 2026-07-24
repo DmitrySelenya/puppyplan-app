@@ -298,24 +298,29 @@ describe('app shell screens', () => {
     expect(onManualInviteToken).toHaveBeenCalledWith(token);
   });
 
-  it('PUP-42 exposes create-your-own only from the unavailable invite state', () => {
-    const onContinueWithoutInvite = jest.fn();
+  it('PUP-42 exposes create-your-own from valid and unavailable invite states', () => {
+    const onExpiredContinueWithoutInvite = jest.fn();
+    const onValidContinueWithoutInvite = jest.fn();
 
     renderWithProviders(
       <>
         <InviteAcceptScreen
-          onContinueWithoutInvite={onContinueWithoutInvite}
+          onContinueWithoutInvite={onExpiredContinueWithoutInvite}
           reviewState="expired"
         />
-        <InviteAcceptScreen onContinueWithoutInvite={jest.fn()} />
+        <InviteAcceptScreen
+          onContinueWithoutInvite={onValidContinueWithoutInvite}
+        />
       </>,
     );
 
     const fallbackButtons = screen.getAllByRole('button', {
       name: i18n.t('sharing.family.accepted.create-own'),
     });
-    expect(fallbackButtons).toHaveLength(1);
+    expect(fallbackButtons).toHaveLength(2);
     fireEvent.press(fallbackButtons[0]);
-    expect(onContinueWithoutInvite).toHaveBeenCalledTimes(1);
+    fireEvent.press(fallbackButtons[1]);
+    expect(onExpiredContinueWithoutInvite).toHaveBeenCalledTimes(1);
+    expect(onValidContinueWithoutInvite).toHaveBeenCalledTimes(1);
   });
 });
