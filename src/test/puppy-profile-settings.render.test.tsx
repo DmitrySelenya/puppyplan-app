@@ -1,7 +1,8 @@
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import type { PuppyProfile } from '@/contracts/supabase';
+import { tokens } from '@/design/tokens';
 import {
   PuppyProfileSettingsScreen,
   PuppyProfileSettingsStatePreview,
@@ -53,6 +54,9 @@ describe('Puppy profile settings screen', () => {
     expect(screen.getByRole('button', {
       name: i18n.t('more.puppy-profile.change-photo'),
     }).props.accessibilityState).toMatchObject({ disabled: true });
+    expect(StyleSheet.flatten(
+      screen.getByText(i18n.t('more.puppy-profile.change-photo')).props.style,
+    ).color).toBe(tokens.color.text.disabled);
     expect(screen.getByText(i18n.t('more.puppy-profile.sections.about'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.puppy-profile.field-name'))).toBeTruthy();
     expect(screen.getByText('Puppy')).toBeTruthy();

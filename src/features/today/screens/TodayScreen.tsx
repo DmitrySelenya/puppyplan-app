@@ -459,7 +459,6 @@ export function TodayScreen({
   const infoHero = showTodayPlan && todayPlan !== null ? (
     <DiaryInfoHero
       hero={todayPlan.hero}
-      onPrimaryAction={openQuickLog}
     />
   ) : null;
   const shareSelectedDay = onShareText === undefined || selectedDayEventRows.length === 0
@@ -529,7 +528,6 @@ export function TodayScreen({
             ? null
             : <TodayStatusCard state={todayStatus} />}
           {fontScale < 2 ? infoHero : null}
-          {hasPendingLocalRows(rows) ? <TodayStatusCard state="pending-write" /> : null}
           {shouldShowQuickLogFailedBanner(rows) ? (
             <Card
               accessibilityLabel={t('quick-log.failed.persistent-banner')}
@@ -765,9 +763,11 @@ function DiaryMixedDayRows({
   // key. Without it the tap has nothing to latch: `onDelete` settles over the network, and until
   // the row stops being `done` every further tap fires another delete against the same event.
   const uncheck = async (item: DiaryPlannedItem, event: QuickLogEventView) => {
-    const onDelete = actions.onDelete;
+    // Un-check deletes the auto-created fact but stays silent (no delete snackbar). Falls back to
+    // onDelete for callers that do not provide the dedicated silent handler.
+    const takeMarkOff = actions.onUncheck ?? actions.onDelete;
 
-    if (onDelete === undefined) {
+    if (takeMarkOff === undefined) {
       return;
     }
 
@@ -776,7 +776,7 @@ function DiaryMixedDayRows({
     setCheckOffError(null);
 
     try {
-      await onDelete(createQuickLogDeleteRequest(event));
+      await takeMarkOff(createQuickLogDeleteRequest(event));
     } finally {
       setCheckingKey(null);
     }
@@ -855,8 +855,13 @@ function DiaryMixedDayRows({
           ? linkedEventRow
           : failedDeleteRowsByReminderKey.get(key);
         const canUncheck = linkedEventRow !== undefined
-          && actions.onDelete !== undefined
+          && (actions.onUncheck ?? actions.onDelete) !== undefined
           && checkingKey !== key;
+        // The check-off write is still reaching the server: show the spinner on the checkbox itself
+        // until the linked fact settles (server-confirmed clears its local sync state).
+        const linkedSyncState = linkedEventRow?.row.localSync?.state;
+        const routineSyncing = linkedSyncState === 'pending_local'
+          || linkedSyncState === 'sending';
         const visual = getPlannedCardVisual(item);
 
         return (
@@ -871,7 +876,8 @@ function DiaryMixedDayRows({
                   checkboxLabel={item.status === 'done'
                     ? t('today.plan.uncheck')
                     : t('today.plan.check-off')}
-                  checkboxTestID={onCheckOff !== undefined && item.status !== 'done'
+                  checkboxTestID={(onCheckOff !== undefined && item.status !== 'done')
+                    || routineSyncing
                     ? `diary-check-off-${item.reminderId}`
                     : undefined}
                   icon={visual.icon}
@@ -901,6 +907,7 @@ function DiaryMixedDayRows({
                   state={item.status === 'done'
                     ? 'done'
                     : item.status === 'past-unmarked' ? 'past' : 'upcoming'}
+                  syncing={routineSyncing}
                   time={plannedTime}
                   title={title}
                   overflowLabel={lifecycleActionsAvailable
@@ -1344,33 +1351,18 @@ function DiaryWeekStrip({
 /** Collapses the day's single priority signal (`plan.hero`) into one Clay guidance tip. */
 function DiaryInfoHero({
   hero,
-  onPrimaryAction,
 }: Readonly<{
   hero: TodayPlan['hero'];
-  onPrimaryAction?: () => void;
 }>) {
   const { t } = useAppTranslation();
   const copy = todayHeroCopy[hero.variant];
   const body = hero.variant === 'first_day' ? '' : t(copy.bodyKey);
   const title = t(copy.titleKey);
-  const primaryKey = 'primaryKey' in copy ? copy.primaryKey : undefined;
 
-  return (
-    <Stack gap="sm">
-      {body.trim() ? (
-        <InfoHero message={body} testID="diary-info-hero" title={title} />
-      ) : (
-        <InfoHero message={title} testID="diary-info-hero" />
-      )}
-      {primaryKey === undefined || onPrimaryAction === undefined ? null : (
-        <Button
-          label={t(primaryKey)}
-          onPress={onPrimaryAction}
-          style={styles.infoHeroAction}
-          variant="primary"
-        />
-      )}
-    </Stack>
+  return body.trim() ? (
+    <InfoHero message={body} testID="diary-info-hero" title={title} />
+  ) : (
+    <InfoHero message={title} testID="diary-info-hero" />
   );
 }
 
@@ -2156,9 +2148,6 @@ const styles = StyleSheet.create({
   historyFilterScroller: {
     marginHorizontal: -tokens.layout.screenPaddingPhone,
     paddingHorizontal: tokens.layout.screenPaddingPhone,
-  },
-  infoHeroAction: {
-    alignSelf: 'flex-start',
   },
   shareError: {
     color: tokens.color.status.danger,

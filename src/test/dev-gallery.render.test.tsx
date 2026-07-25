@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 
 import {
@@ -22,6 +22,7 @@ import {
   SyntheticOnboardingShell,
   SyntheticMoreSettingsShell,
   SyntheticPrivacyAccountStatesShell,
+  SyntheticPrimitiveCoverageShell,
   SyntheticPuppyProfileSettingsShell,
   SyntheticPuppyProfileSettingsStatesShell,
   SyntheticQuickTrackersStatesShell,
@@ -371,6 +372,29 @@ describe('development-only design gallery', () => {
       includeHiddenElements: true,
     }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/supabase|production write|token/i)).toBeNull();
+  });
+
+  it('renders every previously undocumented runtime primitive in one compact real shell', () => {
+    render(<SyntheticPrimitiveCoverageShell />);
+
+    for (const testID of [
+      'gallery-primitive-avatar',
+      'gallery-primitive-icon-button',
+      'gallery-primitive-pending-dot',
+      'gallery-primitive-screen-header',
+      'gallery-primitive-sheet-header',
+      'gallery-primitive-time-gutter',
+      'gallery-primitive-toggle',
+      'gallery-primitive-touchable',
+      'gallery-primitive-when-picker-pill',
+    ]) {
+      expect(screen.getByTestId(testID)).toBeTruthy();
+    }
+    expect(screen.getByText(i18n.t('more.puppy-profile.screen-title'))).toBeTruthy();
+    expect(screen.getByRole('button', { name: i18n.t('quick-log.sheet.title') })).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('reminders.lifecycle.title') }));
+    expect(screen.getByTestId('routine-lifecycle-modal')).toBeTruthy();
   });
 
   it('AC-PROFILE-STATES renders profile state templates inside the visible profile shell', () => {

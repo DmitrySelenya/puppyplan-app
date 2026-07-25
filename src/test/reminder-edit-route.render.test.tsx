@@ -23,6 +23,17 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ reminderId: mockReminderId }),
 }));
 
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'AccessibilityInfo', {
+    value: {
+      ...actual.AccessibilityInfo,
+      isReduceMotionEnabled: jest.fn(() => new Promise<boolean>(() => {})),
+    },
+  });
+});
+
 jest.mock('@/lib/query/active-care-context', () => ({
   useActiveCareContext: () => ({ careContext: mockCareContext, puppy: null, status: 'ready' }),
 }));

@@ -24,6 +24,8 @@ export type RoutineCardProps = {
   reminderOff?: boolean;
   reminderOffLabel?: string;
   state?: RoutineCardState;
+  /** The linked check-off write is still syncing: spinner on the checkbox, card held off the done fill. */
+  syncing?: boolean;
   testID?: string;
   time: string;
   title: string;
@@ -43,12 +45,15 @@ export function RoutineCard({
   reminderOff = false,
   reminderOffLabel,
   state = 'upcoming',
+  syncing = false,
   testID,
   time,
   title,
 }: RoutineCardProps) {
   const done = state === 'done';
   const past = state === 'past';
+  // Optimistically-done but not yet confirmed: keep the row visually pending until the write settles.
+  const settledDone = done && !syncing;
 
   return (
     <View style={styles.row} testID={testID}>
@@ -56,7 +61,7 @@ export function RoutineCard({
       <View
         style={[
           styles.card,
-          done ? styles.cardDone : styles.cardDefault,
+          settledDone ? styles.cardDone : styles.cardDefault,
           past ? styles.cardPast : elevationStyle(1),
         ]}
         testID={testID ? `${testID}-card` : undefined}>
@@ -65,9 +70,10 @@ export function RoutineCard({
           checked={done}
           onPress={onToggleDone}
           quiet={past}
+          syncing={syncing}
           testID={checkboxTestID}
         />
-        <IconChip accent={done ? 'sage' : accent} icon={icon} quiet={past} />
+        <IconChip accent={settledDone ? 'sage' : accent} icon={icon} quiet={past} />
         <View accessibilityLabel={accessibilityLabel} accessible style={styles.copy}>
           <AppText variant="headline">{title}</AppText>
           {meta ? (

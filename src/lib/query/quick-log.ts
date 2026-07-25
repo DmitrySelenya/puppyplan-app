@@ -1016,7 +1016,7 @@ function useQuickLogPipeline(): UseQuickLogMutationPortResult {
               queue,
             });
           }
-        } catch (_error: unknown) {
+        } catch {
           reportQuickLogQueueRecoveryFailure(observability, 'coordinator');
         } finally {
           inFlightDrain = null;
@@ -1110,7 +1110,7 @@ function useQuickLogPipeline(): UseQuickLogMutationPortResult {
         setReadyActorId(actorId);
         recoveryTriggerRef.current = runDrain;
         void runDrain();
-      } catch (_error: unknown) {
+      } catch {
         if (isCurrentActor()) {
           reportQuickLogQueueRecoveryFailure(observability, 'hydrate');
           setQueueUnavailable(true);
@@ -1423,7 +1423,7 @@ async function drainQuickLogQueueForActor(input: Readonly<{
         createdBy: input.actorId,
         now: new Date().toISOString(),
       });
-    } catch (_error: unknown) {
+    } catch {
       reportQuickLogQueueRecoveryFailure(input.observability, 'claim');
       return;
     }
@@ -1479,7 +1479,7 @@ async function drainDeletedQuickLogQueueForActor(input: Readonly<{
   } else {
     try {
       retainedItems = await input.queue.list({ states: ['deleted_before_sync'] });
-    } catch (_error: unknown) {
+    } catch {
       reportQuickLogQueueRecoveryFailure(input.observability, 'list');
       return;
     }
@@ -1532,7 +1532,7 @@ async function drainDeletedQuickLogQueueForActor(input: Readonly<{
             retryCount: retained.retry_count,
           });
         }
-      } catch (_error: unknown) {
+      } catch {
         reportQuickLogQueueRecoveryFailure(
           input.observability,
           'replay_state',
@@ -1545,7 +1545,7 @@ async function drainDeletedQuickLogQueueForActor(input: Readonly<{
 
     try {
       await input.queue.remove(item.client_event_id);
-    } catch (_error: unknown) {
+    } catch {
       const failedAt = new Date().toISOString();
       const category: QuickLogQueueErrorCategory = 'unknown';
       try {
@@ -1563,7 +1563,7 @@ async function drainDeletedQuickLogQueueForActor(input: Readonly<{
             retryCount: retained.retry_count,
           });
         }
-      } catch (_retainError: unknown) {
+      } catch {
         reportQuickLogQueueRecoveryFailure(input.observability, 'replay_state', category);
       }
       reportQuickLogQueueRecoveryFailure(input.observability, 'replay_finalize');
@@ -1602,7 +1602,7 @@ async function drainDeletedQuickLogQueueForActor(input: Readonly<{
         timelineRootKey,
         includeTimeline: true,
       });
-    } catch (_error: unknown) {
+    } catch {
       reportQuickLogQueueRecoveryFailure(input.observability, 'replay_invalidate');
     }
   }
@@ -1629,7 +1629,7 @@ async function returnSupersededQuickLogClaim(input: Readonly<{
       retryAfterAt: retryAfterAt(failedAt, null, input.item.retry_count + 1),
       now: failedAt,
     });
-  } catch (_error: unknown) {
+  } catch {
     reportQuickLogQueueRecoveryFailure(
       input.observability,
       'replay_state',
@@ -1689,7 +1689,7 @@ async function replayClaimedQuickLogQueueItem(input: Readonly<{
     resolution = await input.queue.resolveInFlightSuccess(item.client_event_id, {
       now: new Date().toISOString(),
     });
-  } catch (_error: unknown) {
+  } catch {
     reportQuickLogQueueRecoveryFailure(input.observability, 'replay_finalize');
     return;
   }
@@ -1701,7 +1701,7 @@ async function replayClaimedQuickLogQueueItem(input: Readonly<{
         deletedAt: new Date().toISOString(),
         householdId: item.household_id,
       });
-    } catch (_error: unknown) {
+    } catch {
       reportQuickLogQueueRecoveryFailure(input.observability, 'replay_cleanup');
       return;
     }
@@ -1717,7 +1717,7 @@ async function replayClaimedQuickLogQueueItem(input: Readonly<{
           timelineRootKey,
           includeTimeline: true,
         });
-      } catch (_error: unknown) {
+      } catch {
         reportQuickLogQueueRecoveryFailure(input.observability, 'replay_invalidate');
         return;
       }
@@ -1735,7 +1735,7 @@ async function replayClaimedQuickLogQueueItem(input: Readonly<{
           puppyId: item.puppy_id,
         });
       }
-    } catch (_error: unknown) {
+    } catch {
       reportQuickLogQueueRecoveryFailure(input.observability, 'replay_finalize');
     }
     return;
@@ -1771,7 +1771,7 @@ async function replayClaimedQuickLogQueueItem(input: Readonly<{
         timelineRootKey,
         includeTimeline: true,
       });
-    } catch (_error: unknown) {
+    } catch {
       reportQuickLogQueueRecoveryFailure(input.observability, 'replay_invalidate');
       return;
     }
@@ -1792,7 +1792,7 @@ async function retainFailedAutomaticQuickLogReplay(input: Readonly<{
 
   try {
     latestItem = await input.queue.getByClientEventId(input.item.client_event_id);
-  } catch (_error: unknown) {
+  } catch {
     reportQuickLogQueueRecoveryFailure(input.observability, 'replay_state');
     return;
   }
@@ -1821,7 +1821,7 @@ async function retainFailedAutomaticQuickLogReplay(input: Readonly<{
         errorCategory: decision.category,
         now: failedAt,
       });
-  } catch (_error: unknown) {
+  } catch {
     reportQuickLogQueueRecoveryFailure(input.observability, 'replay_state', decision.category);
     return;
   }
@@ -1841,7 +1841,7 @@ async function retainFailedAutomaticQuickLogReplay(input: Readonly<{
         timelineRootKey: input.timelineRootKey,
         includeTimeline: false,
       });
-    } catch (_error: unknown) {
+    } catch {
       reportQuickLogQueueRecoveryFailure(input.observability, 'replay_invalidate');
     }
   }

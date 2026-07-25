@@ -8,9 +8,18 @@ import type { QuickLogMutationPort } from '@/lib/query/quick-log';
 
 const SYNCED_DELETE_UNDO_DURATION_MS = 5_000;
 
+type SyncedQuickLogDeleteOptions = Readonly<{
+  /**
+   * Suppresses the success "Entry deleted / Undo" snackbar (used by routine un-check, which is a
+   * plain toggle). Failures are still surfaced — a silent delete failure would lose data with no
+   * trace.
+   */
+  silent?: boolean;
+}>;
+
 export function useSyncedQuickLogDeleteUndo(
   mutation: QuickLogMutationPort | undefined,
-): (request: QuickLogEventDeleteRequest) => Promise<void> {
+): (request: QuickLogEventDeleteRequest, options?: SyncedQuickLogDeleteOptions) => Promise<void> {
   const { t } = useAppTranslation();
   const snackbar = useSnackbar();
   const observability = useMemo(() => createObservabilityReporter(), []);
@@ -44,10 +53,12 @@ export function useSyncedQuickLogDeleteUndo(
     activeSnackbarIdsRef.current.clear();
   }, []);
 
-  return useCallback(async (request) => {
+  return useCallback(async (request, options) => {
     if (mutation === undefined) {
       return;
     }
+
+    const silent = options?.silent === true;
 
     if (request.status !== 'synced') {
       mutation.deleteLocal(request.clientEventId);
@@ -112,7 +123,11 @@ export function useSyncedQuickLogDeleteUndo(
     };
 
     await mutation.deleteSynced(restoreRequest)
-      .then(showDeleteUndoSnackbar)
+      .then(() => {
+        if (!silent) {
+          showDeleteUndoSnackbar();
+        }
+      })
       .catch(() => {
         if (currentMutationIdentityRef.current !== mutationIdentity) {
           return;

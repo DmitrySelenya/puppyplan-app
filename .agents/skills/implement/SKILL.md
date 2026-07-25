@@ -21,6 +21,7 @@ If work is non-trivial and no plan exists, use `plan` first unless the user expl
 4. Read source docs referenced by the plan.
 5. Run `git status --short --branch` and note pre-existing changes.
 6. Identify the first incomplete phase and task.
+7. Run **Senior Pass Gate 1 — Contour** (`docs/agents/senior-pass.md`) before writing code: real intent, all states/entry points, edge/lifecycle (midnight, offline round-trip, backdate), which primitive/slot maps to which atlas ID, blast radius, and whether a better approach exists. For a feature, write it and confirm with the owner before coding.
 
 ## Execute
 
@@ -43,6 +44,7 @@ For each task:
 
 Before claiming a phase is complete:
 
+- Run **Senior Pass Gate 2 — Self-review** (`docs/agents/senior-pass.md`) before showing the owner: adversarial diff re-read, eyes on the freshly rebuilt running app (never trust a self-recorded `PASS`), and the pre-flight checklist. For a feature, also dispatch independent fresh eyes — `ux-audit` + `review`/`review-deep`. Present unreviewed work as unreviewed, never as done.
 - Run the area gate. Once available, prefer `npm run check`.
 - If scripts do not exist yet, run the closest available commands and say what is missing.
 - Record command output or concise evidence in the plan/PR/Linear issue.

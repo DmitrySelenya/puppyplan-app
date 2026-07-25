@@ -101,4 +101,5 @@ describe('DiaryHeader', () => {
     );
     expect(screen.getByText('Since yesterday: two naps and a walk.')).toBeTruthy();
   });
+
 });

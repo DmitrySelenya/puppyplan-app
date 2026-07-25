@@ -1,4 +1,3 @@
-import { AccessibilityInfo } from 'react-native';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { i18n } from '@/lib/i18n';
@@ -29,6 +28,17 @@ jest.mock('expo-router', () => ({
     recordId: mockRecordId,
   }),
 }));
+
+jest.mock('react-native', () => {
+  const actual = jest.requireActual<typeof import('react-native')>('react-native');
+
+  return Object.defineProperty(Object.create(actual) as typeof actual, 'AccessibilityInfo', {
+    value: {
+      ...actual.AccessibilityInfo,
+      isReduceMotionEnabled: jest.fn(() => new Promise<boolean>(() => {})),
+    },
+  });
+});
 
 jest.mock('@/lib/query/active-care-context', () => ({
   useActiveCareContext: () => ({
@@ -66,8 +76,6 @@ jest.mock('@/design/primitives/Snackbar', () => ({
 }));
 
 describe('HealthRecordDetailRoute', () => {
-  let reduceMotionProbe: jest.SpyInstance;
-
   beforeEach(async () => {
     mockBack.mockClear();
     mockDeleteMutateAsync.mockReset();
@@ -115,14 +123,7 @@ describe('HealthRecordDetailRoute', () => {
       isError: false,
       isLoading: false,
     });
-    reduceMotionProbe = jest
-      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
-      .mockReturnValue(new Promise<boolean>(() => {}));
     await i18n.changeLanguage('en');
-  });
-
-  afterEach(() => {
-    reduceMotionProbe.mockRestore();
   });
 
   it('AC-PET-DETAIL-3 renders the selected server health record in the detail anatomy', () => {

@@ -10,13 +10,11 @@ import { tokens } from '@/design/tokens';
 import { useAppTranslation } from '@/lib/i18n';
 
 type AccessUnavailableScreenProps = {
-  onAcknowledge?: () => void;
+  onAcknowledge: () => void;
 };
 
-const noop = () => undefined;
-
 export function AccessUnavailableScreen({
-  onAcknowledge = noop,
+  onAcknowledge,
 }: AccessUnavailableScreenProps) {
   const { t } = useAppTranslation();
   const status = t('states.revoked-or-expired.status');

@@ -446,36 +446,36 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('more.privacy.section-your-data'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.privacy.section-account'))).toBeTruthy();
 
-    expect(screen.getByTestId('privacy-analytics-toggle').props.value).toBe(true);
-    fireEvent(screen.getByTestId('privacy-analytics-toggle'), 'valueChange', false);
+    expect(screen.getByTestId('privacy-analytics-toggle').props).toEqual(expect.objectContaining({
+      disabled: true,
+      value: false,
+    }));
+    fireEvent(screen.getByTestId('privacy-analytics-toggle'), 'valueChange', true);
     expect(screen.getByTestId('privacy-analytics-toggle').props.value).toBe(false);
-    expect(screen.getByTestId('privacy-error-reports-toggle').props.value).toBe(true);
-    fireEvent(screen.getByTestId('privacy-error-reports-toggle'), 'valueChange', false);
+    expect(screen.getByTestId('privacy-error-reports-toggle').props).toEqual(expect.objectContaining({
+      disabled: true,
+      value: false,
+    }));
+    fireEvent(screen.getByTestId('privacy-error-reports-toggle'), 'valueChange', true);
     expect(screen.getByTestId('privacy-error-reports-toggle').props.value).toBe(false);
+    expect(screen.getByText(i18n.t('more.privacy.consents-unavailable'))).toBeTruthy();
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.privacy.row-export'),
     }));
     expect(screen.getByTestId('privacy-export-notice')).toBeTruthy();
     expect(screen.getByText(i18n.t('more.privacy.export-sheet'))).toBeTruthy();
+    expect(i18n.t('more.privacy.export-sheet')).toMatch(/No request was created/i);
 
     fireEvent.press(screen.getByRole('button', {
       name: i18n.t('more.privacy.row-delete'),
     }));
-    expect(screen.getByTestId('privacy-delete-confirm')).toBeTruthy();
+    expect(screen.getByTestId('privacy-delete-unavailable')).toBeTruthy();
     expect(screen.getByText(i18n.t('more.privacy.delete-sheet.body'))).toBeTruthy();
-    expect(screen.getByTestId('privacy-delete-confirm-action').props.accessibilityState.disabled).toBe(true);
-
-    fireEvent.changeText(
-      screen.getByTestId('privacy-delete-confirm-input'),
-      i18n.t('more.privacy.delete-sheet.confirm-input-word'),
-    );
-    expect(screen.getByTestId('privacy-delete-confirm-action').props.accessibilityState.disabled).toBe(false);
-    fireEvent.press(screen.getByTestId('privacy-delete-confirm-action'));
-
     expect(screen.queryByTestId('privacy-delete-confirm')).toBeNull();
-    expect(screen.getByTestId('privacy-delete-requested')).toBeTruthy();
-    expect(screen.getByText(i18n.t('more.privacy.delete-toast'))).toBeTruthy();
+    expect(screen.queryByTestId('privacy-delete-confirm-input')).toBeNull();
+    expect(screen.queryByTestId('privacy-delete-confirm-action')).toBeNull();
+    expect(screen.queryByTestId('privacy-delete-requested')).toBeNull();
   });
 
   it('AC-MORE-PRIVACY-SIGNOUT-1 AC-MORE-PRIVACY-SIGNOUT-2 exposes the real auth sign-out action on Privacy Account', async () => {
@@ -571,13 +571,44 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('more.notifications.push-hint'))).toBeTruthy();
 
     expect(screen.getByText(i18n.t('more.notifications.section-quiet-hours'))).toBeTruthy();
-    expect(screen.getByRole('button', {
+    expect(screen.queryByRole('button', {
       name: i18n.t('more.notifications.quiet-hours-example'),
-    })).toBeTruthy();
+    })).toBeNull();
+    expect(screen.getByText(i18n.t('more.notifications.quiet-hours-unavailable'))).toBeTruthy();
     expect(screen.getByText(i18n.t('more.notifications.section-tz'))).toBeTruthy();
-    expect(screen.getByRole('button', {
+    expect(screen.queryByRole('button', {
       name: i18n.t('more.notifications.tz-example'),
-    })).toBeTruthy();
+    })).toBeNull();
+    expect(screen.getByText(i18n.t('more.notifications.timezone-auto-hint'))).toBeTruthy();
+  });
+
+  it('AC-REM-REVIEW-1 renders the effective timezone instead of the historical example', () => {
+    render(
+      <AppProviders>
+        <NotificationPreferencesScreen
+          preferences={{
+            reminderPushEnabled: true,
+            row: null,
+            timezone: 'Europe/Warsaw',
+            trustedSitterCompletionPushEnabled: true,
+          }}
+        />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText('Europe/Warsaw')).toBeTruthy();
+    expect(screen.queryByText(i18n.t('more.notifications.tz-example'))).toBeNull();
+  });
+
+  it('AC-REM-REVIEW-2 labels quiet hours unavailable without presenting the example as effective', () => {
+    render(
+      <AppProviders>
+        <NotificationPreferencesScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(i18n.t('more.notifications.quiet-hours-unavailable'))).toBeTruthy();
+    expect(screen.queryByText(i18n.t('more.notifications.quiet-hours-example'))).toBeNull();
   });
 
   it('AC-MORE-NOTIF-STATES renders deterministic loading, pending, error, and offline states', () => {
@@ -907,6 +938,27 @@ describe('More settings entries', () => {
     expect(screen.queryByText(/support@example/i)).toBeNull();
   });
 
+  it('AC-MORE-HELP-TOPICS replaces inert rows with one offline-safe guidance card', () => {
+    render(
+      <AppProviders>
+        <HelpSupportScreen />
+      </AppProviders>,
+    );
+
+    const topics = [
+      ['more.help.topic-quick-log', 'more.help.topic-guidance.quick-log'],
+      ['more.help.topic-sharing', 'more.help.topic-guidance.sharing'],
+      ['more.help.topic-privacy', 'more.help.topic-guidance.privacy'],
+    ] as const;
+
+    for (const [titleKey, bodyKey] of topics) {
+      fireEvent.press(screen.getByRole('button', { name: i18n.t(titleKey) }));
+      expect(screen.getAllByTestId('more-help-topic-guidance')).toHaveLength(1);
+      expect(screen.getAllByText(i18n.t(titleKey)).length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText(i18n.t(bodyKey))).toBeTruthy();
+    }
+  });
+
   it('opens a privacy-safe support email draft from the Help screen', async () => {
     render(
       <AppProviders>
@@ -1002,6 +1054,7 @@ describe('More settings entries', () => {
     expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.body'))).toHaveLength(1);
     expect(screen.getByRole('button', { name: i18n.t('sharing.family.manage.invite-cta') })).toBeTruthy();
     expect(screen.queryByText(/@/)).toBeNull();
+    expect(screen.queryByTestId('household-action-unavailable')).toBeNull();
   });
 
   it('AC-SHARE-HOUSEHOLD-INVITES-3 renders live pending invite rows without raw invite data', () => {
@@ -1040,6 +1093,10 @@ describe('More settings entries', () => {
       date: '24 May',
     }))).toBeNull();
     expect(screen.queryByText(/A1b2|recipient-hash|@|token/i)).toBeNull();
+    expect(screen.getByRole('button', {
+      name: i18n.t('today.history.item-actions'),
+    })).toBeTruthy();
+    expect(screen.queryByTestId('household-action-unavailable')).toBeNull();
   });
 
   it('PUP-42 creates a transient caregiver invite link and copies the exact deep link', async () => {
@@ -1289,6 +1346,13 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('sharing.sitter.disclosure'))).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('sharing.sitter.enable-cta') })).toBeTruthy();
     expect(screen.queryByText(/@|token/i)).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.sitter.enable-cta'),
+    }));
+    expect(screen.getByTestId('sitter-mode-unavailable')).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.unavailable-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.sitter.unavailable-body'))).toBeTruthy();
   });
 
   it('AC-SITTER-STATES renders compact sitter mode state templates for native handoff', () => {
@@ -1339,6 +1403,25 @@ describe('More settings entries', () => {
     expect(screen.getByText(i18n.t('paywall.legal'))).toBeTruthy();
     expect(screen.getByText(i18n.t('paywall.soft-lock-note'))).toBeTruthy();
     expect(screen.queryByText(/RevenueCat/i)).toBeNull();
+
+    const yearly = screen.getByRole('radio', { name: i18n.t('paywall.plan-yearly-a11y') });
+    const monthly = screen.getByRole('radio', { name: i18n.t('paywall.plan-monthly') });
+    expect(yearly.props.accessibilityState.selected).toBe(true);
+    expect(monthly.props.accessibilityState.selected).toBe(false);
+    fireEvent.press(monthly);
+    expect(screen.getByRole('radio', {
+      name: i18n.t('paywall.plan-monthly'),
+    }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getByRole('radio', {
+      name: i18n.t('paywall.plan-yearly-a11y'),
+    }).props.accessibilityState.selected).toBe(false);
+
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('paywall.primary') }));
+    expect(screen.getByTestId('paywall-purchase-unavailable')).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.unavailable-title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('paywall.unavailable-body'))).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: i18n.t('paywall.secondary') }));
+    expect(screen.getAllByTestId('paywall-purchase-unavailable')).toHaveLength(1);
   });
 
   it('renders the day-30 soft-lock paywall state with export still reachable', () => {

@@ -371,9 +371,6 @@ describe('Today core card rendering', () => {
     expect(hero.props.accessibilityRole).toBe('summary');
     expect(screen.getAllByTestId('diary-info-hero')).toHaveLength(1);
     expect(screen.getByText(i18n.t('today.hero.first-day.title'))).toBeTruthy();
-    expect(screen.getByRole('button', {
-      name: i18n.t('today.hero.first-day.primary'),
-    })).toBeTruthy();
 
     const tree = JSON.stringify(toJSON());
     const heroIndex = tree.indexOf('diary-info-hero');
@@ -395,7 +392,7 @@ describe('Today core card rendering', () => {
     expect(screen.getAllByText(i18n.t('today.states.loading.title')).length).toBeGreaterThan(0);
   });
 
-  it('wires the hero primary CTA to the Quick Log action', async () => {
+  it('renders the Diary hero as guidance without a redundant primary CTA', async () => {
     renderWithQuery(
       <TodayScreen
         careContext={careContext}
@@ -408,11 +405,10 @@ describe('Today core card rendering', () => {
       expect(screen.getByText(i18n.t('today.hero.first-day.title'))).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('today.hero.first-day.primary'),
-    }));
-
-    expect(openQuickLog).toHaveBeenCalledTimes(1);
+    // The hero CTA duplicated the "+" FAB (both opened Quick Log) and was removed so the
+    // FAB is the single add entry point. "Start" was the old first-day CTA label (suite forces EN).
+    expect(screen.queryByRole('button', { name: 'Start' })).toBeNull();
+    expect(openQuickLog).not.toHaveBeenCalled();
   });
 
   it('renders the design first-day plan instead of a separate empty card without events', async () => {
@@ -629,7 +625,7 @@ describe('Today core card rendering', () => {
     expect(screen.getByLabelText(`${i18n.t('today.states.offline-read.title')}. ${i18n.t('today.states.offline-read.body')}`)).toBeTruthy();
   });
 
-  it('renders the pending-write state when local care events are waiting to sync', async () => {
+  it('PUP-38-B keeps a background pending write off the heavy status card (row carries its own pending label)', async () => {
     mockListEvents.mockResolvedValue([]);
     const { queryClient } = renderWithQuery(
       <TodayScreen
@@ -650,11 +646,14 @@ describe('Today core card rendering', () => {
       ]);
     });
 
+    // The pending row shows its own inline status; the header shows no static sync dot...
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('today.states.pending-write.title'))).toBeTruthy();
+      expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
     });
-    expect(screen.getByText(i18n.t('today.states.pending-write.status'))).toBeTruthy();
-    expect(screen.getByLabelText(`${i18n.t('today.states.pending-write.title')}. ${i18n.t('today.states.pending-write.body')}`)).toBeTruthy();
+    expect(screen.queryByTestId('diary-sync-indicator')).toBeNull();
+    // ...and the heavy "Идёт синхронизация" title/body card never appears for a background write.
+    expect(screen.queryByText(i18n.t('today.states.pending-write.title'))).toBeNull();
+    expect(screen.queryByText(i18n.t('today.states.pending-write.body'))).toBeNull();
   });
 
   it('renders the synthetic pending-write Diary state without needing queued local rows', async () => {
@@ -1902,6 +1901,59 @@ describe('Today core card rendering', () => {
     }));
   });
 
+  it('PUP-38-A routes un-check through the silent onUncheck handler when provided', async () => {
+    const onUncheck = jest.fn();
+    const onDelete = jest.fn();
+    mockListEvents.mockResolvedValue([
+      createRow({
+        client_event_id: 'evt_00000000-0000-4000-8000-000000002714',
+        event_type: 'walk',
+        occurred_at: '2026-06-12T10:12:00.000Z',
+        payload: {},
+      }),
+    ]);
+
+    renderWithQuery(
+      <TodayScreen
+        actions={{ onDelete, onUncheck }}
+        careContext={careContext}
+        dayModel={createDayModel([
+          createPlannedItem({
+            actualAt: '2026-06-12T10:12:00.000Z',
+            clientEventId: 'evt_00000000-0000-4000-8000-000000002714',
+            displayAt: '2026-06-12T10:00:00.000Z',
+            plannedAt: '2026-06-12T10:00:00.000Z',
+            reminderId: '00000000-0000-4000-8000-000000002705',
+            scheduledFor: '2026-06-12T10:00:00.000Z',
+            status: 'done',
+            time: '10:00',
+            trackerId: 'walk',
+          }),
+        ])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t('today.plan.uncheck')).props.accessibilityState,
+      ).toMatchObject({ disabled: false });
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole('checkbox', { name: i18n.t('today.plan.uncheck') }));
+      await Promise.resolve();
+    });
+
+    // Un-check must use the silent handler; the entry-deleting onDelete path is not taken.
+    expect(onUncheck).toHaveBeenCalledWith(expect.objectContaining({
+      clientEventId: 'evt_00000000-0000-4000-8000-000000002714',
+    }));
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
   it('AC-P33-UNCHECK-6 does not delete the linked event twice when the checkbox is tapped twice', async () => {
     // The row stays `done` until the delete settles and the day model catches up, so a second tap
     // in that window would otherwise fire a second delete at the same event.
@@ -2061,7 +2113,7 @@ describe('Today core card rendering', () => {
     const failing = jest.fn().mockRejectedValue(new Error('offline'));
     const actualLabel = i18n.t('today.plan.actual-template', { time: '10:12 AM' });
     const failureLabel = i18n.t('today.plan.check-failed');
-    const committedFrames: Array<Readonly<{ actual: boolean; failure: boolean }>> = [];
+    const committedFrames: Readonly<{ actual: boolean; failure: boolean }>[] = [];
     let observeCommits = false;
     const observeCommit = () => {
       if (!observeCommits) return;
@@ -2197,12 +2249,51 @@ describe('Today core card rendering', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(i18n.t('today.states.pending-write.title'))).toBeTruthy();
+      expect(screen.getByText(i18n.t('timeline.pills.pending'))).toBeTruthy();
     });
     expect(screen.queryByText(i18n.t('today.plan.actual-template', {
       time: '10:12 AM',
     }))).toBeNull();
     expect(screen.queryByText(i18n.t('timeline.pills.synced'))).toBeNull();
+  });
+
+  it('PUP-38-B spins the routine checkbox while its check-off write is still syncing', async () => {
+    const linkedClientEventId = 'evt_00000000-0000-4000-8000-000000002720';
+    const reminderId = 'rem_00000000-0000-4000-8000-000000002721';
+    const { queryClient } = renderWithQuery(
+      <TodayScreen
+        actions={{ onDelete: jest.fn(), onRetry: jest.fn() }}
+        careContext={careContext}
+        dayModel={createDayModel([createPlannedItem({
+          actualAt: '2026-06-12T10:12:00.000Z',
+          clientEventId: linkedClientEventId,
+          reminderId,
+          status: 'done',
+        })])}
+        dayModelStatus="ready"
+        onCheckOff={jest.fn()}
+        openTimeline={openTimeline}
+      />,
+    );
+
+    act(() => {
+      queryClient.setQueryData(todayTimelineKey(), [createRow({
+        client_event_id: linkedClientEventId,
+        localSync: {
+          state: 'pending_local',
+          category: null,
+          retryCount: 0,
+        },
+        occurred_at: '2026-06-12T10:12:00.000Z',
+      })]);
+    });
+
+    // The tapped checkbox itself shows the spinner and reads busy until the write settles.
+    await waitFor(() => {
+      expect(screen.getByTestId(`diary-check-off-${reminderId}-spinner`)).toBeTruthy();
+    });
+    expect(screen.getByTestId(`diary-check-off-${reminderId}`).props.accessibilityState.busy)
+      .toBe(true);
   });
 
   it.each(['network_unavailable', 'permission_denied'] as const)(

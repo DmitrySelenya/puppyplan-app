@@ -19,11 +19,9 @@ import {
   retryLocalQuickLogEvent,
   useQuickLogMutationPort,
   type QuickLogCachedEventRow,
-} from '@/lib/query/quick-log';
-import type {
-  QuickLogDetailedMutationVariables,
-  QuickLogMutationPort,
-  QuickLogMutationPortUpdateDetailsRequest,
+  type QuickLogDetailedMutationVariables,
+  type QuickLogMutationPort,
+  type QuickLogMutationPortUpdateDetailsRequest,
 } from '@/lib/query/quick-log';
 import * as quickLogActorVisibility from '@/lib/query/quick-log-actor-visibility';
 import { useQuickLogCachedRows } from '@/lib/query/useQuickLogCachedRows';
@@ -5121,7 +5119,8 @@ describe('useQuickLogMutationPort async failures', () => {
       const authoritativeSentinelBytes = JSON.stringify(authoritativeSentinel);
       const harness = createRecoveryQueueHarness([item], { claimEnabled: false });
       const queryClient = createPuppyPlanQueryClient();
-      const wrapper = createQueryClientWrapper(queryClient);
+      const mutationWrapper = createQueryClientWrapper(queryClient);
+      const readWrapper = createPlainQueryClientWrapper(queryClient);
       const timelineRootKey = queryKeys.events.timelineRoot(item.household_id, item.puppy_id);
       const canonicalTimelineKey = queryKeys.events.timeline(item.household_id, item.puppy_id);
       const canonicalDayTimelineKey = queryKeys.events.timeline(item.household_id, item.puppy_id, {
@@ -5143,7 +5142,7 @@ describe('useQuickLogMutationPort async failures', () => {
 
       mockOpenQuickLogQueueStorage.mockResolvedValue(harness.storage);
       mockListEvents.mockResolvedValue([durableDisplayRow]);
-      const port = renderHook(() => useQuickLogMutationPort(), { wrapper });
+      const port = renderHook(() => useQuickLogMutationPort(), { wrapper: mutationWrapper });
       await waitFor(() => expect(port.result.current.status).toBe('ready'));
       const readTargetRows = (queryKey: readonly unknown[]): readonly QuickLogCachedEventRow[] =>
         (queryClient.getQueryData<QuickLogCachedEventRow[]>(queryKey) ?? [])
@@ -5167,7 +5166,7 @@ describe('useQuickLogMutationPort async failures', () => {
           from: '2026-07-16',
           to: '2026-07-16',
         }),
-        { wrapper },
+        { wrapper: readWrapper },
       );
       await waitFor(() => expect(timeline.result.current.status).toBe('ready'));
       await act(async () => {
@@ -5175,10 +5174,14 @@ describe('useQuickLogMutationPort async failures', () => {
       });
       let activeCareContext: typeof deletingActorContext | typeof displayCreatorContext
         = deletingActorContext;
-      const cached = renderHook(() => useQuickLogCachedRows(activeCareContext), { wrapper });
+      const cached = renderHook(
+        () => useQuickLogCachedRows(activeCareContext),
+        { wrapper: readWrapper },
+      );
       const deletingActorRows = cached.result.current
         .filter((row) => row.client_event_id === item.client_event_id)
         .map((row) => JSON.stringify(row));
+      expect(mockOpenQuickLogQueueStorage).toHaveBeenCalledTimes(1);
       activeCareContext = displayCreatorContext;
       cached.rerender(undefined);
       const displayCreatorIds = cached.result.current.map((row) => row.client_event_id);

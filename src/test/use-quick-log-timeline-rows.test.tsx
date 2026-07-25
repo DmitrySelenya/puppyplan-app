@@ -204,7 +204,6 @@ describe('useQuickLogTimelineRows', () => {
       occurred_at: '2026-05-27T09:00:00.000Z',
     });
     let observedRows: readonly QuickLogCachedEventRow[] = [];
-    let observedStatus = '';
 
     queryClient.setQueryData(queryKeys.events.timeline(householdId, puppyId), [localRow], {
       updatedAt: 0,

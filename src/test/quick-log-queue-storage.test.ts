@@ -1194,6 +1194,72 @@ describe('Quick Log queue SQLite storage boundary', () => {
     },
   );
 
+  it('AC-38C-1 lets a re-check resurrect a claimable write after an unsynced un-check', async () => {
+    const executor = new TestQueueSqlExecutor();
+    const storage = createQuickLogQueueStorage(executor);
+
+    // Check a routine off: the deterministic check-off id lands as a pending local write.
+    await storage.enqueue(enqueueInput(), { now: createdAt });
+    // Un-check it before it ever syncs: the same id becomes a terminal deleted_before_sync row.
+    await storage.markDeletedBeforeSync(clientEventId, { now: '2026-05-26T08:00:02.000Z' });
+    await expect(storage.getByClientEventId(clientEventId)).resolves.toMatchObject({
+      state: 'deleted_before_sync',
+    });
+
+    // Re-check the same slot: the deterministic id collides with the lingering delete.
+    const requeued = await storage.enqueue(enqueueInput(), { now: '2026-05-26T08:00:03.000Z' });
+
+    // The latest intent (re-check) must win — a fresh pending_local write, not the stale delete.
+    expect(requeued).toMatchObject({
+      client_event_id: clientEventId,
+      state: 'pending_local',
+    });
+    // And it must be claimable so it actually reaches the server (no stuck-until-restart).
+    await expect(storage.claimNextReadyToSend({
+      createdBy,
+      now: '2099-05-26T08:00:00.000Z',
+    })).resolves.toMatchObject({
+      client_event_id: clientEventId,
+      state: 'sending',
+    });
+    expect(executor.rows.size).toBe(1);
+  });
+
+  it.each([
+    { label: 'household_id', override: { household_id: '00000000-0000-4000-8000-000000000042' } },
+    { label: 'puppy_id', override: { puppy_id: '00000000-0000-4000-8000-000000000043' } },
+    { label: 'event_type', override: { event_type: 'potty', payload: { subtype: 'outside' } } },
+    { label: 'payload_version', override: { payload_version: 2 } },
+    { label: 'occurred_at', override: { occurred_at: '2026-05-26T08:00:30.000Z' } },
+  ])(
+    'EC-38C-1 rejects a re-check colliding with a deleted_before_sync row on mismatched $label',
+    async ({ override }) => {
+      const executor = new TestQueueSqlExecutor();
+      const storage = createQuickLogQueueStorage(executor);
+
+      await storage.enqueue(enqueueInput(), { now: createdAt });
+      await storage.markDeletedBeforeSync(clientEventId, { now: '2026-05-26T08:00:02.000Z' });
+      const deletedRow = executor.rows.get(clientEventId);
+      if (deletedRow === undefined) throw new Error('Expected a synthetic deleted row');
+
+      const outcome = await storage.enqueue(enqueueInput(override), {
+        now: '2026-05-26T08:00:03.000Z',
+      }).then(
+        () => ({ status: 'accepted' as const }),
+        (error: unknown) => ({ error, status: 'rejected' as const }),
+      );
+
+      expect(outcome).toEqual({ error: expect.any(Error), status: 'rejected' });
+      // The delete intent stays intact and non-insertable; nothing is silently clobbered.
+      expect(executor.rows.size).toBe(1);
+      expect(executor.rows.get(clientEventId)).toEqual(deletedRow);
+      await expect(storage.claimNextReadyToSend({
+        createdBy,
+        now: '2099-05-26T08:00:00.000Z',
+      })).resolves.toBeNull();
+    },
+  );
+
   it('AC-3/AC-4: persists and retries a v2 observation without changing its note or time', async () => {
     const executor = new TestQueueSqlExecutor();
     const storage = createQuickLogQueueStorage(executor);
@@ -1571,7 +1637,7 @@ describe('Quick Log queue SQLite storage boundary', () => {
     });
   });
 
-  it('keeps enqueue idempotent by client_event_id without overwriting failed or deleted rows', async () => {
+  it('keeps enqueue idempotent over a failed row but lets a re-check supersede an un-synced delete', async () => {
     const executor = new TestQueueSqlExecutor();
     const storage = createQuickLogQueueStorage(executor);
 
@@ -1602,6 +1668,8 @@ describe('Quick Log queue SQLite storage boundary', () => {
       last_error_category: 'request_timeout',
     });
 
+    // Un-sync-deleting then re-checking the same deterministic id must revive the write, not stay
+    // stuck on the terminal delete (the on-device "won't re-check until restart" regression).
     await storage.markDeletedBeforeSync(clientEventId, {
       now: '2026-05-26T08:00:06.000Z',
     });
@@ -1610,7 +1678,7 @@ describe('Quick Log queue SQLite storage boundary', () => {
     });
 
     expect(await storage.getByClientEventId(clientEventId)).toMatchObject({
-      state: 'deleted_before_sync',
+      state: 'pending_local',
       payload: {
         amount: 'meal',
       },

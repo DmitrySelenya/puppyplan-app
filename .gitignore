@@ -74,6 +74,7 @@ DerivedData/
 # Agent / MCP local state
 .mcp.json
 .codex/
+.superpowers/
 .claude/work/
 .claude/settings.local.json
 .supergoal/

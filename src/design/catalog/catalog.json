@@ -65,7 +65,7 @@
       "source": "src/design/primitives/Avatar.tsx",
       "propsType": "AvatarProps",
       "tests": ["src/test/design-primitives.render.test.tsx", "src/test/diary-header.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "Button",
@@ -177,7 +177,7 @@
       "source": "src/design/primitives/FAB.tsx",
       "propsType": "FABProps",
       "tests": ["src/test/design-primitives.render.test.tsx", "src/test/onboarding-flow.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "FactCard",
@@ -209,7 +209,7 @@
       "source": "src/design/primitives/IconButton.tsx",
       "propsType": "IconButtonProps",
       "tests": ["src/test/design-primitives.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "IconChip",
@@ -289,7 +289,7 @@
       "source": "src/design/primitives/PendingDot.tsx",
       "propsType": "PendingDotProps",
       "tests": ["src/test/design-primitives.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "PuppyHeader",
@@ -304,8 +304,8 @@
       "related": ["Avatar", "ScreenHeader"],
       "source": "src/design/primitives/PuppyHeader.tsx",
       "propsType": "PuppyHeaderProps",
-      "tests": [],
-      "gallery": []
+      "tests": ["src/test/design-primitives.render.test.tsx"],
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "RoutineCard",
@@ -337,7 +337,7 @@
       "source": "src/design/primitives/RoutineLifecycleMenu.tsx",
       "propsType": "RoutineLifecycleMenuProps",
       "tests": ["src/test/today-core.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "Screen",
@@ -369,7 +369,7 @@
       "source": "src/design/primitives/ScreenHeader.tsx",
       "propsType": "ScreenHeaderProps",
       "tests": ["src/test/screen-header.render.test.tsx", "src/test/design-primitives.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "SectionHeader",
@@ -417,7 +417,7 @@
       "source": "src/design/primitives/SheetHeader.tsx",
       "propsType": "SheetHeaderProps",
       "tests": ["src/test/design-primitives.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "SheetSurface",
@@ -529,7 +529,7 @@
       "source": "src/design/primitives/TimeGutter.tsx",
       "propsType": "TimeGutterProps",
       "tests": ["src/test/diary-primitives.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "Toggle",
@@ -545,7 +545,7 @@
       "source": "src/design/primitives/Toggle.tsx",
       "propsType": "ToggleProps",
       "tests": ["src/test/toggle.render.test.tsx", "src/test/design-primitives.render.test.tsx", "src/test/quick-trackers-settings.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "Touchable",
@@ -561,7 +561,7 @@
       "source": "src/design/primitives/Touchable.tsx",
       "propsType": "TouchableProps",
       "tests": ["src/test/design-primitives.render.test.tsx", "src/test/capsule-tab-bar.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     },
     {
       "name": "TrackerTile",
@@ -609,7 +609,7 @@
       "source": "src/design/primitives/WhenPicker.tsx",
       "propsType": "WhenPickerProps",
       "tests": ["src/test/when-picker.render.test.tsx"],
-      "gallery": []
+      "gallery": ["src/features/_dev/design-gallery/DesignGalleryScreen.tsx"]
     }
   ]
 }

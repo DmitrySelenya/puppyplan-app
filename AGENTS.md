@@ -179,9 +179,26 @@ Use this shape for non-trivial tasks:
 - **Likely files:** expected paths to touch
 - **Verification:** commands, screenshots, RLS tests, migration checks, or manual flows required
 
+## Senior Pass
+
+Every implementation task runs the Senior Pass (`docs/agents/senior-pass.md`), sized to the task:
+
+- **Gate 1 — Contour (before code):** think the whole contour, not the literal request — real intent,
+  all states/entry points, edge/lifecycle (midnight, offline round-trip, backdate), which
+  primitive/slot maps to which atlas ID, blast radius, and whether a better approach exists. For a
+  feature, write it and show the owner before coding; for medium work, run it in your head.
+- **Gate 2 — Senior self-review (before showing the owner):** never hand over work you have not
+  adversarially re-read and looked at on the running app, without trusting your own `PASS`. Features
+  also get independent fresh eyes (`ux-audit` + `review`/`review-deep`).
+
+Trivial edits skip the gates but are still built at senior level. Keep the living pre-flight
+checklist in `docs/agents/senior-pass.md` current: every finishing iteration the owner still has to
+ask for becomes a new checklist line with its precedent.
+
 ## Definition Of Done
 
 - Acceptance criteria are met.
+- The Senior Pass (`docs/agents/senior-pass.md`) was run at the task's size: Gate 1 contour before code, Gate 2 self-review before hand-off, and — for features — independent `ux-audit` + `review`/`review-deep`.
 - The tracked Linear issue reflects the current status, completed checklist items, blockers/dependencies, and verification evidence.
 - Relevant architecture docs, ADRs, diagrams, contracts, migrations, generated types, i18n keys, and tests are updated.
 - No PII or secrets are exposed in logs, analytics, fixtures, docs, screenshots, or PR text.

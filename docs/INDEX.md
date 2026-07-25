@@ -25,6 +25,7 @@ Always start with `AGENTS.md`, then `docs/agents/context-engineering.md`, then t
 | Feature flags / entitlements | `docs/architecture/14-feature-flags-and-entitlements.md`, `docs/architecture/adr/0013-feature-flags-and-entitlements.md` | `plan` |
 | iOS / Android platform / release | `docs/architecture/15-ios-runtime-and-compliance.md`, `docs/architecture/16-android-platform-and-play-gates.md`, `docs/architecture/17-testing-ci-release.md` | — |
 | Repo structure / ownership | `docs/architecture/02-repo-structure-and-ownership.md`, `docs/architecture/OWNERSHIP.md` | — |
+| Implementing any edit or feature (contour before code, self-review before hand-off) | `docs/agents/senior-pass.md` | `implement` |
 | Planning any non-trivial work | `docs/plans/README.md`, `docs/plans/TEMPLATE-feature-plan.md` | `plan` |
 | Reviewing changes / PRs | — | `review` / `review-deep` |
 | Adding/changing behavior with acceptance criteria | — | `tdd` |

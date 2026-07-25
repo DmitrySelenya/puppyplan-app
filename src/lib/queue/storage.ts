@@ -493,6 +493,22 @@ async function enqueueQueueItem(
   });
 
   return runExclusive(executor, async (transaction) => {
+    const existingItem = await getQueueItem(transaction, item.client_event_id);
+
+    // A re-check reuses the deterministic check-off id of an un-check whose delete has not yet
+    // drained, so the deterministic id collides with a terminal `deleted_before_sync` row. The
+    // latest intent (re-check) supersedes the pending delete — mirroring `enqueueDeletedQueueItem`
+    // in the opposite direction — otherwise `INSERT OR IGNORE` silently returns the stale delete
+    // and the re-check gets stuck until the app restarts. Any other existing state keeps the
+    // idempotent no-op that dedupes an accidental double tap.
+    if (existingItem !== null && existingItem.state === 'deleted_before_sync') {
+      assertMatchingQueueClientEventIdentity(existingItem, item);
+      await transaction.runAsync(
+        `DELETE FROM ${QUICK_LOG_QUEUE_TABLE_NAME} WHERE client_event_id = ?`,
+        [item.client_event_id],
+      );
+    }
+
     await transaction.runAsync(
       `INSERT OR IGNORE INTO ${QUICK_LOG_QUEUE_TABLE_NAME} (
         client_event_id,
@@ -517,6 +533,21 @@ async function enqueueQueueItem(
   });
 }
 
+function assertMatchingQueueClientEventIdentity(
+  existingItem: QuickLogStoredQueueItem,
+  item: QuickLogStoredQueueItem,
+): void {
+  if (
+    existingItem.household_id !== item.household_id
+    || existingItem.puppy_id !== item.puppy_id
+    || existingItem.event_type !== item.event_type
+    || existingItem.payload_version !== item.payload_version
+    || existingItem.occurred_at !== item.occurred_at
+  ) {
+    throw new Error('Quick Log queue client event identity does not match');
+  }
+}
+
 async function enqueueDeletedQueueItem(
   executor: QuickLogQueueSqlExecutor,
   input: unknown,
@@ -536,17 +567,8 @@ async function enqueueDeletedQueueItem(
 
   return runExclusive(executor, async (transaction) => {
     const existingItem = await getQueueItem(transaction, item.client_event_id);
-    if (
-      existingItem !== null
-      && (
-        existingItem.household_id !== item.household_id
-        || existingItem.puppy_id !== item.puppy_id
-        || existingItem.event_type !== item.event_type
-        || existingItem.payload_version !== item.payload_version
-        || existingItem.occurred_at !== item.occurred_at
-      )
-    ) {
-      throw new Error('Quick Log queue client event identity does not match');
+    if (existingItem !== null) {
+      assertMatchingQueueClientEventIdentity(existingItem, item);
     }
 
     // A deterministic client id can already belong to an insert/retry state. Replacing that row

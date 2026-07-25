@@ -74,14 +74,17 @@ export function ListRow({
   const content = (
     <>
       {leading ? <View style={styles.slot}>{leading}</View> : null}
-      <View style={styles.copy}>
+      <View style={[styles.copy, usesAccessibilityLayout ? null : styles.compactCopy]}>
         <AppText
           numberOfLines={usesAccessibilityLayout ? undefined : titleNumberOfLines}
           variant="headline">
           {title}
         </AppText>
         {subtitle ? (
-          <AppText numberOfLines={2} tone="secondary" variant="subheadline">
+          <AppText
+            numberOfLines={usesAccessibilityLayout ? undefined : 2}
+            tone="secondary"
+            variant="subheadline">
             {subtitle}
           </AppText>
         ) : null}
@@ -140,10 +143,12 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   copy: {
-    flex: 1,
     flexShrink: 1,
     gap: tokens.space[1],
     minWidth: 0,
+  },
+  compactCopy: {
+    flex: 1,
   },
   disabled: {
     opacity: 0.4,

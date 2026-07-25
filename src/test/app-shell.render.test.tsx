@@ -43,6 +43,7 @@ function SnackbarProbe() {
   useEffect(() => {
     snackbar.showSnackbar({
       accessibilityLabel: 'Quick Log saved.',
+      durationMs: 60_000,
       id: 'app-shell-snackbar-probe',
       message: 'Logged · Feeding',
       tone: 'success',
@@ -166,7 +167,8 @@ describe('app shell screens', () => {
   });
 
   it('renders neutral invite/share unavailable copy without token values', () => {
-    renderWithProviders(<AccessUnavailableScreen />);
+    const onAcknowledge = jest.fn();
+    renderWithProviders(<AccessUnavailableScreen onAcknowledge={onAcknowledge} />);
 
     expect(screen.getByText(i18n.t('states.revoked-or-expired.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('states.revoked-or-expired.body-long'))).toBeTruthy();
@@ -177,6 +179,10 @@ describe('app shell screens', () => {
     expect(screen.getByText(i18n.t('states.revoked-or-expired.next-step-body'))).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('states.revoked-or-expired.action') })).toBeTruthy();
     expect(screen.queryByText(/\[[^\]]*token[^\]]*\]/i)).toBeNull();
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('states.revoked-or-expired.action'),
+    }));
+    expect(onAcknowledge).toHaveBeenCalledTimes(1);
   });
 
   it('renders caregiver-side accept invite anatomy without exposing the token', () => {

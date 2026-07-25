@@ -477,7 +477,9 @@ describe('RemindersHubRoute', () => {
         'reminder-row-icon-00000000-0000-4000-8000-000000005114',
       ).props.style);
       const expiredGlyphStroke = getRowIconGlyphStroke('00000000-0000-4000-8000-000000005114');
-      expect(expiredSubtitle.props.numberOfLines).toBe(2);
+      // jest-expo reports fontScale 2 by default, so ListRow must preserve the complete
+      // accessibility subtitle instead of applying the compact two-line clamp.
+      expect(expiredSubtitle.props.numberOfLines).toBeUndefined();
       expect(expiredQuietStyle).not.toEqual(futureQuietStyle);
       expect(expiredGlyphStroke).not.toBe(futureGlyphStroke);
       expect(screen.getByTestId('reminder-row-toggle-00000000-0000-4000-8000-000000005114').props.disabled)

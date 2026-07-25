@@ -242,6 +242,7 @@ function getHealthMainState(reviewState: HealthMainReviewState | undefined): Hea
 
 function HealthVetPrepCard() {
   const { t } = useAppTranslation();
+  const [addItemNoticeVisible, setAddItemNoticeVisible] = useState(false);
   const [completedChecklistItems, setCompletedChecklistItems] = useState(
     () => healthVetPrepChecklistKeys.map(() => false),
   );
@@ -300,9 +301,18 @@ function HealthVetPrepCard() {
         </Stack>
         <Button
           label={t('health.vet-prep.add-item')}
-          onPress={() => undefined}
+          onPress={() => setAddItemNoticeVisible(true)}
           variant="tertiary"
         />
+        {addItemNoticeVisible ? (
+          <AppText
+            accessibilityLiveRegion="polite"
+            testID="health-vet-prep-add-unavailable"
+            tone="secondary"
+            variant="footnote">
+            {t('health.vet-prep.add-item-unavailable')}
+          </AppText>
+        ) : null}
         <AppText tone="tertiary" variant="footnote">{t('health.vet-prep.hint')}</AppText>
       </Stack>
     </Card>

@@ -56,10 +56,17 @@ export type QuickLogEventEditRequest = Readonly<{
 
 export type QuickLogEventActionHandlers = Readonly<{
   /**
-   * Resolves once the delete has settled. Fact rows fire and forget; the Diary's un-check awaits it
-   * so a second tap cannot fire a second delete against the row the first one is already removing.
+   * Deleting a logged fact. Fact rows fire and forget; resolves once the delete has settled.
+   * Surfaces the "Entry deleted / Undo" snackbar.
    */
   onDelete?: (request: QuickLogEventDeleteRequest) => void | Promise<void>;
+  /**
+   * Taking a routine mark back off. Deletes the auto-created care event exactly like `onDelete`,
+   * but WITHOUT the "Entry deleted / Undo" snackbar — un-checking is a plain toggle, not an entry
+   * deletion, so it stays silent on success (failures are still surfaced). Awaited so a second tap
+   * cannot fire a second delete against the row the first one is already removing.
+   */
+  onUncheck?: (request: QuickLogEventDeleteRequest) => void | Promise<void>;
   onEdit?: (request: QuickLogEventEditRequest) => void;
   onRetry?: (
     clientEventId: string,
