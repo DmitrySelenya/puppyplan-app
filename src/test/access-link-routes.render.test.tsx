@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 
-import InviteTokenRoute from '../../app/invite/[token]';
 import ShareTokenRoute from '../../app/share/[token]';
+import { InviteAcceptScreen } from '@/features/linking/screens/InviteAcceptScreen';
 import { i18n } from '@/lib/i18n';
 import { AppProviders } from '@/lib/providers/AppProviders';
 
@@ -38,20 +38,27 @@ describe('closed access link routes', () => {
   it('shows a neutral unavailable invite without fabricated identity and exits safely', () => {
     render(
       <AppProviders>
-        <InviteTokenRoute />
+        <InviteAcceptScreen
+          inviteToken="synthetic-route-token"
+          onContinueWithoutInvite={() => {
+            mockRouterDismissAll();
+            mockRouterReplace('/diary');
+          }}
+          reviewState="expired"
+        />
       </AppProviders>,
     );
 
-    expect(screen.getByText(i18n.t('states.revoked-or-expired.title'))).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.states.expired.title'))).toBeTruthy();
     expect(screen.queryByText('Owner')).toBeNull();
     expect(screen.queryByText('Puppy')).toBeNull();
     expect(screen.queryByText('synthetic-route-token')).toBeNull();
-    expect(screen.queryByRole('button', {
+    expect(screen.getByRole('button', {
       name: i18n.t('sharing.family.accepted.accept'),
-    })).toBeNull();
+    }).props.accessibilityState.disabled).toBe(true);
 
     fireEvent.press(screen.getByRole('button', {
-      name: i18n.t('states.revoked-or-expired.action'),
+      name: i18n.t('sharing.family.accepted.create-own'),
     }));
     expect(mockRouterDismissAll).toHaveBeenCalledTimes(1);
     expect(mockRouterReplace).toHaveBeenCalledWith('/diary');

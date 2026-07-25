@@ -99,7 +99,7 @@ describe('SignInScreenView', () => {
     await waitFor(() => expect(screen.getByText(i18n.t('auth.errors.verify-failed'))).toBeTruthy());
   });
 
-  it('AC-5 shows the rate-limit copy when the code request is throttled', async () => {
+  it('AC-F13 shows the typed rate-limit state instead of blaming the connection', async () => {
     const actions = {
       ...makeActions(),
       requestCode: jest.fn(async () => {
@@ -111,7 +111,9 @@ describe('SignInScreenView', () => {
     fireEvent.changeText(screen.getByLabelText(i18n.t('auth.email.label')), 'owner@example.com');
     fireEvent.press(screen.getByText(i18n.t('auth.email.cta')));
 
-    await waitFor(() => expect(screen.getByText(i18n.t('auth.errors.rate-limited'))).toBeTruthy());
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('auth.errors.rate-limited'))).toBeTruthy();
+    });
     expect(screen.queryByText(i18n.t('auth.errors.request-failed'))).toBeNull();
   });
 

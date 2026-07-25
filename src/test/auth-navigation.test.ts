@@ -22,6 +22,19 @@ describe('resolveAuthRouteRedirect', () => {
     expect(resolveAuthRouteRedirect('loading', ['(tabs)', 'more'])).toBeNull();
   });
 
+  it('returns an unavailable invite to the neutral fallback screen after OTP', () => {
+    expect(resolveAuthRouteRedirect(
+      'loading',
+      ['sign-in'],
+      'unavailable',
+    )).toBe('/invite/unavailable');
+    expect(resolveAuthRouteRedirect(
+      'loading',
+      ['invite', '[token]'],
+      'unavailable',
+    )).toBeNull();
+  });
+
   it('moves signed-out users away from protected tabs and modals', () => {
     expect(resolveAuthRouteRedirect('signedOut', ['(tabs)', 'more'])).toBe('/sign-in');
     expect(resolveAuthRouteRedirect('signedOut', ['(modals)', 'quick-log'])).toBe('/sign-in');

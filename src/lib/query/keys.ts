@@ -16,7 +16,12 @@ export type QuickLogInvalidationInput = Readonly<{
 
 export const queryKeys = {
   puppy: {
-    active: (userId: string) => ['puppy', 'active', uuidSchema.parse(userId)] as const,
+    active: (userId: string, householdId: string) => [
+      'puppy',
+      'active',
+      uuidSchema.parse(userId),
+      uuidSchema.parse(householdId),
+    ] as const,
     detail: (puppyId: string) => ['puppy', puppyId] as const,
     summary: (householdId: string, puppyId: string) =>
       ['puppy', householdId, puppyId, 'summary'] as const,
@@ -56,8 +61,9 @@ export const queryKeys = {
     records: (puppyId: string) => ['health', 'records', uuidSchema.parse(puppyId)] as const,
   },
   sharing: {
+    householdInvitesRoot: () => ['sharing', 'household-invites'] as const,
     householdInvites: (householdId: string) =>
-      ['sharing', uuidSchema.parse(householdId), 'household-invites'] as const,
+      [...queryKeys.sharing.householdInvitesRoot(), uuidSchema.parse(householdId)] as const,
     list: (householdId: string, puppyId: string) =>
       ['sharing', householdId, puppyId, 'list'] as const,
     preview: (shareLinkId: string) => [

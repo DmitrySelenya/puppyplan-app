@@ -24,6 +24,7 @@ Accepted ADRs for the closed-beta baseline:
 - `adr/0020-v2-ia-diary-pet-more-navigation.md`
 - `adr/0021-durable-local-write-strategy.md`
 - `adr/0022-private-quick-log-details.md`
+- `adr/0023-household-invite-token-sha256.md`
 
 ## Decisions Captured Outside Dedicated ADRs
 

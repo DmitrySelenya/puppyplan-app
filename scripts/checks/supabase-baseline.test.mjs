@@ -19,6 +19,9 @@ const puppyQuickTrackerNonEmptyMigrationPath =
   'supabase/migrations/20260609120000_puppy_quick_tracker_ids_non_empty.sql';
 const eventObservationPayloadV2MigrationPath =
   'supabase/migrations/20260711180000_event_observation_payload_v2.sql';
+const householdInviteAdrPath =
+  'docs/architecture/adr/0023-household-invite-token-sha256.md';
+const adrIndexPath = 'docs/architecture/ADR_INDEX.md';
 const rlsTestPath = 'supabase/tests/rls_baseline.sql';
 const remoteCliPath = 'scripts/supabase/run-remote-cli.mjs';
 const supabaseContractPath = 'src/contracts/supabase.ts';
@@ -61,6 +64,73 @@ function canonicalQuickTrackerMigrationSource() {
   return canonicalQuickTrackerMigrationPaths()
     .map((path) => readFileSync(path, 'utf8'))
     .join('\n');
+}
+
+function householdInviteMigrationPath() {
+  const paths = readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_household_invite_rpcs\.sql$/u.test(filename))
+    .map((filename) => `${migrationDir}/${filename}`);
+
+  assert.equal(
+    paths.length,
+    1,
+    `expected exactly one household invite RPC migration, found ${paths.length}`,
+  );
+
+  return paths[0];
+}
+
+function householdInviteOutcomeMigrationPath() {
+  const paths = readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_household_invite_already_member_outcome\.sql$/u.test(filename))
+    .map((filename) => `${migrationDir}/${filename}`);
+
+  assert.equal(
+    paths.length,
+    1,
+    `expected exactly one household invite outcome migration, found ${paths.length}`,
+  );
+
+  return paths[0];
+}
+
+function bootstrapMembershipResolutionMigrationPath() {
+  const paths = readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_bootstrap_current_user_membership_resolution\.sql$/u.test(filename))
+    .map((filename) => `${migrationDir}/${filename}`);
+
+  assert.equal(
+    paths.length,
+    1,
+    `expected exactly one bootstrap membership resolution migration, found ${paths.length}`,
+  );
+
+  return paths[0];
+}
+
+function bootstrapSerializationMigrationPath() {
+  const paths = readdirSync(migrationDir)
+    .filter((filename) => /^20\d+_bootstrap_current_user_serialization\.sql$/u.test(filename))
+    .map((filename) => `${migrationDir}/${filename}`);
+
+  assert.equal(
+    paths.length,
+    1,
+    `expected exactly one bootstrap serialization migration, found ${paths.length}`,
+  );
+
+  return paths[0];
+}
+
+function namedFunctionBlock(source, functionName) {
+  const match = source.match(
+    new RegExp(
+      `CREATE OR REPLACE FUNCTION public\\.${functionName}\\([\\s\\S]*?\\n\\$\\$;`,
+      'u',
+    ),
+  );
+  assert.ok(match, `missing ${functionName} function`);
+  return match[0];
 }
 
 function selectedTimelineShareScopeHardeningMigrationPath() {
@@ -529,7 +599,7 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
       'accepted trainer selected timeline includes explicitly selected sanitized observation',
     ];
 
-    assert.match(source, /SELECT plan\(126\);/u);
+    assert.match(source, /SELECT plan\(144\);/u);
 
     for (const label of labels) {
       assert.equal(source.split(label).length - 1, 1, `${label} must appear exactly once`);
@@ -627,6 +697,257 @@ describe('Supabase RLS pgTAP coverage guardrails', () => {
         `RLS selected-tracker fixtures still use legacy id: ${rejectedLegacyId}`,
       );
     }
+  });
+
+  it('covers household invite RPC permissions, lifecycle, membership, and hash formats', () => {
+    const source = readFileSync(rlsTestPath, 'utf8');
+    const labels = [
+      'owner can create a 64-character caregiver invite',
+      'create leaves exactly one active household invite',
+      'caregiver cannot create household invites',
+      'non-owner cannot revoke household invites',
+      'owner can revoke household invites',
+      'revoked household invite cannot be accepted',
+      'AC-F1 existing owner keeps actual role and receives already-member outcome',
+      'AC-F1 existing caregiver keeps actual role and receives already-member outcome',
+      'AC-F1 existing viewer keeps actual role and receives already-member outcome',
+      'AC-F1 existing members leave unused household invites unconsumed',
+      'AC-F2 new member receives accepted outcome in owner household as caregiver',
+      'accepting household invite adds caregiver membership',
+      'expired household invite cannot be accepted',
+      'reused household invite is rejected for a different user',
+      'AC-F3 accepted household invite retry returns actual role and already-member outcome',
+      'AC-F3 consumed invite is unavailable after accepted membership is revoked',
+      'invite secret accepts exact lowercase sha256 hash format',
+      'invite secret preserves Argon2id hash compatibility',
+      'authenticated owner cannot directly create household invites',
+    ];
+
+    for (const label of labels) {
+      assert.equal(source.split(label).length - 1, 1, `${label} must appear exactly once`);
+    }
+
+    assert.match(source, /public\.create_household_invite\('caregiver', interval '7 days'\)/u);
+    assert.match(source, /public\.accept_household_invite\(repeat\('a', 64\)\)/u);
+    assert.match(source, /extensions\.digest\(repeat\('a', 64\), 'sha256'\)/u);
+    assert.match(source, /'P4202'/u);
+    assert.match(source, /'P4203'/u);
+    assert.doesNotMatch(source, /argon2id:invite-hash/u);
+  });
+});
+
+describe('PUP-42 Phase 0 household invite migration guardrails', () => {
+  it('defines authenticated-only SECURITY DEFINER RPCs with pinned search paths', () => {
+    const migration = readFileSync(householdInviteMigrationPath(), 'utf8');
+    const expectedSignatures = [
+      [
+        'create_household_invite',
+        /p_role text DEFAULT 'caregiver', p_ttl interval DEFAULT '7 days'/u,
+        /RETURNS TABLE \(token text, expires_at timestamptz\)/u,
+      ],
+      [
+        'accept_household_invite',
+        /p_token text/u,
+        /RETURNS TABLE \(household_id uuid, role text\)/u,
+      ],
+      [
+        'revoke_household_invite',
+        /p_invite_id uuid/u,
+        /RETURNS boolean/u,
+      ],
+    ];
+
+    for (const [name, argumentsPattern, returnPattern] of expectedSignatures) {
+      const block = namedFunctionBlock(migration, name);
+
+      assert.match(block, argumentsPattern);
+      assert.match(block, returnPattern);
+      assert.match(block, /SECURITY DEFINER\s+SET search_path = ''/u);
+      assert.match(block, /auth\.uid\(\)/u);
+      assert.match(
+        migration,
+        new RegExp(`REVOKE ALL ON FUNCTION public\\.${name}\\([^;]+\\) FROM PUBLIC;`, 'u'),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `REVOKE ALL ON FUNCTION public\\.${name}\\([^;]+\\) FROM anon, authenticated;`,
+          'u',
+        ),
+      );
+      assert.match(
+        migration,
+        new RegExp(
+          `GRANT EXECUTE ON FUNCTION public\\.${name}\\([^;]+\\) TO authenticated;`,
+          'u',
+        ),
+      );
+    }
+  });
+
+  it('generates a 256-bit token once and stores only its SHA-256 digest', () => {
+    const migration = readFileSync(householdInviteMigrationPath(), 'utf8');
+    const createBlock = namedFunctionBlock(migration, 'create_household_invite');
+    const acceptBlock = namedFunctionBlock(migration, 'accept_household_invite');
+
+    assert.match(
+      createBlock,
+      /v_token := encode\(extensions\.gen_random_bytes\(32\), 'hex'\);/u,
+    );
+    assert.match(
+      createBlock,
+      /'sha256:' \|\| encode\(extensions\.digest\(v_token, 'sha256'\), 'hex'\)/u,
+    );
+    assert.match(createBlock, /right\(v_token, 4\)/u);
+    assert.match(createBlock, /INSERT INTO public\.invite/u);
+    assert.match(createBlock, /INSERT INTO app_private\.invite_secret/u);
+    assert.match(
+      createBlock,
+      /FROM public\.household AS household[\s\S]*?FOR UPDATE OF household;/u,
+    );
+    assert.doesNotMatch(createBlock, /token_hash\s*\)\s*VALUES\s*\([^)]*\bv_token\b/u);
+    assert.match(
+      acceptBlock,
+      /'sha256:' \|\| encode\(extensions\.digest\(p_token, 'sha256'\), 'hex'\)/u,
+    );
+    assert.match(acceptBlock, /ERRCODE = 'P4201'/u);
+    assert.match(acceptBlock, /ERRCODE = 'P4202'/u);
+    assert.match(acceptBlock, /ERRCODE = 'P4203'/u);
+  });
+
+  it('keeps Argon2 fixtures valid while admitting only exact lowercase SHA-256 digests', () => {
+    const migration = readFileSync(householdInviteMigrationPath(), 'utf8');
+    const source = allMigrationSource();
+    const constraint = latestConstraintBlock(source, 'invite_secret_token_hash_format');
+
+    assert.match(
+      migration,
+      /DROP CONSTRAINT invite_secret_token_hash_format/u,
+    );
+    assert.match(constraint, /argon2id:/u);
+    assert.match(constraint, /\\\$argon2id\\\$/u);
+    assert.match(constraint, /sha256:\[0-9a-f\]\{64\}/u);
+    assert.doesNotMatch(constraint, /\[A-F\]/u);
+  });
+
+  it('records the SHA-256 security decision and indexes ADR-0023', () => {
+    const adr = readFileSync(householdInviteAdrPath, 'utf8');
+    const index = readFileSync(adrIndexPath, 'utf8');
+
+    assert.match(adr, /256[- ]bit CSPRNG/iu);
+    assert.match(adr, /sha-?256/iu);
+    assert.match(adr, /argon2/iu);
+    assert.match(adr, /pgcrypto/iu);
+    assert.match(adr, /plaintext token.*once/iu);
+    assert.match(adr, /ADR-0017/u);
+    assert.match(index, /adr\/0023-household-invite-token-sha256\.md/u);
+  });
+});
+
+describe('PUP-42 follow-up household invite outcome migration guardrails', () => {
+  it('AC-F1 AC-F2 AC-F3: preserves active membership roles and consumes only new-member invites', () => {
+    const migration = readFileSync(householdInviteOutcomeMigrationPath(), 'utf8');
+    const acceptBlock = namedFunctionBlock(migration, 'accept_household_invite');
+    const existingMemberBranch = acceptBlock.match(
+      /IF v_membership_role IS NOT NULL THEN[\s\S]*?RETURN;\s+END IF;/u,
+    )?.[0] ?? '';
+
+    assert.match(
+      migration,
+      /DROP FUNCTION public\.accept_household_invite\(text\);/u,
+    );
+    assert.match(
+      acceptBlock,
+      /RETURNS TABLE \(household_id uuid, role text, outcome text\)/u,
+    );
+    assert.match(acceptBlock, /SECURITY DEFINER\s+SET search_path = ''/u);
+    assert.match(existingMemberBranch, /role := v_membership_role::text;/u);
+    assert.match(existingMemberBranch, /outcome := 'already_member';/u);
+    assert.doesNotMatch(existingMemberBranch, /UPDATE public\.invite/u);
+    assert.match(acceptBlock, /outcome := 'accepted';/u);
+    assert.ok(
+      acceptBlock.indexOf(existingMemberBranch) < acceptBlock.indexOf('UPDATE public.invite'),
+      'existing-member return must happen before invite consumption',
+    );
+    assert.match(
+      migration,
+      /REVOKE ALL ON FUNCTION public\.accept_household_invite\(text\) FROM PUBLIC;/u,
+    );
+    assert.match(
+      migration,
+      /REVOKE ALL ON FUNCTION public\.accept_household_invite\(text\) FROM anon, authenticated;/u,
+    );
+    assert.match(
+      migration,
+      /GRANT EXECUTE ON FUNCTION public\.accept_household_invite\(text\) TO authenticated;/u,
+    );
+  });
+});
+
+describe('PUP-42 cold-start bootstrap migration guardrails', () => {
+  it('reuses accepted memberships and prefers a household with an active puppy', () => {
+    const migration = readFileSync(bootstrapMembershipResolutionMigrationPath(), 'utf8');
+    const bootstrapBlock = namedFunctionBlock(migration, 'bootstrap_current_user');
+    const existingMembershipBranch = bootstrapBlock.match(
+      /IF v_household_id IS NOT NULL THEN[\s\S]*?RETURN;\s+END IF;/u,
+    )?.[0] ?? '';
+
+    assert.match(bootstrapBlock, /RETURNS TABLE \(household_id uuid, created boolean\)/u);
+    assert.match(bootstrapBlock, /SECURITY DEFINER\s+SET search_path = ''/u);
+    assert.match(bootstrapBlock, /hm\.accepted_at IS NOT NULL/u);
+    assert.match(bootstrapBlock, /hm\.revoked_at IS NULL/u);
+    assert.match(
+      bootstrapBlock,
+      /EXISTS \([\s\S]*?FROM public\.puppy p[\s\S]*?p\.deleted_at IS NULL[\s\S]*?\) DESC/u,
+    );
+    assert.match(bootstrapBlock, /hm\.created_at ASC/u);
+    assert.doesNotMatch(bootstrapBlock, /hm\.role = 'owner'/u);
+    assert.match(existingMembershipBranch, /created := false;/u);
+    assert.ok(
+      bootstrapBlock.indexOf(existingMembershipBranch)
+        < bootstrapBlock.indexOf('INSERT INTO public.household'),
+      'an accepted membership must return before household creation',
+    );
+    assert.match(
+      migration,
+      /REVOKE ALL ON FUNCTION public\.bootstrap_current_user\(text\) FROM PUBLIC;/u,
+    );
+    assert.match(
+      migration,
+      /REVOKE ALL ON FUNCTION public\.bootstrap_current_user\(text\) FROM anon, authenticated;/u,
+    );
+    assert.match(
+      migration,
+      /GRANT EXECUTE ON FUNCTION public\.bootstrap_current_user\(text\) TO authenticated;/u,
+    );
+  });
+});
+
+describe('PUP-42 bootstrap serialization migration guardrails', () => {
+  it('AC-F15 serializes bootstrap per authenticated user before membership resolution', () => {
+    const migration = readFileSync(bootstrapSerializationMigrationPath(), 'utf8');
+    const bootstrapBlock = namedFunctionBlock(migration, 'bootstrap_current_user');
+    const lockCall = 'PERFORM pg_catalog.pg_advisory_xact_lock(';
+    const membershipLookup = 'SELECT hm.household_id';
+
+    assert.match(bootstrapBlock, /v_user_id uuid := auth\.uid\(\);/u);
+    assert.match(
+      bootstrapBlock,
+      /PERFORM pg_catalog\.pg_advisory_xact_lock\(\s*pg_catalog\.hashtextextended\(v_user_id::text, 0\)\s*\);/u,
+    );
+    assert.ok(
+      bootstrapBlock.indexOf(lockCall) < bootstrapBlock.indexOf(membershipLookup),
+      'the per-user transaction lock must be acquired before membership resolution',
+    );
+    assert.match(bootstrapBlock, /SECURITY DEFINER\s+SET search_path = ''/u);
+    assert.match(
+      migration,
+      /REVOKE ALL ON FUNCTION public\.bootstrap_current_user\(text\) FROM PUBLIC;/u,
+    );
+    assert.match(
+      migration,
+      /GRANT EXECUTE ON FUNCTION public\.bootstrap_current_user\(text\) TO authenticated;/u,
+    );
   });
 });
 

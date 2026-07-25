@@ -1,19 +1,16 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
-import { InviteAcceptScreen } from '@/features/linking/screens/InviteAcceptScreen';
+import { ConnectedInviteAcceptScreen } from '@/features/linking/screens/InviteAcceptScreen';
 
 export default function InviteTokenRoute() {
   const { token } = useLocalSearchParams<{ token?: string | string[] }>();
-  const router = useRouter();
   const inviteToken = Array.isArray(token) ? token[0] : token;
 
   return (
-    <InviteAcceptScreen
-      inviteToken={inviteToken}
-      onAcknowledge={() => {
-        router.dismissAll();
-        router.replace('/diary');
-      }}
+    <ConnectedInviteAcceptScreen
+      initialInviteToken={inviteToken}
+      onAccepted={() => router.replace('/diary')}
+      onOpenSignIn={() => router.push('/sign-in')}
     />
   );
 }

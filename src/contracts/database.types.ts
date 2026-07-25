@@ -894,12 +894,27 @@ export type Database = {
       }
     }
     Functions: {
+      accept_household_invite: {
+        Args: { p_token: string }
+        Returns: {
+          household_id: string
+          outcome: string
+          role: string
+        }[]
+      }
       active_share_link_ids: { Args: never; Returns: string[] }
       bootstrap_current_user: {
         Args: { p_display_name?: string }
         Returns: {
           created: boolean
           household_id: string
+        }[]
+      }
+      create_household_invite: {
+        Args: { p_role?: string; p_ttl?: string }
+        Returns: {
+          expires_at: string
+          token: string
         }[]
       }
       current_household_ids: { Args: never; Returns: string[] }
@@ -977,6 +992,10 @@ export type Database = {
       }
       quick_tracker_ids_are_unique: {
         Args: { tracker_ids: string[] }
+        Returns: boolean
+      }
+      revoke_household_invite: {
+        Args: { p_invite_id: string }
         Returns: boolean
       }
       share_link_has_scope: {

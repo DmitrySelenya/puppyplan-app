@@ -44,16 +44,20 @@ export default function RootLayout() {
 }
 
 function AuthRouteGate() {
-  const { status } = useAuth();
+  const { householdInviteStatus, status } = useAuth();
   const segments = useSegments();
 
   useEffect(() => {
-    const redirect = resolveAuthRouteRedirect(status, segments);
+    const redirect = resolveAuthRouteRedirect(
+      status,
+      segments,
+      householdInviteStatus,
+    );
 
     if (redirect) {
       router.replace(redirect);
     }
-  }, [segments, status]);
+  }, [householdInviteStatus, segments, status]);
 
   return null;
 }

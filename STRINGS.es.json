@@ -1072,6 +1072,7 @@
       },
       "accepted": {
         "header": "{ownerName} te invita a ayudar a cuidar de {puppyName}",
+        "header-generic": "Te invitan a ayudar a cuidar de un cachorro",
         "role-caregiver": "Tu rol: Cuidador",
         "role-viewer": "Tu rol: espectador",
         "what-included": "A qué tendrás acceso",
@@ -1081,11 +1082,13 @@
           "Registrar comidas, paseos y pausas para ir al baño.",
           "Crear recordatorios"
         ],
+        "caregiver-included-first-generic": "Hoy y la cronología del cachorro",
         "caregiver-excluded-bullets": [
           "Facturación de suscripción",
           "Notas privadas del propietario"
         ],
         "disclosure": "{ownerName} puede cerrar tu acceso en cualquier momento.",
+        "disclosure-generic": "El propietario de la familia puede cerrar tu acceso en cualquier momento.",
         "accept": "Aceptar",
         "decline": "Rechazar",
         "action-unavailable": "Las acciones de invitación no están conectadas en esta versión. El acceso al hogar no cambió.",
@@ -1094,6 +1097,17 @@
         "already-member-cta": "Abierto",
         "load-error": "No se pudo cargar la invitación. Comprueba tu conexión.",
         "neutral-unavailable": "Esta invitación ya no está disponible. Pídele a {ownerName} que envíe una nueva.",
+        "manual": {
+          "title": "¿Tienes otra invitación?",
+          "body": "Pega un enlace de invitación de PuppyPlan o su código.",
+          "label": "Enlace o código de invitación",
+          "placeholder": "Pégalo aquí",
+          "submit": "Usar esta invitación",
+          "invalid": "Introduce un enlace de invitación de PuppyPlan o un código válido.",
+          "ready": "La invitación está lista para aceptar."
+        },
+        "create-own": "Crear tu propia familia",
+        "create-own-error": "No se pudo crear tu familia. Comprueba tu conexión e inténtalo de nuevo.",
         "states": {
           "loading": {
             "status": "Comprobando",
@@ -1126,6 +1140,9 @@
       },
       "manage": {
         "screen-title": "Familia y acceso",
+        "non-owner-intro-title": "Aquí compartimos el cuidado",
+        "non-owner-intro-body": "Puedes registrar el cuidado de este cachorro. El propietario de la familia gestiona el acceso.",
+        "non-owner-member-subtitle": "El propietario de la familia gestiona el acceso.",
         "section-members": "Miembros",
         "section-invites": "invita",
         "member-you": "Tú",
@@ -1135,6 +1152,16 @@
         "pending-invite-caregiver": "Cuidador pendiente",
         "pending-invite-viewer": "Observador pendiente",
         "invite-cta": "Invitar",
+        "invite-link": {
+          "title": "El enlace de invitación está listo",
+          "body": "Envía este enlace de un solo uso al familiar que ayudará con el cuidado.",
+          "accessibility-label": "Enlace de invitación para cuidador de la familia",
+          "last4": "El código del enlace termina en {last4}",
+          "copy": "Copiar enlace",
+          "copy-success": "Enlace de invitación copiado.",
+          "copy-error": "No se pudo copiar el enlace. Selecciónalo arriba y cópialo manualmente.",
+          "create-error": "No se pudo crear la invitación. Comprueba tu conexión e inténtalo de nuevo."
+        },
         "badge-owner": "Dueño",
         "badge-caregiver": "cuidador",
         "badge-viewer": "Espectador",
@@ -1159,6 +1186,11 @@
         },
         "revoked-toast": "El acceso para {name} está cerrado.",
         "states": {
+          "empty": {
+            "status": "Aún no está listo",
+            "title": "El acceso familiar aún no está disponible",
+            "body": "Termina de configurar tu familia antes de gestionar miembros e invitaciones."
+          },
           "loading": {
             "status": "Comprobando",
             "title": "Cargando acceso familiar",

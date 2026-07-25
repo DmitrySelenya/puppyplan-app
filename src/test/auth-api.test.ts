@@ -1,7 +1,6 @@
 // src/test/auth-api.test.ts
 import {
   getCurrentUser,
-  OtpRequestError,
   requestEmailOtp,
   signInWithPassword,
   signOut,
@@ -52,23 +51,28 @@ describe('auth api', () => {
     await expect(requestEmailOtp('owner@example.com')).rejects.toThrow('auth_request_otp_failed');
   });
 
-  it('AC-1 AC-4 flags a 429 OTP request failure as rate_limited without leaking the message', async () => {
+  it('AC-F13 classifies HTTP 429 OTP failures as rate limited without exposing backend text', async () => {
     mockAuth({
-      signInWithOtp: jest.fn(async () => ({ error: { message: 'boom', status: 429 } })),
+      signInWithOtp: jest.fn(async () => ({
+        error: { message: 'synthetic private backend detail', status: 429 },
+      })),
     });
 
     await expect(requestEmailOtp('owner@example.com')).rejects.toMatchObject({
-      name: 'OtpRequestError',
       message: 'auth_request_otp_failed',
+      name: 'OtpRequestError',
       reason: 'rate_limited',
     });
-    await expect(requestEmailOtp('owner@example.com')).rejects.toBeInstanceOf(OtpRequestError);
   });
 
-  it('AC-2 flags an over_email_send_rate_limit code as rate_limited regardless of status', async () => {
+  it('AC-F13 classifies the Supabase email-send limit code as rate limited', async () => {
     mockAuth({
       signInWithOtp: jest.fn(async () => ({
-        error: { message: 'boom', code: 'over_email_send_rate_limit' },
+        error: {
+          code: 'over_email_send_rate_limit',
+          message: 'synthetic private backend detail',
+          status: 500,
+        },
       })),
     });
 
@@ -77,14 +81,21 @@ describe('auth api', () => {
     });
   });
 
-  it('AC-3 flags any other OTP request failure as unknown', async () => {
+  it('ERR-F5 keeps unrecognized OTP failures generic and privacy safe', async () => {
     mockAuth({
-      signInWithOtp: jest.fn(async () => ({ error: { message: 'boom', status: 500 } })),
+      signInWithOtp: jest.fn(async () => ({
+        error: { message: 'synthetic private backend detail', status: 503 },
+      })),
     });
 
     await expect(requestEmailOtp('owner@example.com')).rejects.toMatchObject({
+      message: 'auth_request_otp_failed',
+      name: 'OtpRequestError',
       reason: 'unknown',
     });
+    await expect(requestEmailOtp('owner@example.com')).rejects.not.toThrow(
+      'synthetic private backend detail',
+    );
   });
 
   it('verifies an OTP and returns the session user', async () => {
@@ -169,7 +180,31 @@ describe('auth api', () => {
     await expect(signOut()).rejects.toThrow('auth_sign_out_failed');
   });
 
-  it('subscribes to auth changes and forwards mapped users', () => {
+  it('defers the auth-change handler out of the onAuthStateChange callback (supabase lock safety)', async () => {
+    const unsubscribe = jest.fn();
+    let captured: (event: string, session: unknown) => void = () => {};
+    mockAuth({
+      onAuthStateChange: jest.fn((handler: (event: string, session: unknown) => void) => {
+        captured = handler;
+        return { data: { subscription: { unsubscribe } } };
+      }),
+    });
+    const received: unknown[] = [];
+
+    subscribeToAuthChanges((user) => received.push(user));
+    captured('SIGNED_IN', { user: { id: userId, email: 'owner@example.com' } });
+
+    // supabase-js holds an internal auth lock while the onAuthStateChange callback
+    // runs. If the handler awaits any other Supabase call (bootstrap/accept RPC),
+    // it deadlocks against that lock. The handler must therefore NOT run inside the
+    // callback — it runs on a later task, after the lock is released.
+    expect(received).toEqual([]);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(received).toEqual([{ id: userId, email: 'owner@example.com' }]);
+  });
+
+  it('subscribes to auth changes and forwards mapped users', async () => {
     const unsubscribe = jest.fn();
     let captured: (event: string, session: unknown) => void = () => {};
     mockAuth({
@@ -183,6 +218,7 @@ describe('auth api', () => {
     const dispose = subscribeToAuthChanges((user) => received.push(user));
     captured('SIGNED_IN', { user: { id: userId, email: 'owner@example.com' } });
     captured('SIGNED_OUT', null);
+    await new Promise((resolve) => setTimeout(resolve, 0));
     dispose();
 
     expect(received).toEqual([{ id: userId, email: 'owner@example.com' }, null]);

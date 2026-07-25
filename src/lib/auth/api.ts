@@ -6,10 +6,6 @@ export type AuthChangeHandler = (user: SessionUser | null) => void;
 
 export type OtpRequestFailureReason = 'rate_limited' | 'unknown';
 
-// Carries the classified reason so the sign-in UI can tell a Supabase email
-// rate limit ("too many code requests") apart from a generic/network failure,
-// instead of always blaming the connection. Only status/code are inspected —
-// the raw Supabase message is never surfaced or logged (privacy).
 export class OtpRequestError extends Error {
   readonly reason: OtpRequestFailureReason;
 
@@ -36,10 +32,6 @@ export function toSessionUser(session: MinimalSession): SessionUser | null {
 function classifyOtpRequestFailure(
   error: Readonly<{ status?: number; code?: string }>,
 ): OtpRequestFailureReason {
-  // Supabase returns HTTP 429 for both the per-email cooldown ("you can only
-  // request this after N seconds") and the hourly email-send cap; the cap also
-  // carries code `over_email_send_rate_limit`. Either means "slow down", not
-  // "check your connection".
   if (error.status === 429 || error.code === 'over_email_send_rate_limit') {
     return 'rate_limited';
   }
@@ -107,7 +99,13 @@ export async function signOut(): Promise<void> {
 
 export function subscribeToAuthChanges(handler: AuthChangeHandler): () => void {
   const { data } = getSupabaseClient().auth.onAuthStateChange((_event, session) => {
-    handler(toSessionUser(session));
+    // Map synchronously, but run the handler on a later task. supabase-js holds an
+    // internal auth lock for the duration of the onAuthStateChange callback; if the
+    // handler awaits any other Supabase call (e.g. the bootstrap/accept RPCs in the
+    // auth provider), that call deadlocks against the lock and resolves without a
+    // session — silently signing the user out right after a successful sign-in.
+    const user = toSessionUser(session);
+    setTimeout(() => handler(user), 0);
   });
 
   return () => data.subscription.unsubscribe();

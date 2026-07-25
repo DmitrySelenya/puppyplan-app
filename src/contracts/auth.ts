@@ -1,7 +1,11 @@
 // src/contracts/auth.ts
 import { z } from 'zod';
 
-import { uuidSchema } from './supabase';
+import {
+  householdInviteTokenSchema,
+  timestampSchema,
+  uuidSchema,
+} from './supabase';
 
 export const authMethods = ['email_otp', 'apple', 'google'] as const;
 export const authMethodSchema = z.enum(authMethods);
@@ -35,6 +39,8 @@ export type SessionUser = z.infer<typeof sessionUserSchema>;
 
 export const authStatuses = ['loading', 'signedOut', 'signedIn'] as const;
 export type AuthStatus = (typeof authStatuses)[number];
+export const householdInviteStatuses = ['none', 'unavailable'] as const;
+export type HouseholdInviteStatus = (typeof householdInviteStatuses)[number];
 
 // SECURITY DEFINER bootstrap_current_user(text) returns one row.
 export const bootstrapResultSchema = z
@@ -44,3 +50,15 @@ export const bootstrapResultSchema = z
   })
   .strict();
 export type BootstrapResult = z.infer<typeof bootstrapResultSchema>;
+
+export const pendingHouseholdInviteRecordSchema = z.discriminatedUnion('state', [
+  z.object({
+    state: z.literal('pending'),
+    inviteToken: householdInviteTokenSchema,
+    expiresAt: timestampSchema,
+  }).strict(),
+  z.object({
+    state: z.literal('unavailable'),
+  }).strict(),
+]);
+export type PendingHouseholdInviteRecord = z.infer<typeof pendingHouseholdInviteRecordSchema>;

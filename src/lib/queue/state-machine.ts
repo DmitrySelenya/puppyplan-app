@@ -1,3 +1,5 @@
+import { assertNever } from '@/lib/assertNever';
+
 import {
   createStoredQuickLogQueueItem,
   parseQuickLogQueuePermanentErrorCategory,
@@ -88,6 +90,11 @@ export function applyQuickLogQueueTransition(
         retry_after_at: null,
         updated_at: transition.now,
       });
+
+    default:
+      // A new transition type is a compile error here; a bad persisted value throws
+      // instead of silently returning undefined.
+      return assertNever(transition, 'applyQuickLogQueueTransition');
   }
 }
 

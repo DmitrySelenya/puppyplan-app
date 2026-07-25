@@ -42,13 +42,53 @@ describe('Supabase puppy repository boundary', () => {
     };
     const repository = createSupabasePuppyRepository(client);
 
-    await expect(repository.selectActivePuppy({ userId })).resolves.toMatchObject({
+    await expect(repository.selectActivePuppy({ householdId, userId })).resolves.toMatchObject({
       household_role: 'caregiver',
       id: puppyId,
       quick_tracker_ids: ['feeding', 'walk'],
     });
-    expect(client.selectActiveMembership).toHaveBeenCalledWith(userId);
+    expect(client.selectActiveMembership).toHaveBeenCalledWith(userId, householdId);
     expect(client.selectActivePuppy).toHaveBeenCalledWith(householdId);
+  });
+
+  it('AC-PUP42-AUTH-5 selects the explicitly activated household instead of an older membership', async () => {
+    const invitedHouseholdId = '00000000-0000-4000-8000-000000002204';
+    const client = {
+      insertPuppyProfile: jest.fn(),
+      selectActiveMembership: jest.fn(async () => ({
+        data: {
+          household_id: invitedHouseholdId,
+          role: 'caregiver',
+        },
+        error: null,
+      })),
+      selectActivePuppy: jest.fn(async () => ({
+        data: {
+          age_weeks_estimate: 10,
+          birth_date: null,
+          created_at: '2026-07-24T09:00:00.000Z',
+          deleted_at: null,
+          household_id: invitedHouseholdId,
+          id: puppyId,
+          name: 'Puppy',
+          quick_tracker_ids: ['feeding', 'walk'],
+          updated_at: '2026-07-24T09:00:00.000Z',
+        },
+        error: null,
+      })),
+      updatePuppyProfile: jest.fn(),
+    };
+    const repository = createSupabasePuppyRepository(client);
+
+    await expect(repository.selectActivePuppy({
+      householdId: invitedHouseholdId,
+      userId,
+    })).resolves.toMatchObject({
+      household_id: invitedHouseholdId,
+      household_role: 'caregiver',
+    });
+    expect(client.selectActiveMembership).toHaveBeenCalledWith(userId, invitedHouseholdId);
+    expect(client.selectActivePuppy).toHaveBeenCalledWith(invitedHouseholdId);
   });
 
   it('writes selected quick tracker ids only through the Supabase wrapper', async () => {

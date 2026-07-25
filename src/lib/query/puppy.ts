@@ -22,11 +22,15 @@ export function useActivePuppyQuery(
 ) {
   const auth = useAuth();
   const userId = auth.user?.id ?? '00000000-0000-4000-8000-000000000000';
+  const householdId = auth.activeHouseholdId
+    ?? '00000000-0000-4000-8000-000000000000';
 
   return useQuery({
-    enabled: auth.status === 'signedIn' && auth.user !== null,
-    queryFn: () => repository.selectActivePuppy({ userId }),
-    queryKey: queryKeys.puppy.active(userId),
+    enabled: auth.status === 'signedIn'
+      && auth.user !== null
+      && auth.activeHouseholdId !== null,
+    queryFn: () => repository.selectActivePuppy({ householdId, userId }),
+    queryKey: queryKeys.puppy.active(userId, householdId),
   });
 }
 
@@ -60,7 +64,10 @@ export function useSavePuppyProfileMutation(
     },
     onSuccess: (puppy) => {
       if (auth.user) {
-        queryClient.setQueryData(queryKeys.puppy.active(auth.user.id), puppy);
+        queryClient.setQueryData(
+          queryKeys.puppy.active(auth.user.id, puppy.household_id),
+          puppy,
+        );
       }
 
       queryClient.setQueryData(queryKeys.puppy.detail(puppy.id), puppy);
