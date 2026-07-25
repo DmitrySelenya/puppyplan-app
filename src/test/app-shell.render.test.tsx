@@ -43,6 +43,7 @@ function SnackbarProbe() {
   useEffect(() => {
     snackbar.showSnackbar({
       accessibilityLabel: 'Quick Log saved.',
+      durationMs: 60_000,
       id: 'app-shell-snackbar-probe',
       message: 'Logged · Feeding',
       tone: 'success',
@@ -166,7 +167,8 @@ describe('app shell screens', () => {
   });
 
   it('renders neutral invite/share unavailable copy without token values', () => {
-    renderWithProviders(<AccessUnavailableScreen />);
+    const onAcknowledge = jest.fn();
+    renderWithProviders(<AccessUnavailableScreen onAcknowledge={onAcknowledge} />);
 
     expect(screen.getByText(i18n.t('states.revoked-or-expired.title'))).toBeTruthy();
     expect(screen.getByText(i18n.t('states.revoked-or-expired.body-long'))).toBeTruthy();
@@ -177,12 +179,18 @@ describe('app shell screens', () => {
     expect(screen.getByText(i18n.t('states.revoked-or-expired.next-step-body'))).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('states.revoked-or-expired.action') })).toBeTruthy();
     expect(screen.queryByText(/\[[^\]]*token[^\]]*\]/i)).toBeNull();
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('states.revoked-or-expired.action'),
+    }));
+    expect(onAcknowledge).toHaveBeenCalledTimes(1);
   });
 
   it('renders caregiver-side accept invite anatomy without exposing the token', () => {
+    const onAcknowledge = jest.fn();
     renderWithProviders(
       <InviteAcceptScreen
         inviteToken="raw-invite-token-for-test"
+        onAcknowledge={onAcknowledge}
         ownerName="Owner"
         puppyName="Puppy"
       />,
@@ -208,15 +216,46 @@ describe('app shell screens', () => {
     expect(screen.getByRole('button', { name: i18n.t('sharing.family.accepted.accept') })).toBeTruthy();
     expect(screen.getByRole('button', { name: i18n.t('sharing.family.accepted.decline') })).toBeTruthy();
     expect(screen.queryByText(/raw-invite-token-for-test/i)).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.accepted.accept'),
+    }));
+    expect(screen.getByTestId('invite-action-unavailable')).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.accepted.action-unavailable'))).toBeTruthy();
+    expect(onAcknowledge).not.toHaveBeenCalled();
   });
 
   it('AC-SHARE-ACCEPT-STATES renders deterministic invite loading, error, expired, and already-member states', () => {
     renderWithProviders(
       <>
-        <InviteAcceptScreen inviteToken="raw-loading-token" reviewState="loading" />
-        <InviteAcceptScreen inviteToken="raw-error-token" reviewState="load-error" />
-        <InviteAcceptScreen inviteToken="raw-expired-token" reviewState="expired" />
-        <InviteAcceptScreen inviteToken="raw-member-token" reviewState="already-member" />
+        <InviteAcceptScreen
+          inviteToken="raw-loading-token"
+          onAcknowledge={noop}
+          ownerName="Owner"
+          puppyName="Puppy"
+          reviewState="loading"
+        />
+        <InviteAcceptScreen
+          inviteToken="raw-error-token"
+          onAcknowledge={noop}
+          ownerName="Owner"
+          puppyName="Puppy"
+          reviewState="load-error"
+        />
+        <InviteAcceptScreen
+          inviteToken="raw-expired-token"
+          onAcknowledge={noop}
+          ownerName="Owner"
+          puppyName="Puppy"
+          reviewState="expired"
+        />
+        <InviteAcceptScreen
+          inviteToken="raw-member-token"
+          onAcknowledge={noop}
+          ownerName="Owner"
+          puppyName="Puppy"
+          reviewState="already-member"
+        />
       </>,
     );
 

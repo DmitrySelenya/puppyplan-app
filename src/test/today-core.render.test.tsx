@@ -2113,7 +2113,7 @@ describe('Today core card rendering', () => {
     const failing = jest.fn().mockRejectedValue(new Error('offline'));
     const actualLabel = i18n.t('today.plan.actual-template', { time: '10:12 AM' });
     const failureLabel = i18n.t('today.plan.check-failed');
-    const committedFrames: Array<Readonly<{ actual: boolean; failure: boolean }>> = [];
+    const committedFrames: Readonly<{ actual: boolean; failure: boolean }>[] = [];
     let observeCommits = false;
     const observeCommit = () => {
       if (!observeCommits) return;

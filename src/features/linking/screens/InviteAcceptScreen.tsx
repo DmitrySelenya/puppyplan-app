@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
 import {
@@ -14,6 +15,8 @@ import {
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
 import { type I18nKey, useAppTranslation } from '@/lib/i18n';
+
+import { AccessUnavailableScreen } from './AccessUnavailableScreen';
 
 export type InviteAcceptReviewState =
   | 'loading'
@@ -66,22 +69,39 @@ const inviteAcceptStateMeta: Record<InviteAcceptReviewState, InviteAcceptStateMe
 
 export type InviteAcceptScreenProps = Readonly<{
   inviteToken?: string;
+  onAccept?: () => void;
+  onAcknowledge: () => void;
+  onDecline?: () => void;
   ownerName?: string;
   puppyName?: string;
   reviewState?: InviteAcceptReviewState;
 }>;
 
-const defaultOwnerName = 'Owner';
-const defaultPuppyName = 'Puppy';
-
 export function InviteAcceptScreen({
-  ownerName = defaultOwnerName,
-  puppyName = defaultPuppyName,
+  onAccept,
+  onAcknowledge,
+  onDecline,
+  ownerName,
+  puppyName,
   reviewState,
 }: InviteAcceptScreenProps) {
   const { t } = useAppTranslation();
+  const [actionUnavailableVisible, setActionUnavailableVisible] = useState(false);
+
+  if (ownerName === undefined || puppyName === undefined) {
+    return <AccessUnavailableScreen onAcknowledge={onAcknowledge} />;
+  }
+
   const translationOptions = { ownerName, puppyName };
   const isLoadingInvite = reviewState === 'loading';
+  const runInviteAction = (action: (() => void) | undefined) => {
+    if (action === undefined) {
+      setActionUnavailableVisible(true);
+      return;
+    }
+
+    action();
+  };
 
   return (
     <Screen contentStyle={styles.content}>
@@ -137,15 +157,27 @@ export function InviteAcceptScreen({
           </AppText>
         </Card>
 
+        {actionUnavailableVisible ? (
+          <Card
+            accessibilityLabel={t('sharing.family.accepted.action-unavailable')}
+            accessibilityLiveRegion="polite"
+            testID="invite-action-unavailable"
+            variant="mutedTemplate">
+            <AppText tone="secondary" variant="body">
+              {t('sharing.family.accepted.action-unavailable')}
+            </AppText>
+          </Card>
+        ) : null}
+
         <Stack gap="sm">
           <Button
             label={t('sharing.family.accepted.accept')}
             loading={isLoadingInvite}
-            onPress={() => undefined}
+            onPress={() => runInviteAction(onAccept)}
           />
           <Button
             label={t('sharing.family.accepted.decline')}
-            onPress={() => undefined}
+            onPress={() => runInviteAction(onDecline)}
             variant="tertiary"
           />
         </Stack>

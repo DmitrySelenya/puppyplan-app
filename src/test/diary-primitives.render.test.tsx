@@ -27,8 +27,16 @@ let mockFontScale = 1;
 jest.mock('react-native', () => {
   const actual = jest.requireActual<typeof import('react-native')>('react-native');
 
-  return Object.defineProperty(Object.create(actual) as typeof actual, 'useWindowDimensions', {
-    value: () => ({ fontScale: mockFontScale, height: 667, scale: 2, width: 375 }),
+  return Object.defineProperties(Object.create(actual) as typeof actual, {
+    AccessibilityInfo: {
+      value: {
+        ...actual.AccessibilityInfo,
+        isReduceMotionEnabled: jest.fn(() => new Promise<boolean>(() => {})),
+      },
+    },
+    useWindowDimensions: {
+      value: () => ({ fontScale: mockFontScale, height: 667, scale: 2, width: 375 }),
+    },
   });
 });
 

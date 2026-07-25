@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import {
@@ -111,6 +112,7 @@ export function HouseholdAccessScreen({
   reviewState,
 }: HouseholdAccessScreenProps) {
   const { locale, t } = useAppTranslation();
+  const [actionUnavailableVisible, setActionUnavailableVisible] = useState(false);
   const activeCare = useActiveCareContext();
   const householdInvites = useHouseholdInvitesQuery(activeCare.careContext?.householdId);
   const visibleReviewState = reviewState
@@ -188,7 +190,7 @@ export function HouseholdAccessScreen({
                   label={t('sharing.family.manage.badge-pending')}
                   tone="needsVetReview"
                 />
-                <OverflowButton />
+                <OverflowButton onPress={() => setActionUnavailableVisible(true)} />
               </Stack>
             )}
           />
@@ -204,9 +206,21 @@ export function HouseholdAccessScreen({
         </Stack>
       </Card>
 
+      {actionUnavailableVisible ? (
+        <Card
+          accessibilityLabel={t('sharing.family.manage.actions-unavailable')}
+          accessibilityLiveRegion="polite"
+          testID="household-action-unavailable"
+          variant="mutedTemplate">
+          <AppText tone="secondary" variant="body">
+            {t('sharing.family.manage.actions-unavailable')}
+          </AppText>
+        </Card>
+      ) : null}
+
       <Button
         label={t('sharing.family.manage.invite-cta')}
-        onPress={() => undefined}
+        onPress={() => setActionUnavailableVisible(true)}
       />
     </Screen>
   );
@@ -348,14 +362,14 @@ function HouseholdStatusPill({
   );
 }
 
-function OverflowButton() {
+function OverflowButton({ onPress }: Readonly<{ onPress: () => void }>) {
   const { t } = useAppTranslation();
 
   return (
     <IconButton
       accessibilityLabel={t('today.history.item-actions')}
       icon={<AppIcon color={tokens.color.text.tertiary} name="more" />}
-      onPress={() => undefined}
+      onPress={onPress}
       style={styles.overflowButton}
     />
   );

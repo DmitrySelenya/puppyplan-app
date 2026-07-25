@@ -1088,6 +1088,7 @@
         "disclosure": "{ownerName} puede cerrar tu acceso en cualquier momento.",
         "accept": "Aceptar",
         "decline": "Rechazar",
+        "action-unavailable": "Las acciones de invitación no están conectadas en esta versión. El acceso al hogar no cambió.",
         "decline-confirm-title": "¿Rechazar esta invitación?",
         "already-member": "Ya estás en la casa de {puppyName}.",
         "already-member-cta": "Abierto",
@@ -1140,6 +1141,7 @@
         "badge-pending": "Pendiente",
         "badge-expired": "Venció",
         "badge-revoked": "Revocado",
+        "actions-unavailable": "Las acciones de invitación no están disponibles en esta versión. No se creó, copió, reenvió ni revocó ningún enlace.",
         "member-overflow": [
           "Cambiar rol",
           "Cerrar acceso"
@@ -1205,6 +1207,8 @@
       "disclosure": "Puedes finalizar el modo cuidador en cualquier momento.",
       "enable-cta": "Activar modo cuidador",
       "exit-cta": "Finalizar modo cuidador",
+      "unavailable-title": "El modo cuidador no está disponible",
+      "unavailable-body": "No cambió el acceso de ningún cuidador ni el intervalo del modo.",
       "no-caregiver": "Primero invite a un cuidador. El modo cuidador amplía a un cuidador existente.",
       "no-caregiver-cta": "Invitar a un cuidador",
       "pending-hint": "Esperando a que {name} acepte la invitación.",
@@ -1680,6 +1684,7 @@
         "Correa y transportador"
       ],
       "add-item": "Agregar artículo",
+      "add-item-unavailable": "Todavía no se pueden añadir elementos propios. La lista actual no cambiará.",
       "hint": "Esta es una lista de verificación personal, no instrucciones de tu veterinario."
     },
     "empty": {
@@ -2211,8 +2216,11 @@
       "push-hint": "Por ahora, las notificaciones push solo se envían para estos eventos. La actividad familiar no se envía.",
       "section-quiet-hours": "Horas tranquilas",
       "quiet-hours-example": "10:00 pm – 7:00 am",
+      "quiet-hours-value-unavailable": "No disponible",
+      "quiet-hours-unavailable": "Las horas de silencio no se pueden editar en esta versión.",
       "section-tz": "Huso horario",
       "tz-example": "Europa/Berlín (automático)",
+      "timezone-auto-hint": "Se usa para programar los recordatorios y no se puede editar aquí.",
       "states": {
         "loading": {
           "status": "Comprobando",
@@ -2240,23 +2248,24 @@
       "screen-title": "Datos y cuenta",
       "section-consents": "Consentimientos",
       "row-analytics": "Análisis de uso",
-      "analytics-hint": "Nos ayuda a mejorar la aplicación. No está vinculado a tu permiso de notificaciones.",
+      "analytics-hint": "Las analíticas de uso aún no están conectadas y permanecen desactivadas.",
       "section-errors": "Colección de errores",
       "row-error-reports": "Informes de errores",
-      "errors-hint": "Los datos personales se eliminan antes del envío.",
+      "errors-hint": "Los informes de errores aún no están conectados y permanecen desactivados.",
+      "consents-unavailable": "Estos controles no están disponibles en esta versión. Ambos ajustes permanecen desactivados.",
       "section-your-data": "Tus datos",
       "row-export": "Exporta tus datos",
       "section-account": "Cuenta",
       "section-account-removal": "Eliminación de cuenta",
       "row-delete": "Eliminar cuenta",
-      "export-sheet": "Recopilaremos tus registros y te enviaremos un enlace a tu correo electrónico dentro de las 24 horas.",
+      "export-sheet": "La exportación no está disponible en esta versión. No se creó ninguna solicitud y no se enviará ningún enlace ni correo.",
       "delete-sheet": {
-        "title": "Eliminar cuenta",
-        "body": "Esto eliminará tu perfil, los registros de tu cachorro y los enlaces que has compartido. Esto no se puede deshacer",
+        "title": "La eliminación de la cuenta no está disponible",
+        "body": "No se creó ninguna solicitud de eliminación y no cambió ningún dato de la cuenta ni correo.",
         "confirm-input-prompt": "escribe la palabra \"ELIMINAR\"",
         "confirm-input-word": "ELIMINAR"
       },
-      "delete-toast": "Solicitud de eliminación recibida. Te enviaremos una confirmación a tu correo electrónico.",
+      "delete-toast": "No se creó ninguna solicitud de eliminación.",
       "states": {
         "loading": {
           "status": "Comprobando",
@@ -2296,6 +2305,11 @@
       "topic-quick-log": "Quick Log y rutinas",
       "topic-sharing": "Familia y acceso compartido",
       "topic-privacy": "Datos y privacidad",
+      "topic-guidance": {
+        "quick-log": "Usa Añadir para registrar cuidados rápidamente y revisa o corrige los eventos guardados en Diario.",
+        "sharing": "Familia y acceso muestra los roles actuales. Si una acción no está conectada, la app indicará claramente que el acceso no cambió.",
+        "privacy": "Datos y cuenta explica qué controles funcionan ahora. No pegues datos privados de cuidados en una nota de soporte."
+      },
       "version-row": "Versión de la app",
       "support-code-row": "Código de soporte",
       "support-code-value": "Compilación local",
@@ -2354,10 +2368,12 @@
     ],
     "plan-monthly": "Mensual · 8,99 $",
     "plan-yearly": "Anual · 39,99 $",
-    "plan-yearly-a11y": "Plan anual, 39 dólares 99 céntimos al año, seleccionado",
+    "plan-yearly-a11y": "Plan anual, 39 dólares 99 céntimos al año",
     "plan-lifetime": "Pase puppyhood de por vida · 79-99 $ una vez",
     "primary": "Elegir plan",
     "secondary": "Restaurar compras",
+    "unavailable-title": "Las compras no están disponibles",
+    "unavailable-body": "No se realizó ningún cargo y el acceso Plus no cambió.",
     "legal": "Renovación automática. Puedes cancelar en la App Store.",
     "trial-status": "Quedan {count} días",
     "trial-note": "Acceso completo ahora. El primer paywall se puede cerrar.",

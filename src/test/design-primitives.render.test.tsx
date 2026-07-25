@@ -19,6 +19,7 @@ import { IconButton } from '@/design/primitives/IconButton';
 import { ListGroup } from '@/design/primitives/ListGroup';
 import { ListRow } from '@/design/primitives/ListRow';
 import { PendingDot } from '@/design/primitives/PendingDot';
+import { PuppyHeader } from '@/design/primitives/PuppyHeader';
 import { Screen } from '@/design/primitives/Screen';
 import { ScreenHeader } from '@/design/primitives/ScreenHeader';
 import { SegmentedControl } from '@/design/primitives/SegmentedControl';
@@ -202,6 +203,18 @@ describe('design primitives', () => {
     expect(style.color).toBe(tokens.color.text.primary);
     expect(style.fontSize).toBe(tokens.typography.scale.title1.fontSize);
     expect(style.letterSpacing).toBe(0);
+  });
+
+  it('AC-DESIGN-PUPPY-HEADER keeps identity anatomy readable and ordered', () => {
+    render(<PuppyHeader ageLabel="11 weeks" name="Maple Fox" />);
+
+    expect(screen.getByText('M')).toBeTruthy();
+    expect(screen.getByText('Maple Fox').props).toEqual(expect.objectContaining({
+      maxFontSizeMultiplier: 1.4,
+    }));
+    expect(screen.getByText('11 weeks').props).toEqual(expect.objectContaining({
+      maxFontSizeMultiplier: 1.4,
+    }));
   });
 
   it('maps AppText variants and tones to generated token values', () => {
@@ -764,6 +777,50 @@ describe('design primitives', () => {
         accessibilityRole: 'switch',
         accessibilityState: { checked: true },
       }));
+  });
+
+  it.each([
+    { expectedSubtitleLines: 2, fontScale: 1.999 },
+    { expectedSubtitleLines: undefined, fontScale: 2 },
+  ])('AC-DT-REVIEW-1 uses the accessibility subtitle clamp at fontScale $fontScale', ({
+    expectedSubtitleLines,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(
+      <ListRow
+        subtitle="A complete sentence-length notification preference explanation"
+        title="Notification preference"
+        variant="settings"
+      />,
+    );
+
+    expect(
+      screen.getByText('A complete sentence-length notification preference explanation')
+        .props.numberOfLines,
+    ).toBe(expectedSubtitleLines);
+  });
+
+  it.each([
+    { expectedCopyFlex: 1, fontScale: 1.999 },
+    { expectedCopyFlex: undefined, fontScale: 2 },
+  ])('AC-DT-REVIEW-2 uses intrinsic-height-safe copy flex at fontScale $fontScale', ({
+    expectedCopyFlex,
+    fontScale,
+  }) => {
+    mockFontScale = fontScale;
+    render(
+      <ListRow
+        subtitle="A complete sentence-length notification preference explanation"
+        testID="intrinsic-height-list-row"
+        title="Notification preference"
+        variant="settings"
+      />,
+    );
+
+    const [copy] = screen.getByTestId('intrinsic-height-list-row').findAllByType(View);
+
+    expect(flattenViewStyle(copy?.props.style).flex).toBe(expectedCopyFlex);
   });
 
   it('renders card, list row, tracker, status, segmented, and sheet surfaces from tokens', () => {

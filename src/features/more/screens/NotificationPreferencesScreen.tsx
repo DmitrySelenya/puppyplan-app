@@ -244,22 +244,18 @@ export function NotificationPreferencesScreen({
 
       <NotificationSection title={t('more.notifications.section-quiet-hours')}>
         <ListRow
-          accessibilityLabel={t('more.notifications.quiet-hours-example')}
-          accessory="chevron"
           leading={<AppIcon name="moon" />}
-          onPress={() => undefined}
-          title={t('more.notifications.quiet-hours-example')}
+          subtitle={t('more.notifications.quiet-hours-unavailable')}
+          title={t('more.notifications.quiet-hours-value-unavailable')}
           variant="settings"
         />
       </NotificationSection>
 
       <NotificationSection title={t('more.notifications.section-tz')}>
         <ListRow
-          accessibilityLabel={t('more.notifications.tz-example')}
-          accessory="chevron"
           leading={<AppIcon name="today" />}
-          onPress={() => undefined}
-          title={t('more.notifications.tz-example')}
+          subtitle={t('more.notifications.timezone-auto-hint')}
+          title={preferences?.timezone ?? 'UTC'}
           variant="settings"
         />
       </NotificationSection>

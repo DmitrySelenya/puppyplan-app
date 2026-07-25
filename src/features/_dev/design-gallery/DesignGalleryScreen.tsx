@@ -1,32 +1,45 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 
 import type { Reminder } from '@/contracts/supabase';
 import {
   AppText,
+  Avatar,
   Button,
   Card,
   CheckCircle,
   DayDivider,
   EmptyIllustration,
   EmptyState,
+  FAB,
   AppIcon,
   FactCard,
   IconChip,
+  IconButton,
   InfoHero,
   ListGroup,
   ListRow,
+  PendingDot,
+  PuppyHeader,
   RoutineCard,
+  RoutineLifecycleMenu,
   Screen,
+  ScreenHeader,
   SegmentedControl,
   SectionHeader,
   SheetSurface,
+  SheetHeader,
   SnackbarProvider,
   Stack,
   StatusPill,
   SwipeToDelete,
   TextField,
+  TimeGutter,
+  Toggle,
+  Touchable,
   TrackerTile,
   WeekStrip,
+  WhenPicker,
   type WeekStripDay,
 } from '@/design/primitives';
 import {
@@ -148,6 +161,7 @@ export function DesignGalleryScreen() {
         </Stack>
 
         <SyntheticPaywallStatesShell />
+        <SyntheticPrimitiveCoverageShell />
         <SyntheticInviteAcceptStatesShell />
         <SyntheticShareablePuppyCardStatesShell />
         <SyntheticSitterModeStatesShell />
@@ -194,6 +208,100 @@ export function DesignGalleryScreen() {
         <SyntheticDiaryClayShell />
       </Stack>
     </Screen>
+  );
+}
+
+export function SyntheticPrimitiveCoverageShell() {
+  const { t } = useAppTranslation();
+  const [lifecycleOpen, setLifecycleOpen] = useState(false);
+  const whenValue = new Date('2026-07-23T07:15:00.000Z');
+
+  return (
+    <Card>
+      <Stack gap="md">
+        <ScreenHeader
+          testID="gallery-primitive-screen-header"
+          title={t('dev.gallery.shell-preview')}
+        />
+        <PuppyHeader
+          ageLabel={t('more.puppy-summary.age-weeks', { count: 11 })}
+          name={t('more.puppy-profile.screen-title')}
+        />
+        <Stack align="center" direction="horizontal" gap="md" wrap>
+          <Avatar
+            label={t('sharing.family.manage.member-you')}
+            testID="gallery-primitive-avatar"
+          />
+          <PendingDot
+            accessibilityLabel={t('quick-log.pending.label')}
+            testID="gallery-primitive-pending-dot"
+          />
+          <TimeGutter
+            testID="gallery-primitive-time-gutter"
+            time="7:15 am"
+          />
+        </Stack>
+        <SheetHeader
+          closeAccessibilityLabel={t('common.close')}
+          onClose={noop}
+          testID="gallery-primitive-sheet-header"
+          title={t('dev.gallery.shell-preview')}
+        />
+        <Stack align="center" direction="horizontal" gap="md" wrap>
+          <Toggle
+            accessibilityLabel={t('more.notifications.row-all-reminders')}
+            onValueChange={noop}
+            testID="gallery-primitive-toggle"
+            value={false}
+          />
+          <Touchable
+            accessibilityLabel={t('common.edit')}
+            accessibilityRole="button"
+            onPress={noop}
+            testID="gallery-primitive-touchable">
+            <AppText>{t('common.edit')}</AppText>
+          </Touchable>
+          <IconButton
+            accessibilityLabel={t('common.close')}
+            icon={<AppIcon name="close" />}
+            onPress={noop}
+            testID="gallery-primitive-icon-button"
+          />
+          <FAB
+            accessibilityHint={t('quick-log.sheet.details-hint')}
+            accessibilityLabel={t('quick-log.sheet.title')}
+            onPress={noop}
+          />
+        </Stack>
+        <WhenPicker
+          hint={t('quick-log.details.when.hint')}
+          label={t('quick-log.details.when.label')}
+          maximumDate={whenValue}
+          minimumDate={whenValue}
+          onChange={noop}
+          onOpenChange={noop}
+          open={false}
+          testID="gallery-primitive-when-picker"
+          value={whenValue}
+          valueText={t('quick-log.details.when.now')}
+        />
+        <Button
+          label={t('reminders.lifecycle.title')}
+          onPress={() => setLifecycleOpen(true)}
+          variant="secondary"
+        />
+        {lifecycleOpen ? (
+          <RoutineLifecycleMenu
+            enabled
+            onClose={() => setLifecycleOpen(false)}
+            onDelete={noop}
+            onEdit={noop}
+            onToggleEnabled={noop}
+            title={t('quick-log.trackers.feeding')}
+          />
+        ) : null}
+      </Stack>
+    </Card>
   );
 }
 

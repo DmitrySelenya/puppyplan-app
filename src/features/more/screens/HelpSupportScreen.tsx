@@ -69,6 +69,26 @@ const helpSupportStateMeta: Record<HelpSupportReviewState, HelpSupportStateMeta>
   },
 };
 
+type HelpTopic = 'privacy' | 'quick-log' | 'sharing';
+
+const helpTopicMeta: Record<HelpTopic, Readonly<{
+  bodyKey: I18nKey;
+  titleKey: I18nKey;
+}>> = {
+  'quick-log': {
+    bodyKey: 'more.help.topic-guidance.quick-log',
+    titleKey: 'more.help.topic-quick-log',
+  },
+  sharing: {
+    bodyKey: 'more.help.topic-guidance.sharing',
+    titleKey: 'more.help.topic-sharing',
+  },
+  privacy: {
+    bodyKey: 'more.help.topic-guidance.privacy',
+    titleKey: 'more.help.topic-privacy',
+  },
+};
+
 export type HelpSupportScreenProps = Readonly<{
   onBack?: () => void;
   reviewState?: HelpSupportReviewState;
@@ -79,7 +99,9 @@ export function HelpSupportScreen({
   reviewState,
 }: HelpSupportScreenProps) {
   const { t } = useAppTranslation();
+  const [selectedTopic, setSelectedTopic] = useState<HelpTopic | null>(null);
   const [supportErrorVisible, setSupportErrorVisible] = useState(false);
+  const selectedTopicMeta = selectedTopic === null ? null : helpTopicMeta[selectedTopic];
 
   const openSupportDraft = async () => {
     setSupportErrorVisible(false);
@@ -132,25 +154,46 @@ export function HelpSupportScreen({
         <ListRow
           accessory="chevron"
           leading={<AppIcon name="bowl" />}
-          onPress={() => undefined}
+          onPress={() => setSelectedTopic('quick-log')}
+          selected={selectedTopic === 'quick-log'}
           title={t('more.help.topic-quick-log')}
           variant="settings"
         />
         <ListRow
           accessory="chevron"
           leading={<AppIcon name="personCluster" />}
-          onPress={() => undefined}
+          onPress={() => setSelectedTopic('sharing')}
+          selected={selectedTopic === 'sharing'}
           title={t('more.help.topic-sharing')}
           variant="settings"
         />
         <ListRow
           accessory="chevron"
           leading={<AppIcon name="lock" />}
-          onPress={() => undefined}
+          onPress={() => setSelectedTopic('privacy')}
+          selected={selectedTopic === 'privacy'}
           title={t('more.help.topic-privacy')}
           variant="settings"
         />
       </HelpSection>
+
+      {selectedTopicMeta ? (
+        <Card
+          accessibilityLabel={[
+            t(selectedTopicMeta.titleKey),
+            t(selectedTopicMeta.bodyKey),
+          ].join('. ')}
+          accessibilityLiveRegion="polite"
+          testID="more-help-topic-guidance"
+          variant="mutedTemplate">
+          <Stack gap="xs">
+            <AppText variant="headline">{t(selectedTopicMeta.titleKey)}</AppText>
+            <AppText tone="secondary" variant="body">
+              {t(selectedTopicMeta.bodyKey)}
+            </AppText>
+          </Stack>
+        </Card>
+      ) : null}
 
       <HelpSection title={t('more.help.sections.diagnostics')}>
         <ListRow

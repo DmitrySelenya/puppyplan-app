@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { RoutineEditorScreen } from '@/features/reminders/screens/RoutineEditorScreen';
@@ -15,9 +15,18 @@ jest.mock('react-native', () => {
 });
 
 describe('RoutineEditorScreen', () => {
+  let reduceMotionProbe: jest.SpyInstance;
+
   beforeEach(async () => {
     mockFontScale = 1;
+    reduceMotionProbe = jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockReturnValue(new Promise<boolean>(() => {}));
     await i18n.changeLanguage('en');
+  });
+
+  afterEach(() => {
+    reduceMotionProbe.mockRestore();
   });
 
   it.each([

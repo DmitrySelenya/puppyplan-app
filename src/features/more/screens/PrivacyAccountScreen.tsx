@@ -6,7 +6,6 @@ import {
   AppIcon,
   type AppIconName,
   AppText,
-  Button,
   Card,
   ListGroup,
   ListRow,
@@ -16,7 +15,6 @@ import {
   Stack,
   StatusPill,
   type StatusPillTone,
-  TextField,
   Toggle,
 } from '@/design/primitives';
 import { tokens } from '@/design/tokens';
@@ -93,14 +91,8 @@ export function PrivacyAccountScreen({
   reviewState,
 }: PrivacyAccountScreenProps) {
   const { t } = useAppTranslation();
-  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
-  const [errorReportsEnabled, setErrorReportsEnabled] = useState(true);
   const [exportNoticeVisible, setExportNoticeVisible] = useState(false);
-  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
-  const [deleteConfirmValue, setDeleteConfirmValue] = useState('');
-  const [deleteRequestVisible, setDeleteRequestVisible] = useState(false);
-  const deleteConfirmWord = t('more.privacy.delete-sheet.confirm-input-word');
-  const canRequestDelete = deleteConfirmValue === deleteConfirmWord;
+  const [deleteUnavailableVisible, setDeleteUnavailableVisible] = useState(false);
 
   return (
     <Screen contentStyle={styles.content}>
@@ -123,9 +115,10 @@ export function PrivacyAccountScreen({
           trailing={(
             <Toggle
               accessibilityLabel={t('more.privacy.row-analytics')}
-              onValueChange={setAnalyticsEnabled}
+              disabled
+              onValueChange={() => undefined}
               testID="privacy-analytics-toggle"
-              value={analyticsEnabled}
+              value={false}
             />
           )}
           variant="settings"
@@ -145,9 +138,10 @@ export function PrivacyAccountScreen({
           trailing={(
             <Toggle
               accessibilityLabel={t('more.privacy.row-error-reports')}
-              onValueChange={setErrorReportsEnabled}
+              disabled
+              onValueChange={() => undefined}
               testID="privacy-error-reports-toggle"
-              value={errorReportsEnabled}
+              value={false}
             />
           )}
           variant="settings"
@@ -159,6 +153,11 @@ export function PrivacyAccountScreen({
         variant="footnote">
         {t('more.privacy.errors-hint')}
       </AppText>
+      <Card variant="mutedTemplate">
+        <AppText tone="secondary" variant="footnote">
+          {t('more.privacy.consents-unavailable')}
+        </AppText>
+      </Card>
 
       <PrivacySection title={t('more.privacy.section-your-data')}>
         <ListRow
@@ -192,7 +191,7 @@ export function PrivacyAccountScreen({
           accessory="chevron"
           leading={<AppIcon color={tokens.color.status.danger} name="trash" />}
           onPress={() => {
-            setDeleteConfirmVisible(true);
+            setDeleteUnavailableVisible(true);
           }}
           title={t('more.privacy.row-delete')}
           variant="settings"
@@ -200,50 +199,22 @@ export function PrivacyAccountScreen({
       </PrivacySection>
       <SignOutButton />
 
-      {deleteConfirmVisible ? (
+      {deleteUnavailableVisible ? (
         <Card
-          accessibilityLabel={t('more.privacy.delete-sheet.title')}
-          accessibilityRole="alert"
-          style={styles.deleteCard}
-          testID="privacy-delete-confirm">
-          <Stack gap="md">
-            <Stack gap="xs">
-              <AppText variant="headline">{t('more.privacy.delete-sheet.title')}</AppText>
-              <AppText tone="secondary" variant="body">
-                {t('more.privacy.delete-sheet.body')}
-              </AppText>
-            </Stack>
-            <TextField
-              autoCapitalize="characters"
-              label={t('more.privacy.delete-sheet.confirm-input-prompt')}
-              onChangeText={setDeleteConfirmValue}
-              placeholder={deleteConfirmWord}
-              testID="privacy-delete-confirm-input"
-              value={deleteConfirmValue}
-            />
-            <Button
-              disabled={!canRequestDelete}
-              label={t('more.privacy.row-delete')}
-              onPress={() => {
-                setDeleteRequestVisible(true);
-                setDeleteConfirmVisible(false);
-              }}
-              testID="privacy-delete-confirm-action"
-              variant="destructive"
-            />
-          </Stack>
-        </Card>
-      ) : null}
-
-      {deleteRequestVisible ? (
-        <Card
+          accessibilityLabel={[
+            t('more.privacy.delete-sheet.title'),
+            t('more.privacy.delete-sheet.body'),
+          ].join('. ')}
           accessibilityLiveRegion="polite"
           style={styles.noticeCard}
-          testID="privacy-delete-requested"
+          testID="privacy-delete-unavailable"
           variant="mutedTemplate">
-          <AppText tone="secondary" variant="subheadline">
-            {t('more.privacy.delete-toast')}
-          </AppText>
+          <Stack gap="xs">
+            <AppText variant="headline">{t('more.privacy.delete-sheet.title')}</AppText>
+            <AppText tone="secondary" variant="body">
+              {t('more.privacy.delete-sheet.body')}
+            </AppText>
+          </Stack>
         </Card>
       ) : null}
     </Screen>
@@ -306,9 +277,6 @@ function PrivacySection({
 const styles = StyleSheet.create({
   content: {
     paddingBottom: tokens.space[6],
-  },
-  deleteCard: {
-    borderColor: tokens.color.status.danger,
   },
   hint: {
     marginTop: -tokens.space[1],

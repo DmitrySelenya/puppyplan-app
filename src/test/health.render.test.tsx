@@ -156,6 +156,25 @@ describe('Health V2 anatomy', () => {
     }).props.accessibilityState.checked).toBe(false);
   });
 
+  it('AC-PET-VET-PREP-ADD tells the truth when custom checklist items are unavailable', () => {
+    render(<HealthScreen reviewState="mixed-list" />);
+
+    const firstChecklistToggle = screen.getByRole('checkbox', {
+      name: i18n.t('health.vet-prep.checklist.0'),
+    });
+    fireEvent.press(firstChecklistToggle);
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('health.vet-prep.add-item'),
+    }));
+
+    const notice = screen.getByTestId('health-vet-prep-add-unavailable');
+    expect(notice.props.accessibilityLiveRegion).toBe('polite');
+    expect(screen.getByText(i18n.t('health.vet-prep.add-item-unavailable'))).toBeTruthy();
+    expect(screen.getByRole('checkbox', {
+      name: i18n.t('health.vet-prep.checklist.0'),
+    }).props.accessibilityState.checked).toBe(true);
+  });
+
   it('AC-PET-STATES-1 AC-PET-STATES-2 renders main Health loading, error, and offline-read state cards', () => {
     render(
       <>

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
 import {
@@ -91,6 +92,8 @@ const featureKeys = [
   'paywall.features.2',
 ] as const;
 
+type PaywallPlan = 'lifetime' | 'monthly' | 'yearly';
+
 export function PuppyPlanPlusScreen({
   accessState = 'trial',
   onClose,
@@ -99,6 +102,8 @@ export function PuppyPlanPlusScreen({
   trialDaysRemaining = 30,
 }: PuppyPlanPlusScreenProps) {
   const { t } = useAppTranslation();
+  const [purchaseUnavailableVisible, setPurchaseUnavailableVisible] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PaywallPlan>('yearly');
   const isPendingPurchase = reviewState === 'pending-purchase';
 
   return (
@@ -181,22 +186,24 @@ export function PuppyPlanPlusScreen({
         <ListRow
           accessibilityLabel={t('paywall.plan-yearly-a11y')}
           leading={<AppIcon name="spark" />}
-          onPress={() => undefined}
-          selected
+          onPress={() => setSelectedPlan('yearly')}
+          selected={selectedPlan === 'yearly'}
           selectionRole="radio"
           title={t('paywall.plan-yearly')}
           variant="settings"
         />
         <ListRow
           leading={<AppIcon name="calendar" />}
-          onPress={() => undefined}
+          onPress={() => setSelectedPlan('monthly')}
+          selected={selectedPlan === 'monthly'}
           selectionRole="radio"
           title={t('paywall.plan-monthly')}
           variant="settings"
         />
         <ListRow
           leading={<AppIcon name="paw" />}
-          onPress={() => undefined}
+          onPress={() => setSelectedPlan('lifetime')}
+          selected={selectedPlan === 'lifetime'}
           selectionRole="radio"
           title={t('paywall.plan-lifetime')}
           variant="settings"
@@ -207,14 +214,32 @@ export function PuppyPlanPlusScreen({
         <Button
           label={t('paywall.primary')}
           loading={isPendingPurchase}
-          onPress={() => undefined}
+          onPress={() => setPurchaseUnavailableVisible(true)}
         />
         <Button
           label={t('paywall.secondary')}
-          onPress={() => undefined}
+          onPress={() => setPurchaseUnavailableVisible(true)}
           variant="tertiary"
         />
       </Stack>
+
+      {purchaseUnavailableVisible ? (
+        <Card
+          accessibilityLabel={[
+            t('paywall.unavailable-title'),
+            t('paywall.unavailable-body'),
+          ].join('. ')}
+          accessibilityLiveRegion="polite"
+          testID="paywall-purchase-unavailable"
+          variant="mutedTemplate">
+          <Stack gap="xs">
+            <AppText variant="headline">{t('paywall.unavailable-title')}</AppText>
+            <AppText tone="secondary" variant="body">
+              {t('paywall.unavailable-body')}
+            </AppText>
+          </Stack>
+        </Card>
+      ) : null}
 
       <Card style={styles.softLockCard} variant="mutedTemplate">
         <Stack gap="xs">

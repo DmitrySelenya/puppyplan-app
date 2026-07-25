@@ -351,7 +351,7 @@ function AvatarHero({ label, t }: Readonly<{ label: string; t: AppTranslate }>) 
         minTarget="none"
         onPress={() => undefined}
         style={styles.changePhoto}>
-        <AppText style={styles.changePhotoText} variant="body">
+        <AppText tone="disabled" variant="body">
           {t('more.puppy-profile.change-photo')}
         </AppText>
       </Touchable>
@@ -502,9 +502,6 @@ const styles = StyleSheet.create({
   },
   changePhoto: {
     marginTop: tokens.space[3],
-  },
-  changePhotoText: {
-    color: tokens.color.text.link,
   },
   editBadge: {
     alignItems: 'center',

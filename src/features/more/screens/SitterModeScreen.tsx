@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import {
@@ -87,6 +88,7 @@ export function SitterModeScreen({
   reviewState,
 }: SitterModeScreenProps) {
   const { t } = useAppTranslation();
+  const [unavailableVisible, setUnavailableVisible] = useState(false);
   const caregiverName = t('sharing.family.manage.badge-caregiver');
 
   return (
@@ -179,9 +181,27 @@ export function SitterModeScreen({
 
       <AppText tone="secondary" variant="footnote">{t('sharing.sitter.disclosure')}</AppText>
 
+      {unavailableVisible ? (
+        <Card
+          accessibilityLabel={[
+            t('sharing.sitter.unavailable-title'),
+            t('sharing.sitter.unavailable-body'),
+          ].join('. ')}
+          accessibilityLiveRegion="polite"
+          testID="sitter-mode-unavailable"
+          variant="mutedTemplate">
+          <Stack gap="xs">
+            <AppText variant="headline">{t('sharing.sitter.unavailable-title')}</AppText>
+            <AppText tone="secondary" variant="body">
+              {t('sharing.sitter.unavailable-body')}
+            </AppText>
+          </Stack>
+        </Card>
+      ) : null}
+
       <Button
         label={t('sharing.sitter.enable-cta')}
-        onPress={() => undefined}
+        onPress={() => setUnavailableVisible(true)}
       />
     </Screen>
   );

@@ -1100,6 +1100,7 @@
         "disclosure": "{ownerName} can close your access at any time.",
         "accept": "Accept",
         "decline": "Decline",
+        "action-unavailable": "Invite actions aren't connected in this build. No household access changed.",
         "decline-confirm-title": "Decline this invite?",
         "already-member": "You're already in {puppyName}'s household.",
         "already-member-cta": "Open",
@@ -1152,6 +1153,7 @@
         "badge-pending": "Pending",
         "badge-expired": "Expired",
         "badge-revoked": "Revoked",
+        "actions-unavailable": "Invite actions aren't available in this build. No link was created, copied, resent, or revoked.",
         "member-overflow": [
           "Change role",
           "Close access"
@@ -1218,6 +1220,8 @@
       "disclosure": "You can end sitter mode at any time.",
       "enable-cta": "Turn on sitter mode",
       "exit-cta": "End sitter mode",
+      "unavailable-title": "Sitter mode isn't available",
+      "unavailable-body": "No caregiver access or sitter window changed.",
       "no-caregiver": "First invite a caregiver. Sitter mode extends an existing caregiver.",
       "no-caregiver-cta": "Invite a caregiver",
       "pending-hint": "Waiting for {name} to accept the invite.",
@@ -1700,6 +1704,7 @@
         "Leash and carrier"
       ],
       "add-item": "Add item",
+      "add-item-unavailable": "Custom items aren't available yet. Your current checklist stays unchanged.",
       "hint": "This is a personal checklist, not instructions from your vet"
     },
     "empty": {
@@ -2234,8 +2239,11 @@
       "push-hint": "For now, push is sent only for these events. Family activity isn't pushed.",
       "section-quiet-hours": "Quiet hours",
       "quiet-hours-example": "10:00 pm – 7:00 am",
+      "quiet-hours-value-unavailable": "Unavailable",
+      "quiet-hours-unavailable": "Quiet hours can't be edited in this build.",
       "section-tz": "Time zone",
       "tz-example": "Europe/Berlin (auto)",
+      "timezone-auto-hint": "Used for reminder timing and not editable here.",
       "states": {
         "loading": {
           "status": "Checking",
@@ -2263,23 +2271,24 @@
       "screen-title": "Data and account",
       "section-consents": "Consents",
       "row-analytics": "Usage analytics",
-      "analytics-hint": "Helps us improve the app. Not tied to your notification permission.",
+      "analytics-hint": "Usage analytics isn't connected yet and stays off.",
       "section-errors": "Error collection",
       "row-error-reports": "Error reports",
-      "errors-hint": "Personal data is removed before sending.",
+      "errors-hint": "Error reporting isn't connected yet and stays off.",
+      "consents-unavailable": "These controls aren't available in this build. Both settings stay off.",
       "section-your-data": "Your data",
       "row-export": "Export your data",
       "section-account": "Account",
       "section-account-removal": "Account removal",
       "row-delete": "Delete account",
-      "export-sheet": "We'll gather your records and send a link to your email within 24 hours",
+      "export-sheet": "Export isn't available in this build. No request was created, and no link or email will be sent.",
       "delete-sheet": {
-        "title": "Delete account",
-        "body": "This will delete your profile, your puppy's records, and the links you've shared. This cannot be undone",
+        "title": "Account deletion isn't available",
+        "body": "No deletion request was created, and no account data or email changed.",
         "confirm-input-prompt": "type the word \"DELETE\"",
         "confirm-input-word": "DELETE"
       },
-      "delete-toast": "Deletion request received. We'll send a confirmation to your email",
+      "delete-toast": "No deletion request was created.",
       "states": {
         "loading": {
           "status": "Checking",
@@ -2319,6 +2328,11 @@
       "topic-quick-log": "Quick Log and routines",
       "topic-sharing": "Family and sharing",
       "topic-privacy": "Data and privacy",
+      "topic-guidance": {
+        "quick-log": "Use Add to log routine care quickly, then review or correct saved events in Diary.",
+        "sharing": "Family and access shows current roles. Any action that isn't connected will say clearly that access did not change.",
+        "privacy": "Data and account explains which controls work now. PuppyPlan never asks you to paste private care details into support."
+      },
       "version-row": "App version",
       "support-code-row": "Support code",
       "support-code-value": "Local build",
@@ -2378,10 +2392,12 @@
     ],
     "plan-monthly": "Monthly · $8.99/month",
     "plan-yearly": "Annual · $39.99/year · $3.33/mo",
-    "plan-yearly-a11y": "Annual plan, 39 dollars 99 cents per year, selected",
+    "plan-yearly-a11y": "Annual plan, 39 dollars 99 cents per year",
     "plan-lifetime": "Lifetime puppyhood pass · $79-99 once",
     "primary": "Choose plan",
     "secondary": "Restore purchases",
+    "unavailable-title": "Purchases aren't available",
+    "unavailable-body": "No charge was made, and Plus access did not change.",
     "legal": "Auto-renews. You can cancel in the App Store.",
     "trial-status": "{count} days left",
     "trial-note": "Full access now. First paywall stays skippable.",
