@@ -910,6 +910,13 @@ export type Database = {
           household_id: string
         }[]
       }
+      create_household_invite: {
+        Args: { p_role?: string; p_ttl?: string }
+        Returns: {
+          expires_at: string
+          token: string
+        }[]
+      }
       current_household_ids: { Args: never; Returns: string[] }
       current_share_health_summary: {
         Args: never
@@ -974,13 +981,6 @@ export type Database = {
           occurred_time_bucket: string
           share_link_id: string
           training_topic: string
-        }[]
-      }
-      create_household_invite: {
-        Args: { p_role?: string; p_ttl?: string }
-        Returns: {
-          expires_at: string
-          token: string
         }[]
       }
       has_household_role: {
