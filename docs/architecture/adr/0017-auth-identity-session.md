@@ -16,11 +16,19 @@ Persist sessions with an Expo SecureStore-backed Supabase `SupportedStorage` ada
 
 Create new-user household ownership through `public.bootstrap_current_user(text)`, a SECURITY DEFINER RPC with pinned `search_path`, explicit `auth.uid()` checks, authenticated-only EXECUTE, and idempotent owner-membership creation.
 
+On session restoration, `bootstrap_current_user` first resolves any accepted, non-revoked
+membership instead of treating only owner membership as initialized. It prefers a household with
+an active puppy, then the oldest membership, so an invited caregiver returns to the shared puppy
+and legacy empty-household data is not selected when a populated household is available. It
+creates a new owner household only when no active membership exists.
+
 Allow exactly one temporary narrow `as unknown as` boundary cast in `src/lib/auth/bootstrap.ts` to call the RPC before generated database types exist.
 
 ## Consequences
 
 - Session, gating, bootstrap, and later social sign-in share one provider-neutral auth surface.
 - The app never relies on direct client writes for initial household ownership.
-- The bootstrap RPC must stay covered by pgTAP tests for SECURITY DEFINER shape, idempotency, user isolation, and anon denial.
+- The bootstrap RPC must stay covered by pgTAP tests for SECURITY DEFINER shape, idempotency,
+  accepted caregiver restoration, legacy empty-household recovery, user isolation, and anon
+  denial.
 - The temporary RPC cast must be removed after the gated Supabase push/typegen workflow updates `database.types.ts`.

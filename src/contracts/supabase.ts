@@ -4,6 +4,7 @@ export type { Database } from './database.types';
 
 export const householdMembershipRoles = ['owner', 'caregiver', 'viewer'] as const;
 export const inviteRoles = ['caregiver', 'viewer'] as const;
+export const householdInviteAcceptanceOutcomes = ['accepted', 'already_member'] as const;
 export const shareRoles = ['trainer_viewer'] as const;
 export const shareScopes = [
   'routine_summary',
@@ -104,11 +105,21 @@ export const nonEmptyStringSchema = z.string().trim().min(1);
 export const boundedPayloadStringSchema = z.string().trim().min(1).max(64);
 export const hashSchema = z.string().regex(/^sha256:[A-Za-z0-9._:-]+$/);
 export const tokenLast4Schema = z.string().regex(/^[A-Za-z0-9_-]{4}$/);
+export const householdInviteTokenSchema = z.string().regex(/^[0-9a-f]{64}$/);
+export const householdInviteInputSchema = z.string()
+  .trim()
+  .transform((input) => input.startsWith('puppyplan://invite/')
+    ? input.slice('puppyplan://invite/'.length)
+    : input)
+  .pipe(householdInviteTokenSchema);
+export const householdInviteRpcErrorCodeSchema = z.enum(['P4201', 'P4202', 'P4203']);
 export const payloadVersionSchema = z.union([z.literal(1), z.literal(2)]);
 export const positiveVersionSchema = z.number().int().positive();
 
 export const householdMembershipRoleSchema = z.enum(householdMembershipRoles);
 export const inviteRoleSchema = z.enum(inviteRoles);
+export const householdInviteAcceptanceOutcomeSchema =
+  z.enum(householdInviteAcceptanceOutcomes);
 export const shareRoleSchema = z.enum(shareRoles);
 export const shareScopeSchema = z.enum(shareScopes);
 export const eventTypeSchema = z.enum(eventTypes);
@@ -422,6 +433,19 @@ export const createInviteRequestSchema = z.object({
   expires_at: timestampSchema,
 }).strict();
 
+export const createInviteResponseSchema = z.object({
+  ['token']: householdInviteTokenSchema,
+  expires_at: timestampSchema,
+}).strict();
+
+export const acceptInviteResponseSchema = z.object({
+  household_id: uuidSchema,
+  role: householdMembershipRoleSchema,
+  outcome: householdInviteAcceptanceOutcomeSchema,
+}).strict();
+
+export const revokeInviteResponseSchema = z.boolean();
+
 export const routineSummaryShareScopeInputSchema = z.object({
   scope: z.literal('routine_summary'),
 }).strict();
@@ -616,6 +640,8 @@ export const minimalQuickLogQueueItemSchema = z.object({
 
 export type HouseholdMembershipRole = z.infer<typeof householdMembershipRoleSchema>;
 export type InviteRole = z.infer<typeof inviteRoleSchema>;
+export type HouseholdInviteAcceptanceOutcome =
+  z.infer<typeof householdInviteAcceptanceOutcomeSchema>;
 export type ShareRole = z.infer<typeof shareRoleSchema>;
 export type ShareScope = z.infer<typeof shareScopeSchema>;
 export type EventType = z.infer<typeof eventTypeSchema>;
@@ -627,6 +653,9 @@ export type EventLogInsert = z.infer<typeof eventLogInsertSchema>;
 export type MinimalQuickLogQueueItem = z.infer<typeof minimalQuickLogQueueItemSchema>;
 export type InviteRecord = z.infer<typeof inviteRecordSchema>;
 export type CreateInviteRequest = z.infer<typeof createInviteRequestSchema>;
+export type CreateInviteResponse = z.infer<typeof createInviteResponseSchema>;
+export type AcceptInviteResponse = z.infer<typeof acceptInviteResponseSchema>;
+export type HouseholdInviteRpcErrorCode = z.infer<typeof householdInviteRpcErrorCodeSchema>;
 export type CreateShareLinkRequest = z.infer<typeof createShareLinkRequestSchema>;
 export type ShareScopeInput = z.infer<typeof shareScopeInputSchema>;
 export type PuppyProfile = z.infer<typeof puppyProfileSchema>;

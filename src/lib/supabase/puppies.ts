@@ -21,13 +21,18 @@ export type PuppyProfileUpdate = PuppyProfileWrite & Readonly<{
 
 export type SupabasePuppyRepository = Readonly<{
   createPuppyProfile(insert: PuppyProfileInsert): Promise<ActivePuppyProfile>;
-  selectActivePuppy(input: Readonly<{ userId: string }>): Promise<ActivePuppyProfile | null>;
+  selectActivePuppy(
+    input: Readonly<{ householdId: string; userId: string }>,
+  ): Promise<ActivePuppyProfile | null>;
   updatePuppyProfile(update: PuppyProfileUpdate): Promise<ActivePuppyProfile>;
 }>;
 
 type PuppyClient = Readonly<{
   insertPuppyProfile(insert: PuppyProfileInsert): PromiseLike<PuppyClientResponse>;
-  selectActiveMembership(userId: string): PromiseLike<PuppyClientResponse>;
+  selectActiveMembership(
+    userId: string,
+    householdId: string,
+  ): PromiseLike<PuppyClientResponse>;
   selectActivePuppy(householdId: string): PromiseLike<PuppyClientResponse>;
   updatePuppyProfile(update: PuppyProfileUpdate): PromiseLike<PuppyClientResponse>;
 }>;
@@ -72,8 +77,8 @@ export function createSupabasePuppyRepository(
 
       return parseActivePuppyProfile(response.data, 'owner');
     },
-    selectActivePuppy: async ({ userId }) => {
-      const membershipResponse = await client.selectActiveMembership(userId);
+    selectActivePuppy: async ({ householdId, userId }) => {
+      const membershipResponse = await client.selectActiveMembership(userId, householdId);
 
       if (membershipResponse.error) {
         throw new Error('puppy_profile_read_failed');
@@ -120,14 +125,13 @@ function createDefaultPuppyClient(): PuppyClient {
       .insert(insert)
       .select(puppySelectColumns)
       .maybeSingle(),
-    selectActiveMembership: (userId) => getSupabaseClient()
+    selectActiveMembership: (userId, householdId) => getSupabaseClient()
       .from('household_membership')
       .select(activeMembershipSelectColumns)
       .eq('user_id', userId)
+      .eq('household_id', householdId)
       .not('accepted_at', 'is', null)
       .is('revoked_at', null)
-      .order('created_at', { ascending: true })
-      .limit(1)
       .maybeSingle(),
     selectActivePuppy: (householdId) => getSupabaseClient()
       .from('puppy')

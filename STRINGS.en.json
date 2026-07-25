@@ -124,6 +124,7 @@
       "invalid-code": "Enter the 6-digit code.",
       "debug-sign-in-failed": "The debug account sign-in didn't work. Check the local dev credentials.",
       "request-failed": "We couldn't send a code. Check your connection and try again.",
+      "rate-limited": "Too many code requests for this email. Please wait a bit and try again.",
       "verify-failed": "That code didn't work. Request a new one and try again."
     }
   },
@@ -1088,6 +1089,7 @@
       },
       "accepted": {
         "header": "{ownerName} is inviting you to help care for {puppyName}",
+        "header-generic": "You are invited to help care for a puppy",
         "role-caregiver": "Your role: Caregiver",
         "role-viewer": "Your role: Viewer",
         "what-included": "What you'll have access to",
@@ -1097,11 +1099,13 @@
           "Log feedings, walks, potty breaks",
           "Create reminders"
         ],
+        "caregiver-included-first-generic": "Today and the puppy's timeline",
         "caregiver-excluded-bullets": [
           "Subscription billing",
           "Owner's private notes"
         ],
         "disclosure": "{ownerName} can close your access at any time.",
+        "disclosure-generic": "The household owner can close your access at any time.",
         "accept": "Accept",
         "decline": "Decline",
         "decline-confirm-title": "Decline this invite?",
@@ -1109,6 +1113,17 @@
         "already-member-cta": "Open",
         "load-error": "Couldn't load the invite. Check your connection.",
         "neutral-unavailable": "This invite is no longer available. Ask {ownerName} to send a new one.",
+        "manual": {
+          "title": "Have another invite?",
+          "body": "Paste a PuppyPlan invite link or its code.",
+          "label": "Invite link or code",
+          "placeholder": "Paste it here",
+          "submit": "Use this invite",
+          "invalid": "Enter a valid PuppyPlan invite link or code.",
+          "ready": "Invite is ready to accept."
+        },
+        "create-own": "Create your own household",
+        "create-own-error": "Could not create your household. Check your connection and try again.",
         "states": {
           "loading": {
             "status": "Checking",
@@ -1141,6 +1156,9 @@
       },
       "manage": {
         "screen-title": "Family and access",
+        "non-owner-intro-title": "Care is shared here",
+        "non-owner-intro-body": "You can log care for this puppy. The household owner manages family access.",
+        "non-owner-member-subtitle": "The household owner manages access.",
         "section-members": "Members",
         "section-invites": "Invites",
         "member-you": "You",
@@ -1150,6 +1168,16 @@
         "pending-invite-caregiver": "Pending caregiver",
         "pending-invite-viewer": "Pending viewer",
         "invite-cta": "Invite",
+        "invite-link": {
+          "title": "Invite link ready",
+          "body": "Send this one-time link to the family member who will help with care.",
+          "accessibility-label": "Household caregiver invite link",
+          "last4": "Link code ends in {last4}",
+          "copy": "Copy link",
+          "copy-success": "Invite link copied.",
+          "copy-error": "Could not copy the link. Select it above and copy it manually.",
+          "create-error": "Could not create an invite. Check your connection and try again."
+        },
         "badge-owner": "Owner",
         "badge-caregiver": "Caregiver",
         "badge-viewer": "Viewer",
@@ -1173,6 +1201,11 @@
         },
         "revoked-toast": "Access for {name} is closed.",
         "states": {
+          "empty": {
+            "status": "Not ready",
+            "title": "Household access is not available yet",
+            "body": "Finish setting up your household before managing members and invites."
+          },
           "loading": {
             "status": "Checking",
             "title": "Loading household access",

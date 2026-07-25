@@ -1,5 +1,6 @@
 export {
   getCurrentUser,
+  OtpRequestError,
   requestEmailOtp,
   signOut,
   startAutoRefresh,
@@ -8,6 +9,7 @@ export {
   toSessionUser,
   verifyEmailOtp,
   type AuthChangeHandler,
+  type OtpRequestFailureReason,
 } from './api';
 export { ensureUserBootstrapped, type BootstrapRpc } from './bootstrap';
 export {

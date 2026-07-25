@@ -1,5 +1,7 @@
 import {
+  acceptInviteResponseSchema,
   activePuppyProfileSchema,
+  createInviteResponseSchema,
   createInviteRequestSchema,
   createShareLinkRequestSchema,
   dateSchema,
@@ -8,10 +10,12 @@ import {
   eventLogRecordSchema,
   eventTypes,
   householdMembershipRoles,
+  householdInviteInputSchema,
   minimalQuickLogQueueItemSchema,
   puppyQuickTrackerIds,
   puppyQuickTrackerIdsSchema,
   puppyProfileSchema,
+  revokeInviteResponseSchema,
   shareScopeRecordSchema,
   shareScopes,
   supabaseMvpTableNames,
@@ -49,6 +53,96 @@ describe('Supabase contract vocabulary', () => {
       'health_summary',
       'puppy_profile',
     ]);
+  });
+});
+
+describe('household invite RPC contracts', () => {
+  it('AC-PUP42-INVITEE-1 parses a raw token or exact PuppyPlan invite link', () => {
+    const token = 'a'.repeat(64);
+
+    expect(householdInviteInputSchema.parse(token)).toBe(token);
+    expect(householdInviteInputSchema.parse(`  puppyplan://invite/${token}  `)).toBe(token);
+  });
+
+  it('AC-PUP42-INVITEE-1 rejects malformed, uppercase, or decorated invite input', () => {
+    const token = 'a'.repeat(64);
+
+    for (const input of [
+      'A'.repeat(64),
+      `https://example.com/invite/${token}`,
+      `puppyplan://invite/${token}?source=copy`,
+      `puppyplan://invite/${token}/`,
+      '',
+    ]) {
+      expect(householdInviteInputSchema.safeParse(input).success).toBe(false);
+    }
+  });
+
+  it('AC-PUP42-CLIENT-1 accepts the one-time token create response', () => {
+    expect(createInviteResponseSchema.parse({
+      token: 'a'.repeat(64),
+      expires_at: '2026-07-31T12:00:00.000Z',
+    })).toEqual({
+      token: 'a'.repeat(64),
+      expires_at: '2026-07-31T12:00:00.000Z',
+    });
+  });
+
+  it('AC-PUP42-CLIENT-1 rejects malformed or non-lowercase invite tokens', () => {
+    expect(createInviteResponseSchema.safeParse({
+      token: 'A'.repeat(64),
+      expires_at: '2026-07-31T12:00:00.000Z',
+    }).success).toBe(false);
+    expect(createInviteResponseSchema.safeParse({
+      token: 'a'.repeat(63),
+      expires_at: '2026-07-31T12:00:00.000Z',
+    }).success).toBe(false);
+  });
+
+  it.each([
+    ['owner', 'already_member'],
+    ['caregiver', 'accepted'],
+    ['viewer', 'already_member'],
+  ] as const)(
+    'AC-F4: accepts actual %s membership role with the typed %s outcome',
+    (role, outcome) => {
+      expect(acceptInviteResponseSchema.parse({
+        household_id: uuidA,
+        role,
+        outcome,
+      })).toEqual({
+        household_id: uuidA,
+        role,
+        outcome,
+      });
+    },
+  );
+
+  it('ERR-F3: rejects missing or unknown invite acceptance outcomes and roles', () => {
+    expect(acceptInviteResponseSchema.safeParse({
+      household_id: uuidA,
+      role: 'caregiver',
+    }).success).toBe(false);
+    expect(acceptInviteResponseSchema.safeParse({
+      household_id: uuidA,
+      role: 'caregiver',
+      outcome: 'replaced_membership',
+    }).success).toBe(false);
+    expect(acceptInviteResponseSchema.safeParse({
+      household_id: uuidA,
+      role: 'administrator',
+      outcome: 'already_member',
+    }).success).toBe(false);
+  });
+
+  it('AC-PUP42-CLIENT-1 keeps revoke results boolean and all responses strict', () => {
+    expect(revokeInviteResponseSchema.parse(true)).toBe(true);
+    expect(revokeInviteResponseSchema.safeParse('true').success).toBe(false);
+    expect(createInviteResponseSchema.safeParse({
+      token: 'a'.repeat(64),
+      expires_at: '2026-07-31T12:00:00.000Z',
+      token_hash: 'must-not-cross-client-boundary',
+    }).success).toBe(false);
   });
 });
 

@@ -38,10 +38,14 @@ describe('query key factory', () => {
       puppyId,
       'summary',
     ]);
-    expect(queryKeys.puppy.active('00000000-0000-4000-8000-000000000004')).toEqual([
+    expect(queryKeys.puppy.active(
+      '00000000-0000-4000-8000-000000000004',
+      '00000000-0000-4000-8000-000000000005',
+    )).toEqual([
       'puppy',
       'active',
       '00000000-0000-4000-8000-000000000004',
+      '00000000-0000-4000-8000-000000000005',
     ]);
     expect(queryKeys.events.duplicateWarningSource(householdId, puppyId, 'feeding')).toEqual([
       'events',

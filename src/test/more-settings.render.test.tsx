@@ -36,6 +36,7 @@ import MoreRoute from '../../app/(tabs)/more';
 import ShareablePuppyCardRoute from '../../app/(modals)/sharing/puppy-card';
 
 const mockUseActiveCareContext = jest.fn();
+const mockUseCreateHouseholdInviteMutation = jest.fn();
 const mockUseHouseholdInvitesQuery = jest.fn();
 const mockUseNotificationPreferenceQuery = jest.fn();
 const mockUseUpdateNotificationPreferenceMutation = jest.fn();
@@ -59,6 +60,7 @@ jest.mock('@/lib/query/household-access', () => {
 
   return {
     ...actual,
+    useCreateHouseholdInviteMutation: () => mockUseCreateHouseholdInviteMutation(),
     useHouseholdInvitesQuery: (householdId: string | undefined) =>
       mockUseHouseholdInvitesQuery(householdId),
   };
@@ -118,6 +120,10 @@ describe('More settings entries', () => {
       data: [],
       isError: false,
       isLoading: false,
+    });
+    mockUseCreateHouseholdInviteMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: jest.fn(),
     });
     openSettingsSpy = jest
       .spyOn(Linking, 'openSettings')
@@ -977,7 +983,7 @@ describe('More settings entries', () => {
     );
 
     expect(screen.getByText(i18n.t('sharing.family.manage.screen-title'))).toBeTruthy();
-    expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.title')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.title'))).toHaveLength(1);
     expect(screen.getByText(i18n.t('sharing.family.manage.section-members'))).toBeTruthy();
     expect(screen.getByText(i18n.t('sharing.family.manage.member-you'))).toBeTruthy();
     expect(screen.getAllByText(i18n.t('sharing.family.manage.badge-owner')).length).toBeGreaterThanOrEqual(1);
@@ -993,7 +999,7 @@ describe('More settings entries', () => {
 
     expect(screen.getByText(i18n.t('sharing.family.manage.section-invites'))).toBeTruthy();
     expect(screen.getByText(i18n.t('sharing.family.manage.invites-empty'))).toBeTruthy();
-    expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.body')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(i18n.t('sharing.family.today-prompt.body'))).toHaveLength(1);
     expect(screen.getByRole('button', { name: i18n.t('sharing.family.manage.invite-cta') })).toBeTruthy();
     expect(screen.queryByText(/@/)).toBeNull();
   });
@@ -1034,6 +1040,200 @@ describe('More settings entries', () => {
       date: '24 May',
     }))).toBeNull();
     expect(screen.queryByText(/A1b2|recipient-hash|@|token/i)).toBeNull();
+  });
+
+  it('PUP-42 creates a transient caregiver invite link and copies the exact deep link', async () => {
+    const token = 'ab'.repeat(32);
+    const inviteLink = `puppyplan://invite/${token}`;
+    const mutateAsync = jest.fn().mockResolvedValue({
+      expires_at: '2026-07-31T12:00:00.000Z',
+      token,
+    });
+    const copyInviteLink = jest.fn().mockResolvedValue(undefined);
+    mockUseCreateHouseholdInviteMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync,
+    });
+
+    render(
+      <AppProviders>
+        <HouseholdAccessScreen copyInviteLink={copyInviteLink} />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.manage.invite-cta'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('household-invite-link-card')).toBeTruthy();
+    });
+    expect(mutateAsync).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(inviteLink)).toBeTruthy();
+    expect(screen.getByText(i18n.t('sharing.family.manage.invite-link.last4', {
+      last4: 'abab',
+    }))).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.manage.invite-link.copy'),
+    }));
+
+    await waitFor(() => {
+      expect(copyInviteLink).toHaveBeenCalledWith(inviteLink);
+      expect(screen.getByTestId('household-invite-copy-success')).toBeTruthy();
+    });
+  });
+
+  it('PUP-42 surfaces invite creation failures without exposing internal error details', async () => {
+    const createFailure = new Error('synthetic create failure');
+    const mutateAsync = jest.fn().mockRejectedValue(createFailure);
+    mockUseCreateHouseholdInviteMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync,
+    });
+
+    render(
+      <AppProviders>
+        <HouseholdAccessScreen copyInviteLink={jest.fn()} />
+      </AppProviders>,
+    );
+
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.manage.invite-cta'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('household-invite-create-error')).toBeTruthy();
+    });
+    expect(screen.queryByText(createFailure.message)).toBeNull();
+  });
+
+  it('PUP-42 surfaces clipboard failures without exposing internal error details', async () => {
+    const token = 'cd'.repeat(32);
+    const copyInviteLink = jest.fn().mockRejectedValue(new Error('synthetic clipboard failure'));
+    mockUseCreateHouseholdInviteMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: jest.fn().mockResolvedValue({
+        expires_at: '2026-07-31T12:00:00.000Z',
+        token,
+      }),
+    });
+
+    render(
+      <AppProviders>
+        <HouseholdAccessScreen copyInviteLink={copyInviteLink} />
+      </AppProviders>,
+    );
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.manage.invite-cta'),
+    }));
+    await waitFor(() => {
+      expect(screen.getByTestId('household-invite-link-card')).toBeTruthy();
+    });
+    fireEvent.press(screen.getByRole('button', {
+      name: i18n.t('sharing.family.manage.invite-link.copy'),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('household-invite-copy-error')).toBeTruthy();
+    });
+    expect(screen.queryByText(/synthetic clipboard failure/i)).toBeNull();
+  });
+
+  it('AC-F7: non-owner household members see honest access copy without owner invite controls', () => {
+    mockUseActiveCareContext.mockReturnValue({
+      careContext: {
+        authState: 'authenticated',
+        householdId: '00000000-0000-4000-8000-000000002301',
+        householdRole: 'caregiver',
+        puppyId: '00000000-0000-4000-8000-000000002302',
+        selectedTrackerIds: ['feeding'],
+        todayDate: '2026-06-09',
+        userId: '00000000-0000-4000-8000-000000002303',
+      },
+      puppy: null,
+      status: 'ready',
+    });
+
+    render(
+      <AppProviders>
+        <HouseholdAccessScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByText(
+      i18n.t('sharing.family.manage.non-owner-intro-title'),
+    )).toBeTruthy();
+    expect(screen.getByText(
+      i18n.t('sharing.family.manage.non-owner-intro-body'),
+    )).toBeTruthy();
+    expect(screen.getByText(
+      i18n.t('sharing.family.manage.non-owner-member-subtitle'),
+    )).toBeTruthy();
+    expect(screen.getByText(
+      i18n.t('sharing.family.manage.badge-caregiver'),
+    )).toBeTruthy();
+    expect(screen.queryByText(
+      i18n.t('sharing.family.today-prompt.title'),
+    )).toBeNull();
+    expect(screen.queryByText(
+      i18n.t('sharing.common.disclosure-can-close'),
+    )).toBeNull();
+    expect(screen.queryByText(
+      i18n.t('sharing.family.manage.section-invites'),
+    )).toBeNull();
+    expect(screen.queryByText(
+      i18n.t('sharing.family.manage.invites-empty'),
+    )).toBeNull();
+    expect(screen.queryByRole('button', {
+      name: i18n.t('sharing.family.manage.invite-cta'),
+    })).toBeNull();
+    expect(mockUseHouseholdInvitesQuery).toHaveBeenCalledWith(undefined);
+  });
+
+  it.each([
+    ['loading', 'loading'],
+    ['error', 'error'],
+    ['empty', 'empty'],
+  ] as const)(
+    'AC-F7: %s active-care state hides the unverified owner shell',
+    (activeCareStatus, expectedState) => {
+      mockUseActiveCareContext.mockReturnValue({
+        careContext: null,
+        puppy: null,
+        status: activeCareStatus,
+      });
+
+      render(
+        <AppProviders>
+          <HouseholdAccessScreen />
+        </AppProviders>,
+      );
+
+      expect(screen.getByTestId(`household-state-${expectedState}`)).toBeTruthy();
+      expect(screen.queryByTestId('household-intro-card')).toBeNull();
+      expect(screen.queryByText(i18n.t('sharing.family.manage.member-you'))).toBeNull();
+      expect(screen.queryByRole('button', {
+        name: i18n.t('sharing.family.manage.invite-cta'),
+      })).toBeNull();
+    },
+  );
+
+  it('PUP-42 exposes a busy invite action while creation is pending', () => {
+    mockUseCreateHouseholdInviteMutation.mockReturnValue({
+      isPending: true,
+      mutateAsync: jest.fn(),
+    });
+
+    render(
+      <AppProviders>
+        <HouseholdAccessScreen />
+      </AppProviders>,
+    );
+
+    expect(screen.getByRole('button', {
+      name: i18n.t('sharing.family.manage.invite-cta'),
+    }).props.accessibilityState.busy).toBe(true);
   });
 
   it('AC-SHARE-HOUSEHOLD-STATES renders deterministic household state templates', () => {

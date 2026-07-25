@@ -24,10 +24,11 @@ const puppy: ActivePuppyProfile = {
 
 describe('active care context query contract', () => {
   it('uses a stable active puppy cache key for the authenticated user', () => {
-    expect(queryKeys.puppy.active(userId)).toEqual([
+    expect(queryKeys.puppy.active(userId, householdId)).toEqual([
       'puppy',
       'active',
       userId,
+      householdId,
     ]);
   });
 

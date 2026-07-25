@@ -16,6 +16,7 @@ export function createPuppyPlanQueryClient(): QueryClient {
         retry: false,
       },
       mutations: {
+        gcTime,
         retry: false,
       },
     },

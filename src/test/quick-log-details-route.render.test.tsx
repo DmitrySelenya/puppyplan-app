@@ -547,6 +547,60 @@ describe('QuickLogDetailsRoute', () => {
     expect(screen.getByText(i18n.t('quick-log.details.states.permission-denied.title'))).toBeTruthy();
   });
 
+  it.each([
+    ['empty active-care context', {
+      activeCare: {
+        careContext: null,
+        puppy: null,
+        status: 'empty',
+      },
+      mutationStatus: 'ready',
+    }],
+    ['unavailable Quick Log write port', {
+      activeCare: {
+        careContext: {
+          authState: 'authenticated',
+          householdId: '00000000-0000-4000-8000-000000007902',
+          householdRole: 'owner',
+          puppyId: '00000000-0000-4000-8000-000000007903',
+          selectedTrackerIds: ['feeding'],
+          todayDate: '2026-06-09',
+          userId: '00000000-0000-4000-8000-000000007904',
+        },
+        puppy: null,
+        status: 'ready',
+      },
+      mutationStatus: 'unavailable',
+    }],
+  ] as const)(
+    'AC-F8: shows an honest technical state for %s',
+    (_label, scenario) => {
+      mockUseActiveCareContext.mockReturnValue(scenario.activeCare);
+      mockUseQuickLogMutationPort.mockReturnValue({
+        mutation: undefined,
+        mutationEvents: [],
+        status: scenario.mutationStatus,
+      });
+
+      render(
+        <AppProviders>
+          <QuickLogFeedbackProvider>
+            <QuickLogDetailsRoute />
+          </QuickLogFeedbackProvider>
+        </AppProviders>,
+      );
+
+      expect(screen.getByTestId('quick-log-details-state-error')).toBeTruthy();
+      expect(screen.queryByTestId('quick-log-details-state-permission-denied')).toBeNull();
+      expect(screen.queryByText(
+        i18n.t('quick-log.details.states.permission-denied.body'),
+      )).toBeNull();
+      expect(screen.getByRole('button', {
+        name: i18n.t('quick-log.details.save'),
+      }).props.accessibilityState.disabled).toBe(true);
+    },
+  );
+
   it('AC-QL-DETAIL-STATES shows pending write while the local queue opens', () => {
     mockUseQuickLogMutationPort.mockReturnValue({
       mutation: undefined,
