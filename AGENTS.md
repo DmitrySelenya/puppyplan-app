@@ -93,7 +93,7 @@ src/
     i18n/
     storage/
   contracts/                 # Zod schemas, payloads, business rules
-  state/                     # Zustand UI stores only
+  state/                     # Zustand UI stores only (designated; not installed yet)
   test/
 supabase/
   migrations/
