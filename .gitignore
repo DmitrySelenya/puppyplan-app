@@ -73,7 +73,10 @@ DerivedData/
 
 # Agent / MCP local state
 .mcp.json
-.codex/
+.codex/*
+!.codex/environments/
+.codex/environments/*
+!.codex/environments/environment.toml
 .superpowers/
 .claude/work/
 .claude/settings.local.json
@@ -91,6 +94,13 @@ DerivedData/
 tools/mobile-e2e/artifacts/
 tools/mobile-e2e/config/*.local.json
 docs/reports/
+
+# Internal working artifacts kept out of the public repository.
+# See the "unpublished references" note in docs/plans/README.md.
+docs/qa/
+docs/dogfood/
+docs/reviews/
+
 docs/reviews/**/*.png
 docs/reviews/**/*.jpg
 docs/reviews/**/*.jpeg

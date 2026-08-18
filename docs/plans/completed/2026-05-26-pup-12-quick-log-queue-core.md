@@ -13,7 +13,7 @@
 
 **Architecture:** Supabase Postgres remains the durable source of truth for confirmed `event_log` rows. Expo SQLite owns only unsent Quick Log queue items. The queue core exposes deterministic state-machine, retry, migration, and storage APIs under `src/lib/queue/`; PUP-13 will wire typed Supabase mutation and TanStack Query optimistic lifecycle.
 
-**Linear:** `PUP-12` - https://linear.app/dmitryselenya/issue/PUP-12/expo-sqlite-quick-log-queue-core
+**Linear:** `PUP-12`
 
 **Branch:** `dimaselenya/pup-12-expo-sqlite-quick-log-queue-core`
 

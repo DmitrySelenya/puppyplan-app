@@ -474,7 +474,7 @@ Current Quick Log infrastructure already includes contracts, business-rule const
 - [ ] Update Linear PUP-22/PUP-23 with visual evidence and remaining deviations.
 
 **2026-06-12 partial recovery evidence:**
-- Re-read the original design source under `/Users/dmitryselenya/Downloads/puppy_app/screens/{today,quicklog,timeline}.jsx` and the in-repo design atlas.
+- Re-read the original design source under `<local-downloads>/puppy_app/screens/{today,quicklog,timeline}.jsx` and the in-repo design atlas.
 - Launched the app on `Grith iPhone SE 3 iOS 26.3` with Metro running and captured local native screenshots for Today, Quick Log default, Timeline, More, and Health. Screenshot files are not recorded or attached here because the simulator session contains private local account data.
 - Brought PUP-22/PUP-23 surfaces materially closer to the atlas:
   - Today first-day state now uses the atlas header/title/date/hero/list/banner shape, first-day card priority, and bottom-right Quick Log FAB.

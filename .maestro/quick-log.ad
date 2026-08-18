@@ -1,0 +1,10 @@
+context platform=ios device="Grith iPhone SE 3 iOS 26.3" kind=simulator theme=unknown
+open "${MAESTRO_APP_ID}" --relaunch
+wait "id=\"diary-header\"" 15000
+press "id=\"nav-add\""
+wait "label=\"Quick Log\"" 10000
+press "label=\"Quick Log\""
+wait "label=\"Potty\"" 10000
+wait "label=\"Log with details\"" 10000
+press "id=\"quick-log-sheet-close\""
+wait "id=\"diary-header\"" 15000

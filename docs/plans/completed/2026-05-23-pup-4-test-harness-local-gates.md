@@ -13,7 +13,7 @@
 
 **Architecture:** This extends the `PUP-2` Expo SDK 55 scaffold with Jest/RNTL tests, Node guardrail tests, lightweight GitHub Actions, and local gates. It does not change product data shapes, Supabase schema, RLS, runtime services, navigation IA, or generated native projects.
 
-**Linear:** `PUP-4` - https://linear.app/dmitryselenya/issue/PUP-4/set-up-ci-and-local-verification-gates
+**Linear:** `PUP-4`
 
 **Branch:** `dimaselenya/pup-4-set-up-ci-and-local-verification-gates`
 

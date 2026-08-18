@@ -3,7 +3,7 @@
 **Status:** Completed
 **Plan type:** Completed task plan
 **Current phase:** Completed locally — owner-run remote/database/device acceptance remains pending
-**Linear:** `PUP-42` — https://linear.app/dmitryselenya/issue/PUP-42
+**Linear:** `PUP-42`
 **Owner:** Dmitry
 **Date:** 2026-07-23
 

@@ -1,0 +1,40 @@
+appId: ${MAESTRO_APP_ID}
+name: PuppyPlan add-record entry point
+tags:
+  - smoke
+---
+# Generated from .maestro/quick-log.ad (agent-device replay export --format maestro),
+# then hand-corrected: the export emits `label:` selectors, which the real Maestro CLI
+# accepts while matching nothing, so every selector here stays on `text:` or `id:`.
+# Read-only flow: it opens the add sheet and dismisses it without writing a record.
+- launchApp:
+    appId: ${MAESTRO_APP_ID}
+    stopApp: true
+- extendedWaitUntil:
+    visible:
+      id: diary-header
+    timeout: 15000
+- tapOn:
+    id: nav-add
+- extendedWaitUntil:
+    visible:
+      text: "Quick Log"
+    timeout: 10000
+- tapOn:
+    text: "Quick Log"
+- extendedWaitUntil:
+    visible:
+      text: "Potty"
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      text: "Log with details"
+    timeout: 10000
+# The sheet close button exposes no resourceId in Maestro's iOS hierarchy, so it is
+# targeted by its accessibility label instead of the testID `quick-log-sheet-close`.
+- tapOn:
+    text: "Dismiss Quick Log"
+- extendedWaitUntil:
+    visible:
+      id: diary-header
+    timeout: 15000

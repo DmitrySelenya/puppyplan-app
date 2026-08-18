@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+name: PuppyPlan authenticated shell smoke
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: "nav-add"
+    timeout: 15000
+- assertVisible:
+    id: "diary-header"
+- assertVisible:
+    id: "nav-add"

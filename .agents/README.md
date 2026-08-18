@@ -10,6 +10,7 @@ Use these skills before generic or personal skills when the task matches:
 - `implement`: execute an existing plan phase by phase.
 - `tdd`: run a spec-driven test-first loop for behavior changes, bugfix regressions, and high-risk contract/RLS/privacy/query/Quick Log work.
 - `design-fidelity`: route PuppyPlan screen, layout, component, and UI review work through the mandatory Design Fidelity Pipeline.
+- `device-automation`: drive a build on a simulator, emulator, or device through agent-device, Expo MCP, XcodeBuildMCP, or Maestro.
 
 ## Agent Adapters
 

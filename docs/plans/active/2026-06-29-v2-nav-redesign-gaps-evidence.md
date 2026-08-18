@@ -480,7 +480,7 @@ GREEN / regression evidence:
   checks, tokens, privacy scan, and text hygiene. Output still includes the existing React
   `act(...)` warning in `screen-header.render.test.tsx`; no failures.
 - Project graph advisory refresh:
-  `python3 /Users/dmitryselenya/.codex/skills/project-graph-context/scripts/project_graph.py update --repo /Users/dmitryselenya/Projects/puppy_app --base HEAD`
+  `python3 <home>/.codex/skills/project-graph-context/scripts/project_graph.py update --repo <repo root> --base HEAD`
   — PASS: FTS index rebuilt, 93 files updated.
 
 Implementation notes:
@@ -533,7 +533,7 @@ GREEN / regression evidence:
   checks, tokens, privacy scan, and text hygiene. Output still includes the existing React
   `act(...)` warning in `screen-header.render.test.tsx`; no failures.
 - Project graph advisory refresh:
-  `python3 /Users/dmitryselenya/.codex/skills/project-graph-context/scripts/project_graph.py update --repo /Users/dmitryselenya/Projects/puppy_app --base HEAD`
+  `python3 <home>/.codex/skills/project-graph-context/scripts/project_graph.py update --repo <repo root> --base HEAD`
   — PASS: FTS index rebuilt, 93 files updated.
 
 Implementation notes:

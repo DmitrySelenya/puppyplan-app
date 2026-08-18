@@ -13,7 +13,7 @@
 
 **Architecture:** Quick Log UI behavior flows through a controller port shaped around the PUP-13 mutation/cache boundary. `app/` stays route-thin. Snackbar is shared design infrastructure under `src/design`, hosted globally above modal routes, so post-dismiss success/failure/undo feedback survives the Quick Log sheet lifecycle. The production route remains in the unavailable state until a real active household/puppy/session source exists; PUP-14 does not use fake IDs.
 
-**Linear:** `PUP-14` - https://linear.app/dmitryselenya/issue/PUP-14/quick-log-sheet-ui-and-interaction-states
+**Linear:** `PUP-14`
 
 **Branch:** `dimaselenya/pup-14-quick-log-sheet-ui-and-interaction-states`
 

@@ -14,7 +14,7 @@
 
 **Architecture:** Quick Log is the app's core habit loop. Supabase Postgres remains the durable source of truth for confirmed `event_log` rows. TanStack Query owns server-state cache and optimistic Today/Timeline rows. Expo SQLite owns only the Minimal Durable Quick Log Queue for unsent Quick Log events. Zustand may mirror queue/UI status but must not own server rows. Feature UI composes `src/design` primitives and typed i18n keys. Supabase access stays behind `src/lib/supabase` wrappers and query/mutation hooks.
 
-**Linear:** `PUP-5` - https://linear.app/dmitryselenya/issue/PUP-5/create-quick-log-mvp-implementation-plan
+**Linear:** `PUP-5`
 
 **Branch:** `dimaselenya/pup-5-create-quick-log-mvp-implementation-plan`
 

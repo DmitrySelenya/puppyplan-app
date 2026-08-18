@@ -51,6 +51,9 @@ Before TestFlight/App Store release:
 
 Profiles must use explicit env/channel/bundle strategy.
 
+`expo-dev-client` is development tooling, and Expo excludes it from release builds. Release
+artifacts therefore do not include the development launcher.
+
 ## Notifications
 
 - staged permission: provisional -> full;

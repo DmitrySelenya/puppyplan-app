@@ -17,7 +17,7 @@
 
 **Branch:** `dimaselenya/pup-25-adopt-isolated-spec-driven-tdd-workflow`
 
-**Worktree:** `/Users/dmitryselenya/.config/superpowers/worktrees/puppy_app/dimaselenya/pup-25-adopt-isolated-spec-driven-tdd-workflow`
+**Worktree:** `<home>/.config/superpowers/worktrees/puppy_app/dimaselenya/pup-25-adopt-isolated-spec-driven-tdd-workflow`
 
 **Primary source docs:**
 - PRD: `puppyplan-prd-v2.md` - agent-built velocity, contracts, RLS, privacy, Quick Log acceptance.
@@ -36,9 +36,9 @@
 - Baseline `npm run check` passed before PuppyPlan edits: lint, typecheck, 61 Jest suites / 411 tests, node tests, scaffold checks, tokens, privacy scan, and text hygiene.
 - Project graph context was built externally and reports no current diff impact; graph output is advisory only.
 - Global conflict cleanup:
-  - Copied Grith-specific global TDD wrapper into `/Users/dmitryselenya/Projects/mens-mental-health-mobile/.claude/skills/tdd/SKILL.md`.
+  - Copied Grith-specific global TDD wrapper into `<other-local-project>/.claude/skills/tdd/SKILL.md`.
   - Updated Grith `AGENTS.md` and `CLAUDE.md` to require repo-local TDD and not depend on global `~/.codex/skills/tdd`.
-  - Renamed global `/Users/dmitryselenya/.codex/skills/tdd` to `/Users/dmitryselenya/.codex/skills/grith-tdd` and changed its frontmatter name to `grith-tdd`.
+  - Renamed global `<home>/.codex/skills/tdd` to `<home>/.codex/skills/grith-tdd` and changed its frontmatter name to `grith-tdd`.
 - Upstream review source is pinned and untrusted until adapted:
   - Repo: `kirillgreen/skills`
   - Commit: `5e1e70987322b4b910a6fb3e9e77b162eab3de41`
@@ -123,10 +123,10 @@
 - `docs/plans/README.md`
 
 ### External Grith Cleanup
-- `/Users/dmitryselenya/Projects/mens-mental-health-mobile/.claude/skills/tdd/SKILL.md`
-- `/Users/dmitryselenya/Projects/mens-mental-health-mobile/AGENTS.md`
-- `/Users/dmitryselenya/Projects/mens-mental-health-mobile/CLAUDE.md`
-- `/Users/dmitryselenya/.codex/skills/grith-tdd/SKILL.md`
+- `<other-local-project>/.claude/skills/tdd/SKILL.md`
+- `<other-local-project>/AGENTS.md`
+- `<other-local-project>/CLAUDE.md`
+- `<home>/.codex/skills/grith-tdd/SKILL.md`
 
 ## Implementation Plan
 
@@ -176,7 +176,7 @@
 ### Phase 4 - Verification And Linear Evidence
 
 **Checklist:**
-- [x] Run `python3 /Users/dmitryselenya/.codex/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/tdd`.
+- [x] Run `python3 <home>/.codex/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/tdd`.
 - [x] Run `npm run check`.
 - [x] Record final evidence in this plan.
 - [x] Mirror progress and verification to Linear `PUP-25`.
@@ -222,11 +222,11 @@ Only the Codex lightweight contradictory missing-status spike was forward-tested
 - 2026-06-14: Codex lightweight spike returned `STATUS: HALT_SPEC_DEFECT` for contradictory missing-status criteria.
 - 2026-06-14: Deep-review fix recorded the full PUP-25 eval coverage matrix for contradiction, privacy, access, i18n, design-fidelity, query/cache, Quick Log, and bugfix scenarios.
 - 2026-06-14: `git diff --check` passed.
-- 2026-06-14: `/Users/dmitryselenya/.cache/codex-project-graph/runtime/venv/bin/python /Users/dmitryselenya/.codex/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/tdd` passed with `Skill is valid!`. The default and bundled Python interpreters lacked `yaml`, so the existing project-graph managed runtime was used; no dependency was installed.
+- 2026-06-14: `<home>/.cache/codex-project-graph/runtime/venv/bin/python <home>/.codex/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/tdd` passed with `Skill is valid!`. The default and bundled Python interpreters lacked `yaml`, so the existing project-graph managed runtime was used; no dependency was installed.
 - 2026-06-14: Final `npm run check` passed: lint, typecheck, 61 Jest suites / 411 tests, node tests, scaffold checks, tokens, privacy scan, text hygiene. Jest emitted the same React `act(...)` console warning in `screen-header.render.test.tsx` seen in the baseline run; it did not fail the gate.
-- 2026-06-14: Deep-review fix verification passed: `git diff --check`, `git diff --cached --check`, `/Users/dmitryselenya/.cache/codex-project-graph/runtime/venv/bin/python /Users/dmitryselenya/.codex/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/tdd`, and `npm run check`. The same non-failing React `act(...)` console warning appeared in `screen-header.render.test.tsx`.
+- 2026-06-14: Deep-review fix verification passed: `git diff --check`, `git diff --cached --check`, `<home>/.cache/codex-project-graph/runtime/venv/bin/python <home>/.codex/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/tdd`, and `npm run check`. The same non-failing React `act(...)` console warning appeared in `screen-header.render.test.tsx`.
 - 2026-06-14: Follow-up review wording fix relabeled inspection-only eval rows from `Pass` to method/status-based coverage and recorded deferred heavy-mode plus stop-or-exact-approval forward verification.
-- 2026-06-14: Follow-up review verification passed: `/Users/dmitryselenya/.cache/codex-project-graph/runtime/venv/bin/python /Users/dmitryselenya/.codex/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/tdd`, `git diff --check`, `git diff --cached --check`, and `npm run check`. The same non-failing React `act(...)` console warning appeared in `screen-header.render.test.tsx`.
+- 2026-06-14: Follow-up review verification passed: `<home>/.cache/codex-project-graph/runtime/venv/bin/python <home>/.codex/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/tdd`, `git diff --check`, `git diff --cached --check`, and `npm run check`. The same non-failing React `act(...)` console warning appeared in `screen-header.render.test.tsx`.
 
 ## Changelog
 

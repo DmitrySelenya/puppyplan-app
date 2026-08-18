@@ -1,0 +1,46 @@
+# Project-maintained PuppyPlan Codex environment. Keep actions aligned with scripts/build_and_run.sh.
+version = 1
+name = "PuppyPlan Expo"
+
+[setup]
+script = ""
+
+[[actions]]
+name = "Run"
+icon = "run"
+command = "./scripts/build_and_run.sh"
+
+[[actions]]
+name = "Run with Expo MCP"
+icon = "run"
+command = "./scripts/build_and_run.sh --mcp"
+
+[[actions]]
+name = "Run iOS SE"
+icon = "run"
+command = "./scripts/build_and_run.sh --ios"
+
+[[actions]]
+name = "Run Android"
+icon = "run"
+command = "./scripts/build_and_run.sh --android"
+
+[[actions]]
+name = "Run Dev Client"
+icon = "run"
+command = "./scripts/build_and_run.sh --dev-client"
+
+[[actions]]
+name = "Run Dev Client + Expo MCP"
+icon = "run"
+command = "./scripts/build_and_run.sh --dev-client-mcp"
+
+[[actions]]
+name = "Expo Doctor"
+icon = "tool"
+command = "./scripts/build_and_run.sh --doctor"
+
+[[actions]]
+name = "Maestro iOS Smoke"
+icon = "tool"
+command = "npm run maestro:smoke:ios"

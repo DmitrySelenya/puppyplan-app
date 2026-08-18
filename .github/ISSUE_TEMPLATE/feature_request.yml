@@ -1,0 +1,45 @@
+name: Feature request or proposal
+description: Suggest a change in behavior, architecture, or process.
+labels: ["proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Roadmap decisions are made by the maintainer — see
+        [CONTRIBUTING.md](https://github.com/DmitrySelenya/puppyplan-app/blob/main/CONTRIBUTING.md).
+        A clear problem statement is worth more here than a proposed patch.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What is hard, wrong, or missing today? Describe the situation, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed direction
+      description: Optional. If you already have a shape in mind, sketch it.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: What does this touch?
+      multiple: true
+      options:
+        - App UI / a screen
+        - Data shapes, migrations, or RLS
+        - Navigation structure
+        - The AI-agent workflow (AGENTS.md, skills, gates)
+        - Docs only
+        - Not sure
+    validations:
+      required: true
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Before submitting
+      options:
+        - label: I read CONTRIBUTING.md and understand this is a maintainer-led product repo.
+          required: true
+        - label: This contains no real personal data.
+          required: true
