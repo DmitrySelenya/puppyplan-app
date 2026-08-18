@@ -1035,7 +1035,7 @@ describe('no-Docker Supabase guardrails', () => {
     assert.match(workflow, /npm run supabase:ci:remote/u);
     assert.match(
       workflow,
-      /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02\s+#\s+v4\.6\.2/u,
+      /actions\/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a\s+#\s+v7\.0\.1/u,
     );
     assert.match(workflow, /path: src\/contracts\/database\.types\.ts/u);
     assert.match(packageJson.scripts['supabase:verify:remote'], /supabase:lint/u);

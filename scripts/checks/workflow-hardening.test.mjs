@@ -11,16 +11,16 @@ const workflowPaths = [
 
 const pinnedActions = {
   'actions/checkout': {
-    sha: 'de0fac2e4500dabe0009e67214ff5f5447ce83dd',
-    version: 'v6.0.2',
+    sha: '3d3c42e5aac5ba805825da76410c181273ba90b1',
+    version: 'v7.0.1',
   },
   'actions/setup-node': {
-    sha: '48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
-    version: 'v6.4.0',
+    sha: '820762786026740c76f36085b0efc47a31fe5020',
+    version: 'v7.0.0',
   },
   'actions/upload-artifact': {
-    sha: 'ea165f8d65b6e75b540449e92b4886f43607fa02',
-    version: 'v4.6.2',
+    sha: '043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
+    version: 'v7.0.1',
   },
 };
 
