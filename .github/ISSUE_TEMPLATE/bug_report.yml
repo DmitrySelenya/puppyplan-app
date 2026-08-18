@@ -1,0 +1,59 @@
+name: Bug report
+description: Something behaves incorrectly.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not report security vulnerabilities here.** Use
+        [private vulnerability reporting](https://github.com/DmitrySelenya/puppyplan-app/security/advisories/new).
+
+        **Do not paste real personal data** — pet names, notes, emails, photos, tokens, or
+        screenshots containing them. Use synthetic values.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you observed, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: area
+    attributes:
+      label: Area
+      description: Screen, feature, or path, if you know it.
+      placeholder: e.g. Diary / quick-log sheet / supabase/migrations
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - iOS (simulator)
+        - iOS (device)
+        - Android (emulator)
+        - Android (device)
+        - Not platform-specific
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Output of `npx expo-env-info`, or Expo SDK / OS / device versions.
+      render: text
+  - type: textarea
+    id: gate
+    attributes:
+      label: Does `npm run check` pass on your checkout?
+      description: If it fails, paste the failing gate's output here.
+      render: text

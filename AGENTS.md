@@ -34,6 +34,7 @@ Canonical PuppyPlan project skills live under `.agents/skills/`:
 - `.agents/skills/tdd/SKILL.md`
 - `.agents/skills/design-fidelity/SKILL.md` — routes any UI/screen/component work to the mandatory Design Fidelity Pipeline (complementary to `plan`/`implement`, not a replacement)
 - `.agents/skills/ux-audit/SKILL.md` — eyes-first audit of a live feature (screenshot matrix, whole-frame sweep); use whenever the user asks to review or "look at" UX/UI — code-reading is not a substitute
+- `.agents/skills/device-automation/SKILL.md` — routes simulator, emulator, physical-device, Expo MCP, XcodeBuildMCP, agent-device, and Maestro work through the project device guardrails
 
 Use these project skills before generic or personal skills with the same names. Claude Code discovers `.claude/skills/*` adapters that point back to `.agents/skills/*`. Codex may not auto-discover repo-local skills, so Codex agents must read the matching `.agents/skills/<name>/SKILL.md` manually when the task matches one of these workflows.
 

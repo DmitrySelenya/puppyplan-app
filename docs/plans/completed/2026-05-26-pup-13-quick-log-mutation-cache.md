@@ -13,7 +13,7 @@
 
 **Architecture:** Supabase Postgres is the durable source of truth for confirmed `event_log` rows. TanStack Query owns server-state cache and optimistic rows. Expo SQLite owns only unsent Quick Log queue state and must preserve the original actor for retries.
 
-**Linear:** `PUP-13` - https://linear.app/dmitryselenya/issue/PUP-13/typed-quick-log-supabase-mutation-and-optimistic-cache-lifecycle
+**Linear:** `PUP-13`
 
 **Branch:** `dimaselenya/pup-13-typed-quick-log-supabase-mutation-and-optimistic-cache`
 

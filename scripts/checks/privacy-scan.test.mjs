@@ -174,6 +174,42 @@ describe('scanPrivacyText', () => {
     );
   });
 
+  it('rejects absolute local home paths that would leak a machine account', () => {
+    const homePath = `/Users/${'someone'}/Projects/puppy_app/DESIGN.md`;
+    const violations = scanPrivacyText({
+      path: 'docs/plans/completed/example.md',
+      text: `Design source: ${homePath}`,
+    });
+
+    assert.equal(violations.length, 1);
+    assert.equal(violations[0].kind, 'publication');
+  });
+
+  it('rejects private issue-tracker and design-board URLs', () => {
+    const issueUrl = `https://linear.${'app'}/acme/issue/PUP-9/example`;
+    const boardUrl = `https://miro.${'com'}/app/board/uXjVexample=/`;
+    const violations = scanPrivacyText({
+      path: 'docs/plans/completed/example.md',
+      text: `Tracker: ${issueUrl}\nBoard: ${boardUrl}`,
+    });
+
+    assert.equal(violations.length, 2);
+    assert.deepEqual(violations.map((violation) => violation.kind), [
+      'publication',
+      'publication',
+    ]);
+  });
+
+  it('allows sanitized home-path placeholders and bare issue ids', () => {
+    assert.deepEqual(
+      scanPrivacyText({
+        path: 'docs/plans/completed/example.md',
+        text: 'Design source: <home>/Downloads/export. Tracker: PUP-9.',
+      }),
+      [],
+    );
+  });
+
   it('rejects PostHog autocapture and session replay enablement in app code', () => {
     const autocapture = `posthog.init('key', { auto${'capture'}: true })`;
     const sessionReplay = `posthog.init('key', { session${'Replay'}: true })`;

@@ -13,7 +13,7 @@
 
 **Architecture:** This establishes the single Expo app from ADR-0002, with Expo Router route shells in `app/` and product/runtime code under `src/`. It prepares the design, i18n, query, observability, storage, and test boundaries needed by later `PUP-7`, `PUP-3`, `PUP-4`, and Quick Log work, but it does not create Supabase schema, product data flows, or native generated projects.
 
-**Linear:** `PUP-2` - https://linear.app/dmitryselenya/issue/PUP-2/scaffold-expo-app-baseline
+**Linear:** `PUP-2`
 
 **Branch:** `dimaselenya/pup-2-scaffold-expo-app-baseline`
 
@@ -420,7 +420,7 @@ Run what exists after each relevant phase and record exact results in the change
 - **Approval received:** local dependency installation for the PUP-2 scaffold was approved in the goal prompt on 2026-05-22.
 - **No product blocker:** `PUP-2` implementation is local-only and remains inside the scaffold shell scope.
 - **Dependency audit:** `npm audit --omit=dev --audit-level=moderate` passes after a scoped transitive `uuid` override; no Expo downgrade or force fix was applied.
-- **Reference project note:** `/Users/dmitryselenya/Projects/mens-mental-health-mobile` was inspected as an Expo reference. Its EAS project IDs, OTA update config, bundle/package IDs, and submission settings were not copied because PuppyPlan MVP keeps OTA/EAS Update off and remote/release configuration still requires explicit approval.
+- **Reference project note:** `<other-local-project>` was inspected as an Expo reference. Its EAS project IDs, OTA update config, bundle/package IDs, and submission settings were not copied because PuppyPlan MVP keeps OTA/EAS Update off and remote/release configuration still requires explicit approval.
 
 ## Changelog
 
@@ -430,4 +430,4 @@ Run what exists after each relevant phase and record exact results in the change
 - 2026-05-22: Final verification evidence mirrored to Linear; `PUP-2` moved to `In Review`; plan moved to `docs/plans/completed/`.
 - 2026-05-22: Addressed deep-review follow-up by adding a modal group layout for Quick Log, extending scaffold checks so shell `t('...')` keys must be listed in `shellI18nKeys`, adding the missing `more.sections.support` contract key, and syncing Reanimated architecture docs with the SDK 55 scaffold. `npm run check`, `git diff --check HEAD`, `npx expo install --check`, and browser smoke on `http://localhost:8083/today` passed.
 - 2026-05-22: Addressed second-agent follow-up by adding explicit Babel configuration through the SDK 55 Expo preset, adding a scaffold guardrail check for worklets plugin support, typed routes config, and app/src console logging, hardening shell i18n key extraction for single quotes, double quotes, and static template literals, and documenting scaffold-token, locale-runtime, scroll-first Screen, and test-harness follow-ups for PUP-7/PUP-4.
-- 2026-05-22: Inspected the existing Expo app at `/Users/dmitryselenya/Projects/mens-mental-health-mobile` for reusable local patterns. Kept PuppyPlan EAS/OTA/release config untouched, then closed the remaining transitive Expo tooling audit finding with a scoped `xcode` -> `uuid@11.1.1` override. Verified `npm audit --omit=dev --audit-level=moderate`, `node -e` PBX UUID generation through `xcode`, `npm run check`, `npx expo install --check`, `npx expo config --type public --json`, and `git diff --check HEAD`.
+- 2026-05-22: Inspected the existing Expo app at `<other-local-project>` for reusable local patterns. Kept PuppyPlan EAS/OTA/release config untouched, then closed the remaining transitive Expo tooling audit finding with a scoped `xcode` -> `uuid@11.1.1` override. Verified `npm audit --omit=dev --audit-level=moderate`, `node -e` PBX UUID generation through `xcode`, `npm run check`, `npx expo install --check`, `npx expo config --type public --json`, and `git diff --check HEAD`.

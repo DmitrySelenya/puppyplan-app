@@ -26,6 +26,11 @@ jobs:
     name: Remote Dev Schema Gate
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Fork pull requests never receive repository secrets, and must never be able to
+    # reach the hosted dev database. Skip the job instead of failing it confusingly.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     env:
       SUPABASE_PROJECT_REF: olymqppxsadsxfrcyskh
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

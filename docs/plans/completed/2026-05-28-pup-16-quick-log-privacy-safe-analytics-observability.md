@@ -16,11 +16,11 @@
 **Branch:** Linear `gitBranchName`: `dimaselenya/pup-16-quick-log-privacy-safe-analytics-and-observability`
 
 **Primary source docs:**
-- PRD: `/Users/dmitryselenya/Projects/puppy_app/puppyplan-prd-v2.md` - analytics taxonomy, privacy, Quick Log reliability, Minimal Durable Quick Log Queue.
-- Design: `/Users/dmitryselenya/Projects/puppy_app/DESIGN.md` - data-handling QA and performance QA.
-- Architecture: `/Users/dmitryselenya/Projects/puppy_app/docs/architecture/10-quick-log-queue.md`, `/Users/dmitryselenya/Projects/puppy_app/docs/architecture/13-observability-error-handling-performance.md`, `/Users/dmitryselenya/Projects/puppy_app/docs/architecture/17-testing-ci-release.md`.
-- ADR: `/Users/dmitryselenya/Projects/puppy_app/docs/architecture/adr/0008-privacy-safe-analytics.md`.
-- Parent plan: `/Users/dmitryselenya/Projects/puppy_app/docs/plans/completed/2026-05-25-quick-log-mvp.md`.
+- PRD: `puppyplan-prd-v2.md` - analytics taxonomy, privacy, Quick Log reliability, Minimal Durable Quick Log Queue.
+- Design: `DESIGN.md` - data-handling QA and performance QA.
+- Architecture: `docs/architecture/10-quick-log-queue.md`, `docs/architecture/13-observability-error-handling-performance.md`, `docs/architecture/17-testing-ci-release.md`.
+- ADR: `docs/architecture/adr/0008-privacy-safe-analytics.md`.
+- Parent plan: `docs/plans/completed/2026-05-25-quick-log-mvp.md`.
 
 ---
 

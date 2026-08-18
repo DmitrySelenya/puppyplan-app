@@ -1,6 +1,6 @@
 # PuppyPlan Design V2 Screenshot Atlas
 
-Generated from the delivered local package at `/Users/dmitryselenya/Downloads/Puppy app_V2/`. Validate with `docs/design/v2/manifest.json` and a JSON/screenshot existence check.
+Generated from the delivered local package at `<local-downloads>/Puppy app_V2/`. Validate with `docs/design/v2/manifest.json` and a JSON/screenshot existence check.
 
 The screenshots are design references for Expo native implementation and must be treated as synthetic design data.
 

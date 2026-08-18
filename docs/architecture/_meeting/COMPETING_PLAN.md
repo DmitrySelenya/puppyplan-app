@@ -8,7 +8,7 @@
 ## Plan: PuppyPlan Architecture Document
 
 ### Summary
-Create one root-level Markdown handoff file: `/Users/dmitryselenya/Projects/puppy_app/ARCHITECTURE.md`.
+Create one root-level Markdown handoff file: `ARCHITECTURE.md`.
 
 The file will be the main architecture source for future coding agents and engineers. It will synthesize the six-agent architecture council: CTO, UX/UI lead, two mobile architects, client lead, and server lead. It will include Mermaid diagrams directly inside Markdown, so no extra tooling is required.
 

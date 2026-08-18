@@ -6,7 +6,7 @@ This package preserves the Cloud Design export as a repo-native design reference
 
 The repo-native design source is `docs/design/v1/raw/PuppyPlan.html`, its support files, `manifest.json`, and the generated screenshot atlas under `docs/design/v1/screenshots/`.
 
-On 2026-06-12 this package was compared with the original local export at `/Users/dmitryselenya/Downloads/puppy_app`. The folders are not byte-identical, but the screen/module inventory matches. The differences are small curated changes: synthetic placeholder names in place of private-looking design examples, duplicate-window copy aligned with the 60-second product invariant, and token/audit refinements. The repo package remains the source agents should implement against because it is the sanitized, manifest-backed, screenshot-backed version.
+On 2026-06-12 this package was compared with the original local export at `<local-downloads>/puppy_app`. The folders are not byte-identical, but the screen/module inventory matches. The differences are small curated changes: synthetic placeholder names in place of private-looking design examples, duplicate-window copy aligned with the 60-second product invariant, and token/audit refinements. The repo package remains the source agents should implement against because it is the sanitized, manifest-backed, screenshot-backed version.
 
 If a newer external design package is provided later and the actual visual layout or screen inventory differs from this package, compare it, update this README, regenerate the manifest/screenshots, and use the newer approved package as the visual source. If the exact source cannot be determined, stop implementation and request exact screenshots or a fresh export.
 

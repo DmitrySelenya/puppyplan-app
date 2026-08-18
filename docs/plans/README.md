@@ -10,6 +10,13 @@ Blocked or paused work stays in `active/` with a clear `Status` and next action.
 
 Every file in `active/` must have a row in the Current Plans table below (enforced by `scripts/checks/check-plans-index.mjs` via `npm run check`).
 
+> **Note on unpublished references.** Plans sometimes cite internal working artifacts under
+> `docs/qa/`, `docs/dogfood/`, and `docs/reviews/` — QA evidence sweeps, physical-device
+> checklists, and internal review reports. Those directories are deliberately not published in
+> the public repository (they contain device-specific and reviewer-internal material), so those
+> particular paths will not resolve here. Every decision they informed is recorded in the plan
+> itself, in the relevant ADR, or in `docs/design/`.
+
 ## Current Plans
 
 | Status | Plan | Linear | Current phase / next action |

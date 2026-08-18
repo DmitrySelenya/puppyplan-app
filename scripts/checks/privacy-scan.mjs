@@ -99,6 +99,21 @@ const FORBIDDEN_PRIVATE_FIXTURE_PATTERNS = [
   },
 ];
 
+const FORBIDDEN_PUBLICATION_PATTERNS = [
+  {
+    pattern: /\/Users\/[A-Za-z0-9._-]+\//g,
+    reason: 'absolute local home path (leaks the machine account of whoever wrote it)',
+  },
+  {
+    pattern: /https?:\/\/linear\.app\/\S+/gi,
+    reason: 'private issue-tracker URL (keep the bare issue id instead)',
+  },
+  {
+    pattern: /https?:\/\/miro\.com\/app\/board\/\S+/gi,
+    reason: 'private design-board URL (keep the exported reference instead)',
+  },
+];
+
 function lineForIndex(text, index = 0) {
   return text.slice(0, index).split('\n').length;
 }
@@ -190,6 +205,19 @@ export function scanPrivacyText({ path, text }) {
           value: match[0],
         });
       }
+    }
+  }
+
+  for (const { pattern, reason } of FORBIDDEN_PUBLICATION_PATTERNS) {
+    pattern.lastIndex = 0;
+    for (const match of text.matchAll(pattern)) {
+      violations.push({
+        kind: 'publication',
+        line: lineForIndex(text, match.index),
+        message: reason,
+        path,
+        value: match[0],
+      });
     }
   }
 

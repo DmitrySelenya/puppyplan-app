@@ -1,8 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: PuppyPlan internal task intake
-    url: https://linear.app/dmitryselenya/project/puppyplan-mvp-8ba865db0841
-    about: Use Linear team PUP and project PuppyPlan MVP for internal product, engineering, design, QA, and release work.
-  - name: PuppyPlan repository rules
+  - name: Report a security vulnerability
+    url: https://github.com/DmitrySelenya/puppyplan-app/security/advisories/new
+    about: Never open a public issue for a security problem. Report it privately here.
+  - name: Repository rules and architecture
     url: https://github.com/DmitrySelenya/puppyplan-app/blob/main/AGENTS.md
-    about: Read the agent and repository operating rules before opening implementation work.
+    about: AGENTS.md is the operating contract for this codebase, for humans and AI agents alike.
+  - name: Contributing guide
+    url: https://github.com/DmitrySelenya/puppyplan-app/blob/main/CONTRIBUTING.md
+    about: What is welcome here, and what to discuss before writing code.

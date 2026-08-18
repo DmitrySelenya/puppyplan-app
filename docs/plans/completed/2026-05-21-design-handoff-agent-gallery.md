@@ -15,7 +15,7 @@
 
 **Architecture:** This is a design handoff and implementation-enablement plan. It does not change product scope, app runtime, Supabase schema, RLS, CI, or release behavior. Future code work must still implement Expo native UI through `src/design` primitives, typed i18n, contracts, and tests.
 
-**Linear:** `PUP-7` - https://linear.app/dmitryselenya/issue/PUP-7/finalize-repo-native-design-handoff-and-agent-design-gallery
+**Linear:** `PUP-7`
 
 **Branch:** N/A until a Linear implementation issue creates a branch.
 
@@ -31,7 +31,7 @@
 
 ## Context
 
-The current design package lives outside the repo at `/Users/dmitryselenya/Downloads/puppy_app`. It is a Cloud Design export, not a stable project source of truth. The useful current visual canvas is `PuppyPlan.html`, which was inspected as 17 sections, 65 artboards, and 62 phone screens. `PuppyPlan-print.html` and `PuppyPlan.standalone.src.html` appear older and must be treated as stale unless a later manifest proves otherwise.
+The current design package lives outside the repo at `<local-downloads>/puppy_app`. It is a Cloud Design export, not a stable project source of truth. The useful current visual canvas is `PuppyPlan.html`, which was inspected as 17 sections, 65 artboards, and 62 phone screens. `PuppyPlan-print.html` and `PuppyPlan.standalone.src.html` appear older and must be treated as stale unless a later manifest proves otherwise.
 
 Repo docs and tokens were cleaned before this plan:
 
@@ -164,7 +164,7 @@ Important PuppyPlan invariants that still apply:
 
 ### Design Handoff
 - `docs/design/v1/README.md` - source status, how agents should use the package, current/stale artifact notes.
-- `docs/design/v1/raw/` - raw Cloud Design export copied from `/Users/dmitryselenya/Downloads/puppy_app`.
+- `docs/design/v1/raw/` - raw Cloud Design export copied from `<local-downloads>/puppy_app`.
 - `docs/design/v1/manifest.json` - current artboards, sections, routes, states, dimensions, source files, implementation priority.
 - `docs/design/v1/design-audit-reconciliation.md` - curated applied/superseded/open status for useful findings from the downloaded historical audit note.
 - `docs/design/v1/screenshots/<section>/<artboard-id>.png` - generated screenshot atlas.
@@ -302,7 +302,7 @@ Important PuppyPlan invariants that still apply:
 **Files:**
 - Create: `docs/design/v1/README.md`
 - Create: `docs/design/v1/raw/`
-- Copy from: `/Users/dmitryselenya/Downloads/puppy_app`
+- Copy from: `<local-downloads>/puppy_app`
 
 **Checklist:**
 - [x] Copy the Cloud Design export into `docs/design/v1/raw/`, excluding `uploads/AUDIT_FIXES*.md`.
